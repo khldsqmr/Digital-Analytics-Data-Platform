@@ -2,53 +2,48 @@
 ===============================================================================
 BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS | ONE-TIME BOOTSTRAP
 ===============================================================================
-
-PURPOSE
-- Creates the Bronze table for SITE-LEVEL Search Console metrics
-- This table represents AGGREGATED metrics per site per day
-- Parent table for query-level detail
-
-GRAIN (Natural Key)
-- account_name
-- site_url
-- date
-
-DESIGN PRINCIPLES
-- Preserve upstream aggregation exactly as received
-- No derived metrics
-- Supports executive reporting and trend analysis
-
-PARTITIONING
-- date
-
-CLUSTERING
-- account_name
-- site_url
-===============================================================================
+-- BOOTSTRAP: Google Search Console – Site Totals (Bronze)
+-- TABLE: sdi_bronze_search_console_site_totals_daily
+--
+-- PURPOSE:
+--   Stores raw site-level daily Search Console metrics.
+--   Mirrors Improvado source schema exactly.
+--
+-- SOURCE:
+--   ds_dbi_improvado_master.google_search_console_site_totals_tmo
+--
+-- GRAIN:
+--   date × site_url
+--
+-- NOTES:
+--   - `sum_position` is preserved (no `position` exists upstream)
+--   - No transformations or derivations in Bronze
+-- ============================================================
 */
 
 CREATE TABLE IF NOT EXISTS
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
- .sdi_bronze_search_console_site_totals_daily`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily`
 (
-  -- Source identifiers
+  -- Identifiers
   account_id STRING,
   account_name STRING,
   site_url STRING,
 
-  -- Date
-  date DATE,
+  -- Date fields
+  date INT64,              -- GSC numeric date (days since epoch)
+  date_yyyymmdd INT64,     -- YYYYMMDD representation
 
-  -- Aggregated performance metrics
+  -- Metrics
   clicks FLOAT64,
   impressions FLOAT64,
-  sum_position FLOAT64,
-  position FLOAT64,
+  sum_position FLOAT64,    -- Aggregated position from source
 
-  -- Audit metadata
+  -- Metadata / audit
   __insert_date INT64,
-  file_load_datetime TIMESTAMP,
-  filename STRING
+  File_Load_datetime TIMESTAMP,
+  Filename STRING
 )
-PARTITION BY date
-CLUSTER BY account_name, site_url;
+PARTITION BY
+  DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)))
+CLUSTER BY
+  site_url;

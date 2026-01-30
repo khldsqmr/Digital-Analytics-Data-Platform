@@ -8,13 +8,9 @@ PURPOSE
 - Preserve maximum source granularity (query + page + search_type)
 - Serve as the lowest-level SEO fact table in the platform
 
-GRAIN (Natural Key)
-- account_name
-- site_url
-- page
-- query
-- search_type
-- date
+STRATEGY
+- Merge on full natural grain
+- Preserves raw diagnostic metrics
 
 WHY MERGE
 - Improvado can re-deliver historical files
@@ -33,48 +29,41 @@ TARGET
 ===============================================================================
 */
 
-DECLARE lookback_days INT64 DEFAULT 7;
+-- ============================================================
+-- INCREMENTAL MERGE: Search Console Query + Search Type (Bronze)
+--
+
+-- ============================================================
 
 MERGE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
- .sdi_bronze_search_console_query_daily` T
-USING (
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily` T
+USING
+(
   SELECT
-    -- Identifiers
     account_id,
     account_name,
     site_url,
     page,
     query,
     search_type,
-
-    -- Convert YYYYMMDD → DATE (authoritative partition key)
-    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
-
-    -- Metrics
+    date,
+    date_yyyymmdd,
     clicks,
     impressions,
     position,
     sum_position,
-
-    -- Audit / lineage
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   FROM
-    `prj-dbi-prd-1.ds_dbi_improvado_master
-     .google_search_console_query_search_type_tmo`
-  WHERE
-    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)))
-      >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+    `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo`
 ) S
 ON
-  T.account_name = S.account_name
-  AND T.site_url = S.site_url
+  T.site_url = S.site_url
   AND T.page = S.page
   AND T.query = S.query
   AND T.search_type = S.search_type
-  AND T.date = S.date
+  AND T.date_yyyymmdd = S.date_yyyymmdd
 
 WHEN MATCHED THEN
   UPDATE SET
@@ -83,8 +72,8 @@ WHEN MATCHED THEN
     position = S.position,
     sum_position = S.sum_position,
     __insert_date = S.__insert_date,
-    file_load_datetime = S.file_load_datetime,
-    filename = S.filename
+    File_Load_datetime = S.File_Load_datetime,
+    Filename = S.Filename
 
 WHEN NOT MATCHED THEN
   INSERT (
@@ -95,13 +84,14 @@ WHEN NOT MATCHED THEN
     query,
     search_type,
     date,
+    date_yyyymmdd,
     clicks,
     impressions,
     position,
     sum_position,
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   )
   VALUES (
     S.account_id,
@@ -111,11 +101,12 @@ WHEN NOT MATCHED THEN
     S.query,
     S.search_type,
     S.date,
+    S.date_yyyymmdd,
     S.clicks,
     S.impressions,
     S.position,
     S.sum_position,
     S.__insert_date,
-    S.file_load_datetime,
-    S.filename
+    S.File_Load_datetime,
+    S.Filename
   );

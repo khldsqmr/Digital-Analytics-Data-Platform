@@ -8,10 +8,10 @@ PURPOSE
 - Acts as the parent aggregate for query-level data
 - Used for executive SEO KPIs and trend analysis
 
-GRAIN (Natural Key)
-- account_name
-- site_url
-- date
+STRATEGY
+- Merge on (date_yyyymmdd + site_url)
+- Update metrics if source reloads
+- Insert new dates
 
 WHY MERGE
 - Handles file re-delivery and corrections
@@ -29,52 +29,37 @@ TARGET
 ===============================================================================
 */
 
-DECLARE lookback_days INT64 DEFAULT 7;
-
 MERGE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
- .sdi_bronze_search_console_site_totals_daily` T
-USING (
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily` T
+USING
+(
   SELECT
-    -- Identifiers
     account_id,
     account_name,
     site_url,
-
-    -- Convert YYYYMMDD → DATE
-    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
-
-    -- Metrics
+    date,
+    date_yyyymmdd,
     clicks,
     impressions,
-    position,
     sum_position,
-
-    -- Audit / lineage
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   FROM
-    `prj-dbi-prd-1.ds_dbi_improvado_master
-     .google_search_console_site_totals_tmo`
-  WHERE
-    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)))
-      >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+    `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_site_totals_tmo`
 ) S
 ON
-  T.account_name = S.account_name
-  AND T.site_url = S.site_url
-  AND T.date = S.date
+  T.site_url = S.site_url
+  AND T.date_yyyymmdd = S.date_yyyymmdd
 
 WHEN MATCHED THEN
   UPDATE SET
     clicks = S.clicks,
     impressions = S.impressions,
-    position = S.position,
     sum_position = S.sum_position,
     __insert_date = S.__insert_date,
-    file_load_datetime = S.file_load_datetime,
-    filename = S.filename
+    File_Load_datetime = S.File_Load_datetime,
+    Filename = S.Filename
 
 WHEN NOT MATCHED THEN
   INSERT (
@@ -82,24 +67,24 @@ WHEN NOT MATCHED THEN
     account_name,
     site_url,
     date,
+    date_yyyymmdd,
     clicks,
     impressions,
-    position,
     sum_position,
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   )
   VALUES (
     S.account_id,
     S.account_name,
     S.site_url,
     S.date,
+    S.date_yyyymmdd,
     S.clicks,
     S.impressions,
-    S.position,
     S.sum_position,
     S.__insert_date,
-    S.file_load_datetime,
-    S.filename
+    S.File_Load_datetime,
+    S.Filename
   );
