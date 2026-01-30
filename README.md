@@ -1,136 +1,135 @@
 # Digital Analytics Data Platform
 
 An enterprise-grade digital analytics data platform built on a **medallion
-(Bronze / Silver / Gold) architecture** to produce **authoritative, reusable
-analytical datasets**.
+architecture (Bronze / Silver / Gold)** to support scalable, auditable, and
+reproducible analytics across SEO, paid media, and web analytics domains.
 
-This repository acts as the **single source of truth** for ingestion logic,
-transformations, reference mappings, and platform documentation on BigQuery.
-
----
-
-## Repository Structure & Responsibilities
-
-| Folder / Path              | Layer / Type        | Responsibility                                                                 |
-|----------------------------|---------------------|--------------------------------------------------------------------------------|
-| `sql/bootstrap/`           | Bootstrap SQL       | One-time table creation (DDL, partitioning, clustering). Never scheduled       |
-| `sql/bronze/`              | Bronze              | Source-faithful incremental ingestion using MERGE                              |
-| `sql/silver/`              | Silver              | Business logic, normalization, canonical dimensions                             |
-| `sql/gold/`                | Gold                | Analytics-ready, reusable source-of-truth datasets                              |
-| `docs/bootstrap/`          | Documentation       | Source-specific bootstrap and ingestion documentation                           |
-| `refs/`                    | Reference Data      | Mapping tables (LOB, brand, channel, product, etc.)                             |
-| `orchestration/`           | Orchestration       | Scheduling definitions and workflow orchestration (future)                     |
-| `infra/`                   | Infrastructure      | Dataset setup, permissions, IaC, environment configuration                      |
+This repository serves as the **single source of truth** for transformation
+logic, table definitions, and documentation that power downstream analytical
+and operational use cases.
 
 ---
 
-## Architecture Overview
+## Platform Architecture
 
-Upstream Sources
-↓
-Bronze Layer
-↓
-Silver Layer
-↓
-Gold Layer
-↓
-Downstream Consumers
-(BI, APIs, ML, Products)
+The platform follows a layered medallion architecture:
 
-
----
-
-## Layer Responsibilities
-
-### Bronze — Source-Faithful Ingestion
+### Bronze Layer
+- Source-faithful ingestion from upstream systems
 - Minimal transformation
-- Incremental MERGE-based loads
-- Partitioned and clustered storage
-- Full source metadata retained
+- Incremental, idempotent loads
+- Full auditability and replayability
 
-**Purpose:**  
-Preserve upstream data exactly as delivered and enable safe reprocessing.
+### Silver Layer
+- Business logic and normalization
+- Canonical dimensions (e.g. channel, LOB, brand)
+- Data quality enforcement
+- Analytics-ready but not KPI-aggregated
+
+### Gold Layer
+- Curated, KPI-ready datasets
+- Acts as the **source of truth** for downstream consumption
+- Designed to power:
+  - Logical semantic layers
+  - APIs and data services
+  - Forecasting and advanced analytics
+  - External tools and applications
+
+> Gold tables are intentionally decoupled from visualization tools so they can
+> be reused consistently across multiple consumers.
 
 ---
 
-### Silver — Canonical Business Logic
-- Standardization and normalization
-- Shared business dimensions
-- Cross-source consistency
+## Repository Structure
 
-**Purpose:**  
-Translate raw data into **business-meaningful, reusable entities**.
+| Folder Path | Purpose |
+|------------|---------|
+| `sql/bootstrap/` | One-time table creation (`CREATE TABLE`). Executed once per environment. |
+| `sql/bronze/` | Incremental MERGE-based ingestion logic for raw source data. |
+| `sql/silver/` | Business logic, normalization, and enrichment transformations. |
+| `sql/gold/` | Curated KPI datasets and analytical fact tables. |
+| `docs/bootstrap/` | Bootstrap documentation explaining one-time setup steps. |
+| `docs/domain/` | Domain-specific documentation (e.g. Search Console, Paid Media). |
+| `refs/` | Static reference mappings and lookup tables. |
+| `orchestration/` | Scheduling and orchestration artifacts (future). |
+| `infra/` | Infrastructure-as-code and environment setup (future). |
 
 ---
 
-### Gold — Analytical Source of Truth
-- Fully curated, analytics-ready datasets
-- Stable metric definitions and grains
-- Designed for reuse across consumers
+## Current Data Sources
 
-**Purpose:**  
-Act as the **authoritative logical layer** feeding dashboards, APIs, ML pipelines,
-and other downstream systems.
+### Google Search Console (via Improvado)
 
-Gold datasets are **tool-agnostic** and not presentation-specific.
+Implemented using a **parent–child Bronze design** to preserve full source
+fidelity while enabling both executive and diagnostic analytics.
+
+| Aspect | Site Totals Table | Query-Level Table |
+|------|------------------|------------------|
+| Granularity | Site × Day | Site × Day × Query × Page × Search Type |
+| Aggregation Level | Highest | Lowest |
+| Primary Use Case | Executive KPIs, trend analysis | SEO diagnostics, content analysis |
+| Relationship | Parent aggregate | Child detail |
+
+Design principles:
+- Incremental MERGE-based ingestion
+- Rolling lookback window for late-arriving data
+- No business logic in Bronze
+- Full auditability using metadata columns
+
+Detailed documentation for Search Console lives under:
+`docs/bootstrap/search_console_bronze.md`
 
 ---
 
 ## Execution Model
 
-| Execution Type | Location           | Description                                              |
-|---------------|--------------------|----------------------------------------------------------|
-| One-time      | `sql/bootstrap/`   | Physical table creation per environment                   |
-| Recurring     | `sql/bronze/`      | Incremental ingestion with late-arriving data handling   |
-| Downstream    | `sql/silver/`      | Business logic and standardization                        |
-| Downstream    | `sql/gold/`        | Curated analytical datasets                               |
+- SQL is executed using **BigQuery Scheduled Queries**
+- Bootstrap SQL is executed manually (one time only)
+- Incremental SQL is scheduled for daily execution
+- Downstream layers depend strictly on upstream layers
 
----
-
-## Data Sources
-
-The platform supports **multiple digital data sources**.  
-Each source has **dedicated documentation** describing schema, bootstrap logic,
-and ingestion strategy.
-
-Source-specific documentation lives under:
-docs/bootstrap/
-
-
-Examples:
-- Google Search Console
-- Paid media platforms
-- Web analytics platforms
+Execution order:
+1. Bootstrap tables (`sql/bootstrap/`)
+2. Incremental Bronze ingestion (`sql/bronze/`)
+3. Silver transformations
+4. Gold curation
 
 ---
 
 ## Design Principles
 
-- Bronze remains immutable and source-faithful
-- Business logic belongs in Silver
-- Gold acts as the analytical source of truth
-- Transformations are version-controlled
-- SQL is readable, documented, and idempotent
-- Platform is consumer-agnostic (BI, APIs, ML)
+- **Idempotency:** Pipelines can be safely re-run
+- **Auditability:** All raw data is traceable to source files
+- **Separation of concerns:** Each layer has a clear responsibility
+- **Cost efficiency:** Partitioning and pruning are enforced
+- **Scalability:** New sources and domains can be added without refactoring
 
 ---
 
-## Getting Started
+## Non-Goals (By Design)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/khldsqmr/Digital-Analytics-Data-Platform.git
-   cd Digital-Analytics-Data-Platform
-2. Review source-specific documentation: docs/bootstrap/
-3. Execute bootstrap SQL once per environment
-4. Validate incremental ingestion logic
-5. Schedule incremental SQL jobs in BigQuery
-6. Build Silver and Gold layers incrementally
+This platform intentionally does **not**:
+- Embed visualization logic
+- Apply business KPIs in Bronze
+- Mix ingestion and reporting logic
+- Hard-code downstream consumption assumptions
+
+---
+
+Refer to docs/bootstrap/ before running any SQL.
 
 Ownership
+- Domain: Digital Analytics
+- Architecture: Medallion (Bronze / Silver / Gold)
+- Warehouse: BigQuery
+- Language: SQL
 
-Domain: Digital Analytics
-Warehouse: BigQuery
-Execution Engine: BigQuery Scheduled Queries
+---
 
+## How to Get Started
 
+Clone the repository:
+
+```bash
+git clone https://github.com/khldsqmr/Digital-Analytics-Data-Platform.git
+cd Digital-Analytics-Data-Platform
