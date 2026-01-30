@@ -1,7 +1,7 @@
 /* =============================================================================
 BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL | INCREMENTAL MERGE
 ===============================================================================
-
+Query error: Value of type STRING cannot be assigned to date_yyyymmdd, which has type INT64 at [89:21]
 PURPOSE
 - Incrementally ingest query-level Search Console data
 - Preserve full source granularity (site × page × query × search type × date)
