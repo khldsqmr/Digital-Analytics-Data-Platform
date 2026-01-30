@@ -36,22 +36,22 @@ CREATE TABLE IF NOT EXISTS
   query STRING,
   search_type STRING,
 
-  -- Date fields
-  date INT64,
-  date_yyyymmdd INT64,
+  -- Logical event date
+  event_date DATE,
 
   -- Metrics
   clicks FLOAT64,
   impressions FLOAT64,
-  position FLOAT64,        -- Raw average position from source
-  sum_position FLOAT64,    -- Aggregated position from source
+  position FLOAT64,
+  sum_position FLOAT64,
 
-  -- Metadata / audit
+  -- Raw source date fields
+  date_yyyymmdd INT64,
+
+  -- Audit metadata
   __insert_date INT64,
-  File_Load_datetime TIMESTAMP,
-  Filename STRING
+  file_load_datetime TIMESTAMP,
+  filename STRING
 )
-PARTITION BY
-  DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)))
-CLUSTER BY
-  site_url, page, query;
+PARTITION BY event_date
+CLUSTER BY site_url, page, query;
