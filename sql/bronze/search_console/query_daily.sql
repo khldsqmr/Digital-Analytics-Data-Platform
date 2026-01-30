@@ -1,6 +1,8 @@
 /* =============================================================================
 BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL | INCREMENTAL MERGE
 ===============================================================================
+Query error: No matching signature for operator >= for argument types: STRING, INT64 Signature: T1 >= T1 Unable to find common supertype for templated argument <T1> Input types for <T1>: {INT64, STRING} at [30:5] at [37:1]
+
 Query error: Value of type STRING cannot be assigned to date_yyyymmdd, which has type INT64 at [89:21]
 PURPOSE
 - Incrementally ingest query-level Search Console data
