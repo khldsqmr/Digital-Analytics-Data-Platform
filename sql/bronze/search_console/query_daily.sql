@@ -39,59 +39,55 @@ MERGE
  .sdi_bronze_search_console_query_daily` T
 USING (
   SELECT
-    -- Identifiers
     account_id,
     account_name,
     site_url,
-
-    -- Dimensions
     page,
     query,
     search_type,
 
-    -- Canonical event date (materialized DATE)
-    PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS event_date,
+    -- Source-faithful integer date
+    date_yyyymmdd,
 
-    -- Metrics (as delivered by source)
+    -- Analytics date
+    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
+
     clicks,
     impressions,
     position,
     sum_position,
 
-    -- Preserve raw date representation
-    date_yyyymmdd,
-
     -- Audit metadata
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   FROM
     `prj-dbi-prd-1.ds_dbi_improvado_master
      .google_search_console_query_search_type_tmo`
   WHERE
-    -- Partition pruning + late-arriving data handling
-    PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))
-      >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+    date_yyyymmdd >= CAST(
+      FORMAT_DATE('%Y%m%d',
+        DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      ) AS INT64
+    )
 ) S
 ON
-  -- Full natural business key
-  T.account_name = S.account_name
-  AND T.site_url = S.site_url
-  AND T.page = S.page
-  AND T.query = S.query
+  T.account_name     = S.account_name
+  AND T.site_url    = S.site_url
+  AND T.page        = S.page
+  AND T.query       = S.query
   AND T.search_type = S.search_type
-  AND T.event_date = S.event_date
+  AND T.date_yyyymmdd = S.date_yyyymmdd
 
 WHEN MATCHED THEN
   UPDATE SET
-    clicks = S.clicks,
-    impressions = S.impressions,
-    position = S.position,
-    sum_position = S.sum_position,
-    date_yyyymmdd = S.date_yyyymmdd,
-    __insert_date = S.__insert_date,
-    file_load_datetime = S.file_load_datetime,
-    filename = S.filename
+    clicks            = S.clicks,
+    impressions       = S.impressions,
+    position          = S.position,
+    sum_position      = S.sum_position,
+    __insert_date     = S.__insert_date,
+    File_Load_datetime = S.File_Load_datetime,
+    Filename          = S.Filename
 
 WHEN NOT MATCHED THEN
   INSERT (
@@ -101,15 +97,15 @@ WHEN NOT MATCHED THEN
     page,
     query,
     search_type,
-    event_date,
+    date_yyyymmdd,
+    date,
     clicks,
     impressions,
     position,
     sum_position,
-    date_yyyymmdd,
     __insert_date,
-    file_load_datetime,
-    filename
+    File_Load_datetime,
+    Filename
   )
   VALUES (
     S.account_id,
@@ -118,13 +114,13 @@ WHEN NOT MATCHED THEN
     S.page,
     S.query,
     S.search_type,
-    S.event_date,
+    S.date_yyyymmdd,
+    S.date,
     S.clicks,
     S.impressions,
     S.position,
     S.sum_position,
-    S.date_yyyymmdd,
     S.__insert_date,
-    S.file_load_datetime,
-    S.filename
+    S.File_Load_datetime,
+    S.Filename
   );
