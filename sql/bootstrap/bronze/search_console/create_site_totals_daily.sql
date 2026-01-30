@@ -17,24 +17,24 @@ SOURCE
 CREATE TABLE IF NOT EXISTS
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily`
 (
-  -- Source identifiers
-  account_id            STRING,
-  account_name          STRING,
-  site_url              STRING,
+  account_id STRING,
+  account_name STRING,
+  site_url STRING,
 
-  -- Dates
-  date_yyyymmdd         STRING,   -- Source date (YYYYMMDD)
-  date                  DATE,     -- Derived DATE for partitioning
+  -- Source date as STRING (kept for lineage)
+  date_yyyymmdd STRING,
 
-  -- Metrics
-  clicks                FLOAT64,
-  impressions           FLOAT64,
-  sum_position          FLOAT64,  -- Used to recompute avg position
+  -- Derived analytics date
+  date DATE,
 
-  -- Audit & lineage
-  __insert_date         INT64,
-  file_load_datetime    TIMESTAMP,
-  filename              STRING
+  clicks FLOAT64,
+  impressions FLOAT64,
+  sum_position FLOAT64,
+
+  -- Metadata
+  __insert_date INT64,
+  file_load_datetime TIMESTAMP,
+  filename STRING
 )
 PARTITION BY date
 CLUSTER BY account_name, site_url;
