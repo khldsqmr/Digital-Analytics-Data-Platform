@@ -1,42 +1,64 @@
--- =====================================================================
--- ONE-TIME BOOTSTRAP SQL
--- DO NOT SCHEDULE
--- DO NOT RE-RUN AFTER INITIAL CREATION
---
--- Purpose:
---   Creates the Bronze Search Console query-level daily table.
---
--- Execution:
---   Run manually in BigQuery UI once per environment.
---
--- Dependency:
---   Required before running incremental MERGE logic.
--- =====================================================================
+/*
+===============================================================================
+BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL | ONE-TIME BOOTSTRAP
+===============================================================================
 
-CREATE TABLE IF NOT EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily`
+PURPOSE
+- Creates the Bronze table for query-level Google Search Console data
+- This table stores the MOST GRANULAR Search Console metrics available
+- Executed ONCE per environment
+
+GRAIN (Natural Key)
+- account_name
+- site_url
+- page
+- query
+- search_type
+- date
+
+DESIGN PRINCIPLES
+- Preserve raw source structure
+- No aggregations
+- No business logic
+- Optimized for incremental MERGE operations
+
+PARTITIONING
+- date (daily partitioning for cost control)
+
+CLUSTERING
+- account_name
+- site_url
+- query
+===============================================================================
+*/
+
+CREATE TABLE IF NOT EXISTS
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+ .sdi_bronze_search_console_query_daily`
 (
-  event_date DATE,
-  event_date_yyyymmdd INT64,
-
-  property STRING,
+  -- Source identifiers
+  account_id STRING,
+  account_name STRING,
   site_url STRING,
+
+  -- Search dimensions
   page STRING,
   query STRING,
   search_type STRING,
 
-  clicks FLOAT64,
-  impressions FLOAT64,
-  position FLOAT64,
-  sum_position FLOAT64,
+  -- Date (derived from YYYYMMDD in source)
+  date DATE,
 
-  -- ingestion metadata
-  file_name STRING,
-  file_load_datetime TIMESTAMP,
-  insert_ts TIMESTAMP,
+  -- Performance metrics
+  clicks FLOAT64,          -- Number of clicks
+  impressions FLOAT64,     -- Number of impressions
+  sum_position FLOAT64,    -- Sum of average position across impressions
+  position FLOAT64,        -- Average search position
 
-  -- lineage & control
-  source_system STRING,
-  record_hash STRING
+  -- Audit & lineage metadata
+  __insert_date INT64,     -- Source system insert timestamp
+  file_load_datetime TIMESTAMP, -- When file was loaded
+  filename STRING          -- Source file name
 )
-PARTITION BY event_date
-CLUSTER BY property, page, query;
+PARTITION BY date
+CLUSTER BY account_name, site_url, query;

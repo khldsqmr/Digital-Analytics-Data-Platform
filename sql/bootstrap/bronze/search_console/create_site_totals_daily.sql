@@ -1,66 +1,54 @@
 /*
 ===============================================================================
-BOOTSTRAP | BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS
+BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS | ONE-TIME BOOTSTRAP
 ===============================================================================
 
 PURPOSE
-- Creates the Bronze table for site-level Google Search Console metrics
-- Used as authoritative daily SEO KPI source
-- Executed ONCE per environment
+- Creates the Bronze table for SITE-LEVEL Search Console metrics
+- This table represents AGGREGATED metrics per site per day
+- Parent table for query-level detail
+
+GRAIN (Natural Key)
+- account_name
+- site_url
+- date
 
 DESIGN PRINCIPLES
-- Immutable Bronze foundation
-- Partitioned by date for efficient reprocessing
-- Deterministic record_hash ensures idempotency
+- Preserve upstream aggregation exactly as received
+- No derived metrics
+- Supports executive reporting and trend analysis
 
-GRAIN
-- property + site_url + event_date
+PARTITIONING
+- date
+
+CLUSTERING
+- account_name
+- site_url
 ===============================================================================
 */
 
 CREATE TABLE IF NOT EXISTS
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+ .sdi_bronze_search_console_site_totals_daily`
 (
-  -- ======================
-  -- BUSINESS IDENTIFIERS
-  -- ======================
-  property                STRING,
-  account_name            STRING,
-  site_url                STRING,
+  -- Source identifiers
+  account_id STRING,
+  account_name STRING,
+  site_url STRING,
 
-  -- ======================
-  -- DATE FIELDS
-  -- ======================
-  event_date              DATE,
-  event_date_yyyymmdd     INT64,
+  -- Date
+  date DATE,
 
-  -- ======================
-  -- METRICS (RAW)
-  -- ======================
-  clicks                  FLOAT64,
-  impressions             FLOAT64,
-  sum_position             FLOAT64,
-  position                FLOAT64,
+  -- Aggregated performance metrics
+  clicks FLOAT64,
+  impressions FLOAT64,
+  sum_position FLOAT64,
+  position FLOAT64,
 
-  -- ======================
-  -- INGESTION METADATA
-  -- ======================
-  file_name               STRING,
-  file_load_datetime      TIMESTAMP,
-  insert_ts               TIMESTAMP,
-
-  -- ======================
-  -- LINEAGE
-  -- ======================
-  source_system            STRING,
-
-  -- ======================
-  -- MERGE CONTROL
-  -- ======================
-  record_hash              STRING
+  -- Audit metadata
+  __insert_date INT64,
+  file_load_datetime TIMESTAMP,
+  filename STRING
 )
-PARTITION BY event_date
-CLUSTER BY property, site_url
-OPTIONS (
-  description = "Bronze raw site-level Google Search Console data"
-);
+PARTITION BY date
+CLUSTER BY account_name, site_url;
