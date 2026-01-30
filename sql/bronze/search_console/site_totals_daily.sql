@@ -3,114 +3,113 @@
 BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS | INCREMENTAL
 ===============================================================================
 
-TABLE PURPOSE
-- Bronze (raw) ingestion table for Google Search Console site-level metrics
-- Data source: Improvado
-- Grain: one row per site per day
+PURPOSE
+- Raw site-level daily Search Console metrics
+- Acts as authoritative site KPI source
 
-WHY BRONZE EXISTS
-- Preserve source data exactly as delivered
-- Enable reproducible downstream logic
-- Act as an auditable, immutable foundation
+GRAIN
+- property + site_url + event_date
 
 INCREMENTAL STRATEGY
-- MERGE-based upsert
-- Rolling lookback window to capture late-arriving files
-- Idempotent: same data can be safely reprocessed
+- MERGE with rolling lookback
+- Idempotent and late-data safe
 
-WHY MERGE (NOT INSERT)
-- INSERT-only would duplicate rows if Improvado reloads files
-- MERGE guarantees one record per grain per day
+PARTITIONING
+- event_date (DATE)
 
-PARTITIONING STRATEGY
-- Partitioned by `date`
-- BigQuery scans only relevant partitions
-- Reduces cost and improves performance
-- Allows efficient reprocessing of recent days only
+SOURCE
+- ds_dbi_improvado_master.google_search_console_site_totals_tmo
 
-SOURCE TABLE
-- prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_site_totals_tmo
-
-TARGET TABLE
-- prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-    .sdi_bronze_search_console_site_totals_daily
+TARGET
+- ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily
 ===============================================================================
 */
 
--- Number of recent days to reprocess
 DECLARE lookback_days INT64 DEFAULT 7;
 
 MERGE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
- .sdi_bronze_search_console_site_totals_daily` T
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily` T
 USING (
   SELECT
-    account_id,
+    -- business keys
+    account_id    AS property,
     account_name,
     site_url,
 
-    -- Convert YYYYMMDD integer to DATE
-    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
+    -- dates
+    DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS event_date,
+    date_yyyymmdd                                              AS event_date_yyyymmdd,
 
+    -- metrics
     clicks,
     impressions,
     sum_position,
     position,
 
-    -- Metadata for auditability
-    __insert_date,
-    file_load_datetime,
-    filename
-  FROM
-    `prj-dbi-prd-1.ds_dbi_improvado_master
-     .google_search_console_site_totals_tmo`
+    -- ingestion metadata
+    Filename            AS file_name,
+    File_Load_datetime  AS file_load_datetime,
+    TIMESTAMP_SECONDS(__insert_date) AS insert_ts,
+
+    -- lineage
+    'google_search_console' AS source_system,
+
+    -- deterministic merge key
+    TO_HEX(
+      MD5(CONCAT(
+        account_id,
+        site_url,
+        CAST(date_yyyymmdd AS STRING)
+      ))
+    ) AS record_hash
+
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_site_totals_tmo`
   WHERE
-    -- Partition pruning: only scan recent days
     DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)))
       >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
 ) S
-ON
-  -- Natural business key
-  T.account_name = S.account_name
-  AND T.site_url = S.site_url
-  AND T.date = S.date
+ON T.record_hash = S.record_hash
 
 WHEN MATCHED THEN
-  -- Update metrics if data for the same day is reloaded
   UPDATE SET
-    clicks = S.clicks,
-    impressions = S.impressions,
-    sum_position = S.sum_position,
-    position = S.position,
-    __insert_date = S.__insert_date,
+    clicks             = S.clicks,
+    impressions        = S.impressions,
+    sum_position       = S.sum_position,
+    position           = S.position,
+    file_name          = S.file_name,
     file_load_datetime = S.file_load_datetime,
-    filename = S.filename
+    insert_ts          = S.insert_ts
 
 WHEN NOT MATCHED THEN
-  -- Insert new daily records
   INSERT (
-    account_id,
+    property,
     account_name,
     site_url,
-    date,
+    event_date,
+    event_date_yyyymmdd,
     clicks,
     impressions,
     sum_position,
     position,
-    __insert_date,
+    file_name,
     file_load_datetime,
-    filename
+    insert_ts,
+    source_system,
+    record_hash
   )
   VALUES (
-    S.account_id,
+    S.property,
     S.account_name,
     S.site_url,
-    S.date,
+    S.event_date,
+    S.event_date_yyyymmdd,
     S.clicks,
     S.impressions,
     S.sum_position,
     S.position,
-    S.__insert_date,
+    S.file_name,
     S.file_load_datetime,
-    S.filename
+    S.insert_ts,
+    S.source_system,
+    S.record_hash
   );

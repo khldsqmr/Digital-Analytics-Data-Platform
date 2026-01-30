@@ -7,19 +7,20 @@ for Google Search Console Bronze tables.
 
 ## Purpose
 
-Bronze tables store **raw Search Console metrics** with minimal
-transformation and full fidelity.
+The Bronze layer stores **raw, minimally transformed Google Search Console data**
+with full fidelity to the source.
 
-Incremental MERGE pipelines assume these tables already exist.
-Bootstrap is executed **once per environment**.
+Incremental ingestion pipelines assume these tables already exist.
+Bootstrap is executed **once per environment** to establish physical tables,
+schema, and storage layout.
 
 ---
 
 ## Project & Dataset
 
-- Project: `prj-dbi-prd-1`
-- Dataset: `ds_dbi_digitalmedia_automation`
-- Location: `us-west1`
+- **Project:** `prj-dbi-prd-1`
+- **Dataset:** `ds_dbi_digitalmedia_automation`
+- **Location:** `us-west1`
 
 ---
 
@@ -27,72 +28,140 @@ Bootstrap is executed **once per environment**.
 
 ### 1. Query-Level Daily Metrics
 
-Table: sdi_bronze_search_console_query_daily
+**Table**
+sdi_bronze_search_console_query_daily
 
 
-Grain:
-- date
-- property
-- page
-- query
-- device
-- country
+**Grain**
+- date  
+- account_name  
+- site_url  
+- page  
+- query  
+- search_type  
 
-Description:
-Stores query-level Search Console metrics such as clicks,
-impressions, CTR, and average position.
+**Description**  
+Stores the most granular Search Console performance data available.
+Each row represents performance for a specific query on a specific page,
+for a given site and search type, on a given day.
 
-Partitioning:
+This table enables deep SEO diagnostics such as:
+- query intent analysis
+- page-level performance
+- search type (web / image / video) segmentation
+
+**Partitioning**
 - `date`
 
-Clustering:
-- `property`, `page`, `query`
+**Clustering**
+- `account_name`, `site_url`, `page`, `query`
 
 ---
 
 ### 2. Site-Level Daily Totals
 
-Table: sdi_bronze_search_console_site_totals_daily
+**Table**
+sdi_bronze_search_console_site_totals_daily
 
 
-Grain:
-- date
-- property
-- device
-- country
+**Grain**
+- date  
+- account_name  
+- site_url  
 
-Description:
-Stores site-level aggregated Search Console metrics.
+**Description**  
+Stores daily, site-level aggregated Search Console metrics.
+No query or page breakdowns are included.
 
-Partitioning:
+This table is used for:
+- executive SEO KPIs
+- high-level trend analysis
+- validation and reconciliation against detailed data
+
+**Partitioning**
 - `date`
 
-Clustering:
-- `property`, `device`
+**Clustering**
+- `account_name`, `site_url`
+
+---
+
+## Table Comparison
+
+| Aspect        | Site Totals Table                        | Query-Level Table                                      |
+|--------------|------------------------------------------|--------------------------------------------------------|
+| Granularity  | Site × Day                               | Site × Day × Query × Page × Search Type                |
+| Aggregation  | Highest (fully aggregated)               | Lowest (fully disaggregated)                           |
+| Primary Use  | Executive KPIs, dashboards               | SEO analysis, diagnostics, investigations              |
+| Typical Size | Small                                    | Large                                                  |
+| Cost Profile | Low                                      | Higher (requires partition pruning)                    |
+| Relationship | **Parent aggregate**                     | **Child detail**                                       |
+
+---
+
+## Source Tables (Improvado)
+
+- `ds_dbi_improvado_master.google_search_console_site_totals_tmo`
+- `ds_dbi_improvado_master.google_search_console_query_search_type_tmo`
+
+The site totals table represents **pre-aggregated rollups** of the same
+underlying Search Console data that feeds the query-level table.
+
+---
+
+## Bootstrap SQL (One-Time Only)
+
+One-time table creation SQL is version-controlled under:
+sql/bootstrap/bronze/search_console/
+
+
+Files:
+- `create_query_daily.sql`
+- `create_site_totals_daily.sql`
+
+These scripts:
+- are executed **manually** in BigQuery UI
+- must **never be scheduled**
+- must **not be re-run** after initial table creation
 
 ---
 
 ## Incremental Load Strategy
 
 - Daily ingestion uses `MERGE`
-- Late-arriving data is updated
-- Duplicate records are prevented
-- Partition pruning ensures low cost
+- Rolling lookback window handles late-arriving data
+- Duplicate records are prevented via natural keys
+- Only recent partitions are scanned for cost efficiency
+
+Recurring incremental SQL lives under:
+sql/bronze/search_console/
+
 
 ---
 
 ## Execution Order
 
-1. Run bootstrap CREATE TABLE statements (one time)
-2. Run MERGE SQL manually to validate
-3. Schedule MERGE SQL for daily execution
-4. Build Silver transformations on top
+1. Run bootstrap `CREATE TABLE` statements (one time only)
+2. Run incremental `MERGE` SQL manually to validate results
+3. Schedule incremental `MERGE` SQL for daily execution
+4. Build Silver transformations on top of Bronze tables
+
+---
+
+## Explicit Non-Goals (by design)
+
+The Bronze layer **does not**:
+- derive business logic
+- normalize or re-aggregate metrics
+- apply reporting definitions
+- enforce KPI rules
+
+All business logic belongs in **Silver or Gold** layers.
 
 ---
 
 ## Ownership
 
-Layer: Bronze  
-Source System: Google Search Console  
-Domain: Digital Analytics  
-
+- **Layer:** Bronze  
+- **Source System:** Google Search Console  
+- **Domain:** Digital Analytics  

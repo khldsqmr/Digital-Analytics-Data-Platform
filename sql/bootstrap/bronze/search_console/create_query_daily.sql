@@ -13,27 +13,30 @@
 --   Required before running incremental MERGE logic.
 -- =====================================================================
 
-CREATE TABLE IF NOT EXISTS
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily`
+CREATE TABLE IF NOT EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily`
 (
-  -- Grain columns
-  date DATE,
+  event_date DATE,
+  event_date_yyyymmdd INT64,
+
   property STRING,
+  site_url STRING,
   page STRING,
   query STRING,
-  device STRING,
-  country STRING,
+  search_type STRING,
 
-  -- Raw metrics
-  clicks INT64,
-  impressions INT64,
-  ctr FLOAT64,
+  clicks FLOAT64,
+  impressions FLOAT64,
   position FLOAT64,
+  sum_position FLOAT64,
 
-  -- Metadata
-  account_name STRING,
-  source STRING,
-  ingestion_ts TIMESTAMP
+  -- ingestion metadata
+  file_name STRING,
+  file_load_datetime TIMESTAMP,
+  insert_ts TIMESTAMP,
+
+  -- lineage & control
+  source_system STRING,
+  record_hash STRING
 )
-PARTITION BY date
+PARTITION BY event_date
 CLUSTER BY property, page, query;
