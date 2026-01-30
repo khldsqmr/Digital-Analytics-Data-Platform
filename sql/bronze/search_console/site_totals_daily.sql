@@ -1,19 +1,31 @@
 /*
 ===============================================================================
-BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS | INCREMENTAL
+BRONZE | GOOGLE SEARCH CONSOLE | SITE TOTALS | INCREMENTAL MERGE
 ===============================================================================
 
 PURPOSE
-- Incrementally loads site-level Search Console metrics
-- Maintains exactly one record per site per day
+- Ingest site-level daily Search Console metrics
+- Acts as the parent aggregate for query-level data
+- Used for executive SEO KPIs and trend analysis
 
-INCREMENTAL STRATEGY
-- MERGE with rolling lookback window
-- Safe handling of late-arriving and reloaded data
+GRAIN (Natural Key)
+- account_name
+- site_url
+- date
 
-WHY THIS TABLE MATTERS
-- Parent aggregate for query-level detail
-- Used for executive KPIs and trend analysis
+WHY MERGE
+- Handles file re-delivery and corrections
+- Guarantees one record per site per day
+
+PARTITIONING
+- date (DATE)
+- Efficient reprocessing of recent days only
+
+SOURCE
+- ds_dbi_improvado_master.google_search_console_site_totals_tmo
+
+TARGET
+- ds_dbi_digitalmedia_automation.sdi_bronze_search_console_site_totals_daily
 ===============================================================================
 */
 
@@ -24,17 +36,21 @@ MERGE
  .sdi_bronze_search_console_site_totals_daily` T
 USING (
   SELECT
+    -- Identifiers
     account_id,
     account_name,
     site_url,
 
+    -- Convert YYYYMMDD → DATE
     DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
 
+    -- Metrics
     clicks,
     impressions,
-    sum_position,
     position,
+    sum_position,
 
+    -- Audit / lineage
     __insert_date,
     file_load_datetime,
     filename
@@ -54,8 +70,8 @@ WHEN MATCHED THEN
   UPDATE SET
     clicks = S.clicks,
     impressions = S.impressions,
-    sum_position = S.sum_position,
     position = S.position,
+    sum_position = S.sum_position,
     __insert_date = S.__insert_date,
     file_load_datetime = S.file_load_datetime,
     filename = S.filename
@@ -68,8 +84,8 @@ WHEN NOT MATCHED THEN
     date,
     clicks,
     impressions,
-    sum_position,
     position,
+    sum_position,
     __insert_date,
     file_load_datetime,
     filename
@@ -81,8 +97,8 @@ WHEN NOT MATCHED THEN
     S.date,
     S.clicks,
     S.impressions,
-    S.sum_position,
     S.position,
+    S.sum_position,
     S.__insert_date,
     S.file_load_datetime,
     S.filename

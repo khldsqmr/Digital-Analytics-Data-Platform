@@ -1,22 +1,35 @@
 /*
 ===============================================================================
-BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL | INCREMENTAL
+BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL | INCREMENTAL MERGE
 ===============================================================================
 
 PURPOSE
-- Incrementally loads query-level Search Console data
-- Handles late-arriving files safely
-- Ensures ONE row per natural grain per day
+- Ingest raw Google Search Console query-level data
+- Preserve maximum source granularity (query + page + search_type)
+- Serve as the lowest-level SEO fact table in the platform
 
-INCREMENTAL STRATEGY
-- MERGE-based upsert
-- Rolling lookback window
-- Idempotent by design
+GRAIN (Natural Key)
+- account_name
+- site_url
+- page
+- query
+- search_type
+- date
 
-WHY MERGE?
-- Prevents duplicates
-- Allows safe reprocessing
-- Supports upstream file reloads
+WHY MERGE
+- Improvado can re-deliver historical files
+- Late-arriving data is common
+- MERGE ensures idempotency (no duplicates)
+
+PARTITIONING
+- date (DATE)
+- Enables partition pruning and low-cost reprocessing
+
+SOURCE
+- ds_dbi_improvado_master.google_search_console_query_search_type_tmo
+
+TARGET
+- ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily
 ===============================================================================
 */
 
@@ -31,22 +44,20 @@ USING (
     account_id,
     account_name,
     site_url,
-
-    -- Dimensions
     page,
     query,
     search_type,
 
-    -- Convert YYYYMMDD → DATE
+    -- Convert YYYYMMDD → DATE (authoritative partition key)
     DATE(PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING))) AS date,
 
     -- Metrics
     clicks,
     impressions,
-    sum_position,
     position,
+    sum_position,
 
-    -- Audit fields
+    -- Audit / lineage
     __insert_date,
     file_load_datetime,
     filename
@@ -69,8 +80,8 @@ WHEN MATCHED THEN
   UPDATE SET
     clicks = S.clicks,
     impressions = S.impressions,
-    sum_position = S.sum_position,
     position = S.position,
+    sum_position = S.sum_position,
     __insert_date = S.__insert_date,
     file_load_datetime = S.file_load_datetime,
     filename = S.filename
@@ -86,8 +97,8 @@ WHEN NOT MATCHED THEN
     date,
     clicks,
     impressions,
-    sum_position,
     position,
+    sum_position,
     __insert_date,
     file_load_datetime,
     filename
@@ -102,8 +113,8 @@ WHEN NOT MATCHED THEN
     S.date,
     S.clicks,
     S.impressions,
-    S.sum_position,
     S.position,
+    S.sum_position,
     S.__insert_date,
     S.file_load_datetime,
     S.filename
