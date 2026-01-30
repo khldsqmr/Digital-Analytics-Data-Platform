@@ -1,49 +1,52 @@
 /*
 ===============================================================================
-BOOTSTRAP | BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL
+BOOTSTRAP | BRONZE | GOOGLE SEARCH CONSOLE | QUERY LEVEL (ONE-TIME)
 ===============================================================================
 
 PURPOSE
-- One-time physical table creation for query-level Search Console metrics
-- Preserves full source granularity
+- Creates the physical Bronze table for query-level Search Console data
+- Executed ONCE per environment
+- Must NOT be re-run after creation
 
-SOURCE SNAPSHOT ALIGNMENT
-Source table:
-prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo
+DESIGN PRINCIPLES
+- Preserve source fidelity
+- Keep raw identifiers and metadata
+- Use derived DATE for partitioning
+- Support incremental MERGE pipelines
 
-Verified columns include:
-- position (FLOAT64)
-- sum_position (FLOAT64)
-- date_yyyymmdd (INT64)
+SOURCE
+- Improvado Search Console (query + search_type)
+
 ===============================================================================
 */
 
 CREATE TABLE IF NOT EXISTS
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation
- .sdi_bronze_search_console_query_daily`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_search_console_query_daily`
 (
-  -- Identifiers
-  account_id STRING,
-  account_name STRING,
-  site_url STRING,
-  page STRING,
-  query STRING,
-  search_type STRING,
+  -- Source identifiers
+  account_id            STRING,
+  account_name          STRING,
+  site_url              STRING,
+
+  -- Search dimensions
+  page                  STRING,
+  query                 STRING,
+  search_type           STRING,
 
   -- Dates
-  date_yyyymmdd INT64,
-  date DATE,
+  date_yyyymmdd         STRING,   -- Source date as delivered (YYYYMMDD)
+  date                  DATE,     -- Derived date used for partitioning
 
   -- Metrics
-  clicks FLOAT64,
-  impressions FLOAT64,
-  position FLOAT64,
-  sum_position FLOAT64,
+  clicks                FLOAT64,
+  impressions           FLOAT64,
+  position              FLOAT64,  -- Avg position (query-level only)
+  sum_position          FLOAT64,  -- Sum of positions (used for recalcs)
 
-  -- Audit metadata
-  __insert_date INT64,
-  File_Load_datetime TIMESTAMP,
-  Filename STRING
+  -- Audit & lineage
+  __insert_date         INT64,
+  file_load_datetime    TIMESTAMP,
+  filename              STRING
 )
 PARTITION BY date
-CLUSTER BY site_url, page, query;
+CLUSTER BY account_name, site_url, query;
