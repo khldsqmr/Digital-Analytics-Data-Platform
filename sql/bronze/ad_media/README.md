@@ -125,7 +125,7 @@ Bronze remains **decoupled from reporting and visualization logic** by design.
 
 # Ownership
 
-- **Layer:** Bronze
+- **Layer:** Bronze 
 - **Domain:** SDI
 - **Source:** Ad Media
 - **Maintained by:** Khalid Qamar
