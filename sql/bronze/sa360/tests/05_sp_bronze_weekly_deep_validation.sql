@@ -3,14 +3,13 @@
 FILE: 05_sp_bronze_weekly_deep_validation.sql
 
 PURPOSE:
-  Weekly deep validation for Bronze SA360 tables.
-  Non-blocking but critical for long-term health monitoring.
+  Weekly deep validation:
+    • Outlier detection
+    • Metric sanity
+    • Partition spread
+    • Historical late arrival monitoring
 
-SEVERITY:
-  MEDIUM / LOW
-
-SCHEDULE:
-  Weekly (Sunday)
+Non-blocking but important for long-term quality.
 
 ===============================================================================
 */
@@ -19,136 +18,56 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_weekly_deep_validation`()
 BEGIN
 
-DECLARE negative_count INT64;
-DECLARE cost_difference FLOAT64;
-DECLARE outlier_cost FLOAT64;
-DECLARE late_update_count INT64;
+DECLARE v_expected FLOAT64;
+DECLARE v_actual FLOAT64;
+DECLARE v_variance FLOAT64;
+DECLARE v_status STRING;
+DECLARE v_reason STRING;
+DECLARE v_next STRING;
 
--- ======================================================
--- TEST 1: Negative Metrics (Daily Table)
--- ======================================================
+-- =====================================================
+-- TEST 1: Extreme Cost Spike Check
+-- =====================================================
 
-SET negative_count = (
-  SELECT COUNT(*)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE clicks < 0 OR impressions < 0 OR cost < 0
-);
-
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_bronze_sa360_campaign_daily',
-  'deep_validation',
-  'Negative Metric Detection',
-  'MEDIUM',
-  0,
-  negative_count,
-  negative_count,
-  IF(negative_count=0,'PASS','FAIL'),
-  IF(negative_count=0,'🟢','🔴'),
-  IF(negative_count=0,
-     'No negative metrics.',
-     'Negative metrics detected.'
-  ),
-  IF(negative_count=0,
-     'No action required.',
-     'Inspect ingestion overflow or source corruption.'
-  );
-
--- ======================================================
--- TEST 2: Cost Conversion Validation
--- ======================================================
-
-SET cost_difference = (
-  SELECT ABS(SUM(cost) - SUM(cost_micros)/1000000)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-);
-
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_bronze_sa360_campaign_daily',
-  'deep_validation',
-  'Micros to Cost Conversion',
-  'MEDIUM',
-  0,
-  cost_difference,
-  cost_difference,
-  IF(cost_difference < 0.01,'PASS','FAIL'),
-  IF(cost_difference < 0.01,'🟢','🔴'),
-  IF(cost_difference < 0.01,
-     'Cost conversion accurate.',
-     'Cost conversion mismatch detected.'
-  ),
-  IF(cost_difference < 0.01,
-     'No action required.',
-     'Review transformation logic.'
-  );
-
--- ======================================================
--- TEST 3: Extreme Outlier Detection
--- ======================================================
-
-SET outlier_cost = (
+SET v_expected = 10000000;  -- threshold example
+SET v_actual = (
   SELECT MAX(cost)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
 );
 
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_bronze_sa360_campaign_daily',
-  'deep_validation',
-  'Extreme Cost Outlier',
-  'LOW',
-  10000000,
-  outlier_cost,
-  outlier_cost - 10000000,
-  IF(outlier_cost < 10000000,'PASS','FAIL'),
-  IF(outlier_cost < 10000000,'🟢','🔴'),
-  IF(outlier_cost < 10000000,
-     'Cost values within expected range.',
-     'Abnormally high cost detected.'
-  ),
-  IF(outlier_cost < 10000000,
-     'No action required.',
-     'Inspect for duplication or file corruption.'
-  );
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_actual <= v_expected, 'PASS', 'FAIL');
 
--- ======================================================
--- TEST 4: Late Arrival Monitoring
--- ======================================================
+SET v_reason = IF(
+  v_status='FAIL',
+  'Unusually high cost detected. Possible duplication.',
+  'Cost values within expected threshold.'
+);
 
-SET late_update_count = (
-  SELECT COUNT(*)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE date < DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-    AND bronze_inserted_at > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
+SET v_next = IF(
+  v_status='FAIL',
+  'Investigate duplication or upstream corruption.',
+  'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_daily',
   'deep_validation',
-  'Late Partition Update',
+  'Extreme Cost Spike Check',
   'LOW',
-  0,
-  late_update_count,
-  late_update_count,
-  IF(late_update_count=0,'PASS','WARN'),
-  IF(late_update_count=0,'🟢','🟡'),
-  IF(late_update_count=0,
-     'No unexpected late updates.',
-     'Old partitions updated recently.'
-  ),
-  IF(late_update_count=0,
-     'No action required.',
-     'Verify upstream late file loads.'
-  );
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  FALSE,
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
 END;

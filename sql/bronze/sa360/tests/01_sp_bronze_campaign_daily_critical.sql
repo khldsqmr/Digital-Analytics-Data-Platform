@@ -1,16 +1,16 @@
 /*
 ===============================================================================
 FILE: 01_sp_bronze_campaign_daily_critical.sql
-TABLE: sdi_bronze_sa360_campaign_daily
 
 PURPOSE:
-  Run CRITICAL structural integrity tests.
+  Critical structural validation for:
+    sdi_bronze_sa360_campaign_daily
+
+  These tests are blocking.
+  If any HIGH severity FAIL exists, orchestration stops.
 
 GRAIN:
   account_id + campaign_id + date
-
-BLOCKING:
-  YES (HIGH severity failures)
 
 ===============================================================================
 */
@@ -19,111 +19,159 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_campaign_daily_critical`()
 BEGIN
 
-DECLARE duplicate_count INT64;
-DECLARE null_count INT64;
-DECLARE freshness_gap INT64;
+DECLARE v_expected FLOAT64;
+DECLARE v_actual FLOAT64;
+DECLARE v_variance FLOAT64;
+DECLARE v_status STRING;
+DECLARE v_reason STRING;
+DECLARE v_next STRING;
 
--- ======================================================
--- TEST 1: Duplicate Grain
--- ======================================================
+-- =====================================================
+-- TEST 1: Duplicate Grain Check
+-- =====================================================
 
-SET duplicate_count = (
+SET v_expected = 0;
+
+SET v_actual = (
   SELECT COUNT(*)
   FROM (
-    SELECT account_id, campaign_id, date
+    SELECT account_id, campaign_id, date, COUNT(*) c
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
     GROUP BY 1,2,3
     HAVING COUNT(*) > 1
   )
 );
 
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  'Duplicate grain detected. MERGE or upstream duplication issue.',
+  'No duplicate grain detected.'
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Inspect incremental MERGE and deduplication logic.',
+  'No action required.'
+);
+
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_daily',
   'critical',
   'Duplicate Grain Check',
   'HIGH',
-  0,
-  duplicate_count,
-  duplicate_count,
-  IF(duplicate_count=0,'PASS','FAIL'),
-  IF(duplicate_count=0,'🟢','🔴'),
-  IF(duplicate_count=0,
-     'No duplicates found.',
-     'Duplicate grain detected. MERGE logic likely broken.'
-  ),
-  IF(duplicate_count=0,
-     'No action required.',
-     'Inspect incremental MERGE logic and upstream duplication.'
-  );
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  (v_status='FAIL'),
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
-
--- ======================================================
+-- =====================================================
 -- TEST 2: Null Identifier Check
--- ======================================================
+-- =====================================================
 
-SET null_count = (
+SET v_expected = 0;
+
+SET v_actual = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
   WHERE account_id IS NULL
      OR campaign_id IS NULL
      OR date IS NULL
+     OR date_yyyymmdd IS NULL
+);
+
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  'Primary identifier contains NULL values.',
+  'All identifiers valid.'
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Inspect source ingestion and column mapping.',
+  'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_daily',
   'critical',
   'Null Identifier Check',
   'HIGH',
-  0,
-  null_count,
-  null_count,
-  IF(null_count=0,'PASS','FAIL'),
-  IF(null_count=0,'🟢','🔴'),
-  IF(null_count=0,
-     'Primary keys valid.',
-     'Null primary keys found. Downstream joins will break.'
-  ),
-  IF(null_count=0,
-     'No action required.',
-     'Investigate source ingestion & partition logic.'
-  );
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  (v_status='FAIL'),
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
+-- =====================================================
+-- TEST 3: Partition Freshness Check
+-- =====================================================
 
--- ======================================================
--- TEST 3: Partition Freshness
--- ======================================================
+-- Allow max 2-day delay
+SET v_expected = 2;
 
-SET freshness_gap = (
+SET v_actual = (
   SELECT DATE_DIFF(CURRENT_DATE(), MAX(date), DAY)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
 );
 
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_actual <= v_expected, 'PASS', 'FAIL');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  CONCAT('Partition stale by ', CAST(v_actual AS STRING), ' days. Threshold ≤ 2 days.'),
+  CONCAT('Partition freshness OK (', CAST(v_actual AS STRING), ' days delay).')
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Check incremental ingestion pipeline and upstream data availability.',
+  'No action required.'
+);
+
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_daily',
   'critical',
   'Partition Freshness',
   'HIGH',
-  2,
-  freshness_gap,
-  freshness_gap - 2,
-  IF(freshness_gap<=2,'PASS','FAIL'),
-  IF(freshness_gap<=2,'🟢','🔴'),
-  IF(freshness_gap<=2,
-     'Data is fresh.',
-     'Latest partition too old. Incremental ingestion likely failed.'
-  ),
-  IF(freshness_gap<=2,
-     'No action required.',
-     'Check ingestion scheduler and source arrival.'
-  );
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  (v_status='FAIL'),
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
 END;

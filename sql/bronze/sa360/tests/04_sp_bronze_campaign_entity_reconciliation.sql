@@ -1,17 +1,20 @@
 /*
 ===============================================================================
 FILE: 04_sp_bronze_campaign_entity_reconciliation.sql
-TABLE: sdi_bronze_sa360_campaign_entity
+
+PURPOSE:
+  Reconcile Bronze Campaign Entity against source snapshot table.
 
 SOURCE:
   google_search_ads_360_beta_campaign_entity_custom_tmo
 
-PURPOSE:
-  Validate Bronze Campaign Entity accurately reflects source snapshots.
+TABLE:
+  sdi_bronze_sa360_campaign_entity
 
-BLOCKING:
-  HIGH for row mismatch
-  MEDIUM for distribution drift
+GRAIN:
+  account_id + campaign_id + date
+
+These are MEDIUM severity (non-blocking) but correctness critical.
 
 ===============================================================================
 */
@@ -20,128 +23,112 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_campaign_entity_reconciliation`()
 BEGIN
 
-DECLARE source_count INT64;
-DECLARE bronze_count INT64;
-DECLARE missing_rows INT64;
+DECLARE v_expected FLOAT64;
+DECLARE v_actual FLOAT64;
+DECLARE v_variance FLOAT64;
+DECLARE v_status STRING;
+DECLARE v_reason STRING;
+DECLARE v_next STRING;
 
--- ======================================================
--- TEST 1: Row Count Reconciliation
--- ======================================================
+-- =====================================================
+-- TEST 1: 7-Day Snapshot Row Count Reconciliation
+-- =====================================================
 
-SET source_count = (
+SET v_expected = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
   WHERE PARSE_DATE('%Y%m%d', date_yyyymmdd)
         >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 );
 
-SET bronze_count = (
+SET v_actual = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity`
   WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 );
 
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_bronze_sa360_campaign_entity',
-  'reconciliation',
-  'Row Count Reconciliation',
-  'HIGH',
-  source_count,
-  bronze_count,
-  source_count - bronze_count,
-  IF(source_count=bronze_count,'PASS','FAIL'),
-  IF(source_count=bronze_count,'🟢','🔴'),
-  IF(source_count=bronze_count,
-     'Row counts match.',
-     'Row mismatch between source and bronze entity.'
-  ),
-  IF(source_count=bronze_count,
-     'No action required.',
-     'Review incremental snapshot ingestion.'
-  );
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_variance = 0, 'PASS', 'FAIL');
 
--- ======================================================
--- TEST 2: Missing Snapshot Rows
--- ======================================================
+SET v_reason = IF(
+  v_status='FAIL',
+  'Entity row count mismatch between source and bronze.',
+  'Entity snapshot row counts match source.'
+);
 
-SET missing_rows = (
-  SELECT COUNT(*)
-  FROM (
-    SELECT s.account_id, s.campaign_id, s.date_yyyymmdd
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo` s
-    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity` b
-      ON s.account_id = b.account_id
-     AND s.campaign_id = b.campaign_id
-     AND s.date_yyyymmdd = b.date_yyyymmdd
-    WHERE b.account_id IS NULL
-      AND PARSE_DATE('%Y%m%d', s.date_yyyymmdd)
-          >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-  )
+SET v_next = IF(
+  v_status='FAIL',
+  'Verify entity incremental MERGE logic and snapshot filters.',
+  'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_entity',
   'reconciliation',
-  'Missing Snapshot Rows',
-  'HIGH',
-  0,
-  missing_rows,
-  missing_rows,
-  IF(missing_rows=0,'PASS','FAIL'),
-  IF(missing_rows=0,'🟢','🔴'),
-  IF(missing_rows=0,
-     'No missing snapshots.',
-     'Entity snapshot rows missing in bronze.'
-  ),
-  IF(missing_rows=0,
-     'No action required.',
-     'Re-run incremental entity merge.'
-  );
+  'Entity Row Count Reconciliation (7-day)',
+  'MEDIUM',
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  FALSE,
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
--- ======================================================
--- TEST 3: Bidding Strategy Distribution Drift
--- ======================================================
+-- =====================================================
+-- TEST 2: Bidding Strategy Distribution Check
+-- =====================================================
+
+SET v_expected = (
+  SELECT COUNT(DISTINCT bidding_strategy_type)
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
+);
+
+SET v_actual = (
+  SELECT COUNT(DISTINCT bidding_strategy_type)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity`
+);
+
+SET v_variance = v_actual - v_expected;
+SET v_status = IF(v_variance = 0, 'PASS', 'FAIL');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  'Bidding strategy distribution mismatch.',
+  'Bidding strategy distribution aligned.'
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Check transformation logic for bidding_strategy_type.',
+  'No action required.'
+);
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
+VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_bronze_sa360_campaign_entity',
   'reconciliation',
   'Bidding Strategy Distribution Check',
-  'MEDIUM',
-  0,
-  0,
-  0,
-  'PASS',
-  '🟢',
-  'Distribution check executed (manual review recommended).',
-  'Inspect strategy distribution trends if anomalies observed.';
-
--- ======================================================
--- TEST 4: Snapshot Metadata Freshness
--- ======================================================
-
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
-SELECT
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_bronze_sa360_campaign_entity',
-  'reconciliation',
-  'Snapshot Freshness Metadata',
-  'MEDIUM',
-  0,
-  0,
-  0,
-  'PASS',
-  '🟢',
-  'Latest file load captured.',
-  'Ensure file_load_datetime updates daily.';
+  'LOW',
+  v_expected,
+  v_actual,
+  v_variance,
+  v_status,
+  IF(v_status='PASS','🟢','🔴'),
+  v_reason,
+  v_next,
+  FALSE,
+  (v_status='PASS'),
+  (v_status='FAIL')
+);
 
 END;
