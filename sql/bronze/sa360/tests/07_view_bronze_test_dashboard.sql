@@ -5,6 +5,7 @@ FILE: 07_view_bronze_test_dashboard.sql
 PURPOSE:
   Clean dashboard view for monitoring Bronze QA.
 
+  • Only latest execution per test per day
   • Most recent tests on top
   • Structured display
   • Easy filtering by table, layer, severity
@@ -14,6 +15,22 @@ PURPOSE:
 CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_bronze_sa360_test_dashboard`
 AS
+
+WITH latest_tests AS (
+  SELECT
+      *,
+      ROW_NUMBER() OVER (
+        PARTITION BY
+            test_date,
+            table_name,
+            test_layer,
+            test_name
+        ORDER BY test_run_timestamp DESC
+      ) AS rn
+  FROM
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
+)
+
 SELECT
   test_run_timestamp,
   test_date,
@@ -31,8 +48,8 @@ SELECT
   is_critical_failure,
   is_pass,
   is_fail
-FROM
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
+FROM latest_tests
+WHERE rn = 1
 ORDER BY
     test_date DESC,
     table_name,
@@ -42,4 +59,5 @@ ORDER BY
         WHEN 'LOW'    THEN 3
         ELSE 4
     END,
-    test_run_timestamp DESC;;
+    test_layer,
+    test_name;
