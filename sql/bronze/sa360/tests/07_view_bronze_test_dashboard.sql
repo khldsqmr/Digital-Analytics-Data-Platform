@@ -34,5 +34,12 @@ SELECT
 FROM
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
 ORDER BY
-  test_date DESC,
-  test_run_timestamp DESC;
+    test_date DESC,
+    table_name,
+    CASE severity_level
+        WHEN 'HIGH'   THEN 1
+        WHEN 'MEDIUM' THEN 2
+        WHEN 'LOW'    THEN 3
+        ELSE 4
+    END,
+    test_run_timestamp DESC;;
