@@ -16,117 +16,105 @@ NOTES
 
 DECLARE lookback_days INT64 DEFAULT 7;
 
+-- =====================================================================
+-- Incremental MERGE for Bronze SA360 Campaign Entity table
+-- =====================================================================
+
 MERGE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_google_ads_360_campaign_entity` T
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity` T
+
 USING (
+
   SELECT
     account_id,
-    customer_id,
+    account_name,
     campaign_id,
     resource_name,
-    name AS campaign_name,
+    customer_id,
+
+    date_yyyymmdd,
+    PARSE_DATE('%Y%m%d', date_yyyymmdd) AS date,
+
+    creation_time,
+    start_date,
+    end_date,
+
     advertising_channel_type,
     advertising_channel_sub_type,
-    bidding_strategy_type,
     status,
     serving_status,
-    SAFE_CAST(start_date AS DATE) AS start_date,
-    SAFE_CAST(end_date AS DATE) AS end_date,
-    SAFE_CAST(creation_time AS TIMESTAMP) AS creation_time,
+    ad_serving_optimization_status,
+
+    bidding_strategy,
+    bidding_strategy_id,
+    bidding_strategy_system_status,
+    bidding_strategy_type,
+    campaign_budget,
+
+    manual_cpa,
+    manual_cpc_enhanced_cpc_enabled,
+    manual_cpm,
+
+    max_conv_value_target_roas,
+    max_convs_target_cpa_micros,
+
     target_cpa_target_cpa_micros,
-    target_spend_micros,
-    percent_cpc_cpc_bid_ceiling_micros,
-    SAFE_CAST(enable_local AS BOOL) AS enable_local,
-    SAFE_CAST(opt_in AS BOOL) AS opt_in,
-    labels,
+    target_roas_target_roas,
+
+    target_search_network,
+    target_google_search,
+    target_partner_search_network,
+
+    positive_geo_target_type,
+    negative_geo_target_type,
+    language_code,
+
+    merchant_id,
+    sales_country,
+    domain_name,
+
+    final_url_suffix,
+    tracking_url,
+    tracking_url_template,
     url_custom_parameters,
-    CAST(date_yyyymmdd AS STRING) AS date_yyyymmdd,
-    __insert_date,
-    TIMESTAMP(File_Load_datetime) AS file_load_datetime,
-    Filename AS filename
+    url_expansion_opt_out,
+    use_supplied_urls_only,
+
+    name,
+    labels,
+    optimization_goal_types,
+    enable_local,
+    use_vehicle_inventory,
+    campaign_priority,
+    engine_id,
+    excluded_parent_asset_field_types,
+    feed_label,
+
+    File_Load_datetime,
+    Filename
+
   FROM
-    `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
+  `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
   WHERE
     TIMESTAMP(File_Load_datetime)
       >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL lookback_days DAY)
 ) S
+
 ON
   T.account_id = S.account_id
   AND T.campaign_id = S.campaign_id
-  AND T.file_load_datetime = S.file_load_datetime
+  AND T.date_yyyymmdd = S.date_yyyymmdd
 
 WHEN MATCHED THEN
-UPDATE SET
-  campaign_name = S.campaign_name,
-  advertising_channel_type = S.advertising_channel_type,
-  advertising_channel_sub_type = S.advertising_channel_sub_type,
-  bidding_strategy_type = S.bidding_strategy_type,
-  status = S.status,
-  serving_status = S.serving_status,
-  start_date = S.start_date,
-  end_date = S.end_date,
-  creation_time = S.creation_time,
-  target_cpa_target_cpa_micros = S.target_cpa_target_cpa_micros,
-  target_spend_micros = S.target_spend_micros,
-  percent_cpc_cpc_bid_ceiling_micros = S.percent_cpc_cpc_bid_ceiling_micros,
-  enable_local = S.enable_local,
-  opt_in = S.opt_in,
-  labels = S.labels,
-  url_custom_parameters = S.url_custom_parameters,
-  date_yyyymmdd = S.date_yyyymmdd,
-  __insert_date = S.__insert_date,
-  filename = S.filename
+  UPDATE SET
+    account_name = S.account_name,
+    serving_status = S.serving_status,
+    status = S.status,
+    bidding_strategy_type = S.bidding_strategy_type,
+    campaign_budget = S.campaign_budget,
+    file_load_datetime = S.File_Load_datetime,
+    filename = S.Filename,
+    bronze_inserted_at = CURRENT_TIMESTAMP()
 
 WHEN NOT MATCHED THEN
-INSERT (
-  account_id,
-  customer_id,
-  campaign_id,
-  resource_name,
-  campaign_name,
-  advertising_channel_type,
-  advertising_channel_sub_type,
-  bidding_strategy_type,
-  status,
-  serving_status,
-  start_date,
-  end_date,
-  creation_time,
-  target_cpa_target_cpa_micros,
-  target_spend_micros,
-  percent_cpc_cpc_bid_ceiling_micros,
-  enable_local,
-  opt_in,
-  labels,
-  url_custom_parameters,
-  date_yyyymmdd,
-  __insert_date,
-  file_load_datetime,
-  filename
-)
-VALUES (
-  S.account_id,
-  S.customer_id,
-  S.campaign_id,
-  S.resource_name,
-  S.campaign_name,
-  S.advertising_channel_type,
-  S.advertising_channel_sub_type,
-  S.bidding_strategy_type,
-  S.status,
-  S.serving_status,
-  S.start_date,
-  S.end_date,
-  S.creation_time,
-  S.target_cpa_target_cpa_micros,
-  S.target_spend_micros,
-  S.percent_cpc_cpc_bid_ceiling_micros,
-  S.enable_local,
-  S.opt_in,
-  S.labels,
-  S.url_custom_parameters,
-  S.date_yyyymmdd,
-  S.__insert_date,
-  S.file_load_datetime,
-  S.filename
-);
+  INSERT ROW;
