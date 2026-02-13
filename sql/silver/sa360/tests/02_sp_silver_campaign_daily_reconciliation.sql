@@ -1,21 +1,22 @@
 /*
 ===============================================================================
-FILE: 01_sp_silver_campaign_daily_critical.sql
+FILE: 02_sp_silver_campaign_daily_reconciliation.sql
 
 PURPOSE:
-  Critical structural validation for:
-    sdi_silver_sa360_campaign_daily
+  Validate Silver Campaign Daily against Bronze Campaign Daily.
 
-  These tests are BLOCKING.
-  If any HIGH FAIL exists → orchestration stops.
+SOURCE:
+  sdi_bronze_sa360_campaign_daily
 
 GRAIN:
   account_id + campaign_id + date
+
+These tests are NON-BLOCKING.
 ===============================================================================
 */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_silver_campaign_daily_critical`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_silver_campaign_daily_reconciliation`()
 BEGIN
 
 DECLARE v_expected FLOAT64;
@@ -26,33 +27,33 @@ DECLARE v_reason STRING;
 DECLARE v_next STRING;
 
 -- =====================================================
--- TEST 1: Duplicate Grain Check
+-- TEST 1: Row Count Match (7-day window)
 -- =====================================================
 
-SET v_expected = 0;
+SET v_expected = (
+  SELECT COUNT(*)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+);
 
 SET v_actual = (
   SELECT COUNT(*)
-  FROM (
-    SELECT account_id, campaign_id, date, COUNT(*) c
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-    GROUP BY 1,2,3
-    HAVING COUNT(*) > 1
-  )
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_status = IF(v_variance = 0, 'PASS', 'FAIL');
 
 SET v_reason = IF(
   v_status='FAIL',
-  'Duplicate grain detected. Silver MERGE logic error.',
-  'No duplicate grain detected.'
+  'Row count mismatch between Bronze and Silver.',
+  'Row counts match Bronze.'
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Inspect Silver incremental MERGE and deduplication logic.',
+  'Inspect Silver join logic and filtering.',
   'No action required.'
 );
 
@@ -61,9 +62,9 @@ VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
-  'critical',
-  'Duplicate Grain Check',
-  'HIGH',
+  'reconciliation',
+  'Row Count Reconciliation (7-day)',
+  'MEDIUM',
   v_expected,
   v_actual,
   v_variance,
@@ -71,37 +72,39 @@ VALUES (
   IF(v_status='PASS','🟢','🔴'),
   v_reason,
   v_next,
-  (v_status='FAIL'),
+  FALSE,
   (v_status='PASS'),
   (v_status='FAIL')
 );
 
 -- =====================================================
--- TEST 2: Null Identifier Check
+-- TEST 2: Cost Total Match
 -- =====================================================
 
-SET v_expected = 0;
-
-SET v_actual = (
-  SELECT COUNT(*)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-  WHERE account_id IS NULL
-     OR campaign_id IS NULL
-     OR date IS NULL
+SET v_expected = (
+  SELECT SUM(cost)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
 );
 
-SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_actual = (
+  SELECT SUM(cost)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+);
+
+SET v_variance = IFNULL(v_actual - v_expected, 0);
+SET v_status = IF(ABS(v_variance) < 0.01, 'PASS', 'FAIL');
 
 SET v_reason = IF(
   v_status='FAIL',
-  'Primary identifier contains NULL values.',
-  'All identifiers valid.'
+  'Cost mismatch detected between Bronze and Silver.',
+  'Cost reconciliation successful.'
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Check Silver join logic and Bronze upstream.',
+  'Verify Silver transformation logic.',
   'No action required.'
 );
 
@@ -110,9 +113,9 @@ VALUES (
   CURRENT_TIMESTAMP(),
   CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
-  'critical',
-  'Null Identifier Check',
-  'HIGH',
+  'reconciliation',
+  'Cost Reconciliation',
+  'MEDIUM',
   v_expected,
   v_actual,
   v_variance,
@@ -120,53 +123,7 @@ VALUES (
   IF(v_status='PASS','🟢','🔴'),
   v_reason,
   v_next,
-  (v_status='FAIL'),
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
-
--- =====================================================
--- TEST 3: Partition Freshness
--- =====================================================
-
-SET v_expected = 2;
-
-SET v_actual = (
-  SELECT DATE_DIFF(CURRENT_DATE(), MAX(date), DAY)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-);
-
-SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual <= v_expected, 'PASS', 'FAIL');
-
-SET v_reason = IF(
-  v_status='FAIL',
-  CONCAT('Partition stale by ', CAST(v_actual AS STRING), ' days. Threshold ≤ 2.'),
-  CONCAT('Partition freshness OK (', CAST(v_actual AS STRING), ' days delay).')
-);
-
-SET v_next = IF(
-  v_status='FAIL',
-  'Check Silver incremental merge and Bronze freshness.',
-  'No action required.'
-);
-
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
-  CURRENT_TIMESTAMP(),
-  CURRENT_DATE(),
-  'sdi_silver_sa360_campaign_daily',
-  'critical',
-  'Partition Freshness',
-  'HIGH',
-  v_expected,
-  v_actual,
-  v_variance,
-  v_status,
-  IF(v_status='PASS','🟢','🔴'),
-  v_reason,
-  v_next,
-  (v_status='FAIL'),
+  FALSE,
   (v_status='PASS'),
   (v_status='FAIL')
 );
