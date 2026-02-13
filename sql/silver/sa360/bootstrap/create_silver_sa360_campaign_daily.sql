@@ -184,9 +184,4 @@ FROM
 
 LEFT JOIN latest_entity e
   ON d.account_id = e.account_id
- AND d.campaign_id = e.campaign_id
-
-ORDER BY
-  d.date DESC,
-  d.account_id,
-  d.campaign_id;
+ AND d.campaign_id = e.campaign_id;
