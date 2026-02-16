@@ -3,119 +3,101 @@
 BOOTSTRAP | BRONZE | SA360 | CAMPAIGN ENTITY (ONE-TIME)
 ===============================================================================
 
-PURPOSE
--------
-Create Bronze Campaign Entity snapshot table with:
-- Normalized schema
-- Column descriptions (governance)
-- Partition by snapshot_date (from date_yyyymmdd)
-- Cluster by account_id + campaign_id
-
 SOURCE
 ------
 `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
 
 GRAIN
 -----
-account_id + campaign_id + date_yyyymmdd
+(account_id, campaign_id, date_yyyymmdd)
+
+DATE REQUIREMENT
+----------------
+Derived DATE from date_yyyymmdd is named `date` (per your instruction).
+
+RAW COLUMN RULE
+---------------
+Only columns present in your INFORMATION_SCHEMA list are referenced.
 ===============================================================================
 */
 
 CREATE OR REPLACE TABLE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity`
 (
-  /* ---------- LOAD METADATA ---------- */
-  file_load_datetime DATETIME OPTIONS(description="Ingestion load timestamp (ETL file load time)."),
-  filename STRING OPTIONS(description="Source file path/name used to ingest this snapshot."),
+  file_load_datetime DATETIME OPTIONS(description="Raw: File_Load_datetime. ETL ingestion timestamp."),
+  filename STRING OPTIONS(description="Raw: Filename. Source file path/name."),
 
-  /* ---------- KEYS / DIMS ---------- */
-  account_id STRING OPTIONS(description="Unique numerical identifier assigned to each entity within the SA360 hierarchy."),
-  account_name STRING OPTIONS(description="User-defined identifier for an engine account/sub-manager/manager account in SA360."),
-  customer_id STRING OPTIONS(description="Engine customer ID (same as account_id for Google Ads)."),
-  campaign_id STRING OPTIONS(description="Unique, persistent numeric identifier assigned to a paid search campaign within SA360."),
-  resource_name STRING OPTIONS(description="Full Google Ads API resource name (e.g., customers/{id}/campaigns/{id})."),
-  name STRING OPTIONS(description="Campaign name."),
+  account_id STRING OPTIONS(description="Raw: account_id."),
+  account_name STRING OPTIONS(description="Raw: account_name."),
+  customer_id STRING OPTIONS(description="Raw: customer_id."),
+  campaign_id STRING OPTIONS(description="Raw: campaign_id."),
+  resource_name STRING OPTIONS(description="Raw: resource_name."),
+  name STRING OPTIONS(description="Raw: name (campaign name)."),
 
-  /* ---------- SNAPSHOT DATE ---------- */
-  date_yyyymmdd STRING OPTIONS(description="Partition date in YYYYMMDD used for snapshotting."),
-  snapshot_date DATE OPTIONS(description="Snapshot date as DATE derived from date_yyyymmdd."),
+  date_yyyymmdd STRING OPTIONS(description="Raw: date_yyyymmdd."),
+  date DATE OPTIONS(description="DATE derived from date_yyyymmdd (per requirement)."),
 
-  /* ---------- CORE SETTINGS ---------- */
-  ad_serving_optimization_status STRING OPTIONS(description="Real-time operational state of automated bidding/budgeting/ad delivery."),
-  advertising_channel_type STRING OPTIONS(description="Paid search primary channel type (e.g., SEARCH)."),
-  advertising_channel_sub_type STRING OPTIONS(description="Paid search channel sub-type (e.g., SMART, LOCAL)."),
-  status STRING OPTIONS(description="Engine status set by user (e.g., ENABLED, PAUSED, REMOVED)."),
-  serving_status STRING OPTIONS(description="Indicates whether campaign is actively running or not eligible."),
-  campaign_budget STRING OPTIONS(description="Budget resource controlling campaign spend."),
-  campaign_priority STRING OPTIONS(description="Shopping campaign priority when multiple campaigns advertise same product."),
+  ad_serving_optimization_status STRING OPTIONS(description="Raw: ad_serving_optimization_status."),
+  advertising_channel_sub_type STRING OPTIONS(description="Raw: advertising_channel_sub_type."),
+  advertising_channel_type STRING OPTIONS(description="Raw: advertising_channel_type."),
+  bidding_strategy STRING OPTIONS(description="Raw: bidding_strategy."),
+  bidding_strategy_id STRING OPTIONS(description="Raw: bidding_strategy_id."),
+  bidding_strategy_system_status STRING OPTIONS(description="Raw: bidding_strategy_system_status."),
+  bidding_strategy_type STRING OPTIONS(description="Raw: bidding_strategy_type."),
+  campaign_budget STRING OPTIONS(description="Raw: campaign_budget."),
+  campaign_priority STRING OPTIONS(description="Raw: campaign_priority."),
+  conversion_actions STRING OPTIONS(description="Raw: conversion_actions."),
+  creation_time STRING OPTIONS(description="Raw: creation_time."),
+  domain_name STRING OPTIONS(description="Raw: domain_name."),
+  enable_local STRING OPTIONS(description="Raw: enable_local."),
+  end_date STRING OPTIONS(description="Raw: end_date."),
+  engine_id STRING OPTIONS(description="Raw: engine_id."),
+  excluded_parent_asset_field_types STRING OPTIONS(description="Raw: excluded_parent_asset_field_types."),
+  feed_label STRING OPTIONS(description="Raw: feed_label."),
+  final_url_suffix STRING OPTIONS(description="Raw: final_url_suffix."),
+  frequency_caps STRING OPTIONS(description="Raw: frequency_caps."),
+  labels STRING OPTIONS(description="Raw: labels."),
+  language_code STRING OPTIONS(description="Raw: language_code."),
+  manual_cpa STRING OPTIONS(description="Raw: manual_cpa."),
+  manual_cpc_enhanced_cpc_enabled STRING OPTIONS(description="Raw: manual_cpc_enhanced_cpc_enabled."),
+  manual_cpm STRING OPTIONS(description="Raw: manual_cpm."),
+  max_conv_value_target_roas STRING OPTIONS(description="Raw: max_conv_value_target_roas."),
+  max_convs_target_cpa_micros STRING OPTIONS(description="Raw: max_convs_target_cpa_micros."),
+  merchant_id STRING OPTIONS(description="Raw: merchant_id."),
+  negative_geo_target_type STRING OPTIONS(description="Raw: negative_geo_target_type."),
+  opt_in STRING OPTIONS(description="Raw: opt_in."),
+  optimization_goal_types STRING OPTIONS(description="Raw: optimization_goal_types."),
+  percent_cpc_cpc_bid_ceiling_micros STRING OPTIONS(description="Raw: percent_cpc_cpc_bid_ceiling_micros."),
+  percent_cpc_enhanced_cpc_enabled STRING OPTIONS(description="Raw: percent_cpc_enhanced_cpc_enabled."),
+  positive_geo_target_type STRING OPTIONS(description="Raw: positive_geo_target_type."),
+  sales_country STRING OPTIONS(description="Raw: sales_country."),
+  serving_status STRING OPTIONS(description="Raw: serving_status."),
+  start_date STRING OPTIONS(description="Raw: start_date."),
+  status STRING OPTIONS(description="Raw: status."),
+  target_content_network STRING OPTIONS(description="Raw: target_content_network."),
+  target_cpa_cpc_bid_ceiling_micros STRING OPTIONS(description="Raw: target_cpa_cpc_bid_ceiling_micros."),
+  target_cpa_cpc_bid_floor_micros STRING OPTIONS(description="Raw: target_cpa_cpc_bid_floor_micros."),
+  target_cpa_target_cpa_micros STRING OPTIONS(description="Raw: target_cpa_target_cpa_micros."),
+  target_cpm STRING OPTIONS(description="Raw: target_cpm."),
+  target_google_search STRING OPTIONS(description="Raw: target_google_search."),
+  target_imp_share_cpc_bid_ceiling_micros STRING OPTIONS(description="Raw: target_imp_share_cpc_bid_ceiling_micros."),
+  target_imp_share_location STRING OPTIONS(description="Raw: target_imp_share_location."),
+  target_imp_share_location_fraction_micros STRING OPTIONS(description="Raw: target_imp_share_location_fraction_micros."),
+  target_partner_search_network STRING OPTIONS(description="Raw: target_partner_search_network."),
+  target_roas_cpc_bid_ceiling_micros STRING OPTIONS(description="Raw: target_roas_cpc_bid_ceiling_micros."),
+  target_roas_cpc_bid_floor_micros STRING OPTIONS(description="Raw: target_roas_cpc_bid_floor_micros."),
+  target_roas_target_roas STRING OPTIONS(description="Raw: target_roas_target_roas."),
+  target_search_network STRING OPTIONS(description="Raw: target_search_network."),
+  target_spend_cpc_bid_ceiling_micros STRING OPTIONS(description="Raw: target_spend_cpc_bid_ceiling_micros."),
+  target_spend_micros STRING OPTIONS(description="Raw: target_spend_micros."),
+  tracking_url STRING OPTIONS(description="Raw: tracking_url."),
+  tracking_url_template STRING OPTIONS(description="Raw: tracking_url_template."),
+  url_custom_parameters STRING OPTIONS(description="Raw: url_custom_parameters."),
+  url_expansion_opt_out STRING OPTIONS(description="Raw: url_expansion_opt_out."),
+  use_supplied_urls_only STRING OPTIONS(description="Raw: use_supplied_urls_only."),
+  use_vehicle_inventory STRING OPTIONS(description="Raw: use_vehicle_inventory."),
 
-  conversion_actions STRING OPTIONS(description="Tracked conversion actions (Floodlights)."),
-  optimization_goal_types STRING OPTIONS(description="Business objective automated bidding targets to maximize profit."),
-  creation_time STRING OPTIONS(description="Timestamp when item was created or first synced into SA360."),
-  start_date STRING OPTIONS(description="Paid search campaign start date."),
-  end_date STRING OPTIONS(description="Scheduled end date for the paid search campaign."),
-  sales_country STRING OPTIONS(description="Sales country/market (e.g., US)."),
-  domain_name STRING OPTIONS(description="Domain associated to the campaign (if used in templates/tracking)."),
-  engine_id STRING OPTIONS(description="Engine-specific account ID (Microsoft Ads often populated)."),
-  merchant_id STRING OPTIONS(description="Merchant / feed merchant identifier."),
-  feed_label STRING OPTIONS(description="Merchant Center or feed label associated with the campaign."),
-  labels STRING OPTIONS(description="Internal tags used to organize/filter/report paid search entities."),
-  language_code STRING OPTIONS(description="Language code for targeting (e.g., en, es)."),
-  opt_in STRING OPTIONS(description="Whether the feature the field refers to is opted in (contextual)."),
-
-  /* ---------- BIDDING STRATEGY ---------- */
-  bidding_strategy STRING OPTIONS(description="Automated bidding strategy resource."),
-  bidding_strategy_id STRING OPTIONS(description="Unique identifier for automated portfolio bidding model."),
-  bidding_strategy_type STRING OPTIONS(description="Bidding algorithm type (e.g., TARGET_ROAS)."),
-  bidding_strategy_system_status STRING OPTIONS(description="System status of bidding strategy (ENABLED/PAUSED/UNAVAILABLE)."),
-
-  manual_cpa STRING OPTIONS(description="Manual cost per action (CPA) bidding setting."),
-  manual_cpm STRING OPTIONS(description="Manual cost per thousand impressions (CPM) bidding setting."),
-  manual_cpc_enhanced_cpc_enabled STRING OPTIONS(description="Enhanced CPC enablement flag (manual CPC + AI adjustments)."),
-
-  max_conv_value_target_roas STRING OPTIONS(description="Maximize conversion value target ROAS ratio."),
-  max_convs_target_cpa_micros STRING OPTIONS(description="Maximize conversions target CPA cap in micros."),
-
-  percent_cpc_bid_ceiling_micros STRING OPTIONS(description="Percent CPC bid ceiling in micros."),
-  percent_cpc_enhanced_cpc_enabled STRING OPTIONS(description="Percent CPC enhanced flag."),
-
-  target_cpa_target_cpa_micros STRING OPTIONS(description="Target CPA value in micros."),
-  target_cpa_cpc_bid_ceiling_micros STRING OPTIONS(description="Target CPA CPC bid ceiling in micros."),
-  target_cpa_cpc_bid_floor_micros STRING OPTIONS(description="Target CPA CPC bid floor in micros."),
-
-  target_roas_target_roas STRING OPTIONS(description="Target ROAS ratio."),
-  target_roas_cpc_bid_ceiling_micros STRING OPTIONS(description="Target ROAS CPC bid ceiling in micros."),
-  target_roas_cpc_bid_floor_micros STRING OPTIONS(description="Target ROAS CPC bid floor in micros."),
-
-  target_spend_micros STRING OPTIONS(description="Target spend budget in micros."),
-  target_spend_cpc_bid_ceiling_micros STRING OPTIONS(description="Target spend CPC bid ceiling in micros."),
-
-  target_imp_share_cpc_bid_ceiling_micros STRING OPTIONS(description="Target impression share CPC bid ceiling in micros."),
-  target_imp_share_location STRING OPTIONS(description="Target impression share location (e.g., TOP_OF_PAGE)."),
-  target_imp_share_location_fraction_micros STRING OPTIONS(description="Desired impression share fraction in micros."),
-  target_cpm STRING OPTIONS(description="Target CPM value for CPM strategies."),
-
-  /* ---------- TARGETING ---------- */
-  positive_geo_target_type STRING OPTIONS(description="Included geo targeting type (PRESENCE or PRESENCE_OR_INTEREST)."),
-  negative_geo_target_type STRING OPTIONS(description="Excluded geo targeting type (PRESENCE)."),
-  target_search_network STRING OPTIONS(description="Whether search network is targeted."),
-  target_partner_search_network STRING OPTIONS(description="Whether partner search network is targeted."),
-  target_google_search STRING OPTIONS(description="Whether Google Search is targeted."),
-  target_content_network STRING OPTIONS(description="Whether content/display network is targeted."),
-  enable_local STRING OPTIONS(description="Whether local targeting/inventory is enabled."),
-  frequency_caps STRING OPTIONS(description="Caps limiting frequency of impressions per user in a time window."),
-  excluded_parent_asset_field_types STRING OPTIONS(description="Excluded asset field types inherited from parent."),
-  use_supplied_urls_only STRING OPTIONS(description="If true, only supplied URLs may be used."),
-  url_expansion_opt_out STRING OPTIONS(description="If true, URL expansion is disabled."),
-  use_vehicle_inventory STRING OPTIONS(description="Flag indicating vehicle inventory feed usage."),
-
-  /* ---------- TRACKING ---------- */
-  final_url_suffix STRING OPTIONS(description="Suffix for tracking parameters appended to landing page."),
-  tracking_url STRING OPTIONS(description="Expanded tracking URL used for click redirect."),
-  tracking_url_template STRING OPTIONS(description="Tracking URL template (pre-expansion)."),
-  url_custom_parameters STRING OPTIONS(description="Key-value URL parameters defined at campaign level."),
-
-  bronze_inserted_at TIMESTAMP OPTIONS(description="System timestamp when row was inserted/updated in Bronze.")
+  bronze_updated_at TIMESTAMP OPTIONS(description="System timestamp when row was inserted/updated in Bronze.")
 )
-PARTITION BY snapshot_date
+PARTITION BY date
 CLUSTER BY account_id, campaign_id;
