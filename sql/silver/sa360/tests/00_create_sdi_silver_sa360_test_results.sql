@@ -1,18 +1,21 @@
 /*
 ===============================================================================
 FILE: 00_create_sdi_silver_sa360_test_results.sql
+LAYER: Silver QA
 
 PURPOSE:
   Centralized Silver QA test results table.
 
-  • All tests insert exactly ONE row per execution
+  • Every test inserts exactly ONE row per execution
   • PASS and FAIL both logged
-  • Structured for dashboard monitoring
+  • Designed for dashboard monitoring and orchestration gates
 
 DESIGN:
   • Partitioned by test_date
-  • Clustered for performance
-  • Mirrors Bronze QA structure
+  • Clustered for fast filtering (BigQuery allows up to 4 clustering fields)
+
+NOTES:
+  • Keep structure consistent with Bronze QA so your dashboard patterns reuse easily.
 ===============================================================================
 */
 
@@ -21,7 +24,7 @@ CREATE OR REPLACE TABLE
 (
   -- Execution Metadata
   test_run_timestamp TIMESTAMP OPTIONS(description='Exact timestamp when test executed'),
-  test_date DATE OPTIONS(description='Logical execution date'),
+  test_date DATE OPTIONS(description='Logical execution date (CURRENT_DATE())'),
 
   -- Context
   table_name STRING OPTIONS(description='Table being validated'),
@@ -43,9 +46,12 @@ CREATE OR REPLACE TABLE
   next_step STRING OPTIONS(description='Recommended next action'),
 
   -- Flags
-  is_critical_failure BOOL OPTIONS(description='TRUE if HIGH severity and FAIL'),
+  is_critical_failure BOOL OPTIONS(description='TRUE if severity HIGH and FAIL'),
   is_pass BOOL OPTIONS(description='TRUE if PASS'),
   is_fail BOOL OPTIONS(description='TRUE if FAIL')
 )
 PARTITION BY test_date
-CLUSTER BY table_name, test_layer, severity_level, status;
+CLUSTER BY table_name, test_layer, severity_level, status
+OPTIONS(
+  description = 'Centralized Silver QA results for SA360 tables. One-row-per-test execution. Partitioned by test_date.'
+);

@@ -1,31 +1,25 @@
 /*
 ===============================================================================
 FILE: 07_view_silver_test_dashboard.sql
+LAYER: Silver QA
 
 PURPOSE:
-  Clean dashboard view for monitoring Silver QA.
+  Dashboard view that shows the latest execution per test_name per day.
 ===============================================================================
 */
 
 CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_silver_sa360_test_dashboard`
 AS
-
 WITH latest_tests AS (
   SELECT
-      *,
-      ROW_NUMBER() OVER (
-        PARTITION BY
-            test_date,
-            table_name,
-            test_layer,
-            test_name
-        ORDER BY test_run_timestamp DESC
-      ) AS rn
-  FROM
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY test_date, table_name, test_layer, test_name
+      ORDER BY test_run_timestamp DESC
+    ) AS rn
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
 )
-
 SELECT
   test_run_timestamp,
   test_date,
@@ -46,13 +40,13 @@ SELECT
 FROM latest_tests
 WHERE rn = 1
 ORDER BY
-    test_date DESC,
-    table_name,
-    CASE severity_level
-        WHEN 'HIGH' THEN 1
-        WHEN 'MEDIUM' THEN 2
-        WHEN 'LOW' THEN 3
-        ELSE 4
-    END,
-    test_layer,
-    test_name;
+  test_date DESC,
+  table_name,
+  CASE severity_level
+    WHEN 'HIGH' THEN 1
+    WHEN 'MEDIUM' THEN 2
+    WHEN 'LOW' THEN 3
+    ELSE 4
+  END,
+  test_layer,
+  test_name;
