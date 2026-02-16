@@ -1,175 +1,139 @@
 /*
 ===============================================================================
-BOOTSTRAP | BRONZE | SA360 | CAMPAIGN DAILY (ONE-TIME)
+ONE-TIME | BRONZE | SA360 | CAMPAIGN DAILY (PERFORMANCE SNAPSHOT)
 ===============================================================================
 
-PURPOSE
--------
-Create a Bronze Campaign Daily table from the raw Improvado table:
-`prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo`
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo
 
-This table:
-- Uses normalized (clean) column names for analysis & governance
-- Preserves the original raw `date` INT64 as date_int64
-- Creates `date` as DATE derived from `date_yyyymmdd` (per your requirement)
-- Adds column descriptions (OPTIONS(description=...))
-- Is partitioned by `date` (DATE)
-- Is clustered by (account_id, campaign_id)
+TARGET (BRONZE):
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
 
-PRIMARY KEY (logical)
----------------------
-(account_id, campaign_id, date_yyyymmdd)
+GRAIN:
+  One row per (account_id, campaign_id, date_yyyymmdd) snapshot.
 
-TBG == TFB RULE
----------------
-You stated: tbg and tfb mean the same. We standardize to tfb.
-So we create tfb_* unified columns from the TBG raw columns:
-  tbg__low__funnel               -> tfb_low_funnel
-  tbg__lead__form__submit        -> tfb_lead_form_submit
-  tbg__invoca__sales__intent_dda -> tfb_invoca_sales_intent_dda
-  tbg__invoca__order_dda         -> tfb_invoca_order_dda
+CRITICAL REQUIREMENTS YOU GAVE:
+  - Use parsed date from date_yyyymmdd and name it "date".
+  - Fix bad/raw column names with clean aliases:
+      __insert_date -> insert_date
+      _ma_hint_ec__eligibility__check_ -> ma_hint_ec_eligibility_check
+      double underscores -> single underscore
+      trailing underscores removed
+  - tbg and tfb mean the same:
+      we standardize to tfb_* for the tbg_* metrics too.
 
-IMPORTANT RAW COLUMN RULE
--------------------------
-We only reference raw columns that exist in your INFORMATION_SCHEMA list.
-We also backtick columns with "bad" names like:
-  `__insert_date`
-  `_ma_hint_ec__eligibility__check_`
+DUPLICATE PREVENTION:
+  - Implemented in the incremental MERGE query (next section) via dedup + MERGE keys.
+
 ===============================================================================
 */
 
-CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+CREATE OR REPLACE TABLE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
 (
-  /* =========================
-     INGESTION METADATA
-  ========================== */
-  file_load_datetime DATETIME OPTIONS(description="Raw: File_Load_datetime. ETL ingestion load timestamp."),
-  filename STRING OPTIONS(description="Raw: Filename. Source file path/name used to ingest snapshot."),
-  insert_date INT64 OPTIONS(description="Raw: __insert_date. Technical load integer."),
+  -- -----------------------------
+  -- Keys / Snapshot
+  -- -----------------------------
+  account_id STRING OPTIONS(description='Search Ads 360 / advertiser account ID.'),
+  campaign_id STRING OPTIONS(description='Campaign ID aligned to resource_name.'),
+  date_yyyymmdd STRING OPTIONS(description='Reporting/snapshot date in YYYYMMDD.'),
 
-  /* =========================
-     KEYS / IDENTIFIERS
-  ========================== */
-  account_id STRING OPTIONS(description="Raw: account_id. SA360 advertiser/account ID."),
-  account_name STRING OPTIONS(description="Raw: account_name. Account/advertiser name."),
-  customer_id STRING OPTIONS(description="Raw: customer_id. Google Ads customer ID."),
-  customer_name STRING OPTIONS(description="Raw: customer_name. Customer (account) name."),
-  campaign_id STRING OPTIONS(description="Raw: campaign_id. Campaign ID."),
-  resource_name STRING OPTIONS(description="Raw: resource_name. Google Ads API resource name for the campaign."),
+  -- Parsed snapshot date (per your requirement)
+  date DATE OPTIONS(description='Parsed snapshot date derived from date_yyyymmdd (YYYYMMDD). Field intentionally named "date".'),
 
-  /* =========================
-     DATES
-  ========================== */
-  date_int64 INT64 OPTIONS(description="Raw: date (INT64). Preserved raw numeric date/serial."),
-  date_yyyymmdd STRING OPTIONS(description="Raw: date_yyyymmdd. Reporting date in YYYYMMDD."),
-  date DATE OPTIONS(description="DATE derived from date_yyyymmdd (per requirement)."),
-  segments_date DATE OPTIONS(description="Raw: segments_date parsed as DATE (can be null)."),
+  -- Raw "date" column from Improvado (INT64) kept but renamed to avoid collision
+  date_serial INT64 OPTIONS(description='Raw numeric date field from source (kept for traceability).'),
 
-  /* =========================
-     OPTIONAL DIMENSIONS
-  ========================== */
-  client_manager_id FLOAT64 OPTIONS(description="Raw: client_manager_id."),
-  client_manager_name STRING OPTIONS(description="Raw: client_manager_name."),
+  -- -----------------------------
+  -- Core dimensions
+  -- -----------------------------
+  account_name STRING OPTIONS(description='Account/advertiser name.'),
+  customer_id STRING OPTIONS(description='Google Ads customer ID.'),
+  customer_name STRING OPTIONS(description='Customer (account) name.'),
+  resource_name STRING OPTIONS(description='Google Ads API resource name for the campaign.'),
+  segments_date STRING OPTIONS(description='Segments.date dimension as YYYY-MM-DD string (Google Ads).'),
 
-  /* =========================
-     DELIVERY / COST
-  ========================== */
-  impressions FLOAT64 OPTIONS(description="Raw: impressions."),
-  clicks FLOAT64 OPTIONS(description="Raw: clicks."),
-  cost_micros FLOAT64 OPTIONS(description="Raw: cost_micros. Cost in micros."),
-  cost FLOAT64 OPTIONS(description="Derived: cost_micros / 1e6."),
+  client_manager_id FLOAT64 OPTIONS(description='Client manager ID in SA360 (source type FLOAT64).'),
+  client_manager_name STRING OPTIONS(description='Client manager name.'),
 
-  /* =========================
-     CORE METRICS
-  ========================== */
-  all_conversions FLOAT64 OPTIONS(description="Raw: all_conversions."),
-  bi FLOAT64 OPTIONS(description="Raw: bi."),
-  bts_quality_traffic FLOAT64 OPTIONS(description="Raw: bts__quality__traffic."),
-  buying_intent FLOAT64 OPTIONS(description="Raw: buying__intent."),
-  aal FLOAT64 OPTIONS(description="Raw: aal."),
-  add_a_line FLOAT64 OPTIONS(description="Raw: add_a__line."),
-  digital_gross_add FLOAT64 OPTIONS(description="Raw: digital__gross__add."),
+  -- -----------------------------
+  -- Cleaned technical fields
+  -- -----------------------------
+  insert_date INT64 OPTIONS(description='Technical load integer (raw __insert_date renamed).'),
+  file_load_datetime DATETIME OPTIONS(description='ETL load timestamp (file landed time).'),
+  filename STRING OPTIONS(description='Source file path/name for this daily snapshot.'),
 
-  /* =========================
-     CART / PSPV
-  ========================== */
-  cart_start FLOAT64 OPTIONS(description="Raw: cart__start_."),
-  postpaid_cart_start FLOAT64 OPTIONS(description="Raw: postpaid__cart__start_."),
-  postpaid_pspv FLOAT64 OPTIONS(description="Raw: postpaid_pspv_."),
+  -- -----------------------------
+  -- Metrics (cleaned names)
+  -- -----------------------------
+  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description='Marketing automation HINT eligibility checks (count).'),
 
-  /* =========================
-     CONNECT
-  ========================== */
-  connect_low_funnel_prospect FLOAT64 OPTIONS(description="Raw: connect__low__funnel__prospect."),
-  connect_low_funnel_visit FLOAT64 OPTIONS(description="Raw: connect__low__funnel__visit."),
-  connect_qt FLOAT64 OPTIONS(description="Raw: connect_qt."),
+  aal FLOAT64 OPTIONS(description='Add-a-line related conversions/score (likely count).'),
+  add_a_line FLOAT64 OPTIONS(description='Add-a-line conversions (count).'),
+  all_conversions FLOAT64 OPTIONS(description='All conversions including modeled/cross-device where applicable.'),
+  bi FLOAT64 OPTIONS(description='Business Intent (or similar internal score).'),
+  bts_quality_traffic FLOAT64 OPTIONS(description='BTS quality traffic metric.'),
+  buying_intent FLOAT64 OPTIONS(description='Buying intent signal/score.'),
 
-  /* =========================
-     METRO
-  ========================== */
-  metro_low_funnel_cs FLOAT64 OPTIONS(description="Raw: metro__low__funnel_cs_."),
-  metro_mid_funnel_prospect FLOAT64 OPTIONS(description="Raw: metro__mid__funnel__prospect."),
-  metro_top_funnel_prospect FLOAT64 OPTIONS(description="Raw: metro__top__funnel__prospect."),
-  metro_upper_funnel_prospect FLOAT64 OPTIONS(description="Raw: metro__upper__funnel__prospect."),
-  metro_hint_qt FLOAT64 OPTIONS(description="Raw: metro_hint_qt."),
-  metro_qt FLOAT64 OPTIONS(description="Raw: metro_qt."),
+  clicks FLOAT64 OPTIONS(description='Total clicks.'),
+  impressions FLOAT64 OPTIONS(description='Impressions.'),
 
-  /* =========================
-     FIBER
-  ========================== */
-  fiber_activations FLOAT64 OPTIONS(description="Raw: fiber__activations."),
-  fiber_pre_order FLOAT64 OPTIONS(description="Raw: fiber__pre__order."),
-  fiber_waitlist_sign_up FLOAT64 OPTIONS(description="Raw: fiber__waitlist__sign__up."),
-  fiber_web_orders FLOAT64 OPTIONS(description="Raw: fiber__web__orders."),
-  fiber_ec FLOAT64 OPTIONS(description="Raw: fiber_ec."),
-  fiber_ec_dda FLOAT64 OPTIONS(description="Raw: fiber_ec_dda."),
-  fiber_sec FLOAT64 OPTIONS(description="Raw: fiber_sec."),
-  fiber_sec_dda FLOAT64 OPTIONS(description="Raw: fiber_sec_dda."),
+  cost_micros FLOAT64 OPTIONS(description='Advertiser cost in micros of currency (1e6 micros = 1 unit).'),
+  cost FLOAT64 OPTIONS(description='Derived cost in standard currency units (cost_micros / 1e6).'),
 
-  /* =========================
-     HINT + INVOCA
-  ========================== */
-  hint_ec FLOAT64 OPTIONS(description="Raw: hint_ec."),
-  hint_sec FLOAT64 OPTIONS(description="Raw: hint_sec."),
-  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description="Raw: _ma_hint_ec__eligibility__check_."),
+  cart_start FLOAT64 OPTIONS(description='Cart start events attributed to campaign.'),
+  postpaid_cart_start FLOAT64 OPTIONS(description='Postpaid cart start events (count).'),
+  postpaid_pspv FLOAT64 OPTIONS(description='Postpaid PSPV metric.'),
 
-  hint_invoca_calls FLOAT64 OPTIONS(description="Raw: hint__invoca__calls."),
-  hint_offline_invoca_calls FLOAT64 OPTIONS(description="Raw: hint__offline__invoca__calls."),
-  hint_offline_invoca_eligibility FLOAT64 OPTIONS(description="Raw: hint__offline__invoca__eligibility."),
-  hint_offline_invoca_order FLOAT64 OPTIONS(description="Raw: hint__offline__invoca__order."),
-  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description="Raw: hint__offline__invoca__order_rt_."),
-  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description="Raw: hint__offline__invoca__sales__opp."),
-  hint_web_orders FLOAT64 OPTIONS(description="Raw: hint__web__orders."),
+  connect_low_funnel_prospect FLOAT64 OPTIONS(description='Connect low-funnel prospects (count).'),
+  connect_low_funnel_visit FLOAT64 OPTIONS(description='Connect low-funnel visits (count).'),
+  connect_qt FLOAT64 OPTIONS(description='Connect qualified traffic.'),
 
-  /* =========================
-     PREPAID + TMO FUNNEL
-  ========================== */
-  tmobile_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description="Raw: t__mobile__prepaid__low__funnel__prospect."),
-  tmo_top_funnel_prospect FLOAT64 OPTIONS(description="Raw: tmo__top__funnel__prospect."),
-  tmo_upper_funnel_prospect FLOAT64 OPTIONS(description="Raw: tmo__upper__funnel__prospect."),
+  digital_gross_add FLOAT64 OPTIONS(description='Digital gross adds.'),
 
-  /* =========================
-     TFB (Unified for TBG + TFB)
-  ========================== */
-  tfb_low_funnel FLOAT64 OPTIONS(description="Unified from raw tbg__low__funnel (TBG==TFB)."),
-  tfb_lead_form_submit FLOAT64 OPTIONS(description="Unified from raw tbg__lead__form__submit (TBG==TFB)."),
-  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description="Unified from raw tbg__invoca__sales__intent_dda (TBG==TFB)."),
-  tfb_invoca_order_dda FLOAT64 OPTIONS(description="Unified from raw tbg__invoca__order_dda (TBG==TFB)."),
+  fiber_activations FLOAT64 OPTIONS(description='Fiber activations (count).'),
+  fiber_pre_order FLOAT64 OPTIONS(description='Fiber pre-orders (count).'),
+  fiber_waitlist_sign_up FLOAT64 OPTIONS(description='Fiber waitlist sign-ups (count).'),
+  fiber_web_orders FLOAT64 OPTIONS(description='Fiber web orders (count).'),
+  fiber_ec FLOAT64 OPTIONS(description='Fiber e-commerce orders (count).'),
+  fiber_ec_dda FLOAT64 OPTIONS(description='Fiber e-commerce (DDA attributed).'),
+  fiber_sec FLOAT64 OPTIONS(description='Fiber secondary eligibility checks (count).'),
+  fiber_sec_dda FLOAT64 OPTIONS(description='Fiber secondary eligibility checks (DDA attributed).'),
 
-  tfb_credit_check FLOAT64 OPTIONS(description="Raw: tfb__credit__check."),
-  tfb_invoca_sales_calls FLOAT64 OPTIONS(description="Raw: tfb__invoca__sales__calls."),
-  tfb_leads FLOAT64 OPTIONS(description="Raw: tfb__leads."),
-  tfb_quality_traffic FLOAT64 OPTIONS(description="Raw: tfb__quality__traffic."),
-  tfb_hint_ec FLOAT64 OPTIONS(description="Raw: tfb_hint_ec."),
-  total_tfb_conversions FLOAT64 OPTIONS(description="Raw: total_tfb__conversions."),
+  hint_invoca_calls FLOAT64 OPTIONS(description='HINT Invoca calls (count).'),
+  hint_offline_invoca_calls FLOAT64 OPTIONS(description='HINT offline Invoca calls (count).'),
+  hint_offline_invoca_eligibility FLOAT64 OPTIONS(description='HINT offline Invoca eligibility events (count).'),
+  hint_offline_invoca_order FLOAT64 OPTIONS(description='HINT offline Invoca order events (count).'),
+  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description='HINT offline Invoca real-time order events (count).'),
+  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description='HINT offline Invoca sales opportunities (count).'),
+  hint_web_orders FLOAT64 OPTIONS(description='HINT web orders (count).'),
+  hint_ec FLOAT64 OPTIONS(description='Home Internet (HINT) eligibility checks (count).'),
+  hint_sec FLOAT64 OPTIONS(description='HINT secondary eligibility checks (count).'),
 
-  /* =========================
-     OTHER
-  ========================== */
-  magenta_pqt FLOAT64 OPTIONS(description="Raw: magenta_pqt."),
+  magenta_pqt FLOAT64 OPTIONS(description='Magenta pre-qualification tool completions (count).'),
 
-  bronze_updated_at TIMESTAMP OPTIONS(description="System timestamp when row was inserted/updated in Bronze.")
+  metro_low_funnel_cs FLOAT64 OPTIONS(description='Metro low-funnel customer signups (count).'),
+  metro_mid_funnel_prospect FLOAT64 OPTIONS(description='Metro mid-funnel prospects (count).'),
+  metro_top_funnel_prospect FLOAT64 OPTIONS(description='Metro top-funnel prospects (count).'),
+  metro_upper_funnel_prospect FLOAT64 OPTIONS(description='Metro upper-funnel prospects (count).'),
+  metro_hint_qt FLOAT64 OPTIONS(description='Metro HINT qualified traffic (count).'),
+  metro_qt FLOAT64 OPTIONS(description='Metro qualified traffic (count).'),
+
+  t_mobile_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description='Prepaid low-funnel prospects (count).'),
+  tmo_top_funnel_prospect FLOAT64 OPTIONS(description='TMO top-funnel prospects (count).'),
+  tmo_upper_funnel_prospect FLOAT64 OPTIONS(description='TMO upper-funnel prospects (count).'),
+
+  -- Standardize TBG -> TFB (your requirement: tfb and tbg mean the same)
+  tfb_low_funnel FLOAT64 OPTIONS(description='TFB low-funnel conversions (includes raw tbg__low__funnel).'),
+  tfb_lead_form_submit FLOAT64 OPTIONS(description='TFB lead form submissions (includes raw tbg__lead__form__submit).'),
+  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description='TFB Invoca sales intent (DDA) (includes raw tbg__invoca__sales__intent_dda).'),
+  tfb_invoca_order_dda FLOAT64 OPTIONS(description='TFB Invoca orders (DDA) (includes raw tbg__invoca__order_dda).'),
+
+  tfb_credit_check FLOAT64 OPTIONS(description='TFB credit check events (count).'),
+  tfb_hint_ec FLOAT64 OPTIONS(description='TFB HINT eligibility checks (count).'),
+  tfb_invoca_sales_calls FLOAT64 OPTIONS(description='TFB Invoca sales calls (count).'),
+  tfb_leads FLOAT64 OPTIONS(description='TFB leads (count).'),
+  tfb_quality_traffic FLOAT64 OPTIONS(description='TFB quality traffic (count/index).'),
+  total_tfb_conversions FLOAT64 OPTIONS(description='Total TFB conversions.')
 )
 PARTITION BY date
 CLUSTER BY account_id, campaign_id;
