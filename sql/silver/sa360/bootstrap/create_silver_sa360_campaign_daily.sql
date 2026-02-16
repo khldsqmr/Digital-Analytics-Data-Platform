@@ -6,25 +6,27 @@ TABLE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_da
 
 PURPOSE:
   Business-ready enriched daily campaign fact table for SA360 Paid Search,
-  with LOB + Ad Platform derived from account_name, and campaign metadata
-  from the latest entity snapshot.
+  with:
+    - LOB derived from account_name
+    - Ad Platform derived from account_name
+    - Campaign metadata from latest entity snapshot (campaign_name etc.)
 
 GRAIN:
   account_id + campaign_id + date
 
 SOURCES:
-  - Bronze Daily:  sdi_bronze_sa360_campaign_daily  (metrics)
-  - Bronze Entity: sdi_bronze_sa360_campaign_entity (metadata)
+  - Bronze Daily:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
+  - Bronze Entity: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity
 
-METRIC COVERAGE (MANDATORY):
-  - Core: impressions, clicks, cost, all_conversions
-  - Cart/PSPV/Postpaid: cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line
-  - HINT/HSI: hint_ec, hint_sec, hint_web_orders, invoca + offline invoca, ma_hint_ec_eligibility_check
-  - Fiber: activations, pre-order, waitlist, web_orders, ec/sec (+ DDA variants)
-  - Metro: top/upper/mid/low funnel + metro_qt + metro_hint_qt
-  - TFB: credit_check, invoca_sales_calls, leads, quality_traffic, tfb_hint_ec, total_tfb_conversions
-  - TBG treated as TFB: tfb_low_funnel, tfb_lead_form_submit, tfb_invoca_sales_intent_dda, tfb_invoca_order_dda
-  - TMO: tmo_top_funnel_prospect, tmo_upper_funnel_prospect, tmo_prepaid_low_funnel_prospect
+PARTITIONING / CLUSTERING:
+  - PARTITION BY date (daily fact table best practice)
+  - CLUSTER BY (max 4 fields allowed in BigQuery):
+      account_id, campaign_id, lob, ad_platform
+
+NOTE:
+  BigQuery allows up to 4 clustering fields — so we intentionally do NOT add campaign_type
+  into clustering even though it is commonly filtered.
+
 ===============================================================================
 */
 
@@ -57,13 +59,13 @@ CREATE OR REPLACE TABLE
   serving_status STRING OPTIONS(description="Entity: serving_status."),
 
   -- ============================================================
-  -- OPTIONAL BUSINESS ATTRIBUTES (keep if you kept them in Bronze)
+  -- OPTIONAL BUSINESS ATTRIBUTES (present in Bronze Daily)
   -- ============================================================
-  customer_id STRING OPTIONS(description="Daily: customer_id (if present)."),
-  customer_name STRING OPTIONS(description="Daily: customer_name (if present)."),
-  client_manager_id STRING OPTIONS(description="Daily: client_manager_id (if present)."),
-  client_manager_name STRING OPTIONS(description="Daily: client_manager_name (if present)."),
-  resource_name STRING OPTIONS(description="Daily: resource_name (if present)."),
+  customer_id STRING OPTIONS(description="Daily: customer_id (if present in Bronze)."),
+  customer_name STRING OPTIONS(description="Daily: customer_name (if present in Bronze)."),
+  client_manager_id STRING OPTIONS(description="Daily: client_manager_id (if present in Bronze)."),
+  client_manager_name STRING OPTIONS(description="Daily: client_manager_name (if present in Bronze)."),
+  resource_name STRING OPTIONS(description="Daily: resource_name (if present in Bronze)."),
 
   -- ============================================================
   -- CORE PERFORMANCE METRICS (MANDATORY)
@@ -147,6 +149,7 @@ CREATE OR REPLACE TABLE
 
   -- ============================================================
   -- TFB + TBG→TFB (MANDATORY FAMILY)
+  -- (Assumes Bronze already mapped TBG fields into these standardized TFB fields.)
   -- ============================================================
   tfb_credit_check FLOAT64 OPTIONS(description="TFB credit check."),
   tfb_invoca_sales_calls FLOAT64 OPTIONS(description="TFB Invoca sales calls."),
@@ -166,4 +169,4 @@ CREATE OR REPLACE TABLE
   silver_inserted_at TIMESTAMP OPTIONS(description="Silver insert/update timestamp.")
 )
 PARTITION BY date
-CLUSTER BY lob, ad_platform, account_id, campaign_id, campaign_type;
+CLUSTER BY account_id, campaign_id, lob, ad_platform;

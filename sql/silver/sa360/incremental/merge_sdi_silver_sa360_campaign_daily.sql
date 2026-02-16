@@ -14,6 +14,9 @@ KEY RULES:
   - Derive lob + ad_platform from account_name
   - Idempotent MERGE: no duplicates
 
+IMPORTANT FIX:
+  - Entity campaign name column is campaign_name (NOT raw "name")
+
 ===============================================================================
 */
 BEGIN
@@ -23,11 +26,14 @@ DECLARE lookback_days INT64 DEFAULT 7;
 MERGE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` T
 USING (
+  -- ============================================================
+  -- STEP 1: Latest Campaign Entity Snapshot (1 row per account_id+campaign_id)
+  -- ============================================================
   WITH latest_entity AS (
     SELECT
       account_id,
       campaign_id,
-      campaign_name,                -- IMPORTANT: this is the Bronze column (NOT raw "name")
+      campaign_name,
       advertising_channel_type,
       advertising_channel_sub_type,
       bidding_strategy_type,
@@ -53,43 +59,53 @@ USING (
     )
     WHERE rn = 1
   ),
+
+  -- ============================================================
+  -- STEP 2: Filter Bronze Daily with 7-day lookback
+  -- ============================================================
   filtered_daily AS (
     SELECT *
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
     WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   )
+
+  -- ============================================================
+  -- STEP 3: Join Daily + Entity and Derive Business Fields
+  -- ============================================================
   SELECT
-    -- =========================
+    -- -------------------------
     -- Grain
-    -- =========================
+    -- -------------------------
     d.account_id,
     d.account_name,
     d.campaign_id,
     e.campaign_name,
     d.date,
 
-    -- =========================
-    -- Derived fields
-    -- =========================
+    -- -------------------------
+    -- Derived LOB (based on your exact mapping list)
+    -- -------------------------
     CASE
-      WHEN LOWER(d.account_name) LIKE '%postpaid%' THEN 'Postpaid'
-      WHEN LOWER(d.account_name) LIKE '%broadband%' THEN 'HSI'
-      WHEN LOWER(d.account_name) LIKE '%fiber%' THEN 'Fiber'
-      WHEN LOWER(d.account_name) LIKE '%metro%' THEN 'Metro'
-      WHEN LOWER(d.account_name) LIKE '%tfb%' THEN 'TFB'
-      WHEN LOWER(d.account_name) LIKE '%bts%' THEN 'Postpaid'
+      WHEN d.account_name IN ('Postpaid Google','Postpaid Bing','BTS Google','BTS Bing') THEN 'Postpaid'
+      WHEN d.account_name IN ('Broadband Google','Broadband Bing') THEN 'HSI'
+      WHEN d.account_name IN ('Fiber Google','Fiber Bing') THEN 'Fiber'
+      WHEN d.account_name IN ('Metro Google','Metro Bing') THEN 'Metro'
+      WHEN d.account_name IN ('TFB Google','TFB Bing') THEN 'TFB'
       ELSE 'Unclassified'
     END AS lob,
 
+    -- -------------------------
+    -- Derived Ad Platform
+    -- -------------------------
     CASE
       WHEN LOWER(d.account_name) LIKE '%google%' THEN 'Google'
       WHEN LOWER(d.account_name) LIKE '%bing%' THEN 'Bing'
       ELSE 'Unknown'
     END AS ad_platform,
 
-    -- =========================
-    -- Metadata from Entity
-    -- =========================
+    -- -------------------------
+    -- Campaign Type (derived from campaign_name)
+    -- -------------------------
     CASE
       WHEN e.campaign_name IS NULL THEN 'Unclassified'
       WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'(^|[^a-z])brand([^a-z]|$)') THEN 'Brand'
@@ -100,57 +116,60 @@ USING (
       ELSE 'Unclassified'
     END AS campaign_type,
 
+    -- -------------------------
+    -- Entity Metadata
+    -- -------------------------
     e.advertising_channel_type,
     e.advertising_channel_sub_type,
     e.bidding_strategy_type,
     e.campaign_status,
     e.serving_status,
 
-    -- =========================
+    -- -------------------------
     -- Optional business attrs
-    -- =========================
+    -- -------------------------
     d.customer_id,
     d.customer_name,
     d.client_manager_id,
     d.client_manager_name,
     d.resource_name,
 
-    -- =========================
+    -- -------------------------
     -- CORE METRICS (MANDATORY)
-    -- =========================
+    -- -------------------------
     d.impressions,
     d.clicks,
     d.cost,
     d.all_conversions,
 
-    -- =========================
+    -- -------------------------
     -- QUALITY / INTENT
-    -- =========================
+    -- -------------------------
     d.bi,
     d.buying_intent,
     d.bts_quality_traffic,
     d.digital_gross_add,
     d.magenta_pqt,
 
-    -- =========================
-    -- CART START + POSTPAID
-    -- =========================
+    -- -------------------------
+    -- CART START + POSTPAID / PSPV
+    -- -------------------------
     d.cart_start,
     d.postpaid_cart_start,
     d.postpaid_pspv,
     d.aal,
     d.add_a_line,
 
-    -- =========================
+    -- -------------------------
     -- CONNECT
-    -- =========================
+    -- -------------------------
     d.connect_low_funnel_visit,
     d.connect_low_funnel_prospect,
     d.connect_qt,
 
-    -- =========================
+    -- -------------------------
     -- HINT / HSI
-    -- =========================
+    -- -------------------------
     d.hint_ec,
     d.hint_sec,
     d.hint_web_orders,
@@ -162,9 +181,9 @@ USING (
     d.hint_offline_invoca_sales_opp,
     d.ma_hint_ec_eligibility_check,
 
-    -- =========================
+    -- -------------------------
     -- FIBER
-    -- =========================
+    -- -------------------------
     d.fiber_activations,
     d.fiber_pre_order,
     d.fiber_waitlist_sign_up,
@@ -174,9 +193,9 @@ USING (
     d.fiber_sec,
     d.fiber_sec_dda,
 
-    -- =========================
+    -- -------------------------
     -- METRO
-    -- =========================
+    -- -------------------------
     d.metro_top_funnel_prospect,
     d.metro_upper_funnel_prospect,
     d.metro_mid_funnel_prospect,
@@ -184,16 +203,16 @@ USING (
     d.metro_qt,
     d.metro_hint_qt,
 
-    -- =========================
+    -- -------------------------
     -- TMO FUNNEL
-    -- =========================
+    -- -------------------------
     d.tmo_top_funnel_prospect,
     d.tmo_upper_funnel_prospect,
     d.tmo_prepaid_low_funnel_prospect,
 
-    -- =========================
-    -- TFB + TBG→TFB
-    -- =========================
+    -- -------------------------
+    -- TFB + TBG→TFB (already standardized in Bronze)
+    -- -------------------------
     d.tfb_credit_check,
     d.tfb_invoca_sales_calls,
     d.tfb_leads,
@@ -205,9 +224,9 @@ USING (
     d.tfb_invoca_sales_intent_dda,
     d.tfb_invoca_order_dda,
 
-    -- =========================
+    -- -------------------------
     -- METADATA
-    -- =========================
+    -- -------------------------
     d.file_load_datetime,
     CURRENT_TIMESTAMP() AS silver_inserted_at
 
