@@ -9,76 +9,57 @@ SOURCE (RAW):
 TARGET (BRONZE):
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
 
-MERGE KEY (NO DUPLICATES):
-  account_id + campaign_id + date_yyyymmdd
+COST CONTROL:
+  Process only the most recent N days of snapshot data using lookback_days variable.
 
-DEDUP LOGIC:
-  If multiple raw rows exist for the same key (e.g., multiple files),
-  keep the latest by File_Load_datetime (then Filename as tie-breaker).
+NO DUPLICATES:
+  MERGE KEY:
+    (account_id, campaign_id, date_yyyymmdd)
 
-COLUMN NAME CLEANUP:
+  DEDUP WITHIN WINDOW:
+    Keep latest row by:
+      File_Load_datetime DESC, Filename DESC
+
+STANDARDIZATION:
+  - Parsed date from date_yyyymmdd is named "date"
+  - Raw INT64 "date" from source becomes date_serial
   - __insert_date -> insert_date
   - _ma_hint_ec__eligibility__check_ -> ma_hint_ec_eligibility_check
-  - double underscores -> single underscore
-  - trailing underscores removed
-  - raw INT64 "date" -> date_serial (to avoid collision with parsed DATE "date")
-  - parsed snapshot date from date_yyyymmdd -> date (per your requirement)
-
-TBG vs TFB STANDARDIZATION:
-  - tfb_low_funnel, tfb_lead_form_submit, tfb_invoca_sales_intent_dda, tfb_invoca_order_dda
-    are populated from the corresponding raw tbg__* fields.
+  - Standardize TBG -> TFB (per your rule)
 
 ===============================================================================
 */
+
+DECLARE lookback_days INT64 DEFAULT 7;
 
 MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily` T
 USING (
   WITH src AS (
     SELECT
-      -- -----------------------------
-      -- Keys / Snapshot
-      -- -----------------------------
       CAST(raw.account_id AS STRING) AS account_id,
       CAST(raw.campaign_id AS STRING) AS campaign_id,
       CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
-
-      -- Parsed snapshot date (named "date" per your requirement)
       SAFE.PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS date,
-
-      -- Keep the raw numeric date field but rename it
       CAST(raw.date AS INT64) AS date_serial,
 
-      -- -----------------------------
-      -- Dimensions
-      -- -----------------------------
       CAST(raw.account_name AS STRING) AS account_name,
       CAST(raw.customer_id AS STRING) AS customer_id,
       CAST(raw.customer_name AS STRING) AS customer_name,
       CAST(raw.resource_name AS STRING) AS resource_name,
       CAST(raw.segments_date AS STRING) AS segments_date,
-
       CAST(raw.client_manager_id AS FLOAT64) AS client_manager_id,
       CAST(raw.client_manager_name AS STRING) AS client_manager_name,
 
-      -- -----------------------------
-      -- Technical / ingestion metadata
-      -- -----------------------------
       CAST(raw.__insert_date AS INT64) AS insert_date,
       CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
       CAST(raw.Filename AS STRING) AS filename,
 
-      -- -----------------------------
-      -- Metrics (cleaned aliases)
-      -- -----------------------------
       CAST(raw._ma_hint_ec__eligibility__check_ AS FLOAT64) AS ma_hint_ec_eligibility_check,
 
       CAST(raw.aal AS FLOAT64) AS aal,
       CAST(raw.add_a__line AS FLOAT64) AS add_a_line,
       CAST(raw.all_conversions AS FLOAT64) AS all_conversions,
-
-      -- IMPORTANT: "bi" exists in your INFORMATION_SCHEMA list, so we reference it explicitly.
       CAST(raw.bi AS FLOAT64) AS bi,
-
       CAST(raw.bts__quality__traffic AS FLOAT64) AS bts_quality_traffic,
       CAST(raw.buying__intent AS FLOAT64) AS buying_intent,
 
@@ -130,7 +111,7 @@ USING (
       CAST(raw.tmo__top__funnel__prospect AS FLOAT64) AS tmo_top_funnel_prospect,
       CAST(raw.tmo__upper__funnel__prospect AS FLOAT64) AS tmo_upper_funnel_prospect,
 
-      -- Standardize TBG -> TFB (your stated rule)
+      -- Standardize TBG -> TFB
       CAST(raw.tbg__low__funnel AS FLOAT64) AS tfb_low_funnel,
       CAST(raw.tbg__lead__form__submit AS FLOAT64) AS tfb_lead_form_submit,
       CAST(raw.tbg__invoca__sales__intent_dda AS FLOAT64) AS tfb_invoca_sales_intent_dda,
@@ -144,6 +125,9 @@ USING (
       CAST(raw.total_tfb__conversions AS FLOAT64) AS total_tfb_conversions
 
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo` raw
+    WHERE
+      SAFE.PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING))
+        >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ),
 
   dedup AS (
@@ -168,96 +152,93 @@ ON
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
 WHEN MATCHED THEN UPDATE SET
-  T.date = S.date,
-  T.date_serial = S.date_serial,
+  date = S.date,
+  date_serial = S.date_serial,
 
-  T.account_name = S.account_name,
-  T.customer_id = S.customer_id,
-  T.customer_name = S.customer_name,
-  T.resource_name = S.resource_name,
-  T.segments_date = S.segments_date,
+  account_name = S.account_name,
+  customer_id = S.customer_id,
+  customer_name = S.customer_name,
+  resource_name = S.resource_name,
+  segments_date = S.segments_date,
+  client_manager_id = S.client_manager_id,
+  client_manager_name = S.client_manager_name,
 
-  T.client_manager_id = S.client_manager_id,
-  T.client_manager_name = S.client_manager_name,
+  insert_date = S.insert_date,
+  file_load_datetime = S.file_load_datetime,
+  filename = S.filename,
 
-  T.insert_date = S.insert_date,
-  T.file_load_datetime = S.file_load_datetime,
-  T.filename = S.filename,
+  ma_hint_ec_eligibility_check = S.ma_hint_ec_eligibility_check,
 
-  T.ma_hint_ec_eligibility_check = S.ma_hint_ec_eligibility_check,
+  aal = S.aal,
+  add_a_line = S.add_a_line,
+  all_conversions = S.all_conversions,
+  bi = S.bi,
+  bts_quality_traffic = S.bts_quality_traffic,
+  buying_intent = S.buying_intent,
 
-  T.aal = S.aal,
-  T.add_a_line = S.add_a_line,
-  T.all_conversions = S.all_conversions,
-  T.bi = S.bi,
-  T.bts_quality_traffic = S.bts_quality_traffic,
-  T.buying_intent = S.buying_intent,
+  clicks = S.clicks,
+  impressions = S.impressions,
 
-  T.clicks = S.clicks,
-  T.impressions = S.impressions,
+  cost_micros = S.cost_micros,
+  cost = S.cost,
 
-  T.cost_micros = S.cost_micros,
-  T.cost = S.cost,
+  cart_start = S.cart_start,
+  postpaid_cart_start = S.postpaid_cart_start,
+  postpaid_pspv = S.postpaid_pspv,
 
-  T.cart_start = S.cart_start,
-  T.postpaid_cart_start = S.postpaid_cart_start,
-  T.postpaid_pspv = S.postpaid_pspv,
+  connect_low_funnel_prospect = S.connect_low_funnel_prospect,
+  connect_low_funnel_visit = S.connect_low_funnel_visit,
+  connect_qt = S.connect_qt,
 
-  T.connect_low_funnel_prospect = S.connect_low_funnel_prospect,
-  T.connect_low_funnel_visit = S.connect_low_funnel_visit,
-  T.connect_qt = S.connect_qt,
+  digital_gross_add = S.digital_gross_add,
 
-  T.digital_gross_add = S.digital_gross_add,
+  fiber_activations = S.fiber_activations,
+  fiber_pre_order = S.fiber_pre_order,
+  fiber_waitlist_sign_up = S.fiber_waitlist_sign_up,
+  fiber_web_orders = S.fiber_web_orders,
+  fiber_ec = S.fiber_ec,
+  fiber_ec_dda = S.fiber_ec_dda,
+  fiber_sec = S.fiber_sec,
+  fiber_sec_dda = S.fiber_sec_dda,
 
-  T.fiber_activations = S.fiber_activations,
-  T.fiber_pre_order = S.fiber_pre_order,
-  T.fiber_waitlist_sign_up = S.fiber_waitlist_sign_up,
-  T.fiber_web_orders = S.fiber_web_orders,
-  T.fiber_ec = S.fiber_ec,
-  T.fiber_ec_dda = S.fiber_ec_dda,
-  T.fiber_sec = S.fiber_sec,
-  T.fiber_sec_dda = S.fiber_sec_dda,
+  hint_invoca_calls = S.hint_invoca_calls,
+  hint_offline_invoca_calls = S.hint_offline_invoca_calls,
+  hint_offline_invoca_eligibility = S.hint_offline_invoca_eligibility,
+  hint_offline_invoca_order = S.hint_offline_invoca_order,
+  hint_offline_invoca_order_rt = S.hint_offline_invoca_order_rt,
+  hint_offline_invoca_sales_opp = S.hint_offline_invoca_sales_opp,
+  hint_web_orders = S.hint_web_orders,
+  hint_ec = S.hint_ec,
+  hint_sec = S.hint_sec,
 
-  T.hint_invoca_calls = S.hint_invoca_calls,
-  T.hint_offline_invoca_calls = S.hint_offline_invoca_calls,
-  T.hint_offline_invoca_eligibility = S.hint_offline_invoca_eligibility,
-  T.hint_offline_invoca_order = S.hint_offline_invoca_order,
-  T.hint_offline_invoca_order_rt = S.hint_offline_invoca_order_rt,
-  T.hint_offline_invoca_sales_opp = S.hint_offline_invoca_sales_opp,
-  T.hint_web_orders = S.hint_web_orders,
-  T.hint_ec = S.hint_ec,
-  T.hint_sec = S.hint_sec,
+  magenta_pqt = S.magenta_pqt,
 
-  T.magenta_pqt = S.magenta_pqt,
+  metro_low_funnel_cs = S.metro_low_funnel_cs,
+  metro_mid_funnel_prospect = S.metro_mid_funnel_prospect,
+  metro_top_funnel_prospect = S.metro_top_funnel_prospect,
+  metro_upper_funnel_prospect = S.metro_upper_funnel_prospect,
+  metro_hint_qt = S.metro_hint_qt,
+  metro_qt = S.metro_qt,
 
-  T.metro_low_funnel_cs = S.metro_low_funnel_cs,
-  T.metro_mid_funnel_prospect = S.metro_mid_funnel_prospect,
-  T.metro_top_funnel_prospect = S.metro_top_funnel_prospect,
-  T.metro_upper_funnel_prospect = S.metro_upper_funnel_prospect,
-  T.metro_hint_qt = S.metro_hint_qt,
-  T.metro_qt = S.metro_qt,
+  t_mobile_prepaid_low_funnel_prospect = S.t_mobile_prepaid_low_funnel_prospect,
+  tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
+  tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
 
-  T.t_mobile_prepaid_low_funnel_prospect = S.t_mobile_prepaid_low_funnel_prospect,
-  T.tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
-  T.tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
+  tfb_low_funnel = S.tfb_low_funnel,
+  tfb_lead_form_submit = S.tfb_lead_form_submit,
+  tfb_invoca_sales_intent_dda = S.tfb_invoca_sales_intent_dda,
+  tfb_invoca_order_dda = S.tfb_invoca_order_dda,
 
-  T.tfb_low_funnel = S.tfb_low_funnel,
-  T.tfb_lead_form_submit = S.tfb_lead_form_submit,
-  T.tfb_invoca_sales_intent_dda = S.tfb_invoca_sales_intent_dda,
-  T.tfb_invoca_order_dda = S.tfb_invoca_order_dda,
-
-  T.tfb_credit_check = S.tfb_credit_check,
-  T.tfb_hint_ec = S.tfb_hint_ec,
-  T.tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
-  T.tfb_leads = S.tfb_leads,
-  T.tfb_quality_traffic = S.tfb_quality_traffic,
-  T.total_tfb_conversions = S.total_tfb_conversions
+  tfb_credit_check = S.tfb_credit_check,
+  tfb_hint_ec = S.tfb_hint_ec,
+  tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
+  tfb_leads = S.tfb_leads,
+  tfb_quality_traffic = S.tfb_quality_traffic,
+  total_tfb_conversions = S.total_tfb_conversions
 
 WHEN NOT MATCHED THEN INSERT (
-  account_id, campaign_id, date_yyyymmdd,
-  date, date_serial,
-  account_name, customer_id, customer_name,
-  resource_name, segments_date,
+  account_id, campaign_id, date_yyyymmdd, date, date_serial,
+  account_name, customer_id, customer_name, resource_name, segments_date,
   client_manager_id, client_manager_name,
   insert_date, file_load_datetime, filename,
 
@@ -277,15 +258,14 @@ WHEN NOT MATCHED THEN INSERT (
   metro_low_funnel_cs, metro_mid_funnel_prospect, metro_top_funnel_prospect, metro_upper_funnel_prospect,
   metro_hint_qt, metro_qt,
   t_mobile_prepaid_low_funnel_prospect, tmo_top_funnel_prospect, tmo_upper_funnel_prospect,
+
   tfb_low_funnel, tfb_lead_form_submit, tfb_invoca_sales_intent_dda, tfb_invoca_order_dda,
   tfb_credit_check, tfb_hint_ec, tfb_invoca_sales_calls, tfb_leads, tfb_quality_traffic,
   total_tfb_conversions
 )
 VALUES (
-  S.account_id, S.campaign_id, S.date_yyyymmdd,
-  S.date, S.date_serial,
-  S.account_name, S.customer_id, S.customer_name,
-  S.resource_name, S.segments_date,
+  S.account_id, S.campaign_id, S.date_yyyymmdd, S.date, S.date_serial,
+  S.account_name, S.customer_id, S.customer_name, S.resource_name, S.segments_date,
   S.client_manager_id, S.client_manager_name,
   S.insert_date, S.file_load_datetime, S.filename,
 
@@ -305,6 +285,7 @@ VALUES (
   S.metro_low_funnel_cs, S.metro_mid_funnel_prospect, S.metro_top_funnel_prospect, S.metro_upper_funnel_prospect,
   S.metro_hint_qt, S.metro_qt,
   S.t_mobile_prepaid_low_funnel_prospect, S.tmo_top_funnel_prospect, S.tmo_upper_funnel_prospect,
+
   S.tfb_low_funnel, S.tfb_lead_form_submit, S.tfb_invoca_sales_intent_dda, S.tfb_invoca_order_dda,
   S.tfb_credit_check, S.tfb_hint_ec, S.tfb_invoca_sales_calls, S.tfb_leads, S.tfb_quality_traffic,
   S.total_tfb_conversions
