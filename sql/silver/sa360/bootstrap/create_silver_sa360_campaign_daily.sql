@@ -2,30 +2,29 @@
 ===============================================================================
 FILE: 00_create_sdi_silver_sa360_campaign_daily.sql
 LAYER: Silver
-TABLE: sdi_silver_sa360_campaign_daily
+TABLE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
 
 PURPOSE:
-  Business-ready enriched daily campaign fact table for SA360 Paid Search.
+  Business-ready enriched daily campaign fact table for SA360 Paid Search,
+  with LOB + Ad Platform derived from account_name, and campaign metadata
+  from the latest entity snapshot.
 
 GRAIN:
   account_id + campaign_id + date
 
-SOURCE TABLES (Silver reads these Bronze tables):
-  - prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
-  - prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity
+SOURCES:
+  - Bronze Daily:  sdi_bronze_sa360_campaign_daily  (metrics)
+  - Bronze Entity: sdi_bronze_sa360_campaign_entity (metadata)
 
-DESIGN PRINCIPLES:
-  - Preserve business-relevant dimensions from Bronze (customer, client manager, resource_name)
-  - Preserve meaningful metrics from Bronze (incl. bi / intent / connect / cart_start / digital_gross_add)
-  - Enrich with latest campaign metadata from entity snapshot
-  - Canonicalize TBG + TFB (tbg and tfb mean same) into unified "tfb_*" fields while keeping total_tfb_conversions
-  - No ingestion-only raw fields (e.g., cost_micros not present in Silver)
-  - Partition by date for performance; clustered for common filters
-
-NOTES:
-  - This file ONLY creates the Silver table schema with column descriptions.
-  - The incremental MERGE (separate file) populates it.
-
+METRIC COVERAGE (MANDATORY):
+  - Core: impressions, clicks, cost, all_conversions
+  - Cart/PSPV/Postpaid: cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line
+  - HINT/HSI: hint_ec, hint_sec, hint_web_orders, invoca + offline invoca, ma_hint_ec_eligibility_check
+  - Fiber: activations, pre-order, waitlist, web_orders, ec/sec (+ DDA variants)
+  - Metro: top/upper/mid/low funnel + metro_qt + metro_hint_qt
+  - TFB: credit_check, invoca_sales_calls, leads, quality_traffic, tfb_hint_ec, total_tfb_conversions
+  - TBG treated as TFB: tfb_low_funnel, tfb_lead_form_submit, tfb_invoca_sales_intent_dda, tfb_invoca_order_dda
+  - TMO: tmo_top_funnel_prospect, tmo_upper_funnel_prospect, tmo_prepaid_low_funnel_prospect
 ===============================================================================
 */
 
@@ -33,132 +32,138 @@ CREATE OR REPLACE TABLE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
 (
   -- ============================================================
-  -- GRAIN IDENTIFIERS
+  -- GRAIN IDENTIFIERS (MANDATORY)
   -- ============================================================
-  account_id STRING OPTIONS(description="SA360 advertiser account identifier."),
-  account_name STRING OPTIONS(description="Advertiser account name associated with account_id."),
-  campaign_id STRING OPTIONS(description="Unique campaign identifier within the SA360 account."),
-  campaign_name STRING OPTIONS(description="Latest campaign name from Campaign Entity snapshot."),
-  date DATE OPTIONS(description="Daily performance date derived from Bronze date_yyyymmdd (stored as DATE)."),
+  account_id STRING OPTIONS(description="SA360 account identifier."),
+  account_name STRING OPTIONS(description="Account name (e.g., 'Postpaid Google')."),
+  campaign_id STRING OPTIONS(description="Campaign identifier."),
+  campaign_name STRING OPTIONS(description="Latest campaign name from entity snapshot."),
+  date DATE OPTIONS(description="Daily performance date."),
 
   -- ============================================================
-  -- BUSINESS DIMENSIONS (not ingestion-only; used downstream)
+  -- BUSINESS DIMENSIONS DERIVED FROM account_name (MANDATORY)
   -- ============================================================
-  customer_id STRING OPTIONS(description="Engine customer ID (Google Ads customer ID)."),
-  customer_name STRING OPTIONS(description="Customer/account name."),
-  client_manager_id FLOAT64 OPTIONS(description="Client manager ID in SA360."),
-  client_manager_name STRING OPTIONS(description="Client manager name in SA360."),
-  resource_name STRING OPTIONS(description="Google Ads API resource name for the campaign (traceability)."),
+  lob STRING OPTIONS(description="LOB derived from account_name (Postpaid | HSI | Fiber | Metro | TFB)."),
+  ad_platform STRING OPTIONS(description="Ad platform derived from account_name (Google | Bing)."),
 
   -- ============================================================
-  -- CAMPAIGN CLASSIFICATION (derived/enriched)
+  -- CAMPAIGN METADATA (from latest entity snapshot)
   -- ============================================================
-  campaign_type STRING OPTIONS(description="Derived campaign classification based on campaign_name pattern (Brand, Generic, Shopping, PMax, DemandGen, Unclassified)."),
-  advertising_channel_type STRING OPTIONS(description="Primary advertising channel type (e.g., SEARCH, PERFORMANCE_MAX)."),
-  advertising_channel_sub_type STRING OPTIONS(description="Advertising channel sub-type (may be empty)."),
-  bidding_strategy_type STRING OPTIONS(description="Bidding strategy type (e.g., TARGET_ROAS, MAXIMIZE_CONVERSIONS)."),
-  campaign_status STRING OPTIONS(description="Campaign status from entity snapshot (e.g., ENABLED, PAUSED, REMOVED)."),
-  serving_status STRING OPTIONS(description="Campaign serving status indicating eligibility to deliver impressions."),
+  campaign_type STRING OPTIONS(description="Derived from campaign_name (Brand | Generic | Shopping | PMax | DemandGen | Unclassified)."),
+  advertising_channel_type STRING OPTIONS(description="Entity: advertising_channel_type."),
+  advertising_channel_sub_type STRING OPTIONS(description="Entity: advertising_channel_sub_type."),
+  bidding_strategy_type STRING OPTIONS(description="Entity: bidding_strategy_type."),
+  campaign_status STRING OPTIONS(description="Entity: campaign_status."),
+  serving_status STRING OPTIONS(description="Entity: serving_status."),
 
   -- ============================================================
-  -- CORE PERFORMANCE METRICS
+  -- OPTIONAL BUSINESS ATTRIBUTES (keep if you kept them in Bronze)
   -- ============================================================
-  impressions FLOAT64 OPTIONS(description="Total ad impressions for the campaign on the given date."),
-  clicks FLOAT64 OPTIONS(description="Total clicks for the campaign on the given date."),
-  cost FLOAT64 OPTIONS(description="Campaign cost in account currency (Bronze cost_micros / 1,000,000)."),
-  all_conversions FLOAT64 OPTIONS(description="Total conversions (includes modeled/cross-device where applicable)."),
+  customer_id STRING OPTIONS(description="Daily: customer_id (if present)."),
+  customer_name STRING OPTIONS(description="Daily: customer_name (if present)."),
+  client_manager_id STRING OPTIONS(description="Daily: client_manager_id (if present)."),
+  client_manager_name STRING OPTIONS(description="Daily: client_manager_name (if present)."),
+  resource_name STRING OPTIONS(description="Daily: resource_name (if present)."),
 
   -- ============================================================
-  -- INTENT / QUALITY / GENERIC BUSINESS METRICS (present in Bronze)
+  -- CORE PERFORMANCE METRICS (MANDATORY)
   -- ============================================================
-  bi FLOAT64 OPTIONS(description="BI metric from source (business intent / internal score)."),
-  buying_intent FLOAT64 OPTIONS(description="Buying intent signal/score."),
+  impressions FLOAT64 OPTIONS(description="Daily impressions."),
+  clicks FLOAT64 OPTIONS(description="Daily clicks."),
+  cost FLOAT64 OPTIONS(description="Daily cost in account currency (already converted in Bronze)."),
+  all_conversions FLOAT64 OPTIONS(description="Daily all_conversions."),
+
+  -- ============================================================
+  -- QUALITY / INTENT / GENERIC METRICS
+  -- ============================================================
+  bi FLOAT64 OPTIONS(description="BI metric."),
+  buying_intent FLOAT64 OPTIONS(description="Buying intent metric."),
   bts_quality_traffic FLOAT64 OPTIONS(description="BTS quality traffic metric."),
-  digital_gross_add FLOAT64 OPTIONS(description="Digital gross adds."),
-  cart_start FLOAT64 OPTIONS(description="Overall cart start events attributed to campaign."),
-
-  connect_low_funnel_visit FLOAT64 OPTIONS(description="Connect low-funnel visits attributed to campaign."),
-  connect_low_funnel_prospect FLOAT64 OPTIONS(description="Connect low-funnel prospects attributed to campaign."),
-  connect_qt FLOAT64 OPTIONS(description="Connect qualified traffic."),
+  digital_gross_add FLOAT64 OPTIONS(description="Digital gross add metric."),
+  magenta_pqt FLOAT64 OPTIONS(description="Magenta PQT metric."),
 
   -- ============================================================
-  -- POSTPAID METRICS
+  -- CART START (MANDATORY FAMILY)
   -- ============================================================
-  postpaid_cart_start FLOAT64 OPTIONS(description="Postpaid cart start events attributed to campaign."),
+  cart_start FLOAT64 OPTIONS(description="Generic cart start events."),
+  postpaid_cart_start FLOAT64 OPTIONS(description="Postpaid cart start events."),
+
+  -- ============================================================
+  -- POSTPAID + PSPV (MANDATORY FAMILY)
+  -- ============================================================
   postpaid_pspv FLOAT64 OPTIONS(description="Postpaid PSPV events."),
-  aal FLOAT64 OPTIONS(description="Add-a-Line related conversions/score."),
-  add_a_line FLOAT64 OPTIONS(description="Add-a-Line conversion events."),
+  aal FLOAT64 OPTIONS(description="Add-a-line related conversions."),
+  add_a_line FLOAT64 OPTIONS(description="Add-a-line events."),
 
   -- ============================================================
-  -- HINT (Home Internet)
+  -- CONNECT METRICS (if applicable / present)
   -- ============================================================
-  hint_ec FLOAT64 OPTIONS(description="Home Internet eligibility check events."),
-  hint_sec FLOAT64 OPTIONS(description="Home Internet secondary eligibility check events."),
-  hint_web_orders FLOAT64 OPTIONS(description="Home Internet web orders."),
-  hint_invoca_calls FLOAT64 OPTIONS(description="Home Internet Invoca call events."),
-  hint_offline_invoca_calls FLOAT64 OPTIONS(description="Home Internet offline Invoca calls."),
-  hint_offline_invoca_eligibility FLOAT64 OPTIONS(description="Home Internet offline Invoca eligibility events."),
-  hint_offline_invoca_order FLOAT64 OPTIONS(description="Home Internet offline Invoca order events."),
-  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description="Home Internet offline Invoca real-time order events."),
-  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description="Home Internet offline Invoca sales opportunities."),
-  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description="Marketing automation Home Internet eligibility checks."),
+  connect_low_funnel_visit FLOAT64 OPTIONS(description="Connect low-funnel visit events."),
+  connect_low_funnel_prospect FLOAT64 OPTIONS(description="Connect low-funnel prospect events."),
+  connect_qt FLOAT64 OPTIONS(description="Connect qualified traffic metric."),
 
   -- ============================================================
-  -- FIBER METRICS
+  -- HINT / HSI (MANDATORY FAMILY)
+  -- ============================================================
+  hint_ec FLOAT64 OPTIONS(description="HINT eligibility check events."),
+  hint_sec FLOAT64 OPTIONS(description="HINT secondary eligibility check events."),
+  hint_web_orders FLOAT64 OPTIONS(description="HINT web orders."),
+  hint_invoca_calls FLOAT64 OPTIONS(description="HINT Invoca calls."),
+  hint_offline_invoca_calls FLOAT64 OPTIONS(description="HINT offline Invoca calls."),
+  hint_offline_invoca_eligibility FLOAT64 OPTIONS(description="HINT offline Invoca eligibility."),
+  hint_offline_invoca_order FLOAT64 OPTIONS(description="HINT offline Invoca order."),
+  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description="HINT offline Invoca order RT."),
+  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description="HINT offline Invoca sales opp."),
+  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description="Marketing automation HINT EC eligibility check."),
+
+  -- ============================================================
+  -- FIBER (MANDATORY FAMILY)
   -- ============================================================
   fiber_activations FLOAT64 OPTIONS(description="Fiber activations."),
   fiber_pre_order FLOAT64 OPTIONS(description="Fiber pre-orders."),
   fiber_waitlist_sign_up FLOAT64 OPTIONS(description="Fiber waitlist sign-ups."),
   fiber_web_orders FLOAT64 OPTIONS(description="Fiber web orders."),
-  fiber_ec FLOAT64 OPTIONS(description="Fiber e-commerce orders/conversions."),
-  fiber_ec_dda FLOAT64 OPTIONS(description="Fiber e-commerce conversions attributed via DDA."),
-  fiber_sec FLOAT64 OPTIONS(description="Fiber secondary eligibility checks."),
-  fiber_sec_dda FLOAT64 OPTIONS(description="Fiber secondary eligibility checks attributed via DDA."),
+  fiber_ec FLOAT64 OPTIONS(description="Fiber EC conversions."),
+  fiber_ec_dda FLOAT64 OPTIONS(description="Fiber EC conversions (DDA)."),
+  fiber_sec FLOAT64 OPTIONS(description="Fiber SEC events."),
+  fiber_sec_dda FLOAT64 OPTIONS(description="Fiber SEC events (DDA)."),
 
   -- ============================================================
-  -- METRO METRICS
+  -- METRO (MANDATORY FAMILY)
   -- ============================================================
-  metro_top_funnel_prospect FLOAT64 OPTIONS(description="Metro top-of-funnel prospect events."),
-  metro_upper_funnel_prospect FLOAT64 OPTIONS(description="Metro upper-funnel prospect events."),
-  metro_mid_funnel_prospect FLOAT64 OPTIONS(description="Metro mid-funnel prospect events."),
-  metro_low_funnel_cs FLOAT64 OPTIONS(description="Metro low-funnel customer sign-up events."),
+  metro_top_funnel_prospect FLOAT64 OPTIONS(description="Metro top funnel prospect."),
+  metro_upper_funnel_prospect FLOAT64 OPTIONS(description="Metro upper funnel prospect."),
+  metro_mid_funnel_prospect FLOAT64 OPTIONS(description="Metro mid funnel prospect."),
+  metro_low_funnel_cs FLOAT64 OPTIONS(description="Metro low funnel CS."),
   metro_qt FLOAT64 OPTIONS(description="Metro qualified traffic."),
-  metro_hint_qt FLOAT64 OPTIONS(description="Metro Home Internet qualified traffic."),
+  metro_hint_qt FLOAT64 OPTIONS(description="Metro HINT qualified traffic."),
 
   -- ============================================================
-  -- TMO METRICS
+  -- TMO FUNNEL (MANDATORY FAMILY)
   -- ============================================================
-  tmo_top_funnel_prospect FLOAT64 OPTIONS(description="TMO top-of-funnel prospects."),
-  tmo_upper_funnel_prospect FLOAT64 OPTIONS(description="TMO upper-funnel prospects."),
-  tmo_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description="TMO prepaid low-funnel prospects."),
+  tmo_top_funnel_prospect FLOAT64 OPTIONS(description="TMO top funnel prospect."),
+  tmo_upper_funnel_prospect FLOAT64 OPTIONS(description="TMO upper funnel prospect."),
+  tmo_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description="TMO prepaid low funnel prospect."),
 
   -- ============================================================
-  -- TFB METRICS (Canonical: includes TBG mappings)
+  -- TFB + TBG→TFB (MANDATORY FAMILY)
   -- ============================================================
-  tfb_credit_check FLOAT64 OPTIONS(description="TFB credit check events."),
+  tfb_credit_check FLOAT64 OPTIONS(description="TFB credit check."),
   tfb_invoca_sales_calls FLOAT64 OPTIONS(description="TFB Invoca sales calls."),
   tfb_leads FLOAT64 OPTIONS(description="TFB leads."),
   tfb_quality_traffic FLOAT64 OPTIONS(description="TFB quality traffic."),
-  tfb_hint_ec FLOAT64 OPTIONS(description="TFB HINT eligibility checks."),
-  tfb_low_funnel FLOAT64 OPTIONS(description="TFB low-funnel conversions (canonicalized from tbg__low__funnel when present)."),
-  tfb_lead_form_submit FLOAT64 OPTIONS(description="TFB lead form submits (canonicalized from tbg__lead__form__submit when present)."),
-  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description="TFB Invoca sales intent (DDA), canonicalized from tbg__invoca__sales__intent_dda when present."),
-  tfb_invoca_order_dda FLOAT64 OPTIONS(description="TFB Invoca orders (DDA), canonicalized from tbg__invoca__order_dda when present."),
+  tfb_hint_ec FLOAT64 OPTIONS(description="TFB HINT EC."),
   total_tfb_conversions FLOAT64 OPTIONS(description="Total TFB conversions."),
+  tfb_low_funnel FLOAT64 OPTIONS(description="TFB low funnel (includes mapped TBG low funnel)."),
+  tfb_lead_form_submit FLOAT64 OPTIONS(description="TFB lead form submit (includes mapped TBG)."),
+  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description="TFB invoca sales intent DDA (includes mapped TBG)."),
+  tfb_invoca_order_dda FLOAT64 OPTIONS(description="TFB invoca order DDA (includes mapped TBG)."),
 
   -- ============================================================
-  -- OTHER METRICS
+  -- METADATA (MANDATORY)
   -- ============================================================
-  magenta_pqt FLOAT64 OPTIONS(description="Magenta pre-qualification tool completions."),
-
-  -- ============================================================
-  -- METADATA
-  -- ============================================================
-  file_load_datetime DATETIME OPTIONS(description="Bronze file load timestamp (used as lineage / freshness)."),
-  silver_inserted_at TIMESTAMP OPTIONS(description="Timestamp when the record was inserted/updated in Silver.")
+  file_load_datetime DATETIME OPTIONS(description="Bronze daily file load timestamp."),
+  silver_inserted_at TIMESTAMP OPTIONS(description="Silver insert/update timestamp.")
 )
 PARTITION BY date
-CLUSTER BY account_id, campaign_id, campaign_type;
-
-
-
+CLUSTER BY lob, ad_platform, account_id, campaign_id, campaign_type;
