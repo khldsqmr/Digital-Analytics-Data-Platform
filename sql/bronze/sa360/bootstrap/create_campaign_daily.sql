@@ -1,26 +1,24 @@
 /*
 ===============================================================================
-BOOTSTRAP | BRONZE | SA 360 | CAMPAIGN DAILY (ONE-TIME FULL BUILD)
+BOOTSTRAP | BRONZE | SA360 | CAMPAIGN DAILY (NORMALIZED)
 ===============================================================================
 
 PURPOSE
 -------
-Create the Bronze Campaign Daily table from the raw Improvado
-Search Ads 360 campaign export.
+Create normalized Bronze Campaign Daily table.
 
-This table is intentionally:
-  • LOSSLESS (all raw metrics preserved)
-  • MINIMALLY TRANSFORMED (Bronze principle)
-  • STRUCTURED for downstream Silver logic
-  • SAFE for incremental MERGE
+This table:
+  • Preserves all raw data
+  • Normalizes column names
+  • Removes double underscores
+  • Removes leading/trailing underscores
+  • Documents original raw column names
+  • Converts cost_micros into cost
+  • Adds bronze_inserted_at timestamp
 
-SOURCE TABLE
-------------
-prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo
-
-TARGET TABLE
-------------
-prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
+SOURCE
+------
+google_search_ads_360_campaigns_tmo
 
 GRAIN
 -----
@@ -28,20 +26,11 @@ account_id + campaign_id + date_yyyymmdd
 
 PARTITION
 ---------
-date  (Parsed from date_yyyymmdd)
+date_serial (numeric date from source)
 
 CLUSTER
 -------
 account_id, campaign_id
-
-DESIGN PRINCIPLES
------------------
-1. No metric dropped
-2. No business logic applied
-3. Naming standardized (snake_case)
-4. Cost converted from micros
-5. Raw metadata preserved
-6. Ready for Silver modeling
 ===============================================================================
 */
 
@@ -49,143 +38,198 @@ CREATE OR REPLACE TABLE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
 (
 
-  /* ========================================================================
-     CORE IDENTIFIERS
-     ======================================================================== */
+/* ============================================================================
+   IDENTIFIERS
+============================================================================ */
 
-  account_id STRING OPTIONS(description='Search Ads 360 advertiser account ID'),
-  account_name STRING OPTIONS(description='Advertiser account name'),
-  campaign_id STRING OPTIONS(description='Campaign ID'),
-  resource_name STRING OPTIONS(description='Google Ads API resource name'),
-  customer_id STRING OPTIONS(description='Google Ads customer ID'),
-  customer_name STRING OPTIONS(description='Customer account name'),
-  client_manager_id FLOAT64 OPTIONS(description='Client manager ID'),
-  client_manager_name STRING OPTIONS(description='Client manager name'),
+account_id STRING OPTIONS(description='Raw: account_id. SA360 advertiser account ID.'),
 
-  /* ========================================================================
-     DATE FIELDS
-     ======================================================================== */
+account_name STRING OPTIONS(description='Raw: account_name. Advertiser account name.'),
 
-  date_yyyymmdd STRING OPTIONS(description='Raw date in YYYYMMDD format'),
-  raw_numeric_date INT64 OPTIONS(description='Raw numeric date value from source'),
-  date DATE OPTIONS(description='Parsed DATE derived from date_yyyymmdd'),
-  segments_date DATE OPTIONS(description='Segments date dimension'),
+campaign_id STRING OPTIONS(description='Raw: campaign_id. Unique campaign identifier.'),
 
-  /* ========================================================================
-     CORE PERFORMANCE METRICS
-     ======================================================================== */
+resource_name STRING OPTIONS(description='Raw: resource_name. Google Ads API resource path.'),
 
-  clicks FLOAT64 OPTIONS(description='Total clicks'),
-  impressions FLOAT64 OPTIONS(description='Total impressions'),
-  cost_micros FLOAT64 OPTIONS(description='Cost in micros'),
-  cost FLOAT64 OPTIONS(description='Cost converted from micros to currency'),
-  all_conversions FLOAT64 OPTIONS(description='All conversions'),
+customer_id STRING OPTIONS(description='Raw: customer_id. Google Ads engine customer ID.'),
 
-  /* ========================================================================
-     GENERAL METRICS
-     ======================================================================== */
+customer_name STRING OPTIONS(description='Raw: customer_name. Customer account name.'),
 
-  aal FLOAT64 OPTIONS(description='Add-a-line conversions'),
-  add_a_line FLOAT64 OPTIONS(description='Add-a-line explicit conversions'),
-  bi FLOAT64 OPTIONS(description='Buying intent metric'),
-  buying_intent FLOAT64 OPTIONS(description='Buying intent conversions'),
-  bts_quality_traffic FLOAT64 OPTIONS(description='BTS quality traffic'),
-  digital_gross_add FLOAT64 OPTIONS(description='Digital gross add metric'),
+client_manager_id FLOAT64 OPTIONS(description='Raw: client_manager_id. Client manager numeric ID.'),
 
-  /* ========================================================================
-     CART / CHECKOUT
-     ======================================================================== */
+client_manager_name STRING OPTIONS(description='Raw: client_manager_name. Client manager name.'),
 
-  cart_start FLOAT64 OPTIONS(description='Generic cart start events'),
-  postpaid_cart_start FLOAT64 OPTIONS(description='Postpaid cart start events'),
-  postpaid_pspv FLOAT64 OPTIONS(description='Postpaid PSPV metric'),
+/* ============================================================================
+   DATE FIELDS
+============================================================================ */
 
-  /* ========================================================================
-     CONNECT
-     ======================================================================== */
+date_yyyymmdd STRING OPTIONS(description='Raw: date_yyyymmdd. Reporting date in YYYYMMDD.'),
 
-  connect_low_funnel_visit FLOAT64 OPTIONS(description='Connect low funnel visits'),
-  connect_low_funnel_prospect FLOAT64 OPTIONS(description='Connect low funnel prospects'),
-  connect_qt FLOAT64 OPTIONS(description='Connect qualified traffic'),
+date_serial INT64 OPTIONS(description='Raw: date. Numeric date identifier from source.'),
 
-  /* ========================================================================
-     HINT (HOME INTERNET)
-     ======================================================================== */
+segments_date STRING OPTIONS(description='Raw: segments_date. Google Ads segments date.'),
 
-  hint_ec FLOAT64 OPTIONS(description='Home Internet eligibility checks'),
-  hint_sec FLOAT64 OPTIONS(description='Home Internet secondary eligibility'),
-  hint_web_orders FLOAT64 OPTIONS(description='HINT web orders'),
-  hint_invoca_calls FLOAT64 OPTIONS(description='HINT Invoca calls'),
-  hint_offline_invoca_calls FLOAT64 OPTIONS(description='HINT offline calls'),
-  hint_offline_invoca_eligibility FLOAT64 OPTIONS(description='HINT offline eligibility'),
-  hint_offline_invoca_order FLOAT64 OPTIONS(description='HINT offline order'),
-  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description='HINT offline RT order'),
-  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description='HINT offline sales opp'),
-  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description='Marketing automation HINT eligibility'),
+insert_date_id INT64 OPTIONS(description='Raw: __insert_date. Technical load identifier.'),
 
-  /* ========================================================================
-     FIBER
-     ======================================================================== */
+/* ============================================================================
+   LOAD METADATA
+============================================================================ */
 
-  fiber_activations FLOAT64 OPTIONS(description='Fiber activations'),
-  fiber_pre_order FLOAT64 OPTIONS(description='Fiber pre-orders'),
-  fiber_waitlist_sign_up FLOAT64 OPTIONS(description='Fiber waitlist sign-ups'),
-  fiber_ec FLOAT64 OPTIONS(description='Fiber e-commerce orders'),
-  fiber_ec_dda FLOAT64 OPTIONS(description='Fiber e-commerce DDA'),
-  fiber_web_orders FLOAT64 OPTIONS(description='Fiber web orders'),
-  fiber_sec FLOAT64 OPTIONS(description='Fiber secondary eligibility'),
-  fiber_sec_dda FLOAT64 OPTIONS(description='Fiber secondary eligibility DDA'),
+file_load_datetime DATETIME OPTIONS(description='Raw: File_Load_datetime. ETL ingestion timestamp.'),
 
-  /* ========================================================================
-     METRO
-     ======================================================================== */
+filename STRING OPTIONS(description='Raw: Filename. Source file path.'),
 
-  metro_top_funnel_prospect FLOAT64 OPTIONS(description='Metro top funnel prospects'),
-  metro_upper_funnel_prospect FLOAT64 OPTIONS(description='Metro upper funnel prospects'),
-  metro_mid_funnel_prospect FLOAT64 OPTIONS(description='Metro mid funnel prospects'),
-  metro_low_funnel_cs FLOAT64 OPTIONS(description='Metro low funnel customer signups'),
-  metro_qt FLOAT64 OPTIONS(description='Metro qualified traffic'),
-  metro_hint_qt FLOAT64 OPTIONS(description='Metro HINT qualified traffic'),
+bronze_inserted_at TIMESTAMP OPTIONS(description='Timestamp when record inserted into Bronze table.'),
 
-  /* ========================================================================
-     TMO
-     ======================================================================== */
+/* ============================================================================
+   CORE PERFORMANCE
+============================================================================ */
 
-  tmo_top_funnel_prospect FLOAT64 OPTIONS(description='TMO top funnel prospects'),
-  tmo_upper_funnel_prospect FLOAT64 OPTIONS(description='TMO upper funnel prospects'),
-  tmo_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description='TMO prepaid low funnel prospects'),
+clicks FLOAT64 OPTIONS(description='Raw: clicks. Total clicks.'),
 
-  /* ========================================================================
-     TFB / TBG (Same Business Domain)
-     ======================================================================== */
+impressions FLOAT64 OPTIONS(description='Raw: impressions. Total impressions.'),
 
-  tbg_low_funnel FLOAT64 OPTIONS(description='TFB low funnel events'),
-  tbg_lead_form_submit FLOAT64 OPTIONS(description='TFB lead form submissions'),
-  tbg_invoca_sales_intent_dda FLOAT64 OPTIONS(description='TFB Invoca sales intent DDA'),
-  tbg_invoca_order_dda FLOAT64 OPTIONS(description='TFB Invoca order DDA'),
+cost_micros FLOAT64 OPTIONS(description='Raw: cost_micros. Cost in micros.'),
 
-  tfb_credit_check FLOAT64 OPTIONS(description='TFB credit check events'),
-  tfb_hint_ec FLOAT64 OPTIONS(description='TFB HINT eligibility'),
-  tfb_invoca_sales_calls FLOAT64 OPTIONS(description='TFB Invoca sales calls'),
-  tfb_leads FLOAT64 OPTIONS(description='TFB leads'),
-  tfb_quality_traffic FLOAT64 OPTIONS(description='TFB quality traffic'),
-  total_tfb_conversions FLOAT64 OPTIONS(description='Total TFB conversions'),
+cost FLOAT64 OPTIONS(description='Derived: cost_micros / 1e6. Cost in currency units.'),
 
-  /* ========================================================================
-     OTHER METRICS
-     ======================================================================== */
+all_conversions FLOAT64 OPTIONS(description='Raw: all_conversions. All conversions metric.'),
 
-  magenta_pqt FLOAT64 OPTIONS(description='Magenta PQT metric'),
+/* ============================================================================
+   GENERAL METRICS
+============================================================================ */
 
-  /* ========================================================================
-     LOAD METADATA
-     ======================================================================== */
+aal FLOAT64 OPTIONS(description='Raw: aal. Add-a-line related conversions.'),
 
-  __insert_date INT64 OPTIONS(description='Technical insert date identifier'),
-  file_load_datetime DATETIME OPTIONS(description='File load timestamp'),
-  filename STRING OPTIONS(description='Source file path'),
-  bronze_inserted_at TIMESTAMP OPTIONS(description='Bronze ingestion timestamp')
+add_a_line FLOAT64 OPTIONS(description='Raw: add_a__line. Add-a-line conversions.'),
+
+bi FLOAT64 OPTIONS(description='Raw: bi. Business intent metric.'),
+
+bts_quality_traffic FLOAT64 OPTIONS(description='Raw: bts__quality__traffic. BTS quality traffic metric.'),
+
+buying_intent FLOAT64 OPTIONS(description='Raw: buying__intent. Buying intent score.'),
+
+digital_gross_add FLOAT64 OPTIONS(description='Raw: digital__gross__add. Digital gross adds.'),
+
+/* ============================================================================
+   CART / POSTPAID
+============================================================================ */
+
+cart_start FLOAT64 OPTIONS(description='Raw: cart__start_. Cart start events.'),
+
+postpaid_cart_start FLOAT64 OPTIONS(description='Raw: postpaid__cart__start_. Postpaid cart starts.'),
+
+postpaid_pspv FLOAT64 OPTIONS(description='Raw: postpaid_pspv_. Postpaid PSPV metric.'),
+
+/* ============================================================================
+   CONNECT
+============================================================================ */
+
+connect_low_funnel_prospect FLOAT64 OPTIONS(description='Raw: connect__low__funnel__prospect.'),
+
+connect_low_funnel_visit FLOAT64 OPTIONS(description='Raw: connect__low__funnel__visit.'),
+
+connect_qt FLOAT64 OPTIONS(description='Raw: connect_qt. Connect qualified traffic.'),
+
+/* ============================================================================
+   HINT
+============================================================================ */
+
+hint_ec FLOAT64 OPTIONS(description='Raw: hint_ec. HINT eligibility checks.'),
+
+hint_sec FLOAT64 OPTIONS(description='Raw: hint_sec. HINT secondary eligibility checks.'),
+
+hint_web_orders FLOAT64 OPTIONS(description='Raw: hint__web__orders.'),
+
+hint_invoca_calls FLOAT64 OPTIONS(description='Raw: hint__invoca__calls.'),
+
+hint_offline_invoca_calls FLOAT64 OPTIONS(description='Raw: hint__offline__invoca__calls.'),
+
+hint_offline_invoca_eligibility FLOAT64 OPTIONS(description='Raw: hint__offline__invoca__eligibility.'),
+
+hint_offline_invoca_order FLOAT64 OPTIONS(description='Raw: hint__offline__invoca__order.'),
+
+hint_offline_invoca_order_rt FLOAT64 OPTIONS(description='Raw: hint__offline__invoca__order_rt_.'),
+
+hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description='Raw: hint__offline__invoca__sales__opp.'),
+
+ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description='Raw: _ma_hint_ec__eligibility__check_.'),
+
+/* ============================================================================
+   FIBER
+============================================================================ */
+
+fiber_activations FLOAT64 OPTIONS(description='Raw: fiber__activations.'),
+
+fiber_pre_order FLOAT64 OPTIONS(description='Raw: fiber__pre__order.'),
+
+fiber_waitlist_sign_up FLOAT64 OPTIONS(description='Raw: fiber__waitlist__sign__up.'),
+
+fiber_web_orders FLOAT64 OPTIONS(description='Raw: fiber__web__orders.'),
+
+fiber_ec FLOAT64 OPTIONS(description='Raw: fiber_ec.'),
+
+fiber_ec_dda FLOAT64 OPTIONS(description='Raw: fiber_ec_dda.'),
+
+fiber_sec FLOAT64 OPTIONS(description='Raw: fiber_sec.'),
+
+fiber_sec_dda FLOAT64 OPTIONS(description='Raw: fiber_sec_dda.'),
+
+/* ============================================================================
+   METRO
+============================================================================ */
+
+metro_low_funnel_cs FLOAT64 OPTIONS(description='Raw: metro__low__funnel_cs_.'),
+
+metro_mid_funnel_prospect FLOAT64 OPTIONS(description='Raw: metro__mid__funnel__prospect.'),
+
+metro_top_funnel_prospect FLOAT64 OPTIONS(description='Raw: metro__top__funnel__prospect.'),
+
+metro_upper_funnel_prospect FLOAT64 OPTIONS(description='Raw: metro__upper__funnel__prospect.'),
+
+metro_hint_qt FLOAT64 OPTIONS(description='Raw: metro_hint_qt.'),
+
+metro_qt FLOAT64 OPTIONS(description='Raw: metro_qt.'),
+
+/* ============================================================================
+   TMO
+============================================================================ */
+
+tmo_top_funnel_prospect FLOAT64 OPTIONS(description='Raw: tmo__top__funnel__prospect.'),
+
+tmo_upper_funnel_prospect FLOAT64 OPTIONS(description='Raw: tmo__upper__funnel__prospect.'),
+
+tmo_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description='Raw: t__mobile__prepaid__low__funnel__prospect.'),
+
+/* ============================================================================
+   TFB / TBG
+============================================================================ */
+
+tbg_low_funnel FLOAT64 OPTIONS(description='Raw: tbg__low__funnel.'),
+
+tbg_lead_form_submit FLOAT64 OPTIONS(description='Raw: tbg__lead__form__submit.'),
+
+tbg_invoca_sales_intent_dda FLOAT64 OPTIONS(description='Raw: tbg__invoca__sales__intent_dda.'),
+
+tbg_invoca_order_dda FLOAT64 OPTIONS(description='Raw: tbg__invoca__order_dda.'),
+
+tfb_credit_check FLOAT64 OPTIONS(description='Raw: tfb__credit__check.'),
+
+tfb_invoca_sales_calls FLOAT64 OPTIONS(description='Raw: tfb__invoca__sales__calls.'),
+
+tfb_leads FLOAT64 OPTIONS(description='Raw: tfb__leads.'),
+
+tfb_quality_traffic FLOAT64 OPTIONS(description='Raw: tfb__quality__traffic.'),
+
+tfb_hint_ec FLOAT64 OPTIONS(description='Raw: tfb_hint_ec.'),
+
+total_tfb_conversions FLOAT64 OPTIONS(description='Raw: total_tfb__conversions.'),
+
+/* ============================================================================
+   OTHER
+============================================================================ */
+
+magenta_pqt FLOAT64 OPTIONS(description='Raw: magenta_pqt.')
 
 )
-PARTITION BY date
+PARTITION BY date_serial
 CLUSTER BY account_id, campaign_id;
