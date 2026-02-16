@@ -3,15 +3,12 @@
 FILE: 00_create_sdi_bronze_sa360_test_results.sql
 
 PURPOSE:
-  Create centralized Bronze QA test results table.
-
-  All test procedures insert exactly ONE row per test execution.
-  PASS and FAIL both logged.
+  Centralized Bronze QA test results table.
 
 DESIGN:
-  • Partitioned by test_date
-  • Clustered for fast dashboard filtering
-  • Consistent naming across procedures
+  - Partitioned by test_date
+  - Clustered for fast filtering
+  - All procedures insert exactly ONE row per test (PASS or FAIL)
 
 ===============================================================================
 */

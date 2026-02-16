@@ -3,14 +3,12 @@
 FILE: 01_sp_bronze_campaign_daily_critical.sql
 
 PURPOSE:
-  Critical structural validation for:
-    sdi_bronze_sa360_campaign_daily
+  Blocking / HIGH severity structural validation for:
+    prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
 
-  These tests are blocking.
-  If any HIGH severity FAIL exists, orchestration stops.
-
-GRAIN:
-  account_id + campaign_id + date
+GRAIN (must be unique):
+  account_id + campaign_id + date_yyyymmdd
+  (date is parsed from date_yyyymmdd and is not the dedupe key)
 
 ===============================================================================
 */
@@ -20,22 +18,21 @@ CREATE OR REPLACE PROCEDURE
 BEGIN
 
 DECLARE v_expected FLOAT64;
-DECLARE v_actual FLOAT64;
+DECLARE v_actual   FLOAT64;
 DECLARE v_variance FLOAT64;
-DECLARE v_status STRING;
-DECLARE v_reason STRING;
-DECLARE v_next STRING;
+DECLARE v_status   STRING;
+DECLARE v_reason   STRING;
+DECLARE v_next     STRING;
 
 -- =====================================================
 -- TEST 1: Duplicate Grain Check
 -- =====================================================
-
 SET v_expected = 0;
 
 SET v_actual = (
   SELECT COUNT(*)
   FROM (
-    SELECT account_id, campaign_id, date, COUNT(*) c
+    SELECT account_id, campaign_id, date_yyyymmdd, COUNT(*) AS c
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
     GROUP BY 1,2,3
     HAVING COUNT(*) > 1
@@ -43,17 +40,17 @@ SET v_actual = (
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_status   = IF(v_actual = 0, 'PASS', 'FAIL');
 
 SET v_reason = IF(
-  v_status='FAIL',
-  'Duplicate grain detected. MERGE or upstream duplication issue.',
+  v_status = 'FAIL',
+  'Duplicate grain detected (account_id, campaign_id, date_yyyymmdd). MERGE/dedup issue.',
   'No duplicate grain detected.'
 );
 
 SET v_next = IF(
-  v_status='FAIL',
-  'Inspect incremental MERGE and deduplication logic.',
+  v_status = 'FAIL',
+  'Inspect incremental/backfill MERGE keys and ROW_NUMBER() dedup ordering.',
   'No action required.'
 );
 
@@ -80,30 +77,29 @@ VALUES (
 -- =====================================================
 -- TEST 2: Null Identifier Check
 -- =====================================================
-
 SET v_expected = 0;
 
 SET v_actual = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE account_id IS NULL
-     OR campaign_id IS NULL
-     OR date IS NULL
+  WHERE account_id   IS NULL
+     OR campaign_id  IS NULL
      OR date_yyyymmdd IS NULL
+     OR date         IS NULL
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_status   = IF(v_actual = 0, 'PASS', 'FAIL');
 
 SET v_reason = IF(
   v_status='FAIL',
-  'Primary identifier contains NULL values.',
+  'Primary identifiers contain NULL values (account_id/campaign_id/date_yyyymmdd/date).',
   'All identifiers valid.'
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Inspect source ingestion and column mapping.',
+  'Inspect parsing of date_yyyymmdd -> date and source ingestion mapping.',
   'No action required.'
 );
 
@@ -128,29 +124,28 @@ VALUES (
 );
 
 -- =====================================================
--- TEST 3: Partition Freshness Check
+-- TEST 3: Partition Freshness Check (max 2-day delay)
 -- =====================================================
-
--- Allow max 2-day delay
 SET v_expected = 2;
 
 SET v_actual = (
   SELECT DATE_DIFF(CURRENT_DATE(), MAX(date), DAY)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+  WHERE date IS NOT NULL
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual <= v_expected, 'PASS', 'FAIL');
+SET v_status   = IF(v_actual <= v_expected, 'PASS', 'FAIL');
 
 SET v_reason = IF(
   v_status='FAIL',
-  CONCAT('Partition stale by ', CAST(v_actual AS STRING), ' days. Threshold ≤ 2 days.'),
+  CONCAT('Partition stale by ', CAST(v_actual AS STRING), ' days. Threshold <= 2 days.'),
   CONCAT('Partition freshness OK (', CAST(v_actual AS STRING), ' days delay).')
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Check incremental ingestion pipeline and upstream data availability.',
+  'Check upstream landing, incremental scheduling, and 7-day lookback logic.',
   'No action required.'
 );
 

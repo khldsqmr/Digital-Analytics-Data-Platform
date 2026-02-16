@@ -8,8 +8,8 @@ PURPOSE:
 FLOW:
   1. Run critical tests
   2. Stop if any critical FAIL
-  3. Run reconciliation
-  4. Run weekly deep validation (optional)
+  3. Run reconciliation tests
+  4. Run weekly deep validation (optional schedule)
 
 ===============================================================================
 */
@@ -51,7 +51,7 @@ CALL `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_campaign_daily_reco
 CALL `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_campaign_entity_reconciliation`();
 
 -- =====================================================
--- STEP 4: Run Deep Validation (optional schedule)
+-- STEP 4: Run Deep Validation (optional weekly schedule)
 -- =====================================================
 
 CALL `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_weekly_deep_validation`();
