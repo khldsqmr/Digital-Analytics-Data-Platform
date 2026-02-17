@@ -4,20 +4,31 @@ FILE: 02_merge_sdi_gold_sa360_campaign_daily.sql
 LAYER: Gold (Daily)
 TARGET:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
+
 SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
 
 PURPOSE:
-  Incrementally upsert Gold Daily from Silver Daily (late-arrival protection).
+  Incrementally upsert Gold Daily from Silver Daily with late-arrival protection.
 
-LOOKBACK:
-  7 days (configurable)
+WHY LOOKBACK MATTERS:
+  If Silver backfills/corrects historical dates, Gold must re-pull those dates.
+  If QA reconciles over 14 days, and lookback is only 7 days, you can get:
+    - keys match (PASS)
+    - rowcount match (PASS)
+    - metric sums mismatch (FAIL)
+  because Gold has stale values older than 7 days.
 
+DEFAULT LOOKBACK:
+  21 days (tunable). You can reduce if Silver never backfills beyond 7.
+
+GRAIN:
+  account_id + campaign_id + date
 ===============================================================================
 */
 
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 7;
+  DECLARE lookback_days INT64 DEFAULT 21;
 
   MERGE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T

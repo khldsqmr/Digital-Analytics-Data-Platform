@@ -37,26 +37,26 @@ BEGIN
   DECLARE v_cost_tol FLOAT64 DEFAULT 0.01;      -- currency tolerance
   DECLARE v_conv_tol FLOAT64 DEFAULT 0.0001;    -- conversion tolerance (float)
 
-  WITH silver AS (
-    SELECT account_id, campaign_id, date, impressions, clicks, cost, all_conversions
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-    WHERE date >= v_start
-  ),
-  gold AS (
-    SELECT account_id, campaign_id, date, impressions, clicks, cost, all_conversions
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE date >= v_start
-  )
-
   -- ---------------------------------------------------------------------------
   -- TEST 1: Rowcount Match (HIGH)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH counts AS (
-    SELECT
-      (SELECT COUNT(*) FROM silver) AS expected_rows,
-      (SELECT COUNT(*) FROM gold) AS actual_rows
-  )
+  WITH
+    silver AS (
+      SELECT account_id, campaign_id, date
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    gold AS (
+      SELECT account_id, campaign_id, date
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    counts AS (
+      SELECT
+        (SELECT COUNT(*) FROM silver) AS expected_rows,
+        (SELECT COUNT(*) FROM gold) AS actual_rows
+    )
   SELECT
     v_now, CURRENT_DATE(), v_table,
     'reconciliation',
@@ -84,17 +84,24 @@ BEGIN
   -- TEST 2: Missing Gold Keys vs Silver (HIGH)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH missing AS (
-    SELECT COUNT(*) AS missing_cnt
-    FROM (
-      SELECT DISTINCT account_id, campaign_id, date FROM silver
-    ) s
-    LEFT JOIN (
-      SELECT DISTINCT account_id, campaign_id, date FROM gold
-    ) g
-    USING (account_id, campaign_id, date)
-    WHERE g.account_id IS NULL
-  )
+  WITH
+    silver AS (
+      SELECT DISTINCT account_id, campaign_id, date
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    gold AS (
+      SELECT DISTINCT account_id, campaign_id, date
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    missing AS (
+      SELECT COUNT(*) AS missing_cnt
+      FROM silver s
+      LEFT JOIN gold g
+      USING (account_id, campaign_id, date)
+      WHERE g.account_id IS NULL
+    )
   SELECT
     v_now, CURRENT_DATE(), v_table,
     'reconciliation',
@@ -120,35 +127,44 @@ BEGIN
 
   -- ---------------------------------------------------------------------------
   -- TEST 3: Core Metric Sums Match vs Silver (HIGH, tolerant)
-  --   impressions/clicks expected integers -> exact
-  --   cost/all_conversions -> tolerance
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH s AS (
-    SELECT
-      IFNULL(SUM(impressions),0) AS impressions,
-      IFNULL(SUM(clicks),0) AS clicks,
-      IFNULL(SUM(cost),0) AS cost,
-      IFNULL(SUM(all_conversions),0) AS all_conversions
-    FROM silver
-  ),
-  g AS (
-    SELECT
-      IFNULL(SUM(impressions),0) AS impressions,
-      IFNULL(SUM(clicks),0) AS clicks,
-      IFNULL(SUM(cost),0) AS cost,
-      IFNULL(SUM(all_conversions),0) AS all_conversions
-    FROM gold
-  ),
-  calc AS (
-    SELECT
-      (IF(g.impressions = s.impressions, 0, 1) +
-       IF(g.clicks = s.clicks, 0, 1) +
-       IF(ABS(g.cost - s.cost) <= v_cost_tol, 0, 1) +
-       IF(ABS(g.all_conversions - s.all_conversions) <= v_conv_tol, 0, 1)
-      ) AS failed_metric_cnt
-    FROM s, g
-  )
+  WITH
+    silver AS (
+      SELECT impressions, clicks, cost, all_conversions
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    gold AS (
+      SELECT impressions, clicks, cost, all_conversions
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date >= v_start
+    ),
+    s AS (
+      SELECT
+        IFNULL(SUM(impressions),0) AS impressions,
+        IFNULL(SUM(clicks),0) AS clicks,
+        IFNULL(SUM(cost),0) AS cost,
+        IFNULL(SUM(all_conversions),0) AS all_conversions
+      FROM silver
+    ),
+    g AS (
+      SELECT
+        IFNULL(SUM(impressions),0) AS impressions,
+        IFNULL(SUM(clicks),0) AS clicks,
+        IFNULL(SUM(cost),0) AS cost,
+        IFNULL(SUM(all_conversions),0) AS all_conversions
+      FROM gold
+    ),
+    calc AS (
+      SELECT
+        (IF(g.impressions = s.impressions, 0, 1) +
+         IF(g.clicks = s.clicks, 0, 1) +
+         IF(ABS(g.cost - s.cost) <= v_cost_tol, 0, 1) +
+         IF(ABS(g.all_conversions - s.all_conversions) <= v_conv_tol, 0, 1)
+        ) AS failed_metric_cnt
+      FROM s, g
+    )
   SELECT
     v_now, CURRENT_DATE(), v_table,
     'reconciliation',
@@ -165,7 +181,7 @@ BEGIN
     ),
     IF(failed_metric_cnt = 0,
       'No action required.',
-      'Compare totals by metric; verify types/tolerance; check Gold MERGE selection.'
+      'Compare totals by metric; verify tolerance; check Gold MERGE selection and column rename mapping.'
     ),
     IF(failed_metric_cnt = 0, FALSE, TRUE),
     IF(failed_metric_cnt = 0, TRUE, FALSE),
