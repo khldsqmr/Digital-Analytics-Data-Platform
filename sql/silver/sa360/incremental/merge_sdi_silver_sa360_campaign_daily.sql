@@ -172,7 +172,7 @@ BEGIN
         d.metro_qt,
 
         -- TMO standardized alias
-        d.t_mobile_prepaid_low_funnel_prospect AS tmo_prepaid_low_funnel_prospect,
+        d.tmo_prepaid_low_funnel_prospect AS tmo_prepaid_low_funnel_prospect,
         d.tmo_top_funnel_prospect,
         d.tmo_upper_funnel_prospect,
 
