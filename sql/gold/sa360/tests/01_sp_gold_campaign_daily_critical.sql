@@ -18,6 +18,7 @@ GRAIN:
 
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_campaign_daily_critical`()
+OPTIONS(strict_mode=false)
 BEGIN
 
   DECLARE v_table_name STRING DEFAULT 'sdi-gold-sa360-campaign-daily';

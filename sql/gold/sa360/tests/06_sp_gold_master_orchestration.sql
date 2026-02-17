@@ -21,6 +21,7 @@ RESULTS TABLE:
 
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_master_orchestration`()
+OPTIONS(strict_mode=false)
 BEGIN
 
   DECLARE v_critical_failures INT64;
