@@ -2,8 +2,9 @@
 ===============================================================================
 FILE: 00_create_sdi_gold_sa360_campaign_daily.sql
 LAYER: Gold
+
 TARGET:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi-gold-sa360-campaign-daily
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
 SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
@@ -17,47 +18,48 @@ GRAIN:
   account_id + campaign_id + date
 
 DESIGN NOTES:
-  - Retains Bronze/Silver metric types (FLOAT64 for metrics)
-  - Does NOT use campaign status in Gold (per your requirement)
-  - Keeps a few lineage fields: file_load_datetime, gold_inserted_at
+  - Retains metric types (FLOAT64 for metrics) as upstream
+  - Keeps minimal lineage fields: file_load_datetime, gold_inserted_at
+  - Naming consistency: uses tmo_prepaid_low_funnel_prospect (NOT t_mobile...)
 
 PARTITION / CLUSTER:
-  - Partition by date
-  - Cluster by lob, ad_platform, account_id, campaign_id (max 4)
+  - PARTITION BY date
+  - CLUSTER BY lob, ad_platform, account_id, campaign_id (max 4)
 ===============================================================================
 */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi-gold-sa360-campaign-daily`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
 (
   -- ============================================================
   -- GRAIN IDENTIFIERS
   -- ============================================================
   account_id STRING OPTIONS(description="SA360 account identifier."),
-  account_name STRING OPTIONS(description="Account name / advertiser name (from Silver)."),
   campaign_id STRING OPTIONS(description="Campaign identifier within account."),
-  campaign_name STRING OPTIONS(description="Campaign name from entity snapshot (via Silver)."),
-  date DATE OPTIONS(description="Daily performance date."),
+  date DATE OPTIONS(description="Daily performance date (canonical)."),
 
   -- ============================================================
   -- DASHBOARD DIMENSIONS
   -- ============================================================
-  lob STRING OPTIONS(description="Line of Business derived in Silver (e.g., Postpaid | HSI | Fiber | Metro | TFB)."),
-  ad_platform STRING OPTIONS(description="Ad platform derived in Silver (e.g., Google | Bing)."),
+  account_name STRING OPTIONS(description="Account name / advertiser name (from Silver)."),
+  lob STRING OPTIONS(description="Line of Business derived in Silver (Postpaid | HSI | Fiber | Metro | TFB | Unclassified)."),
+  ad_platform STRING OPTIONS(description="Ad platform derived in Silver (Google | Bing | Unknown)."),
 
-  campaign_type STRING OPTIONS(description="Derived classification from campaign_name (from Silver)."),
+  campaign_name STRING OPTIONS(description="Campaign name (as-of entity snapshot via Silver)."),
+  campaign_type STRING OPTIONS(description="Derived campaign classification (Brand | Generic | Shopping | PMax | DemandGen | Unclassified)."),
+
   advertising_channel_type STRING OPTIONS(description="SA360 entity advertising_channel_type (from Silver)."),
   advertising_channel_sub_type STRING OPTIONS(description="SA360 entity advertising_channel_sub_type (from Silver)."),
   bidding_strategy_type STRING OPTIONS(description="SA360 entity bidding_strategy_type (from Silver)."),
   serving_status STRING OPTIONS(description="SA360 entity serving_status (from Silver)."),
 
   -- ============================================================
-  -- OPTIONAL DRILLDOWN IDENTIFIERS (keep types same as Silver/Bronze)
+  -- OPTIONAL DRILLDOWN IDENTIFIERS
   -- ============================================================
   customer_id STRING OPTIONS(description="Customer ID (from Silver)."),
   customer_name STRING OPTIONS(description="Customer name (from Silver)."),
   resource_name STRING OPTIONS(description="Google Ads resource name (from Silver)."),
-  client_manager_id FLOAT64 OPTIONS(description="Client manager ID (FLOAT64, matches Bronze/Silver)."),
+  client_manager_id FLOAT64 OPTIONS(description="Client manager ID (matches upstream type)."),
   client_manager_name STRING OPTIONS(description="Client manager name (from Silver)."),
 
   -- ============================================================
@@ -66,12 +68,12 @@ CREATE OR REPLACE TABLE
   impressions FLOAT64 OPTIONS(description="Daily impressions."),
   clicks FLOAT64 OPTIONS(description="Daily clicks."),
   cost FLOAT64 OPTIONS(description="Daily cost in standard currency units."),
-  all_conversions FLOAT64 OPTIONS(description="Daily all conversions (modeled + cross-device)."),
+  all_conversions FLOAT64 OPTIONS(description="Daily all conversions."),
 
   -- ============================================================
   -- QUALITY / INTENT / GENERIC
   -- ============================================================
-  bi FLOAT64 OPTIONS(description="Business intent / internal metric."),
+  bi FLOAT64 OPTIONS(description="BI metric."),
   buying_intent FLOAT64 OPTIONS(description="Buying intent signal."),
   bts_quality_traffic FLOAT64 OPTIONS(description="BTS quality traffic."),
   digital_gross_add FLOAT64 OPTIONS(description="Digital gross adds."),
@@ -83,8 +85,8 @@ CREATE OR REPLACE TABLE
   cart_start FLOAT64 OPTIONS(description="Cart start events."),
   postpaid_cart_start FLOAT64 OPTIONS(description="Postpaid cart start events."),
   postpaid_pspv FLOAT64 OPTIONS(description="Postpaid PSPV events."),
-  aal FLOAT64 OPTIONS(description="Add-a-line score/conversions."),
-  add_a_line FLOAT64 OPTIONS(description="Add-a-line conversions count."),
+  aal FLOAT64 OPTIONS(description="AAL metric."),
+  add_a_line FLOAT64 OPTIONS(description="Add-a-line metric."),
 
   -- ============================================================
   -- CONNECT
@@ -96,16 +98,16 @@ CREATE OR REPLACE TABLE
   -- ============================================================
   -- HINT / HSI
   -- ============================================================
-  hint_ec FLOAT64 OPTIONS(description="HINT eligibility checks."),
-  hint_sec FLOAT64 OPTIONS(description="HINT secondary eligibility checks."),
+  hint_ec FLOAT64 OPTIONS(description="HINT EC."),
+  hint_sec FLOAT64 OPTIONS(description="HINT SEC."),
   hint_web_orders FLOAT64 OPTIONS(description="HINT web orders."),
   hint_invoca_calls FLOAT64 OPTIONS(description="HINT Invoca calls."),
   hint_offline_invoca_calls FLOAT64 OPTIONS(description="HINT offline Invoca calls."),
   hint_offline_invoca_eligibility FLOAT64 OPTIONS(description="HINT offline Invoca eligibility."),
   hint_offline_invoca_order FLOAT64 OPTIONS(description="HINT offline Invoca orders."),
-  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description="HINT offline Invoca orders (real-time)."),
-  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description="HINT offline Invoca sales opportunities."),
-  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description="Marketing automation HINT eligibility checks."),
+  hint_offline_invoca_order_rt FLOAT64 OPTIONS(description="HINT offline Invoca orders RT."),
+  hint_offline_invoca_sales_opp FLOAT64 OPTIONS(description="HINT offline Invoca sales opp."),
+  ma_hint_ec_eligibility_check FLOAT64 OPTIONS(description="MA HINT EC eligibility check."),
 
   -- ============================================================
   -- FIBER
@@ -114,10 +116,10 @@ CREATE OR REPLACE TABLE
   fiber_pre_order FLOAT64 OPTIONS(description="Fiber pre-orders."),
   fiber_waitlist_sign_up FLOAT64 OPTIONS(description="Fiber waitlist sign-ups."),
   fiber_web_orders FLOAT64 OPTIONS(description="Fiber web orders."),
-  fiber_ec FLOAT64 OPTIONS(description="Fiber e-commerce orders."),
-  fiber_ec_dda FLOAT64 OPTIONS(description="Fiber e-commerce orders (DDA)."),
-  fiber_sec FLOAT64 OPTIONS(description="Fiber secondary eligibility checks."),
-  fiber_sec_dda FLOAT64 OPTIONS(description="Fiber secondary eligibility checks (DDA)."),
+  fiber_ec FLOAT64 OPTIONS(description="Fiber EC."),
+  fiber_ec_dda FLOAT64 OPTIONS(description="Fiber EC DDA."),
+  fiber_sec FLOAT64 OPTIONS(description="Fiber SEC."),
+  fiber_sec_dda FLOAT64 OPTIONS(description="Fiber SEC DDA."),
 
   -- ============================================================
   -- METRO
@@ -125,7 +127,7 @@ CREATE OR REPLACE TABLE
   metro_top_funnel_prospect FLOAT64 OPTIONS(description="Metro top-funnel prospects."),
   metro_upper_funnel_prospect FLOAT64 OPTIONS(description="Metro upper-funnel prospects."),
   metro_mid_funnel_prospect FLOAT64 OPTIONS(description="Metro mid-funnel prospects."),
-  metro_low_funnel_cs FLOAT64 OPTIONS(description="Metro low-funnel customer signups."),
+  metro_low_funnel_cs FLOAT64 OPTIONS(description="Metro low-funnel CS."),
   metro_qt FLOAT64 OPTIONS(description="Metro qualified traffic."),
   metro_hint_qt FLOAT64 OPTIONS(description="Metro HINT qualified traffic."),
 
@@ -134,21 +136,21 @@ CREATE OR REPLACE TABLE
   -- ============================================================
   tmo_top_funnel_prospect FLOAT64 OPTIONS(description="TMO top-funnel prospects."),
   tmo_upper_funnel_prospect FLOAT64 OPTIONS(description="TMO upper-funnel prospects."),
-  t_mobile_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description="T-Mobile prepaid low-funnel prospects (matches Bronze/Silver field)."),
+  tmo_prepaid_low_funnel_prospect FLOAT64 OPTIONS(description="TMO prepaid low-funnel prospects (standardized)."),
 
   -- ============================================================
-  -- TFB (includes TBG mapped into TFB upstream)
+  -- TFB (includes TBG mapped upstream)
   -- ============================================================
   tfb_credit_check FLOAT64 OPTIONS(description="TFB credit checks."),
   tfb_invoca_sales_calls FLOAT64 OPTIONS(description="TFB Invoca sales calls."),
   tfb_leads FLOAT64 OPTIONS(description="TFB leads."),
   tfb_quality_traffic FLOAT64 OPTIONS(description="TFB quality traffic."),
-  tfb_hint_ec FLOAT64 OPTIONS(description="TFB HINT eligibility checks."),
+  tfb_hint_ec FLOAT64 OPTIONS(description="TFB HINT EC."),
   total_tfb_conversions FLOAT64 OPTIONS(description="Total TFB conversions."),
-  tfb_low_funnel FLOAT64 OPTIONS(description="TFB low funnel (standardized from TBG)."),
-  tfb_lead_form_submit FLOAT64 OPTIONS(description="TFB lead form submit (standardized from TBG)."),
-  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description="TFB Invoca sales intent (DDA) standardized from TBG."),
-  tfb_invoca_order_dda FLOAT64 OPTIONS(description="TFB Invoca orders (DDA) standardized from TBG."),
+  tfb_low_funnel FLOAT64 OPTIONS(description="TFB low funnel."),
+  tfb_lead_form_submit FLOAT64 OPTIONS(description="TFB lead form submit."),
+  tfb_invoca_sales_intent_dda FLOAT64 OPTIONS(description="TFB Invoca sales intent DDA."),
+  tfb_invoca_order_dda FLOAT64 OPTIONS(description="TFB Invoca order DDA."),
 
   -- ============================================================
   -- LINEAGE / METADATA

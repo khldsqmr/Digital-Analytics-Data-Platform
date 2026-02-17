@@ -2,8 +2,9 @@
 ===============================================================================
 FILE: 01_merge_sdi_gold_sa360_campaign_daily.sql
 LAYER: Gold
+
 TARGET:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi-gold-sa360-campaign-daily
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
 SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
@@ -23,18 +24,18 @@ BEGIN
 DECLARE lookback_days INT64 DEFAULT 7;
 
 MERGE
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi-gold-sa360-campaign-daily` T
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T
 USING (
   SELECT
     account_id,
-    account_name,
     campaign_id,
-    campaign_name,
     date,
 
+    account_name,
     lob,
     ad_platform,
 
+    campaign_name,
     campaign_type,
     advertising_channel_type,
     advertising_channel_sub_type,
@@ -97,7 +98,7 @@ USING (
 
     tmo_top_funnel_prospect,
     tmo_upper_funnel_prospect,
-    t_mobile_prepaid_low_funnel_prospect,
+    tmo_prepaid_low_funnel_prospect,
 
     tfb_credit_check,
     tfb_invoca_sales_calls,
@@ -122,11 +123,10 @@ ON
 
 WHEN MATCHED THEN UPDATE SET
   account_name = S.account_name,
-  campaign_name = S.campaign_name,
-
   lob = S.lob,
   ad_platform = S.ad_platform,
 
+  campaign_name = S.campaign_name,
   campaign_type = S.campaign_type,
   advertising_channel_type = S.advertising_channel_type,
   advertising_channel_sub_type = S.advertising_channel_sub_type,
@@ -189,7 +189,7 @@ WHEN MATCHED THEN UPDATE SET
 
   tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
   tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
-  t_mobile_prepaid_low_funnel_prospect = S.t_mobile_prepaid_low_funnel_prospect,
+  tmo_prepaid_low_funnel_prospect = S.tmo_prepaid_low_funnel_prospect,
 
   tfb_credit_check = S.tfb_credit_check,
   tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
