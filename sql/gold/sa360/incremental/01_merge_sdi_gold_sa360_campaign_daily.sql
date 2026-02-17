@@ -4,41 +4,37 @@ FILE: 02_merge_sdi_gold_sa360_campaign_daily.sql
 LAYER: Gold (Daily)
 TARGET:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
-
 SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
 
 PURPOSE:
   Incrementally upsert Gold Daily from Silver Daily with late-arrival protection.
 
-WHY LOOKBACK MATTERS:
-  If Silver backfills/corrects historical dates, Gold must re-pull those dates.
-  If QA reconciles over 14 days, and lookback is only 7 days, you can get:
-    - keys match (PASS)
-    - rowcount match (PASS)
-    - metric sums mismatch (FAIL)
-  because Gold has stale values older than 7 days.
-
 DEFAULT LOOKBACK:
-  21 days (tunable). You can reduce if Silver never backfills beyond 7.
+  21 days (tunable)
 
-GRAIN:
-  account_id + campaign_id + date
+KEY POINT:
+  - DO NOT use INSERT ROW (fragile)
+  - Force date to DATE in the source subquery (defensive)
 ===============================================================================
 */
 
 BEGIN
   DECLARE lookback_days INT64 DEFAULT 21;
 
-  MERGE
-    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T
   USING (
     SELECT
       account_id,
       account_name,
       campaign_id,
       campaign_name,
-      date,
+
+      -- Defensive: guarantees DATE type even if upstream regresses
+      COALESCE(
+        SAFE_CAST(date AS DATE),
+        SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd)
+      ) AS date,
 
       lob,
       ad_platform,
@@ -51,7 +47,7 @@ BEGIN
       customer_id,
       customer_name,
       resource_name,
-      client_manager_id,
+      CAST(client_manager_id AS FLOAT64) AS client_manager_id,
       client_manager_name,
 
       impressions,
@@ -122,10 +118,9 @@ BEGIN
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
     WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ) S
-  ON
-    T.account_id = S.account_id
-    AND T.campaign_id = S.campaign_id
-    AND T.date = S.date
+  ON T.account_id = S.account_id
+ AND T.campaign_id = S.campaign_id
+ AND T.date = S.date
 
   WHEN MATCHED THEN UPDATE SET
     account_name = S.account_name,
@@ -212,6 +207,49 @@ BEGIN
     gold_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN
-    INSERT ROW;
+    INSERT (
+      account_id, account_name, campaign_id, campaign_name, date,
+      lob, ad_platform, campaign_type,
+      advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
+      customer_id, customer_name, resource_name, client_manager_id, client_manager_name,
+      impressions, clicks, cost, all_conversions,
+      bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
+      cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line,
+      connect_low_funnel_prospect, connect_low_funnel_visit, connect_qt,
+      hint_ec, hint_sec, hint_web_orders, hint_invoca_calls, hint_offline_invoca_calls,
+      hint_offline_invoca_eligibility, hint_offline_invoca_order, hint_offline_invoca_order_rt,
+      hint_offline_invoca_sales_opp, ma_hint_ec_eligibility_check,
+      fiber_activations, fiber_pre_order, fiber_waitlist_sign_up, fiber_web_orders,
+      fiber_ec, fiber_ec_dda, fiber_sec, fiber_sec_dda,
+      metro_top_funnel_prospect, metro_upper_funnel_prospect, metro_mid_funnel_prospect,
+      metro_low_funnel_cs, metro_qt, metro_hint_qt,
+      tmo_top_funnel_prospect, tmo_upper_funnel_prospect, tmo_prepaid_low_funnel_prospect,
+      tfb_credit_check, tfb_invoca_sales_calls, tfb_leads, tfb_quality_traffic,
+      tfb_hint_ec, total_tfb_conversions, tfb_low_funnel, tfb_lead_form_submit,
+      tfb_invoca_sales_intent_dda, tfb_invoca_order_dda,
+      file_load_datetime, gold_inserted_at
+    )
+    VALUES (
+      S.account_id, S.account_name, S.campaign_id, S.campaign_name, S.date,
+      S.lob, S.ad_platform, S.campaign_type,
+      S.advertising_channel_type, S.advertising_channel_sub_type, S.bidding_strategy_type, S.serving_status,
+      S.customer_id, S.customer_name, S.resource_name, S.client_manager_id, S.client_manager_name,
+      S.impressions, S.clicks, S.cost, S.all_conversions,
+      S.bi, S.buying_intent, S.bts_quality_traffic, S.digital_gross_add, S.magenta_pqt,
+      S.cart_start, S.postpaid_cart_start, S.postpaid_pspv, S.aal, S.add_a_line,
+      S.connect_low_funnel_prospect, S.connect_low_funnel_visit, S.connect_qt,
+      S.hint_ec, S.hint_sec, S.hint_web_orders, S.hint_invoca_calls, S.hint_offline_invoca_calls,
+      S.hint_offline_invoca_eligibility, S.hint_offline_invoca_order, S.hint_offline_invoca_order_rt,
+      S.hint_offline_invoca_sales_opp, S.ma_hint_ec_eligibility_check,
+      S.fiber_activations, S.fiber_pre_order, S.fiber_waitlist_sign_up, S.fiber_web_orders,
+      S.fiber_ec, S.fiber_ec_dda, S.fiber_sec, S.fiber_sec_dda,
+      S.metro_top_funnel_prospect, S.metro_upper_funnel_prospect, S.metro_mid_funnel_prospect,
+      S.metro_low_funnel_cs, S.metro_qt, S.metro_hint_qt,
+      S.tmo_top_funnel_prospect, S.tmo_upper_funnel_prospect, S.tmo_prepaid_low_funnel_prospect,
+      S.tfb_credit_check, S.tfb_invoca_sales_calls, S.tfb_leads, S.tfb_quality_traffic,
+      S.tfb_hint_ec, S.total_tfb_conversions, S.tfb_low_funnel, S.tfb_lead_form_submit,
+      S.tfb_invoca_sales_intent_dda, S.tfb_invoca_order_dda,
+      S.file_load_datetime, S.gold_inserted_at
+    );
 
 END;
