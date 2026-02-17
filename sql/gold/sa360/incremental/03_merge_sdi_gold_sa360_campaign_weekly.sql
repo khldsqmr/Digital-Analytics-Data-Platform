@@ -1,7 +1,7 @@
 /*
 ===============================================================================
-FILE: 04_merge_sdi_gold_sa360_campaign_weekly.sql
-LAYER: Gold (Weekly)
+FILE: 03_merge_sdi_gold_sa360_campaign_weekly.sql
+LAYER: Gold Weekly
 TARGET:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
 
@@ -9,18 +9,56 @@ SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
 PURPOSE:
-  Recompute recent weekly buckets (N days) and MERGE by:
-    account_id + campaign_id + qgp_week
+  Incrementally upsert Gold Weekly by recomputing recent QGP-week buckets
+  from Gold Daily, then MERGE by (account_id, campaign_id, qgp_week).
 
-NOTE:
-  lookback_days is day-based to safely include quarter-end partial buckets.
+QGP WEEK DEFINITION (required):
+  - Standard weeks: Sun -> Sat aggregated, labeled by week-ending Saturday.
+  - Quarter-end partial: days AFTER last Saturday of quarter up to quarter_end_date
+    are aggregated into a bucket labeled by the quarter_end_date.
+
+EXAMPLE (your scenario):
+  - Suppose quarter end date = 2025-09-30 (Tue).
+  - The week-ending Saturday after that is 2025-10-04 (Sat).
+  - We expect:
+      * QGP week = 2025-09-30 includes the partial tail after the last Saturday
+        of the quarter up to Sep 30.
+      * QGP week = 2025-10-04 includes ONLY Oct 01 to Oct 04.
+    This is exactly what the CASE logic below enforces.
+
+INCREMENTAL STRATEGY (critical fixes):
+  1) Use window_start = CURRENT_DATE() - lookback_days
+  2) Pull daily data from (window_start - 6 days) to avoid bucket clipping
+     (because a QGP week bucket may include dates slightly earlier than window_start).
+  3) Compute qgp_week and then FILTER to qgp_week >= window_start
+  4) MERGE into weekly and DELETE stale keys in-window:
+        WHEN NOT MATCHED BY SOURCE AND T.qgp_week >= window_start THEN DELETE
+
+WHY DELETE IS REQUIRED:
+  BigQuery MERGE does NOT automatically remove keys that disappeared from the source.
+  Without a delete clause, weekly can accumulate stale rows -> rowcount mismatch and
+  metric sum mismatch (exactly what your QA showed).
+
+GRAIN:
+  account_id + campaign_id + qgp_week
+
+DEFAULT LOOKBACK:
+  60 days (covers quarter-end partial buckets safely)
 
 ===============================================================================
 */
 
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_campaign_weekly`()
+OPTIONS(strict_mode=false)
 BEGIN
+
   DECLARE lookback_days INT64 DEFAULT 60;
   DECLARE window_start DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY);
+
+  -- Spill window: pull extra days so QGP buckets don't get clipped at the boundary.
+  DECLARE spill_days INT64 DEFAULT 6;
+  DECLARE daily_pull_start DATE DEFAULT DATE_SUB(window_start, INTERVAL spill_days DAY);
 
   MERGE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly` T
@@ -29,18 +67,31 @@ BEGIN
       SELECT
         d.*,
 
+        -- Standard week end date (Saturday) for Sun->Sat weeks
         DATE_ADD(DATE_TRUNC(d.date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS week_end_saturday,
+
+        -- Quarter end date
         DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end_date,
+
+        -- Last Saturday on/before quarter end date
         DATE_SUB(
           DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY),
-          INTERVAL MOD(EXTRACT(DAYOFWEEK FROM DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY)), 7) DAY
+          INTERVAL MOD(
+            EXTRACT(DAYOFWEEK FROM DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY)),
+            7
+          ) DAY
         ) AS last_saturday_before_qe
+
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` d
-      WHERE d.date >= window_start
+      WHERE d.date >= daily_pull_start
     ),
     bucketed AS (
       SELECT
         *,
+
+        -- QGP week end date:
+        -- - if date is in the quarter-end tail after last Saturday: bucket = quarter_end_date
+        -- - else: bucket = week_end_saturday (standard Sat week-ending)
         CASE
           WHEN date > last_saturday_before_qe AND date <= quarter_end_date
           THEN quarter_end_date
@@ -53,12 +104,14 @@ BEGIN
       ANY_VALUE(account_name) AS account_name,
       campaign_id,
       ANY_VALUE(campaign_name) AS campaign_name,
+
+      -- Only keep the clean QGP week as the date bucket
       qgp_week,
 
       ANY_VALUE(lob) AS lob,
       ANY_VALUE(ad_platform) AS ad_platform,
-      ANY_VALUE(campaign_type) AS campaign_type,
 
+      ANY_VALUE(campaign_type) AS campaign_type,
       ANY_VALUE(advertising_channel_type) AS advertising_channel_type,
       ANY_VALUE(advertising_channel_sub_type) AS advertising_channel_sub_type,
       ANY_VALUE(bidding_strategy_type) AS bidding_strategy_type,
@@ -70,27 +123,42 @@ BEGIN
       ANY_VALUE(client_manager_id) AS client_manager_id,
       ANY_VALUE(client_manager_name) AS client_manager_name,
 
+      -- =========================
+      -- Core performance
+      -- =========================
       SUM(impressions) AS impressions,
       SUM(clicks) AS clicks,
       SUM(cost) AS cost,
       SUM(all_conversions) AS all_conversions,
 
+      -- =========================
+      -- Intent / quality / generic
+      -- =========================
       SUM(bi) AS bi,
       SUM(buying_intent) AS buying_intent,
       SUM(bts_quality_traffic) AS bts_quality_traffic,
       SUM(digital_gross_add) AS digital_gross_add,
       SUM(magenta_pqt) AS magenta_pqt,
 
+      -- =========================
+      -- Cart / Postpaid / PSPV / AAL
+      -- =========================
       SUM(cart_start) AS cart_start,
       SUM(postpaid_cart_start) AS postpaid_cart_start,
       SUM(postpaid_pspv) AS postpaid_pspv,
       SUM(aal) AS aal,
       SUM(add_a_line) AS add_a_line,
 
+      -- =========================
+      -- Connect
+      -- =========================
       SUM(connect_low_funnel_prospect) AS connect_low_funnel_prospect,
       SUM(connect_low_funnel_visit) AS connect_low_funnel_visit,
       SUM(connect_qt) AS connect_qt,
 
+      -- =========================
+      -- HINT / HSI
+      -- =========================
       SUM(hint_ec) AS hint_ec,
       SUM(hint_sec) AS hint_sec,
       SUM(hint_web_orders) AS hint_web_orders,
@@ -102,6 +170,9 @@ BEGIN
       SUM(hint_offline_invoca_sales_opp) AS hint_offline_invoca_sales_opp,
       SUM(ma_hint_ec_eligibility_check) AS ma_hint_ec_eligibility_check,
 
+      -- =========================
+      -- Fiber
+      -- =========================
       SUM(fiber_activations) AS fiber_activations,
       SUM(fiber_pre_order) AS fiber_pre_order,
       SUM(fiber_waitlist_sign_up) AS fiber_waitlist_sign_up,
@@ -111,6 +182,9 @@ BEGIN
       SUM(fiber_sec) AS fiber_sec,
       SUM(fiber_sec_dda) AS fiber_sec_dda,
 
+      -- =========================
+      -- Metro
+      -- =========================
       SUM(metro_top_funnel_prospect) AS metro_top_funnel_prospect,
       SUM(metro_upper_funnel_prospect) AS metro_upper_funnel_prospect,
       SUM(metro_mid_funnel_prospect) AS metro_mid_funnel_prospect,
@@ -118,10 +192,16 @@ BEGIN
       SUM(metro_qt) AS metro_qt,
       SUM(metro_hint_qt) AS metro_hint_qt,
 
+      -- =========================
+      -- TMO
+      -- =========================
       SUM(tmo_top_funnel_prospect) AS tmo_top_funnel_prospect,
       SUM(tmo_upper_funnel_prospect) AS tmo_upper_funnel_prospect,
-      SUM(tmo_prepaid_low_funnel_prospect) AS tmo_prepaid_low_funnel_prospect,
+      SUM(t_mobile_prepaid_low_funnel_prospect) AS t_mobile_prepaid_low_funnel_prospect,
 
+      -- =========================
+      -- TFB
+      -- =========================
       SUM(tfb_credit_check) AS tfb_credit_check,
       SUM(tfb_invoca_sales_calls) AS tfb_invoca_sales_calls,
       SUM(tfb_leads) AS tfb_leads,
@@ -133,10 +213,16 @@ BEGIN
       SUM(tfb_invoca_sales_intent_dda) AS tfb_invoca_sales_intent_dda,
       SUM(tfb_invoca_order_dda) AS tfb_invoca_order_dda,
 
+      -- Lineage
       MAX(file_load_datetime) AS file_load_datetime,
       CURRENT_TIMESTAMP() AS gold_inserted_at
+
     FROM bucketed
-    GROUP BY account_id, campaign_id, qgp_week
+    WHERE qgp_week >= window_start
+    GROUP BY
+      account_id,
+      campaign_id,
+      qgp_week
   ) S
   ON
     T.account_id = S.account_id
@@ -149,8 +235,8 @@ BEGIN
 
     lob = S.lob,
     ad_platform = S.ad_platform,
-    campaign_type = S.campaign_type,
 
+    campaign_type = S.campaign_type,
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,
@@ -212,7 +298,7 @@ BEGIN
 
     tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
     tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
-    tmo_prepaid_low_funnel_prospect = S.tmo_prepaid_low_funnel_prospect,
+    t_mobile_prepaid_low_funnel_prospect = S.t_mobile_prepaid_low_funnel_prospect,
 
     tfb_credit_check = S.tfb_credit_check,
     tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
@@ -229,6 +315,11 @@ BEGIN
     gold_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN
-    INSERT ROW;
+    INSERT ROW
+
+  -- CRITICAL FIX: remove stale keys that no longer exist in the recomputed window.
+  WHEN NOT MATCHED BY SOURCE
+    AND T.qgp_week >= window_start
+  THEN DELETE;
 
 END;

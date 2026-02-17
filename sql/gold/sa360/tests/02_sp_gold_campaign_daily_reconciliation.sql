@@ -4,11 +4,22 @@ FILE: 02_sp_gold_campaign_daily_reconciliation.sql
 LAYER: Gold QA (Reconciliation)
 
 PURPOSE:
-  Reconcile Gold Daily vs Silver Daily in recent window:
-    1) Rowcount match (HIGH)
-    2) Missing keys in Gold vs Silver (HIGH)
-    3) Core metric sums match (HIGH): impressions, clicks, cost, all_conversions
+  Reconcile Gold Daily against Silver Daily for correctness.
 
+TABLES:
+  Silver Daily: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
+  Gold Daily:   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
+
+GRAIN:
+  account_id + campaign_id + date
+
+WINDOW:
+  last N days (default 14)
+
+TESTS (HIGH):
+  1) Rowcount Match
+  2) Missing Gold Keys vs Silver
+  3) Core Metric Sums Match (with tolerance)
 ===============================================================================
 */
 
@@ -16,20 +27,35 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_campaign_daily_reconciliation`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE v_now TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
+
   DECLARE v_table STRING DEFAULT 'sdi_gold_sa360_campaign_daily';
+  DECLARE v_now TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
 
-  DECLARE v_lookback_days INT64 DEFAULT 14;
-  DECLARE v_start DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL v_lookback_days DAY);
+  DECLARE v_window_days INT64 DEFAULT 14;
+  DECLARE v_start DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL v_window_days DAY);
 
-  -- TEST 1: Rowcount match (HIGH)
+  DECLARE v_cost_tol FLOAT64 DEFAULT 0.01;      -- currency tolerance
+  DECLARE v_conv_tol FLOAT64 DEFAULT 0.0001;    -- conversion tolerance (float)
+
+  WITH silver AS (
+    SELECT account_id, campaign_id, date, impressions, clicks, cost, all_conversions
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+    WHERE date >= v_start
+  ),
+  gold AS (
+    SELECT account_id, campaign_id, date, impressions, clicks, cost, all_conversions
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+    WHERE date >= v_start
+  )
+
+  -- ---------------------------------------------------------------------------
+  -- TEST 1: Rowcount Match (HIGH)
+  -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH c AS (
+  WITH counts AS (
     SELECT
-      (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-       WHERE date >= v_start) AS expected_rows,
-      (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-       WHERE date >= v_start) AS actual_rows
+      (SELECT COUNT(*) FROM silver) AS expected_rows,
+      (SELECT COUNT(*) FROM gold) AS actual_rows
   )
   SELECT
     v_now, CURRENT_DATE(), v_table,
@@ -39,40 +65,34 @@ BEGIN
     CAST(expected_rows AS FLOAT64),
     CAST(actual_rows AS FLOAT64),
     CAST(actual_rows - expected_rows AS FLOAT64),
-    IF(actual_rows = expected_rows,'PASS','FAIL'),
-    IF(actual_rows = expected_rows,'🟢','🔴'),
+    IF(actual_rows = expected_rows, 'PASS', 'FAIL'),
+    IF(actual_rows = expected_rows, '🟢', '🔴'),
     IF(actual_rows = expected_rows,
       'Rowcount matches Silver in window.',
       CONCAT('Rowcount differs (Gold=', CAST(actual_rows AS STRING), ', Silver=', CAST(expected_rows AS STRING), ').')
     ),
     IF(actual_rows = expected_rows,
       'No action required.',
-      'Run Gold Daily MERGE; verify lookback; ensure Gold selection includes all Silver rows.'
+      'Check Gold Daily MERGE lookback, filters, or key mismatches.'
     ),
-    IF(actual_rows = expected_rows,FALSE,TRUE),
-    IF(actual_rows = expected_rows,TRUE,FALSE),
-    IF(actual_rows = expected_rows,FALSE,TRUE)
-  FROM c;
+    IF(actual_rows = expected_rows, FALSE, TRUE),
+    IF(actual_rows = expected_rows, TRUE, FALSE),
+    IF(actual_rows = expected_rows, FALSE, TRUE)
+  FROM counts;
 
-  -- TEST 2: Missing keys (HIGH)
+  -- ---------------------------------------------------------------------------
+  -- TEST 2: Missing Gold Keys vs Silver (HIGH)
+  -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH silver_keys AS (
-    SELECT DISTINCT account_id, campaign_id, date
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-    WHERE date >= v_start
-  ),
-  gold_keys AS (
-    SELECT DISTINCT account_id, campaign_id, date
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE date >= v_start
-  ),
-  miss AS (
+  WITH missing AS (
     SELECT COUNT(*) AS missing_cnt
-    FROM silver_keys s
-    LEFT JOIN gold_keys g
-      ON s.account_id = g.account_id
-     AND s.campaign_id = g.campaign_id
-     AND s.date = g.date
+    FROM (
+      SELECT DISTINCT account_id, campaign_id, date FROM silver
+    ) s
+    LEFT JOIN (
+      SELECT DISTINCT account_id, campaign_id, date FROM gold
+    ) g
+    USING (account_id, campaign_id, date)
     WHERE g.account_id IS NULL
   )
   SELECT
@@ -83,48 +103,51 @@ BEGIN
     0.0,
     CAST(missing_cnt AS FLOAT64),
     CAST(missing_cnt AS FLOAT64),
-    IF(missing_cnt = 0,'PASS','FAIL'),
-    IF(missing_cnt = 0,'🟢','🔴'),
+    IF(missing_cnt = 0, 'PASS', 'FAIL'),
+    IF(missing_cnt = 0, '🟢', '🔴'),
     IF(missing_cnt = 0,
       'No missing daily keys. Gold covers Silver keys in window.',
-      CONCAT('Missing Gold keys: ', CAST(missing_cnt AS STRING), ' Silver keys absent in Gold.')
+      CONCAT('Missing Gold daily keys detected: ', CAST(missing_cnt AS STRING), '.')
     ),
     IF(missing_cnt = 0,
       'No action required.',
-      'Fix Gold Daily MERGE inserts; check window; check table name/location.'
+      'Investigate Gold MERGE filters and upstream availability.'
     ),
-    IF(missing_cnt = 0,FALSE,TRUE),
-    IF(missing_cnt = 0,TRUE,FALSE),
-    IF(missing_cnt = 0,FALSE,TRUE)
-  FROM miss;
+    IF(missing_cnt = 0, FALSE, TRUE),
+    IF(missing_cnt = 0, TRUE, FALSE),
+    IF(missing_cnt = 0, FALSE, TRUE)
+  FROM missing;
 
-  -- TEST 3: Core metric sums match (HIGH)
+  -- ---------------------------------------------------------------------------
+  -- TEST 3: Core Metric Sums Match vs Silver (HIGH, tolerant)
+  --   impressions/clicks expected integers -> exact
+  --   cost/all_conversions -> tolerance
+  -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH silver AS (
+  WITH s AS (
     SELECT
       IFNULL(SUM(impressions),0) AS impressions,
       IFNULL(SUM(clicks),0) AS clicks,
       IFNULL(SUM(cost),0) AS cost,
       IFNULL(SUM(all_conversions),0) AS all_conversions
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-    WHERE date >= v_start
+    FROM silver
   ),
-  gold AS (
+  g AS (
     SELECT
       IFNULL(SUM(impressions),0) AS impressions,
       IFNULL(SUM(clicks),0) AS clicks,
       IFNULL(SUM(cost),0) AS cost,
       IFNULL(SUM(all_conversions),0) AS all_conversions
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE date >= v_start
+    FROM gold
   ),
   calc AS (
     SELECT
-      (IF(gold.impressions = silver.impressions, 0, 1) +
-       IF(gold.clicks = silver.clicks, 0, 1) +
-       IF(gold.cost = silver.cost, 0, 1) +
-       IF(gold.all_conversions = silver.all_conversions, 0, 1)) AS failed_metric_cnt
-    FROM silver CROSS JOIN gold
+      (IF(g.impressions = s.impressions, 0, 1) +
+       IF(g.clicks = s.clicks, 0, 1) +
+       IF(ABS(g.cost - s.cost) <= v_cost_tol, 0, 1) +
+       IF(ABS(g.all_conversions - s.all_conversions) <= v_conv_tol, 0, 1)
+      ) AS failed_metric_cnt
+    FROM s, g
   )
   SELECT
     v_now, CURRENT_DATE(), v_table,
@@ -134,19 +157,19 @@ BEGIN
     0.0,
     CAST(failed_metric_cnt AS FLOAT64),
     CAST(failed_metric_cnt AS FLOAT64),
-    IF(failed_metric_cnt = 0,'PASS','FAIL'),
-    IF(failed_metric_cnt = 0,'🟢','🔴'),
+    IF(failed_metric_cnt = 0, 'PASS', 'FAIL'),
+    IF(failed_metric_cnt = 0, '🟢', '🔴'),
     IF(failed_metric_cnt = 0,
-      'Gold core metric sums match Silver in window.',
-      'Gold core metric sums differ vs Silver (filtering/duplication/missing rows).'
+      'Gold core metric sums match Silver (tolerant).',
+      'Gold core metric sums differ vs Silver (filtering/duplication/missing rows OR tolerance too strict).'
     ),
     IF(failed_metric_cnt = 0,
       'No action required.',
-      'Check Gold selection and MERGE logic; ensure no columns were dropped/renamed.'
+      'Compare totals by metric; verify types/tolerance; check Gold MERGE selection.'
     ),
-    IF(failed_metric_cnt = 0,FALSE,TRUE),
-    IF(failed_metric_cnt = 0,TRUE,FALSE),
-    IF(failed_metric_cnt = 0,FALSE,TRUE)
+    IF(failed_metric_cnt = 0, FALSE, TRUE),
+    IF(failed_metric_cnt = 0, TRUE, FALSE),
+    IF(failed_metric_cnt = 0, FALSE, TRUE)
   FROM calc;
 
 END;
