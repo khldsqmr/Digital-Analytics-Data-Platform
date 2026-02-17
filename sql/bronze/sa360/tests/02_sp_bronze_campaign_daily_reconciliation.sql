@@ -169,7 +169,7 @@ SELECT
 -- >>> IMPORTANT: update the source column if needed <<<
 -- I assumed it exists as s.postpaid_pspv (you may need s.postpaid__pspv).
 SET v_expected = (
-  SELECT IFNULL(SUM(CAST(s.postpaid_pspv AS FLOAT64)), 0)
+  SELECT IFNULL(SUM(CAST(s.postpaid_pspv_ AS FLOAT64)), 0)
   FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo` s
   WHERE SAFE.PARSE_DATE('%Y%m%d', CAST(s.date_yyyymmdd AS STRING)) >= v_window_start
 );

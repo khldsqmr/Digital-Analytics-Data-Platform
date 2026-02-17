@@ -2,73 +2,75 @@
 ===============================================================================
 FILE: 01_merge_sdi_silver_sa360_campaign_daily.sql
 LAYER: Silver
-DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE:  sdi_silver_sa360_campaign_daily
+TABLE: sdi_silver_sa360_campaign_daily
 
-PURPOSE:
-  Incremental MERGE for Silver SA360 Campaign Daily.
-
-  - Reads last N days from Bronze Daily (late-arrival tolerant).
-  - Enriches each daily row with campaign_name + settings from Bronze Entity using
-    an AS-OF join (entity.date <= daily.date).
-  - Derives lob + ad_platform from account_name.
-  - Idempotent upsert by grain (account_id, campaign_id, date).
-
-KEY DESIGN CHOICES:
-  1) AS-OF join prevents "future metadata leakage".
-  2) We keep all metrics/dimensions from Bronze Daily without type recasting.
-  3) Column naming is already standardized in Bronze (incl. TMO naming).
-
-GRAIN / MERGE KEY:
-  (account_id, campaign_id, date)
-
+CORRECTNESS GUARANTEES:
+  1) Row coverage: every Bronze Daily row in the window produces exactly 1 Silver row.
+  2) Entity enrichment:
+     - AS-OF entity row used for settings fields (e.date <= d.date).
+     - campaign_name uses fallback to latest NON-NULL campaign_name for that campaign_id.
+     - If entity has zero rows: entity fields NULL, campaign_name NULL.
+  3) Deterministic tie-breakers.
 ===============================================================================
 */
 
 BEGIN
 
-  -- ===========================================================================
-  -- CONFIG
-  -- ===========================================================================
   DECLARE lookback_days INT64 DEFAULT 7;
 
-  -- ===========================================================================
-  -- MERGE
-  -- ===========================================================================
-  MERGE
-    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` T
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` T
   USING (
 
-    -- =======================================================================
-    -- STEP 1: Filter Bronze Daily to Lookback Window
-    -- =======================================================================
     WITH filtered_daily AS (
-      SELECT
-        *
+      SELECT *
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
       WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
-    -- =======================================================================
-    -- STEP 2: Join Entity via AS-OF logic
-    --   For each daily row, choose the most recent entity row where:
-    --     entity.date <= daily.date
-    --   Tie-breakers:
-    --     entity.date DESC, entity.file_load_datetime DESC, entity.filename DESC
-    -- =======================================================================
-    joined AS (
+    -- Latest NON-NULL campaign_name per campaign (fallback only for name)
+    latest_name AS (
       SELECT
-        -- -------------------------------------------------------------------
+        account_id,
+        campaign_id,
+        ARRAY_AGG(NULLIF(campaign_name,'') IGNORE NULLS
+                  ORDER BY date DESC, file_load_datetime DESC, filename DESC
+                  LIMIT 1)[OFFSET(0)] AS latest_nonnull_campaign_name
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity`
+      GROUP BY 1,2
+    ),
+
+    -- AS-OF entity row (0-or-1) for each daily grain
+    asof_entity AS (
+      SELECT
+        d.account_id,
+        d.campaign_id,
+        d.date,
+        e.campaign_name,
+        e.advertising_channel_type,
+        e.advertising_channel_sub_type,
+        e.bidding_strategy_type,
+        e.serving_status
+      FROM filtered_daily d
+      LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity` e
+        ON  d.account_id = e.account_id
+        AND d.campaign_id = e.campaign_id
+        AND e.date <= d.date
+      QUALIFY
+        ROW_NUMBER() OVER (
+          PARTITION BY d.account_id, d.campaign_id, d.date
+          ORDER BY e.date DESC, e.file_load_datetime DESC, e.filename DESC
+        ) = 1
+    ),
+
+    final AS (
+      SELECT
         -- Grain + snapshot
-        -- -------------------------------------------------------------------
         d.account_id,
         d.campaign_id,
         d.date,
         d.date_yyyymmdd,
 
-        -- -------------------------------------------------------------------
-        -- Account dimension + derived business dimensions
-        -- -------------------------------------------------------------------
+        -- Account + derived dims
         d.account_name,
 
         CASE
@@ -86,29 +88,27 @@ BEGIN
           ELSE 'Unknown'
         END AS ad_platform,
 
-        -- -------------------------------------------------------------------
-        -- Entity metadata (AS-OF)
-        -- -------------------------------------------------------------------
-        e.campaign_name,
+        -- campaign_name: AS-OF first, fallback to latest non-null, else NULL
+        COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name) AS campaign_name,
 
+        -- campaign_type derived from final campaign_name
         CASE
-          WHEN e.campaign_name IS NULL THEN 'Unclassified'
-          WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'(^|[^a-z])brand([^a-z]|$)') THEN 'Brand'
-          WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'(^|[^a-z])generic([^a-z]|$)') THEN 'Generic'
-          WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'shopping|shop') THEN 'Shopping'
-          WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'pmax|performance\s*max') THEN 'PMax'
-          WHEN REGEXP_CONTAINS(LOWER(e.campaign_name), r'demand\s*gen|demandgen') THEN 'DemandGen'
+          WHEN COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name) IS NULL THEN 'Unclassified'
+          WHEN REGEXP_CONTAINS(LOWER(COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name)), r'(^|[^a-z])brand([^a-z]|$)') THEN 'Brand'
+          WHEN REGEXP_CONTAINS(LOWER(COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name)), r'(^|[^a-z])generic([^a-z]|$)') THEN 'Generic'
+          WHEN REGEXP_CONTAINS(LOWER(COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name)), r'shopping|shop') THEN 'Shopping'
+          WHEN REGEXP_CONTAINS(LOWER(COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name)), r'pmax|performance\s*max') THEN 'PMax'
+          WHEN REGEXP_CONTAINS(LOWER(COALESCE(NULLIF(a.campaign_name,''), n.latest_nonnull_campaign_name)), r'demand\s*gen|demandgen') THEN 'DemandGen'
           ELSE 'Unclassified'
         END AS campaign_type,
 
-        e.advertising_channel_type,
-        e.advertising_channel_sub_type,
-        e.bidding_strategy_type,
-        e.serving_status,
+        -- Entity settings strictly from AS-OF row (do not fallback these)
+        a.advertising_channel_type,
+        a.advertising_channel_sub_type,
+        a.bidding_strategy_type,
+        a.serving_status,
 
-        -- -------------------------------------------------------------------
-        -- Optional dimensions from Daily
-        -- -------------------------------------------------------------------
+        -- Optional daily dims
         d.customer_id,
         d.customer_name,
         d.resource_name,
@@ -116,42 +116,32 @@ BEGIN
         d.client_manager_id,
         d.client_manager_name,
 
-        -- -------------------------------------------------------------------
         -- Core metrics
-        -- -------------------------------------------------------------------
         d.impressions,
         d.clicks,
         d.cost,
         d.all_conversions,
 
-        -- -------------------------------------------------------------------
         -- Intent/quality
-        -- -------------------------------------------------------------------
         d.bi,
         d.buying_intent,
         d.bts_quality_traffic,
         d.digital_gross_add,
         d.magenta_pqt,
 
-        -- -------------------------------------------------------------------
-        -- Cart + Postpaid/PSPV + AAL
-        -- -------------------------------------------------------------------
+        -- Cart/Postpaid/PSPV + AAL
         d.cart_start,
         d.postpaid_cart_start,
         d.postpaid_pspv,
         d.aal,
         d.add_a_line,
 
-        -- -------------------------------------------------------------------
         -- Connect
-        -- -------------------------------------------------------------------
         d.connect_low_funnel_prospect,
         d.connect_low_funnel_visit,
         d.connect_qt,
 
-        -- -------------------------------------------------------------------
         -- HINT/HSI
-        -- -------------------------------------------------------------------
         d.hint_ec,
         d.hint_sec,
         d.hint_web_orders,
@@ -163,9 +153,7 @@ BEGIN
         d.hint_offline_invoca_sales_opp,
         d.ma_hint_ec_eligibility_check,
 
-        -- -------------------------------------------------------------------
         -- Fiber
-        -- -------------------------------------------------------------------
         d.fiber_activations,
         d.fiber_pre_order,
         d.fiber_waitlist_sign_up,
@@ -175,9 +163,7 @@ BEGIN
         d.fiber_sec,
         d.fiber_sec_dda,
 
-        -- -------------------------------------------------------------------
         -- Metro
-        -- -------------------------------------------------------------------
         d.metro_low_funnel_cs,
         d.metro_mid_funnel_prospect,
         d.metro_top_funnel_prospect,
@@ -185,25 +171,16 @@ BEGIN
         d.metro_hint_qt,
         d.metro_qt,
 
-        -- -------------------------------------------------------------------
-        -- TMO (standardized naming in Bronze)
-        --   NOTE: your Bronze currently has:
-        --     t_mobile_prepaid_low_funnel_prospect
-        --   To enforce your "tmo everywhere" naming in Silver,
-        --   we alias it into tmo_prepaid_low_funnel_prospect here.
-        -- -------------------------------------------------------------------
+        -- TMO standardized alias
         d.t_mobile_prepaid_low_funnel_prospect AS tmo_prepaid_low_funnel_prospect,
         d.tmo_top_funnel_prospect,
         d.tmo_upper_funnel_prospect,
 
-        -- -------------------------------------------------------------------
-        -- TFB (+ TBG standardized into TFB family in Bronze)
-        -- -------------------------------------------------------------------
+        -- TFB
         d.tfb_low_funnel,
         d.tfb_lead_form_submit,
         d.tfb_invoca_sales_intent_dda,
         d.tfb_invoca_order_dda,
-
         d.tfb_credit_check,
         d.tfb_hint_ec,
         d.tfb_invoca_sales_calls,
@@ -211,43 +188,33 @@ BEGIN
         d.tfb_quality_traffic,
         d.total_tfb_conversions,
 
-        -- -------------------------------------------------------------------
-        -- Lineage
-        -- -------------------------------------------------------------------
+        -- lineage
         d.file_load_datetime,
         CURRENT_TIMESTAMP() AS silver_inserted_at
 
       FROM filtered_daily d
-      LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity` e
-        ON  d.account_id = e.account_id
-        AND d.campaign_id = e.campaign_id
-        AND e.date <= d.date
-
-      QUALIFY
-        ROW_NUMBER() OVER (
-          PARTITION BY d.account_id, d.campaign_id, d.date
-          ORDER BY e.date DESC, e.file_load_datetime DESC, e.filename DESC
-        ) = 1
+      LEFT JOIN asof_entity a
+        ON d.account_id = a.account_id
+       AND d.campaign_id = a.campaign_id
+       AND d.date = a.date
+      LEFT JOIN latest_name n
+        ON d.account_id = n.account_id
+       AND d.campaign_id = n.campaign_id
     )
 
-    SELECT * FROM joined
-  ) S
+    SELECT * FROM final
 
-  ON
-    T.account_id = S.account_id
-    AND T.campaign_id = S.campaign_id
-    AND T.date = S.date
+  ) S
+  ON  T.account_id = S.account_id
+  AND T.campaign_id = S.campaign_id
+  AND T.date = S.date
 
   WHEN MATCHED THEN UPDATE SET
-    -- Grain lineage
     date_yyyymmdd = S.date_yyyymmdd,
-
-    -- Business dims
     account_name = S.account_name,
     lob = S.lob,
     ad_platform = S.ad_platform,
 
-    -- Entity metadata
     campaign_name = S.campaign_name,
     campaign_type = S.campaign_type,
     advertising_channel_type = S.advertising_channel_type,
@@ -255,7 +222,6 @@ BEGIN
     bidding_strategy_type = S.bidding_strategy_type,
     serving_status = S.serving_status,
 
-    -- Optional daily dims
     customer_id = S.customer_id,
     customer_name = S.customer_name,
     resource_name = S.resource_name,
@@ -263,32 +229,27 @@ BEGIN
     client_manager_id = S.client_manager_id,
     client_manager_name = S.client_manager_name,
 
-    -- Core metrics
     impressions = S.impressions,
     clicks = S.clicks,
     cost = S.cost,
     all_conversions = S.all_conversions,
 
-    -- Intent/quality
     bi = S.bi,
     buying_intent = S.buying_intent,
     bts_quality_traffic = S.bts_quality_traffic,
     digital_gross_add = S.digital_gross_add,
     magenta_pqt = S.magenta_pqt,
 
-    -- Cart/Postpaid/PSPV + AAL
     cart_start = S.cart_start,
     postpaid_cart_start = S.postpaid_cart_start,
     postpaid_pspv = S.postpaid_pspv,
     aal = S.aal,
     add_a_line = S.add_a_line,
 
-    -- Connect
     connect_low_funnel_prospect = S.connect_low_funnel_prospect,
     connect_low_funnel_visit = S.connect_low_funnel_visit,
     connect_qt = S.connect_qt,
 
-    -- HINT/HSI
     hint_ec = S.hint_ec,
     hint_sec = S.hint_sec,
     hint_web_orders = S.hint_web_orders,
@@ -300,7 +261,6 @@ BEGIN
     hint_offline_invoca_sales_opp = S.hint_offline_invoca_sales_opp,
     ma_hint_ec_eligibility_check = S.ma_hint_ec_eligibility_check,
 
-    -- Fiber
     fiber_activations = S.fiber_activations,
     fiber_pre_order = S.fiber_pre_order,
     fiber_waitlist_sign_up = S.fiber_waitlist_sign_up,
@@ -310,7 +270,6 @@ BEGIN
     fiber_sec = S.fiber_sec,
     fiber_sec_dda = S.fiber_sec_dda,
 
-    -- Metro
     metro_low_funnel_cs = S.metro_low_funnel_cs,
     metro_mid_funnel_prospect = S.metro_mid_funnel_prospect,
     metro_top_funnel_prospect = S.metro_top_funnel_prospect,
@@ -318,17 +277,14 @@ BEGIN
     metro_hint_qt = S.metro_hint_qt,
     metro_qt = S.metro_qt,
 
-    -- TMO (standardized)
     tmo_prepaid_low_funnel_prospect = S.tmo_prepaid_low_funnel_prospect,
     tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
     tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
 
-    -- TFB
     tfb_low_funnel = S.tfb_low_funnel,
     tfb_lead_form_submit = S.tfb_lead_form_submit,
     tfb_invoca_sales_intent_dda = S.tfb_invoca_sales_intent_dda,
     tfb_invoca_order_dda = S.tfb_invoca_order_dda,
-
     tfb_credit_check = S.tfb_credit_check,
     tfb_hint_ec = S.tfb_hint_ec,
     tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
@@ -336,7 +292,6 @@ BEGIN
     tfb_quality_traffic = S.tfb_quality_traffic,
     total_tfb_conversions = S.total_tfb_conversions,
 
-    -- Lineage
     file_load_datetime = S.file_load_datetime,
     silver_inserted_at = CURRENT_TIMESTAMP()
 
