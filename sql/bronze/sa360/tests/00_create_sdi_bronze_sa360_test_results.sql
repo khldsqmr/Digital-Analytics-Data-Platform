@@ -8,8 +8,10 @@ PURPOSE:
 DESIGN:
   - Partitioned by test_date
   - Clustered for fast filtering
-  - All procedures insert exactly ONE row per test (PASS or FAIL)
+  - Every test procedure inserts exactly ONE row per test execution (PASS/FAIL)
 
+NOTES:
+  - Use INSERT(column_list) SELECT ... (not VALUES) in procedures for stability.
 ===============================================================================
 */
 

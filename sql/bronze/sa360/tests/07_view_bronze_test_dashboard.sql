@@ -3,12 +3,12 @@
 FILE: 07_view_bronze_test_dashboard.sql
 
 PURPOSE:
-  Clean dashboard view for monitoring Bronze QA.
+  Clean dashboard view for monitoring Bronze QA
 
-  • Only latest execution per test per day
-  • Most recent tests on top
-  • Structured display
-  • Easy filtering by table, layer, severity
+FEATURES:
+  - Only latest execution per test per day
+  - Most recent days on top
+  - Easy filtering by table, layer, severity, status
 
 ===============================================================================
 */
@@ -19,17 +19,16 @@ AS
 
 WITH latest_tests AS (
   SELECT
-      *,
-      ROW_NUMBER() OVER (
-        PARTITION BY
-            test_date,
-            table_name,
-            test_layer,
-            test_name
-        ORDER BY test_run_timestamp DESC
-      ) AS rn
-  FROM
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY
+        test_date,
+        table_name,
+        test_layer,
+        test_name
+      ORDER BY test_run_timestamp DESC
+    ) AS rn
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
 )
 
 SELECT
@@ -52,13 +51,18 @@ SELECT
 FROM latest_tests
 WHERE rn = 1
 ORDER BY
-    test_date DESC,
-    table_name,
-    CASE severity_level
-        WHEN 'HIGH'   THEN 1
-        WHEN 'MEDIUM' THEN 2
-        WHEN 'LOW'    THEN 3
-        ELSE 4
-    END,
-    test_layer,
-    test_name;
+  test_date DESC,
+  table_name,
+  CASE severity_level
+    WHEN 'HIGH'   THEN 1
+    WHEN 'MEDIUM' THEN 2
+    WHEN 'LOW'    THEN 3
+    ELSE 4
+  END,
+  CASE test_layer
+    WHEN 'critical'       THEN 1
+    WHEN 'reconciliation' THEN 2
+    WHEN 'deep_validation' THEN 3
+    ELSE 4
+  END,
+  test_name;

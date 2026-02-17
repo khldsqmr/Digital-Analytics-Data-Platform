@@ -5,18 +5,16 @@ LAYER: Silver QA
 TABLE: sdi_silver_sa360_campaign_daily
 
 PURPOSE:
-  Cross-table reconciliation: Silver Campaign Daily vs Bronze Campaign Daily.
-  Focus: row coverage + metric totals.
+  Inter-layer reconciliation: Silver Campaign Daily vs Bronze Campaign Daily.
+  Focus: row coverage + key coverage + high-signal metric totals (cart_start + PSPV).
 
 WINDOW:
-  last 7 days (changeable by lookback_days)
-
-GRAIN:
-  account_id + campaign_id + date
+  last N days (default 7)
 
 NOTES:
-  - Silver may LEFT JOIN entity; that must NOT change row counts vs Bronze Daily.
-  - Use small tolerances on floating sums to avoid float noise.
+  - Silver enrichments (entity join for campaign_name) must NOT change row-level coverage.
+  - Use small tolerances for FLOAT sums.
+
 ===============================================================================
 */
 
@@ -25,31 +23,34 @@ CREATE OR REPLACE PROCEDURE
 BEGIN
 
 DECLARE lookback_days INT64 DEFAULT 7;
+DECLARE v_window_start DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY);
 
-DECLARE v_expected FLOAT64 DEFAULT 0;
-DECLARE v_actual FLOAT64 DEFAULT 0;
-DECLARE v_variance FLOAT64 DEFAULT 0;
-DECLARE v_status STRING DEFAULT 'PASS';
-DECLARE v_reason STRING DEFAULT '';
-DECLARE v_next STRING DEFAULT '';
+DECLARE v_expected FLOAT64;
+DECLARE v_actual   FLOAT64;
+DECLARE v_variance FLOAT64;
+DECLARE v_status   STRING;
+DECLARE v_reason   STRING;
+DECLARE v_next     STRING;
+DECLARE v_emoji    STRING;
 
 -- =====================================================
--- TEST 1: Row Count Match (lookback window)
+-- TEST 1: Row Count Match (recent window)
 -- =====================================================
 SET v_expected = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+  WHERE date >= v_window_start
 );
 
 SET v_actual = (
   SELECT COUNT(*)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+  WHERE date >= v_window_start
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_variance = 0, 'PASS', 'FAIL');
+SET v_status   = IF(v_variance = 0, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
 
 SET v_reason = IF(
   v_status='FAIL',
@@ -59,28 +60,32 @@ SET v_reason = IF(
 
 SET v_next = IF(
   v_status='FAIL',
-  'Check Silver backfill/merge source filter. Silver should not drop rows when joining entity.',
+  'Check Silver join logic + filters. Silver should not drop/add rows relative to Bronze grain.',
   'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
   CURRENT_TIMESTAMP(), CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
   'reconciliation',
   CONCAT('Row Count Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
   'MEDIUM',
   v_expected, v_actual, v_variance,
-  v_status, IF(v_status='PASS','🟢','🔴'),
+  v_status, v_emoji,
   v_reason, v_next,
-  FALSE,
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
+  FALSE, (v_status='PASS'), (v_status='FAIL');
 
 -- =====================================================
--- TEST 2: Key Coverage (anti-join) Bronze keys missing in Silver
---   Expected = 0 missing keys
+-- TEST 2 (HIGH): Bronze keys missing in Silver (anti-join)
 -- =====================================================
 SET v_expected = 0;
 
@@ -89,154 +94,123 @@ SET v_actual = (
   FROM (
     SELECT b.account_id, b.campaign_id, b.date
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily` b
-    WHERE b.date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+    WHERE b.date >= v_window_start
     EXCEPT DISTINCT
     SELECT s.account_id, s.campaign_id, s.date
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` s
-    WHERE s.date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+    WHERE s.date >= v_window_start
   )
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_status   = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
 
 SET v_reason = IF(
   v_status='FAIL',
-  CONCAT('Silver is missing ', CAST(v_actual AS STRING), ' key(s) present in Bronze (lookback window).'),
-  'All Bronze keys are present in Silver (lookback window).'
+  CONCAT('Silver is missing ', CAST(v_actual AS STRING), ' Bronze key(s) (recent window).'),
+  'All Bronze keys are present in Silver (recent window).'
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Inspect Silver MERGE ON clause and source SELECT. Verify partition filters and that date_yyyymmdd is not used as key in Silver.',
+  'Inspect Silver MERGE filters/window. Ensure join does not drop rows and merge ON clause matches grain.',
   'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
   CURRENT_TIMESTAMP(), CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
   'reconciliation',
   CONCAT('Key Coverage: Bronze minus Silver (', CAST(lookback_days AS STRING), '-day)'),
   'HIGH',
   v_expected, v_actual, v_variance,
-  v_status, IF(v_status='PASS','🟢','🔴'),
+  v_status, v_emoji,
   v_reason, v_next,
-  (v_status='FAIL'),
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
+  (v_status='FAIL'), (v_status='PASS'), (v_status='FAIL');
 
 -- =====================================================
--- TEST 3: Cost Total Match (tolerance)
+-- TEST 3 (HIGH): Silver keys missing in Bronze (should be 0)
+--   If Silver has keys Bronze doesn't, something is wrong (timing or filters).
 -- =====================================================
-SET v_expected = (
-  SELECT IFNULL(SUM(cost), 0)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
-);
+SET v_expected = 0;
 
 SET v_actual = (
-  SELECT IFNULL(SUM(cost), 0)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+  SELECT COUNT(*)
+  FROM (
+    SELECT s.account_id, s.campaign_id, s.date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` s
+    WHERE s.date >= v_window_start
+    EXCEPT DISTINCT
+    SELECT b.account_id, b.campaign_id, b.date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily` b
+    WHERE b.date >= v_window_start
+  )
 );
 
 SET v_variance = v_actual - v_expected;
-
--- tolerance: 0.01 currency units
-SET v_status = IF(ABS(v_variance) < 0.01, 'PASS', 'FAIL');
+SET v_status   = IF(v_actual = 0, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
 
 SET v_reason = IF(
   v_status='FAIL',
-  CONCAT('Cost mismatch Bronze vs Silver. Variance=', CAST(v_variance AS STRING)),
-  'Cost reconciliation successful.'
+  CONCAT('Silver contains ', CAST(v_actual AS STRING), ' key(s) not present in Bronze (recent window).'),
+  'Silver keys are fully explainable by Bronze keys (recent window).'
 );
 
 SET v_next = IF(
   v_status='FAIL',
-  'Verify Silver is using d.cost (already derived from Bronze) and not re-deriving from micros.',
+  'Confirm orchestration order (Bronze before Silver). Verify Silver is not unioning extra sources or using different date logic.',
   'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
   CURRENT_TIMESTAMP(), CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
   'reconciliation',
-  CONCAT('Cost Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
-  'MEDIUM',
+  CONCAT('Key Coverage: Silver minus Bronze (', CAST(lookback_days AS STRING), '-day)'),
+  'HIGH',
   v_expected, v_actual, v_variance,
-  v_status, IF(v_status='PASS','🟢','🔴'),
+  v_status, v_emoji,
   v_reason, v_next,
-  FALSE,
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
+  (v_status='FAIL'), (v_status='PASS'), (v_status='FAIL');
 
 -- =====================================================
--- TEST 4: Sum checks for key conversion families (high-signal metrics)
---   (Keep these few; don't explode into 50 tests.)
+-- TEST 4 (MEDIUM): cart_start total match (tolerance)
 -- =====================================================
-
--- 4A: all_conversions
 SET v_expected = (
-  SELECT IFNULL(SUM(all_conversions), 0)
+  SELECT IFNULL(SUM(CAST(cart_start AS FLOAT64)), 0)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+  WHERE date >= v_window_start
 );
 
 SET v_actual = (
-  SELECT IFNULL(SUM(all_conversions), 0)
+  SELECT IFNULL(SUM(CAST(cart_start AS FLOAT64)), 0)
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+  WHERE date >= v_window_start
 );
 
 SET v_variance = v_actual - v_expected;
-SET v_status = IF(ABS(v_variance) < 0.0001, 'PASS', 'FAIL');
-
-SET v_reason = IF(
-  v_status='FAIL',
-  CONCAT('all_conversions mismatch Bronze vs Silver. Variance=', CAST(v_variance AS STRING)),
-  'all_conversions totals match.'
-);
-
-SET v_next = IF(
-  v_status='FAIL',
-  'Check column mapping in Silver SELECT/UPDATE. Ensure Silver uses d.all_conversions.',
-  'No action required.'
-);
-
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
-  CURRENT_TIMESTAMP(), CURRENT_DATE(),
-  'sdi_silver_sa360_campaign_daily',
-  'reconciliation',
-  CONCAT('all_conversions Total Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
-  'LOW',
-  v_expected, v_actual, v_variance,
-  v_status, IF(v_status='PASS','🟢','🔴'),
-  v_reason, v_next,
-  FALSE,
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
-
--- 4B: cart_start (cart family)
-SET v_expected = (
-  SELECT IFNULL(SUM(cart_start), 0)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
-);
-
-SET v_actual = (
-  SELECT IFNULL(SUM(cart_start), 0)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-  WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
-);
-
-SET v_variance = v_actual - v_expected;
-SET v_status = IF(ABS(v_variance) < 0.0001, 'PASS', 'FAIL');
+SET v_status   = IF(ABS(v_variance) < 0.0001, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
 
 SET v_reason = IF(
   v_status='FAIL',
@@ -246,23 +220,130 @@ SET v_reason = IF(
 
 SET v_next = IF(
   v_status='FAIL',
-  'Check Silver column mapping for cart_start.',
+  'Check Silver column mapping for cart_start and ensure no aggregations occur in Silver.',
   'No action required.'
 );
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
-VALUES (
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
   CURRENT_TIMESTAMP(), CURRENT_DATE(),
   'sdi_silver_sa360_campaign_daily',
   'reconciliation',
   CONCAT('cart_start Total Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
+  'MEDIUM',
+  v_expected, v_actual, v_variance,
+  v_status, v_emoji,
+  v_reason, v_next,
+  FALSE, (v_status='PASS'), (v_status='FAIL');
+
+-- =====================================================
+-- TEST 5 (MEDIUM): postpaid_pspv total match (tolerance)
+-- =====================================================
+SET v_expected = (
+  SELECT IFNULL(SUM(CAST(postpaid_pspv AS FLOAT64)), 0)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+  WHERE date >= v_window_start
+);
+
+SET v_actual = (
+  SELECT IFNULL(SUM(CAST(postpaid_pspv AS FLOAT64)), 0)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+  WHERE date >= v_window_start
+);
+
+SET v_variance = v_actual - v_expected;
+SET v_status   = IF(ABS(v_variance) < 0.0001, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  CONCAT('postpaid_pspv mismatch Bronze vs Silver. Variance=', CAST(v_variance AS STRING)),
+  'postpaid_pspv totals match.'
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Check Silver column mapping for postpaid_pspv and ensure no aggregations occur in Silver.',
+  'No action required.'
+);
+
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
+  CURRENT_TIMESTAMP(), CURRENT_DATE(),
+  'sdi_silver_sa360_campaign_daily',
+  'reconciliation',
+  CONCAT('postpaid_pspv Total Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
+  'MEDIUM',
+  v_expected, v_actual, v_variance,
+  v_status, v_emoji,
+  v_reason, v_next,
+  FALSE, (v_status='PASS'), (v_status='FAIL');
+
+-- =====================================================
+-- TEST 6 (LOW, optional): cost total match (keep or delete)
+-- =====================================================
+SET v_expected = (
+  SELECT IFNULL(SUM(CAST(cost AS FLOAT64)), 0)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+  WHERE date >= v_window_start
+);
+
+SET v_actual = (
+  SELECT IFNULL(SUM(CAST(cost AS FLOAT64)), 0)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
+  WHERE date >= v_window_start
+);
+
+SET v_variance = v_actual - v_expected;
+SET v_status   = IF(ABS(v_variance) < 0.01, 'PASS', 'FAIL');
+SET v_emoji    = IF(v_status='PASS','🟢','🔴');
+
+SET v_reason = IF(
+  v_status='FAIL',
+  CONCAT('cost mismatch Bronze vs Silver. Variance=', CAST(v_variance AS STRING)),
+  'cost totals match.'
+);
+
+SET v_next = IF(
+  v_status='FAIL',
+  'Verify Silver is not re-deriving cost differently than Bronze.',
+  'No action required.'
+);
+
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_test_results`
+(
+  test_run_timestamp, test_date,
+  table_name, test_layer, test_name, severity_level,
+  expected_value, actual_value, variance_value,
+  status, status_emoji,
+  failure_reason, next_step,
+  is_critical_failure, is_pass, is_fail
+)
+SELECT
+  CURRENT_TIMESTAMP(), CURRENT_DATE(),
+  'sdi_silver_sa360_campaign_daily',
+  'reconciliation',
+  CONCAT('cost Total Reconciliation (', CAST(lookback_days AS STRING), '-day)'),
   'LOW',
   v_expected, v_actual, v_variance,
-  v_status, IF(v_status='PASS','🟢','🔴'),
+  v_status, v_emoji,
   v_reason, v_next,
-  FALSE,
-  (v_status='PASS'),
-  (v_status='FAIL')
-);
+  FALSE, (v_status='PASS'), (v_status='FAIL');
 
 END;

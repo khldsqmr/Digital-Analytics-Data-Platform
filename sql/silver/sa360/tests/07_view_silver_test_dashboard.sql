@@ -4,7 +4,8 @@ FILE: 07_view_silver_test_dashboard.sql
 LAYER: Silver QA
 
 PURPOSE:
-  Dashboard view that shows the latest execution per test_name per day.
+  Dashboard view showing latest execution per test_name per day.
+
 ===============================================================================
 */
 
@@ -48,5 +49,10 @@ ORDER BY
     WHEN 'LOW' THEN 3
     ELSE 4
   END,
-  test_layer,
+  CASE test_layer
+    WHEN 'critical' THEN 1
+    WHEN 'reconciliation' THEN 2
+    WHEN 'business_logic' THEN 3
+    ELSE 4
+  END,
   test_name;
