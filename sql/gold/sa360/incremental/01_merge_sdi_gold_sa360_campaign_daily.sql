@@ -1,24 +1,24 @@
 /*
 ===============================================================================
-FILE: 02_merge_sdi_gold_sa360_campaign_daily.sql
+FILE: 02_sp_merge_sdi_gold_sa360_campaign_daily.sql
 LAYER: Gold (Daily)
-TARGET:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
-SOURCE:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily
+PROC:
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_daily
 
 PURPOSE:
-  Incrementally upsert Gold Daily from Silver Daily with late-arrival protection.
+  Incrementally upsert Gold Daily from Silver Daily.
+  Uses a lookback window for late arrivals/backfills.
 
-DEFAULT LOOKBACK:
-  21 days (tunable)
-
-KEY POINT:
-  - DO NOT use INSERT ROW (fragile)
-  - Force date to DATE in the source subquery (defensive)
+CRITICAL DESIGN:
+  - No INSERT ROW (positional inserts can break with schema drift).
+  - Explicit INSERT columns + VALUES.
+  - Defensive CAST for date.
 ===============================================================================
 */
 
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_daily`()
+OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_days INT64 DEFAULT 21;
 
@@ -29,12 +29,7 @@ BEGIN
       account_name,
       campaign_id,
       campaign_name,
-
-      -- Defensive: guarantees DATE type even if upstream regresses
-      COALESCE(
-        SAFE_CAST(date AS DATE),
-        SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd)
-      ) AS date,
+      COALESCE(SAFE_CAST(date AS DATE), SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd)) AS date,
 
       lob,
       ad_platform,
@@ -216,9 +211,9 @@ BEGIN
       bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
       cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line,
       connect_low_funnel_prospect, connect_low_funnel_visit, connect_qt,
-      hint_ec, hint_sec, hint_web_orders, hint_invoca_calls, hint_offline_invoca_calls,
-      hint_offline_invoca_eligibility, hint_offline_invoca_order, hint_offline_invoca_order_rt,
-      hint_offline_invoca_sales_opp, ma_hint_ec_eligibility_check,
+      hint_ec, hint_sec, hint_web_orders, hint_invoca_calls,
+      hint_offline_invoca_calls, hint_offline_invoca_eligibility, hint_offline_invoca_order,
+      hint_offline_invoca_order_rt, hint_offline_invoca_sales_opp, ma_hint_ec_eligibility_check,
       fiber_activations, fiber_pre_order, fiber_waitlist_sign_up, fiber_web_orders,
       fiber_ec, fiber_ec_dda, fiber_sec, fiber_sec_dda,
       metro_top_funnel_prospect, metro_upper_funnel_prospect, metro_mid_funnel_prospect,
@@ -238,9 +233,9 @@ BEGIN
       S.bi, S.buying_intent, S.bts_quality_traffic, S.digital_gross_add, S.magenta_pqt,
       S.cart_start, S.postpaid_cart_start, S.postpaid_pspv, S.aal, S.add_a_line,
       S.connect_low_funnel_prospect, S.connect_low_funnel_visit, S.connect_qt,
-      S.hint_ec, S.hint_sec, S.hint_web_orders, S.hint_invoca_calls, S.hint_offline_invoca_calls,
-      S.hint_offline_invoca_eligibility, S.hint_offline_invoca_order, S.hint_offline_invoca_order_rt,
-      S.hint_offline_invoca_sales_opp, S.ma_hint_ec_eligibility_check,
+      S.hint_ec, S.hint_sec, S.hint_web_orders, S.hint_invoca_calls,
+      S.hint_offline_invoca_calls, S.hint_offline_invoca_eligibility, S.hint_offline_invoca_order,
+      S.hint_offline_invoca_order_rt, S.hint_offline_invoca_sales_opp, S.ma_hint_ec_eligibility_check,
       S.fiber_activations, S.fiber_pre_order, S.fiber_waitlist_sign_up, S.fiber_web_orders,
       S.fiber_ec, S.fiber_ec_dda, S.fiber_sec, S.fiber_sec_dda,
       S.metro_top_funnel_prospect, S.metro_upper_funnel_prospect, S.metro_mid_funnel_prospect,

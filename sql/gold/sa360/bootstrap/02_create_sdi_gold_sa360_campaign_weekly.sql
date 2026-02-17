@@ -6,20 +6,15 @@ TARGET:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
 
 SOURCE:
-  Gold Daily (weekly is derived downstream by merge procedure)
+  Gold Daily
 
-PURPOSE:
-  Dashboard-ready WEEKLY table using QGP bucketing:
-    - Standard weeks: Sun..Sat aggregated -> bucket labeled by Saturday (week end)
-    - Quarter-end partial tail: after last Saturday of quarter to quarter_end_date
-      -> bucket labeled by quarter_end_date
+TIME GRAIN:
+  qgp_week = bucket end date:
+    - Saturday for standard Sun..Sat weeks
+    - Quarter-end date for quarter-end partial tail (after last Sat of quarter)
 
 GRAIN:
   account_id + campaign_id + qgp_week
-
-PARTITION / CLUSTER:
-  - PARTITION BY qgp_week
-  - CLUSTER BY lob, ad_platform, account_id, campaign_id
 ===============================================================================
 */
 
@@ -30,7 +25,6 @@ CREATE OR REPLACE TABLE
   account_name STRING,
   campaign_id STRING,
   campaign_name STRING,
-
   qgp_week DATE,
 
   lob STRING,
@@ -116,4 +110,4 @@ CREATE OR REPLACE TABLE
 )
 PARTITION BY qgp_week
 CLUSTER BY lob, ad_platform, account_id, campaign_id
-OPTIONS(description="Gold SA360 WEEKLY dashboard table. qgp_week = Saturday week-ending OR quarter-end partial bucket end date.");
+OPTIONS(description="Gold SA360 Weekly table rolled up from Gold Daily using QGP week logic.");

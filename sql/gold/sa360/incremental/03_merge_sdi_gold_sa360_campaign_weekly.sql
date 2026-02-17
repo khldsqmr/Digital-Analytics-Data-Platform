@@ -1,28 +1,22 @@
 /*
 ===============================================================================
-FILE: 04_merge_sdi_gold_sa360_campaign_weekly.sql
+FILE: 04_sp_merge_sdi_gold_sa360_campaign_weekly.sql
 LAYER: Gold (Weekly)
-TARGET:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
-SOURCE:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
 PURPOSE:
-  Incrementally upsert Gold Weekly by recomputing recent QGP buckets from Gold Daily.
-
-CRITICAL REQUIREMENTS:
-  1) Spill-window pull: daily_pull_start = window_start - 6 days
-  2) Filter by qgp_week >= window_start AFTER bucketing
-  3) DELETE stale keys in-window:
-       WHEN NOT MATCHED BY SOURCE AND T.qgp_week >= window_start THEN DELETE
+  Recompute recent qgp_week buckets from Gold Daily and MERGE into Weekly.
+  Deletes stale keys in-window so weekly always matches recomputation.
 
 DEFAULT LOOKBACK:
-  60 days
+  60 days (safe for quarter-end partial logic)
+
+SPILL:
+  Pull (window_start - 6 days) from daily so Sat-week buckets aren’t clipped.
 ===============================================================================
 */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_campaign_weekly`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_weekly`()
 OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_days INT64 DEFAULT 60;
@@ -36,10 +30,8 @@ BEGIN
     WITH base AS (
       SELECT
         d.*,
-
         DATE_ADD(DATE_TRUNC(d.date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS week_end_saturday,
         DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end_date,
-
         DATE_SUB(
           DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY),
           INTERVAL MOD(EXTRACT(DAYOFWEEK FROM DATE_SUB(DATE_ADD(DATE_TRUNC(d.date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY)), 7) DAY
@@ -50,10 +42,8 @@ BEGIN
     bucketed AS (
       SELECT
         *,
-
         CASE
-          WHEN date > last_saturday_before_qe AND date <= quarter_end_date
-          THEN quarter_end_date
+          WHEN date > last_saturday_before_qe AND date <= quarter_end_date THEN quarter_end_date
           ELSE week_end_saturday
         END AS qgp_week
       FROM base
@@ -80,72 +70,73 @@ BEGIN
       ANY_VALUE(client_manager_id) AS client_manager_id,
       ANY_VALUE(client_manager_name) AS client_manager_name,
 
-      SUM(impressions) AS impressions,
-      SUM(clicks) AS clicks,
-      SUM(cost) AS cost,
-      SUM(all_conversions) AS all_conversions,
+      -- sums (COALESCE protects weekly totals if a metric is NULL in daily)
+      SUM(COALESCE(impressions,0)) AS impressions,
+      SUM(COALESCE(clicks,0)) AS clicks,
+      SUM(COALESCE(cost,0)) AS cost,
+      SUM(COALESCE(all_conversions,0)) AS all_conversions,
 
-      SUM(bi) AS bi,
-      SUM(buying_intent) AS buying_intent,
-      SUM(bts_quality_traffic) AS bts_quality_traffic,
-      SUM(digital_gross_add) AS digital_gross_add,
-      SUM(magenta_pqt) AS magenta_pqt,
+      SUM(COALESCE(bi,0)) AS bi,
+      SUM(COALESCE(buying_intent,0)) AS buying_intent,
+      SUM(COALESCE(bts_quality_traffic,0)) AS bts_quality_traffic,
+      SUM(COALESCE(digital_gross_add,0)) AS digital_gross_add,
+      SUM(COALESCE(magenta_pqt,0)) AS magenta_pqt,
 
-      SUM(cart_start) AS cart_start,
-      SUM(postpaid_cart_start) AS postpaid_cart_start,
-      SUM(postpaid_pspv) AS postpaid_pspv,
-      SUM(aal) AS aal,
-      SUM(add_a_line) AS add_a_line,
+      SUM(COALESCE(cart_start,0)) AS cart_start,
+      SUM(COALESCE(postpaid_cart_start,0)) AS postpaid_cart_start,
+      SUM(COALESCE(postpaid_pspv,0)) AS postpaid_pspv,
+      SUM(COALESCE(aal,0)) AS aal,
+      SUM(COALESCE(add_a_line,0)) AS add_a_line,
 
-      SUM(connect_low_funnel_prospect) AS connect_low_funnel_prospect,
-      SUM(connect_low_funnel_visit) AS connect_low_funnel_visit,
-      SUM(connect_qt) AS connect_qt,
+      SUM(COALESCE(connect_low_funnel_prospect,0)) AS connect_low_funnel_prospect,
+      SUM(COALESCE(connect_low_funnel_visit,0)) AS connect_low_funnel_visit,
+      SUM(COALESCE(connect_qt,0)) AS connect_qt,
 
-      SUM(hint_ec) AS hint_ec,
-      SUM(hint_sec) AS hint_sec,
-      SUM(hint_web_orders) AS hint_web_orders,
-      SUM(hint_invoca_calls) AS hint_invoca_calls,
-      SUM(hint_offline_invoca_calls) AS hint_offline_invoca_calls,
-      SUM(hint_offline_invoca_eligibility) AS hint_offline_invoca_eligibility,
-      SUM(hint_offline_invoca_order) AS hint_offline_invoca_order,
-      SUM(hint_offline_invoca_order_rt) AS hint_offline_invoca_order_rt,
-      SUM(hint_offline_invoca_sales_opp) AS hint_offline_invoca_sales_opp,
-      SUM(ma_hint_ec_eligibility_check) AS ma_hint_ec_eligibility_check,
+      SUM(COALESCE(hint_ec,0)) AS hint_ec,
+      SUM(COALESCE(hint_sec,0)) AS hint_sec,
+      SUM(COALESCE(hint_web_orders,0)) AS hint_web_orders,
+      SUM(COALESCE(hint_invoca_calls,0)) AS hint_invoca_calls,
+      SUM(COALESCE(hint_offline_invoca_calls,0)) AS hint_offline_invoca_calls,
+      SUM(COALESCE(hint_offline_invoca_eligibility,0)) AS hint_offline_invoca_eligibility,
+      SUM(COALESCE(hint_offline_invoca_order,0)) AS hint_offline_invoca_order,
+      SUM(COALESCE(hint_offline_invoca_order_rt,0)) AS hint_offline_invoca_order_rt,
+      SUM(COALESCE(hint_offline_invoca_sales_opp,0)) AS hint_offline_invoca_sales_opp,
+      SUM(COALESCE(ma_hint_ec_eligibility_check,0)) AS ma_hint_ec_eligibility_check,
 
-      SUM(fiber_activations) AS fiber_activations,
-      SUM(fiber_pre_order) AS fiber_pre_order,
-      SUM(fiber_waitlist_sign_up) AS fiber_waitlist_sign_up,
-      SUM(fiber_web_orders) AS fiber_web_orders,
-      SUM(fiber_ec) AS fiber_ec,
-      SUM(fiber_ec_dda) AS fiber_ec_dda,
-      SUM(fiber_sec) AS fiber_sec,
-      SUM(fiber_sec_dda) AS fiber_sec_dda,
+      SUM(COALESCE(fiber_activations,0)) AS fiber_activations,
+      SUM(COALESCE(fiber_pre_order,0)) AS fiber_pre_order,
+      SUM(COALESCE(fiber_waitlist_sign_up,0)) AS fiber_waitlist_sign_up,
+      SUM(COALESCE(fiber_web_orders,0)) AS fiber_web_orders,
+      SUM(COALESCE(fiber_ec,0)) AS fiber_ec,
+      SUM(COALESCE(fiber_ec_dda,0)) AS fiber_ec_dda,
+      SUM(COALESCE(fiber_sec,0)) AS fiber_sec,
+      SUM(COALESCE(fiber_sec_dda,0)) AS fiber_sec_dda,
 
-      SUM(metro_top_funnel_prospect) AS metro_top_funnel_prospect,
-      SUM(metro_upper_funnel_prospect) AS metro_upper_funnel_prospect,
-      SUM(metro_mid_funnel_prospect) AS metro_mid_funnel_prospect,
-      SUM(metro_low_funnel_cs) AS metro_low_funnel_cs,
-      SUM(metro_qt) AS metro_qt,
-      SUM(metro_hint_qt) AS metro_hint_qt,
+      SUM(COALESCE(metro_top_funnel_prospect,0)) AS metro_top_funnel_prospect,
+      SUM(COALESCE(metro_upper_funnel_prospect,0)) AS metro_upper_funnel_prospect,
+      SUM(COALESCE(metro_mid_funnel_prospect,0)) AS metro_mid_funnel_prospect,
+      SUM(COALESCE(metro_low_funnel_cs,0)) AS metro_low_funnel_cs,
+      SUM(COALESCE(metro_qt,0)) AS metro_qt,
+      SUM(COALESCE(metro_hint_qt,0)) AS metro_hint_qt,
 
-      -- IMPORTANT: keep name consistent with Gold Daily
-      SUM(tmo_top_funnel_prospect) AS tmo_top_funnel_prospect,
-      SUM(tmo_upper_funnel_prospect) AS tmo_upper_funnel_prospect,
-      SUM(tmo_prepaid_low_funnel_prospect) AS tmo_prepaid_low_funnel_prospect,
+      SUM(COALESCE(tmo_top_funnel_prospect,0)) AS tmo_top_funnel_prospect,
+      SUM(COALESCE(tmo_upper_funnel_prospect,0)) AS tmo_upper_funnel_prospect,
+      SUM(COALESCE(tmo_prepaid_low_funnel_prospect,0)) AS tmo_prepaid_low_funnel_prospect,
 
-      SUM(tfb_credit_check) AS tfb_credit_check,
-      SUM(tfb_invoca_sales_calls) AS tfb_invoca_sales_calls,
-      SUM(tfb_leads) AS tfb_leads,
-      SUM(tfb_quality_traffic) AS tfb_quality_traffic,
-      SUM(tfb_hint_ec) AS tfb_hint_ec,
-      SUM(total_tfb_conversions) AS total_tfb_conversions,
-      SUM(tfb_low_funnel) AS tfb_low_funnel,
-      SUM(tfb_lead_form_submit) AS tfb_lead_form_submit,
-      SUM(tfb_invoca_sales_intent_dda) AS tfb_invoca_sales_intent_dda,
-      SUM(tfb_invoca_order_dda) AS tfb_invoca_order_dda,
+      SUM(COALESCE(tfb_credit_check,0)) AS tfb_credit_check,
+      SUM(COALESCE(tfb_invoca_sales_calls,0)) AS tfb_invoca_sales_calls,
+      SUM(COALESCE(tfb_leads,0)) AS tfb_leads,
+      SUM(COALESCE(tfb_quality_traffic,0)) AS tfb_quality_traffic,
+      SUM(COALESCE(tfb_hint_ec,0)) AS tfb_hint_ec,
+      SUM(COALESCE(total_tfb_conversions,0)) AS total_tfb_conversions,
+      SUM(COALESCE(tfb_low_funnel,0)) AS tfb_low_funnel,
+      SUM(COALESCE(tfb_lead_form_submit,0)) AS tfb_lead_form_submit,
+      SUM(COALESCE(tfb_invoca_sales_intent_dda,0)) AS tfb_invoca_sales_intent_dda,
+      SUM(COALESCE(tfb_invoca_order_dda,0)) AS tfb_invoca_order_dda,
 
       MAX(file_load_datetime) AS file_load_datetime,
       CURRENT_TIMESTAMP() AS gold_inserted_at
+
     FROM bucketed
     WHERE qgp_week >= window_start
     GROUP BY account_id, campaign_id, qgp_week
@@ -157,43 +148,35 @@ BEGIN
   WHEN MATCHED THEN UPDATE SET
     account_name = S.account_name,
     campaign_name = S.campaign_name,
-
     lob = S.lob,
     ad_platform = S.ad_platform,
     campaign_type = S.campaign_type,
-
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,
     serving_status = S.serving_status,
-
     customer_id = S.customer_id,
     customer_name = S.customer_name,
     resource_name = S.resource_name,
     client_manager_id = S.client_manager_id,
     client_manager_name = S.client_manager_name,
-
     impressions = S.impressions,
     clicks = S.clicks,
     cost = S.cost,
     all_conversions = S.all_conversions,
-
     bi = S.bi,
     buying_intent = S.buying_intent,
     bts_quality_traffic = S.bts_quality_traffic,
     digital_gross_add = S.digital_gross_add,
     magenta_pqt = S.magenta_pqt,
-
     cart_start = S.cart_start,
     postpaid_cart_start = S.postpaid_cart_start,
     postpaid_pspv = S.postpaid_pspv,
     aal = S.aal,
     add_a_line = S.add_a_line,
-
     connect_low_funnel_prospect = S.connect_low_funnel_prospect,
     connect_low_funnel_visit = S.connect_low_funnel_visit,
     connect_qt = S.connect_qt,
-
     hint_ec = S.hint_ec,
     hint_sec = S.hint_sec,
     hint_web_orders = S.hint_web_orders,
@@ -204,7 +187,6 @@ BEGIN
     hint_offline_invoca_order_rt = S.hint_offline_invoca_order_rt,
     hint_offline_invoca_sales_opp = S.hint_offline_invoca_sales_opp,
     ma_hint_ec_eligibility_check = S.ma_hint_ec_eligibility_check,
-
     fiber_activations = S.fiber_activations,
     fiber_pre_order = S.fiber_pre_order,
     fiber_waitlist_sign_up = S.fiber_waitlist_sign_up,
@@ -213,18 +195,15 @@ BEGIN
     fiber_ec_dda = S.fiber_ec_dda,
     fiber_sec = S.fiber_sec,
     fiber_sec_dda = S.fiber_sec_dda,
-
     metro_top_funnel_prospect = S.metro_top_funnel_prospect,
     metro_upper_funnel_prospect = S.metro_upper_funnel_prospect,
     metro_mid_funnel_prospect = S.metro_mid_funnel_prospect,
     metro_low_funnel_cs = S.metro_low_funnel_cs,
     metro_qt = S.metro_qt,
     metro_hint_qt = S.metro_hint_qt,
-
     tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
     tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
     tmo_prepaid_low_funnel_prospect = S.tmo_prepaid_low_funnel_prospect,
-
     tfb_credit_check = S.tfb_credit_check,
     tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
     tfb_leads = S.tfb_leads,
@@ -235,12 +214,54 @@ BEGIN
     tfb_lead_form_submit = S.tfb_lead_form_submit,
     tfb_invoca_sales_intent_dda = S.tfb_invoca_sales_intent_dda,
     tfb_invoca_order_dda = S.tfb_invoca_order_dda,
-
     file_load_datetime = S.file_load_datetime,
     gold_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN
-    INSERT ROW
+    INSERT (
+      account_id, account_name, campaign_id, campaign_name, qgp_week,
+      lob, ad_platform, campaign_type,
+      advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
+      customer_id, customer_name, resource_name, client_manager_id, client_manager_name,
+      impressions, clicks, cost, all_conversions,
+      bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
+      cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line,
+      connect_low_funnel_prospect, connect_low_funnel_visit, connect_qt,
+      hint_ec, hint_sec, hint_web_orders, hint_invoca_calls,
+      hint_offline_invoca_calls, hint_offline_invoca_eligibility, hint_offline_invoca_order,
+      hint_offline_invoca_order_rt, hint_offline_invoca_sales_opp, ma_hint_ec_eligibility_check,
+      fiber_activations, fiber_pre_order, fiber_waitlist_sign_up, fiber_web_orders,
+      fiber_ec, fiber_ec_dda, fiber_sec, fiber_sec_dda,
+      metro_top_funnel_prospect, metro_upper_funnel_prospect, metro_mid_funnel_prospect,
+      metro_low_funnel_cs, metro_qt, metro_hint_qt,
+      tmo_top_funnel_prospect, tmo_upper_funnel_prospect, tmo_prepaid_low_funnel_prospect,
+      tfb_credit_check, tfb_invoca_sales_calls, tfb_leads, tfb_quality_traffic,
+      tfb_hint_ec, total_tfb_conversions, tfb_low_funnel, tfb_lead_form_submit,
+      tfb_invoca_sales_intent_dda, tfb_invoca_order_dda,
+      file_load_datetime, gold_inserted_at
+    )
+    VALUES (
+      S.account_id, S.account_name, S.campaign_id, S.campaign_name, S.qgp_week,
+      S.lob, S.ad_platform, S.campaign_type,
+      S.advertising_channel_type, S.advertising_channel_sub_type, S.bidding_strategy_type, S.serving_status,
+      S.customer_id, S.customer_name, S.resource_name, S.client_manager_id, S.client_manager_name,
+      S.impressions, S.clicks, S.cost, S.all_conversions,
+      S.bi, S.buying_intent, S.bts_quality_traffic, S.digital_gross_add, S.magenta_pqt,
+      S.cart_start, S.postpaid_cart_start, S.postpaid_pspv, S.aal, S.add_a_line,
+      S.connect_low_funnel_prospect, S.connect_low_funnel_visit, S.connect_qt,
+      S.hint_ec, S.hint_sec, S.hint_web_orders, S.hint_invoca_calls,
+      S.hint_offline_invoca_calls, S.hint_offline_invoca_eligibility, S.hint_offline_invoca_order,
+      S.hint_offline_invoca_order_rt, S.hint_offline_invoca_sales_opp, S.ma_hint_ec_eligibility_check,
+      S.fiber_activations, S.fiber_pre_order, S.fiber_waitlist_sign_up, S.fiber_web_orders,
+      S.fiber_ec, S.fiber_ec_dda, S.fiber_sec, S.fiber_sec_dda,
+      S.metro_top_funnel_prospect, S.metro_upper_funnel_prospect, S.metro_mid_funnel_prospect,
+      S.metro_low_funnel_cs, S.metro_qt, S.metro_hint_qt,
+      S.tmo_top_funnel_prospect, S.tmo_upper_funnel_prospect, S.tmo_prepaid_low_funnel_prospect,
+      S.tfb_credit_check, S.tfb_invoca_sales_calls, S.tfb_leads, S.tfb_quality_traffic,
+      S.tfb_hint_ec, S.total_tfb_conversions, S.tfb_low_funnel, S.tfb_lead_form_submit,
+      S.tfb_invoca_sales_intent_dda, S.tfb_invoca_order_dda,
+      S.file_load_datetime, S.gold_inserted_at
+    )
 
   WHEN NOT MATCHED BY SOURCE
     AND T.qgp_week >= window_start
