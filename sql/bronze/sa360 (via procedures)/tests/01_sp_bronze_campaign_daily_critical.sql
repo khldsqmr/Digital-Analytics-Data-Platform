@@ -7,14 +7,6 @@ PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_sa360_campaign_dai
 TABLE UNDER TEST:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
 
-WHY THESE TESTS:
-  - Bronze must be structurally sound (unique grain, no null IDs)
-  - Freshness ensures pipeline is not stale
-  - Metric sanity prevents obvious corruption (negative cart_start / postpaid_pspv)
-
-NOTES:
-  - Tests run on a configurable lookback window (default 7 days).
-  - Each test writes exactly 1 row into sdi_bronze_sa360_test_results.
 ===============================================================================
 */
 
