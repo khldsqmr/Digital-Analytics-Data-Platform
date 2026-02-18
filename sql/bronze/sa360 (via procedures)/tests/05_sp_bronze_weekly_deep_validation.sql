@@ -20,7 +20,6 @@ METRICS CHECKED:
   - postpaid_pspv
 ===============================================================================
 */
-
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_sa360_weekly_deep_validation_tests`()
 OPTIONS(strict_mode=false)
@@ -35,25 +34,27 @@ BEGIN
   WITH weekly AS (
     SELECT
       DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
-      SUM(COALESCE(cart_start,0)) AS cart_start_week
+      SUM(COALESCE(cart_start, 0)) AS cart_start_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
     GROUP BY 1
   ),
   last_week AS (
     SELECT cart_start_week
     FROM weekly
-    QUALIFY weekend_date = (SELECT MAX(weekend_date) FROM weekly)
+    ORDER BY weekend_date DESC
+    LIMIT 1
   ),
-  prev AS (
-    SELECT AVG(cart_start_week) AS avg_prev
+  prev_stats AS (
+    SELECT
+      AVG(cart_start_week) AS avg_prev,
+      COUNT(*) AS cnt_prev
     FROM weekly
     WHERE weekend_date < (SELECT MAX(weekend_date) FROM weekly)
-    QUALIFY COUNT(*) OVER() >= history_weeks
   ),
   calc AS (
     SELECT
       (SELECT cart_start_week FROM last_week) AS last_val,
-      (SELECT avg_prev FROM prev) AS baseline
+      IF((SELECT cnt_prev FROM prev_stats) < history_weeks, NULL, (SELECT avg_prev FROM prev_stats)) AS baseline
   )
   SELECT
     CURRENT_TIMESTAMP(),
@@ -95,25 +96,27 @@ BEGIN
   WITH weekly AS (
     SELECT
       DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
-      SUM(COALESCE(postpaid_pspv,0)) AS pspv_week
+      SUM(COALESCE(postpaid_pspv, 0)) AS pspv_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
     GROUP BY 1
   ),
   last_week AS (
     SELECT pspv_week
     FROM weekly
-    QUALIFY weekend_date = (SELECT MAX(weekend_date) FROM weekly)
+    ORDER BY weekend_date DESC
+    LIMIT 1
   ),
-  prev AS (
-    SELECT AVG(pspv_week) AS avg_prev
+  prev_stats AS (
+    SELECT
+      AVG(pspv_week) AS avg_prev,
+      COUNT(*) AS cnt_prev
     FROM weekly
     WHERE weekend_date < (SELECT MAX(weekend_date) FROM weekly)
-    QUALIFY COUNT(*) OVER() >= history_weeks
   ),
   calc AS (
     SELECT
       (SELECT pspv_week FROM last_week) AS last_val,
-      (SELECT avg_prev FROM prev) AS baseline
+      IF((SELECT cnt_prev FROM prev_stats) < history_weeks, NULL, (SELECT avg_prev FROM prev_stats)) AS baseline
   )
   SELECT
     CURRENT_TIMESTAMP(),
