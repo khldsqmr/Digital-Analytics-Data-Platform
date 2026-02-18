@@ -115,5 +115,5 @@ CREATE OR REPLACE TABLE
   gold_inserted_at TIMESTAMP OPTIONS(description="Timestamp when row was inserted/updated in Gold.")
 )
 PARTITION BY date
-CLUSTER BY lob, ad_platform, campaign_type, account_id, campaign_id
+CLUSTER BY lob, account_id, campaign_id
 OPTIONS(description="Gold SA360 campaign daily fact. Reporting-ready schema derived from Silver.");

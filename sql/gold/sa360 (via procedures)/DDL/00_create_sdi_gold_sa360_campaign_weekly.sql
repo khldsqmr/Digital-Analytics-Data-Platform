@@ -111,5 +111,5 @@ CREATE OR REPLACE TABLE
   gold_weekly_inserted_at TIMESTAMP OPTIONS(description="Timestamp when week row was inserted/updated.")
 )
 PARTITION BY weekend_date
-CLUSTER BY lob, ad_platform, campaign_type, account_id, campaign_id
+CLUSTER BY lob, account_id, campaign_id
 OPTIONS(description="Gold SA360 campaign weekly rollup derived as sums of Gold Daily with stable week-ending Saturday.");
