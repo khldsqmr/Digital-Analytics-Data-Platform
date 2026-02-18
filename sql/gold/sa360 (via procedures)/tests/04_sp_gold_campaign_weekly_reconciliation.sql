@@ -4,83 +4,174 @@ FILE: 04_sp_gold_campaign_weekly_reconciliation.sql
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-RECONCILIATION:
-  Gold Weekly must equal SUM(Gold Daily) for same weekend_date window.
-  This ensures week rollups are mathematically correct.
-
-METRICS:
-  - cart_start
-  - postpaid_pspv
+Key points:
+  - Uses last N complete weekend_dates driven by Daily (so the weeks are real)
+  - Compares per weekend_date so you get pinpoint failures
+  - No COALESCE “hiding” — if a side is missing you’ll see it because the join fails and expected/actual becomes NULL (that’s a legit FAIL)
 ===============================================================================
 */
-
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_weeks INT64 DEFAULT 12;
+  DECLARE sample_weeks INT64 DEFAULT 4;   -- keep it simple: 4 weeks
   DECLARE tolerance FLOAT64 DEFAULT 0.000001;
 
-  -- cart_start reconcile (weekly vs sum(daily))
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH weekly_sum AS (
-    SELECT
-      SUM(COALESCE(cart_start,0)) AS weekly_total
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
+  -- Pick the most recent COMPLETE weekend_dates based on Daily
+  -- "Complete" here means weekend_date <= current week's weekend (Saturday) and is present in Daily.
+  WITH daily_week_list AS (
+    SELECT weekend_date
+    FROM (
+      SELECT DISTINCT DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date IS NOT NULL
+    )
+    ORDER BY weekend_date DESC
+    LIMIT sample_weeks
   ),
-  daily_sum AS (
-    SELECT
-      SUM(COALESCE(cart_start,0)) AS daily_total
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE DATE_TRUNC(date, WEEK(SATURDAY)) >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
-  )
-  SELECT
-    CURRENT_TIMESTAMP(), CURRENT_DATE(),
-    'sdi_gold_sa360_campaign_weekly',
-    'reconciliation',
-    'Cart Start Reconciliation (Weekly vs SUM(Daily), 12w)',
-    'HIGH',
-    (SELECT daily_total FROM daily_sum),
-    (SELECT weekly_total FROM weekly_sum),
-    (SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, 'PASS', 'FAIL'),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, '🟢', '🔴'),
-    'Weekly should equal SUM(Daily) for the same week window.',
-    'If FAIL: verify weekend_date logic (WEEK(SATURDAY)) + ensure weekly built only from Gold Daily.',
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) > tolerance, TRUE, FALSE),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, TRUE, FALSE),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) > tolerance, TRUE, FALSE);
 
-  -- postpaid_pspv reconcile (weekly vs sum(daily))
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH weekly_sum AS (
+  daily_rollup AS (
     SELECT
-      SUM(COALESCE(postpaid_pspv,0)) AS weekly_total
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
-  ),
-  daily_sum AS (
-    SELECT
-      SUM(COALESCE(postpaid_pspv,0)) AS daily_total
+      DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
+      SUM(COALESCE(cart_start,0))     AS cart_start_daily_sum,
+      SUM(COALESCE(postpaid_pspv,0))  AS postpaid_pspv_daily_sum
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE DATE_TRUNC(date, WEEK(SATURDAY)) >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
+    GROUP BY 1
+  ),
+
+  weekly_rollup AS (
+    SELECT
+      weekend_date,
+      SUM(COALESCE(cart_start,0))     AS cart_start_weekly_sum,
+      SUM(COALESCE(postpaid_pspv,0))  AS postpaid_pspv_weekly_sum
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    GROUP BY 1
+  ),
+
+  aligned AS (
+    SELECT
+      l.weekend_date,
+      d.cart_start_daily_sum,
+      w.cart_start_weekly_sum,
+      d.postpaid_pspv_daily_sum,
+      w.postpaid_pspv_weekly_sum
+    FROM daily_week_list l
+    LEFT JOIN daily_rollup d USING (weekend_date)
+    LEFT JOIN weekly_rollup w USING (weekend_date)
   )
+
+  -- ---------------------------------------------------------------------------
+  -- TEST 1: cart_start weekly == sum(daily) (per weekend)
+  -- ---------------------------------------------------------------------------
+  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   SELECT
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'reconciliation',
-    'Postpaid PSPV Reconciliation (Weekly vs SUM(Daily), 12w)',
+    CONCAT('Cart Start Weekly == SUM(Daily) | weekend=', CAST(weekend_date AS STRING)) AS test_name,
     'HIGH',
-    (SELECT daily_total FROM daily_sum),
-    (SELECT weekly_total FROM weekly_sum),
-    (SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, 'PASS', 'FAIL'),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, '🟢', '🔴'),
-    'Weekly should equal SUM(Daily) for the same week window.',
-    'If FAIL: verify weekend_date logic (WEEK(SATURDAY)) + ensure weekly built only from Gold Daily.',
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) > tolerance, TRUE, FALSE),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) <= tolerance, TRUE, FALSE),
-    IF(ABS((SELECT weekly_total FROM weekly_sum) - (SELECT daily_total FROM daily_sum)) > tolerance, TRUE, FALSE);
+    CAST(cart_start_daily_sum AS FLOAT64) AS expected_value,
+    CAST(cart_start_weekly_sum AS FLOAT64) AS actual_value,
+    CAST(cart_start_weekly_sum - cart_start_daily_sum AS FLOAT64) AS variance_value,
+    IF(
+      cart_start_daily_sum IS NOT NULL
+      AND cart_start_weekly_sum IS NOT NULL
+      AND ABS(cart_start_weekly_sum - cart_start_daily_sum) <= tolerance,
+      'PASS','FAIL'
+    ) AS status,
+    IF(
+      cart_start_daily_sum IS NOT NULL
+      AND cart_start_weekly_sum IS NOT NULL
+      AND ABS(cart_start_weekly_sum - cart_start_daily_sum) <= tolerance,
+      '🟢','🔴'
+    ) AS status_emoji,
+    CASE
+      WHEN cart_start_daily_sum IS NULL THEN 'Daily rollup missing for this weekend_date (unexpected).'
+      WHEN cart_start_weekly_sum IS NULL THEN 'Weekly rollup missing for this weekend_date (weekly not built or filtered out).'
+      WHEN ABS(cart_start_weekly_sum - cart_start_daily_sum) <= tolerance THEN 'Weekly equals SUM(Daily) for this weekend_date.'
+      ELSE 'Weekly does NOT equal SUM(Daily) for this weekend_date.'
+    END AS failure_reason,
+    CASE
+      WHEN cart_start_weekly_sum IS NULL THEN 'Build weekly for this weekend_date and validate weekend_date logic.'
+      WHEN cart_start_daily_sum IS NULL THEN 'Validate daily availability and weekend_date derivation.'
+      WHEN ABS(cart_start_weekly_sum - cart_start_daily_sum) <= tolerance THEN 'No action required.'
+      ELSE 'Verify weekly build is sourced only from Gold Daily and uses WEEK(SATURDAY) consistently.'
+    END AS next_step,
+    IF(
+      cart_start_daily_sum IS NULL
+      OR cart_start_weekly_sum IS NULL
+      OR ABS(cart_start_weekly_sum - cart_start_daily_sum) > tolerance,
+      TRUE, FALSE
+    ) AS is_critical_failure,
+    IF(
+      cart_start_daily_sum IS NOT NULL
+      AND cart_start_weekly_sum IS NOT NULL
+      AND ABS(cart_start_weekly_sum - cart_start_daily_sum) <= tolerance,
+      TRUE, FALSE
+    ) AS is_pass,
+    IF(
+      cart_start_daily_sum IS NULL
+      OR cart_start_weekly_sum IS NULL
+      OR ABS(cart_start_weekly_sum - cart_start_daily_sum) > tolerance,
+      TRUE, FALSE
+    ) AS is_fail
+  FROM aligned;
+
+  -- ---------------------------------------------------------------------------
+  -- TEST 2: postpaid_pspv weekly == sum(daily) (per weekend)
+  -- ---------------------------------------------------------------------------
+  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
+  SELECT
+    CURRENT_TIMESTAMP(), CURRENT_DATE(),
+    'sdi_gold_sa360_campaign_weekly',
+    'reconciliation',
+    CONCAT('Postpaid PSPV Weekly == SUM(Daily) | weekend=', CAST(weekend_date AS STRING)) AS test_name,
+    'HIGH',
+    CAST(postpaid_pspv_daily_sum AS FLOAT64) AS expected_value,
+    CAST(postpaid_pspv_weekly_sum AS FLOAT64) AS actual_value,
+    CAST(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum AS FLOAT64) AS variance_value,
+    IF(
+      postpaid_pspv_daily_sum IS NOT NULL
+      AND postpaid_pspv_weekly_sum IS NOT NULL
+      AND ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) <= tolerance,
+      'PASS','FAIL'
+    ) AS status,
+    IF(
+      postpaid_pspv_daily_sum IS NOT NULL
+      AND postpaid_pspv_weekly_sum IS NOT NULL
+      AND ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) <= tolerance,
+      '🟢','🔴'
+    ) AS status_emoji,
+    CASE
+      WHEN postpaid_pspv_daily_sum IS NULL THEN 'Daily rollup missing for this weekend_date (unexpected).'
+      WHEN postpaid_pspv_weekly_sum IS NULL THEN 'Weekly rollup missing for this weekend_date (weekly not built or filtered out).'
+      WHEN ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) <= tolerance THEN 'Weekly equals SUM(Daily) for this weekend_date.'
+      ELSE 'Weekly does NOT equal SUM(Daily) for this weekend_date.'
+    END AS failure_reason,
+    CASE
+      WHEN postpaid_pspv_weekly_sum IS NULL THEN 'Build weekly for this weekend_date and validate weekend_date logic.'
+      WHEN postpaid_pspv_daily_sum IS NULL THEN 'Validate daily availability and weekend_date derivation.'
+      WHEN ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) <= tolerance THEN 'No action required.'
+      ELSE 'Verify weekly build is sourced only from Gold Daily and uses WEEK(SATURDAY) consistently.'
+    END AS next_step,
+    IF(
+      postpaid_pspv_daily_sum IS NULL
+      OR postpaid_pspv_weekly_sum IS NULL
+      OR ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) > tolerance,
+      TRUE, FALSE
+    ) AS is_critical_failure,
+    IF(
+      postpaid_pspv_daily_sum IS NOT NULL
+      AND postpaid_pspv_weekly_sum IS NOT NULL
+      AND ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) <= tolerance,
+      TRUE, FALSE
+    ) AS is_pass,
+    IF(
+      postpaid_pspv_daily_sum IS NULL
+      OR postpaid_pspv_weekly_sum IS NULL
+      OR ABS(postpaid_pspv_weekly_sum - postpaid_pspv_daily_sum) > tolerance,
+      TRUE, FALSE
+    ) AS is_fail
+  FROM aligned;
 
 END;
