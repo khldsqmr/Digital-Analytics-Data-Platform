@@ -1,29 +1,9 @@
-/*
-===============================================================================
+/* =============================================================================
 FILE: 02_sp_bronze_campaign_daily_reconciliation.sql
-LAYER: Bronze | QA
-PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_sa360_campaign_daily_reconciliation_tests
-
-TABLE UNDER TEST:
-  Bronze Daily:
-    prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily
-
-RECONCILIATION SOURCE (RAW):
-  prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo
-
-WHY RECONCILE BRONZE VS RAW:
-  Bronze is a cleaned + typed representation of RAW.
-  We must ensure no values are lost/duplicated after:
-    - date parsing
-    - dedup in merge key
-    - metric casting
-
-IMPORTANT:
-  To be apples-to-apples, we dedupe RAW using the SAME rules as Bronze MERGE:
-    key = (account_id, campaign_id, date_yyyymmdd)
-    tie-breaker = file_load_datetime DESC, filename DESC
-===============================================================================
-*/
+CHANGE:
+  - Force variance_value = 0 on PASS (within tolerance)
+  - Round expected/actual to avoid tiny float artifacts in UI
+============================================================================= */
 
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_sa360_campaign_daily_reconciliation_tests`()
@@ -33,10 +13,8 @@ BEGIN
   DECLARE tolerance FLOAT64 DEFAULT 0.000001;
 
   -- ---------------------------------------------------------------------------
-  -- Helper CTE: RAW deduped in-window (mirror Bronze MERGE dedupe)
-  -- ---------------------------------------------------------------------------
   -- TEST 1: Row-count reconciliation (Bronze vs RAW-dedup)
-  -- Expect: counts match exactly
+  -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
   WITH raw_src AS (
     SELECT
@@ -50,9 +28,7 @@ BEGIN
     WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING))
           >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ),
-  raw_clean AS (
-    SELECT * FROM raw_src WHERE date IS NOT NULL
-  ),
+  raw_clean AS (SELECT * FROM raw_src WHERE date IS NOT NULL),
   raw_dedup AS (
     SELECT * EXCEPT(rn)
     FROM (
@@ -83,11 +59,11 @@ BEGIN
     'HIGH',
     CAST(raw_cnt AS FLOAT64) AS expected_value,
     CAST(bronze_cnt AS FLOAT64) AS actual_value,
-    CAST(bronze_cnt - raw_cnt AS FLOAT64) AS variance_value,
+    IF(bronze_cnt = raw_cnt, 0.0, CAST(bronze_cnt - raw_cnt AS FLOAT64)) AS variance_value,
     IF(bronze_cnt = raw_cnt, 'PASS', 'FAIL') AS status,
     IF(bronze_cnt = raw_cnt, '🟢', '🔴') AS status_emoji,
     IF(bronze_cnt = raw_cnt,
-      'Row counts match exactly.',
+      'Row counts match exactly (variance forced to 0 on PASS).',
       'Row counts do NOT match. Bronze may be missing rows or duplicating rows vs RAW-dedup.'
     ) AS failure_reason,
     IF(bronze_cnt = raw_cnt,
@@ -99,9 +75,10 @@ BEGIN
     IF(bronze_cnt != raw_cnt, TRUE, FALSE) AS is_fail
   FROM counts;
 
+
   -- ---------------------------------------------------------------------------
   -- TEST 2: Metric reconciliation (cart_start) over 7d (Bronze vs RAW-dedup)
-  -- Expect: sums match within tolerance
+  -- variance_value forced to 0 when within tolerance
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
   WITH raw_src AS (
@@ -146,13 +123,13 @@ BEGIN
     'reconciliation',
     'Cart Start Reconciliation (Bronze vs RAW-dedup, 7d)',
     'HIGH',
-    raw_sum AS expected_value,
-    bronze_sum AS actual_value,
-    (bronze_sum - raw_sum) AS variance_value,
+    ROUND(raw_sum, 6) AS expected_value,
+    ROUND(bronze_sum, 6) AS actual_value,
+    IF(ABS(bronze_sum - raw_sum) <= tolerance, 0.0, ROUND(bronze_sum - raw_sum, 6)) AS variance_value,
     IF(ABS(bronze_sum - raw_sum) <= tolerance, 'PASS', 'FAIL') AS status,
     IF(ABS(bronze_sum - raw_sum) <= tolerance, '🟢', '🔴') AS status_emoji,
     IF(ABS(bronze_sum - raw_sum) <= tolerance,
-      'Cart Start sums reconcile successfully.',
+      'Cart Start sums reconcile successfully (variance forced to 0 within tolerance).',
       'Cart Start sums do NOT reconcile (beyond tolerance).'
     ) AS failure_reason,
     IF(ABS(bronze_sum - raw_sum) <= tolerance,
@@ -164,9 +141,10 @@ BEGIN
     IF(ABS(bronze_sum - raw_sum) > tolerance, TRUE, FALSE) AS is_fail
   FROM sums;
 
+
   -- ---------------------------------------------------------------------------
   -- TEST 3: Metric reconciliation (postpaid_pspv) over 7d
-  -- Expect: sums match within tolerance
+  -- variance_value forced to 0 when within tolerance
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_test_results`
   WITH raw_src AS (
@@ -211,13 +189,13 @@ BEGIN
     'reconciliation',
     'Postpaid PSPV Reconciliation (Bronze vs RAW-dedup, 7d)',
     'HIGH',
-    raw_sum AS expected_value,
-    bronze_sum AS actual_value,
-    (bronze_sum - raw_sum) AS variance_value,
+    ROUND(raw_sum, 6) AS expected_value,
+    ROUND(bronze_sum, 6) AS actual_value,
+    IF(ABS(bronze_sum - raw_sum) <= tolerance, 0.0, ROUND(bronze_sum - raw_sum, 6)) AS variance_value,
     IF(ABS(bronze_sum - raw_sum) <= tolerance, 'PASS', 'FAIL') AS status,
     IF(ABS(bronze_sum - raw_sum) <= tolerance, '🟢', '🔴') AS status_emoji,
     IF(ABS(bronze_sum - raw_sum) <= tolerance,
-      'Postpaid PSPV sums reconcile successfully.',
+      'Postpaid PSPV sums reconcile successfully (variance forced to 0 within tolerance).',
       'Postpaid PSPV sums do NOT reconcile (beyond tolerance).'
     ) AS failure_reason,
     IF(ABS(bronze_sum - raw_sum) <= tolerance,
@@ -230,3 +208,5 @@ BEGIN
   FROM sums;
 
 END;
+
+
