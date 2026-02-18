@@ -5,16 +5,22 @@ LAYER: Gold
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_weekly
 
 PURPOSE:
-  Rebuild / upsert weekly aggregates from Gold Daily within lookback window.
+  Rebuild / upsert QGP-week aggregates from Gold Daily within lookback window.
 
-WEEK LOGIC:
-  weekend_date = DATE_TRUNC(date, WEEK(SATURDAY))
+QGP WEEK LOGIC:
+  - week_end_sat = DATE_TRUNC(date, WEEK(SATURDAY))
+  - quarter_end  = last day of quarter for `date`
+  - if quarter_end occurs before that Saturday:
+      * dates <= quarter_end bucket to qgp_week = quarter_end (QUARTER_END_PARTIAL)
+      * dates after quarter_end bucket to qgp_week = week_end_sat (WEEKLY)
+    else:
+      * bucket to qgp_week = week_end_sat (WEEKLY)
 
 MERGE KEY:
-  (account_id, campaign_id, weekend_date)
+  (account_id, campaign_id, qgp_week)
 
 RECONCILIATION:
-  Weekly metrics = SUM(daily metrics) over the week.
+  Period metrics = SUM(daily metrics) over that qgp_week bucket.
 ===============================================================================
 */
 
@@ -22,7 +28,6 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_weekly`()
 OPTIONS(strict_mode=false)
 BEGIN
-  -- Wider lookback so full weeks and late updates reconcile cleanly
   DECLARE lookback_days INT64 DEFAULT 56;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly` T
@@ -32,7 +37,15 @@ BEGIN
         account_id,
         campaign_id,
         date,
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
+
+        -- Normal week end (Saturday)
+        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
+
+        -- Quarter end (last day of quarter)
+        DATE_SUB(
+          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        ) AS quarter_end,
 
         lob, ad_platform, account_name, campaign_name, campaign_type,
         advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
@@ -56,14 +69,30 @@ BEGIN
       WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
-    weekly AS (
+    bucketed AS (
+      SELECT
+        *,
+        CASE
+          WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+          ELSE week_end_sat
+        END AS qgp_week,
+
+        CASE
+          WHEN quarter_end < week_end_sat AND date <= quarter_end THEN 'QUARTER_END_PARTIAL'
+          ELSE 'WEEKLY'
+        END AS period_type
+      FROM base
+    ),
+
+    agg AS (
       SELECT
         account_id,
         campaign_id,
-        weekend_date,
-        FORMAT_DATE('%Y%m%d', weekend_date) AS week_yyyymmdd,
+        qgp_week,
+        FORMAT_DATE('%Y%m%d', qgp_week) AS qgp_week_yyyymmdd,
+        period_type,
 
-        -- Latest-in-week dims/settings (non-null preferred)
+        -- Latest-in-period dims/settings (non-null preferred)
         ARRAY_AGG(lob IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS lob,
         ARRAY_AGG(ad_platform IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS ad_platform,
         ARRAY_AGG(account_name IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS account_name,
@@ -75,7 +104,7 @@ BEGIN
         ARRAY_AGG(bidding_strategy_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS bidding_strategy_type,
         ARRAY_AGG(serving_status IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS serving_status,
 
-        -- Weekly sums (reconciliation-safe)
+        -- Sums (reconciliation-safe)
         SUM(impressions) AS impressions,
         SUM(clicks) AS clicks,
         SUM(cost) AS cost,
@@ -141,23 +170,26 @@ BEGIN
         SUM(total_tfb_conversions) AS total_tfb_conversions,
 
         CURRENT_TIMESTAMP() AS gold_weekly_inserted_at
-      FROM base
-      GROUP BY account_id, campaign_id, weekend_date
+      FROM bucketed
+      GROUP BY account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type
     )
 
-    SELECT * FROM weekly
+    SELECT * FROM agg
   ) S
   ON  T.account_id = S.account_id
   AND T.campaign_id = S.campaign_id
-  AND T.weekend_date = S.weekend_date
+  AND T.qgp_week = S.qgp_week
 
   WHEN MATCHED THEN UPDATE SET
-    week_yyyymmdd = S.week_yyyymmdd,
+    qgp_week_yyyymmdd = S.qgp_week_yyyymmdd,
+    period_type = S.period_type,
+
     lob = S.lob,
     ad_platform = S.ad_platform,
     account_name = S.account_name,
     campaign_name = S.campaign_name,
     campaign_type = S.campaign_type,
+
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,

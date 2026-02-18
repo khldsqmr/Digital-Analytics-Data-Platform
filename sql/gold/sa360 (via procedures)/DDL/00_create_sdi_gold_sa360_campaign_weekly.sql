@@ -8,17 +8,21 @@ SOURCE:
   Gold Daily: sdi_gold_sa360_campaign_daily
 
 PURPOSE:
-  Weekly rollup for reporting:
-    - weekend_date = week ending Saturday
-    - week_yyyymmdd string for easy joins / labels
-    - metrics are sums of daily metrics to guarantee reconciliation
+  QGP week rollup for reporting:
+    - qgp_week = period end date where:
+        * normally: week ending Saturday
+        * if quarter-end occurs before that Saturday:
+            - dates up to quarter-end roll into qgp_week = quarter_end (partial)
+            - remaining dates roll into qgp_week = Saturday
+    - qgp_week_yyyymmdd string for labels/joins
+    - metrics are SUM(daily metrics) to guarantee reconciliation
 
 GRAIN:
-  (account_id, campaign_id, weekend_date)
+  (account_id, campaign_id, qgp_week)
 
 PARTITION / CLUSTER:
-  PARTITION BY weekend_date
-  CLUSTER BY lob, ad_platform, campaign_type, account_id, campaign_id
+  PARTITION BY qgp_week
+  CLUSTER BY lob, account_id, campaign_id
 ===============================================================================
 */
 
@@ -28,22 +32,23 @@ CREATE OR REPLACE TABLE
   -- Keys
   account_id STRING OPTIONS(description="SA360 advertiser account ID."),
   campaign_id STRING OPTIONS(description="Campaign ID."),
-  weekend_date DATE OPTIONS(description="Week ending Saturday (partition key)."),
-  week_yyyymmdd STRING OPTIONS(description="Formatted weekend_date as YYYYMMDD."),
+  qgp_week DATE OPTIONS(description="Canonical period end date: Saturday week-end OR quarter-end partial (partition key)."),
+  qgp_week_yyyymmdd STRING OPTIONS(description="Formatted qgp_week as YYYYMMDD."),
+  period_type STRING OPTIONS(description="WEEKLY or QUARTER_END_PARTIAL (quarter split)."),
 
-  -- Reporting dimensions (picked as latest in the week)
-  lob STRING OPTIONS(description="LOB (latest value in week)."),
-  ad_platform STRING OPTIONS(description="Ad platform (latest value in week)."),
-  account_name STRING OPTIONS(description="Account name (latest in week)."),
-  campaign_name STRING OPTIONS(description="Campaign name (latest in week)."),
-  campaign_type STRING OPTIONS(description="Campaign type (latest in week)."),
+  -- Reporting dimensions (latest-in-period)
+  lob STRING OPTIONS(description="LOB (latest value in period)."),
+  ad_platform STRING OPTIONS(description="Ad platform (latest in period)."),
+  account_name STRING OPTIONS(description="Account name (latest in period)."),
+  campaign_name STRING OPTIONS(description="Campaign name (latest in period)."),
+  campaign_type STRING OPTIONS(description="Campaign type (latest in period)."),
 
-  advertising_channel_type STRING OPTIONS(description="Latest in week."),
-  advertising_channel_sub_type STRING OPTIONS(description="Latest in week."),
-  bidding_strategy_type STRING OPTIONS(description="Latest in week."),
-  serving_status STRING OPTIONS(description="Latest in week."),
+  advertising_channel_type STRING OPTIONS(description="Latest in period."),
+  advertising_channel_sub_type STRING OPTIONS(description="Latest in period."),
+  bidding_strategy_type STRING OPTIONS(description="Latest in period."),
+  serving_status STRING OPTIONS(description="Latest in period."),
 
-  -- Weekly sums (must reconcile to daily sums)
+  -- Period sums (reconciliation-safe)
   impressions FLOAT64,
   clicks FLOAT64,
   cost FLOAT64,
@@ -108,8 +113,8 @@ CREATE OR REPLACE TABLE
   tfb_quality_traffic FLOAT64,
   total_tfb_conversions FLOAT64,
 
-  gold_weekly_inserted_at TIMESTAMP OPTIONS(description="Timestamp when week row was inserted/updated.")
+  gold_weekly_inserted_at TIMESTAMP OPTIONS(description="Timestamp when period row was inserted/updated.")
 )
-PARTITION BY weekend_date
+PARTITION BY qgp_week
 CLUSTER BY lob, account_id, campaign_id
-OPTIONS(description="Gold SA360 campaign weekly rollup derived as sums of Gold Daily with stable week-ending Saturday.");
+OPTIONS(description="Gold SA360 campaign QGP-week rollup derived as sums of Gold Daily; qgp_week may be Saturday or quarter-end partial.");

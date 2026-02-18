@@ -4,15 +4,14 @@ FILE: 04_sp_gold_campaign_weekly_reconciliation.sql
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-WHAT THIS TEST DOES (REAL TESTS, apples-to-apples):
-  1) Builds the list of most recent N weekend_dates from Gold Daily (driver).
-  2) Aggregates Gold Daily -> weekly totals by weekend_date.
-  3) Aggregates Gold Weekly -> weekly totals by weekend_date.
-  4) Compares per weekend_date (so no giant variance blobs, and no hiding issues).
+WHAT THIS TEST DOES (apples-to-apples):
+  1) Builds list of most recent N qgp_week values from Gold Daily (driver).
+  2) Aggregates Gold Daily -> qgp_week totals (using SAME bucketing logic).
+  3) Aggregates Gold Weekly -> qgp_week totals.
+  4) Compares per qgp_week.
 
 NOTES:
   - Uses QUALIFY instead of LIMIT variable (BigQuery scripting limitation).
-  - Each INSERT is a single statement: "INSERT INTO ... WITH ... SELECT ..."
 ===============================================================================
 */
 
@@ -20,53 +19,74 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE sample_weeks INT64 DEFAULT 4;       -- compare last 4 real weeks
+  DECLARE sample_weeks INT64 DEFAULT 4;       -- compare last 4 qgp periods
   DECLARE tolerance    FLOAT64 DEFAULT 0.000001;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 1: cart_start weekly == SUM(daily) (per weekend_date)
+  -- TEST 1: cart_start weekly == SUM(daily) (per qgp_week)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH week_list AS (
-    SELECT weekend_date
+  WITH daily_bucketed AS (
+    SELECT
+      date,
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END AS qgp_week,
+      cart_start
     FROM (
-      SELECT DISTINCT DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date
+      SELECT
+        date,
+        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
+        DATE_SUB(
+          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        ) AS quarter_end,
+        cart_start
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
       WHERE date IS NOT NULL
     )
-    QUALIFY ROW_NUMBER() OVER (ORDER BY weekend_date DESC) <= sample_weeks
+  ),
+  qgp_list AS (
+    SELECT qgp_week
+    FROM (
+      SELECT DISTINCT qgp_week
+      FROM daily_bucketed
+      WHERE qgp_week IS NOT NULL
+    )
+    QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
   ),
   daily_rollup AS (
     SELECT
-      DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
+      qgp_week,
       SUM(cart_start) AS daily_val
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE date IS NOT NULL
+    FROM daily_bucketed
+    WHERE qgp_week IS NOT NULL
     GROUP BY 1
   ),
   weekly_rollup AS (
     SELECT
-      weekend_date,
+      qgp_week,
       SUM(cart_start) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date IS NOT NULL
+    WHERE qgp_week IS NOT NULL
     GROUP BY 1
   ),
   aligned AS (
     SELECT
-      l.weekend_date,
+      l.qgp_week,
       d.daily_val  AS expected_value,
       w.weekly_val AS actual_value
-    FROM week_list l
-    LEFT JOIN daily_rollup d USING (weekend_date)
-    LEFT JOIN weekly_rollup w USING (weekend_date)
+    FROM qgp_list l
+    LEFT JOIN daily_rollup d USING (qgp_week)
+    LEFT JOIN weekly_rollup w USING (qgp_week)
   )
   SELECT
     CURRENT_TIMESTAMP() AS test_run_timestamp,
     CURRENT_DATE()      AS test_date,
     'sdi_gold_sa360_campaign_weekly' AS table_name,
     'reconciliation'    AS test_layer,
-    CONCAT('Cart Start Weekly == SUM(Daily) | weekend=', CAST(weekend_date AS STRING)) AS test_name,
+    CONCAT('Cart Start Weekly == SUM(Daily) | qgp_week=', CAST(qgp_week AS STRING)) AS test_name,
     'HIGH'              AS severity_level,
     CAST(expected_value AS FLOAT64) AS expected_value,
     CAST(actual_value   AS FLOAT64) AS actual_value,
@@ -84,16 +104,16 @@ BEGIN
       ELSE '🔴'
     END AS status_emoji,
     CASE
-      WHEN expected_value IS NULL THEN 'Daily rollup missing for this weekend_date (unexpected).'
-      WHEN actual_value   IS NULL THEN 'Weekly rollup missing for this weekend_date (weekly not built / filtered).'
-      WHEN ABS(actual_value - expected_value) <= tolerance THEN 'Weekly equals SUM(Daily) for this weekend_date.'
-      ELSE 'Weekly does NOT equal SUM(Daily) for this weekend_date.'
+      WHEN expected_value IS NULL THEN 'Daily rollup missing for this qgp_week (unexpected).'
+      WHEN actual_value   IS NULL THEN 'Weekly rollup missing for this qgp_week (weekly not built / filtered).'
+      WHEN ABS(actual_value - expected_value) <= tolerance THEN 'Weekly equals SUM(Daily) for this qgp_week.'
+      ELSE 'Weekly does NOT equal SUM(Daily) for this qgp_week.'
     END AS failure_reason,
     CASE
-      WHEN expected_value IS NULL THEN 'Validate Gold Daily availability and weekend_date derivation.'
-      WHEN actual_value   IS NULL THEN 'Validate Gold Weekly build coverage/window; ensure it includes this weekend_date.'
+      WHEN expected_value IS NULL THEN 'Validate Gold Daily availability and qgp_week bucketing.'
+      WHEN actual_value   IS NULL THEN 'Validate Gold Weekly build coverage/window; ensure it includes this qgp_week.'
       WHEN ABS(actual_value - expected_value) <= tolerance THEN 'No action required.'
-      ELSE 'Verify weekly build is sourced only from Gold Daily and uses WEEK(SATURDAY) consistently.'
+      ELSE 'Verify weekly build is sourced only from Gold Daily and uses the same qgp_week bucketing.'
     END AS next_step,
     CASE
       WHEN expected_value IS NULL THEN TRUE
@@ -116,49 +136,70 @@ BEGIN
   FROM aligned;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 2: postpaid_pspv weekly == SUM(daily) (per weekend_date)
+  -- TEST 2: postpaid_pspv weekly == SUM(daily) (per qgp_week)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH week_list AS (
-    SELECT weekend_date
+  WITH daily_bucketed AS (
+    SELECT
+      date,
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END AS qgp_week,
+      postpaid_pspv
     FROM (
-      SELECT DISTINCT DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date
+      SELECT
+        date,
+        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
+        DATE_SUB(
+          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        ) AS quarter_end,
+        postpaid_pspv
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
       WHERE date IS NOT NULL
     )
-    QUALIFY ROW_NUMBER() OVER (ORDER BY weekend_date DESC) <= sample_weeks
+  ),
+  qgp_list AS (
+    SELECT qgp_week
+    FROM (
+      SELECT DISTINCT qgp_week
+      FROM daily_bucketed
+      WHERE qgp_week IS NOT NULL
+    )
+    QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
   ),
   daily_rollup AS (
     SELECT
-      DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
+      qgp_week,
       SUM(postpaid_pspv) AS daily_val
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE date IS NOT NULL
+    FROM daily_bucketed
+    WHERE qgp_week IS NOT NULL
     GROUP BY 1
   ),
   weekly_rollup AS (
     SELECT
-      weekend_date,
+      qgp_week,
       SUM(postpaid_pspv) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date IS NOT NULL
+    WHERE qgp_week IS NOT NULL
     GROUP BY 1
   ),
   aligned AS (
     SELECT
-      l.weekend_date,
+      l.qgp_week,
       d.daily_val  AS expected_value,
       w.weekly_val AS actual_value
-    FROM week_list l
-    LEFT JOIN daily_rollup d USING (weekend_date)
-    LEFT JOIN weekly_rollup w USING (weekend_date)
+    FROM qgp_list l
+    LEFT JOIN daily_rollup d USING (qgp_week)
+    LEFT JOIN weekly_rollup w USING (qgp_week)
   )
   SELECT
     CURRENT_TIMESTAMP(),
     CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'reconciliation',
-    CONCAT('Postpaid PSPV Weekly == SUM(Daily) | weekend=', CAST(weekend_date AS STRING)),
+    CONCAT('Postpaid PSPV Weekly == SUM(Daily) | qgp_week=', CAST(qgp_week AS STRING)),
     'HIGH',
     CAST(expected_value AS FLOAT64),
     CAST(actual_value   AS FLOAT64),
@@ -176,16 +217,16 @@ BEGIN
       ELSE '🔴'
     END,
     CASE
-      WHEN expected_value IS NULL THEN 'Daily rollup missing for this weekend_date (unexpected).'
-      WHEN actual_value   IS NULL THEN 'Weekly rollup missing for this weekend_date (weekly not built / filtered).'
-      WHEN ABS(actual_value - expected_value) <= tolerance THEN 'Weekly equals SUM(Daily) for this weekend_date.'
-      ELSE 'Weekly does NOT equal SUM(Daily) for this weekend_date.'
+      WHEN expected_value IS NULL THEN 'Daily rollup missing for this qgp_week (unexpected).'
+      WHEN actual_value   IS NULL THEN 'Weekly rollup missing for this qgp_week (weekly not built / filtered).'
+      WHEN ABS(actual_value - expected_value) <= tolerance THEN 'Weekly equals SUM(Daily) for this qgp_week.'
+      ELSE 'Weekly does NOT equal SUM(Daily) for this qgp_week.'
     END,
     CASE
-      WHEN expected_value IS NULL THEN 'Validate Gold Daily availability and weekend_date derivation.'
-      WHEN actual_value   IS NULL THEN 'Validate Gold Weekly build coverage/window; ensure it includes this weekend_date.'
+      WHEN expected_value IS NULL THEN 'Validate Gold Daily availability and qgp_week bucketing.'
+      WHEN actual_value   IS NULL THEN 'Validate Gold Weekly build coverage/window; ensure it includes this qgp_week.'
       WHEN ABS(actual_value - expected_value) <= tolerance THEN 'No action required.'
-      ELSE 'Verify weekly build is sourced only from Gold Daily and uses WEEK(SATURDAY) consistently.'
+      ELSE 'Verify weekly build is sourced only from Gold Daily and uses the same qgp_week bucketing.'
     END,
     CASE
       WHEN expected_value IS NULL THEN TRUE

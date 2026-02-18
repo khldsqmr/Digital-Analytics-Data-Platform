@@ -8,17 +8,17 @@ TABLE UNDER TEST:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
 
 PURPOSE:
-  Real critical QA tests for Gold Weekly:
-    1) Duplicate grain check (acct,campaign,weekend_date)
+  Critical QA tests for Gold Weekly (QGP-week):
+    1) Duplicate grain check (acct,campaign,qgp_week)
     2) Null identifier check
-    3) Weekend alignment check (must be Saturday)
-    4) Missing weeks (Daily has weekend_date, Weekly missing)   <-- FIXED WINDOW
-    5) Extra weeks (Weekly has weekend_date, Daily missing)     <-- FIXED WINDOW
+    3) QGP week alignment check (qgp_week must be Saturday OR quarter-end)
+    4) Missing qgp_weeks (Daily has qgp_week, Weekly missing)  <-- FIXED WINDOW + SAME BUCKETING
+    5) Extra qgp_weeks (Weekly has qgp_week, Daily missing)    <-- FIXED WINDOW + SAME BUCKETING
 
 KEY FIX:
-  Use Saturday-aligned cutoff_weekend so Daily and Weekly are compared on the
-  same "weekend_date" window. This prevents false positives like 2025-11-22
-  when the raw lookback date starts mid-week.
+  Compare Daily vs Weekly on the SAME derived qgp_week logic.
+  Cutoff window anchored to Saturday for stable scanning, but qgp_week can be
+  either Saturday or quarter-end.
 ===============================================================================
 */
 
@@ -28,22 +28,22 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_weeks INT64 DEFAULT 12;
 
-  -- IMPORTANT: Align the window to Saturday to match weekend_date logic
-  DECLARE cutoff_weekend DATE DEFAULT DATE_TRUNC(
+  -- Anchor cutoff to Saturday so window is stable and prevents mid-week false positives.
+  DECLARE cutoff_anchor DATE DEFAULT DATE_TRUNC(
     DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK),
     WEEK(SATURDAY)
   );
 
   -- ---------------------------------------------------------------------------
-  -- TEST 1: Duplicate grain (account_id, campaign_id, weekend_date)
+  -- TEST 1: Duplicate grain (account_id, campaign_id, qgp_week)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH dup AS (
     SELECT COUNT(1) AS duplicate_groups
     FROM (
-      SELECT account_id, campaign_id, weekend_date, COUNT(*) c
+      SELECT account_id, campaign_id, qgp_week, COUNT(*) c
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-      WHERE weekend_date >= cutoff_weekend
+      WHERE qgp_week >= cutoff_anchor
       GROUP BY 1,2,3
       HAVING COUNT(*) > 1
     )
@@ -52,7 +52,7 @@ BEGIN
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'critical',
-    'Duplicate Grain Check (acct,campaign,weekend_date)',
+    'Duplicate Grain Check (acct,campaign,qgp_week)',
     'HIGH',
     0.0,
     CAST(duplicate_groups AS FLOAT64),
@@ -74,24 +74,24 @@ BEGIN
 
 
   -- ---------------------------------------------------------------------------
-  -- TEST 2: Null identifier check (account_id, campaign_id, weekend_date)
+  -- TEST 2: Null identifier check (account_id, campaign_id, qgp_week)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH bad AS (
     SELECT COUNT(1) AS bad_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= cutoff_weekend
+    WHERE qgp_week >= cutoff_anchor
       AND (
         account_id IS NULL OR
         campaign_id IS NULL OR
-        weekend_date IS NULL
+        qgp_week IS NULL
       )
   )
   SELECT
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'critical',
-    '"Null Identifier Check (acct,campaign,weekend_date)"',
+    '"Null Identifier Check (acct,campaign,qgp_week)"',
     'HIGH',
     0.0,
     CAST(bad_rows AS FLOAT64),
@@ -113,20 +113,29 @@ BEGIN
 
 
   -- ---------------------------------------------------------------------------
-  -- TEST 3: Weekend Date Alignment (must be Saturday)
+  -- TEST 3: QGP Week Alignment
+  -- qgp_week must be EITHER:
+  --   - Saturday-aligned (DATE_TRUNC(qgp_week, WEEK(SATURDAY)) == qgp_week)
+  --   - OR quarter-end date for its quarter
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH mis AS (
     SELECT COUNT(1) AS misaligned_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= cutoff_weekend
-      AND weekend_date != DATE_TRUNC(weekend_date, WEEK(SATURDAY))
+    WHERE qgp_week >= cutoff_anchor
+      AND (
+        qgp_week != DATE_TRUNC(qgp_week, WEEK(SATURDAY))
+        AND qgp_week != DATE_SUB(
+          DATE_ADD(DATE_TRUNC(qgp_week, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        )
+      )
   )
   SELECT
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'critical',
-    'Weekend Date Alignment (must be Saturday)',
+    'QGP Week Alignment (must be Saturday OR quarter-end)',
     'HIGH',
     0.0,
     CAST(misaligned_rows AS FLOAT64),
@@ -134,12 +143,12 @@ BEGIN
     IF(misaligned_rows = 0, 'PASS', 'FAIL'),
     IF(misaligned_rows = 0, '🟢', '🔴'),
     IF(misaligned_rows = 0,
-      'All weekend_date values align to Saturday (WEEK(SATURDAY)).',
-      'One or more weekend_date values are not Saturday-aligned.'
+      'All qgp_week values are valid (Saturday-aligned or quarter-end).',
+      'One or more qgp_week values are neither Saturday nor quarter-end.'
     ),
     IF(misaligned_rows = 0,
       'No action required.',
-      'Fix weekend_date derivation. Must use DATE_TRUNC(date, WEEK(SATURDAY)).'
+      'Fix qgp_week derivation; must be DATE_TRUNC(date, WEEK(SATURDAY)) or quarter_end for partial weeks.'
     ),
     IF(misaligned_rows > 0, TRUE, FALSE),
     IF(misaligned_rows = 0, TRUE, FALSE),
@@ -148,31 +157,50 @@ BEGIN
 
 
   -- ---------------------------------------------------------------------------
-  -- TEST 4: Missing Weeks (Daily has week, Weekly missing)  ✅ FIXED
-  -- Uses the SAME weekend_date-aligned window on both sides.
+  -- TEST 4: Missing QGP Weeks (Daily has qgp_week, Weekly missing)
+  -- Uses SAME qgp_week bucketing logic as the weekly build.
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH daily_weeks AS (
-    SELECT DISTINCT DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE DATE_TRUNC(date, WEEK(SATURDAY)) >= cutoff_weekend
+  WITH daily_qgp AS (
+    SELECT DISTINCT
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END AS qgp_week
+    FROM (
+      SELECT
+        date,
+        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
+        DATE_SUB(
+          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        ) AS quarter_end
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date >= cutoff_anchor
+        AND date IS NOT NULL
+    )
+    WHERE
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END >= cutoff_anchor
   ),
-  weekly_weeks AS (
-    SELECT DISTINCT weekend_date
+  weekly_qgp AS (
+    SELECT DISTINCT qgp_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= cutoff_weekend
+    WHERE qgp_week >= cutoff_anchor
   ),
   missing AS (
-    SELECT d.weekend_date
-    FROM daily_weeks d
-    LEFT JOIN weekly_weeks w USING (weekend_date)
-    WHERE w.weekend_date IS NULL
+    SELECT d.qgp_week
+    FROM daily_qgp d
+    LEFT JOIN weekly_qgp w USING (qgp_week)
+    WHERE w.qgp_week IS NULL
   )
   SELECT
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'critical',
-    '"Missing Weeks (Daily has week, Weekly missing)"',
+    '"Missing QGP Weeks (Daily has qgp_week, Weekly missing)"',
     'HIGH',
     0.0,
     CAST(COUNT(*) AS FLOAT64),
@@ -180,12 +208,12 @@ BEGIN
     IF(COUNT(*) = 0, 'PASS', 'FAIL'),
     IF(COUNT(*) = 0, '🟢', '🔴'),
     IF(COUNT(*) = 0,
-      'No missing weekend_dates in Weekly vs Daily (Saturday-aligned window).',
-      CONCAT('Weekly is missing weekend_date example: ', CAST(ANY_VALUE(weekend_date) AS STRING))
+      'No missing qgp_week values in Weekly vs Daily (same bucketing + aligned window).',
+      CONCAT('Weekly is missing qgp_week example: ', CAST(ANY_VALUE(qgp_week) AS STRING))
     ),
     IF(COUNT(*) = 0,
       'No action required.',
-      'Check weekly job run window/backfill; ensure weekly is built for all Daily weeks.'
+      'Check weekly job run window/backfill; ensure weekly is built for all Daily qgp_week buckets.'
     ),
     IF(COUNT(*) > 0, TRUE, FALSE),
     IF(COUNT(*) = 0, TRUE, FALSE),
@@ -194,31 +222,50 @@ BEGIN
 
 
   -- ---------------------------------------------------------------------------
-  -- TEST 5: Extra Weeks (Weekly has week, Daily missing) ✅ FIXED
-  -- Uses the SAME weekend_date-aligned window on both sides.
+  -- TEST 5: Extra QGP Weeks (Weekly has qgp_week, Daily missing)
+  -- Uses SAME qgp_week bucketing logic as the weekly build.
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH daily_weeks AS (
-    SELECT DISTINCT DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-    WHERE DATE_TRUNC(date, WEEK(SATURDAY)) >= cutoff_weekend
+  WITH daily_qgp AS (
+    SELECT DISTINCT
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END AS qgp_week
+    FROM (
+      SELECT
+        date,
+        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
+        DATE_SUB(
+          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
+          INTERVAL 1 DAY
+        ) AS quarter_end
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date >= cutoff_anchor
+        AND date IS NOT NULL
+    )
+    WHERE
+      CASE
+        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
+        ELSE week_end_sat
+      END >= cutoff_anchor
   ),
-  weekly_weeks AS (
-    SELECT DISTINCT weekend_date
+  weekly_qgp AS (
+    SELECT DISTINCT qgp_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE weekend_date >= cutoff_weekend
+    WHERE qgp_week >= cutoff_anchor
   ),
   extra AS (
-    SELECT w.weekend_date
-    FROM weekly_weeks w
-    LEFT JOIN daily_weeks d USING (weekend_date)
-    WHERE d.weekend_date IS NULL
+    SELECT w.qgp_week
+    FROM weekly_qgp w
+    LEFT JOIN daily_qgp d USING (qgp_week)
+    WHERE d.qgp_week IS NULL
   )
   SELECT
     CURRENT_TIMESTAMP(), CURRENT_DATE(),
     'sdi_gold_sa360_campaign_weekly',
     'critical',
-    '"Extra Weeks (Weekly has week, Daily missing)"',
+    '"Extra QGP Weeks (Weekly has qgp_week, Daily missing)"',
     'MEDIUM',
     0.0,
     CAST(COUNT(*) AS FLOAT64),
@@ -226,12 +273,12 @@ BEGIN
     IF(COUNT(*) = 0, 'PASS', 'FAIL'),
     IF(COUNT(*) = 0, '🟢', '🔴'),
     IF(COUNT(*) = 0,
-      'No extra weekend_dates in Weekly vs Daily (Saturday-aligned window).',
-      CONCAT('Weekly has extra weekend_date example: ', CAST(ANY_VALUE(weekend_date) AS STRING))
+      'No extra qgp_week values in Weekly vs Daily (same bucketing + aligned window).',
+      CONCAT('Weekly has extra qgp_week example: ', CAST(ANY_VALUE(qgp_week) AS STRING))
     ),
     IF(COUNT(*) = 0,
       'No action required.',
-      'Check weekly filters/late arriving data; ensure Daily coverage matches Weekly.'
+      'Check weekly filters/late arriving data; ensure Daily coverage matches Weekly buckets.'
     ),
     FALSE, -- not critical by default (MEDIUM)
     IF(COUNT(*) = 0, TRUE, FALSE),
