@@ -39,7 +39,7 @@ BEGIN
     severity_level,
     expected_value,
     actual_value,
-    delta_value,
+    variance_value,
     status,
     status_emoji,
     failure_reason,
@@ -53,6 +53,7 @@ BEGIN
       DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
       SUM(COALESCE(cart_start, 0)) AS metric_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+    WHERE date IS NOT NULL
     GROUP BY 1
   ),
   last_week AS (
@@ -83,32 +84,14 @@ BEGIN
       'MEDIUM'            AS severity_level,
       baseline            AS expected_value,
       last_val            AS actual_value,
-      (last_val - baseline) AS delta_value,
+      (last_val - baseline) AS variance_value,
 
-      -- Status logic
       IF(baseline IS NULL, 'PASS',
-         IF(baseline = 0, IF(last_val = 0, 'PASS', 'FAIL'),
+         IF(baseline = 0,
+            IF(last_val = 0, 'PASS', 'FAIL'),
             IF(last_val > baseline * spike_multiplier OR last_val < baseline / spike_multiplier, 'FAIL', 'PASS')
          )
-      ) AS status,
-
-      IF(baseline IS NULL, '🟢',
-         IF(baseline = 0, IF(last_val = 0, '🟢', '🔴'),
-            IF(last_val > baseline * spike_multiplier OR last_val < baseline / spike_multiplier, '🔴', '🟢')
-         )
-      ) AS status_emoji,
-
-      IF(baseline IS NULL,
-        'Not enough history to evaluate anomaly reliably (PASS by design).',
-        'Weekly value compared to baseline; FAIL indicates extreme spike/drop (may be data issue or real event).'
-      ) AS failure_reason,
-
-      IF(baseline IS NULL,
-        'No action required.',
-        'If unexpected: validate last week ingestion completeness and RAW->Bronze reconciliation.'
-      ) AS next_step,
-
-      FALSE AS is_critical_failure
+      ) AS status
     FROM calc
   )
   SELECT
@@ -120,12 +103,18 @@ BEGIN
     severity_level,
     expected_value,
     actual_value,
-    delta_value,
+    variance_value,
     status,
-    status_emoji,
-    failure_reason,
-    next_step,
-    is_critical_failure,
+    IF(status = 'PASS', '🟢', '🔴') AS status_emoji,
+    IF(expected_value IS NULL,
+      'Not enough history to evaluate anomaly reliably (PASS by design).',
+      'Weekly value compared to baseline; FAIL indicates extreme spike/drop (may be data issue or real event).'
+    ) AS failure_reason,
+    IF(expected_value IS NULL,
+      'No action required.',
+      'If unexpected: validate last week ingestion completeness and RAW->Bronze reconciliation.'
+    ) AS next_step,
+    (severity_level = 'HIGH' AND status = 'FAIL') AS is_critical_failure,
     (status = 'PASS') AS is_pass,
     (status = 'FAIL') AS is_fail
   FROM final;
@@ -142,7 +131,7 @@ BEGIN
     severity_level,
     expected_value,
     actual_value,
-    delta_value,
+    variance_value,
     status,
     status_emoji,
     failure_reason,
@@ -156,6 +145,7 @@ BEGIN
       DATE_TRUNC(date, WEEK(SATURDAY)) AS weekend_date,
       SUM(COALESCE(postpaid_pspv, 0)) AS metric_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
+    WHERE date IS NOT NULL
     GROUP BY 1
   ),
   last_week AS (
@@ -186,31 +176,14 @@ BEGIN
       'MEDIUM'            AS severity_level,
       baseline            AS expected_value,
       last_val            AS actual_value,
-      (last_val - baseline) AS delta_value,
+      (last_val - baseline) AS variance_value,
 
       IF(baseline IS NULL, 'PASS',
-         IF(baseline = 0, IF(last_val = 0, 'PASS', 'FAIL'),
+         IF(baseline = 0,
+            IF(last_val = 0, 'PASS', 'FAIL'),
             IF(last_val > baseline * spike_multiplier OR last_val < baseline / spike_multiplier, 'FAIL', 'PASS')
          )
-      ) AS status,
-
-      IF(baseline IS NULL, '🟢',
-         IF(baseline = 0, IF(last_val = 0, '🟢', '🔴'),
-            IF(last_val > baseline * spike_multiplier OR last_val < baseline / spike_multiplier, '🔴', '🟢')
-         )
-      ) AS status_emoji,
-
-      IF(baseline IS NULL,
-        'Not enough history to evaluate anomaly reliably (PASS by design).',
-        'Weekly value compared to baseline; FAIL indicates extreme spike/drop (may be data issue or real event).'
-      ) AS failure_reason,
-
-      IF(baseline IS NULL,
-        'No action required.',
-        'If unexpected: validate last week ingestion completeness and RAW->Bronze reconciliation.'
-      ) AS next_step,
-
-      FALSE AS is_critical_failure
+      ) AS status
     FROM calc
   )
   SELECT
@@ -222,14 +195,21 @@ BEGIN
     severity_level,
     expected_value,
     actual_value,
-    delta_value,
+    variance_value,
     status,
-    status_emoji,
-    failure_reason,
-    next_step,
-    is_critical_failure,
+    IF(status = 'PASS', '🟢', '🔴') AS status_emoji,
+    IF(expected_value IS NULL,
+      'Not enough history to evaluate anomaly reliably (PASS by design).',
+      'Weekly value compared to baseline; FAIL indicates extreme spike/drop (may be data issue or real event).'
+    ) AS failure_reason,
+    IF(expected_value IS NULL,
+      'No action required.',
+      'If unexpected: validate last week ingestion completeness and RAW->Bronze reconciliation.'
+    ) AS next_step,
+    (severity_level = 'HIGH' AND status = 'FAIL') AS is_critical_failure,
     (status = 'PASS') AS is_pass,
     (status = 'FAIL') AS is_fail
   FROM final;
 
 END;
+
