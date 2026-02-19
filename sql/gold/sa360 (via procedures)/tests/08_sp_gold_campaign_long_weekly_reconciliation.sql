@@ -4,11 +4,11 @@ FILE: 08_sp_gold_campaign_long_weekly_reconciliation.sql
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_long_weekly_reconciliation_tests
 RECON: Gold long weekly vs Gold wide weekly (qgp_week)
 
-UPDATES:
-  - Removed invalid standalone WITH (compile fix)
-  - Uses TEMP qgp list for scan efficiency
-  - Correct is_critical_failure logic (no constant TRUE)
+FIXES:
+  - Removed TEMP table usage (not supported reliably inside BQ procedures)
+  - Uses sampled_qgp_weeks ARRAY<DATE> for scan efficiency
   - Row-count aware FAIL (wide missing / long missing per qgp_week)
+  - Correct is_critical_failure logic (no constant TRUE)
 ===============================================================================
 */
 
@@ -19,17 +19,19 @@ BEGIN
   DECLARE sample_weeks INT64 DEFAULT 4;
   DECLARE tolerance   FLOAT64 DEFAULT 0.000001;
 
-  -- Build sampled qgp_week list once
-  CREATE TEMP TABLE tmp_qgp_list AS
-  SELECT qgp_week
-  FROM (
-    SELECT DISTINCT qgp_week
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IS NOT NULL
-  )
-  QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks;
+  -- Sample the most recent qgp_weeks from WIDE weekly once (efficient)
+  DECLARE sampled_qgp_weeks ARRAY<DATE>;
 
-  DECLARE qgp_cnt INT64 DEFAULT (SELECT COUNT(1) FROM tmp_qgp_list);
+  SET sampled_qgp_weeks = (
+    SELECT ARRAY_AGG(qgp_week ORDER BY qgp_week DESC LIMIT sample_weeks)
+    FROM (
+      SELECT DISTINCT qgp_week
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+      WHERE qgp_week IS NOT NULL
+    )
+  );
+
+  DECLARE qgp_cnt INT64 DEFAULT ARRAY_LENGTH(sampled_qgp_weeks);
 
   -- If no qgp_weeks available, write one FAIL row and exit
   IF qgp_cnt = 0 THEN
@@ -49,26 +51,29 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Helper macro pattern (repeat per metric): compare wide column vs long(metric_name)
-
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 1: impressions
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(impressions,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(impressions,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'impressions'
     GROUP BY 1
   ),
@@ -77,9 +82,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
@@ -134,24 +139,29 @@ BEGIN
     END
   FROM aligned;
 
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 2: clicks
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(clicks,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(clicks,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'clicks'
     GROUP BY 1
   ),
@@ -160,9 +170,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
@@ -217,24 +227,29 @@ BEGIN
     END
   FROM aligned;
 
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 3: cost
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(cost,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(cost,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'cost'
     GROUP BY 1
   ),
@@ -243,9 +258,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
@@ -300,24 +315,29 @@ BEGIN
     END
   FROM aligned;
 
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 4: all_conversions
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(all_conversions,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(all_conversions,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'all_conversions'
     GROUP BY 1
   ),
@@ -326,9 +346,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
@@ -383,24 +403,29 @@ BEGIN
     END
   FROM aligned;
 
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 5: cart_start
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(cart_start,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(cart_start,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'cart_start'
     GROUP BY 1
   ),
@@ -409,9 +434,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
@@ -466,24 +491,29 @@ BEGIN
     END
   FROM aligned;
 
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   -- TEST 6: postpaid_pspv
-  -- ---------------------------------------------------------------------------
+  -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
-  WITH wide AS (
-    SELECT qgp_week,
-           SUM(COALESCE(postpaid_pspv,0)) AS wide_val,
-           COUNT(1) AS wide_rows
+  WITH qgp_list AS (
+    SELECT qgp_week FROM UNNEST(sampled_qgp_weeks) AS qgp_week
+  ),
+  wide AS (
+    SELECT
+      qgp_week,
+      SUM(COALESCE(postpaid_pspv,0)) AS wide_val,
+      COUNT(1) AS wide_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   long AS (
-    SELECT qgp_week,
-           SUM(COALESCE(metric_value,0)) AS long_val,
-           COUNT(1) AS long_rows
+    SELECT
+      qgp_week,
+      SUM(COALESCE(metric_value,0)) AS long_val,
+      COUNT(1) AS long_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
-    WHERE qgp_week IN (SELECT qgp_week FROM tmp_qgp_list)
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
       AND metric_name = 'postpaid_pspv'
     GROUP BY 1
   ),
@@ -492,9 +522,9 @@ BEGIN
       l.qgp_week,
       w.wide_val AS expected_value,
       g.long_val AS actual_value,
-      COALESCE(w.wide_rows,0) AS expected_rows,
-      COALESCE(g.long_rows,0) AS actual_rows
-    FROM tmp_qgp_list l
+      COALESCE(w.wide_rows, 0) AS expected_rows,
+      COALESCE(g.long_rows, 0) AS actual_rows
+    FROM qgp_list l
     LEFT JOIN wide w USING (qgp_week)
     LEFT JOIN long g USING (qgp_week)
   )
