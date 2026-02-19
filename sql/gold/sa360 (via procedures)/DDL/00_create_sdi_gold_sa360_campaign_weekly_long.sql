@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-FILE: 00_create_sdi_gold_sa360_campaign_qgp_week_long.sql
+FILE: 00_create_sdi_gold_sa360_campaign_weekly_long.sql
 LAYER: Gold
 TABLE: sdi_gold_sa360_campaign_weekly_long
 
@@ -55,3 +55,4 @@ CREATE OR REPLACE TABLE
 PARTITION BY qgp_week
 CLUSTER BY lob, account_id, campaign_id, metric_name
 OPTIONS(description="Gold SA360 QGP_WEEK LONG fact for Tableau. Wide metrics unpivoted into metric_name/metric_value.");
+
