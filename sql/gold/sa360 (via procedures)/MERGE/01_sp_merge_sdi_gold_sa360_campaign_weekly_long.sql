@@ -19,7 +19,7 @@ BEGIN
   -- QGP-week rollups can be updated by lookback of the upstream wide weekly
   DECLARE lookback_days INT64 DEFAULT 56;
 
-  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_qgp_week_long` T
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long` T
   USING (
     WITH src AS (
       SELECT
