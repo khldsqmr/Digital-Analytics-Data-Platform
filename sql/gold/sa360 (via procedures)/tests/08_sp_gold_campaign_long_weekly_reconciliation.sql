@@ -183,17 +183,17 @@ BEGIN
   aligned AS (
     SELECT
       q.qgp_week,
-      m.metric_name,
+      metric_name,
       w.wide_val AS expected_value,
       l.long_val AS actual_value,
       COALESCE(w.wide_rows, 0) AS expected_rows,
       COALESCE(l.long_rows, 0) AS actual_rows
     FROM qgp_list q
-    CROSS JOIN UNNEST(metric_allowlist) AS m(metric_name)
+    CROSS JOIN UNNEST(metric_allowlist) AS metric_name
     LEFT JOIN wide_agg w
-      ON w.qgp_week = q.qgp_week AND w.metric_name = m.metric_name
+      ON w.qgp_week = q.qgp_week AND w.metric_name = metric_name
     LEFT JOIN long_agg l
-      ON l.qgp_week = q.qgp_week AND l.metric_name = m.metric_name
+      ON l.qgp_week = q.qgp_week AND l.metric_name = metric_name
   )
 
   SELECT
