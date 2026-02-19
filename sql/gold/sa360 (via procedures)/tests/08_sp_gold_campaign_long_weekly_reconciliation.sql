@@ -21,17 +21,20 @@ BEGIN
 
   -- Sample the most recent qgp_weeks from WIDE weekly once (efficient)
   DECLARE sampled_qgp_weeks ARRAY<DATE>;
+  DECLARE qgp_cnt INT64 DEFAULT ARRAY_LENGTH(sampled_qgp_weeks);
+
 
   SET sampled_qgp_weeks = (
-    SELECT ARRAY_AGG(qgp_week ORDER BY qgp_week DESC LIMIT sample_weeks)
+    SELECT ARRAY_AGG(qgp_week ORDER BY qgp_week DESC)
     FROM (
-      SELECT DISTINCT qgp_week
+      SELECT qgp_week
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
       WHERE qgp_week IS NOT NULL
+      GROUP BY qgp_week
+      QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
     )
   );
 
-  DECLARE qgp_cnt INT64 DEFAULT ARRAY_LENGTH(sampled_qgp_weeks);
 
   -- If no qgp_weeks available, write one FAIL row and exit
   IF qgp_cnt = 0 THEN
