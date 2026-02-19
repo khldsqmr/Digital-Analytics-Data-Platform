@@ -4,14 +4,10 @@ FILE: 04_sp_gold_campaign_weekly_reconciliation.sql
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-WHAT THIS TEST DOES (apples-to-apples):
-  1) Builds list of most recent N qgp_week values from Gold Daily (driver).
-  2) Aggregates Gold Daily -> qgp_week totals (using SAME bucketing logic).
-  3) Aggregates Gold Weekly -> qgp_week totals.
-  4) Compares per qgp_week.
+RECONCILIATION (QGP-week):
+  - Driver: most recent N qgp_week buckets from Gold Daily (derived)
+  - Compare SUM(Gold Daily bucketed) vs SUM(Gold Weekly) per qgp_week
 
-NOTES:
-  - Uses QUALIFY instead of LIMIT variable (BigQuery scripting limitation).
 ===============================================================================
 */
 
@@ -19,8 +15,17 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE sample_weeks INT64 DEFAULT 4;       -- compare last 4 qgp periods
+  DECLARE sample_weeks INT64 DEFAULT 4;
   DECLARE tolerance    FLOAT64 DEFAULT 0.000001;
+
+  -- ===========================================================================
+  -- Helper CTE pattern used in each test:
+  --   1) daily_bucketed: derive qgp_week from date (same build logic)
+  --   2) qgp_list: last N qgp_week values
+  --   3) daily_rollup: SUM metric by qgp_week
+  --   4) weekly_rollup: SUM metric by qgp_week from weekly table
+  --   5) aligned: compare
+  -- ===========================================================================
 
   -- ---------------------------------------------------------------------------
   -- TEST 1: cart_start weekly == SUM(daily) (per qgp_week)
@@ -28,7 +33,6 @@ BEGIN
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
     SELECT
-      date,
       CASE
         WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
         ELSE week_end_sat
@@ -38,10 +42,7 @@ BEGIN
       SELECT
         date,
         DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(
-          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
-          INTERVAL 1 DAY
-        ) AS quarter_end,
+        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end,
         cart_start
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
       WHERE date IS NOT NULL
@@ -59,7 +60,7 @@ BEGIN
   daily_rollup AS (
     SELECT
       qgp_week,
-      SUM(cart_start) AS daily_val
+      SUM(COALESCE(cart_start,0)) AS daily_val
     FROM daily_bucketed
     WHERE qgp_week IS NOT NULL
     GROUP BY 1
@@ -67,7 +68,7 @@ BEGIN
   weekly_rollup AS (
     SELECT
       qgp_week,
-      SUM(cart_start) AS weekly_val
+      SUM(COALESCE(cart_start,0)) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week IS NOT NULL
     GROUP BY 1
@@ -141,7 +142,6 @@ BEGIN
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
     SELECT
-      date,
       CASE
         WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
         ELSE week_end_sat
@@ -151,10 +151,7 @@ BEGIN
       SELECT
         date,
         DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(
-          DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
-          INTERVAL 1 DAY
-        ) AS quarter_end,
+        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end,
         postpaid_pspv
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
       WHERE date IS NOT NULL
@@ -172,7 +169,7 @@ BEGIN
   daily_rollup AS (
     SELECT
       qgp_week,
-      SUM(postpaid_pspv) AS daily_val
+      SUM(COALESCE(postpaid_pspv,0)) AS daily_val
     FROM daily_bucketed
     WHERE qgp_week IS NOT NULL
     GROUP BY 1
@@ -180,7 +177,7 @@ BEGIN
   weekly_rollup AS (
     SELECT
       qgp_week,
-      SUM(postpaid_pspv) AS weekly_val
+      SUM(COALESCE(postpaid_pspv,0)) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week IS NOT NULL
     GROUP BY 1

@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-FILE: 07_view_gold_test_dashboard.sql
+FILE: 11_view_gold_test_dashboard.sql
 VIEW: vw_sdi_gold_sa360_test_dashboard
 PURPOSE:
   Latest result per (test_date, table_name, test_layer, test_name) for Gold.
