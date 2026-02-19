@@ -2,7 +2,7 @@
 ===============================================================================
 FILE: 00_create_sdi_gold_sa360_campaign_qgp_week_long.sql
 LAYER: Gold
-TABLE: sdi_gold_sa360_campaign_qgp_week_long
+TABLE: sdi_gold_sa360_campaign_weekly_long
 
 SOURCE:
   Gold QGP Week Wide: sdi_gold_sa360_campaign_weekly (UPDATED to qgp_week design)
@@ -24,7 +24,7 @@ PARTITION / CLUSTER:
 */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_qgp_week_long`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
 (
   -- Keys
   account_id STRING,

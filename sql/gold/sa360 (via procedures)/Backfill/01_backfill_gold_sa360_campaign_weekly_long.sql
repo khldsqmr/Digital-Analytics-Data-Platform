@@ -2,7 +2,7 @@
 ===============================================================================
 FILE: 01_backfill_gold_sa360_campaign_qgp_week_long.sql
 LAYER: Gold (One-time Backfill)
-TARGET: sdi_gold_sa360_campaign_qgp_week_long
+TARGET: sdi_gold_sa360_campaign_weekly_long
 SOURCE: sdi_gold_sa360_campaign_weekly (qgp_week wide)
 ===============================================================================
 */
@@ -14,7 +14,7 @@ DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();     -- change
 DECLARE expanded_start DATE DEFAULT DATE_SUB(backfill_start_date, INTERVAL 14 DAY);
 DECLARE expanded_end   DATE DEFAULT DATE_ADD(backfill_end_date,   INTERVAL 14 DAY);
 
-MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_qgp_week_long` T
+MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long` T
 USING (
   WITH src AS (
     SELECT *
