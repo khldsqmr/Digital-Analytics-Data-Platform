@@ -30,3 +30,5 @@ BEGIN
   -- OPTIONAL: bronze reconciliation (limited metrics)
   CALL `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_long_bronze_reconciliation_tests`();
 END;
+
+

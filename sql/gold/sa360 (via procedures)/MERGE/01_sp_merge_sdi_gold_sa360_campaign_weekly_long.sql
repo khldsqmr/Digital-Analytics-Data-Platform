@@ -2,7 +2,7 @@
 ===============================================================================
 FILE: 01_sp_merge_sdi_gold_sa360_campaign_qgp_week_long.sql
 LAYER: Gold
-PROC:  sp_merge_gold_sa360_campaign_qgp_week_long
+PROC:  sp_merge_gold_sa360_campaign_weekly_long
 
 PURPOSE:
   Upsert recent wide QGP-week rows into QGP-week long.
@@ -13,7 +13,7 @@ MERGE KEY:
 */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_qgp_week_long`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_weekly_long`()
 OPTIONS(strict_mode=false)
 BEGIN
   -- QGP-week rollups can be updated by lookback of the upstream wide weekly
@@ -241,3 +241,4 @@ BEGIN
   );
 
 END;
+

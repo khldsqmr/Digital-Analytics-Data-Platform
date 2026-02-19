@@ -4,10 +4,8 @@ FILE: 04_sp_gold_campaign_weekly_reconciliation.sql
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-RECONCILIATION (QGP-week):
-  - Driver: most recent N qgp_week buckets from Gold Daily (derived)
-  - Compare SUM(Gold Daily bucketed) vs SUM(Gold Weekly) per qgp_week
-
+UPDATES:
+  - Rollups are now restricted to the sampled qgp_weeks only (scan efficiency)
 ===============================================================================
 */
 
@@ -18,17 +16,8 @@ BEGIN
   DECLARE sample_weeks INT64 DEFAULT 4;
   DECLARE tolerance    FLOAT64 DEFAULT 0.000001;
 
-  -- ===========================================================================
-  -- Helper CTE pattern used in each test:
-  --   1) daily_bucketed: derive qgp_week from date (same build logic)
-  --   2) qgp_list: last N qgp_week values
-  --   3) daily_rollup: SUM metric by qgp_week
-  --   4) weekly_rollup: SUM metric by qgp_week from weekly table
-  --   5) aligned: compare
-  -- ===========================================================================
-
   -- ---------------------------------------------------------------------------
-  -- TEST 1: cart_start weekly == SUM(daily) (per qgp_week)
+  -- TEST 1: cart_start weekly == SUM(daily) per qgp_week (last N weeks)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
@@ -62,7 +51,7 @@ BEGIN
       qgp_week,
       SUM(COALESCE(cart_start,0)) AS daily_val
     FROM daily_bucketed
-    WHERE qgp_week IS NOT NULL
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   weekly_rollup AS (
@@ -70,7 +59,7 @@ BEGIN
       qgp_week,
       SUM(COALESCE(cart_start,0)) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IS NOT NULL
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   aligned AS (
@@ -137,7 +126,7 @@ BEGIN
   FROM aligned;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 2: postpaid_pspv weekly == SUM(daily) (per qgp_week)
+  -- TEST 2: postpaid_pspv weekly == SUM(daily) per qgp_week (last N weeks)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
@@ -171,7 +160,7 @@ BEGIN
       qgp_week,
       SUM(COALESCE(postpaid_pspv,0)) AS daily_val
     FROM daily_bucketed
-    WHERE qgp_week IS NOT NULL
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   weekly_rollup AS (
@@ -179,7 +168,7 @@ BEGIN
       qgp_week,
       SUM(COALESCE(postpaid_pspv,0)) AS weekly_val
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-    WHERE qgp_week IS NOT NULL
+    WHERE qgp_week IN (SELECT qgp_week FROM qgp_list)
     GROUP BY 1
   ),
   aligned AS (
