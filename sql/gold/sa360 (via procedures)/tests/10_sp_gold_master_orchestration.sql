@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-FILE: 09_sp_gold_master_orchestration.sql
+FILE: 10_sp_gold_master_orchestration.sql
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_master_orchestration
 

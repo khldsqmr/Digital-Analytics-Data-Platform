@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-FILE: 10_sp_gold_campaign_long_bronze_reconciliation.sql
+FILE: 09_sp_gold_campaign_long_bronze_reconciliation.sql
 PROC:  sp_gold_sa360_campaign_long_bronze_reconciliation_tests
 
 RECON (LIMITED):
