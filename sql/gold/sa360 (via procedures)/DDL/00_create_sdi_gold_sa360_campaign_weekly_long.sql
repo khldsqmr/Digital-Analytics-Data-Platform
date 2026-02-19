@@ -4,15 +4,12 @@ FILE: 00_create_sdi_gold_sa360_campaign_weekly_long.sql
 LAYER: Gold
 TABLE: sdi_gold_sa360_campaign_weekly_long
 
-SOURCE:
-  Gold QGP Week Wide: sdi_gold_sa360_campaign_weekly (UPDATED to qgp_week design)
-
 PURPOSE:
   Tableau-ready LONG fact at QGP_WEEK grain:
     - one row per (account_id, campaign_id, qgp_week, metric_name)
-    - qgp_week can be:
-        * Saturday week ending
-        * Quarter-end date for quarter-end partial
+    - qgp_week includes:
+        * WEEKLY buckets ending on Saturday
+        * QUARTER_END_PARTIAL buckets ending on quarter-end date
 
 GRAIN:
   (account_id, campaign_id, qgp_week, metric_name)
@@ -54,5 +51,4 @@ CREATE OR REPLACE TABLE
 )
 PARTITION BY qgp_week
 CLUSTER BY lob, account_id, campaign_id, metric_name
-OPTIONS(description="Gold SA360 QGP_WEEK LONG fact for Tableau. Wide metrics unpivoted into metric_name/metric_value.");
-
+OPTIONS(description="Gold SA360 QGP_WEEK LONG fact. qgp_week includes Saturday weeks + quarter-end partial buckets.");
