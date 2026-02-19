@@ -118,3 +118,5 @@ CREATE OR REPLACE TABLE
 PARTITION BY qgp_week
 CLUSTER BY lob, account_id, campaign_id
 OPTIONS(description="Gold SA360 campaign QGP-week rollup derived as sums of Gold Daily; qgp_week may be Saturday or quarter-end partial.");
+
+
