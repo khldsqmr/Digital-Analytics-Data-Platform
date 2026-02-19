@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-FILE: 01_sp_merge_sdi_gold_sa360_campaign_qgp_week_long.sql
+FILE: 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql
 LAYER: Gold
 PROC:  sp_merge_gold_sa360_campaign_weekly_long
 
