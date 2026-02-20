@@ -4,9 +4,10 @@ FILE: 03_sp_gold_campaign_weekly_critical.sql  (UPDATED)
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_critical_tests
 
-CHANGES:
-  - cutoff_anchor now uses fn_qgp_week() (matches build logic)
-  - Daily-derived qgp_week in tests 4/5 uses fn_qgp_week(date) (matches build logic)
+CHANGES (NEW):
+  - Added max_allowed_qgp_week to exclude FUTURE qgp_week buckets (qgp_week > CURRENT_DATE()).
+  - Applied max_allowed_qgp_week cap consistently to tests 1-5.
+  - Keeps fn_qgp_week() anchor logic (matches build logic).
 ===============================================================================
 */
 
@@ -16,11 +17,18 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_weeks INT64 DEFAULT 12;
 
-  -- Anchor aligned to your actual QGP bucketing rule (next Saturday or quarter-end partial)
+  -- Anchor aligned to your QGP bucketing rule
   DECLARE cutoff_anchor DATE DEFAULT
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(
       DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
     );
+
+  -- NEW: exclude future qgp_week buckets from test scope
+  DECLARE max_allowed_qgp_week DATE DEFAULT (
+    SELECT MAX(qgp_week)
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    WHERE qgp_week <= CURRENT_DATE()
+  );
 
   -- ---------------------------------------------------------------------------
   -- TEST 1: Duplicate grain (account_id, campaign_id, qgp_week)
@@ -32,6 +40,7 @@ BEGIN
       SELECT account_id, campaign_id, qgp_week, COUNT(*) c
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
       WHERE qgp_week >= cutoff_anchor
+        AND qgp_week <= max_allowed_qgp_week
       GROUP BY 1,2,3
       HAVING COUNT(*) > 1
     )
@@ -68,6 +77,7 @@ BEGIN
     SELECT COUNT(1) AS bad_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
       AND (
         account_id IS NULL OR
         campaign_id IS NULL OR
@@ -107,6 +117,7 @@ BEGIN
     SELECT COUNT(1) AS misaligned_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
       AND (
         qgp_week != DATE_TRUNC(qgp_week, WEEK(SATURDAY))
         AND qgp_week != DATE_SUB(
@@ -142,6 +153,7 @@ BEGIN
   -- ---------------------------------------------------------------------------
   -- TEST 4: Missing qgp_weeks (Daily-derived exists, Weekly missing)
   -- Daily-derived MUST use fn_qgp_week(date) to match build.
+  -- NEW: daily_scoped capped to <= max_allowed_qgp_week (no future buckets).
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_qgp AS (
@@ -149,18 +161,20 @@ BEGIN
       `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
     WHERE date IS NOT NULL
-      AND date >= DATE_SUB(cutoff_anchor, INTERVAL 40 DAY)  -- ensures full coverage around bucket edges
+      AND date >= DATE_SUB(cutoff_anchor, INTERVAL 40 DAY)
   ),
   daily_scoped AS (
     SELECT qgp_week
     FROM daily_qgp
     WHERE qgp_week IS NOT NULL
       AND qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
   ),
   weekly_qgp AS (
     SELECT DISTINCT qgp_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
   ),
   missing AS (
     SELECT d.qgp_week
@@ -185,7 +199,7 @@ BEGIN
     ),
     IF(COUNT(*) = 0,
       'No action required.',
-      'Check weekly job coverage/backfill; ensure weekly built for all Daily-derived qgp_week buckets.'
+      'Check weekly job coverage/backfill; ensure weekly built for all Daily-derived qgp_week buckets (non-future).'
     ),
     IF(COUNT(*) > 0, TRUE, FALSE),
     IF(COUNT(*) = 0, TRUE, FALSE),
@@ -194,6 +208,7 @@ BEGIN
 
   -- ---------------------------------------------------------------------------
   -- TEST 5: Extra qgp_weeks (Weekly exists, Daily-derived missing)
+  -- NEW: daily_scoped capped to <= max_allowed_qgp_week (no future buckets).
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_qgp AS (
@@ -208,11 +223,13 @@ BEGIN
     FROM daily_qgp
     WHERE qgp_week IS NOT NULL
       AND qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
   ),
   weekly_qgp AS (
     SELECT DISTINCT qgp_week
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
   ),
   extra AS (
     SELECT w.qgp_week
@@ -237,7 +254,7 @@ BEGIN
     ),
     IF(COUNT(*) = 0,
       'No action required.',
-      'Check weekly filters/late arriving data; ensure Daily-derived qgp_week coverage matches Weekly.'
+      'Check weekly filters/late arriving data; ensure Daily-derived qgp_week coverage matches Weekly (non-future).'
     ),
     FALSE,
     IF(COUNT(*) = 0, TRUE, FALSE),

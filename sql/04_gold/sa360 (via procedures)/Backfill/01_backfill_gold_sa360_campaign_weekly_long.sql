@@ -4,15 +4,22 @@ FILE: 03_backfill_gold_sa360_campaign_weekly_long.sql
 LAYER: Gold (One-time Backfill)
 TARGET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long
 SOURCE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
-NOTES:
-  - Authoritative: weekly_long built from weekly wide (perfect consistency)
-  - Chunked by qgp_week for stability
+
+RULE:
+  - Do NOT backfill future qgp_week buckets (qgp_week > CURRENT_DATE()).
 ===============================================================================
 */
 
 DECLARE backfill_start_date DATE DEFAULT DATE('2024-01-01');
-DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();
-DECLARE chunk_days          INT64 DEFAULT 35;
+
+-- This is the important fix:
+DECLARE backfill_end_date DATE DEFAULT (
+  SELECT MAX(qgp_week)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+  WHERE qgp_week <= CURRENT_DATE()
+);
+
+DECLARE chunk_days INT64 DEFAULT 35;
 
 DECLARE chunk_start DATE;
 DECLARE chunk_end   DATE;
@@ -32,6 +39,7 @@ LOOP
       SELECT *
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
       WHERE qgp_week BETWEEN chunk_start AND chunk_end
+        AND qgp_week <= CURRENT_DATE()  -- redundant but explicit safety
     ),
     longified AS (
       SELECT
@@ -53,7 +61,7 @@ LOOP
         serving_status,
 
         metric_name,
-        metric_value,
+        CAST(metric_value AS FLOAT64) AS metric_value,
         CURRENT_TIMESTAMP() AS gold_qgp_long_inserted_at
       FROM src
       UNPIVOT EXCLUDE NULLS (

@@ -1,11 +1,14 @@
 /*
 ===============================================================================
 GOLD | SA360 | CAMPAIGN WEEKLY LONG
-File Name: 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql
+FILE: 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql
 PROC: sp_merge_gold_sa360_campaign_weekly_long
 
+RULE:
+  - Do NOT load future qgp_week buckets (qgp_week > CURRENT_DATE()).
+
 CRITICAL FIX:
-  - Use UNPIVOT EXCLUDE NULLS to prevent row explosion
+  - UNPIVOT EXCLUDE NULLS to prevent row explosion
 ===============================================================================
 */
 
@@ -15,12 +18,19 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_days INT64 DEFAULT 120;
 
+  DECLARE max_allowed_qgp_week DATE DEFAULT (
+    SELECT MAX(qgp_week)
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    WHERE qgp_week <= CURRENT_DATE()
+  );
+
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long` T
   USING (
     WITH src AS (
       SELECT *
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
       WHERE qgp_week >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+        AND qgp_week <= max_allowed_qgp_week
     ),
     longified AS (
       SELECT

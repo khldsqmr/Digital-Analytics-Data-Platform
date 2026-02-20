@@ -7,6 +7,10 @@ RECON (basic data flow):
   Gold long weekly vs Gold wide weekly for ONLY:
     - cart_start
     - postpaid_pspv
+
+CRITICAL UPDATE:
+  - Exclude FUTURE qgp_week buckets from sampling (qgp_week > CURRENT_DATE()).
+  - Prevents false FAIL when wide weekly contains tomorrow’s Saturday bucket.
 ===============================================================================
 */
 
@@ -19,15 +23,24 @@ BEGIN
 
   DECLARE metric_focus ARRAY<STRING> DEFAULT ['cart_start','postpaid_pspv'];
 
+  -- IMPORTANT: cap to non-future qgp_week buckets
+  DECLARE max_allowed_qgp_week DATE DEFAULT (
+    SELECT MAX(qgp_week)
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    WHERE qgp_week <= CURRENT_DATE()
+  );
+
   DECLARE sampled_qgp_weeks ARRAY<DATE>;
   DECLARE qgp_cnt INT64;
 
+  -- Sample last N qgp_week values, but ONLY up to max_allowed_qgp_week
   SET sampled_qgp_weeks = (
     SELECT ARRAY_AGG(qgp_week ORDER BY qgp_week DESC)
     FROM (
       SELECT qgp_week
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
       WHERE qgp_week IS NOT NULL
+        AND qgp_week <= max_allowed_qgp_week
       GROUP BY qgp_week
       QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
     )
@@ -46,8 +59,8 @@ BEGIN
       0.0, 0.0, 0.0,
       'FAIL',
       '🔴',
-      'Gold wide weekly has no qgp_week values to sample (cannot run reconciliation).',
-      'Check Gold weekly build/backfill; ensure qgp_week is populated.',
+      'Gold wide weekly has no non-future qgp_week values to sample (cannot run reconciliation).',
+      'Check Gold weekly build/backfill; ensure qgp_week is populated and not future-filtered out unexpectedly.',
       TRUE, FALSE, TRUE;
     RETURN;
   END IF;

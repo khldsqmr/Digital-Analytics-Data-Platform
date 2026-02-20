@@ -7,7 +7,13 @@ BASIC correctness:
   - Duplicate grain
   - Null identifiers
   - QGP week validity
-  - Metric focus: long weekly contains only the metrics we care about (cart_start, postpaid_pspv)
+
+FOCUS:
+  - focus metrics only: cart_start, postpaid_pspv
+
+CRITICAL UPDATE:
+  - Exclude FUTURE qgp_week buckets from test scope (qgp_week > CURRENT_DATE()).
+  - Uses max_allowed_qgp_week derived from Gold wide weekly.
 ===============================================================================
 */
 
@@ -24,6 +30,13 @@ BEGIN
 
   DECLARE metric_focus ARRAY<STRING> DEFAULT ['cart_start','postpaid_pspv'];
 
+  -- IMPORTANT: cap scope to non-future qgp_week buckets
+  DECLARE max_allowed_qgp_week DATE DEFAULT (
+    SELECT MAX(qgp_week)
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    WHERE qgp_week <= CURRENT_DATE()
+  );
+
   -- ===========================================================================
   -- TEST 1: Duplicate grain (acct,campaign,qgp_week,metric_name)
   -- ===========================================================================
@@ -34,6 +47,7 @@ BEGIN
       SELECT account_id, campaign_id, qgp_week, metric_name, COUNT(*) c
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
       WHERE qgp_week >= cutoff_anchor
+        AND qgp_week <= max_allowed_qgp_week
         AND metric_name IN UNNEST(metric_focus)
       GROUP BY 1,2,3,4
       HAVING COUNT(*) > 1
@@ -67,6 +81,7 @@ BEGIN
     SELECT COUNT(1) AS bad_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
       AND metric_name IN UNNEST(metric_focus)
       AND (
         account_id IS NULL OR
@@ -103,6 +118,7 @@ BEGIN
     SELECT COUNT(1) AS misaligned_rows
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long`
     WHERE qgp_week >= cutoff_anchor
+      AND qgp_week <= max_allowed_qgp_week
       AND metric_name IN UNNEST(metric_focus)
       AND (
         qgp_week != DATE_TRUNC(qgp_week, WEEK(SATURDAY))

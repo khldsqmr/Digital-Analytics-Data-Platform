@@ -4,8 +4,9 @@ FILE: 04_sp_gold_campaign_weekly_reconciliation.sql  (UPDATED)
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-CHANGES:
-  - Daily bucket derivation uses fn_qgp_week(date) to match build
+CHANGES (NEW):
+  - Exclude FUTURE qgp_week buckets from qgp_list sampling (qgp_week > CURRENT_DATE()).
+  - Daily bucket derivation still uses fn_qgp_week(date) to match build.
 ===============================================================================
 */
 
@@ -15,6 +16,13 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE sample_weeks INT64 DEFAULT 4;
   DECLARE tolerance    FLOAT64 DEFAULT 0.000001;
+
+  -- NEW: cap to non-future qgp_week buckets
+  DECLARE max_allowed_qgp_week DATE DEFAULT (
+    SELECT MAX(qgp_week)
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
+    WHERE qgp_week <= CURRENT_DATE()
+  );
 
   -- ---------------------------------------------------------------------------
   -- TEST 1: cart_start weekly == SUM(daily) per qgp_week (last N qgp_weeks)
@@ -33,6 +41,7 @@ BEGIN
       SELECT DISTINCT qgp_week
       FROM daily_bucketed
       WHERE qgp_week IS NOT NULL
+        AND qgp_week <= max_allowed_qgp_week
     )
     QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
   ),
@@ -132,6 +141,7 @@ BEGIN
       SELECT DISTINCT qgp_week
       FROM daily_bucketed
       WHERE qgp_week IS NOT NULL
+        AND qgp_week <= max_allowed_qgp_week
     )
     QUALIFY ROW_NUMBER() OVER (ORDER BY qgp_week DESC) <= sample_weeks
   ),
