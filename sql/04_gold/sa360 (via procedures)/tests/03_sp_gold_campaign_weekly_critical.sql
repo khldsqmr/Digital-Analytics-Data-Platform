@@ -1,21 +1,12 @@
 /*
 ===============================================================================
-FILE: 03_sp_gold_campaign_weekly_critical.sql
+FILE: 03_sp_gold_campaign_weekly_critical.sql  (UPDATED)
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_critical_tests
 
-TABLE UNDER TEST:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
-
-PURPOSE (QGP-week):
-  1) Duplicate grain check (acct,campaign,qgp_week)
-  2) Null identifier check
-  3) QGP week validity check (qgp_week must be Saturday OR quarter-end)
-  4) Missing qgp_weeks (Daily-derived qgp_week exists, Weekly missing)
-  5) Extra qgp_weeks (Weekly has qgp_week, Daily-derived missing)
-
-KEY:
-  Daily vs Weekly comparison uses the SAME qgp_week bucketing logic as the build.
+CHANGES:
+  - cutoff_anchor now uses fn_qgp_week() (matches build logic)
+  - Daily-derived qgp_week in tests 4/5 uses fn_qgp_week(date) (matches build logic)
 ===============================================================================
 */
 
@@ -25,11 +16,11 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_weeks INT64 DEFAULT 12;
 
-  -- Stable scan anchor (Saturday-aligned) to avoid mid-week cutoff artifacts.
-  DECLARE cutoff_anchor DATE DEFAULT DATE_TRUNC(
-    DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK),
-    WEEK(SATURDAY)
-  );
+  -- Anchor aligned to your actual QGP bucketing rule (next Saturday or quarter-end partial)
+  DECLARE cutoff_anchor DATE DEFAULT
+    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(
+      DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
+    );
 
   -- ---------------------------------------------------------------------------
   -- TEST 1: Duplicate grain (account_id, campaign_id, qgp_week)
@@ -109,9 +100,7 @@ BEGIN
 
   -- ---------------------------------------------------------------------------
   -- TEST 3: QGP Week Validity
-  -- qgp_week must be either:
-  --   A) Saturday-aligned  (qgp_week = DATE_TRUNC(qgp_week, WEEK(SATURDAY)))
-  --   B) Quarter-end date  (qgp_week = last day of its quarter)
+  -- qgp_week must be Saturday OR quarter-end
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH mis AS (
@@ -151,25 +140,16 @@ BEGIN
   FROM mis;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 4: Missing qgp_weeks (Daily-derived qgp_week exists, Weekly missing)
-  -- Daily side derives qgp_week using SAME bucketing logic as weekly build.
+  -- TEST 4: Missing qgp_weeks (Daily-derived exists, Weekly missing)
+  -- Daily-derived MUST use fn_qgp_week(date) to match build.
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_qgp AS (
     SELECT DISTINCT
-      CASE
-        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
-        ELSE week_end_sat
-      END AS qgp_week
-    FROM (
-      SELECT
-        date,
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-      WHERE date IS NOT NULL
-        AND date >= cutoff_anchor
-    )
+      `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+    WHERE date IS NOT NULL
+      AND date >= DATE_SUB(cutoff_anchor, INTERVAL 40 DAY)  -- ensures full coverage around bucket edges
   ),
   daily_scoped AS (
     SELECT qgp_week
@@ -213,24 +193,15 @@ BEGIN
   FROM missing;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 5: Extra qgp_weeks (Weekly has qgp_week, Daily-derived missing)
+  -- TEST 5: Extra qgp_weeks (Weekly exists, Daily-derived missing)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_qgp AS (
     SELECT DISTINCT
-      CASE
-        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
-        ELSE week_end_sat
-      END AS qgp_week
-    FROM (
-      SELECT
-        date,
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-      WHERE date IS NOT NULL
-        AND date >= cutoff_anchor
-    )
+      `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+    WHERE date IS NOT NULL
+      AND date >= DATE_SUB(cutoff_anchor, INTERVAL 40 DAY)
   ),
   daily_scoped AS (
     SELECT qgp_week

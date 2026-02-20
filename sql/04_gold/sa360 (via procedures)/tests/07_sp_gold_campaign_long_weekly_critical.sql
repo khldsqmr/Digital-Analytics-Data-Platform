@@ -6,7 +6,7 @@ TABLE: sdi_gold_sa360_campaign_weekly_long
 GRAIN: (account_id, campaign_id, qgp_week, metric_name)
 
 UPDATES:
-  - Added QGP week validity test (Saturday OR quarter-end)
+  - cutoff_anchor now uses fn_qgp_week() to match build bucketing
   - Added metric_name allowlist test (aligned to UNPIVOT list)
   - Added coverage test (wide weekly recent qgp_weeks must exist in long weekly)
 ===============================================================================
@@ -18,10 +18,10 @@ OPTIONS(strict_mode=false)
 BEGIN
   DECLARE lookback_weeks INT64 DEFAULT 12;
 
-  DECLARE cutoff_anchor DATE DEFAULT DATE_TRUNC(
-    DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK),
-    WEEK(SATURDAY)
-  );
+  DECLARE cutoff_anchor DATE DEFAULT
+    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(
+      DATE_SUB(CURRENT_DATE(), INTERVAL lookback_weeks WEEK)
+    );
 
   -- Must match your weekly_long UNPIVOT list (keep in sync with merge proc)
   DECLARE metric_allowlist ARRAY<STRING> DEFAULT [

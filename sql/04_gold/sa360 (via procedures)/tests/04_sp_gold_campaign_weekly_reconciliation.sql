@@ -1,11 +1,11 @@
 /*
 ===============================================================================
-FILE: 04_sp_gold_campaign_weekly_reconciliation.sql
+FILE: 04_sp_gold_campaign_weekly_reconciliation.sql  (UPDATED)
 LAYER: Gold | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_weekly_reconciliation_tests
 
-UPDATES:
-  - Rollups are now restricted to the sampled qgp_weeks only (scan efficiency)
+CHANGES:
+  - Daily bucket derivation uses fn_qgp_week(date) to match build
 ===============================================================================
 */
 
@@ -17,25 +17,15 @@ BEGIN
   DECLARE tolerance    FLOAT64 DEFAULT 0.000001;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 1: cart_start weekly == SUM(daily) per qgp_week (last N weeks)
+  -- TEST 1: cart_start weekly == SUM(daily) per qgp_week (last N qgp_weeks)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
     SELECT
-      CASE
-        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
-        ELSE week_end_sat
-      END AS qgp_week,
+      `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week,
       cart_start
-    FROM (
-      SELECT
-        date,
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end,
-        cart_start
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-      WHERE date IS NOT NULL
-    )
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+    WHERE date IS NOT NULL
   ),
   qgp_list AS (
     SELECT qgp_week
@@ -126,25 +116,15 @@ BEGIN
   FROM aligned;
 
   -- ---------------------------------------------------------------------------
-  -- TEST 2: postpaid_pspv weekly == SUM(daily) per qgp_week (last N weeks)
+  -- TEST 2: postpaid_pspv weekly == SUM(daily) per qgp_week (last N qgp_weeks)
   -- ---------------------------------------------------------------------------
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH daily_bucketed AS (
     SELECT
-      CASE
-        WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
-        ELSE week_end_sat
-      END AS qgp_week,
+      `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week,
       postpaid_pspv
-    FROM (
-      SELECT
-        date,
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        DATE_SUB(DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH), INTERVAL 1 DAY) AS quarter_end,
-        postpaid_pspv
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-      WHERE date IS NOT NULL
-    )
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+    WHERE date IS NOT NULL
   ),
   qgp_list AS (
     SELECT qgp_week
