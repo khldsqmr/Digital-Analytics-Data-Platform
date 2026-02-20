@@ -5,27 +5,21 @@ LAYER: Gold (One-time Backfill)
 TARGET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly
 SOURCE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
-PURPOSE:
-  Backfill QGP-week aggregates over a date range.
+RULES:
+  - week_end_sat = DATE_TRUNC(date, WEEK(SATURDAY))
+  - quarter_end  = LAST_DAY(date, QUARTER)
+  - if quarter_end < week_end_sat AND date <= quarter_end => qgp_week = quarter_end (partial)
+    else qgp_week = week_end_sat
 
-  QGP WEEK RULE:
-    - Week ends Saturday => qgp_week = DATE_TRUNC(date, WEEK(SATURDAY))
-    - Quarter-end partial => qgp_week = quarter_end for dates up to quarter_end
-      when quarter_end happens before that week's Saturday.
-
-  Metrics = SUM(daily) to guarantee reconciliation.
-
-  Uses explicit INSERT columns (schema-safe).
+  Metrics = SUM(COALESCE(daily,0)) to guarantee reconciliation.
 ===============================================================================
 */
 
-DECLARE backfill_start_date DATE DEFAULT DATE('2024-01-01');  -- <-- change
-DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();      -- <-- change
+DECLARE backfill_start_date DATE DEFAULT DATE('2024-01-01');
+DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();
 
--- Expand scan window to avoid partial-week/partial-period edge issues
--- (ensures we pull all daily rows needed to fully rebuild affected qgp_week buckets)
-DECLARE expanded_start DATE DEFAULT DATE_SUB(backfill_start_date, INTERVAL 14 DAY);
-DECLARE expanded_end   DATE DEFAULT DATE_ADD(backfill_end_date,   INTERVAL 14 DAY);
+DECLARE expanded_start DATE DEFAULT DATE_SUB(backfill_start_date, INTERVAL 40 DAY);
+DECLARE expanded_end   DATE DEFAULT DATE_ADD(backfill_end_date,   INTERVAL 40 DAY);
 
 MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly` T
 USING (
@@ -34,15 +28,8 @@ USING (
       account_id,
       campaign_id,
       date,
-
-      -- Week ending Saturday
       DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-
-      -- Quarter end (e.g., Sep 30, Dec 31)
-      DATE_SUB(
-        DATE_ADD(DATE_TRUNC(date, QUARTER), INTERVAL 3 MONTH),
-        INTERVAL 1 DAY
-      ) AS quarter_end,
+      LAST_DAY(date, QUARTER)          AS quarter_end,
 
       lob, ad_platform, account_name, campaign_name, campaign_type,
       advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
@@ -70,11 +57,9 @@ USING (
     SELECT
       *,
       CASE
-        -- Quarter-end partial bucket (e.g., Sep 30) splits the week
         WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
         ELSE week_end_sat
       END AS qgp_week,
-
       CASE
         WHEN quarter_end < week_end_sat AND date <= quarter_end THEN 'QUARTER_END_PARTIAL'
         ELSE 'WEEKLY'
@@ -82,8 +67,6 @@ USING (
     FROM base
   ),
 
-  -- Restrict to qgp_week buckets that overlap the requested window
-  -- (so if you backfill Sep 15–Oct 10, you rebuild the qgp weeks touched by those dates)
   impacted_qgp_weeks AS (
     SELECT DISTINCT qgp_week
     FROM bucketed
@@ -105,93 +88,89 @@ USING (
       FORMAT_DATE('%Y%m%d', qgp_week) AS qgp_week_yyyymmdd,
       period_type,
 
-      -- Latest-in-period dims/settings (non-null preferred)
       ARRAY_AGG(lob IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS lob,
       ARRAY_AGG(ad_platform IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS ad_platform,
       ARRAY_AGG(account_name IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS account_name,
       ARRAY_AGG(campaign_name IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS campaign_name,
       ARRAY_AGG(campaign_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS campaign_type,
-
       ARRAY_AGG(advertising_channel_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS advertising_channel_type,
       ARRAY_AGG(advertising_channel_sub_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS advertising_channel_sub_type,
       ARRAY_AGG(bidding_strategy_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS bidding_strategy_type,
       ARRAY_AGG(serving_status IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS serving_status,
 
-      -- Sums (reconciliation-safe)
-      SUM(impressions) AS impressions,
-      SUM(clicks) AS clicks,
-      SUM(cost) AS cost,
-      SUM(all_conversions) AS all_conversions,
+      SUM(COALESCE(impressions,0))     AS impressions,
+      SUM(COALESCE(clicks,0))          AS clicks,
+      SUM(COALESCE(cost,0))            AS cost,
+      SUM(COALESCE(all_conversions,0)) AS all_conversions,
 
-      SUM(bi) AS bi,
-      SUM(buying_intent) AS buying_intent,
-      SUM(bts_quality_traffic) AS bts_quality_traffic,
-      SUM(digital_gross_add) AS digital_gross_add,
-      SUM(magenta_pqt) AS magenta_pqt,
+      SUM(COALESCE(bi,0))                AS bi,
+      SUM(COALESCE(buying_intent,0))     AS buying_intent,
+      SUM(COALESCE(bts_quality_traffic,0)) AS bts_quality_traffic,
+      SUM(COALESCE(digital_gross_add,0)) AS digital_gross_add,
+      SUM(COALESCE(magenta_pqt,0))       AS magenta_pqt,
 
-      SUM(cart_start) AS cart_start,
-      SUM(postpaid_cart_start) AS postpaid_cart_start,
-      SUM(postpaid_pspv) AS postpaid_pspv,
-      SUM(aal) AS aal,
-      SUM(add_a_line) AS add_a_line,
+      SUM(COALESCE(cart_start,0))         AS cart_start,
+      SUM(COALESCE(postpaid_cart_start,0)) AS postpaid_cart_start,
+      SUM(COALESCE(postpaid_pspv,0))      AS postpaid_pspv,
+      SUM(COALESCE(aal,0))                AS aal,
+      SUM(COALESCE(add_a_line,0))         AS add_a_line,
 
-      SUM(connect_low_funnel_prospect) AS connect_low_funnel_prospect,
-      SUM(connect_low_funnel_visit) AS connect_low_funnel_visit,
-      SUM(connect_qt) AS connect_qt,
+      SUM(COALESCE(connect_low_funnel_prospect,0)) AS connect_low_funnel_prospect,
+      SUM(COALESCE(connect_low_funnel_visit,0))    AS connect_low_funnel_visit,
+      SUM(COALESCE(connect_qt,0))                  AS connect_qt,
 
-      SUM(hint_ec) AS hint_ec,
-      SUM(hint_sec) AS hint_sec,
-      SUM(hint_web_orders) AS hint_web_orders,
-      SUM(hint_invoca_calls) AS hint_invoca_calls,
-      SUM(hint_offline_invoca_calls) AS hint_offline_invoca_calls,
-      SUM(hint_offline_invoca_eligibility) AS hint_offline_invoca_eligibility,
-      SUM(hint_offline_invoca_order) AS hint_offline_invoca_order,
-      SUM(hint_offline_invoca_order_rt) AS hint_offline_invoca_order_rt,
-      SUM(hint_offline_invoca_sales_opp) AS hint_offline_invoca_sales_opp,
-      SUM(ma_hint_ec_eligibility_check) AS ma_hint_ec_eligibility_check,
+      SUM(COALESCE(hint_ec,0))                     AS hint_ec,
+      SUM(COALESCE(hint_sec,0))                    AS hint_sec,
+      SUM(COALESCE(hint_web_orders,0))             AS hint_web_orders,
+      SUM(COALESCE(hint_invoca_calls,0))           AS hint_invoca_calls,
+      SUM(COALESCE(hint_offline_invoca_calls,0))   AS hint_offline_invoca_calls,
+      SUM(COALESCE(hint_offline_invoca_eligibility,0)) AS hint_offline_invoca_eligibility,
+      SUM(COALESCE(hint_offline_invoca_order,0))   AS hint_offline_invoca_order,
+      SUM(COALESCE(hint_offline_invoca_order_rt,0)) AS hint_offline_invoca_order_rt,
+      SUM(COALESCE(hint_offline_invoca_sales_opp,0)) AS hint_offline_invoca_sales_opp,
+      SUM(COALESCE(ma_hint_ec_eligibility_check,0)) AS ma_hint_ec_eligibility_check,
 
-      SUM(fiber_activations) AS fiber_activations,
-      SUM(fiber_pre_order) AS fiber_pre_order,
-      SUM(fiber_waitlist_sign_up) AS fiber_waitlist_sign_up,
-      SUM(fiber_web_orders) AS fiber_web_orders,
-      SUM(fiber_ec) AS fiber_ec,
-      SUM(fiber_ec_dda) AS fiber_ec_dda,
-      SUM(fiber_sec) AS fiber_sec,
-      SUM(fiber_sec_dda) AS fiber_sec_dda,
+      SUM(COALESCE(fiber_activations,0))     AS fiber_activations,
+      SUM(COALESCE(fiber_pre_order,0))       AS fiber_pre_order,
+      SUM(COALESCE(fiber_waitlist_sign_up,0)) AS fiber_waitlist_sign_up,
+      SUM(COALESCE(fiber_web_orders,0))      AS fiber_web_orders,
+      SUM(COALESCE(fiber_ec,0))              AS fiber_ec,
+      SUM(COALESCE(fiber_ec_dda,0))          AS fiber_ec_dda,
+      SUM(COALESCE(fiber_sec,0))             AS fiber_sec,
+      SUM(COALESCE(fiber_sec_dda,0))         AS fiber_sec_dda,
 
-      SUM(metro_low_funnel_cs) AS metro_low_funnel_cs,
-      SUM(metro_mid_funnel_prospect) AS metro_mid_funnel_prospect,
-      SUM(metro_top_funnel_prospect) AS metro_top_funnel_prospect,
-      SUM(metro_upper_funnel_prospect) AS metro_upper_funnel_prospect,
-      SUM(metro_hint_qt) AS metro_hint_qt,
-      SUM(metro_qt) AS metro_qt,
+      SUM(COALESCE(metro_low_funnel_cs,0))       AS metro_low_funnel_cs,
+      SUM(COALESCE(metro_mid_funnel_prospect,0)) AS metro_mid_funnel_prospect,
+      SUM(COALESCE(metro_top_funnel_prospect,0)) AS metro_top_funnel_prospect,
+      SUM(COALESCE(metro_upper_funnel_prospect,0)) AS metro_upper_funnel_prospect,
+      SUM(COALESCE(metro_hint_qt,0))             AS metro_hint_qt,
+      SUM(COALESCE(metro_qt,0))                  AS metro_qt,
 
-      SUM(tmo_prepaid_low_funnel_prospect) AS tmo_prepaid_low_funnel_prospect,
-      SUM(tmo_top_funnel_prospect) AS tmo_top_funnel_prospect,
-      SUM(tmo_upper_funnel_prospect) AS tmo_upper_funnel_prospect,
+      SUM(COALESCE(tmo_prepaid_low_funnel_prospect,0)) AS tmo_prepaid_low_funnel_prospect,
+      SUM(COALESCE(tmo_top_funnel_prospect,0))         AS tmo_top_funnel_prospect,
+      SUM(COALESCE(tmo_upper_funnel_prospect,0))       AS tmo_upper_funnel_prospect,
 
-      SUM(tfb_low_funnel) AS tfb_low_funnel,
-      SUM(tfb_lead_form_submit) AS tfb_lead_form_submit,
-      SUM(tfb_invoca_sales_intent_dda) AS tfb_invoca_sales_intent_dda,
-      SUM(tfb_invoca_order_dda) AS tfb_invoca_order_dda,
+      SUM(COALESCE(tfb_low_funnel,0))            AS tfb_low_funnel,
+      SUM(COALESCE(tfb_lead_form_submit,0))      AS tfb_lead_form_submit,
+      SUM(COALESCE(tfb_invoca_sales_intent_dda,0)) AS tfb_invoca_sales_intent_dda,
+      SUM(COALESCE(tfb_invoca_order_dda,0))      AS tfb_invoca_order_dda,
 
-      SUM(tfb_credit_check) AS tfb_credit_check,
-      SUM(tfb_hint_ec) AS tfb_hint_ec,
-      SUM(tfb_invoca_sales_calls) AS tfb_invoca_sales_calls,
-      SUM(tfb_leads) AS tfb_leads,
-      SUM(tfb_quality_traffic) AS tfb_quality_traffic,
-      SUM(total_tfb_conversions) AS total_tfb_conversions,
+      SUM(COALESCE(tfb_credit_check,0))          AS tfb_credit_check,
+      SUM(COALESCE(tfb_hint_ec,0))               AS tfb_hint_ec,
+      SUM(COALESCE(tfb_invoca_sales_calls,0))    AS tfb_invoca_sales_calls,
+      SUM(COALESCE(tfb_leads,0))                 AS tfb_leads,
+      SUM(COALESCE(tfb_quality_traffic,0))       AS tfb_quality_traffic,
+      SUM(COALESCE(total_tfb_conversions,0))     AS total_tfb_conversions,
 
       CURRENT_TIMESTAMP() AS gold_weekly_inserted_at
     FROM scoped
     GROUP BY account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type
   )
-
   SELECT * FROM agg
 ) S
-ON  T.account_id = S.account_id
+ON  T.account_id  = S.account_id
 AND T.campaign_id = S.campaign_id
-AND T.qgp_week = S.qgp_week
+AND T.qgp_week    = S.qgp_week
 
 WHEN MATCHED THEN UPDATE SET
   qgp_week_yyyymmdd = S.qgp_week_yyyymmdd,
@@ -276,7 +255,6 @@ WHEN NOT MATCHED THEN INSERT (
   account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type,
   lob, ad_platform, account_name, campaign_name, campaign_type,
   advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
-
   impressions, clicks, cost, all_conversions,
   bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
   cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line,
@@ -298,7 +276,6 @@ VALUES (
   S.account_id, S.campaign_id, S.qgp_week, S.qgp_week_yyyymmdd, S.period_type,
   S.lob, S.ad_platform, S.account_name, S.campaign_name, S.campaign_type,
   S.advertising_channel_type, S.advertising_channel_sub_type, S.bidding_strategy_type, S.serving_status,
-
   S.impressions, S.clicks, S.cost, S.all_conversions,
   S.bi, S.buying_intent, S.bts_quality_traffic, S.digital_gross_add, S.magenta_pqt,
   S.cart_start, S.postpaid_cart_start, S.postpaid_pspv, S.aal, S.add_a_line,

@@ -1,34 +1,43 @@
 /*
 ===============================================================================
-FILE: 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql  (NEW)
-LAYER: Gold
-PROC:  sp_merge_gold_sa360_campaign_weekly_long
-
-PURPOSE:
-  Upsert weekly_long from weekly wide (authoritative rollup).
+FILE: 02_backfill_gold_sa360_campaign_daily_long.sql
+LAYER: Gold (One-time Backfill)
+TARGET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily_long
+SOURCE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
+NOTES:
+  - Chunked to avoid massive MERGE
+  - UNPIVOT EXCLUDE NULLS (keeps zeros, drops null metrics)
 ===============================================================================
 */
 
-CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_weekly_long`()
-OPTIONS(strict_mode=false)
-BEGIN
-  DECLARE lookback_days INT64 DEFAULT 90;
+DECLARE backfill_start_date DATE DEFAULT DATE('2024-01-01');
+DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();
+DECLARE chunk_days          INT64 DEFAULT 14;
 
-  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long` T
+DECLARE chunk_start DATE;
+DECLARE chunk_end   DATE;
+
+SET chunk_start = backfill_start_date;
+
+LOOP
+  IF chunk_start > backfill_end_date THEN
+    LEAVE;
+  END IF;
+
+  SET chunk_end = LEAST(DATE_ADD(chunk_start, INTERVAL chunk_days - 1 DAY), backfill_end_date);
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily_long` T
   USING (
     WITH src AS (
       SELECT *
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly`
-      WHERE qgp_week >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
+      WHERE date BETWEEN chunk_start AND chunk_end
     ),
     longified AS (
       SELECT
         account_id,
         campaign_id,
-        qgp_week,
-        qgp_week_yyyymmdd,
-        period_type,
+        date,
 
         lob,
         ad_platform,
@@ -43,9 +52,11 @@ BEGIN
 
         metric_name,
         metric_value,
-        CURRENT_TIMESTAMP() AS gold_qgp_long_inserted_at
+
+        file_load_datetime,
+        CURRENT_TIMESTAMP() AS gold_long_inserted_at
       FROM src
-      UNPIVOT (
+      UNPIVOT EXCLUDE NULLS (
         metric_value FOR metric_name IN (
           impressions, clicks, cost, all_conversions,
           bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
@@ -69,24 +80,24 @@ BEGIN
   ) S
   ON  T.account_id  = S.account_id
   AND T.campaign_id = S.campaign_id
-  AND T.qgp_week    = S.qgp_week
+  AND T.date        = S.date
   AND T.metric_name = S.metric_name
 
   WHEN MATCHED THEN UPDATE SET
-    qgp_week_yyyymmdd = S.qgp_week_yyyymmdd,
-    period_type       = S.period_type,
-    lob               = S.lob,
-    ad_platform       = S.ad_platform,
-    account_name      = S.account_name,
-    campaign_name     = S.campaign_name,
-    campaign_type     = S.campaign_type,
+    lob = S.lob,
+    ad_platform = S.ad_platform,
+    account_name = S.account_name,
+    campaign_name = S.campaign_name,
+    campaign_type = S.campaign_type,
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,
-    serving_status    = S.serving_status,
-    metric_value      = S.metric_value,
-    gold_qgp_long_inserted_at = CURRENT_TIMESTAMP()
+    serving_status = S.serving_status,
+    metric_value = S.metric_value,
+    file_load_datetime = S.file_load_datetime,
+    gold_long_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN INSERT ROW;
 
-END;
+  SET chunk_start = DATE_ADD(chunk_end, INTERVAL 1 DAY);
+END LOOP;

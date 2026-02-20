@@ -1,17 +1,17 @@
 /*
 ===============================================================================
-FILE: 01_sp_merge_sdi_gold_sa360_campaign_daily.sql
-LAYER: Gold
-PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_daily
+GOLD | SA360 | CAMPAIGN DAILY (WIDE)
+File Name: 01_sp_merge_sdi_gold_sa360_campaign_daily.sql
+PROC: sp_merge_gold_sa360_campaign_daily
 
 PURPOSE:
-  Upsert recent Silver daily rows into Gold daily.
-  - NO additional dedupe
-  - Gold is a clean projection of Silver (reporting schema)
-  - lookback window handles late arriving entity updates that affect Silver
+  Incremental upsert from Silver daily -> Gold daily.
 
 MERGE KEY:
   (account_id, campaign_id, date)
+
+NOTES:
+  - Uses lookback window for late updates
 ===============================================================================
 */
 
@@ -19,7 +19,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 14;
+  DECLARE lookback_days INT64 DEFAULT 21;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T
   USING (
@@ -118,7 +118,6 @@ BEGIN
     account_name = S.account_name,
     campaign_name = S.campaign_name,
     campaign_type = S.campaign_type,
-
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,

@@ -1,13 +1,16 @@
 /*
 ===============================================================================
-FILE: 01_sp_merge_sdi_gold_sa360_campaign_weekly.sql  (NEW)
-LAYER: Gold
-PROC:  sp_merge_gold_sa360_campaign_weekly
+GOLD | SA360 | CAMPAIGN WEEKLY (WIDE)
+File Name: 01_sp_merge_sdi_gold_sa360_campaign_weekly.sql
+PROC: sp_merge_gold_sa360_campaign_weekly
+
+KEY FIX:
+  Uses fn_qgp_week(date) which correctly returns:
+    - next Saturday on/after date
+    - OR quarter_end if quarter_end < that Saturday
 
 PURPOSE:
-  Incremental rebuild of impacted qgp_week buckets from Gold Daily.
-  - Lookback window handles late arriving daily updates
-  - Rebuilds the entire impacted qgp_week buckets to guarantee reconciliation
+  Rebuild impacted qgp_week buckets for reconciliation-safe rollups.
 ===============================================================================
 */
 
@@ -20,6 +23,7 @@ BEGIN
   DECLARE backfill_start_date DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY);
   DECLARE backfill_end_date   DATE DEFAULT CURRENT_DATE();
 
+  -- Pull extra edges so impacted buckets can be fully rebuilt
   DECLARE expanded_start DATE DEFAULT DATE_SUB(backfill_start_date, INTERVAL 40 DAY);
   DECLARE expanded_end   DATE DEFAULT DATE_ADD(backfill_end_date,   INTERVAL 40 DAY);
 
@@ -31,8 +35,11 @@ BEGIN
         campaign_id,
         date,
 
-        DATE_TRUNC(date, WEEK(SATURDAY)) AS week_end_sat,
-        LAST_DAY(date, QUARTER)          AS quarter_end,
+        -- Correct week end Saturday (next Sat on/after date)
+        DATE_ADD(date, INTERVAL (7 - EXTRACT(DAYOFWEEK FROM date)) DAY) AS week_end_saturday,
+        LAST_DAY(date, QUARTER) AS quarter_end,
+
+        `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(date) AS qgp_week,
 
         lob, ad_platform, account_name, campaign_name, campaign_type,
         advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
@@ -60,21 +67,17 @@ BEGIN
       SELECT
         *,
         CASE
-          WHEN quarter_end < week_end_sat AND date <= quarter_end THEN quarter_end
-          ELSE week_end_sat
-        END AS qgp_week,
-        CASE
-          WHEN quarter_end < week_end_sat AND date <= quarter_end THEN 'QUARTER_END_PARTIAL'
+          WHEN quarter_end < week_end_saturday AND qgp_week = quarter_end THEN 'QUARTER_END_PARTIAL'
           ELSE 'WEEKLY'
         END AS period_type
       FROM base
+      WHERE qgp_week IS NOT NULL
     ),
 
     impacted_qgp_weeks AS (
       SELECT DISTINCT qgp_week
       FROM bucketed
       WHERE date BETWEEN backfill_start_date AND backfill_end_date
-        AND qgp_week IS NOT NULL
     ),
 
     scoped AS (
@@ -89,7 +92,13 @@ BEGIN
         campaign_id,
         qgp_week,
         FORMAT_DATE('%Y%m%d', qgp_week) AS qgp_week_yyyymmdd,
-        period_type,
+
+        -- period_type per bucket (deterministic)
+        -- If any day in that bucket is a quarter-end partial day, bucket is QUARTER_END_PARTIAL
+        CASE
+          WHEN LOGICAL_OR(period_type = 'QUARTER_END_PARTIAL') THEN 'QUARTER_END_PARTIAL'
+          ELSE 'WEEKLY'
+        END AS period_type,
 
         ARRAY_AGG(lob IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS lob,
         ARRAY_AGG(ad_platform IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS ad_platform,
@@ -101,6 +110,7 @@ BEGIN
         ARRAY_AGG(bidding_strategy_type IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS bidding_strategy_type,
         ARRAY_AGG(serving_status IGNORE NULLS ORDER BY date DESC LIMIT 1)[OFFSET(0)] AS serving_status,
 
+        -- reconciliation-safe sums
         SUM(COALESCE(impressions,0)) AS impressions,
         SUM(COALESCE(clicks,0)) AS clicks,
         SUM(COALESCE(cost,0)) AS cost,
@@ -167,8 +177,9 @@ BEGIN
 
         CURRENT_TIMESTAMP() AS gold_weekly_inserted_at
       FROM scoped
-      GROUP BY account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type
+      GROUP BY account_id, campaign_id, qgp_week
     )
+
     SELECT * FROM agg
   ) S
   ON  T.account_id = S.account_id
@@ -187,23 +198,28 @@ BEGIN
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,
     serving_status = S.serving_status,
+
     impressions = S.impressions,
     clicks = S.clicks,
     cost = S.cost,
     all_conversions = S.all_conversions,
+
     bi = S.bi,
     buying_intent = S.buying_intent,
     bts_quality_traffic = S.bts_quality_traffic,
     digital_gross_add = S.digital_gross_add,
     magenta_pqt = S.magenta_pqt,
+
     cart_start = S.cart_start,
     postpaid_cart_start = S.postpaid_cart_start,
     postpaid_pspv = S.postpaid_pspv,
     aal = S.aal,
     add_a_line = S.add_a_line,
+
     connect_low_funnel_prospect = S.connect_low_funnel_prospect,
     connect_low_funnel_visit = S.connect_low_funnel_visit,
     connect_qt = S.connect_qt,
+
     hint_ec = S.hint_ec,
     hint_sec = S.hint_sec,
     hint_web_orders = S.hint_web_orders,
@@ -214,6 +230,7 @@ BEGIN
     hint_offline_invoca_order_rt = S.hint_offline_invoca_order_rt,
     hint_offline_invoca_sales_opp = S.hint_offline_invoca_sales_opp,
     ma_hint_ec_eligibility_check = S.ma_hint_ec_eligibility_check,
+
     fiber_activations = S.fiber_activations,
     fiber_pre_order = S.fiber_pre_order,
     fiber_waitlist_sign_up = S.fiber_waitlist_sign_up,
@@ -222,27 +239,75 @@ BEGIN
     fiber_ec_dda = S.fiber_ec_dda,
     fiber_sec = S.fiber_sec,
     fiber_sec_dda = S.fiber_sec_dda,
+
     metro_low_funnel_cs = S.metro_low_funnel_cs,
     metro_mid_funnel_prospect = S.metro_mid_funnel_prospect,
     metro_top_funnel_prospect = S.metro_top_funnel_prospect,
     metro_upper_funnel_prospect = S.metro_upper_funnel_prospect,
     metro_hint_qt = S.metro_hint_qt,
     metro_qt = S.metro_qt,
+
     tmo_prepaid_low_funnel_prospect = S.tmo_prepaid_low_funnel_prospect,
     tmo_top_funnel_prospect = S.tmo_top_funnel_prospect,
     tmo_upper_funnel_prospect = S.tmo_upper_funnel_prospect,
+
     tfb_low_funnel = S.tfb_low_funnel,
     tfb_lead_form_submit = S.tfb_lead_form_submit,
     tfb_invoca_sales_intent_dda = S.tfb_invoca_sales_intent_dda,
     tfb_invoca_order_dda = S.tfb_invoca_order_dda,
+
     tfb_credit_check = S.tfb_credit_check,
     tfb_hint_ec = S.tfb_hint_ec,
     tfb_invoca_sales_calls = S.tfb_invoca_sales_calls,
     tfb_leads = S.tfb_leads,
     tfb_quality_traffic = S.tfb_quality_traffic,
     total_tfb_conversions = S.total_tfb_conversions,
+
     gold_weekly_inserted_at = CURRENT_TIMESTAMP()
 
-  WHEN NOT MATCHED THEN INSERT ROW;
+  WHEN NOT MATCHED THEN INSERT (
+    account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type,
+    lob, ad_platform, account_name, campaign_name, campaign_type,
+    advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
+
+    impressions, clicks, cost, all_conversions,
+    bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
+    cart_start, postpaid_cart_start, postpaid_pspv, aal, add_a_line,
+    connect_low_funnel_prospect, connect_low_funnel_visit, connect_qt,
+    hint_ec, hint_sec, hint_web_orders, hint_invoca_calls, hint_offline_invoca_calls,
+    hint_offline_invoca_eligibility, hint_offline_invoca_order, hint_offline_invoca_order_rt,
+    hint_offline_invoca_sales_opp, ma_hint_ec_eligibility_check,
+    fiber_activations, fiber_pre_order, fiber_waitlist_sign_up, fiber_web_orders,
+    fiber_ec, fiber_ec_dda, fiber_sec, fiber_sec_dda,
+    metro_low_funnel_cs, metro_mid_funnel_prospect, metro_top_funnel_prospect, metro_upper_funnel_prospect,
+    metro_hint_qt, metro_qt,
+    tmo_prepaid_low_funnel_prospect, tmo_top_funnel_prospect, tmo_upper_funnel_prospect,
+    tfb_low_funnel, tfb_lead_form_submit, tfb_invoca_sales_intent_dda, tfb_invoca_order_dda,
+    tfb_credit_check, tfb_hint_ec, tfb_invoca_sales_calls, tfb_leads, tfb_quality_traffic,
+    total_tfb_conversions,
+    gold_weekly_inserted_at
+  )
+  VALUES (
+    S.account_id, S.campaign_id, S.qgp_week, S.qgp_week_yyyymmdd, S.period_type,
+    S.lob, S.ad_platform, S.account_name, S.campaign_name, S.campaign_type,
+    S.advertising_channel_type, S.advertising_channel_sub_type, S.bidding_strategy_type, S.serving_status,
+
+    S.impressions, S.clicks, S.cost, S.all_conversions,
+    S.bi, S.buying_intent, S.bts_quality_traffic, S.digital_gross_add, S.magenta_pqt,
+    S.cart_start, S.postpaid_cart_start, S.postpaid_pspv, S.aal, S.add_a_line,
+    S.connect_low_funnel_prospect, S.connect_low_funnel_visit, S.connect_qt,
+    S.hint_ec, S.hint_sec, S.hint_web_orders, S.hint_invoca_calls, S.hint_offline_invoca_calls,
+    S.hint_offline_invoca_eligibility, S.hint_offline_invoca_order, S.hint_offline_invoca_order_rt,
+    S.hint_offline_invoca_sales_opp, S.ma_hint_ec_eligibility_check,
+    S.fiber_activations, S.fiber_pre_order, S.fiber_waitlist_sign_up, S.fiber_web_orders,
+    S.fiber_ec, S.fiber_ec_dda, S.fiber_sec, S.fiber_sec_dda,
+    S.metro_low_funnel_cs, S.metro_mid_funnel_prospect, S.metro_top_funnel_prospect, S.metro_upper_funnel_prospect,
+    S.metro_hint_qt, S.metro_qt,
+    S.tmo_prepaid_low_funnel_prospect, S.tmo_top_funnel_prospect, S.tmo_upper_funnel_prospect,
+    S.tfb_low_funnel, S.tfb_lead_form_submit, S.tfb_invoca_sales_intent_dda, S.tfb_invoca_order_dda,
+    S.tfb_credit_check, S.tfb_hint_ec, S.tfb_invoca_sales_calls, S.tfb_leads, S.tfb_quality_traffic,
+    S.total_tfb_conversions,
+    S.gold_weekly_inserted_at
+  );
 
 END;
