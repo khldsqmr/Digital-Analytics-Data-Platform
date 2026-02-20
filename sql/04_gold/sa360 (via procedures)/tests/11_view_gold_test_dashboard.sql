@@ -43,3 +43,4 @@ SELECT
   is_fail
 FROM latest
 WHERE rn = 1;
+

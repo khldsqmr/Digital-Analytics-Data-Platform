@@ -4,8 +4,8 @@ GOLD | SA360 | CAMPAIGN WEEKLY LONG
 File Name: 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql
 PROC: sp_merge_gold_sa360_campaign_weekly_long
 
-PURPOSE:
-  Upsert weekly_long from weekly wide (authoritative).
+CRITICAL FIX:
+  - Use UNPIVOT EXCLUDE NULLS to prevent row explosion
 ===============================================================================
 */
 
@@ -45,7 +45,7 @@ BEGIN
         CAST(metric_value AS FLOAT64) AS metric_value,
         CURRENT_TIMESTAMP() AS gold_qgp_long_inserted_at
       FROM src
-      UNPIVOT (
+      UNPIVOT EXCLUDE NULLS (
         metric_value FOR metric_name IN (
           impressions, clicks, cost, all_conversions,
           bi, buying_intent, bts_quality_traffic, digital_gross_add, magenta_pqt,
@@ -87,19 +87,6 @@ BEGIN
     metric_value      = S.metric_value,
     gold_qgp_long_inserted_at = CURRENT_TIMESTAMP()
 
-  WHEN NOT MATCHED THEN INSERT (
-    account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type,
-    lob, ad_platform, account_name, campaign_name, campaign_type,
-    advertising_channel_type, advertising_channel_sub_type, bidding_strategy_type, serving_status,
-    metric_name, metric_value,
-    gold_qgp_long_inserted_at
-  )
-  VALUES (
-    S.account_id, S.campaign_id, S.qgp_week, S.qgp_week_yyyymmdd, S.period_type,
-    S.lob, S.ad_platform, S.account_name, S.campaign_name, S.campaign_type,
-    S.advertising_channel_type, S.advertising_channel_sub_type, S.bidding_strategy_type, S.serving_status,
-    S.metric_name, S.metric_value,
-    S.gold_qgp_long_inserted_at
-  );
+  WHEN NOT MATCHED THEN INSERT ROW;
 
 END;

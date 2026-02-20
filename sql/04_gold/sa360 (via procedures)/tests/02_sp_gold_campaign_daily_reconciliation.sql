@@ -2,14 +2,12 @@
 ===============================================================================
 FILE: 02_sp_gold_campaign_daily_reconciliation.sql
 LAYER: Gold | QA
-PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_daily_reconciliation_tests
+PROC:  sp_gold_sa360_campaign_daily_reconciliation_tests
 
-RECONCILIATION:
-  Gold Daily vs Silver Daily (metrics should match, Gold is projection).
-
-UPDATES:
-  - NULL-safe SUM() using COALESCE((SELECT SUM(...)),0)
-  - Clean FAIL when either side has 0 rows in lookback window
+RECONCILIATION (basic data flow):
+  Gold Daily vs Silver Daily for ONLY:
+    - cart_start
+    - postpaid_pspv
 ===============================================================================
 */
 
@@ -26,7 +24,6 @@ BEGIN
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH stats AS (
     SELECT
-      -- Row counts (to detect empty windows)
       (SELECT COUNT(1)
        FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
        WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
@@ -36,7 +33,6 @@ BEGIN
        WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
       ) AS silver_rows,
 
-      -- NULL-safe sums
       COALESCE((
         SELECT SUM(COALESCE(cart_start,0))
         FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
@@ -56,7 +52,6 @@ BEGIN
       gold_sum,
       silver_sum,
       (gold_sum - silver_sum) AS diff,
-      -- Fail if either side is empty (comparison not meaningful)
       CASE
         WHEN gold_rows = 0 THEN 'FAIL'
         WHEN silver_rows = 0 THEN 'FAIL'
@@ -79,18 +74,18 @@ BEGIN
     CASE
       WHEN gold_rows = 0 THEN 'Gold Daily has 0 rows in lookback window (cannot reconcile).'
       WHEN silver_rows = 0 THEN 'Silver Daily has 0 rows in lookback window (cannot reconcile).'
-      WHEN status = 'PASS' THEN 'Cart Start sums match Gold vs Silver.'
-      ELSE 'Cart Start sums do NOT match Gold vs Silver (unexpected).'
+      WHEN status = 'PASS' THEN 'cart_start sums match (Gold vs Silver).'
+      ELSE 'cart_start sums do NOT match (Gold vs Silver).'
     END,
     CASE
-      WHEN gold_rows = 0 THEN 'Check Gold Daily build/backfill for the last 14 days.'
-      WHEN silver_rows = 0 THEN 'Check Silver Daily build/backfill for the last 14 days.'
+      WHEN gold_rows = 0 THEN 'Check Gold Daily build/backfill for last 14 days.'
+      WHEN silver_rows = 0 THEN 'Check Silver Daily build/backfill for last 14 days.'
       WHEN status = 'PASS' THEN 'No action required.'
-      ELSE 'Investigate Gold daily MERGE projection and column mapping.'
+      ELSE 'Investigate Gold projection/merge mapping for cart_start.'
     END,
-    (status = 'FAIL') AS is_critical_failure,
-    (status = 'PASS') AS is_pass,
-    (status = 'FAIL') AS is_fail
+    (status = 'FAIL'),
+    (status = 'PASS'),
+    (status = 'FAIL')
   FROM eval;
 
   -- ===========================================================================
@@ -149,18 +144,18 @@ BEGIN
     CASE
       WHEN gold_rows = 0 THEN 'Gold Daily has 0 rows in lookback window (cannot reconcile).'
       WHEN silver_rows = 0 THEN 'Silver Daily has 0 rows in lookback window (cannot reconcile).'
-      WHEN status = 'PASS' THEN 'Postpaid PSPV sums match Gold vs Silver.'
-      ELSE 'Postpaid PSPV sums do NOT match Gold vs Silver (unexpected).'
+      WHEN status = 'PASS' THEN 'postpaid_pspv sums match (Gold vs Silver).'
+      ELSE 'postpaid_pspv sums do NOT match (Gold vs Silver).'
     END,
     CASE
-      WHEN gold_rows = 0 THEN 'Check Gold Daily build/backfill for the last 14 days.'
-      WHEN silver_rows = 0 THEN 'Check Silver Daily build/backfill for the last 14 days.'
+      WHEN gold_rows = 0 THEN 'Check Gold Daily build/backfill for last 14 days.'
+      WHEN silver_rows = 0 THEN 'Check Silver Daily build/backfill for last 14 days.'
       WHEN status = 'PASS' THEN 'No action required.'
-      ELSE 'Investigate Gold daily MERGE projection and column mapping.'
+      ELSE 'Investigate Gold projection/merge mapping for postpaid_pspv.'
     END,
-    (status = 'FAIL') AS is_critical_failure,
-    (status = 'PASS') AS is_pass,
-    (status = 'FAIL') AS is_fail
+    (status = 'FAIL'),
+    (status = 'PASS'),
+    (status = 'FAIL')
   FROM eval;
 
 END;

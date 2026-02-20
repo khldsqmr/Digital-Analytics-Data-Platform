@@ -24,6 +24,7 @@ AS (
     )
     SELECT
       CASE
+        WHEN d IS NULL THEN NULL
         WHEN quarter_end < week_end_saturday THEN quarter_end
         ELSE week_end_saturday
       END

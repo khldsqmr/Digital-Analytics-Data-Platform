@@ -2,10 +2,11 @@
 ===============================================================================
 FILE: 01_sp_gold_campaign_daily_critical.sql
 LAYER: Gold | QA
-PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_gold_sa360_campaign_daily_critical_tests
+PROC:  sp_gold_sa360_campaign_daily_critical_tests
 
-UPDATES:
-  - Freshness test now FAILS cleanly when table is empty (max(date) is NULL)
+PURPOSE (basic correctness):
+  - Uniqueness at grain (account_id, campaign_id, date)
+  - Freshness (max(date) not stale / not empty)
 ===============================================================================
 */
 
@@ -45,14 +46,14 @@ BEGIN
        'Duplicate keys found in Gold Daily.'),
     IF(duplicate_groups = 0, 'No action required.',
        'Inspect Gold MERGE key and upstream Silver uniqueness.'),
-    IF(duplicate_groups > 0, TRUE, FALSE),
-    IF(duplicate_groups = 0, TRUE, FALSE),
-    IF(duplicate_groups > 0, TRUE, FALSE)
+    (duplicate_groups > 0),
+    (duplicate_groups = 0),
+    (duplicate_groups > 0)
   FROM dup;
 
   -- ===========================================================================
   -- TEST 2: Freshness check (max(date) delay days)
-  --   - If table empty (max_date is NULL) => force FAIL with huge delay
+  --   - If table empty (max_date is NULL) => force FAIL (delay=9999)
   -- ===========================================================================
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_test_results`
   WITH mx AS (
@@ -83,13 +84,13 @@ BEGIN
       ELSE CONCAT('Gold Daily is stale. Delay days = ', CAST(days_delay AS STRING), '.')
     END,
     CASE
-      WHEN max_date IS NULL THEN 'Check upstream build and backfill. Ensure Gold Daily table is populated.'
+      WHEN max_date IS NULL THEN 'Check upstream build/backfill; ensure Gold Daily is populated.'
       WHEN days_delay <= allowed_delay THEN 'No action required.'
-      ELSE 'Check Gold daily merge schedule + upstream Silver readiness.'
+      ELSE 'Check Gold daily schedule + upstream Silver readiness.'
     END,
-    IF(days_delay > allowed_delay, TRUE, FALSE),
-    IF(days_delay <= allowed_delay, TRUE, FALSE),
-    IF(days_delay > allowed_delay, TRUE, FALSE)
+    (days_delay > allowed_delay),
+    (days_delay <= allowed_delay),
+    (days_delay > allowed_delay)
   FROM calc;
 
 END;
