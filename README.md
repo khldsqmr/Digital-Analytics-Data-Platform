@@ -253,178 +253,90 @@ DIGITAL-ANALYTICS-DATA-PLATFORM/
                 └── vw_sdi_gold_sa360_ps_weekly_wide.sql
                     # Final weekly WIDE reporting view
 ```
-# What Each Major Folder Does?
+## What Each Major Folder Does
 
-sql/01_common
-# Shared building blocks used across layers:
-# - common date logic
-# - qgp week standardization
-# - reusable calendar mappings
+- **`sql/01_common`**: Shared building blocks used across layers (common date logic, QGP week standardization, reusable calendar mappings).
+- **`sql/02_bronze`**: Raw/source-faithful ingestion with minimal standardization; first clean landing layer for source data.
+- **`sql/03_silver`**: Business logic layer for cleaning, mapping, normalization, and core transformation rules.
+- **`sql/04_gold`**: Final curated reporting layer producing daily/weekly, wide/long, dashboard-ready and analyst-ready datasets.
+- **`tests/` (inside each layer)**: Layer-specific QA (critical tests, reconciliation tests, QA master orchestration, dashboard views).
+- **`Views/` (inside Gold)**: Final consumption views for dashboards, analysts, reporting tools, and downstream services/models.
 
-sql/02_bronze
-# Raw/source-faithful ingestion + minimal standardization
-# First clean landing layer for source data
+## Current Data Domain (Implemented)
 
-sql/03_silver
-# Business logic layer
-# Cleans, maps, normalizes, and applies transformation rules
+### SA360 (Search Ads 360) Pipeline
+Implemented end-to-end medallion pipeline with:
+- Bronze daily + entity ingestion
+- Silver daily business transformation
+- Gold daily/weekly datasets (wide + long)
+- QA dashboards + cross-layer reconciliation
+- Backfill + incremental orchestration
 
-sql/04_gold
-# Final curated reporting layer
-# Produces:
-# - daily / weekly datasets
-# - wide / long models
-# - dashboard-ready / analyst-ready outputs
+This is a reusable production pattern for other sources (e.g., Google Ads, Meta Ads, Search Console).
 
-tests/ (inside each layer)
-# Layer-specific QA:
-# - critical tests
-# - reconciliation tests
-# - QA master orchestration
-# - dashboard views for monitoring
+## Execution Model
 
-Views/ (inside Gold)
-# Final consumption views for:
-# - dashboards
-# - analysts
-# - reporting tools
-# - downstream models/services
+- SQL runs in **BigQuery**
+- Core pipelines are orchestrated via **stored procedures**
+- Trigger options: **BigQuery Scheduled Queries**, **Composer/Airflow**, **CI/CD jobs**, or **manual runs** (backfill/debugging)
 
+**Dependency rule:** `Bronze -> Silver -> Gold`  
+Gold QA should pass before dashboards consume Gold Views.
 
-# Current Data Domain (Implemented in Detail)
+## End-to-End Execution Order (Runbook)
 
-SA360 (Search Ads 360) Pipeline
-# Implemented end-to-end medallion pipeline with:
-# - Bronze daily + entity ingestion
-# - Silver daily business transformation
-# - Gold daily/weekly (wide + long)
-# - QA dashboards + cross-layer reconciliation
-# - backfill + incremental orchestration
-# Reusable pattern for other sources (Google Ads, Meta, Search Console, etc.)
+### 1) First-Time Setup (One-Time)
+- Run `sql/01_common` objects
+- Create Bronze DDL + Bronze test-results table
+- Create Silver DDL + Silver test-results table
+- Create Gold DDL + Gold test-results table
+- Create QA dashboard views (Bronze/Silver/Gold + unified)
+- Create final Gold reporting views
 
+### 2) Historical Load (One-Time Backfill)
+- Bronze backfill -> Bronze QA -> review dashboard
+- Silver backfill -> Silver QA -> review dashboard
+- Gold backfill (daily wide, daily long, weekly wide, weekly long)
+- Gold QA -> review unified QA dashboards
 
-# Execution Model
+### 3) Daily / Recurring Production Run
+- Bronze Master Orchestration
+- Bronze QA Master
+- Silver Master Orchestration
+- Silver QA Master
+- Gold Master Orchestration
+- Gold QA Master
+- Review unified QA dashboard + summary
+- Dashboards/analysts consume Gold Views
 
-# SQL runs in BigQuery
-# Core pipelines run via stored procedures
-# Trigger options:
-# - BigQuery Scheduled Queries
-# - Composer / Airflow
-# - CI/CD jobs
-# - manual runs (backfill/debugging)
+## QA Strategy
 
-# Dependency rule:
-# Bronze -> Silver -> Gold
-# Gold QA should pass before dashboards consume Gold Views
+- **Bronze QA**: Validates ingestion correctness (row counts, key validity, duplicates, reconciliation to raw)
+- **Silver QA**: Validates transformation correctness (mappings, derivations, reconciliation to Bronze)
+- **Gold QA**: Validates reporting correctness (daily vs weekly, wide vs long, end-to-end reconciliation to Bronze baseline)
+- **Dashboard QA Views**: Operational monitoring with PASS/FAIL, failure reasons, severity, and next-step guidance
 
+## Design Principles
 
-# End-to-End Execution Order (Runbook)
+- Idempotent (safe reruns)
+- Auditable (traceable across layers)
+- Layered separation of concerns
+- Extensible for new sources/domains
+- QA is first-class (not ad hoc)
+- Gold is decoupled from any single dashboard tool
 
-1) First-Time Setup (one-time)
-# - Run sql/01_common objects
-# - Create Bronze DDL + Bronze test results table
-# - Create Silver DDL + Silver test results table
-# - Create Gold DDL + Gold test results table
-# - Create QA dashboard views (Bronze/Silver/Gold + unified)
-# - Create final Gold reporting views
+## Non-Goals
 
-2) Historical Load (one-time backfill)
-# - Bronze backfill -> Bronze QA -> review dashboard
-# - Silver backfill -> Silver QA -> review dashboard
-# - Gold backfill (daily wide, daily long, weekly wide, weekly long)
-# - Gold QA -> review unified QA dashboards
+This platform intentionally does **not**:
+- Embed dashboard-specific logic in Bronze
+- Mix ingestion and reporting logic
+- Skip reconciliation checks
+- Hard-code a single downstream consumer
 
-3) Daily / Recurring Production Run
-# - Bronze Master Orchestration
-# - Bronze QA Master
-# - Silver Master Orchestration
-# - Silver QA Master
-# - Gold Master Orchestration
-# - Gold QA Master
-# - Review unified QA dashboard + summary
-# - Dashboards/analysts consume Gold Views
+## How to Get Started
 
+Clone the repository:
 
-# QA Strategy (Why This Matters)
-
-Bronze QA
-# Validates ingestion correctness:
-# - row counts
-# - key validity
-# - duplicates
-# - reconciliation to raw
-
-Silver QA
-# Validates transformation correctness:
-# - mappings
-# - derivations
-# - reconciliation to Bronze
-
-Gold QA
-# Validates reporting correctness:
-# - daily vs weekly consistency
-# - wide vs long consistency
-# - end-to-end reconciliation to Bronze baseline
-
-Dashboard QA Views
-# Makes QA operational:
-# - PASS/FAIL visibility
-# - failure reasons
-# - severity
-# - next-step guidance
-
-
-# Design Principles
-
-# - Idempotent (safe reruns)
-# - Auditable (traceable across layers)
-# - Layered separation of concerns
-# - Extensible for new sources/domains
-# - QA is first-class (not ad hoc)
-# - Gold is decoupled from any single dashboard tool
-
-
-# Non-Goals (By Design)
-
-# This platform intentionally does NOT:
-# - embed dashboard-specific logic in Bronze
-# - mix ingestion and reporting logic
-# - skip reconciliation checks
-# - hard-code one downstream consumer
-
-
-# How to Get Started
-
-# Clone the repo:
+```bash
 git clone https://github.com/khldsqmr/Digital-Analytics-Data-Platform.git
 cd Digital-Analytics-Data-Platform
-
-# Then start with:
-# 1. docs/bootstrap/
-# 2. sql/01_common/
-# 3. Bronze DDL + Bronze test-results DDL
-# 4. Silver DDL + Silver test-results DDL
-# 5. Gold DDL + Gold test-results DDL
-# 6. Backfill (if needed)
-# 7. QA orchestration + dashboards
-# 8. Schedule recurring runs
-
-
-# Ownership
-
-# Domain: Digital Analytics
-# Architecture: Medallion (Bronze / Silver / Gold)
-# Warehouse: BigQuery
-# Language: SQL
-# Pattern: Procedure-driven orchestration + QA dashboards
-
-
-# Notes for Contributors
-
-# For any new source/domain, follow the same pattern:
-# - DDL/            -> table creation
-# - Backfill/       -> historical load
-# - MERGE/          -> recurring incremental logic
-# - Orchestration/  -> master procedure
-# - tests/          -> QA + reconciliation
-# - Views/ (Gold)   -> final consumption layer
