@@ -32,7 +32,7 @@ USING (
       account_id,
       campaign_id,
       date,
-      file_load_datetime,
+      TIMESTAMP(file_load_datetime) AS file_load_datetime,
 
       -- Week end Saturday: next Sat on/after date (matches fn_qgp_week)
       DATE_ADD(date, INTERVAL (7 - EXTRACT(DAYOFWEEK FROM date)) DAY) AS week_end_saturday,
