@@ -22,6 +22,7 @@ BEGIN
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly` T
   USING (
+    WITH
     daily_base AS (
       SELECT
         d.* EXCEPT(file_load_datetime),
