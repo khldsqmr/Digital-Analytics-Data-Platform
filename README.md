@@ -252,7 +252,7 @@ DIGITAL-ANALYTICS-DATA-PLATFORM/
                 │   # Final weekly LONG reporting view
                 └── vw_sdi_gold_sa360_ps_weekly_wide.sql
                     # Final weekly WIDE reporting view
-
+```
 # What Each Major Folder Does?
 
 sql/01_common
