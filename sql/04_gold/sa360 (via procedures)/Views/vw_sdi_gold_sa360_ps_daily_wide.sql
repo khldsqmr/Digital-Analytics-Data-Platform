@@ -1,5 +1,6 @@
 /*
 ===============================================================================
+FILE NAME: vw_sdi_gold_sa360_ps_daily_wide.sql
 VIEW: vw_gold_sa360_daily_wide_reporting
 SOURCE: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily
 
