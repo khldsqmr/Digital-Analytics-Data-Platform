@@ -5,6 +5,12 @@ File Name: 01_sp_merge_sdi_gold_sa360_campaign_weekly.sql
 PROC: sp_merge_gold_sa360_campaign_weekly
 SOURCE: sdi_gold_sa360_campaign_daily
 TARGET: sdi_gold_sa360_campaign_weekly
+
+UPDATES:
+  - Keeps defensive dedupe on Gold Daily source
+  - Uses file_load_datetime safely in weekly aggregation
+  - Writes to weekly table metadata column: gold_weekly_inserted_at
+  - Avoids reference to non-existent gold_inserted_at column
 ===============================================================================
 */
 
@@ -21,6 +27,7 @@ BEGIN
         *
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
       WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+        AND date IS NOT NULL
     ),
 
     -- Defensive dedupe (if Gold Daily is already unique this does nothing)
@@ -30,8 +37,8 @@ BEGIN
         SELECT
           d.*,
           ROW_NUMBER() OVER (
-            PARTITION BY account_id, campaign_id, date
-            ORDER BY file_load_datetime DESC
+            PARTITION BY d.account_id, d.campaign_id, d.date
+            ORDER BY d.file_load_datetime DESC NULLS LAST
           ) AS rn
         FROM daily_base d
       )
@@ -43,24 +50,28 @@ BEGIN
         dd.*,
         `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week`(dd.date) AS qgp_week,
 
-        -- week_end_saturday for the day (used to detect partial)
-        DATE_ADD(dd.date, INTERVAL (7 - EXTRACT(DAYOFWEEK FROM dd.date)) DAY) AS week_end_saturday,
+        -- Saturday week-end for the day (used to detect quarter-end partial buckets)
+        DATE_TRUNC(dd.date, WEEK(SATURDAY)) AS week_end_saturday,
         LAST_DAY(dd.date, QUARTER) AS quarter_end
       FROM daily_dedup dd
       WHERE dd.date IS NOT NULL
     ),
 
-    -- Aggregated metrics by week + keys
+    -- Aggregated metrics by qgp_week + keys
     weekly_metrics AS (
       SELECT
         account_id,
         campaign_id,
         qgp_week,
 
-        -- If ANY row in this qgp_week group is partial, the group is partial (it will be consistent in practice)
         CASE
-          WHEN MAX(CASE WHEN quarter_end < week_end_saturday AND qgp_week = quarter_end THEN 1 ELSE 0 END) = 1
-            THEN 'QUARTER_END_PARTIAL'
+          WHEN MAX(
+            CASE
+              WHEN quarter_end < week_end_saturday AND qgp_week = quarter_end THEN 1
+              ELSE 0
+            END
+          ) = 1
+          THEN 'QUARTER_END_PARTIAL'
           ELSE 'WEEKLY'
         END AS period_type,
 
@@ -129,10 +140,11 @@ BEGIN
 
         MAX(file_load_datetime) AS file_load_datetime
       FROM daily_mapped
+      WHERE qgp_week IS NOT NULL
       GROUP BY 1,2,3
     ),
 
-    -- Pick the "best" dimension values per week (latest date, then latest file_load_datetime)
+    -- Pick best dimension values per week (latest date, then latest file_load_datetime)
     weekly_dims AS (
       SELECT * EXCEPT(rn, week_end_saturday, quarter_end)
       FROM (
@@ -155,12 +167,13 @@ BEGIN
           file_load_datetime,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, qgp_week
-            ORDER BY date DESC, file_load_datetime DESC
+            ORDER BY date DESC, file_load_datetime DESC NULLS LAST
           ) AS rn,
 
           week_end_saturday,
           quarter_end
         FROM daily_mapped
+        WHERE qgp_week IS NOT NULL
       )
       WHERE rn = 1
     ),
@@ -248,7 +261,7 @@ BEGIN
         m.total_tfb_conversions,
 
         m.file_load_datetime,
-        CURRENT_TIMESTAMP() AS gold_inserted_at
+        CURRENT_TIMESTAMP() AS gold_weekly_inserted_at
       FROM weekly_metrics m
       LEFT JOIN weekly_dims d
         USING (account_id, campaign_id, qgp_week)
@@ -338,7 +351,7 @@ BEGIN
     total_tfb_conversions = S.total_tfb_conversions,
 
     file_load_datetime = S.file_load_datetime,
-    gold_inserted_at = CURRENT_TIMESTAMP()
+    gold_weekly_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN INSERT (
     account_id, campaign_id, qgp_week, qgp_week_yyyymmdd, period_type,
@@ -366,7 +379,7 @@ BEGIN
     tfb_credit_check, tfb_hint_ec, tfb_invoca_sales_calls, tfb_leads, tfb_quality_traffic,
     total_tfb_conversions,
 
-    file_load_datetime, gold_inserted_at
+    file_load_datetime, gold_weekly_inserted_at
   )
   VALUES (
     S.account_id, S.campaign_id, S.qgp_week, S.qgp_week_yyyymmdd, S.period_type,
@@ -394,7 +407,7 @@ BEGIN
     S.tfb_credit_check, S.tfb_hint_ec, S.tfb_invoca_sales_calls, S.tfb_leads, S.tfb_quality_traffic,
     S.total_tfb_conversions,
 
-    S.file_load_datetime, S.gold_inserted_at
+    S.file_load_datetime, S.gold_weekly_inserted_at
   );
 
 END;

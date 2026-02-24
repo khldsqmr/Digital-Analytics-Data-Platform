@@ -7,7 +7,9 @@ PROC: sp_merge_gold_sa360_campaign_weekly_long
 RULE:
   - Do NOT load future qgp_week buckets (qgp_week > CURRENT_DATE()).
 
-CRITICAL FIX:
+FIXES:
+  - Handles NULL max_allowed_qgp_week safely
+  - Defensive dedupe on weekly source
   - UNPIVOT EXCLUDE NULLS to prevent row explosion
 ===============================================================================
 */
@@ -24,6 +26,11 @@ BEGIN
     WHERE qgp_week <= CURRENT_DATE()
   );
 
+  -- If weekly table is empty, avoid NULL filter issues
+  IF max_allowed_qgp_week IS NULL THEN
+    SET max_allowed_qgp_week = CURRENT_DATE();
+  END IF;
+
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly_long` T
   USING (
     WITH src AS (
@@ -32,6 +39,23 @@ BEGIN
       WHERE qgp_week >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
         AND qgp_week <= max_allowed_qgp_week
     ),
+
+    -- Defensive dedupe in case weekly gets duplicate rows for same key
+    src_dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          s.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY s.account_id, s.campaign_id, s.qgp_week
+            ORDER BY s.file_load_datetime DESC NULLS LAST,
+                     s.gold_weekly_inserted_at DESC NULLS LAST
+          ) AS rn
+        FROM src s
+      )
+      WHERE rn = 1
+    ),
+
     longified AS (
       SELECT
         account_id,
@@ -53,8 +77,9 @@ BEGIN
 
         metric_name,
         CAST(metric_value AS FLOAT64) AS metric_value,
+
         CURRENT_TIMESTAMP() AS gold_qgp_long_inserted_at
-      FROM src
+      FROM src_dedup
       UNPIVOT EXCLUDE NULLS (
         metric_value FOR metric_name IN (
           impressions, clicks, cost, all_conversions,
@@ -84,17 +109,20 @@ BEGIN
 
   WHEN MATCHED THEN UPDATE SET
     qgp_week_yyyymmdd = S.qgp_week_yyyymmdd,
-    period_type       = S.period_type,
-    lob               = S.lob,
-    ad_platform       = S.ad_platform,
-    account_name      = S.account_name,
-    campaign_name     = S.campaign_name,
-    campaign_type     = S.campaign_type,
+    period_type = S.period_type,
+
+    lob = S.lob,
+    ad_platform = S.ad_platform,
+    account_name = S.account_name,
+    campaign_name = S.campaign_name,
+    campaign_type = S.campaign_type,
+
     advertising_channel_type = S.advertising_channel_type,
     advertising_channel_sub_type = S.advertising_channel_sub_type,
     bidding_strategy_type = S.bidding_strategy_type,
-    serving_status    = S.serving_status,
-    metric_value      = S.metric_value,
+    serving_status = S.serving_status,
+
+    metric_value = S.metric_value,
     gold_qgp_long_inserted_at = CURRENT_TIMESTAMP()
 
   WHEN NOT MATCHED THEN INSERT ROW;
