@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS
 
   -- Metadata
   file_load_datetime TIMESTAMP,
-  gold_inserted_at TIMESTAMP
+  gold_weekly_inserted_at TIMESTAMP
 )
 PARTITION BY qgp_week
 CLUSTER BY account_id, campaign_id;
