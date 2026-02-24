@@ -22,12 +22,13 @@ BEGIN
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_weekly` T
   USING (
-    WITH daily_base AS (
+    daily_base AS (
       SELECT
-        *
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily`
-      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
-        AND date IS NOT NULL
+        d.* EXCEPT(file_load_datetime),
+        TIMESTAMP(d.file_load_datetime) AS file_load_datetime
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` d
+      WHERE d.date IS NOT NULL
+        AND d.date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
     -- Defensive dedupe (if Gold Daily is already unique this does nothing)
