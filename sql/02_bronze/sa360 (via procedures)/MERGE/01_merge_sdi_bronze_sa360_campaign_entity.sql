@@ -1,23 +1,23 @@
 /*
 ===============================================================================
-FILE: 01_merge_sdi_bronze_sa360_campaign_entity.sql   (UPDATED)
+FILE: 01_merge_sdi_bronze_sa360_campaign_entity.sql
 LAYER: Bronze
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_bronze_sa360_campaign_entity
 
 PURPOSE:
-  Incrementally upsert SA360 campaign entity/settings snapshots into Bronze:
-    - IMPORTANT: scope incremental window by ARRIVAL time (file_load_datetime),
-      NOT by date_yyyymmdd (entity feeds often arrive late with older dates).
-    - dedupe within the window by (file_load_datetime desc, filename desc)
-    - enforce canonical date from date_yyyymmdd
-    - drop rows where parsed date IS NULL (prevents partition garbage)
+  Incrementally upsert recent SA360 campaign entity/settings snapshots into Bronze:
+    - business-date lookback window (parsed from date_yyyymmdd)
+    - drop rows with unparseable date (no partition garbage)
+    - dedupe within window by (file_load_datetime DESC, filename DESC)
+    - upsert into Bronze using MERGE key (account_id, campaign_id, date_yyyymmdd)
 
 MERGE KEY:
   (account_id, campaign_id, date_yyyymmdd)
 
-KEY FIX (THIS SOLVES YOUR FAIL):
-  - WHERE clause uses file_load_datetime arrival window:
-      TIMESTAMP(file_load_datetime) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL lookback_days DAY)
+NOTES:
+  - Bronze is an auditable landing layer; we do NOT delete history even if RAW drops keys later.
+  - file_load_datetime is stored as TIMESTAMP in Bronze for consistency across layers.
+  - Use explicit INSERT column list (no INSERT ROW) to avoid schema drift issues.
 ===============================================================================
 */
 
@@ -117,42 +117,35 @@ BEGIN
         NULLIF(TRIM(SAFE_CAST(raw.use_supplied_urls_only AS STRING)), '') AS use_supplied_urls_only,
         NULLIF(TRIM(SAFE_CAST(raw.use_vehicle_inventory AS STRING)), '') AS use_vehicle_inventory,
 
-        -- Keep Bronze column type as DATETIME (matches your current table + tests)
-        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        -- Normalize to TIMESTAMP in Bronze
+        TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME)) AS file_load_datetime,
         NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
       FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo` raw
-      WHERE
-        -- ✅ ARRIVAL-WINDOW FILTER (fix)
-        TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME))
-          >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL lookback_days DAY)
+      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING))
+            >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
     cleaned AS (
-      SELECT * FROM src
-      WHERE date IS NOT NULL
-        AND account_id IS NOT NULL
-        AND campaign_id IS NOT NULL
-        AND date_yyyymmdd IS NOT NULL
+      SELECT * FROM src WHERE date IS NOT NULL
     ),
 
     dedup AS (
       SELECT * EXCEPT(rn)
       FROM (
         SELECT
-          c.*,
+          cleaned.*,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, date_yyyymmdd
-            ORDER BY file_load_datetime DESC NULLS LAST, filename DESC NULLS LAST
+            ORDER BY file_load_datetime DESC, filename DESC
           ) AS rn
-        FROM cleaned c
+        FROM cleaned
       )
       WHERE rn = 1
     )
-
     SELECT * FROM dedup
   ) S
-  ON  T.account_id    = S.account_id
-  AND T.campaign_id   = S.campaign_id
+  ON  T.account_id   = S.account_id
+  AND T.campaign_id  = S.campaign_id
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
   WHEN MATCHED THEN UPDATE SET
