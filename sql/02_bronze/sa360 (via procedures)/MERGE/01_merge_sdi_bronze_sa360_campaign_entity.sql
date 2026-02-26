@@ -6,18 +6,18 @@ PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_bronze_sa360_campai
 
 PURPOSE:
   Incrementally upsert recent SA360 campaign entity/settings snapshots into Bronze:
-    - business-date lookback window (parsed from date_yyyymmdd)
-    - drop rows with unparseable date (no partition garbage)
-    - dedupe within window by (file_load_datetime DESC, filename DESC)
-    - upsert into Bronze using MERGE key (account_id, campaign_id, date_yyyymmdd)
+    - Business-date lookback window (parsed from date_yyyymmdd)
+    - Drop rows with unparseable date (no partition garbage)
+    - Dedupe within window by (file_load_timestamp DESC, filename DESC)
+    - Upsert into Bronze using MERGE key (account_id, campaign_id, date_yyyymmdd)
 
 MERGE KEY:
   (account_id, campaign_id, date_yyyymmdd)
 
 NOTES:
   - Bronze is an auditable landing layer; we do NOT delete history even if RAW drops keys later.
-  - file_load_datetime is stored as TIMESTAMP in Bronze for consistency across layers.
-  - Use explicit INSERT column list (no INSERT ROW) to avoid schema drift issues.
+  - file_load_datetime stored as TIMESTAMP in Bronze (UTC assumption).
+  - Uses explicit INSERT column list (no INSERT ROW) to avoid schema drift issues.
 ===============================================================================
 */
 
@@ -117,16 +117,21 @@ BEGIN
         NULLIF(TRIM(SAFE_CAST(raw.use_supplied_urls_only AS STRING)), '') AS use_supplied_urls_only,
         NULLIF(TRIM(SAFE_CAST(raw.use_vehicle_inventory AS STRING)), '') AS use_vehicle_inventory,
 
-        -- Normalize to TIMESTAMP in Bronze
-        TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME)) AS file_load_datetime,
+        -- Normalize to TIMESTAMP in Bronze (prefer TIMESTAMP if present; otherwise DATETIME -> TIMESTAMP)
+        COALESCE(
+          SAFE_CAST(raw.File_Load_datetime AS TIMESTAMP),
+          TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME))
+        ) AS file_load_datetime,
+
         NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
       FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo` raw
-      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING))
-            >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
     cleaned AS (
-      SELECT * FROM src WHERE date IS NOT NULL
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
     ),
 
     dedup AS (
@@ -136,7 +141,7 @@ BEGIN
           cleaned.*,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, date_yyyymmdd
-            ORDER BY file_load_datetime DESC, filename DESC
+            ORDER BY file_load_datetime DESC NULLS LAST, filename DESC
           ) AS rn
         FROM cleaned
       )
@@ -144,8 +149,8 @@ BEGIN
     )
     SELECT * FROM dedup
   ) S
-  ON  T.account_id   = S.account_id
-  AND T.campaign_id  = S.campaign_id
+  ON  T.account_id    = S.account_id
+  AND T.campaign_id   = S.campaign_id
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
   WHEN MATCHED THEN UPDATE SET

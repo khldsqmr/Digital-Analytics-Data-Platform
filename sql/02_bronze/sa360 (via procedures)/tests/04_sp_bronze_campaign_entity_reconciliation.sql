@@ -5,9 +5,9 @@ LAYER: Bronze | QA
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_bronze_sa360_campaign_entity_reconciliation_tests
 
 RECONCILIATION CONTRACT (ENTITY):
-  - CRITICAL: Bronze must NOT be missing keys that exist in RAW (for the same business-date window).
-  - INFO/WARN: RAW missing Bronze keys is allowed (RAW may be non-append-only / may drop historical keys).
-  - Output must NOT explode: write exactly ONE row into test_results.
+  - CRITICAL: Bronze must NOT be missing keys that exist in RAW (same business-date window).
+  - INFO/WARN: RAW missing Bronze keys is allowed (RAW may be non-append-only / may drop keys).
+  - Output must NOT explode: exactly ONE row inserted into test_results.
 
 WINDOW:
   Business-date window (parsed from date_yyyymmdd) over lookback_days.
@@ -30,15 +30,24 @@ BEGIN
       SAFE_CAST(campaign_id AS STRING) AS campaign_id,
       SAFE_CAST(date_yyyymmdd AS STRING) AS date_yyyymmdd,
       SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) AS date,
-      TIMESTAMP(SAFE_CAST(File_Load_datetime AS DATETIME)) AS file_load_datetime,
+
+      -- Normalize to TIMESTAMP in QA too (same as Bronze logic)
+      COALESCE(
+        SAFE_CAST(File_Load_datetime AS TIMESTAMP),
+        TIMESTAMP(SAFE_CAST(File_Load_datetime AS DATETIME))
+      ) AS file_load_datetime,
+
       NULLIF(TRIM(SAFE_CAST(Filename AS STRING)), '') AS filename
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo`
-    WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING))
-          >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ),
+
   raw_clean AS (
-    SELECT * FROM raw_src WHERE date IS NOT NULL
+    SELECT *
+    FROM raw_src
+    WHERE date IS NOT NULL
+      AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ),
+
   raw_dedup AS (
     SELECT * EXCEPT(rn)
     FROM (
@@ -46,7 +55,7 @@ BEGIN
         raw_clean.*,
         ROW_NUMBER() OVER (
           PARTITION BY account_id, campaign_id, date_yyyymmdd
-          ORDER BY file_load_datetime DESC, filename DESC
+          ORDER BY file_load_datetime DESC NULLS LAST, filename DESC
         ) AS rn
       FROM raw_clean
     )
@@ -57,13 +66,10 @@ BEGIN
     SELECT
       account_id,
       campaign_id,
-      date_yyyymmdd,
-      date,
-      file_load_datetime,
-      filename
+      date_yyyymmdd
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_entity`
-    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
-      AND date IS NOT NULL
+    WHERE date IS NOT NULL
+      AND date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
   ),
 
   raw_keys AS (
@@ -122,19 +128,17 @@ BEGIN
     CURRENT_DATE() AS test_date,
     'sdi_bronze_sa360_campaign_entity' AS table_name,
     'reconciliation' AS test_layer,
-    'Row Count Reconciliation (Entity Bronze vs RAW-dedup, 7d by business date)' AS test_name,
+    CONCAT('Row Count Reconciliation (Entity Bronze vs RAW-dedup, ', CAST(lookback_days AS STRING), 'd by business date)') AS test_name,
     'HIGH' AS severity_level,
 
     CAST(raw_cnt AS FLOAT64) AS expected_value,
     CAST(bronze_cnt AS FLOAT64) AS actual_value,
     CAST(bronze_cnt - raw_cnt AS FLOAT64) AS variance_value,
 
-    -- STATUS:
     -- FAIL only if RAW has keys missing in Bronze (true pipeline issue)
     IF(missing_in_bronze_cnt > 0, 'FAIL', 'PASS') AS status,
     IF(missing_in_bronze_cnt > 0, '🔴', '🟢') AS status_emoji,
 
-    -- Keep it informative but compact (no output explosion)
     CONCAT(
       IF(missing_in_bronze_cnt > 0,
         'Bronze is missing RAW keys in the business-date window. ',
@@ -153,9 +157,9 @@ BEGIN
     ) AS failure_reason,
 
     IF(missing_in_bronze_cnt > 0,
-      'Run a key-diff on (account_id,campaign_id,date_yyyymmdd) for the sample keys. Validate Bronze MERGE window + dedupe ordering + key casting.',
+      'Investigate the sample keys: confirm RAW has them (same business date window), then validate Bronze MERGE filter + dedupe ordering + key casting.',
       IF(missing_in_raw_cnt > 0,
-        'RAW may be non-append-only (retention/overwrite). This is informational unless you require Bronze to mirror RAW deletes.',
+        'RAW appears non-append-only (drops/overwrites). This is informational unless you require Bronze to mirror RAW deletes.',
         'No action required.'
       )
     ) AS next_step,
