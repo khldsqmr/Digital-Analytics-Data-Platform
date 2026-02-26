@@ -1,22 +1,23 @@
 /*
 ===============================================================================
-FILE: 01_merge_sdi_bronze_sa360_campaign_entity.sql
+FILE: 01_merge_sdi_bronze_sa360_campaign_entity.sql   (UPDATED)
 LAYER: Bronze
 PROC:  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_bronze_sa360_campaign_entity
 
 PURPOSE:
-  Incrementally upsert recent campaign entity/settings snapshots:
-    - lookback window for late-arriving files
-    - dedup within the window by (file_load_datetime desc, filename desc)
+  Incrementally upsert SA360 campaign entity/settings snapshots into Bronze:
+    - IMPORTANT: scope incremental window by ARRIVAL time (file_load_datetime),
+      NOT by date_yyyymmdd (entity feeds often arrive late with older dates).
+    - dedupe within the window by (file_load_datetime desc, filename desc)
     - enforce canonical date from date_yyyymmdd
-    - no-garbage: drop rows where parsed date IS NULL
+    - drop rows where parsed date IS NULL (prevents partition garbage)
 
 MERGE KEY:
   (account_id, campaign_id, date_yyyymmdd)
 
-BEST PRACTICE FIX:
-  - DO NOT use "INSERT ROW" (breaks on schema drift)
-  - Use explicit INSERT column list
+KEY FIX (THIS SOLVES YOUR FAIL):
+  - WHERE clause uses file_load_datetime arrival window:
+      TIMESTAMP(file_load_datetime) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL lookback_days DAY)
 ===============================================================================
 */
 
@@ -116,36 +117,42 @@ BEGIN
         NULLIF(TRIM(SAFE_CAST(raw.use_supplied_urls_only AS STRING)), '') AS use_supplied_urls_only,
         NULLIF(TRIM(SAFE_CAST(raw.use_vehicle_inventory AS STRING)), '') AS use_vehicle_inventory,
 
+        -- Keep Bronze column type as DATETIME (matches your current table + tests)
         SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
         NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
-
       FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo` raw
-      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING))
-            >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      WHERE
+        -- ✅ ARRIVAL-WINDOW FILTER (fix)
+        TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME))
+          >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL lookback_days DAY)
     ),
 
     cleaned AS (
-      SELECT * FROM src WHERE date IS NOT NULL
+      SELECT * FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND campaign_id IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
     ),
 
     dedup AS (
       SELECT * EXCEPT(rn)
       FROM (
         SELECT
-          cleaned.*,
+          c.*,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, date_yyyymmdd
-            ORDER BY file_load_datetime DESC, filename DESC
+            ORDER BY file_load_datetime DESC NULLS LAST, filename DESC NULLS LAST
           ) AS rn
-        FROM cleaned
+        FROM cleaned c
       )
       WHERE rn = 1
     )
 
     SELECT * FROM dedup
   ) S
-  ON  T.account_id = S.account_id
-  AND T.campaign_id = S.campaign_id
+  ON  T.account_id    = S.account_id
+  AND T.campaign_id   = S.campaign_id
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
   WHEN MATCHED THEN UPDATE SET
