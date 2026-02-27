@@ -15,38 +15,37 @@ PURPOSE:
 CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_sa360_test_summary` AS
 WITH base AS (
-  SELECT
-    test_date,
-    table_name,
-    test_layer,
-    severity_level,
-    status,
-    is_critical_failure,
-    test_name,
-    next_step
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_sa360_test_dashboard`
+  SELECT 'bronze' AS pipeline_layer, * 
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_bronze_sa360_test_dashboard`
+  UNION ALL
+  SELECT 'silver' AS pipeline_layer, *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_silver_sa360_test_dashboard`
+  UNION ALL
+  SELECT 'gold' AS pipeline_layer, *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_gold_sa360_test_dashboard`
 ),
-agg AS (
-  SELECT
-    test_date,
-    table_name,
-    test_layer,
-
-    COUNT(1) AS total_tests,
-    SUM(CASE WHEN status = 'PASS' THEN 1 ELSE 0 END) AS passed_tests,
-    SUM(CASE WHEN status = 'FAIL' THEN 1 ELSE 0 END) AS failed_tests,
-    SAFE_DIVIDE(SUM(CASE WHEN status = 'PASS' THEN 1 ELSE 0 END), COUNT(1)) AS pass_rate,
-    SAFE_DIVIDE(SUM(CASE WHEN status = 'FAIL' THEN 1 ELSE 0 END), COUNT(1)) AS fail_rate,
-
-    SUM(CASE WHEN is_critical_failure THEN 1 ELSE 0 END) AS critical_failures,
-
-    ARRAY_AGG(
-      CASE WHEN status='FAIL' THEN CONCAT(test_name, ' | next: ', next_step) END
-      IGNORE NULLS
-      ORDER BY test_name
-      LIMIT 25
-    ) AS failing_tests_next_steps
+latest AS (
+  SELECT MAX(test_run_timestamp) AS max_ts
   FROM base
-  GROUP BY 1,2,3
+),
+batch AS (
+  -- define "this run" as everything within the last N minutes of the global max timestamp
+  SELECT b.*
+  FROM base b
+  CROSS JOIN latest l
+  WHERE b.test_run_timestamp BETWEEN TIMESTAMP_SUB(l.max_ts, INTERVAL 30 MINUTE) AND l.max_ts
+),
+ranked AS (
+  -- IMPORTANT: rank AFTER filtering to batch, so stale tests don't leak in
+  SELECT
+    *,
+    DENSE_RANK() OVER (
+      PARTITION BY pipeline_layer, test_name
+      ORDER BY test_run_timestamp DESC
+    ) AS rnk
+  FROM batch
 )
-SELECT * FROM agg;
+SELECT *
+FROM ranked
+WHERE rnk = 1
+ORDER BY test_run_timestamp DESC, pipeline_layer, test_name;

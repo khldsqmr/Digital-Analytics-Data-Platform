@@ -61,197 +61,181 @@ The platform follows a layered medallion design:
 > Below is the current structure with **easy explanations embedded directly in the tree** so new contributors can quickly understand what each folder/script does.
 
 ```text
+# SA360 (Search Ads 360)
+# Root shows only the pieces relevant to the SA360 pipeline.
+
 DIGITAL-ANALYTICS-DATA-PLATFORM/
-│
-├── docs/
-│   ├── architecture/
-│   │   # Architecture diagrams, design decisions, and data flow notes
-│   └── bootstrap/
-│       # One-time setup notes (datasets, procedures, first-run instructions)
-│
-├── infra/
-│   # Infrastructure setup (datasets, IAM, schedulers, IaC) [current/future]
-│
 ├── orchestration/
-│   # External orchestration wrappers (Airflow/Composer/CI schedulers) [current/future]
+│   └── bigquery/
+│       └── Paid Search Dashboard Orchestration/
+│           └── 00_sdi_sa360_paid_search_sp_call.sql
+│               # Wrapper SQL used by BigQuery Scheduler to CALL the SA360 master procedures
 │
 ├── refs/
 │   └── sa360_Sanity_Check_1.sql
-│       # Manual ad-hoc sanity check query for quick validation/debugging
+│       # Manual one-off sanity query for quick investigation/debugging
 │
 └── sql/
-    │
     ├── 01_common/
     │   ├── 00_fn_qgp_week.sql
-    │   │   # Shared function to derive/standardize QGP week
+    │   │   # Shared function: standard QGP week derivation used by weekly Gold + QA
     │   └── 01_vw_qgp_calendar.sql
-    │       # Calendar mapping view (date ↔ qgp_week) used across layers
+    │       # Shared view: date ↔ qgp_week mapping (calendar spine)
     │
-    ├── 02_bronze/
-    │   ├── ad_media/
-    │   │   # Bronze pipelines for ad media sources (domain-specific)
-    │   ├── google_ads/
-    │   │   # Bronze pipelines for Google Ads (domain-specific)
-    │   ├── meta_ads/
-    │   │   # Bronze pipelines for Meta Ads (domain-specific)
-    │   ├── search_console/
-    │   │   # Bronze pipelines for Search Console (domain-specific)
-    │   │
-    │   └── sa360 (via procedures)/
-    │       │
-    │       ├── DDL/
-    │       │   ├── 00_create_sdi_bronze_sa360_campaign_daily.sql
-    │       │   │   # Creates Bronze daily campaign landing table (source-faithful standardized raw)
-    │       │   └── 00_create_sdi_bronze_sa360_campaign_entity.sql
-    │       │       # Creates Bronze campaign entity table (campaign metadata/dimensions)
-    │       │
-    │       ├── Backfill/
-    │       │   ├── 00_backfill_bronze_sa360_campaign_daily.sql
-    │       │   │   # One-time historical backfill into Bronze daily
-    │       │   └── 01_backfill_bronze_sa360_campaign_entity.sql
-    │       │       # One-time historical backfill into Bronze entity
-    │       │
-    │       ├── MERGE/
-    │       │   ├── 01_merge_sdi_bronze_sa360_campaign_daily.sql
-    │       │   │   # Recurring incremental MERGE (raw → Bronze daily)
-    │       │   └── 01_merge_sdi_bronze_sa360_campaign_entity.sql
-    │       │       # Recurring incremental MERGE (raw → Bronze entity)
-    │       │
-    │       ├── Orchestration/
-    │       │   └── 01_sp_bronze_sa360_master_orchestration.sql
-    │       │       # Master Bronze stored procedure to run Bronze pipeline steps in order
-    │       │
-    │       └── tests/
-    │           ├── 00_create_sdi_bronze_sa360_test_results.sql
-    │           │   # Creates Bronze QA results table to store PASS/FAIL test outcomes
-    │           ├── 01_sp_bronze_campaign_daily_critical.sql
-    │           │   # Critical QA tests on Bronze daily (nulls, duplicates, invalid IDs/keys)
-    │           ├── 02_sp_bronze_campaign_daily_reconciliation.sql
-    │           │   # Reconciliation QA: Bronze daily vs raw source totals/counts
-    │           ├── 03_sp_bronze_campaign_entity_critical.sql
-    │           │   # Critical QA tests on Bronze entity metadata table
-    │           ├── 04_sp_bronze_campaign_entity_reconciliation.sql
-    │           │   # Reconciliation QA: Bronze entity vs raw entity source
-    │           ├── 05_sp_bronze_weekly_deep_validation.sql
-    │           │   # Additional deeper weekly checks on Bronze metrics/trends
-    │           ├── 06_sp_bronze_sa360_qa_master_orchestration.sql
-    │           │   # Runs all Bronze QA procedures and writes outcomes to test_results
-    │           └── 07_view_bronze_test_dashboard.sql
-    │               # Creates Bronze QA dashboard view for easy PASS/FAIL monitoring
-    │
-    ├── 03_silver/
-    │   └── sa360 (via procedures)/
-    │       │
-    │       ├── DDL/
-    │       │   └── 00_create_sdi_silver_sa360_campaign_daily.sql
-    │       │       # Creates Silver daily table (cleaned + normalized + business logic applied)
-    │       │
-    │       ├── Backfill/
-    │       │   └── 00_backfill_silver_sa360_campaign_daily.sql
-    │       │       # One-time historical backfill Bronze → Silver
-    │       │
-    │       ├── MERGE/
-    │       │   └── 01_merge_sdi_silver_sa360_campaign_daily.sql
-    │       │       # Recurring incremental MERGE Bronze → Silver with business transformations
-    │       │
-    │       ├── Orchestration/
-    │       │   └── 01_sp_silver_sa360_master_orchestration.sql
-    │       │       # Master Silver stored procedure to run Silver transformation steps
-    │       │
-    │       └── tests/
-    │           ├── 00_create_sdi_silver_sa360_test_results.sql
-    │           │   # Creates Silver QA results table
-    │           ├── 01_sp_silver_campaign_daily_critical.sql
-    │           │   # Critical QA tests on Silver daily (keys/nulls/duplicates)
-    │           ├── 02_sp_silver_campaign_daily_reconciliation.sql
-    │           │   # Reconciliation QA: Silver vs Bronze totals/counts
-    │           ├── 03_sp_silver_campaign_daily_business_logic.sql
-    │           │   # Validates mappings, derivations, and business logic applied in Silver
-    │           ├── 06_sp_silver_sa360_qa_master_orchestration.sql
-    │           │   # Runs all Silver QA procedures and writes outcomes
-    │           └── 07_view_silver_test_dashboard.sql
-    │               # Creates Silver QA dashboard view
-    │
-    └── 04_gold/
-        └── sa360 (via procedures)/
-            │
+    └── 02_SDI_SA360/
+        ├── 00_COMMON/
+        │   ├── 00_fn_qgp_week.sql
+        │   └── 01_vw_qgp_calendar.sql
+        │       # (Optional) SA360-local copies; prefer sql/01_common where possible
+        │
+        ├── 01_BRONZE/                           # Raw → standardized landing (auditable, minimal logic)
+        │   ├── DDL/
+        │   │   ├── 00_create_sdi_bronze_sa360_campaign_daily.sql
+        │   │   │   # Creates Bronze daily fact table (campaign × day) with partition/cluster
+        │   │   └── 00_create_sdi_bronze_sa360_campaign_entity.sql
+        │   │       # Creates Bronze entity snapshot table (campaign settings/metadata by day)
+        │   │
+        │   ├── Backfill/
+        │   │   ├── 00_backfill_bronze_sa360_campaign_daily.sql
+        │   │   │   # One-time historical load for Bronze daily (chunked by date)
+        │   │   └── 01_backfill_bronze_sa360_campaign_entity.sql
+        │   │       # One-time historical load for Bronze entity (chunked by date)
+        │   │
+        │   ├── MERGE/
+        │   │   ├── 01_merge_sdi_bronze_sa360_campaign_daily.sql
+        │   │   │   # Recurring incremental MERGE (RAW → Bronze daily) with lookback + dedupe
+        │   │   └── 01_merge_sdi_bronze_sa360_campaign_entity.sql
+        │   │       # Recurring incremental MERGE (RAW → Bronze entity) with lookback + dedupe
+        │   │
+        │   ├── Orchestration/
+        │   │   └── 01_sp_bronze_sa360_master_orchestration.sql
+        │   │       # Master Bronze procedure (runs daily + entity merges in correct order)
+        │   │
+        │   └── tests/
+        │       ├── 00_create_sdi_bronze_sa360_test_results.sql
+        │       │   # Creates Bronze test_results table (stores PASS/FAIL outputs)
+        │       ├── 01_sp_bronze_campaign_daily_critical.sql
+        │       │   # Bronze daily critical tests (null keys, duplicates, invalid values)
+        │       ├── 02_sp_bronze_campaign_daily_reconciliation.sql
+        │       │   # Bronze daily reconciliation (Bronze vs RAW-dedup metrics/row counts)
+        │       ├── 03_sp_bronze_campaign_entity_critical.sql
+        │       │   # Bronze entity critical tests (null keys, duplicates, freshness)
+        │       ├── 04_sp_bronze_campaign_entity_reconciliation.sql
+        │       │   # Bronze entity reconciliation (Bronze vs RAW-dedup; non-append-only aware)
+        │       ├── 05_sp_bronze_weekly_deep_validation.sql
+        │       │   # Weekly-level anomaly checks for key metrics (lightweight deep QA)
+        │       ├── 06_sp_bronze_sa360_qa_master_orchestration.sql
+        │       │   # Runs all Bronze QA procs and writes 1-row-per-test to test_results
+        │       └── 07_view_bronze_test_dashboard.sql
+        │           # Dashboard view for Bronze QA results (easy monitoring)
+        │
+        ├── 02_SILVER/                           # Business logic (clean/map/normalize/enrich)
+        │   ├── DDL/
+        │   │   └── 00_create_sdi_silver_sa360_campaign_daily.sql
+        │   │       # Creates Silver daily table (enriched + normalized, still daily grain)
+        │   │
+        │   ├── Backfill/
+        │   │   └── 00_backfill_silver_sa360_campaign_daily.sql
+        │   │       # One-time historical build (Bronze daily + entity → Silver daily)
+        │   │
+        │   ├── MERGE/
+        │   │   └── 01_merge_sdi_silver_sa360_campaign_daily.sql
+        │   │       # Recurring incremental build (Bronze → Silver) incl. as-of entity join
+        │   │
+        │   ├── Orchestration/
+        │   │   └── 01_sp_silver_sa360_master_orchestration.sql
+        │   │       # Master Silver procedure (runs Silver merge in correct order)
+        │   │
+        │   └── tests/
+        │       ├── 00_create_sdi_silver_sa360_test_results.sql
+        │       │   # Creates Silver test_results table
+        │       ├── 01_sp_silver_campaign_daily_critical.sql
+        │       │   # Silver critical tests (null keys, duplicates, freshness)
+        │       ├── 02_sp_silver_campaign_daily_reconciliation.sql
+        │       │   # Reconciles Silver vs Bronze (ensures no metric drift)
+        │       ├── 03_sp_silver_campaign_daily_business_logic.sql
+        │       │   # Validates mappings/derivations (LOB, platform, campaign_type, etc.)
+        │       ├── 06_sp_silver_sa360_qa_master_orchestration.sql
+        │       │   # Runs all Silver QA procs and writes outcomes
+        │       └── 07_view_silver_test_dashboard.sql
+        │           # Dashboard view for Silver QA results
+        │
+        └── 03_GOLD/                             # Curated consumption layer (daily/weekly + wide/long)
             ├── DDL/
             │   ├── 00_create_sdi_gold_sa360_campaign_daily.sql
-            │   │   # Creates Gold daily WIDE table (one row = many metric columns)
+            │   │   # Gold daily WIDE (many metric columns; dashboard-friendly)
             │   ├── 00_create_sdi_gold_sa360_campaign_daily_long.sql
-            │   │   # Creates Gold daily LONG table (metric_name + metric_value format)
+            │   │   # Gold daily LONG (metric_name, metric_value; flexible charting)
             │   ├── 00_create_sdi_gold_sa360_campaign_weekly.sql
-            │   │   # Creates Gold weekly WIDE table (weekly aggregated metrics)
+            │   │   # Gold weekly WIDE (weekly rollups, uses QGP week logic)
             │   └── 00_create_sdi_gold_sa360_campaign_weekly_long.sql
-            │       # Creates Gold weekly LONG table
+            │       # Gold weekly LONG (metric_name, metric_value)
             │
             ├── Backfill/
             │   ├── 00_backfill_gold_sa360_campaign_daily.sql
-            │   │   # One-time historical backfill Silver → Gold daily WIDE
+            │   │   # One-time build Silver → Gold daily WIDE
             │   ├── 01_backfill_gold_sa360_campaign_daily_long.sql
-            │   │   # One-time historical unpivot Gold daily WIDE → Gold daily LONG
+            │   │   # One-time unpivot Gold daily WIDE → Gold daily LONG
             │   ├── 01_backfill_gold_sa360_campaign_weekly.sql
-            │   │   # One-time historical aggregation Gold daily → Gold weekly WIDE
+            │   │   # One-time rollup Gold daily → Gold weekly WIDE
             │   └── 01_backfill_gold_sa360_campaign_weekly_long.sql
-            │       # One-time historical unpivot Gold weekly WIDE → Gold weekly LONG
-            │       # Safety rule: excludes future qgp_week buckets
+            │       # One-time unpivot Gold weekly WIDE → Gold weekly LONG (+ future-week guard)
             │
             ├── MERGE/
             │   ├── 01_sp_merge_sdi_gold_sa360_campaign_daily.sql
-            │   │   # Recurring incremental build/update for Gold daily WIDE
+            │   │   # Recurring incremental build/update Gold daily WIDE (from Silver)
             │   ├── 01_sp_merge_sdi_gold_sa360_campaign_daily_long.sql
-            │   │   # Recurring incremental build/update for Gold daily LONG from daily WIDE
+            │   │   # Recurring incremental build/update Gold daily LONG (from Gold daily WIDE)
             │   ├── 01_sp_merge_sdi_gold_sa360_campaign_weekly.sql
-            │   │   # Recurring incremental build/update for Gold weekly WIDE
+            │   │   # Recurring incremental build/update Gold weekly WIDE (from Gold daily)
             │   └── 01_sp_merge_sdi_gold_sa360_campaign_weekly_long.sql
-            │       # Recurring incremental build/update for Gold weekly LONG from weekly WIDE
+            │       # Recurring incremental build/update Gold weekly LONG (from Gold weekly WIDE)
             │
             ├── Orchestration/
             │   └── 02_sp_gold_sa360_master_orchestration.sql
-            │       # Master Gold stored procedure:
-            │       # runs daily wide → daily long → weekly wide → weekly long in sequence
+            │       # Master Gold procedure: daily wide → daily long → weekly wide → weekly long
             │
-            ├── tests/
-            │   ├── 00_create_sdi_gold_sa360_test_results.sql
-            │   │   # Creates Gold QA results table
-            │   ├── 01_sp_gold_campaign_daily_critical.sql
-            │   │   # Critical QA tests on Gold daily WIDE
-            │   ├── 02_sp_gold_campaign_daily_reconciliation.sql
-            │   │   # Reconciliation QA: Gold daily WIDE vs expected upstream totals
-            │   ├── 03_sp_gold_campaign_weekly_critical.sql
-            │   │   # Critical QA tests on Gold weekly WIDE
-            │   ├── 04_sp_gold_campaign_weekly_reconciliation.sql
-            │   │   # Reconciliation QA: Gold weekly WIDE vs Gold daily rollups
-            │   ├── 05_sp_gold_campaign_long_daily_critical.sql
-            │   │   # Critical QA tests on Gold daily LONG
-            │   ├── 06_sp_gold_campaign_long_daily_reconciliation.sql
-            │   │   # Reconciliation QA: Gold daily LONG vs Gold daily WIDE
-            │   ├── 07_sp_gold_campaign_long_weekly_critical.sql
-            │   │   # Critical QA tests on Gold weekly LONG
-            │   ├── 08_sp_gold_campaign_long_weekly_reconciliation.sql
-            │   │   # Reconciliation QA: Gold weekly LONG vs Gold weekly WIDE
-            │   ├── 09_sp_gold_campaign_long_bronze_reconciliation.sql
-            │   │   # End-to-end reconciliation: Gold LONG vs Bronze baseline
-            │   ├── 10_sp_gold_sa360_qa_master_orchestration.sql
-            │   │   # Runs all Gold QA procedures and writes outcomes
-            │   ├── 11_view_gold_test_dashboard.sql
-            │   │   # Creates Gold-only QA dashboard view
-            │   ├── 99_view_sa360_test_dashboard_all_layers.sql
-            │   │   # Combined QA dashboard view across Bronze + Silver + Gold
-            │   ├── 99_view_sa360_test_dashboard.sql
-            │   │   # Unified/latest SA360 QA dashboard view (single pane)
-            │   └── 99_view_sa360_test_summary.sql
-            │       # Summary QA view (pass/fail counts by layer, severity, date)
+            ├── Views/
+            │   ├── vw_sdi_gold_sa360_ps_daily_wide.sql
+            │   │   # Final daily WIDE consumption view (dashboards/analysts)
+            │   ├── vw_sdi_gold_sa360_ps_daily_long.sql
+            │   │   # Final daily LONG consumption view (metric-driven dashboards)
+            │   ├── vw_sdi_gold_sa360_ps_weekly_wide.sql
+            │   │   # Final weekly WIDE consumption view
+            │   └── vw_sdi_gold_sa360_ps_weekly_long.sql
+            │       # Final weekly LONG consumption view
             │
-            └── Views/
-                ├── vw_sdi_gold_sa360_ps_daily_long.sql
-                │   # Final daily LONG reporting view (best for metric-driven dashboards)
-                ├── vw_sdi_gold_sa360_ps_daily_wide.sql
-                │   # Final daily WIDE reporting view (best for easy analyst consumption)
-                ├── vw_sdi_gold_sa360_ps_weekly_long.sql
-                │   # Final weekly LONG reporting view
-                └── vw_sdi_gold_sa360_ps_weekly_wide.sql
-                    # Final weekly WIDE reporting view
+            └── tests/
+                ├── 00_create_sdi_gold_sa360_test_results.sql
+                │   # Creates Gold test_results table
+                ├── 01_sp_gold_campaign_daily_critical.sql
+                │   # Gold daily WIDE critical tests (keys, duplicates, freshness)
+                ├── 02_sp_gold_campaign_daily_reconciliation.sql
+                │   # Gold daily WIDE reconciliation (Gold vs Silver)
+                ├── 03_sp_gold_campaign_weekly_critical.sql
+                │   # Gold weekly WIDE critical tests (QGP week validity, keys, duplicates)
+                ├── 04_sp_gold_campaign_weekly_reconciliation.sql
+                │   # Gold weekly WIDE reconciliation (weekly == SUM(daily))
+                ├── 05_sp_gold_campaign_long_daily_critical.sql
+                │   # Gold daily LONG critical tests (keys, duplicates)
+                ├── 06_sp_gold_campaign_long_daily_reconciliation.sql
+                │   # Gold daily LONG reconciliation (long == wide for metric subsets)
+                ├── 07_sp_gold_campaign_long_weekly_critical.sql
+                │   # Gold weekly LONG critical tests (keys, duplicates, QGP week validity)
+                ├── 08_sp_gold_campaign_long_weekly_reconciliation.sql
+                │   # Gold weekly LONG reconciliation (long == wide)
+                ├── 09_sp_gold_campaign_long_bronze_reconciliation.sql
+                │   # End-to-end reconciliation (Gold LONG vs Bronze baseline metrics)
+                ├── 10_sp_gold_sa360_qa_master_orchestration.sql
+                │   # Runs all Gold QA procs and writes outcomes
+                ├── 11_view_gold_test_dashboard.sql
+                │   # Gold-only QA dashboard view
+                ├── 99_view_sa360_test_dashboard_all_layers.sql
+                │   # Combined QA dashboard across Bronze + Silver + Gold
+                ├── 99_view_sa360_test_dashboard.sql
+                │   # Unified/latest SA360 QA dashboard view (single-pane)
+                └── 99_view_sa360_test_summary.sql
+                    # QA summary (pass/fail counts by layer + severity)
 ```
 ## What Each Major Folder Does
 
