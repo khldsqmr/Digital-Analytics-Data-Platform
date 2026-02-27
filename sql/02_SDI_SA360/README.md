@@ -1,4 +1,4 @@
-# SA360 (Search Ads 360) — Digital Analytics Data Platform
+# SA360 (Search Ads 360) - Digital Analytics Data Platform
 
 This folder implements a **production-ready SA360 pipeline on BigQuery** using a **Medallion Architecture (Bronze → Silver → Gold)**.
 
