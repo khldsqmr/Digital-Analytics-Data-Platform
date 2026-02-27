@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_silver_sa360_campaign_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 7;
+  DECLARE lookback_days INT64 DEFAULT 14;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` T
   USING (
@@ -419,6 +419,5 @@ VALUES (
   S.file_load_datetime,
   CURRENT_TIMESTAMP()
 );
-
 
 END;
