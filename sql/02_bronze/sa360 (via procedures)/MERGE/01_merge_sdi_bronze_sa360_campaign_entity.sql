@@ -118,10 +118,8 @@ BEGIN
         NULLIF(TRIM(SAFE_CAST(raw.use_vehicle_inventory AS STRING)), '') AS use_vehicle_inventory,
 
         -- Normalize to TIMESTAMP in Bronze (prefer TIMESTAMP if present; otherwise DATETIME -> TIMESTAMP)
-        COALESCE(
-          SAFE_CAST(raw.File_Load_datetime AS TIMESTAMP),
-          TIMESTAMP(SAFE_CAST(raw.File_Load_datetime AS DATETIME))
-        ) AS file_load_datetime,
+        
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
 
         NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
       FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_beta_campaign_entity_custom_tmo` raw
