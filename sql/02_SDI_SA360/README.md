@@ -34,7 +34,7 @@ The goal is simple: **reliable, auditable, and repeatable SA360 reporting** wher
 
 ## Architecture (Medallion Layers)
 
-### Bronze — Source-faithful landing (auditable)
+### Bronze: Source-faithful landing (auditable)
 **Purpose:** land raw SA360 data in a clean, standardized, replayable format.
 
 Key points:
@@ -43,7 +43,7 @@ Key points:
 - dedupe inside the merge window using deterministic ordering
 - designed for audit + troubleshooting (keeps history)
 
-### Silver — Business logic + normalization
+### Silver: Business logic + normalization
 **Purpose:** apply standard transformations once, consistently.
 
 Key points:
@@ -51,7 +51,7 @@ Key points:
 - derived fields: LOB, ad_platform, campaign_type, etc.
 - ensures downstream reporting does not re-implement logic per dashboard
 
-### Gold — Curated consumption layer
+### Gold: Curated consumption layer
 **Purpose:** final reporting-ready outputs.
 
 Key points:
@@ -79,7 +79,7 @@ Key points:
 
 ## Repository Structure (SA360 Focus)
 
-> This tree is scoped to the SA360 pipeline and includes short, manager-friendly explanations.
+> This tree is scoped to the SA360 pipeline and includes short explanations.
 
 ```text
 DIGITAL-ANALYTICS-DATA-PLATFORM/
