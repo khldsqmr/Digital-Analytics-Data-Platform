@@ -1,9 +1,9 @@
 
 /* =================================================================================================
-FILE: 01_backfill_sdi_bronze_seo_profound_visibility_asset_daily.sql
+FILE: 01_backfill_sdi_profound_bronze_visibility_asset_daily.sql
 LAYER: Bronze (One-time / On-demand Backfill)
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TARGET TABLE: sdi_bronze_seo_profound_visibility_asset_daily
+TARGET TABLE: sdi_profound_bronze_visibility_asset_daily
 SOURCE (RAW):
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo
 
@@ -30,35 +30,37 @@ SET chunk_start = backfill_start_date;
 
 LOOP
   IF chunk_start > backfill_end_date THEN LEAVE; END IF;
+
   SET chunk_end = LEAST(DATE_ADD(chunk_start, INTERVAL chunk_days - 1 DAY), backfill_end_date);
 
-  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_seo_profound_visibility_asset_daily` T
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_daily` T
   USING (
     WITH src AS (
       SELECT
-        SAFE_CAST(account_id AS STRING) AS account_id,
-        NULLIF(TRIM(SAFE_CAST(account_name AS STRING)), '') AS account_name,
-        NULLIF(TRIM(SAFE_CAST(asset_id AS STRING)), '') AS asset_id,
-        NULLIF(TRIM(SAFE_CAST(asset_name AS STRING)), '') AS asset_name,
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_id AS STRING)), '') AS asset_id,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
 
-        SAFE_CAST(date_yyyymmdd AS STRING) AS date_yyyymmdd,
-        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) AS date,
-        SAFE_CAST(date AS INT64) AS raw_date_int64,
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
 
-        SAFE_CAST(executions AS FLOAT64) AS executions,
-        SAFE_CAST(mentions_count AS FLOAT64) AS mentions_count,
-        SAFE_CAST(share_of_voice AS FLOAT64) AS share_of_voice,
-        SAFE_CAST(visibility_score AS FLOAT64) AS visibility_score,
+        SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+        SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+        SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
 
-        SAFE_CAST(__insert_date AS INT64) AS insert_date,
-        SAFE_CAST(File_Load_datetime AS DATETIME) AS file_load_datetime,
-        NULLIF(TRIM(SAFE_CAST(Filename AS STRING)), '') AS filename
-      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo`
-      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING))
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo` raw
+      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING))
         BETWEEN chunk_start AND chunk_end
     ),
     cleaned AS (
-      SELECT * FROM src
+      SELECT *
+      FROM src
       WHERE date IS NOT NULL
         AND account_id IS NOT NULL
         AND asset_id IS NOT NULL
@@ -79,8 +81,8 @@ LOOP
     )
     SELECT * FROM dedup
   ) S
-  ON  T.account_id   = S.account_id
-  AND T.asset_id     = S.asset_id
+  ON  T.account_id    = S.account_id
+  AND T.asset_id      = S.asset_id
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
   WHEN MATCHED THEN UPDATE SET
