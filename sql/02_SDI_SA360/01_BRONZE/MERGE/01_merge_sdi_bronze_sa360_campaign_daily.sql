@@ -24,7 +24,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_bronze_sa360_campaign_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 7;
+  DECLARE lookback_days INT64 DEFAULT 60;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily` T
   USING (
@@ -123,8 +123,8 @@ BEGIN
         SAFE_CAST(raw.total_tfb__conversions AS FLOAT64) AS total_tfb_conversions
 
       FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_ads_360_campaigns_tmo` raw
-      WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING))
-            >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+      >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
     ),
 
     cleaned AS (
@@ -138,7 +138,7 @@ BEGIN
           cleaned.*,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, date_yyyymmdd
-            ORDER BY file_load_datetime DESC, filename DESC
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
           ) AS rn
         FROM cleaned
       )

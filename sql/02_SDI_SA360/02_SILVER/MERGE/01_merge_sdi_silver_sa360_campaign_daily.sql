@@ -18,14 +18,14 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_silver_sa360_campaign_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 14;
+  DECLARE lookback_days INT64 DEFAULT 60;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily` T
   USING (
     WITH filtered_daily AS (
       SELECT *
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_sa360_campaign_daily`
-      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      WHERE file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
     ),
 
     latest_name AS (

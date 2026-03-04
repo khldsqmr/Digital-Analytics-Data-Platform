@@ -6,7 +6,12 @@ PROC: sp_merge_gold_sa360_campaign_daily
 
 FIX:
   - Dedup Silver source per (account_id, campaign_id, date) using latest file_load_datetime
-  - Prevents MERGE source multiple-match issues
+    with deterministic tiebreaker (silver_inserted_at).
+  - Prevents MERGE source multiple-match issues.
+
+NOTES:
+  - We must SELECT silver_inserted_at into `base` since we use it in dedup ORDER BY.
+  - lookback_days controls how much recent history to re-upsert (late arriving / restatements).
 ===============================================================================
 */
 
@@ -14,7 +19,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_gold_sa360_campaign_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  DECLARE lookback_days INT64 DEFAULT 21;
+  DECLARE lookback_days INT64 DEFAULT 60;
 
   MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_gold_sa360_campaign_daily` T
   USING (
@@ -99,10 +104,15 @@ BEGIN
         tfb_quality_traffic,
         total_tfb_conversions,
 
-        file_load_datetime
+        file_load_datetime,
+        silver_inserted_at   -- REQUIRED for deterministic dedup tie-break
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_silver_sa360_campaign_daily`
-      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      WHERE (
+        file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+        OR date >= DATE_SUB(CURRENT_DATE(), INTERVAL lookback_days DAY)
+      )
     ),
+
     dedup AS (
       SELECT * EXCEPT(rn)
       FROM (
@@ -110,14 +120,16 @@ BEGIN
           b.*,
           ROW_NUMBER() OVER (
             PARTITION BY account_id, campaign_id, date
-            ORDER BY file_load_datetime DESC
+            ORDER BY file_load_datetime DESC, silver_inserted_at DESC
           ) AS rn
         FROM base b
       )
       WHERE rn = 1
     )
+
     SELECT
-      d.*,
+      -- keep all business columns from Silver
+      d.* EXCEPT(silver_inserted_at),  -- not needed in Gold unless you want to store it
       CURRENT_TIMESTAMP() AS gold_inserted_at
     FROM dedup d
   ) S
