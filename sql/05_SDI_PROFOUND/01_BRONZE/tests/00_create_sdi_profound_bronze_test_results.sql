@@ -1,5 +1,4 @@
-/*
-===============================================================================
+/* =================================================================================================
 FILE: 00_create_sdi_profound_bronze_test_results.sql
 LAYER: Bronze | QA
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
@@ -12,8 +11,8 @@ PURPOSE:
 
 GRAIN:
   One row per (test_run_timestamp, test_name, table_name).
-===============================================================================
-*/
+================================================================================================= */
+
 CREATE OR REPLACE TABLE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
 (
@@ -42,3 +41,18 @@ CREATE OR REPLACE TABLE
 PARTITION BY test_date
 CLUSTER BY table_name, test_layer, severity_level
 OPTIONS(description="Bronze ProFound centralized QA test results table.");
+
+
+/* =================================================================================================
+SHARED QA NOTES (IMPORTANT):
+  These QA procs are aligned to our merge logic:
+    - expected/raw side is filtered by File_Load_datetime lookback_days
+    - expected/raw side is deduped using the SAME grain + ORDER BY as the merge procedure
+    - bronze/actual side is compared within the same File_Load_datetime lookback window
+  This prevents the earlier mismatch where raw was filtered by event date and Bronze by load date.
+
+  Each table QA proc inserts exactly 5 rows:
+    - 3 critical tests
+    - 2 reconciliation tests
+================================================================================================= */
+

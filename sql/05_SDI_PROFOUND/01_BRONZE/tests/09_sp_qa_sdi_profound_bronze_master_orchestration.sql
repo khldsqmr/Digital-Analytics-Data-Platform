@@ -1,6 +1,5 @@
 
-/*
-===============================================================================
+/* =================================================================================================
 FILE: 09_sp_qa_sdi_profound_bronze_master_orchestration.sql
 LAYER: Bronze | QA
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
@@ -10,10 +9,10 @@ PURPOSE:
   Runs ProFound Bronze QA procedures for all 8 ProFound Bronze tables.
 
 NOTES:
-  - Schedule AFTER Bronze merges finish.
-  - Each QA proc inserts EXACTLY 5 rows (3 critical + 2 recon).
-===============================================================================
-*/
+  - Typically scheduled AFTER bronze merges complete.
+  - Each QA proc inserts exactly 5 rows (3 critical + 2 reconciliation).
+================================================================================================= */
+
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_profound_bronze_qa_master_orchestration`()
 OPTIONS(strict_mode=false)
