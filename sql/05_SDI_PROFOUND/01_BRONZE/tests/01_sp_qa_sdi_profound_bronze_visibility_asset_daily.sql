@@ -28,10 +28,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_qa_sdi_profound_bronze_visibility_asset_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  -- ✅ prevent "Already Exists" temp table collisions (same script/session reruns)
-  DROP TABLE IF EXISTS _raw_dedup;
-  DROP TABLE IF EXISTS _bronze_window;
-  
+
   DECLARE lookback_days INT64 DEFAULT 60;
   DECLARE freshness_hours INT64 DEFAULT 24;
 
@@ -40,7 +37,10 @@ BEGIN
 
   DECLARE table_name STRING DEFAULT 'sdi_profound_bronze_visibility_asset_daily';
   DECLARE raw_table  STRING DEFAULT 'prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo';
-
+  -- ✅ prevent "Already Exists" temp table collisions (same script/session reruns)
+  DROP TABLE IF EXISTS _raw_dedup;
+  DROP TABLE IF EXISTS _bronze_window;
+  
   -- ----------------------------
   -- Helper CTEs (aligned to merge)
   -- ----------------------------

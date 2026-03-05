@@ -13,10 +13,7 @@ CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_qa_sdi_profound_bronze_visibility_tag_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
-  -- ✅ prevent "Already Exists" temp table collisions (same script/session reruns)
-  DROP TABLE IF EXISTS _raw_dedup;
-  DROP TABLE IF EXISTS _bronze_window;
-  
+
   DECLARE lookback_days INT64 DEFAULT 60;
   DECLARE freshness_hours INT64 DEFAULT 24;
 
@@ -24,7 +21,10 @@ BEGIN
   DECLARE run_date DATE DEFAULT CURRENT_DATE();
 
   DECLARE table_name STRING DEFAULT 'sdi_profound_bronze_visibility_tag_daily';
-
+  -- ✅ prevent "Already Exists" temp table collisions (same script/session reruns)
+  DROP TABLE IF EXISTS _raw_dedup;
+  DROP TABLE IF EXISTS _bronze_window;
+  
   CREATE TEMP TABLE _raw_dedup AS
   WITH src AS (
     SELECT
