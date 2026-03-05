@@ -1,10 +1,11 @@
+
 /*===============================================================================
 FILE: 10_vw_sdi_profound_bronze_test_dashboard.sql
 VIEW: vw_sdi_profound_bronze_test_dashboard
 
 PURPOSE:
   Latest result per (test_date, table_name, test_layer, test_name) for Bronze.
-  Output columns match sdi_profound_bronze_test_results schema.
+  Keeps output columns EXACTLY matching sdi_profound_bronze_test_results schema.
 ===============================================================================*/
 CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_bronze_test_dashboard` AS
