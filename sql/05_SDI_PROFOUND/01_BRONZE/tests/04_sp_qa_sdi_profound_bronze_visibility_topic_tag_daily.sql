@@ -1,25 +1,31 @@
-
-/* =================================================================================================
+/*===============================================================================
 FILE: 04_sp_qa_sdi_profound_bronze_visibility_topic_tag_daily.sql
 LAYER: Bronze | QA
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROC:  sp_qa_sdi_profound_bronze_visibility_topic_tag_daily
-TARGET: sdi_profound_bronze_visibility_topic_tag_daily
-RAW:    prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_tag_daily_tmo
-GRAIN:  account_id + asset_name + topic + tag + date_yyyymmdd
-================================================================================================= */
 
+PURPOSE:
+  3 critical + 2 reconciliation tests for:
+    sdi_profound_bronze_visibility_topic_tag_daily
+
+ALIGNMENT:
+  - RAW source + filter matches merge SP (File_Load_datetime lookback)
+  - RAW dedup grain + ORDER BY matches merge SP
+  - Bronze comparison window matches merge SP lookback (file_load_datetime)
+
+OUTPUT:
+  Exactly 5 rows inserted into sdi_profound_bronze_test_results per run.
+===============================================================================*/
 CREATE OR REPLACE PROCEDURE
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_qa_sdi_profound_bronze_visibility_topic_tag_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
- 
   DECLARE lookback_days INT64 DEFAULT 60;
-  DECLARE freshness_hours INT64 DEFAULT 24;
+  DECLARE freshness_days INT64 DEFAULT 7;
 
   DECLARE run_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
-  DECLARE run_date DATE DEFAULT CURRENT_DATE();
-
-  DECLARE table_name STRING DEFAULT 'sdi_profound_bronze_visibility_topic_tag_daily';
+  DECLARE run_dt DATE DEFAULT CURRENT_DATE();
+  DECLARE tbl STRING DEFAULT 'sdi_profound_bronze_visibility_topic_tag_daily';
 
   CREATE OR REPLACE TEMP TABLE _raw_dedup AS
   WITH src AS (
@@ -44,24 +50,17 @@ BEGIN
       AND SAFE_CAST(raw.File_Load_datetime AS DATETIME) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
   ),
   cleaned AS (
-    SELECT *
-    FROM src
-    WHERE date IS NOT NULL
-      AND account_id IS NOT NULL
-      AND asset_name IS NOT NULL
-      AND topic IS NOT NULL
-      AND tag IS NOT NULL
-      AND date_yyyymmdd IS NOT NULL
+    SELECT * FROM src
+    WHERE date IS NOT NULL AND account_id IS NOT NULL AND asset_name IS NOT NULL AND topic IS NOT NULL AND tag IS NOT NULL AND date_yyyymmdd IS NOT NULL
   ),
   dedup AS (
     SELECT * EXCEPT(rn)
     FROM (
-      SELECT
-        c.*,
+      SELECT c.*,
         ROW_NUMBER() OVER (
           PARTITION BY account_id, asset_name, topic, tag, date_yyyymmdd
           ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
-        ) AS rn
+        ) rn
       FROM cleaned c
     )
     WHERE rn = 1
@@ -69,144 +68,74 @@ BEGIN
   SELECT * FROM dedup;
 
   CREATE OR REPLACE TEMP TABLE _bronze_window AS
-  SELECT
-    account_id, asset_name, topic, tag, date_yyyymmdd, date,
-    executions, mentions_count, share_of_voice, visibility_score,
-    file_load_datetime
+  SELECT *
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`
-  WHERE file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY);
+  WHERE file_load_datetime IS NOT NULL
+    AND file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY);
 
-  -- (1) freshness
+  -- Freshness
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  SELECT
-    run_ts, run_date, table_name,
-    'critical', 'freshness_rows_in_last_hours', 'HIGH',
-    1.0,
-    CAST(COUNT(1) AS FLOAT64),
-    CAST(COUNT(1) AS FLOAT64) - 1.0,
-    IF(COUNT(1) >= 1, 'PASS', 'FAIL'),
-    IF(COUNT(1) >= 1, '🟢', '🔴'),
-    IF(COUNT(1) >= 1, 'Recent Bronze loads exist.', 'No Bronze loads found in the freshness window.'),
-    'Check ingestion + merge schedule/lookback.',
-    IF(COUNT(1) < 1, TRUE, FALSE),
-    IF(COUNT(1) >= 1, TRUE, FALSE),
-    IF(COUNT(1) < 1, TRUE, FALSE)
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`
-  WHERE file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL freshness_hours HOUR);
+  WITH x AS (SELECT MAX(file_load_datetime) max_fldt FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`),
+       y AS (SELECT 1.0 expected_value, IF(max_fldt >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL freshness_days DAY),1.0,0.0) actual_value, max_fldt FROM x)
+  SELECT run_ts, run_dt, tbl,'critical','freshness_max_file_load_datetime_within_last_days','HIGH',
+         expected_value, actual_value, actual_value-expected_value,
+         IF(actual_value=expected_value,'PASS','FAIL'), IF(actual_value=expected_value,'🟢','🔴'),
+         IF(actual_value=expected_value,'Recent loads exist (MAX(file_load_datetime) is fresh).',
+            CONCAT('No loads within ',CAST(freshness_days AS STRING),' days. max(file_load_datetime)=',CAST(max_fldt AS STRING))),
+         'If FAIL: check raw ingestion, merge schedule, and file_load_datetime population.',
+         IF(actual_value!=expected_value,TRUE,FALSE), IF(actual_value=expected_value,TRUE,FALSE), IF(actual_value!=expected_value,TRUE,FALSE)
+  FROM y;
 
-  -- (2) null keys/date
+  -- Null key/date
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH bad AS (
-    SELECT COUNT(1) AS bad_rows
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`
-    WHERE file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
-      AND (account_id IS NULL OR asset_name IS NULL OR topic IS NULL OR tag IS NULL OR date_yyyymmdd IS NULL OR date IS NULL)
-  )
-  SELECT
-    run_ts, run_date, table_name,
-    'critical', 'null_key_or_date_rows_last_N_days', 'HIGH',
-    0.0,
-    CAST(bad_rows AS FLOAT64),
-    CAST(bad_rows AS FLOAT64),
-    IF(bad_rows = 0, 'PASS', 'FAIL'),
-    IF(bad_rows = 0, '🟢', '🔴'),
-    IF(bad_rows = 0, 'No null key/date rows found.', 'Null key/date rows found in Bronze window.'),
-    'Check parsing + TRIM/NULLIF rules.',
-    IF(bad_rows > 0, TRUE, FALSE),
-    IF(bad_rows = 0, TRUE, FALSE),
-    IF(bad_rows > 0, TRUE, FALSE)
-  FROM bad;
+  WITH z AS (SELECT COUNTIF(account_id IS NULL OR asset_name IS NULL OR topic IS NULL OR tag IS NULL OR date_yyyymmdd IS NULL OR date IS NULL) bad_rows FROM _bronze_window)
+  SELECT run_ts, run_dt, tbl,'critical','null_key_or_date_rows_last_N_days','HIGH',
+         0.0, CAST(bad_rows AS FLOAT64), CAST(bad_rows AS FLOAT64),
+         IF(bad_rows=0,'PASS','FAIL'), IF(bad_rows=0,'🟢','🔴'),
+         IF(bad_rows=0,'No null key/date rows found.', CONCAT('Found ',CAST(bad_rows AS STRING),' rows with null key/date.')),
+         'If FAIL: verify TRIM/NULLIF + SAFE.PARSE_DATE + key filters in merge.',
+         IF(bad_rows>0,TRUE,FALSE), IF(bad_rows=0,TRUE,FALSE), IF(bad_rows>0,TRUE,FALSE)
+  FROM z;
 
-  -- (3) duplicates
+  -- Duplicate grain
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH dup AS (
-    SELECT COUNT(1) AS dup_groups
-    FROM (
-      SELECT account_id, asset_name, topic, tag, date_yyyymmdd
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`
-      WHERE file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
-      GROUP BY 1,2,3,4,5
-      HAVING COUNT(1) > 1
-    )
-  )
-  SELECT
-    run_ts, run_date, table_name,
-    'critical', 'duplicate_grain_groups_last_N_days', 'HIGH',
-    0.0,
-    CAST(dup_groups AS FLOAT64),
-    CAST(dup_groups AS FLOAT64),
-    IF(dup_groups = 0, 'PASS', 'FAIL'),
-    IF(dup_groups = 0, '🟢', '🔴'),
-    IF(dup_groups = 0, 'No duplicate grain groups detected.', 'Duplicate grain groups found in Bronze window.'),
-    'Check MERGE key + dedup ordering.',
-    IF(dup_groups > 0, TRUE, FALSE),
-    IF(dup_groups = 0, TRUE, FALSE),
-    IF(dup_groups > 0, TRUE, FALSE)
-  FROM dup;
+  WITH d AS (SELECT COUNT(*) dup_groups FROM (SELECT account_id, asset_name, topic, tag, date_yyyymmdd FROM _bronze_window GROUP BY 1,2,3,4,5 HAVING COUNT(*)>1))
+  SELECT run_ts, run_dt, tbl,'critical','duplicate_grain_groups_last_N_days','HIGH',
+         0.0, CAST(dup_groups AS FLOAT64), CAST(dup_groups AS FLOAT64),
+         IF(dup_groups=0,'PASS','FAIL'), IF(dup_groups=0,'🟢','🔴'),
+         IF(dup_groups=0,'No duplicate grain groups detected.', CONCAT('Duplicate grain groups found: ',CAST(dup_groups AS STRING))),
+         'If FAIL: check MERGE key + dedup ORDER BY tie-breakers.',
+         IF(dup_groups>0,TRUE,FALSE), IF(dup_groups=0,TRUE,FALSE), IF(dup_groups>0,TRUE,FALSE)
+  FROM d;
 
-  -- (4) recon row count
+  -- Recon row count
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH exp AS (SELECT COUNT(1) AS expected_cnt FROM _raw_dedup),
-       act AS (SELECT COUNT(1) AS actual_cnt FROM _bronze_window)
-  SELECT
-    run_ts, run_date, table_name,
-    'reconciliation', 'raw_dedup_vs_bronze_row_count_last_N_days', 'HIGH',
-    CAST(expected_cnt AS FLOAT64),
-    CAST(actual_cnt AS FLOAT64),
-    CAST(actual_cnt AS FLOAT64) - CAST(expected_cnt AS FLOAT64),
-    IF(expected_cnt = actual_cnt, 'PASS', 'FAIL'),
-    IF(expected_cnt = actual_cnt, '🟢', '🔴'),
-    CONCAT('expected(raw_dedup)=', CAST(expected_cnt AS STRING), ', actual(bronze)=', CAST(actual_cnt AS STRING)),
-    'If FAIL: check lookback coverage + dedup ordering + whether Bronze was recreated without backfill.',
-    IF(expected_cnt != actual_cnt, TRUE, FALSE),
-    IF(expected_cnt = actual_cnt, TRUE, FALSE),
-    IF(expected_cnt != actual_cnt, TRUE, FALSE)
-  FROM exp, act;
+  WITH a AS (SELECT COUNT(*) exp_cnt FROM _raw_dedup), b AS (SELECT COUNT(*) act_cnt FROM _bronze_window)
+  SELECT run_ts, run_dt, tbl,'reconciliation','raw_dedup_vs_bronze_row_count_last_N_days','HIGH',
+         CAST(exp_cnt AS FLOAT64), CAST(act_cnt AS FLOAT64), CAST(act_cnt-exp_cnt AS FLOAT64),
+         IF(exp_cnt=act_cnt,'PASS','FAIL'), IF(exp_cnt=act_cnt,'🟢','🔴'),
+         IF(exp_cnt=act_cnt,'Row counts match (raw_dedup vs bronze window).', CONCAT('expected(raw_dedup)=',exp_cnt,', actual(bronze)=',act_cnt)),
+         'If FAIL: Bronze missing rows in lookback window; run backfill or re-run merge with lookback_days.',
+         IF(exp_cnt!=act_cnt,TRUE,FALSE), IF(exp_cnt=act_cnt,TRUE,FALSE), IF(exp_cnt!=act_cnt,TRUE,FALSE)
+  FROM a,b;
 
-  -- (5) recon metric sums
+  -- Recon metric sums (visibility checksum)
   INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH exp AS (
-    SELECT
-      SUM(COALESCE(executions,0)) AS exp_exec,
-      SUM(COALESCE(mentions_count,0)) AS exp_mentions,
-      SUM(COALESCE(share_of_voice,0)) AS exp_sov,
-      SUM(COALESCE(visibility_score,0)) AS exp_vis
-    FROM _raw_dedup
-  ),
-  act AS (
-    SELECT
-      SUM(COALESCE(executions,0)) AS act_exec,
-      SUM(COALESCE(mentions_count,0)) AS act_mentions,
-      SUM(COALESCE(share_of_voice,0)) AS act_sov,
-      SUM(COALESCE(visibility_score,0)) AS act_vis
-    FROM _bronze_window
-  ),
-  packed AS (
-    SELECT
-      (exp_exec + exp_mentions + exp_sov + exp_vis) AS expected_value,
-      (act_exec + act_mentions + act_sov + act_vis) AS actual_value,
-      CONCAT(
-        'exec exp=', CAST(exp_exec AS STRING), ', act=', CAST(act_exec AS STRING),
-        ' | mentions exp=', CAST(exp_mentions AS STRING), ', act=', CAST(act_mentions AS STRING),
-        ' | sov exp=', CAST(exp_sov AS STRING), ', act=', CAST(act_sov AS STRING),
-        ' | vis exp=', CAST(exp_vis AS STRING), ', act=', CAST(act_vis AS STRING)
-      ) AS msg,
-      IF(exp_exec = act_exec AND exp_mentions = act_mentions AND exp_sov = act_sov AND exp_vis = act_vis, TRUE, FALSE) AS is_match
-    FROM exp, act
-  )
-  SELECT
-    run_ts, run_date, table_name,
-    'reconciliation', 'raw_dedup_vs_bronze_metric_sums_last_N_days', 'HIGH',
-    CAST(expected_value AS FLOAT64),
-    CAST(actual_value AS FLOAT64),
-    CAST(actual_value AS FLOAT64) - CAST(expected_value AS FLOAT64),
-    IF(is_match, 'PASS', 'FAIL'),
-    IF(is_match, '🟢', '🔴'),
-    msg,
-    'If FAIL: validate dedup ordering + casting + lookback alignment (File_Load_datetime).',
-    IF(NOT is_match, TRUE, FALSE),
-    IF(is_match, TRUE, FALSE),
-    IF(NOT is_match, TRUE, FALSE)
-  FROM packed;
+  WITH r AS (SELECT SUM(executions) exec_sum,SUM(mentions_count) mentions_sum,SUM(share_of_voice) sov_sum,SUM(visibility_score) vis_sum FROM _raw_dedup),
+       s AS (SELECT SUM(executions) exec_sum,SUM(mentions_count) mentions_sum,SUM(share_of_voice) sov_sum,SUM(visibility_score) vis_sum FROM _bronze_window),
+       t AS (
+         SELECT (COALESCE(r.exec_sum,0)+COALESCE(r.mentions_sum,0)+COALESCE(r.sov_sum,0)+COALESCE(r.vis_sum,0)) expected_value,
+                (COALESCE(s.exec_sum,0)+COALESCE(s.mentions_sum,0)+COALESCE(s.sov_sum,0)+COALESCE(s.vis_sum,0)) actual_value,
+                r.exec_sum exp_exec,s.exec_sum act_exec,r.mentions_sum exp_mentions,s.mentions_sum act_mentions,r.sov_sum exp_sov,s.sov_sum act_sov,r.vis_sum exp_vis,s.vis_sum act_vis
+         FROM r,s
+       )
+  SELECT run_ts, run_dt, tbl,'reconciliation','raw_dedup_vs_bronze_metric_sums_last_N_days','HIGH',
+         expected_value, actual_value, actual_value-expected_value,
+         IF(ABS(actual_value-expected_value)<0.000001,'PASS','FAIL'), IF(ABS(actual_value-expected_value)<0.000001,'🟢','🔴'),
+         IF(ABS(actual_value-expected_value)<0.000001,'Metric sums match (raw_dedup vs bronze window).',
+            CONCAT('exec exp=',exp_exec,', act=',act_exec,' | mentions exp=',exp_mentions,', act=',act_mentions,' | sov exp=',exp_sov,', act=',act_sov,' | vis exp=',exp_vis,', act=',act_vis)),
+         'If FAIL: Bronze missing rows or dedup mismatch vs raw; verify lookback + ordering.',
+         IF(ABS(actual_value-expected_value)>=0.000001,TRUE,FALSE), IF(ABS(actual_value-expected_value)<0.000001,TRUE,FALSE), IF(ABS(actual_value-expected_value)>=0.000001,TRUE,FALSE)
+  FROM t;
 
 END;

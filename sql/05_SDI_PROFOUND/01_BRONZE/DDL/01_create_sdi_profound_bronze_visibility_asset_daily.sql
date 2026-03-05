@@ -42,6 +42,8 @@ CREATE OR REPLACE TABLE
   insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
   file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
   filename STRING OPTIONS(description="Raw Filename (lineage).")
+  -- bronze_inserted_at TIMESTAMP OPTIONS(description="Timestamp when this row was inserted/updated in Bronze.")
+
 )
 PARTITION BY date
 CLUSTER BY account_id, asset_id
