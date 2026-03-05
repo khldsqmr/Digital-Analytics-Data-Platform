@@ -20,11 +20,8 @@ BEGIN
   DECLARE run_date DATE DEFAULT CURRENT_DATE();
 
   DECLARE table_name STRING DEFAULT 'sdi_profound_bronze_citations_tag_daily';
-  -- ✅ prevent "Already Exists" temp table collisions (same script/session reruns)
-  DROP TABLE IF EXISTS _raw_dedup;
-  DROP TABLE IF EXISTS _bronze_window;
-  
-  CREATE TEMP TABLE _raw_dedup AS
+
+  CREATE OR REPLACE TEMP TABLE _raw_dedup AS
   WITH src AS (
     SELECT
       SAFE_CAST(raw.account_id AS STRING) AS account_id,
@@ -67,7 +64,7 @@ BEGIN
   )
   SELECT * FROM dedup;
 
-  CREATE TEMP TABLE _bronze_window AS
+  CREATE OR REPLACE TEMP TABLE _bronze_window AS
   SELECT
     account_id, root_domain, tag, date_yyyymmdd, date,
     count, share_of_voice,
