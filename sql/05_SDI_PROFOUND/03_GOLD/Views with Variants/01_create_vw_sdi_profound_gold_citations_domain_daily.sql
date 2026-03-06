@@ -9,7 +9,12 @@ PURPOSE:
   Tableau-facing Gold daily view for ProFound Citations by Domain.
 
 BUSINESS GRAIN:
-  date + account_id + account_name + root_domain
+  One row per:
+    - date
+    - account_id
+    - account_name
+    - root_domain
+    - metric_variant_id
 
 DESIGN NOTES:
   1) This Gold view is built from the Bronze table only.
@@ -31,7 +36,6 @@ OUTPUT COLUMNS:
   root_domain
   count
   share_of_voice
-  metric_variant_number
   metric_variant_id
   metric_variant_count
   has_metric_variants
@@ -43,10 +47,7 @@ REFRESH STRATEGY:
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_gold_citations_domain_daily` AS
 
-WITH bronze_base AS (
-  /* ---------------------------------------------------------------------------------------------
-  Step 1: Read the required Tableau-facing columns from Bronze.
-  --------------------------------------------------------------------------------------------- */
+WITH bronze_source AS (
   SELECT
     date,
     account_id,
@@ -57,18 +58,7 @@ WITH bronze_base AS (
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_domain_daily`
 ),
 
-collapsed_metric_rows AS (
-  /* ---------------------------------------------------------------------------------------------
-  Step 2: Collapse exact duplicate rows.
-
-  Why:
-    If Bronze contains repeated rows that are identical across both:
-      - business grain columns
-      - metric columns
-    then Tableau should not see those as multiple rows.
-
-  collapsed_bronze_row_count tells us how many identical Bronze rows collapsed into this record.
-  --------------------------------------------------------------------------------------------- */
+collapsed_exact_duplicates AS (
   SELECT
     date,
     account_id,
@@ -77,7 +67,7 @@ collapsed_metric_rows AS (
     count,
     share_of_voice,
     COUNT(*) AS collapsed_bronze_row_count
-  FROM bronze_base
+  FROM bronze_source
   GROUP BY
     date,
     account_id,
@@ -87,21 +77,7 @@ collapsed_metric_rows AS (
     share_of_voice
 ),
 
-variant_labeled AS (
-  /* ---------------------------------------------------------------------------------------------
-  Step 3: Assign metric variants within each business grain.
-
-  Business grain for this view:
-    date + account_id + account_name + root_domain
-
-  If only one distinct metric combination exists:
-    metric_variant_number = 1
-    metric_variant_count  = 1
-    has_metric_variants   = FALSE
-
-  If multiple distinct metric combinations exist for the same grain:
-    each distinct metric row gets variant_1 / variant_2 / ...
-  --------------------------------------------------------------------------------------------- */
+variant_enriched AS (
   SELECT
     date,
     account_id,
@@ -110,16 +86,22 @@ variant_labeled AS (
     count,
     share_of_voice,
     collapsed_bronze_row_count,
-
-    ROW_NUMBER() OVER (
-      PARTITION BY date, account_id, account_name, root_domain
-      ORDER BY count, share_of_voice
-    ) AS metric_variant_number,
-
+    CONCAT(
+      'variant_',
+      CAST(
+        DENSE_RANK() OVER (
+          PARTITION BY date, account_id, account_name, root_domain
+          ORDER BY count, share_of_voice
+        ) AS STRING
+      )
+    ) AS metric_variant_id,
     COUNT(*) OVER (
       PARTITION BY date, account_id, account_name, root_domain
-    ) AS metric_variant_count
-  FROM collapsed_metric_rows
+    ) AS metric_variant_count,
+    COUNT(*) OVER (
+      PARTITION BY date, account_id, account_name, root_domain
+    ) > 1 AS has_metric_variants
+  FROM collapsed_exact_duplicates
 )
 
 SELECT
@@ -129,9 +111,8 @@ SELECT
   root_domain,
   count,
   share_of_voice,
-  metric_variant_number,
-  CONCAT('variant_', CAST(metric_variant_number AS STRING)) AS metric_variant_id,
+  metric_variant_id,
   metric_variant_count,
-  metric_variant_count > 1 AS has_metric_variants,
+  has_metric_variants,
   collapsed_bronze_row_count
-FROM variant_labeled;
+FROM variant_enriched;

@@ -9,21 +9,49 @@ PURPOSE:
   Tableau-facing Gold daily view for ProFound Citations by Topic and Tag.
 
 BUSINESS GRAIN:
-  date + account_id + account_name + root_domain + topic + tag
-
-IMPORTANT:
-  root_domain is intentionally retained here because your earlier mismatch analysis clearly showed
-  that topic+tag alone is not sufficient for this dataset. Different root domains can exist under
-  the same topic/tag on the same day and must remain distinct in reporting.
+  One row per:
+    - date
+    - account_id
+    - account_name
+    - root_domain
+    - topic
+    - tag
+    - metric_variant_id
 
 DESIGN NOTES:
-  - Exact duplicate metric rows are collapsed.
-  - Distinct metric combinations for the same business grain are preserved as variants.
+  1) This Gold view is built from the Bronze table only.
+  2) Exact duplicate rows with the same business grain + same metric values are collapsed.
+  3) If the same business grain has multiple distinct metric combinations, they are preserved
+     as metric variants:
+       - variant_1
+       - variant_2
+       - variant_3
+       - etc.
+  4) Lineage columns such as file_load_datetime / filename / insert_date are intentionally NOT
+     exposed because this is a Tableau-facing reporting view.
+  5) This means the dashboard remains stable while still surfacing upstream metric conflicts.
+
+OUTPUT COLUMNS:
+  date
+  account_id
+  account_name
+  root_domain
+  topic
+  tag
+  count
+  share_of_voice
+  metric_variant_id
+  metric_variant_count
+  has_metric_variants
+  collapsed_bronze_row_count
+
+REFRESH STRATEGY:
+  Safe to use as a view on top of the daily-refreshed Bronze table.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_gold_citations_topic_tag_daily` AS
 
-WITH bronze_base AS (
+WITH bronze_source AS (
   SELECT
     date,
     account_id,
@@ -36,7 +64,7 @@ WITH bronze_base AS (
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_topic_tag_daily`
 ),
 
-collapsed_metric_rows AS (
+collapsed_exact_duplicates AS (
   SELECT
     date,
     account_id,
@@ -47,7 +75,7 @@ collapsed_metric_rows AS (
     count,
     share_of_voice,
     COUNT(*) AS collapsed_bronze_row_count
-  FROM bronze_base
+  FROM bronze_source
   GROUP BY
     date,
     account_id,
@@ -59,7 +87,7 @@ collapsed_metric_rows AS (
     share_of_voice
 ),
 
-variant_labeled AS (
+variant_enriched AS (
   SELECT
     date,
     account_id,
@@ -70,16 +98,22 @@ variant_labeled AS (
     count,
     share_of_voice,
     collapsed_bronze_row_count,
-
-    ROW_NUMBER() OVER (
-      PARTITION BY date, account_id, account_name, root_domain, topic, tag
-      ORDER BY count, share_of_voice
-    ) AS metric_variant_number,
-
+    CONCAT(
+      'variant_',
+      CAST(
+        DENSE_RANK() OVER (
+          PARTITION BY date, account_id, account_name, root_domain, topic, tag
+          ORDER BY count, share_of_voice
+        ) AS STRING
+      )
+    ) AS metric_variant_id,
     COUNT(*) OVER (
       PARTITION BY date, account_id, account_name, root_domain, topic, tag
-    ) AS metric_variant_count
-  FROM collapsed_metric_rows
+    ) AS metric_variant_count,
+    COUNT(*) OVER (
+      PARTITION BY date, account_id, account_name, root_domain, topic, tag
+    ) > 1 AS has_metric_variants
+  FROM collapsed_exact_duplicates
 )
 
 SELECT
@@ -91,9 +125,8 @@ SELECT
   tag,
   count,
   share_of_voice,
-  metric_variant_number,
-  CONCAT('variant_', CAST(metric_variant_number AS STRING)) AS metric_variant_id,
+  metric_variant_id,
   metric_variant_count,
-  metric_variant_count > 1 AS has_metric_variants,
+  has_metric_variants,
   collapsed_bronze_row_count
-FROM variant_labeled;
+FROM variant_enriched;
