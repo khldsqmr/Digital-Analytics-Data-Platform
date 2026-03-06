@@ -17,7 +17,7 @@ PURPOSE:
 
 GRAIN:
   account_id + asset_id + tag + date_yyyymmdd
-  
+
 PARTITION / CLUSTER:
   PARTITION BY date
   CLUSTER BY account_id, asset_id, tag
@@ -28,7 +28,7 @@ CREATE OR REPLACE TABLE
 (
   account_id STRING OPTIONS(description="Account ID from raw."),
   account_name STRING OPTIONS(description="Account name from raw."),
-  asset_id STRING OPTIONS(description="Asset ID from raw."),
+  --asset_id STRING OPTIONS(description="Asset ID from raw."),
   asset_name STRING OPTIONS(description="Asset name from raw."),
   tag STRING OPTIONS(description="Tag from raw."),
 
