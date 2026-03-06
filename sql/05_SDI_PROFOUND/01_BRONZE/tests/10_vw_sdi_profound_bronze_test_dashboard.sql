@@ -1,4 +1,3 @@
-
 /*===============================================================================
 FILE: 10_vw_sdi_profound_bronze_test_dashboard.sql
 VIEW: vw_sdi_profound_bronze_test_dashboard
