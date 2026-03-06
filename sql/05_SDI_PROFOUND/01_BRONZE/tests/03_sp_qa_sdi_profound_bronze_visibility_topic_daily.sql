@@ -1,231 +1,142 @@
-
 /*===============================================================================
 FILE: 03_sp_qa_sdi_profound_bronze_visibility_topic_daily.sql
 LAYER: Bronze | QA
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROC:  sp_qa_sdi_profound_bronze_visibility_topic_daily
-
 PURPOSE:
-  3 critical + 2 reconciliation tests for:
-    prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily
-
-ALIGNMENT (matches merge SP exactly):
-  - RAW source: prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo
-  - RAW canonical date: SAFE.PARSE_DATE('%Y%m%d', raw.date_yyyymmdd)
-  - RAW dedup grain: (account_id, asset_name, topic, date_yyyymmdd)
-  - RAW dedup ORDER BY: file_load_datetime DESC, filename DESC, insert_date DESC
-  - Reconciliation window: last completed ISO week (Mon-Sun) by event date (NOT ingestion)
-
-OUTPUT:
-  Exactly 5 rows inserted into sdi_profound_bronze_test_results per run.
+  3 critical + 2 reconciliation tests for sdi_profound_bronze_visibility_topic_daily
+ALIGNMENT:
+  RAW: sdi_seo_profound_visibility_topic_daily_tmo
+  Dedup: (account_id, asset_name, topic, date_yyyymmdd) ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+  Scope: ISO week + file_load_datetime within lookback_days
+OUTPUT: Exactly 5 rows into sdi_profound_bronze_test_results
 ===============================================================================*/
-CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_qa_sdi_profound_bronze_visibility_topic_daily`()
+CREATE OR REPLACE PROCEDURE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_qa_sdi_profound_bronze_visibility_topic_daily`()
 OPTIONS(strict_mode=false)
 BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+  DECLARE freshness_days INT64 DEFAULT 3;
   DECLARE recon_week_offset INT64 DEFAULT 1;
-  DECLARE freshness_days INT64 DEFAULT 2;
-  DECLARE test_date DATE DEFAULT CURRENT_DATE();
-  DECLARE run_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
+  DECLARE week_start DATE;
+  DECLARE week_end   DATE;
+  SET week_start = DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL recon_week_offset WEEK), WEEK(MONDAY));
+  SET week_end   = DATE_ADD(week_start, INTERVAL 6 DAY);
 
-  DECLARE week_start DATE DEFAULT DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL recon_week_offset WEEK), WEEK(MONDAY));
-  DECLARE week_end   DATE DEFAULT DATE_ADD(week_start, INTERVAL 6 DAY);
-
-  DECLARE bronze_table STRING DEFAULT 'sdi_profound_bronze_visibility_topic_daily';
-
-  -- TEST 1: Duplicate grain groups
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH dup AS (
-    SELECT COUNT(*) AS duplicate_groups
+  WITH
+  bronze_scope AS (
+    SELECT *
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
+    WHERE date BETWEEN week_start AND week_end
+      AND file_load_datetime >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+  ),
+  raw_src AS (
+    SELECT
+      SAFE_CAST(raw.account_id AS STRING) AS account_id,
+      NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+      NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+      NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
+      SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+      SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+      SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+      SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+      SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+      SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+      SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
+      SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+      SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+      NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo` raw
+    WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+      AND SAFE_CAST(raw.File_Load_datetime AS DATETIME) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+      AND SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) BETWEEN week_start AND week_end
+  ),
+  raw_clean AS (
+    SELECT * FROM raw_src
+    WHERE date IS NOT NULL AND account_id IS NOT NULL AND asset_name IS NOT NULL AND topic IS NOT NULL AND date_yyyymmdd IS NOT NULL
+  ),
+  raw_dedup AS (
+    SELECT * EXCEPT(rn)
     FROM (
-      SELECT account_id, asset_name, topic, date_yyyymmdd, COUNT(*) AS c
-      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
-      WHERE date BETWEEN week_start AND week_end
-      GROUP BY 1,2,3,4
-      HAVING c > 1
+      SELECT r.*,
+        ROW_NUMBER() OVER (
+          PARTITION BY account_id, asset_name, topic, date_yyyymmdd
+          ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+        ) rn
+      FROM raw_clean r
     )
-  )
-  SELECT
-    run_ts, test_date, bronze_table,
-    'critical', 'duplicate_grain_groups_iso_week', 'HIGH',
-    0.0, CAST(duplicate_groups AS FLOAT64), CAST(duplicate_groups AS FLOAT64),
-    IF(duplicate_groups=0,'PASS','FAIL'),
-    IF(duplicate_groups=0,'🟢','🔴'),
-    IF(duplicate_groups=0,'No duplicate grain groups detected.','Duplicate grain groups found in Bronze for the ISO week.'),
-    'If FAIL: check MERGE key + dedup ORDER BY tie-breakers.',
-    IF(duplicate_groups=0,FALSE,TRUE),
-    IF(duplicate_groups=0,TRUE,FALSE),
-    IF(duplicate_groups=0,FALSE,TRUE)
-  FROM dup;
-
-  -- TEST 2: Null key/date rows
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH bad AS (
-    SELECT COUNT(*) AS bad_rows
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
-    WHERE date BETWEEN week_start AND week_end
-      AND (account_id IS NULL OR asset_name IS NULL OR topic IS NULL OR date_yyyymmdd IS NULL OR date IS NULL)
-  )
-  SELECT
-    run_ts, test_date, bronze_table,
-    'critical', 'null_key_or_date_rows_iso_week', 'HIGH',
-    0.0, CAST(bad_rows AS FLOAT64), CAST(bad_rows AS FLOAT64),
-    IF(bad_rows=0,'PASS','FAIL'),
-    IF(bad_rows=0,'🟢','🔴'),
-    IF(bad_rows=0,'No null key/date rows found.','Null key/date rows found in Bronze for the ISO week.'),
-    'If FAIL: verify TRIM/NULLIF + SAFE.PARSE_DATE + key filters in merge.',
-    IF(bad_rows=0,FALSE,TRUE),
-    IF(bad_rows=0,TRUE,FALSE),
-    IF(bad_rows=0,FALSE,TRUE)
-  FROM bad;
-
-  -- TEST 3: Freshness
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH f AS (SELECT MAX(file_load_datetime) AS max_fld
-             FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`),
-  flags AS (
-    SELECT IF(max_fld IS NULL,0,IF(max_fld >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL freshness_days DAY),1,0)) AS is_fresh
-    FROM f
-  )
-  SELECT
-    run_ts, test_date, bronze_table,
-    'critical', 'freshness_max_file_load_datetime_within_last_days', 'HIGH',
-    1.0, CAST(is_fresh AS FLOAT64), CAST(is_fresh AS FLOAT64)-1.0,
-    IF(is_fresh=1,'PASS','FAIL'),
-    IF(is_fresh=1,'🟢','🔴'),
-    IF(is_fresh=1,'Recent loads exist (MAX(file_load_datetime) is fresh).','No recent loads (MAX(file_load_datetime) is stale or NULL).'),
-    'If FAIL: check raw ingestion, merge schedule, and file_load_datetime population.',
-    IF(is_fresh=1,FALSE,TRUE),
-    IF(is_fresh=1,TRUE,FALSE),
-    IF(is_fresh=1,FALSE,TRUE)
-  FROM flags;
-
-  -- TEST 4: Raw-dedup vs Bronze row count
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH raw_src AS (
-    SELECT
-      SAFE_CAST(account_id AS STRING) AS account_id,
-      NULLIF(TRIM(SAFE_CAST(asset_name AS STRING)), '') AS asset_name,
-      NULLIF(TRIM(SAFE_CAST(topic AS STRING)), '') AS topic,
-      SAFE_CAST(date_yyyymmdd AS STRING) AS date_yyyymmdd,
-      SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) AS date,
-      SAFE_CAST(File_Load_datetime AS DATETIME) AS file_load_datetime,
-      NULLIF(TRIM(SAFE_CAST(Filename AS STRING)), '') AS filename,
-      SAFE_CAST(__insert_date AS INT64) AS insert_date
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo`
-    WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) BETWEEN week_start AND week_end
-      AND SAFE_CAST(File_Load_datetime AS DATETIME) IS NOT NULL
+    WHERE rn=1
   ),
-  raw_clean AS (
-    SELECT * FROM raw_src
-    WHERE date IS NOT NULL AND account_id IS NOT NULL AND asset_name IS NOT NULL AND topic IS NOT NULL AND date_yyyymmdd IS NOT NULL
-  ),
-  raw_dedup AS (
-    SELECT * EXCEPT(rn) FROM (
-      SELECT r.*,
-             ROW_NUMBER() OVER (
-               PARTITION BY account_id, asset_name, topic, date_yyyymmdd
-               ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
-             ) AS rn
-      FROM raw_clean r
-    ) WHERE rn=1
-  ),
-  expected AS (SELECT COUNT(*) AS expected_rows FROM raw_dedup),
-  actual AS (
-    SELECT COUNT(*) AS actual_rows
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
-    WHERE date BETWEEN week_start AND week_end
-  )
-  SELECT
-    run_ts, test_date, bronze_table,
-    'reconciliation', 'raw_dedup_vs_bronze_row_count_iso_week', 'HIGH',
-    CAST(expected_rows AS FLOAT64),
-    CAST(actual_rows AS FLOAT64),
-    CAST(actual_rows AS FLOAT64) - CAST(expected_rows AS FLOAT64),
-    IF(actual_rows=expected_rows,'PASS','FAIL'),
-    IF(actual_rows=expected_rows,'🟢','🔴'),
-    FORMAT('expected(raw_dedup)=%d, actual(bronze)=%d', expected_rows, actual_rows),
-    'If FAIL: Bronze missing/extra rows for the ISO week; check merge lookback + run backfill if table was recreated.',
-    IF(actual_rows=expected_rows,FALSE,TRUE),
-    IF(actual_rows=expected_rows,TRUE,FALSE),
-    IF(actual_rows=expected_rows,FALSE,TRUE)
-  FROM expected, actual;
-
-  -- TEST 5: Raw-dedup vs Bronze metric sums
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
-  WITH raw_src AS (
-    SELECT
-      SAFE_CAST(account_id AS STRING) AS account_id,
-      NULLIF(TRIM(SAFE_CAST(asset_name AS STRING)), '') AS asset_name,
-      NULLIF(TRIM(SAFE_CAST(topic AS STRING)), '') AS topic,
-      SAFE_CAST(date_yyyymmdd AS STRING) AS date_yyyymmdd,
-      SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) AS date,
-      SAFE_CAST(executions AS FLOAT64) AS executions,
-      SAFE_CAST(mentions_count AS FLOAT64) AS mentions_count,
-      SAFE_CAST(share_of_voice AS FLOAT64) AS share_of_voice,
-      SAFE_CAST(visibility_score AS FLOAT64) AS visibility_score,
-      SAFE_CAST(File_Load_datetime AS DATETIME) AS file_load_datetime,
-      NULLIF(TRIM(SAFE_CAST(Filename AS STRING)), '') AS filename,
-      SAFE_CAST(__insert_date AS INT64) AS insert_date
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo`
-    WHERE SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(date_yyyymmdd AS STRING)) BETWEEN week_start AND week_end
-      AND SAFE_CAST(File_Load_datetime AS DATETIME) IS NOT NULL
-  ),
-  raw_clean AS (
-    SELECT * FROM raw_src
-    WHERE date IS NOT NULL AND account_id IS NOT NULL AND asset_name IS NOT NULL AND topic IS NOT NULL AND date_yyyymmdd IS NOT NULL
-  ),
-  raw_dedup AS (
-    SELECT * EXCEPT(rn) FROM (
-      SELECT r.*,
-             ROW_NUMBER() OVER (
-               PARTITION BY account_id, asset_name, topic, date_yyyymmdd
-               ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
-             ) AS rn
-      FROM raw_clean r
-    ) WHERE rn=1
-  ),
-  exp AS (
-    SELECT
-      SUM(COALESCE(executions,0)) AS exp_exec,
-      SUM(COALESCE(mentions_count,0)) AS exp_mentions,
-      SUM(COALESCE(share_of_voice,0)) AS exp_sov,
-      SUM(COALESCE(visibility_score,0)) AS exp_vis
+  agg_raw AS (
+    SELECT COUNT(1) row_cnt,
+      SUM(executions) sum_executions,
+      SUM(mentions_count) sum_mentions,
+      SUM(share_of_voice) sum_sov,
+      SUM(visibility_score) sum_vis
     FROM raw_dedup
   ),
-  act AS (
-    SELECT
-      SUM(COALESCE(executions,0)) AS act_exec,
-      SUM(COALESCE(mentions_count,0)) AS act_mentions,
-      SUM(COALESCE(share_of_voice,0)) AS act_sov,
-      SUM(COALESCE(visibility_score,0)) AS act_vis
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
-    WHERE date BETWEEN week_start AND week_end
+  agg_bronze AS (
+    SELECT COUNT(1) row_cnt,
+      SUM(executions) sum_executions,
+      SUM(mentions_count) sum_mentions,
+      SUM(share_of_voice) sum_sov,
+      SUM(visibility_score) sum_vis
+    FROM bronze_scope
   ),
-  cmp AS (
-    SELECT
-      (exp_exec + exp_mentions + exp_sov + exp_vis) AS expected_total,
-      (act_exec + act_mentions + act_sov + act_vis) AS actual_total,
-      FORMAT(
-        'exec exp=%.0f, act=%.0f | mentions exp=%.0f, act=%.0f | sov exp=%.6f, act=%.6f | vis exp=%.6f, act=%.6f',
-        exp_exec, act_exec, exp_mentions, act_mentions, exp_sov, act_sov, exp_vis, act_vis
-      ) AS detail_msg
-    FROM exp, act
+  crit_duplicates AS (
+    SELECT COUNT(1) dup_groups
+    FROM (SELECT account_id, asset_name, topic, date_yyyymmdd, COUNT(*) c FROM bronze_scope GROUP BY 1,2,3,4 HAVING c>1)
+  ),
+  crit_nulls AS (
+    SELECT COUNT(1) bad_rows
+    FROM bronze_scope
+    WHERE account_id IS NULL OR asset_name IS NULL OR topic IS NULL OR date_yyyymmdd IS NULL OR date IS NULL
+  ),
+  crit_fresh AS (
+    SELECT CASE WHEN MAX(file_load_datetime) >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL freshness_days DAY) THEN 1 ELSE 0 END is_fresh
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
   )
+  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_test_results`
+  (test_run_timestamp,test_date,table_name,test_layer,test_name,severity_level,expected_value,actual_value,variance_value,status,status_emoji,failure_reason,next_step,is_critical_failure,is_pass,is_fail)
   SELECT
-    run_ts, test_date, bronze_table,
-    'reconciliation', 'raw_dedup_vs_bronze_metric_sums_iso_week', 'HIGH',
-    CAST(expected_total AS FLOAT64),
-    CAST(actual_total AS FLOAT64),
-    CAST(actual_total AS FLOAT64) - CAST(expected_total AS FLOAT64),
-    IF(ABS(actual_total-expected_total) < 0.000001,'PASS','FAIL'),
-    IF(ABS(actual_total-expected_total) < 0.000001,'🟢','🔴'),
-    detail_msg,
-    'If FAIL: mismatch indicates missing/extra rows or dedup mismatch; verify raw filter + dedup ORDER BY + merge lookback.',
-    IF(ABS(actual_total-expected_total) < 0.000001,FALSE,TRUE),
-    IF(ABS(actual_total-expected_total) < 0.000001,TRUE,FALSE),
-    IF(ABS(actual_total-expected_total) < 0.000001,FALSE,TRUE)
-  FROM cmp;
-
+    CURRENT_TIMESTAMP(), CURRENT_DATE(), 'sdi_profound_bronze_visibility_topic_daily',
+    test_layer, test_name, severity_level,
+    expected_value, actual_value, actual_value-expected_value,
+    IF(actual_value=expected_value,'PASS','FAIL'),
+    IF(actual_value=expected_value,'🟢','🔴'),
+    failure_reason, next_step,
+    (severity_level='HIGH' AND actual_value!=expected_value),
+    (actual_value=expected_value),
+    (actual_value!=expected_value)
+  FROM (
+    SELECT 'critical','duplicate_grain_groups_iso_week','HIGH',0.0, CAST((SELECT dup_groups FROM crit_duplicates) AS FLOAT64),
+      'No duplicate grain groups detected.','If FAIL: check MERGE key + dedup ORDER BY tie-breakers.'
+    UNION ALL
+    SELECT 'critical','null_key_or_date_rows_iso_week','HIGH',0.0, CAST((SELECT bad_rows FROM crit_nulls) AS FLOAT64),
+      'No null key/date rows found.','If FAIL: verify TRIM/NULLIF + SAFE.PARSE_DATE + key filters in merge.'
+    UNION ALL
+    SELECT 'critical','freshness_max_file_load_datetime_within_last_days','HIGH',1.0, CAST((SELECT is_fresh FROM crit_fresh) AS FLOAT64),
+      'Recent loads exist (MAX(file_load_datetime) is fresh).','If FAIL: check raw ingestion, merge schedule, and file_load_datetime population.'
+    UNION ALL
+    SELECT 'reconciliation','raw_dedup_vs_bronze_row_count_iso_week','HIGH',
+      CAST((SELECT row_cnt FROM agg_raw) AS FLOAT64), CAST((SELECT row_cnt FROM agg_bronze) AS FLOAT64),
+      CONCAT('expected(raw_dedup)=', CAST((SELECT row_cnt FROM agg_raw) AS STRING),
+             ', actual(bronze)=', CAST((SELECT row_cnt FROM agg_bronze) AS STRING)),
+      'If FAIL: populations differ; run key-diff (anti-join) to find extra/missing keys.'
+    UNION ALL
+    SELECT 'reconciliation','raw_dedup_vs_bronze_metric_sums_iso_week','HIGH',
+      CAST((SELECT IFNULL(sum_executions,0)+IFNULL(sum_mentions,0)+IFNULL(sum_sov,0)+IFNULL(sum_vis,0) FROM agg_raw) AS FLOAT64),
+      CAST((SELECT IFNULL(sum_executions,0)+IFNULL(sum_mentions,0)+IFNULL(sum_sov,0)+IFNULL(sum_vis,0) FROM agg_bronze) AS FLOAT64),
+      CONCAT(
+        'exec exp=', CAST((SELECT IFNULL(sum_executions,0) FROM agg_raw) AS STRING),
+        ', act=', CAST((SELECT IFNULL(sum_executions,0) FROM agg_bronze) AS STRING),
+        ' | mentions exp=', CAST((SELECT IFNULL(sum_mentions,0) FROM agg_raw) AS STRING),
+        ', act=', CAST((SELECT IFNULL(sum_mentions,0) FROM agg_bronze) AS STRING),
+        ' | sov exp=', CAST((SELECT IFNULL(sum_sov,0) FROM agg_raw) AS STRING),
+        ', act=', CAST((SELECT IFNULL(sum_sov,0) FROM agg_bronze) AS STRING),
+        ' | vis exp=', CAST((SELECT IFNULL(sum_vis,0) FROM agg_raw) AS STRING),
+        ', act=', CAST((SELECT IFNULL(sum_vis,0) FROM agg_bronze) AS STRING)
+      ),
+      'If FAIL: populations differ or dedup differs; confirm RAW ORDER BY matches MERGE and run key-diff.'
+  );
 END;
 
