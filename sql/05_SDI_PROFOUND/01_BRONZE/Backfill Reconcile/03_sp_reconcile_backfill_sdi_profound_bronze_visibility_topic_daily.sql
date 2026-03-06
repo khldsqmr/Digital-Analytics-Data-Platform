@@ -29,6 +29,7 @@ BEGIN
       SELECT
         NULLIF(TRIM(SAFE_CAST(raw.account_id AS STRING)), '') AS account_id,
         NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_id AS STRING)), '') AS asset_id,
         NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
         NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
 
@@ -57,7 +58,7 @@ BEGIN
       SELECT *
       FROM scoped
       WHERE account_id IS NOT NULL
-        AND asset_name IS NOT NULL
+        AND asset_id IS NOT NULL
         AND topic IS NOT NULL
         AND date_yyyymmdd IS NOT NULL
         AND date IS NOT NULL
@@ -69,7 +70,7 @@ BEGIN
         SELECT
           c.*,
           ROW_NUMBER() OVER (
-            PARTITION BY account_id, asset_name, topic, date_yyyymmdd
+            PARTITION BY account_id, asset_id, topic, date_yyyymmdd
             ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
           ) AS rn
         FROM cleaned c
@@ -80,6 +81,7 @@ BEGIN
     SELECT
       account_id,
       account_name,
+      asset_id,
       asset_name,
       topic,
       date_yyyymmdd,
@@ -95,13 +97,14 @@ BEGIN
     FROM dedup
   ) AS S
   ON  T.account_id    = S.account_id
-  AND T.asset_name    = S.asset_name
+  AND T.asset_id      = S.asset_id
   AND T.topic         = S.topic
   AND T.date_yyyymmdd = S.date_yyyymmdd
 
   WHEN MATCHED THEN
     UPDATE SET
       account_name       = S.account_name,
+      asset_name         = S.asset_name,
       date               = S.date,
       raw_date_int64     = S.raw_date_int64,
       executions         = S.executions,
@@ -116,6 +119,7 @@ BEGIN
     INSERT (
       account_id,
       account_name,
+      asset_id,
       asset_name,
       topic,
       date_yyyymmdd,
@@ -132,6 +136,7 @@ BEGIN
     VALUES (
       S.account_id,
       S.account_name,
+      S.asset_id,
       S.asset_name,
       S.topic,
       S.date_yyyymmdd,
