@@ -1,0 +1,1180 @@
+/* =================================================================================================
+FILE: 01_create_sdi_profound_bronze_visibility_asset_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_visibility_asset_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Visibility by Asset:
+    - Parse canonical DATE from date_yyyymmdd
+    - Keep raw INT64 date from source for lineage (raw_date_int64)
+    - Preserve lineage columns (file_load_datetime, filename, insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + asset_id + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, asset_id
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  asset_id STRING OPTIONS(description="Asset ID from raw."),
+  asset_name STRING OPTIONS(description="Asset name from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  executions FLOAT64 OPTIONS(description="Executions metric."),
+  mentions_count FLOAT64 OPTIONS(description="Mentions count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+  visibility_score FLOAT64 OPTIONS(description="Visibility score metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+  -- bronze_inserted_at TIMESTAMP OPTIONS(description="Timestamp when this row was inserted/updated in Bronze.")
+
+)
+PARTITION BY date
+CLUSTER BY account_id, asset_id
+OPTIONS(description="Bronze ProFound Visibility Asset Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 02_create_sdi_profound_bronze_visibility_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_visibility_tag_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_tag_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Visibility by Tag:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + asset_name + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, tag
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  asset_name STRING OPTIONS(description="Asset name from raw."),
+  tag STRING OPTIONS(description="Tag from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  executions FLOAT64 OPTIONS(description="Executions metric."),
+  mentions_count FLOAT64 OPTIONS(description="Mentions count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+  visibility_score FLOAT64 OPTIONS(description="Visibility score metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, tag
+OPTIONS(description="Bronze ProFound Visibility Tag Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 03_create_sdi_profound_bronze_visibility_topic_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_visibility_topic_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Visibility by Topic:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + asset_name + topic + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  asset_name STRING OPTIONS(description="Asset name from raw."),
+  topic STRING OPTIONS(description="Topic from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  executions FLOAT64 OPTIONS(description="Executions metric."),
+  mentions_count FLOAT64 OPTIONS(description="Mentions count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+  visibility_score FLOAT64 OPTIONS(description="Visibility score metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, topic
+OPTIONS(description="Bronze ProFound Visibility Topic Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 04_create_sdi_profound_bronze_visibility_topic_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_visibility_topic_tag_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_tag_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Visibility by Topic+Tag:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + asset_name + topic + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic, tag
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  asset_name STRING OPTIONS(description="Asset name from raw."),
+  topic STRING OPTIONS(description="Topic from raw."),
+  tag STRING OPTIONS(description="Tag from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  executions FLOAT64 OPTIONS(description="Executions metric."),
+  mentions_count FLOAT64 OPTIONS(description="Mentions count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+  visibility_score FLOAT64 OPTIONS(description="Visibility score metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, topic, tag
+OPTIONS(description="Bronze ProFound Visibility Topic+Tag Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 05_create_sdi_profound_bronze_citations_domain_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_citations_domain_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_domain_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Citations by Root Domain:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + root_domain + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, root_domain
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_domain_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  root_domain STRING OPTIONS(description="Root domain from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  count FLOAT64 OPTIONS(description="Citations count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, root_domain
+OPTIONS(description="Bronze ProFound Citations Domain Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 06_create_sdi_profound_bronze_citations_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_citations_tag_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_tag_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Citations by Root Domain + Tag:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + root_domain + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, tag
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_tag_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  root_domain STRING OPTIONS(description="Root domain from raw."),
+  tag STRING OPTIONS(description="Tag from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  count FLOAT64 OPTIONS(description="Citations count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, tag
+OPTIONS(description="Bronze ProFound Citations Tag Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 07_create_sdi_profound_bronze_citations_topic_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_citations_topic_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_topic_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Citations by Root Domain + Topic:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + root_domain + topic + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_topic_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  root_domain STRING OPTIONS(description="Root domain from raw."),
+  topic STRING OPTIONS(description="Topic from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  count FLOAT64 OPTIONS(description="Citations count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, topic
+OPTIONS(description="Bronze ProFound Citations Topic Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 08_create_sdi_profound_bronze_citations_topic_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+TABLE:  sdi_profound_bronze_citations_topic_tag_daily
+
+SOURCE (RAW):
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_topic_tag_daily_tmo
+
+PURPOSE:
+  Canonical Bronze daily table for ProFound Citations by Root Domain + Topic + Tag:
+    - Canonical DATE parsed from date_yyyymmdd
+    - Keep raw INT64 date from source column 'date' for lineage/debug
+    - Preserve lineage fields (file_load_datetime, filename, __insert_date)
+    - Dedupe per grain using latest file load
+
+GRAIN:
+  account_id + root_domain + topic + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic, tag
+================================================================================================= */
+
+CREATE OR REPLACE TABLE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_topic_tag_daily`
+(
+  account_id STRING OPTIONS(description="Account ID from raw."),
+  account_name STRING OPTIONS(description="Account name from raw."),
+  root_domain STRING OPTIONS(description="Root domain from raw."),
+  topic STRING OPTIONS(description="Topic from raw."),
+  tag STRING OPTIONS(description="Tag from raw."),
+
+  date_yyyymmdd STRING OPTIONS(description="Raw YYYYMMDD key (lineage/debug)."),
+  date DATE OPTIONS(description="Canonical DATE parsed from date_yyyymmdd (partition key)."),
+  raw_date_int64 INT64 OPTIONS(description="Raw INT64 date from source column 'date' (lineage/debug)."),
+
+  count FLOAT64 OPTIONS(description="Citations count metric."),
+  share_of_voice FLOAT64 OPTIONS(description="Share of voice metric."),
+
+  insert_date INT64 OPTIONS(description="Raw __insert_date (lineage)."),
+  file_load_datetime DATETIME OPTIONS(description="Raw File_Load_datetime (lineage)."),
+  filename STRING OPTIONS(description="Raw Filename (lineage).")
+)
+PARTITION BY date
+CLUSTER BY account_id, topic, tag
+OPTIONS(description="Bronze ProFound Citations Topic+Tag Daily. Canonical date + dedupe + lineage.");
+
+
+/* =================================================================================================
+FILE: 01_sp_merge_sdi_profound_bronze_visibility_asset_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_visibility_asset_daily
+TARGET TABLE: sdi_profound_bronze_visibility_asset_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Visibility Asset Daily into Bronze:
+    - filter by File_Load_datetime lookback window (late arriving files)
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe within window using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + asset_id + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, asset_id
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_asset_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_id AS STRING)), '') AS asset_id,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+        SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+        SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_asset_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND asset_id IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, asset_id, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.asset_id      = S.asset_id
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    asset_name = S.asset_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    executions = S.executions,
+    mentions_count = S.mentions_count,
+    share_of_voice = S.share_of_voice,
+    visibility_score = S.visibility_score,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 02_sp_merge_sdi_profound_bronze_visibility_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_visibility_tag_daily
+TARGET TABLE: sdi_profound_bronze_visibility_tag_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Visibility Tag Daily into Bronze:
+    - filter by File_Load_datetime lookback window (late arriving files)
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe within window using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + asset_name + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, tag
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_tag_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+        NULLIF(TRIM(SAFE_CAST(raw.tag AS STRING)), '') AS tag,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+        SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+        SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_tag_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND asset_name IS NOT NULL
+        AND tag IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, asset_name, tag, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.asset_name    = S.asset_name
+  AND T.tag           = S.tag
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    executions = S.executions,
+    mentions_count = S.mentions_count,
+    share_of_voice = S.share_of_voice,
+    visibility_score = S.visibility_score,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 03_sp_merge_sdi_profound_bronze_visibility_topic_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_visibility_topic_daily
+TARGET TABLE: sdi_profound_bronze_visibility_topic_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Visibility Topic Daily into Bronze:
+    - filter by File_Load_datetime lookback window (late arriving files)
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe within window using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + asset_name + topic + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_topic_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+        NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+        SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+        SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND asset_name IS NOT NULL
+        AND topic IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, asset_name, topic, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.asset_name    = S.asset_name
+  AND T.topic         = S.topic
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    executions = S.executions,
+    mentions_count = S.mentions_count,
+    share_of_voice = S.share_of_voice,
+    visibility_score = S.visibility_score,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 04_sp_merge_sdi_profound_bronze_visibility_topic_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_visibility_topic_tag_daily
+TARGET TABLE: sdi_profound_bronze_visibility_topic_tag_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Visibility Topic+Tag Daily into Bronze:
+    - filter by File_Load_datetime lookback window
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe per grain using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + asset_name + topic + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic, tag
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_topic_tag_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_topic_tag_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+        NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
+        NULLIF(TRIM(SAFE_CAST(raw.tag AS STRING)), '') AS tag,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.executions AS FLOAT64) AS executions,
+        SAFE_CAST(raw.mentions_count AS FLOAT64) AS mentions_count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+        SAFE_CAST(raw.visibility_score AS FLOAT64) AS visibility_score,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_visibility_topic_tag_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND asset_name IS NOT NULL
+        AND topic IS NOT NULL
+        AND tag IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, asset_name, topic, tag, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.asset_name    = S.asset_name
+  AND T.topic         = S.topic
+  AND T.tag           = S.tag
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    executions = S.executions,
+    mentions_count = S.mentions_count,
+    share_of_voice = S.share_of_voice,
+    visibility_score = S.visibility_score,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 05_sp_merge_sdi_profound_bronze_citations_domain_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_citations_domain_daily
+TARGET TABLE: sdi_profound_bronze_citations_domain_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Citations Domain Daily into Bronze:
+    - filter by File_Load_datetime lookback window
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe per grain using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + root_domain + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, root_domain
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citations_domain_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_domain_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.root_domain AS STRING)), '') AS root_domain,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.count AS FLOAT64) AS count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_domain_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND root_domain IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, root_domain, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.root_domain   = S.root_domain
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    count = S.count,
+    share_of_voice = S.share_of_voice,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 06_sp_merge_sdi_profound_bronze_citations_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_citations_tag_daily
+TARGET TABLE: sdi_profound_bronze_citations_tag_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Citations Tag Daily into Bronze:
+    - filter by File_Load_datetime lookback window
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe per grain using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + root_domain + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, tag
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citations_tag_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_tag_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.root_domain AS STRING)), '') AS root_domain,
+        NULLIF(TRIM(SAFE_CAST(raw.tag AS STRING)), '') AS tag,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.count AS FLOAT64) AS count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_tag_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND root_domain IS NOT NULL
+        AND tag IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, root_domain, tag, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.root_domain   = S.root_domain
+  AND T.tag           = S.tag
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    count = S.count,
+    share_of_voice = S.share_of_voice,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 07_sp_merge_sdi_profound_bronze_citations_topic_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_citations_topic_daily
+TARGET TABLE: sdi_profound_bronze_citations_topic_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Citations Topic Daily into Bronze:
+    - filter by File_Load_datetime lookback window
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe per grain using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + root_domain + topic + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citations_topic_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_topic_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.root_domain AS STRING)), '') AS root_domain,
+        NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.count AS FLOAT64) AS count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_topic_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND root_domain IS NOT NULL
+        AND topic IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, root_domain, topic, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.root_domain   = S.root_domain
+  AND T.topic         = S.topic
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    count = S.count,
+    share_of_voice = S.share_of_voice,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
+
+/* =================================================================================================
+FILE: 08_sp_merge_sdi_profound_bronze_citations_topic_tag_daily.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROC:  sp_merge_sdi_profound_bronze_citations_topic_tag_daily
+TARGET TABLE: sdi_profound_bronze_citations_topic_tag_daily
+
+PURPOSE:
+  Incrementally upsert ProFound Citations Topic+Tag Daily into Bronze:
+    - filter by File_Load_datetime lookback window
+    - parse canonical DATE from date_yyyymmdd
+    - keep raw date INT64 from source column 'date'
+    - dedupe per grain using latest (file_load_datetime, filename, insert_date)
+
+GRAIN:
+  account_id + root_domain + topic + tag + date_yyyymmdd
+
+PARTITION / CLUSTER:
+  PARTITION BY date
+  CLUSTER BY account_id, topic, tag
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citations_topic_tag_daily`()
+OPTIONS(strict_mode=false)
+BEGIN
+  DECLARE lookback_days INT64 DEFAULT 60;
+
+  MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citations_topic_tag_daily` T
+  USING (
+    WITH src AS (
+      SELECT
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
+        NULLIF(TRIM(SAFE_CAST(raw.root_domain AS STRING)), '') AS root_domain,
+        NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
+        NULLIF(TRIM(SAFE_CAST(raw.tag AS STRING)), '') AS tag,
+
+        SAFE_CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        SAFE.PARSE_DATE('%Y%m%d', SAFE_CAST(raw.date_yyyymmdd AS STRING)) AS date,
+        SAFE_CAST(raw.date AS INT64) AS raw_date_int64,
+
+        SAFE_CAST(raw.count AS FLOAT64) AS count,
+        SAFE_CAST(raw.share_of_voice AS FLOAT64) AS share_of_voice,
+
+        SAFE_CAST(raw.__insert_date AS INT64) AS insert_date,
+        SAFE_CAST(raw.File_Load_datetime AS DATETIME) AS file_load_datetime,
+        NULLIF(TRIM(SAFE_CAST(raw.Filename AS STRING)), '') AS filename
+      FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_citations_topic_tag_daily_tmo` raw
+      WHERE SAFE_CAST(raw.File_Load_datetime AS DATETIME) IS NOT NULL
+        AND SAFE_CAST(raw.File_Load_datetime AS DATETIME)
+          >= DATETIME_SUB(CURRENT_DATETIME(), INTERVAL lookback_days DAY)
+    ),
+    cleaned AS (
+      SELECT *
+      FROM src
+      WHERE date IS NOT NULL
+        AND account_id IS NOT NULL
+        AND root_domain IS NOT NULL
+        AND topic IS NOT NULL
+        AND tag IS NOT NULL
+        AND date_yyyymmdd IS NOT NULL
+    ),
+    dedup AS (
+      SELECT * EXCEPT(rn)
+      FROM (
+        SELECT
+          c.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY account_id, root_domain, topic, tag, date_yyyymmdd
+            ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+          ) AS rn
+        FROM cleaned c
+      )
+      WHERE rn = 1
+    )
+    SELECT * FROM dedup
+  ) S
+  ON  T.account_id    = S.account_id
+  AND T.root_domain   = S.root_domain
+  AND T.topic         = S.topic
+  AND T.tag           = S.tag
+  AND T.date_yyyymmdd = S.date_yyyymmdd
+
+  WHEN MATCHED THEN UPDATE SET
+    account_name = S.account_name,
+    date = S.date,
+    raw_date_int64 = S.raw_date_int64,
+    count = S.count,
+    share_of_voice = S.share_of_voice,
+    insert_date = S.insert_date,
+    file_load_datetime = S.file_load_datetime,
+    filename = S.filename
+
+  WHEN NOT MATCHED THEN INSERT ROW;
+
+END;
+
