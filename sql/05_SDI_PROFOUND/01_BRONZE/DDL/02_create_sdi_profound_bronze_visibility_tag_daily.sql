@@ -16,11 +16,11 @@ PURPOSE:
     - Dedupe per grain using latest file load
 
 GRAIN:
-  account_id + asset_id + tag + date_yyyymmdd
+  account_id + asset_name + tag + date_yyyymmdd
 
 PARTITION / CLUSTER:
   PARTITION BY date
-  CLUSTER BY account_id, asset_id, tag
+  CLUSTER BY account_id, asset_name, tag
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
@@ -46,6 +46,6 @@ CREATE OR REPLACE TABLE
   filename STRING OPTIONS(description="Raw Filename (lineage).")
 )
 PARTITION BY date
-CLUSTER BY account_id, asset_id, tag
+CLUSTER BY account_id, asset_name, tag
 OPTIONS(description="Bronze ProFound Visibility Tag Daily. Canonical date + dedupe + lineage.");
 

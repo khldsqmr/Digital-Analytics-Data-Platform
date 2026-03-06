@@ -20,7 +20,7 @@ GRAIN:
 
 PARTITION / CLUSTER:
   PARTITION BY date
-  CLUSTER BY account_id, asset_id, topic
+  CLUSTER BY account_id, asset_name, topic
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
@@ -46,6 +46,6 @@ CREATE OR REPLACE TABLE
   filename STRING OPTIONS(description="Raw Filename (lineage).")
 )
 PARTITION BY date
-CLUSTER BY account_id, asset_id, topic
+CLUSTER BY account_id, asset_name, topic
 OPTIONS(description="Bronze ProFound Visibility Topic Daily. Canonical date + dedupe + lineage.");
 
