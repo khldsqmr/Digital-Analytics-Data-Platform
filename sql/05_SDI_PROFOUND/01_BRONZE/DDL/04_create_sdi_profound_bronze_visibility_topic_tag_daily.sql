@@ -16,7 +16,7 @@ PURPOSE:
     - Dedupe per grain using latest file load
 
 GRAIN:
-  account_id + asset_id + topic + tag + date_yyyymmdd
+  account_id + asset_name + topic + tag + date_yyyymmdd
 
 PARTITION / CLUSTER:
   PARTITION BY date

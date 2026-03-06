@@ -39,5 +39,5 @@ CREATE OR REPLACE TABLE
   is_fail BOOL OPTIONS(description="TRUE when FAIL.")
 )
 PARTITION BY test_date
-CLUSTER BY table_name, test_layer, severity_level
+CLUSTER BY table_name, test_name, status
 OPTIONS(description="Bronze ProFound centralized QA test results table.");
