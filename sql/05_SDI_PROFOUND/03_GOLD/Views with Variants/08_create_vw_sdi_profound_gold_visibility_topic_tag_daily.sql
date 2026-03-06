@@ -13,7 +13,6 @@ BUSINESS GRAIN:
     - date
     - account_id
     - account_name
-    - asset_id
     - asset_name
     - topic
     - tag
@@ -36,7 +35,6 @@ OUTPUT COLUMNS:
   date
   account_id
   account_name
-  asset_id
   asset_name
   topic
   tag
@@ -60,7 +58,6 @@ WITH bronze_source AS (
     date,
     account_id,
     account_name,
-    asset_id,
     asset_name,
     topic,
     tag,
@@ -76,7 +73,6 @@ collapsed_exact_duplicates AS (
     date,
     account_id,
     account_name,
-    asset_id,
     asset_name,
     topic,
     tag,
@@ -90,7 +86,6 @@ collapsed_exact_duplicates AS (
     date,
     account_id,
     account_name,
-    asset_id,
     asset_name,
     topic,
     tag,
@@ -105,7 +100,6 @@ variant_enriched AS (
     date,
     account_id,
     account_name,
-    asset_id,
     asset_name,
     topic,
     tag,
@@ -118,16 +112,16 @@ variant_enriched AS (
       'variant_',
       CAST(
         DENSE_RANK() OVER (
-          PARTITION BY date, account_id, account_name, asset_id, asset_name, topic, tag
+          PARTITION BY date, account_id, account_name, asset_name, topic, tag
           ORDER BY executions, mentions_count, share_of_voice, visibility_score
         ) AS STRING
       )
     ) AS metric_variant_id,
     COUNT(*) OVER (
-      PARTITION BY date, account_id, account_name, asset_id, asset_name, topic, tag
+      PARTITION BY date, account_id, account_name, asset_name, topic, tag
     ) AS metric_variant_count,
     COUNT(*) OVER (
-      PARTITION BY date, account_id, account_name, asset_id, asset_name, topic, tag
+      PARTITION BY date, account_id, account_name, asset_name, topic, tag
     ) > 1 AS has_metric_variants
   FROM collapsed_exact_duplicates
 )
@@ -136,7 +130,6 @@ SELECT
   date,
   account_id,
   account_name,
-  asset_id,
   asset_name,
   topic,
   tag,
