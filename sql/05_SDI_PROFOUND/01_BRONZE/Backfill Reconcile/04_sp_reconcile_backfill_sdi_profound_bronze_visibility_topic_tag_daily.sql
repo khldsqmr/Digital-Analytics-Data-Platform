@@ -8,7 +8,7 @@ PURPOSE:
   Reconcile Bronze ProFound Visibility Topic+Tag Daily against raw for a supplied business-date range.
 
 BUSINESS GRAIN:
-  account_id + asset_name + topic + tag + date_yyyymmdd
+  account_id + asset_id + topic + tag + date_yyyymmdd
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
