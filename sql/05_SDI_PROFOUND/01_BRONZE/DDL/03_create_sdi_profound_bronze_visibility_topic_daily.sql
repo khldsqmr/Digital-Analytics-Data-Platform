@@ -28,6 +28,7 @@ CREATE OR REPLACE TABLE
 (
   account_id STRING OPTIONS(description="Account ID from raw."),
   account_name STRING OPTIONS(description="Account name from raw."),
+  asset_id STRING OPTIONS(description="Asset ID from raw."),
   asset_name STRING OPTIONS(description="Asset name from raw."),
   topic STRING OPTIONS(description="Topic from raw."),
 

@@ -32,6 +32,7 @@ BEGIN
         NULLIF(TRIM(SAFE_CAST(raw.account_id AS STRING)), '') AS account_id,
         NULLIF(TRIM(SAFE_CAST(raw.account_name AS STRING)), '') AS account_name,
         NULLIF(TRIM(SAFE_CAST(raw.asset_name AS STRING)), '') AS asset_name,
+        NULLIF(TRIM(SAFE_CAST(raw.asset_id AS STRING)), '') AS asset_id,
         NULLIF(TRIM(SAFE_CAST(raw.topic AS STRING)), '') AS topic,
         NULLIF(TRIM(SAFE_CAST(raw.tag AS STRING)), '') AS tag,
 
