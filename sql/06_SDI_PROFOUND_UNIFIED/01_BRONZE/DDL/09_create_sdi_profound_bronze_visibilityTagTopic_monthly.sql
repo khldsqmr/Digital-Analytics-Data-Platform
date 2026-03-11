@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 09_create_sdi_profound_bronze_visibility_tag_topic_monthly.sql
+FILE: 09_create_sdi_profound_bronze_visibilityTagTopic_monthly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE: sdi_profound_bronze_visibility_tag_topic_monthly
+TABLE: sdi_profound_bronze_visibilityTagTopic_monthly
 
 SOURCE (RAW):
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_topic_monthly_tmo
@@ -19,7 +19,7 @@ PARTITION / CLUSTER:
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_topic_monthly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTagTopic_monthly`
 (
   account_id STRING,
   account_name STRING,

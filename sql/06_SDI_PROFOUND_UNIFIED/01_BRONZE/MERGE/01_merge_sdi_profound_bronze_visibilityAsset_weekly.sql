@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 01_merge_sdi_profound_bronze_visibility_asset_weekly.sql
+FILE: 01_merge_sdi_profound_bronze_visibilityAsset_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TARGET TABLE: sdi_profound_bronze_visibility_asset_weekly
+TARGET TABLE: sdi_profound_bronze_visibilityAsset_weekly
 
 SOURCE (RAW):
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_asset_weekly_tmo
@@ -25,14 +25,14 @@ BUSINESS GRAIN:
 
 BEGIN TRANSACTION;
 
-DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_weekly`
+DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityAsset_weekly`
 WHERE date_yyyymmdd IN (
   SELECT DISTINCT date_yyyymmdd
   FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_asset_weekly_tmo`
   WHERE SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd) IS NOT NULL
 );
 
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_weekly`
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityAsset_weekly`
 (
   account_id,
   account_name,

@@ -1,12 +1,12 @@
 /* =================================================================================================
-FILE: 06_sp_merge_sdi_profound_bronze_citation_tag_topic_weekly.sql
+FILE: 06_sp_merge_sdi_profound_bronze_citationTagTopic_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-PROCEDURE: sp_merge_sdi_profound_bronze_citation_tag_topic_weekly
+PROCEDURE: sp_merge_sdi_profound_bronze_citationTagTopic_weekly
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citation_tag_topic_weekly`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citationTagTopic_weekly`()
 OPTIONS(strict_mode=false)
 BEGIN
 

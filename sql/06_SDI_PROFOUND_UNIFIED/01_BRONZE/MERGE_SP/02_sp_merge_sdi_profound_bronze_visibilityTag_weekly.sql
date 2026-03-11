@@ -1,12 +1,12 @@
 /* =================================================================================================
-FILE: 02_sp_merge_sdi_profound_bronze_visibility_tag_weekly.sql
+FILE: 02_sp_merge_sdi_profound_bronze_visibilityTag_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-PROCEDURE: sp_merge_sdi_profound_bronze_visibility_tag_weekly
+PROCEDURE: sp_merge_sdi_profound_bronze_visibilityTag_weekly
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_tag_weekly`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibilityTag_weekly`()
 OPTIONS(strict_mode=false)
 BEGIN
 

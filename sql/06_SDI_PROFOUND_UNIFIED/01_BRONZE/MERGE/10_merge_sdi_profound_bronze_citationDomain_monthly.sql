@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 10_merge_sdi_profound_bronze_citation_domain_monthly.sql
+FILE: 10_merge_sdi_profound_bronze_citationDomain_monthly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TARGET TABLE: sdi_profound_bronze_citation_domain_monthly
+TARGET TABLE: sdi_profound_bronze_citationDomain_monthly
 
 SOURCE (RAW):
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_monthly_tmo
@@ -16,14 +16,14 @@ BUSINESS GRAIN:
 
 BEGIN TRANSACTION;
 
-DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_monthly`
+DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationDomain_monthly`
 WHERE date_yyyymmdd IN (
   SELECT DISTINCT date_yyyymmdd
   FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_monthly_tmo`
   WHERE SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd) IS NOT NULL
 );
 
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_monthly`
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationDomain_monthly`
 (
   account_id, account_name, root_domain,
   date, date_yyyymmdd, raw_date_int64,

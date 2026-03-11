@@ -1,15 +1,15 @@
 /* =================================================================================================
-FILE: 01_sp_merge_sdi_profound_bronze_visibility_asset_weekly.sql
+FILE: 01_sp_merge_sdi_profound_bronze_visibilityAsset_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-PROCEDURE: sp_merge_sdi_profound_bronze_visibility_asset_weekly
+PROCEDURE: sp_merge_sdi_profound_bronze_visibilityAsset_weekly
 
 PURPOSE:
   Stored procedure wrapper for refreshing Bronze ProFound Visibility Asset Weekly.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_asset_weekly`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibilityAsset_weekly`()
 OPTIONS(strict_mode=false)
 BEGIN
 

@@ -1,12 +1,12 @@
 /* =================================================================================================
-FILE: 07_sp_merge_sdi_profound_bronze_visibility_asset_monthly.sql
+FILE: 07_sp_merge_sdi_profound_bronze_visibilityAsset_monthly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-PROCEDURE: sp_merge_sdi_profound_bronze_visibility_asset_monthly
+PROCEDURE: sp_merge_sdi_profound_bronze_visibilityAsset_monthly
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibility_asset_monthly`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_visibilityAsset_monthly`()
 OPTIONS(strict_mode=false)
 BEGIN
 
