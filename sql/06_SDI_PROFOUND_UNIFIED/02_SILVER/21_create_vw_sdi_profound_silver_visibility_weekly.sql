@@ -55,7 +55,7 @@ SELECT
   visibility_score AS vis_visibility_score,
   CAST(NULL AS FLOAT64) AS cit_count,
   CAST(NULL AS FLOAT64) AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_weekly`
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityAsset_weekly`
 
 UNION ALL
 
@@ -79,7 +79,7 @@ SELECT
   visibility_score AS vis_visibility_score,
   CAST(NULL AS FLOAT64) AS cit_count,
   CAST(NULL AS FLOAT64) AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_weekly`
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTag_weekly`
 
 UNION ALL
 
@@ -103,4 +103,4 @@ SELECT
   visibility_score AS vis_visibility_score,
   CAST(NULL AS FLOAT64) AS cit_count,
   CAST(NULL AS FLOAT64) AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_topic_weekly`;
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTagTopic_weekly`;

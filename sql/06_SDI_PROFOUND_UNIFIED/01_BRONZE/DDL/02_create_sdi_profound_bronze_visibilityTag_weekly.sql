@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 02_create_sdi_profound_bronze_visibility_tag_weekly.sql
+FILE: 02_create_sdi_profound_bronze_visibilityTag_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE: sdi_profound_bronze_visibility_tag_weekly
+TABLE: sdi_profound_bronze_visibilityTag_weekly
 
 SOURCE (RAW):
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_weekly_tmo
@@ -19,7 +19,7 @@ PARTITION / CLUSTER:
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_weekly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTag_weekly`
 (
   account_id STRING,
   account_name STRING,

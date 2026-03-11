@@ -1,14 +1,14 @@
 /* =================================================================================================
-FILE: 10_create_sdi_profound_bronze_citation_domain_monthly.sql
+FILE: 04_create_sdi_profound_bronze_citationDomain_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE: sdi_profound_bronze_citation_domain_monthly
+TABLE: sdi_profound_bronze_citationDomain_weekly
 
 SOURCE (RAW):
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_monthly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_weekly_tmo
 
 PURPOSE:
-  Canonical Bronze monthly table for ProFound Citation by Domain.
+  Canonical Bronze weekly table for ProFound Citation by Domain.
 
 BUSINESS GRAIN:
   account_id + root_domain + date_yyyymmdd
@@ -19,7 +19,7 @@ PARTITION / CLUSTER:
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_monthly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationDomain_weekly`
 (
   account_id STRING,
   account_name STRING,
@@ -39,5 +39,5 @@ CREATE OR REPLACE TABLE
 PARTITION BY date
 CLUSTER BY account_id, root_domain
 OPTIONS(
-  description="Bronze ProFound Citation Domain Monthly."
+  description="Bronze ProFound Citation Domain Weekly."
 );

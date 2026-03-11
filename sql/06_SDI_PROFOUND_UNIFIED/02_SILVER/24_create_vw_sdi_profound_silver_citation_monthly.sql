@@ -28,7 +28,7 @@ SELECT
   CAST(NULL AS FLOAT64) AS vis_visibility_score,
   count AS cit_count,
   share_of_voice AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_monthly`
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationDomain_monthly`
 
 UNION ALL
 
@@ -52,7 +52,7 @@ SELECT
   CAST(NULL AS FLOAT64) AS vis_visibility_score,
   count AS cit_count,
   share_of_voice AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_tag_monthly`
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationTag_monthly`
 
 UNION ALL
 
@@ -76,4 +76,4 @@ SELECT
   CAST(NULL AS FLOAT64) AS vis_visibility_score,
   count AS cit_count,
   share_of_voice AS cit_share_of_voice
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_tag_topic_monthly`;
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationTagTopic_monthly`;

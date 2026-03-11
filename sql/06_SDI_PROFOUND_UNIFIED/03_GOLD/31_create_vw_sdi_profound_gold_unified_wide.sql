@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 31_create_vw_sdi_profound_gold_unified.sql
+FILE: 31_create_vw_sdi_profound_gold_unified_wide.sql
 LAYER: Gold
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_profound_gold_unified
+VIEW: vw_sdi_profound_gold_unified_wide
 
 PURPOSE:
   Unified long-format Gold reporting view for ProFound.
@@ -33,7 +33,7 @@ OUTPUT COLUMNS:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_gold_unified` AS
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_gold_unified_wide` AS
 
 SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_profound_silver_visibility_weekly`
 UNION ALL

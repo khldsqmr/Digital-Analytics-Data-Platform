@@ -1,23 +1,28 @@
 /* =================================================================================================
-FILE: 07_create_sdi_profound_bronze_visibility_asset_monthly.sql
+FILE: 01_create_sdi_profound_bronze_visibilityAsset_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE: sdi_profound_bronze_visibility_asset_monthly
+TABLE: sdi_profound_bronze_visibilityAsset_weekly
 
 SOURCE (RAW):
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_asset_monthly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_asset_weekly_tmo
 
 PURPOSE:
-  Canonical Bronze monthly table for ProFound Visibility by Asset.
+  Canonical Bronze weekly table for ProFound Visibility by Asset.
   - Parse DATE from date_yyyymmdd
-  - Preserve raw lineage fields needed for audits and refresh logic
-  - Serve as the durable latest Bronze snapshot for monthly visibility asset data
+  - Preserve raw source lineage fields needed for audits and refresh logic
+  - Serve as the durable latest Bronze snapshot for weekly visibility asset data
 
 BUSINESS GRAIN:
   account_id + asset_id + asset_name + date_yyyymmdd
 
 REFRESH STRATEGY:
   Date-scoped delete + insert for affected raw dates.
+  This ensures Bronze reflects:
+    - updates
+    - inserts
+    - deletions from refreshed raw snapshots
+    - historical backfills
 
 PARTITION / CLUSTER:
   PARTITION BY date
@@ -25,7 +30,7 @@ PARTITION / CLUSTER:
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_monthly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityAsset_weekly`
 (
   account_id STRING OPTIONS(description="Raw account identifier."),
   account_name STRING OPTIONS(description="Raw account name."),
@@ -48,5 +53,5 @@ CREATE OR REPLACE TABLE
 PARTITION BY date
 CLUSTER BY account_id, asset_id
 OPTIONS(
-  description="Bronze ProFound Visibility Asset Monthly."
+  description="Bronze ProFound Visibility Asset Weekly."
 );

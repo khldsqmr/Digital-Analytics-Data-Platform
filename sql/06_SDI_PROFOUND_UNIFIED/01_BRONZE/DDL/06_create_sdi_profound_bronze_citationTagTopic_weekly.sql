@@ -1,17 +1,17 @@
 /* =================================================================================================
-FILE: 04_create_sdi_profound_bronze_citation_domain_weekly.sql
+FILE: 06_create_sdi_profound_bronze_citationTagTopic_weekly.sql
 LAYER: Bronze
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-TABLE: sdi_profound_bronze_citation_domain_weekly
+TABLE: sdi_profound_bronze_citationTagTopic_weekly
 
 SOURCE (RAW):
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_weekly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_topic_weekly_tmo
 
 PURPOSE:
-  Canonical Bronze weekly table for ProFound Citation by Domain.
+  Canonical Bronze weekly table for ProFound Citation by Domain + Tag + Topic.
 
 BUSINESS GRAIN:
-  account_id + root_domain + date_yyyymmdd
+  account_id + root_domain + tag + topic + date_yyyymmdd
 
 PARTITION / CLUSTER:
   PARTITION BY date
@@ -19,11 +19,13 @@ PARTITION / CLUSTER:
 ================================================================================================= */
 
 CREATE OR REPLACE TABLE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_weekly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationTagTopic_weekly`
 (
   account_id STRING,
   account_name STRING,
   root_domain STRING,
+  tag STRING,
+  topic STRING,
 
   date DATE,
   date_yyyymmdd STRING,
@@ -39,5 +41,5 @@ CREATE OR REPLACE TABLE
 PARTITION BY date
 CLUSTER BY account_id, root_domain
 OPTIONS(
-  description="Bronze ProFound Citation Domain Weekly."
+  description="Bronze ProFound Citation Tag Topic Weekly."
 );
