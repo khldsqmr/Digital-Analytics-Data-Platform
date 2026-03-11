@@ -12,14 +12,14 @@ BEGIN
 
   BEGIN TRANSACTION;
 
-  DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_topic_weekly`
+  DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTagTopic_weekly`
   WHERE date_yyyymmdd IN (
     SELECT DISTINCT date_yyyymmdd
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_topic_weekly_tmo`
     WHERE SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd) IS NOT NULL
   );
 
-  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_topic_weekly`
+  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTagTopic_weekly`
   (
     account_id, account_name, asset_id, asset_name, tag, topic,
     date, date_yyyymmdd, raw_date_int64,
