@@ -3,8 +3,7 @@ FILE: 43_test_sdi_profound_silver_sanity.sql
 PURPOSE:
   Sanity checks for Silver views.
   - row counts
-  - nullability patterns
-  - report/grain distribution
+  - report / grain distribution
 ================================================================================================= */
 
 SELECT 'vw_sdi_profound_silver_visibility_weekly' AS view_name, COUNT(*) AS row_count

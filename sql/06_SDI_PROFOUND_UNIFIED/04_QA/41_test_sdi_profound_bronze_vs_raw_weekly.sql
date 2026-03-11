@@ -1,12 +1,12 @@
 /* =================================================================================================
 FILE: 41_test_sdi_profound_bronze_vs_raw_weekly.sql
 PURPOSE:
-  Weekly Bronze vs Raw reconciliation checks for ProFound.
-  These tests compare date-scoped deduped raw output against Bronze row counts.
+  Weekly Bronze vs Raw reconciliation checks for ProFound Unified.
+  These tests compare raw latest-snapshot deduped output against Bronze row counts.
 
 NOTES:
   - Run section by section
-  - If counts mismatch, inspect duplicate grain / stale snapshot issues
+  - If counts mismatch, inspect grain logic, duplicate handling, or stale snapshot issues
 ================================================================================================= */
 
 -- -------------------------------------------------------------------------------------------------
@@ -16,7 +16,10 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, asset_id, asset_name, date_yyyymmdd,
+      account_id,
+      asset_id,
+      asset_name,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, asset_id, asset_name, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -27,9 +30,9 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'visibility_asset_weekly' AS table_name,
+  'visibilityAsset_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_asset_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityAsset_weekly`) AS bronze_count;
 
 -- -------------------------------------------------------------------------------------------------
 -- 41.2 Visibility Tag Weekly
@@ -38,7 +41,11 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, asset_id, asset_name, tag, date_yyyymmdd,
+      account_id,
+      asset_id,
+      asset_name,
+      tag,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, asset_id, asset_name, tag, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -49,9 +56,9 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'visibility_tag_weekly' AS table_name,
+  'visibilityTag_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTag_weekly`) AS bronze_count;
 
 -- -------------------------------------------------------------------------------------------------
 -- 41.3 Visibility Tag Topic Weekly
@@ -60,7 +67,12 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, asset_id, asset_name, tag, topic, date_yyyymmdd,
+      account_id,
+      asset_id,
+      asset_name,
+      tag,
+      topic,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, asset_id, asset_name, tag, topic, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -71,9 +83,9 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'visibility_tag_topic_weekly' AS table_name,
+  'visibilityTagTopic_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibility_tag_topic_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_visibilityTagTopic_weekly`) AS bronze_count;
 
 -- -------------------------------------------------------------------------------------------------
 -- 41.4 Citation Domain Weekly
@@ -82,7 +94,9 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, root_domain, date_yyyymmdd,
+      account_id,
+      root_domain,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, root_domain, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -93,9 +107,9 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'citation_domain_weekly' AS table_name,
+  'citationDomain_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationDomain_weekly`) AS bronze_count;
 
 -- -------------------------------------------------------------------------------------------------
 -- 41.5 Citation Tag Weekly
@@ -104,7 +118,10 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, root_domain, tag, date_yyyymmdd,
+      account_id,
+      root_domain,
+      tag,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, root_domain, tag, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -115,9 +132,9 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'citation_tag_weekly' AS table_name,
+  'citationTag_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_tag_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationTag_weekly`) AS bronze_count;
 
 -- -------------------------------------------------------------------------------------------------
 -- 41.6 Citation Tag Topic Weekly
@@ -126,7 +143,11 @@ WITH raw_deduped AS (
   SELECT *
   FROM (
     SELECT
-      account_id, root_domain, tag, topic, date_yyyymmdd,
+      account_id,
+      root_domain,
+      tag,
+      topic,
+      date_yyyymmdd,
       ROW_NUMBER() OVER (
         PARTITION BY account_id, root_domain, tag, topic, date_yyyymmdd
         ORDER BY File_Load_datetime DESC, __insert_date DESC, Filename DESC
@@ -137,6 +158,6 @@ WITH raw_deduped AS (
   WHERE rn = 1
 )
 SELECT
-  'citation_tag_topic_weekly' AS table_name,
+  'citationTagTopic_weekly' AS table_name,
   (SELECT COUNT(*) FROM raw_deduped) AS raw_deduped_count,
-  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_tag_topic_weekly`) AS bronze_count;
+  (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citationTagTopic_weekly`) AS bronze_count;
