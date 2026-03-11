@@ -35,7 +35,7 @@ BEGIN
       src.account_name,
       src.asset_id,
       src.asset_name,
-      PARSE_DATE('%Y%m%d', src.date_yyyymmdd) AS date,
+      DATE_ADD(SAFE.PARSE_DATE('%Y%m%d', src.date_yyyymmdd), INTERVAL 6 DAY) AS date,
       src.date_yyyymmdd,
       src.date AS raw_date_int64,
       src.executions,
