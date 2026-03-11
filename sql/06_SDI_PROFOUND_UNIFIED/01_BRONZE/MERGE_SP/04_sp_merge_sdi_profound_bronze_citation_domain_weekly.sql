@@ -1,0 +1,59 @@
+/* =================================================================================================
+FILE: 04_sp_merge_sdi_profound_bronze_citation_domain_weekly.sql
+LAYER: Bronze
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROCEDURE: sp_merge_sdi_profound_bronze_citation_domain_weekly
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_profound_bronze_citation_domain_weekly`()
+OPTIONS(strict_mode=false)
+BEGIN
+
+  BEGIN TRANSACTION;
+
+  DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_weekly`
+  WHERE date_yyyymmdd IN (
+    SELECT DISTINCT date_yyyymmdd
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_weekly_tmo`
+    WHERE SAFE.PARSE_DATE('%Y%m%d', date_yyyymmdd) IS NOT NULL
+  );
+
+  INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_profound_bronze_citation_domain_weekly`
+  (
+    account_id, account_name, root_domain,
+    date, date_yyyymmdd, raw_date_int64,
+    count, share_of_voice,
+    insert_date, file_load_datetime, filename
+  )
+  WITH ranked AS (
+    SELECT
+      src.account_id,
+      src.account_name,
+      src.root_domain,
+      PARSE_DATE('%Y%m%d', src.date_yyyymmdd) AS date,
+      src.date_yyyymmdd,
+      src.date AS raw_date_int64,
+      src.count,
+      src.share_of_voice,
+      src.__insert_date AS insert_date,
+      src.File_Load_datetime AS file_load_datetime,
+      src.Filename AS filename,
+      ROW_NUMBER() OVER (
+        PARTITION BY src.account_id, src.root_domain, src.date_yyyymmdd
+        ORDER BY src.File_Load_datetime DESC, src.__insert_date DESC, src.Filename DESC
+      ) AS rn
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_domain_weekly_tmo` src
+    WHERE SAFE.PARSE_DATE('%Y%m%d', src.date_yyyymmdd) IS NOT NULL
+  )
+  SELECT
+    account_id, account_name, root_domain,
+    date, date_yyyymmdd, raw_date_int64,
+    count, share_of_voice,
+    insert_date, file_load_datetime, filename
+  FROM ranked
+  WHERE rn = 1;
+
+  COMMIT TRANSACTION;
+
+END;
