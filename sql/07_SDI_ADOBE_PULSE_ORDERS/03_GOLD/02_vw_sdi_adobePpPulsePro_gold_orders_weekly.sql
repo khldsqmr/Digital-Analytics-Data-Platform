@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 01_vw_sdi_adobePpPulsePro_gold_orders_weekly.sql
+FILE: 02_vw_sdi_adobePpPulsePro_gold_orders_weekly.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_adobePpPulsePro_gold_orders_weekly_by_channel
+VIEW: vw_sdi_adobePpPulsePro_gold_orders_weekly
 
 SOURCE:
   vw_sdi_adobePpPulsePro_silver_orders_daily
