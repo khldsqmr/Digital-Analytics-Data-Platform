@@ -1,0 +1,18 @@
+SELECT
+  qgp_week,
+
+  SUM(orders_web_unassisted) AS orders_web_unassisted,
+  SUM(orders_web_assisted) AS orders_web_assisted,
+  SUM(orders_app_unassisted) AS orders_app_unassisted,
+  SUM(orders_app_assisted) AS orders_app_assisted,
+
+  SUM(orders_web_all) AS orders_web_all,
+  SUM(orders_app_all) AS orders_app_all,
+  SUM(orders_fully_unassisted) AS orders_fully_unassisted,
+  SUM(orders_fully_assisted) AS orders_fully_assisted,
+  SUM(orders_all) AS orders_all
+
+FROM  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobePpPulsePro_gold_orders_weekly`
+GROUP BY qgp_week
+ORDER BY qgp_week DESC;
+ 
