@@ -13,7 +13,7 @@ PURPOSE:
   This view enriches the Bronze entry-session table by:
   - standardizing the raw page label
   - deriving structured tokens from page_name
-  - assigning business-friendly entry page groups using those tokens
+  - assigning a cleaner business-friendly entry page group taxonomy
 
 BUSINESS GRAIN:
   session_id + session_day
@@ -21,19 +21,41 @@ BUSINESS GRAIN:
 WHY THIS VERSION IS BETTER:
   The raw page_name field clearly follows a structured taxonomy such as:
     token_1 | token_2 : token_3
-  Examples seen in profiling include:
+
+  Profiling showed strong recurring patterns like:
     - TLife App | Onboarding : Launch
     - TMO | Home : Home
     - TMO | Marketing : Landing Page
+    - TMO | Marketing : Offers
     - TMO | Shop : Browse
     - TMO | Shop : Cell Phone Detail
     - TMO | Shop : Order Status
-  This makes token-based grouping more reliable than broad LIKE-only logic.
+    - TMO | Store : Business Detail
+    - TMO | Support : Resources
+  so token-based grouping is more reliable than broad LIKE-only logic. 
+
+TARGET TAXONOMY (MAX 15 GROUPS):
+  1. App / T-Life
+  2. Homepage
+  3. PLP / Browse
+  4. PDP / Detail
+  5. Deals / Offers
+  6. Brand / Marketing
+  7. Coverage / Network
+  8. Support / Help
+  9. Store / Locator
+  10. Order Status
+  11. Cart / Checkout
+  12. Account / Billing / Login
+  13. Privacy / Legal
+  14. Search / Tools
+  15. Other
 
 IMPORTANT:
-  - This is still a starter taxonomy, but much stronger than free-text-only grouping.
-  - Raw page name and cleaned page name are preserved for auditability.
-  - Tokens are exposed for debugging and future refinement.
+  - This is still a business mapping layer and should be refined as needed.
+  - Raw page name and tokens are preserved for auditability.
+  - TLife App is intentionally kept as one major group for now because it is a very large distinct
+    app ecosystem in the data. :contentReference[oaicite:2]{index=2}
 
 TOKEN EXTRACTION APPROACH:
   token_1:
@@ -46,8 +68,8 @@ TOKEN EXTRACTION APPROACH:
     first segment after the first colon ':'
 
 NOTES:
-  - Some rows are malformed, blank, or URL-like. These will usually fall to Other unless covered.
-  - TLife App is kept as a dedicated top-level app grouping in this version.
+  - Some rows are malformed, blank, numeric, URL-like, or error-like. These usually fall to Other
+    unless clearly mapped into Search / Tools, Order Status, Cart / Checkout, or Privacy / Legal.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -107,53 +129,31 @@ SELECT
   token_3,
 
   CASE
-    /* ---------------------------------------------------------------------------------------------
-       APP / T-LIFE
-       Keep the TLife family together for now because it is a very large and distinct app ecosystem.
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) = 'tlife app' THEN 'App / T-Life'
+    /* =============================================================================================
+       1. APP / T-LIFE
+       Keep all TLife App together for now.
+    ============================================================================================= */
+    WHEN LOWER(token_1) = 'tlife app'
+      OR LOWER(token_1) = 'metro app'
+    THEN 'App / T-Life'
 
-    /* ---------------------------------------------------------------------------------------------
-       HOMEPAGE
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) = 'tmo'
+    /* =============================================================================================
+       2. HOMEPAGE
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 't-mo prepaid')
          AND LOWER(token_2) = 'home'
          AND LOWER(token_3) = 'home'
     THEN 'Homepage'
 
-    WHEN LOWER(token_1) = 'mbyt'
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) = 'home'
-         AND LOWER(token_3) = 'home'
+         AND LOWER(token_3) = 'landing page'
     THEN 'Homepage'
 
-    WHEN LOWER(token_1) = 't-mo prepaid'
-         AND LOWER(token_2) = 'home'
-         AND LOWER(token_3) = 'home'
-    THEN 'Homepage'
-
-    /* ---------------------------------------------------------------------------------------------
-       PDP
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app')
-         AND LOWER(token_2) IN ('shop', 'store')
-         AND LOWER(token_3) IN (
-           'cell phone detail',
-           'cellphone detail',
-           'product detail',
-           'detalle de producto',
-           'smart watch detail',
-           'tablet detail',
-           'tablet & device detail',
-           'hotspot & iot detail',
-           'hotspot & iot detail',
-           'accessory detail'
-         )
-    THEN 'PDP'
-
-    /* ---------------------------------------------------------------------------------------------
-       PLP
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app', 't-mo prepaid')
+    /* =============================================================================================
+       3. PLP / BROWSE
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 't-mo prepaid')
          AND LOWER(token_2) IN ('shop', 'store')
          AND LOWER(token_3) IN (
            'browse',
@@ -164,25 +164,45 @@ SELECT
            'plans',
            'bring your own phone',
            'bring your own device',
-           'devices'
+           'devices',
+           'vaciar carrito'
          )
-    THEN 'PLP'
+    THEN 'PLP / Browse'
 
     WHEN LOWER(token_1) = 'tmo'
-         AND LOWER(token_2) IN ('cell-phone-plans', 'flex')
-    THEN 'PLP'
+         AND LOWER(token_2) IN ('cell-phone-plans', 'flex', 'plans', 'customer')
+    THEN 'PLP / Browse'
 
-    /* ---------------------------------------------------------------------------------------------
-       DEALS / OFFERS
-    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) = 'resources'
+         AND LOWER(token_3) = 'bring your own phone'
+    THEN 'PLP / Browse'
+
+    /* =============================================================================================
+       4. PDP / DETAIL
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
+         AND LOWER(token_2) IN ('shop', 'store')
+         AND LOWER(token_3) IN (
+           'cell phone detail',
+           'cellphone detail',
+           'product detail',
+           'detalle de producto',
+           'smart watch detail',
+           'tablet detail',
+           'tablet & device detail',
+           'hotspot & iot detail',
+           'accessory detail',
+           'product detail'
+         )
+    THEN 'PDP / Detail'
+
+    /* =============================================================================================
+       5. DEALS / OFFERS
+    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) IN ('marketing', 'promotions')
-         AND LOWER(token_3) IN (
-           'offers',
-           'deals',
-           'landing page',
-           'benefits'
-         )
+         AND LOWER(token_3) IN ('offers', 'deals', 'benefits')
     THEN 'Deals / Offers'
 
     WHEN LOWER(token_1) = 'tmo'
@@ -190,20 +210,75 @@ SELECT
          AND LOWER(token_3) = 'home'
     THEN 'Deals / Offers'
 
-    /* ---------------------------------------------------------------------------------------------
-       BRAND / WHY T-MOBILE
-    --------------------------------------------------------------------------------------------- */
+    /* =============================================================================================
+       6. BRAND / MARKETING
+       Brand narratives, acquisition/landing pages, resources, news, benefits, campaigns, etc.
+    ============================================================================================= */
     WHEN LOWER(token_1) = 'tmo'
-         AND LOWER(token_2) IN ('marketing', 'coverage', 'brand')
-    THEN 'Brand / Why T-Mobile'
+         AND LOWER(token_2) IN ('marketing', 'brand', 'benefits', 'resources', 'advertising solutions')
+    THEN 'Brand / Marketing'
+
+    WHEN LOWER(token_1) IN ('tmo:nextgen', 'tmo:uno', 'tmo:nextgen+')
+    THEN 'Brand / Marketing'
+
+    /* =============================================================================================
+       7. COVERAGE / NETWORK
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'assurance')
+         AND LOWER(token_2) IN ('coverage', 'network')
+    THEN 'Coverage / Network'
+
+    /* =============================================================================================
+       8. SUPPORT / HELP
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tfb')
+         AND LOWER(token_2) IN ('support', 'asistencia')
+    THEN 'Support / Help'
 
     WHEN LOWER(token_1) = 'tmo'
-         AND LOWER(token_2) IN ('resources', 'benefits')
-    THEN 'Brand / Why T-Mobile'
+         AND LOWER(token_2) IN ('contact-us', 'contactus')
+    THEN 'Support / Help'
 
-    /* ---------------------------------------------------------------------------------------------
-       ACCOUNT / LOGIN
-    --------------------------------------------------------------------------------------------- */
+    /* =============================================================================================
+       9. STORE / LOCATOR
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
+         AND LOWER(token_2) = 'store'
+    THEN 'Store / Locator'
+
+    /* =============================================================================================
+       10. ORDER STATUS
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
+         AND LOWER(token_2) = 'shop'
+         AND LOWER(token_3) = 'order status'
+    THEN 'Order Status'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%checkorder%'
+      OR LOWER(entry_page_name_clean) LIKE '%order-status%'
+      OR LOWER(entry_page_name_clean) LIKE '%/order-status%'
+    THEN 'Order Status'
+
+    /* =============================================================================================
+       11. CART / CHECKOUT
+    ============================================================================================= */
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) = 'shop'
+         AND LOWER(token_3) IN ('cart', 'empty cart', 'checkout')
+    THEN 'Cart / Checkout'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%/checkout%'
+      OR LOWER(entry_page_name_clean) LIKE '%cart%'
+      OR LOWER(entry_page_name_clean) LIKE '%shipping-payment%'
+      OR LOWER(entry_page_name_clean) LIKE '%esign-agreement%'
+      OR LOWER(entry_page_name_clean) LIKE '%finish%'
+      OR LOWER(entry_page_name_clean) LIKE '%review%'
+      OR LOWER(entry_page_name_clean) LIKE '%hint-order%'
+    THEN 'Cart / Checkout'
+
+    /* =============================================================================================
+       12. ACCOUNT / BILLING / LOGIN
+    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tmo app')
          AND LOWER(token_2) IN (
            'billing',
@@ -213,64 +288,32 @@ SELECT
            'guest pay',
            'guestpay',
            'my phone',
-           'payments'
+           'payments',
+           'log in'
          )
-    THEN 'Account / Login'
+    THEN 'Account / Billing / Login'
 
-    /* ---------------------------------------------------------------------------------------------
-       SUPPORT
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tfb')
-         AND LOWER(token_2) IN ('support', 'asistencia', 'contact-us', 'contactus')
-    THEN 'Support'
-
-    WHEN LOWER(token_1) = 'tmo'
+    /* =============================================================================================
+       13. PRIVACY / LEGAL
+    ============================================================================================= */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'assurance')
          AND LOWER(token_2) IN ('privacy center', 'legal')
-    THEN 'Support'
+    THEN 'Privacy / Legal'
 
-    /* ---------------------------------------------------------------------------------------------
-       STORE / LOCATOR
-    --------------------------------------------------------------------------------------------- */
+    /* =============================================================================================
+       14. SEARCH / TOOLS
+    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
-         AND LOWER(token_2) = 'store'
-    THEN 'Store / Locator'
+         AND LOWER(token_2) IN ('search', 'dns', 'hint')
+    THEN 'Search / Tools'
 
-    /* ---------------------------------------------------------------------------------------------
-       ORDER STATUS
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app')
-         AND LOWER(token_2) = 'shop'
-         AND LOWER(token_3) = 'order status'
-    THEN 'Order Status'
+    WHEN LOWER(token_1) IN ('invoca phone call', 'qualtrics survey response', 'mytmo app lifecycle event')
+    THEN 'Search / Tools'
 
-    WHEN LOWER(entry_page_name_clean) LIKE '%checkorder%'
-      OR LOWER(entry_page_name_clean) LIKE '%order-status%'
-    THEN 'Order Status'
-
-    /* ---------------------------------------------------------------------------------------------
-       FALLBACKS
-    --------------------------------------------------------------------------------------------- */
-    WHEN LOWER(entry_page_name_clean) LIKE '%cell phone detail%'
-      OR LOWER(entry_page_name_clean) LIKE '%product detail%'
-      OR LOWER(entry_page_name_clean) LIKE '%phone detail%'
-    THEN 'PDP'
-
-    WHEN LOWER(entry_page_name_clean) LIKE '%browse%'
-      OR LOWER(entry_page_name_clean) LIKE '%cell phones%'
-      OR LOWER(entry_page_name_clean) LIKE '%plan%'
-    THEN 'PLP'
-
-    WHEN LOWER(entry_page_name_clean) LIKE '%deals%'
-      OR LOWER(entry_page_name_clean) LIKE '%offers%'
-      OR LOWER(entry_page_name_clean) LIKE '%promotions%'
-    THEN 'Deals / Offers'
-
-    WHEN LOWER(entry_page_name_clean) LIKE '%support%'
-      OR LOWER(entry_page_name_clean) LIKE '%contact us%'
-      OR LOWER(entry_page_name_clean) LIKE '%privacy%'
-      OR LOWER(entry_page_name_clean) LIKE '%legal%'
-    THEN 'Support'
-
+    /* =============================================================================================
+       15. OTHER
+       Fallback bucket for malformed, invalid, utility, error, or uncategorized rows.
+    ============================================================================================= */
     ELSE 'Other'
   END AS entry_page_group
 
