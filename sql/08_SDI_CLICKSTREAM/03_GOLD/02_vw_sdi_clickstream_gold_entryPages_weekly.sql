@@ -8,12 +8,26 @@ SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_clickstream_gold_entryPages_daily
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.fn_qgp_week
 
+
 PURPOSE:
   Weekly Gold fact view for the Entry Pages tab using QGP week rollup, with TY and LY values,
-  including channel.
+  including:
+    - raw channel
+    - channel hierarchy
+    - page grouping
+    - tactic levels
 
 BUSINESS GRAIN:
-  qgp_week + lob + entry_page_group + session_channel_name
+  qgp_week
+  + lob
+  + entry_page_group
+  + session_channel_name
+  + TYPE
+  + SUB_TYPE
+  + MEDIA_TYPE
+  + TACTIC_LEVEL_1
+  + TACTIC_LEVEL_2
+  + TACTIC_LEVEL_3
 
 WHY CHANNEL IS INCLUDED:
   This supports:
@@ -43,6 +57,12 @@ SELECT
   lob,
   entry_page_group,
   session_channel_name,
+  TYPE,
+  SUB_TYPE,
+  MEDIA_TYPE,
+  TACTIC_LEVEL_1,
+  TACTIC_LEVEL_2,
+  TACTIC_LEVEL_3,
 
   SUM(entry_sessions) AS entry_sessions,
   SUM(entry_sessions_LY) AS entry_sessions_LY,
@@ -64,4 +84,10 @@ GROUP BY
   qgp_week,
   lob,
   entry_page_group,
-  session_channel_name;
+  session_channel_name,
+  TYPE,
+  SUB_TYPE,
+  MEDIA_TYPE,
+  TACTIC_LEVEL_1,
+  TACTIC_LEVEL_2,
+  TACTIC_LEVEL_3;

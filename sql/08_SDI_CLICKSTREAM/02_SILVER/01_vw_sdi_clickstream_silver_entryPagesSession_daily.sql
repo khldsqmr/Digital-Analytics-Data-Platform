@@ -14,25 +14,19 @@ PURPOSE:
   - standardizing the raw page label
   - deriving structured tokens from page_name
   - assigning a clean business-friendly entry page group taxonomy
+  - assigning standardized channel hierarchy fields:
+      * TYPE
+      * SUB_TYPE
+      * MEDIA_TYPE
 
 BUSINESS GRAIN:
   session_id + session_day
 
-WHY THIS VERSION IS BETTER:
-  The raw page_name field clearly follows structured patterns such as:
-    token_1 | token_2 : token_3
-
-  Profiling showed strong recurring patterns like:
-    - TLife App | Onboarding : Launch
-    - TMO | Home : Home
-    - TMO | Marketing : Landing Page
-    - TMO | Marketing : Offers
-    - TMO | Shop : Browse
-    - TMO | Shop : Cell Phone Detail
-    - TMO | Shop : Order Status
-    - TMO | Store : Business Detail
-    - TMO | Support : Resources
-  so token-based grouping is more reliable than broad free-text matching. 
+IMPORTANT:
+  - This view preserves one row per session_id + session_day from Bronze.
+  - No aggregation is done here.
+  - Channel hierarchy is derived from session_channel_name only, so it is deterministic and safe
+    to carry into Gold.
 
 TARGET TAXONOMY (MAX 15 GROUPS):
   1. App / T-Life
@@ -50,34 +44,6 @@ TARGET TAXONOMY (MAX 15 GROUPS):
   13. Privacy / Legal
   14. Search / Tools
   15. Other
-
-WHAT THIS CLEANUP VERSION FIXES:
-  - Promotions rows now map to Deals / Offers
-  - Tienda rows are classified into PLP / Browse or Store / Locator where appropriate
-  - T-Fiber rows no longer fall to Other
-  - T-Money rows no longer fall to Other
-  - TMO App billandpay-style rows map to Account / Billing / Login
-  - Order-status and checkout/cart URLs are handled more explicitly
-
-IMPORTANT:
-  - This is still a business mapping layer and can be refined further.
-  - Raw page name and tokens are preserved for auditability.
-  - TLife App is intentionally kept as one major group for now because it is a very large and
-    distinct app ecosystem in the data. :contentReference[oaicite:2]{index=2}
-
-TOKEN EXTRACTION APPROACH:
-  token_1:
-    first segment before the first pipe '|'
-
-  token_2:
-    first segment after the first pipe, before the first colon ':'
-
-  token_3:
-    first segment after the first colon ':'
-
-NOTES:
-  - Some rows are malformed, blank, numeric, URL-like, or error-like. These usually fall to Other
-    unless clearly mapped into Order Status, Cart / Checkout, Search / Tools, or Privacy / Legal.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -102,6 +68,7 @@ WITH base AS (
     device_type,
 
     session_channel_name,
+    UPPER(TRIM(session_channel_name)) AS channel_raw_upper,
     adobe_last_touch_channel_name,
     page_view_channel_name,
 
@@ -129,6 +96,7 @@ SELECT
   device_type,
 
   session_channel_name,
+  channel_raw_upper,
   adobe_last_touch_channel_name,
   page_view_channel_name,
 
@@ -136,17 +104,74 @@ SELECT
   token_2,
   token_3,
 
-  CASE
-    /* =============================================================================================
-       1. APP / T-LIFE
-       Keep all TLife App / Metro App together for now as one app ecosystem.
-    ============================================================================================= */
-    WHEN LOWER(token_1) IN ('tlife app', 'metro app')
-    THEN 'App / T-Life'
+  /* Better business-friendly tactic names */
+  COALESCE(NULLIF(token_1, ''), 'UNKNOWN') AS TACTIC_LEVEL_1,
+  COALESCE(NULLIF(token_2, ''), 'UNKNOWN') AS TACTIC_LEVEL_2,
+  COALESCE(NULLIF(token_3, ''), 'UNKNOWN') AS TACTIC_LEVEL_3,
 
-    /* =============================================================================================
-       2. HOMEPAGE
-    ============================================================================================= */
+  /* Channel hierarchy */
+  CASE
+    WHEN channel_raw_upper = 'NATURAL SEARCH' THEN 'Media'
+    WHEN channel_raw_upper IN (
+      'AFFILIATE','PODCAST','STREAMING RADIO','BROADCAST TV','CABLE TV','DIRECT TV',
+      'LIVE SPORTS TV','LOCAL TV','SL TV','SUPER BOWL','TUESDAYS','OVER THE TOP',
+      'PAID SEARCH: BRAND','PAID SEARCH: NON-BRAND','PAID SEARCH: PLAS','PERFORMANCE MAX',
+      'SOCIAL NETWORK - CAMPAIGN','DISPLAY','ON DEVICE','PROGRAMMATIC DISPLAY','ONLINE VIDEO'
+    ) THEN 'Media'
+    WHEN channel_raw_upper = 'DIRECT' THEN 'Non-Media'
+    WHEN channel_raw_upper IN (
+      '? TFB _EFL_ _SLN_ ?','CONTENT SYNDICATION','DIRECT MAIL','EMAIL - CAMPAIGN',
+      'EMAIL - ORGANIC','OFFLINE','OTHER CAMPAIGNS','REFERRING DOMAINS','SESSION REFRESH',
+      'OUT OF HOME','RETAIL STORE','SMS','SOCIAL NETWORK - NATURAL','B2B','NONE'
+    ) THEN 'Non-Media'
+    ELSE 'UNMAPPED'
+  END AS TYPE,
+
+  CASE
+    WHEN channel_raw_upper = 'NATURAL SEARCH' THEN 'Organic Search'
+    WHEN channel_raw_upper IN ('PAID SEARCH: BRAND','PAID SEARCH: NON-BRAND','PAID SEARCH: PLAS','PERFORMANCE MAX') THEN 'Paid Search'
+    WHEN channel_raw_upper = 'SOCIAL NETWORK - CAMPAIGN' THEN 'Paid Social'
+    WHEN channel_raw_upper IN ('DISPLAY','ON DEVICE','PROGRAMMATIC DISPLAY','ONLINE VIDEO') THEN 'Programmatic'
+    WHEN channel_raw_upper = 'DIRECT' THEN 'Direct'
+    WHEN channel_raw_upper IN (
+      'AFFILIATE','PODCAST','STREAMING RADIO','BROADCAST TV','CABLE TV','DIRECT TV',
+      'LIVE SPORTS TV','LOCAL TV','SL TV','SUPER BOWL','TUESDAYS','OVER THE TOP',
+      '? TFB _EFL_ _SLN_ ?','CONTENT SYNDICATION','DIRECT MAIL','EMAIL - CAMPAIGN',
+      'EMAIL - ORGANIC','OFFLINE','OTHER CAMPAIGNS','REFERRING DOMAINS','SESSION REFRESH',
+      'OUT OF HOME','RETAIL STORE','SMS','SOCIAL NETWORK - NATURAL','B2B','NONE'
+    ) THEN 'Other'
+    ELSE 'Other'
+  END AS SUB_TYPE,
+
+  CASE
+    WHEN channel_raw_upper = 'NATURAL SEARCH' THEN 'Search'
+    WHEN channel_raw_upper = 'AFFILIATE' THEN 'Affiliate'
+    WHEN channel_raw_upper IN ('PODCAST','STREAMING RADIO') THEN 'Audio'
+    WHEN channel_raw_upper IN (
+      'BROADCAST TV','CABLE TV','DIRECT TV','LIVE SPORTS TV','LOCAL TV','SL TV','SUPER BOWL','TUESDAYS'
+    ) THEN 'TV'
+    WHEN channel_raw_upper = 'OVER THE TOP' THEN 'Video'
+    WHEN channel_raw_upper IN ('PAID SEARCH: BRAND','PAID SEARCH: NON-BRAND','PAID SEARCH: PLAS','PERFORMANCE MAX') THEN 'Search'
+    WHEN channel_raw_upper = 'SOCIAL NETWORK - CAMPAIGN' THEN 'Social'
+    WHEN channel_raw_upper IN ('DISPLAY','ON DEVICE','PROGRAMMATIC DISPLAY') THEN 'Display'
+    WHEN channel_raw_upper = 'ONLINE VIDEO' THEN 'Video'
+    WHEN channel_raw_upper = 'DIRECT' THEN 'Other Channels'
+    WHEN channel_raw_upper IN (
+      '? TFB _EFL_ _SLN_ ?','CONTENT SYNDICATION','DIRECT MAIL','EMAIL - CAMPAIGN',
+      'EMAIL - ORGANIC','OFFLINE','OTHER CAMPAIGNS','REFERRING DOMAINS','SESSION REFRESH',
+      'B2B','NONE'
+    ) THEN 'Other Channels'
+    WHEN channel_raw_upper = 'OUT OF HOME' THEN 'Out Of Home'
+    WHEN channel_raw_upper = 'RETAIL STORE' THEN 'Retail'
+    WHEN channel_raw_upper = 'SMS' THEN 'SMS'
+    WHEN channel_raw_upper = 'SOCIAL NETWORK - NATURAL' THEN 'Social'
+    ELSE 'UNMAPPED'
+  END AS MEDIA_TYPE,
+
+  /* Entry page grouping */
+  CASE
+    WHEN LOWER(token_1) IN ('tlife app', 'metro app') THEN 'App / T-Life'
+
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 't-mo prepaid')
          AND LOWER(token_2) = 'home'
          AND LOWER(token_3) = 'home'
@@ -157,22 +182,11 @@ SELECT
          AND LOWER(token_3) = 'landing page'
     THEN 'Homepage'
 
-    /* =============================================================================================
-       3. PLP / BROWSE
-       Listing, browse, plan exploration, BYOD and similar discovery pages.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 't-mo prepaid')
          AND LOWER(token_2) IN ('shop', 'store')
          AND LOWER(token_3) IN (
-           'browse',
-           'browse test',
-           'product list',
-           'lista de productos',
-           'plan',
-           'plans',
-           'bring your own phone',
-           'bring your own device',
-           'devices'
+           'browse','browse test','product list','lista de productos','plan','plans',
+           'bring your own phone','bring your own device','devices'
          )
     THEN 'PLP / Browse'
 
@@ -187,32 +201,18 @@ SELECT
 
     WHEN LOWER(token_1) = 'tmo'
          AND LOWER(token_2) = 'tienda'
-         AND LOWER(token_3) IN ('lista de productos')
+         AND LOWER(token_3) = 'lista de productos'
     THEN 'PLP / Browse'
 
-    /* =============================================================================================
-       4. PDP / DETAIL
-       Product/device detail pages.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) IN ('shop', 'store')
          AND LOWER(token_3) IN (
-           'cell phone detail',
-           'cellphone detail',
-           'product detail',
-           'detalle de producto',
-           'smart watch detail',
-           'tablet detail',
-           'tablet & device detail',
-           'hotspot & iot detail',
-           'accessory detail'
+           'cell phone detail','cellphone detail','product detail','detalle de producto',
+           'smart watch detail','tablet detail','tablet & device detail',
+           'hotspot & iot detail','accessory detail'
          )
     THEN 'PDP / Detail'
 
-    /* =============================================================================================
-       5. DEALS / OFFERS
-       Promotions, offers, campaign pages, discounts, benefits-led deal landers.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) IN ('marketing', 'promotions')
          AND LOWER(token_3) IN ('offers', 'deals', 'benefits', 'home')
@@ -223,22 +223,10 @@ SELECT
          AND LOWER(token_3) = 'home'
     THEN 'Deals / Offers'
 
-    /* =============================================================================================
-       6. BRAND / MARKETING
-       Brand, acquisition/landing, campaign narrative, benefits hub, T-Fiber, T-Money,
-       advertising/solutions, content families, etc.
-    ============================================================================================= */
     WHEN LOWER(token_1) = 'tmo'
          AND LOWER(token_2) IN (
-           'marketing',
-           'brand',
-           'benefits',
-           'resources',
-           'advertising solutions',
-           'advertising',
-           'content',
-           't-fiber',
-           't-money'
+           'marketing','brand','benefits','resources','advertising solutions',
+           'advertising','content','t-fiber','t-money'
          )
     THEN 'Brand / Marketing'
 
@@ -250,17 +238,10 @@ SELECT
          AND LOWER(token_3) = 'landing page'
     THEN 'Brand / Marketing'
 
-    /* =============================================================================================
-       7. COVERAGE / NETWORK
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'assurance')
          AND LOWER(token_2) IN ('coverage', 'network')
     THEN 'Coverage / Network'
 
-    /* =============================================================================================
-       8. SUPPORT / HELP
-       Support, assistance, contact/help style sections.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tfb')
          AND LOWER(token_2) IN ('support', 'asistencia')
     THEN 'Support / Help'
@@ -269,10 +250,6 @@ SELECT
          AND LOWER(token_2) IN ('contact-us', 'contactus')
     THEN 'Support / Help'
 
-    /* =============================================================================================
-       9. STORE / LOCATOR
-       Store listings, city pages, locator/search/detail pages, Tienda business-detail style pages.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) = 'store'
     THEN 'Store / Locator'
@@ -282,9 +259,6 @@ SELECT
          AND LOWER(token_3) IN ('detalle del negocio', 'buscar', 'página de información', 'city page')
     THEN 'Store / Locator'
 
-    /* =============================================================================================
-       10. ORDER STATUS
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) = 'shop'
          AND LOWER(token_3) = 'order status'
@@ -295,10 +269,6 @@ SELECT
       OR LOWER(entry_page_name_clean) LIKE '%/order-status%'
     THEN 'Order Status'
 
-    /* =============================================================================================
-       11. CART / CHECKOUT
-       Cart, checkout, shipping-payment, finish, review, order creation flow.
-    ============================================================================================= */
     WHEN LOWER(token_1) = 'tmo'
          AND LOWER(token_2) = 'shop'
          AND LOWER(token_3) IN ('cart', 'empty cart', 'checkout')
@@ -313,36 +283,17 @@ SELECT
       OR LOWER(entry_page_name_clean) LIKE '%hint-order%'
     THEN 'Cart / Checkout'
 
-    /* =============================================================================================
-       12. ACCOUNT / BILLING / LOGIN
-       Billing, account, guest pay, login, auth, My Phone, payment arrangements, TMO App billandpay.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tmo app')
          AND LOWER(token_2) IN (
-           'billing',
-           'account',
-           'autenticación',
-           'cuenta',
-           'guest pay',
-           'guestpay',
-           'my phone',
-           'payments',
-           'log in',
-           'billandpay'
+           'billing','account','autenticación','cuenta','guest pay','guestpay',
+           'my phone','payments','log in','billandpay'
          )
     THEN 'Account / Billing / Login'
 
-    /* =============================================================================================
-       13. PRIVACY / LEGAL
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'assurance')
          AND LOWER(token_2) IN ('privacy center', 'legal')
     THEN 'Privacy / Legal'
 
-    /* =============================================================================================
-       14. SEARCH / TOOLS
-       Search, DNS, HINT, utility/tooling style pages and system-style utility events.
-    ============================================================================================= */
     WHEN LOWER(token_1) IN ('tmo', 'mbyt')
          AND LOWER(token_2) IN ('search', 'dns', 'hint')
     THEN 'Search / Tools'
@@ -350,10 +301,6 @@ SELECT
     WHEN LOWER(token_1) IN ('invoca phone call', 'qualtrics survey response', 'mytmo app lifecycle event')
     THEN 'Search / Tools'
 
-    /* =============================================================================================
-       15. OTHER
-       Fallback bucket for malformed, numeric, error, invalid, unknown, or uncategorized rows.
-    ============================================================================================= */
     ELSE 'Other'
   END AS entry_page_group
 

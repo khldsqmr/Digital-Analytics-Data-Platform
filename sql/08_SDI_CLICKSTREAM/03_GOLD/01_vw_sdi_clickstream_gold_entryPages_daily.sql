@@ -10,10 +10,23 @@ SOURCE:
 
 PURPOSE:
   Canonical daily Gold fact view for the Entry Pages tab using clickstream-only metrics, with
-  TY and LY values side by side, and including channel.
+  TY and LY values side by side, including:
+    - raw channel
+    - channel hierarchy
+    - page grouping
+    - tactic levels
 
 BUSINESS GRAIN:
-  session_day + lob + entry_page_group + session_channel_name
+  session_day
+  + lob
+  + entry_page_group
+  + session_channel_name
+  + TYPE
+  + SUB_TYPE
+  + MEDIA_TYPE
+  + TACTIC_LEVEL_1
+  + TACTIC_LEVEL_2
+  + TACTIC_LEVEL_3
 
 WHY CHANNEL IS INCLUDED:
   Entry page behavior is often analyzed by traffic source/channel. Including session_channel_name
@@ -37,6 +50,10 @@ LY LOGIC:
 NOTES:
   - If no matching prior-year row exists, LY values default to 0.
   - This is same-calendar-date last year logic, not same-weekday or same-QGP-week logic.
+  - Silver contains one row per session_id + session_day
+  - Bronze metrics contains one row per session_id + session_day
+  - Join is 1:1 on session_id + session_day + lob
+  - All additional dimensions are deterministic attributes of the Silver row
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -49,6 +66,12 @@ WITH daily_base AS (
     s.lob,
     s.entry_page_group,
     s.session_channel_name,
+    s.TYPE,
+    s.SUB_TYPE,
+    s.MEDIA_TYPE,
+    s.TACTIC_LEVEL_1,
+    s.TACTIC_LEVEL_2,
+    s.TACTIC_LEVEL_3,
 
     COUNT(*) AS entry_sessions,
     SUM(COALESCE(m.has_pspv, 0)) AS pspv_sessions,
@@ -65,7 +88,13 @@ WITH daily_base AS (
     s.session_day,
     s.lob,
     s.entry_page_group,
-    s.session_channel_name
+    s.session_channel_name,
+    s.TYPE,
+    s.SUB_TYPE,
+    s.MEDIA_TYPE,
+    s.TACTIC_LEVEL_1,
+    s.TACTIC_LEVEL_2,
+    s.TACTIC_LEVEL_3
 )
 
 SELECT
@@ -73,6 +102,12 @@ SELECT
   cur.lob,
   cur.entry_page_group,
   cur.session_channel_name,
+  cur.TYPE,
+  cur.SUB_TYPE,
+  cur.MEDIA_TYPE,
+  cur.TACTIC_LEVEL_1,
+  cur.TACTIC_LEVEL_2,
+  cur.TACTIC_LEVEL_3,
 
   cur.entry_sessions,
   COALESCE(ly.entry_sessions, 0) AS entry_sessions_LY,
@@ -94,4 +129,10 @@ LEFT JOIN daily_base ly
   ON ly.session_day = DATE_SUB(cur.session_day, INTERVAL 1 YEAR)
  AND ly.lob = cur.lob
  AND ly.entry_page_group = cur.entry_page_group
- AND ly.session_channel_name = cur.session_channel_name;
+ AND ly.session_channel_name = cur.session_channel_name
+ AND ly.TYPE = cur.TYPE
+ AND ly.SUB_TYPE = cur.SUB_TYPE
+ AND ly.MEDIA_TYPE = cur.MEDIA_TYPE
+ AND ly.TACTIC_LEVEL_1 = cur.TACTIC_LEVEL_1
+ AND ly.TACTIC_LEVEL_2 = cur.TACTIC_LEVEL_2
+ AND ly.TACTIC_LEVEL_3 = cur.TACTIC_LEVEL_3;
