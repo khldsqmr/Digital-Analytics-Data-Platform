@@ -12,28 +12,75 @@ PURPOSE:
 
   This view enriches the Bronze entry-session table by:
   - standardizing the raw page label
-  - assigning starter business page groups
+  - deriving structured tokens from page_name
+  - assigning business-friendly entry page groups using those tokens
 
 BUSINESS GRAIN:
   session_id + session_day
 
-WHY THIS VIEW EXISTS:
-  Bronze should remain close to raw. Silver is the appropriate place to centralize business logic,
-  especially entry page grouping, while still preserving raw fields for traceability.
+WHY THIS VERSION IS BETTER:
+  The raw page_name field clearly follows a structured taxonomy such as:
+    token_1 | token_2 : token_3
+  Examples seen in profiling include:
+    - TLife App | Onboarding : Launch
+    - TMO | Home : Home
+    - TMO | Marketing : Landing Page
+    - TMO | Shop : Browse
+    - TMO | Shop : Cell Phone Detail
+    - TMO | Shop : Order Status
+  This makes token-based grouping more reliable than broad LIKE-only logic.
 
 IMPORTANT:
-  - This is a starter grouping logic, not a final taxonomy.
-  - The best way to refine it is by reviewing top raw entry pages after Bronze load.
+  - This is still a starter taxonomy, but much stronger than free-text-only grouping.
+  - Raw page name and cleaned page name are preserved for auditability.
+  - Tokens are exposed for debugging and future refinement.
 
-GROUPING STRATEGY:
-  - Separate app-first experiences from classic web pages
-  - Separate commerce discovery pages from account/service pages
-  - Group support/store/order-status operational pages separately
+TOKEN EXTRACTION APPROACH:
+  token_1:
+    first segment before the first pipe '|'
+
+  token_2:
+    first segment after the first pipe, before the first colon ':'
+
+  token_3:
+    first segment after the first colon ':'
+
+NOTES:
+  - Some rows are malformed, blank, or URL-like. These will usually fall to Other unless covered.
+  - TLife App is kept as a dedicated top-level app grouping in this version.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_clickstream_silver_entryPagesSession_daily`
 AS
+
+WITH base AS (
+  SELECT
+    session_id,
+    session_day,
+    lob,
+
+    entry_page_name_raw,
+    REGEXP_REPLACE(TRIM(entry_page_name_raw), r'\s+\|\s+', ' | ') AS entry_page_name_clean,
+    visit_start_pagename,
+
+    full_url,
+    url_path,
+    visit_start_page_url,
+
+    site_name,
+    device_type,
+
+    session_channel_name,
+    adobe_last_touch_channel_name,
+    page_view_channel_name,
+
+    TRIM(SPLIT(entry_page_name_raw, '|')[SAFE_OFFSET(0)]) AS token_1,
+    TRIM(SPLIT(SPLIT(entry_page_name_raw, '|')[SAFE_OFFSET(1)], ':')[SAFE_OFFSET(0)]) AS token_2,
+    TRIM(SPLIT(SPLIT(entry_page_name_raw, ':')[SAFE_OFFSET(1)], ':')[SAFE_OFFSET(0)]) AS token_3
+
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_clickstream_bronze_entryPagesSession_daily`
+)
 
 SELECT
   session_id,
@@ -41,7 +88,7 @@ SELECT
   lob,
 
   entry_page_name_raw,
-  REGEXP_REPLACE(TRIM(entry_page_name_raw), r'\s+\|\s+', ' | ') AS entry_page_name_clean,
+  entry_page_name_clean,
   visit_start_pagename,
 
   full_url,
@@ -55,66 +102,176 @@ SELECT
   adobe_last_touch_channel_name,
   page_view_channel_name,
 
-  CASE
-    WHEN LOWER(entry_page_name_raw) LIKE 'tlife app%'
-      OR LOWER(entry_page_name_raw) LIKE '%t-life%'
-    THEN 'App / T-Life'
+  token_1,
+  token_2,
+  token_3,
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%home : home%'
+  CASE
+    /* ---------------------------------------------------------------------------------------------
+       APP / T-LIFE
+       Keep the TLife family together for now because it is a very large and distinct app ecosystem.
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) = 'tlife app' THEN 'App / T-Life'
+
+    /* ---------------------------------------------------------------------------------------------
+       HOMEPAGE
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) = 'home'
+         AND LOWER(token_3) = 'home'
     THEN 'Homepage'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%cell phone detail%'
-      OR LOWER(entry_page_name_raw) LIKE '%product detail%'
-      OR LOWER(entry_page_name_raw) LIKE '%phone detail%'
+    WHEN LOWER(token_1) = 'mbyt'
+         AND LOWER(token_2) = 'home'
+         AND LOWER(token_3) = 'home'
+    THEN 'Homepage'
+
+    WHEN LOWER(token_1) = 't-mo prepaid'
+         AND LOWER(token_2) = 'home'
+         AND LOWER(token_3) = 'home'
+    THEN 'Homepage'
+
+    /* ---------------------------------------------------------------------------------------------
+       PDP
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app')
+         AND LOWER(token_2) IN ('shop', 'store')
+         AND LOWER(token_3) IN (
+           'cell phone detail',
+           'cellphone detail',
+           'product detail',
+           'detalle de producto',
+           'smart watch detail',
+           'tablet detail',
+           'tablet & device detail',
+           'hotspot & iot detail',
+           'hotspot & iot detail',
+           'accessory detail'
+         )
     THEN 'PDP'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%browse%'
-      OR LOWER(entry_page_name_raw) LIKE '%cell phones%'
-      OR LOWER(entry_page_name_raw) LIKE '%plan : cell phone plans%'
-      OR LOWER(entry_page_name_raw) LIKE '%bring your own phone%'
-      OR LOWER(entry_page_name_raw) LIKE '%shop : plan%'
+    /* ---------------------------------------------------------------------------------------------
+       PLP
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app', 't-mo prepaid')
+         AND LOWER(token_2) IN ('shop', 'store')
+         AND LOWER(token_3) IN (
+           'browse',
+           'browse test',
+           'product list',
+           'lista de productos',
+           'plan',
+           'plans',
+           'bring your own phone',
+           'bring your own device',
+           'devices'
+         )
     THEN 'PLP'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%deals%'
-      OR LOWER(entry_page_name_raw) LIKE '%offers%'
-      OR LOWER(entry_page_name_raw) LIKE '%promotions%'
-      OR LOWER(entry_page_name_raw) LIKE '%carrier freedom%'
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) IN ('cell-phone-plans', 'flex')
+    THEN 'PLP'
+
+    /* ---------------------------------------------------------------------------------------------
+       DEALS / OFFERS
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
+         AND LOWER(token_2) IN ('marketing', 'promotions')
+         AND LOWER(token_3) IN (
+           'offers',
+           'deals',
+           'landing page',
+           'benefits'
+         )
     THEN 'Deals / Offers'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%landing page%'
-      OR LOWER(entry_page_name_raw) LIKE '%join us%'
-      OR LOWER(entry_page_name_raw) LIKE '%switch%'
-      OR LOWER(entry_page_name_raw) LIKE '%brand%'
-      OR LOWER(entry_page_name_raw) LIKE '%coverage%'
-      OR LOWER(entry_page_name_raw) LIKE '%network%'
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) = 'carrier freedom'
+         AND LOWER(token_3) = 'home'
+    THEN 'Deals / Offers'
+
+    /* ---------------------------------------------------------------------------------------------
+       BRAND / WHY T-MOBILE
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) IN ('marketing', 'coverage', 'brand')
     THEN 'Brand / Why T-Mobile'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%authentication%'
-      OR LOWER(entry_page_name_raw) LIKE '%login%'
-      OR LOWER(entry_page_name_raw) LIKE '%sign in%'
-      OR LOWER(entry_page_name_raw) LIKE '%my account%'
-      OR LOWER(entry_page_name_raw) LIKE '%billing%'
-      OR LOWER(entry_page_name_raw) LIKE '%guestpay%'
-      OR LOWER(entry_page_name_raw) LIKE '%payment arrangement%'
-      OR LOWER(entry_page_name_raw) LIKE '%eipjod%'
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) IN ('resources', 'benefits')
+    THEN 'Brand / Why T-Mobile'
+
+    /* ---------------------------------------------------------------------------------------------
+       ACCOUNT / LOGIN
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tmo app')
+         AND LOWER(token_2) IN (
+           'billing',
+           'account',
+           'autenticación',
+           'cuenta',
+           'guest pay',
+           'guestpay',
+           'my phone',
+           'payments'
+         )
     THEN 'Account / Login'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%support%'
-      OR LOWER(entry_page_name_raw) LIKE '%contact us%'
-      OR LOWER(entry_page_name_raw) LIKE '%privacy notices%'
-      OR LOWER(entry_page_name_raw) LIKE '%resources%'
-      OR LOWER(entry_page_name_raw) LIKE '%chat%'
+    /* ---------------------------------------------------------------------------------------------
+       SUPPORT
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tfb')
+         AND LOWER(token_2) IN ('support', 'asistencia', 'contact-us', 'contactus')
     THEN 'Support'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%store%'
-      OR LOWER(entry_page_name_raw) LIKE '%locator%'
-      OR LOWER(entry_page_name_raw) LIKE '%qr redirect%'
+    WHEN LOWER(token_1) = 'tmo'
+         AND LOWER(token_2) IN ('privacy center', 'legal')
+    THEN 'Support'
+
+    /* ---------------------------------------------------------------------------------------------
+       STORE / LOCATOR
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt')
+         AND LOWER(token_2) = 'store'
     THEN 'Store / Locator'
 
-    WHEN LOWER(entry_page_name_raw) LIKE '%order status%'
+    /* ---------------------------------------------------------------------------------------------
+       ORDER STATUS
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(token_1) IN ('tmo', 'mbyt', 'tlife app')
+         AND LOWER(token_2) = 'shop'
+         AND LOWER(token_3) = 'order status'
     THEN 'Order Status'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%checkorder%'
+      OR LOWER(entry_page_name_clean) LIKE '%order-status%'
+    THEN 'Order Status'
+
+    /* ---------------------------------------------------------------------------------------------
+       FALLBACKS
+    --------------------------------------------------------------------------------------------- */
+    WHEN LOWER(entry_page_name_clean) LIKE '%cell phone detail%'
+      OR LOWER(entry_page_name_clean) LIKE '%product detail%'
+      OR LOWER(entry_page_name_clean) LIKE '%phone detail%'
+    THEN 'PDP'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%browse%'
+      OR LOWER(entry_page_name_clean) LIKE '%cell phones%'
+      OR LOWER(entry_page_name_clean) LIKE '%plan%'
+    THEN 'PLP'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%deals%'
+      OR LOWER(entry_page_name_clean) LIKE '%offers%'
+      OR LOWER(entry_page_name_clean) LIKE '%promotions%'
+    THEN 'Deals / Offers'
+
+    WHEN LOWER(entry_page_name_clean) LIKE '%support%'
+      OR LOWER(entry_page_name_clean) LIKE '%contact us%'
+      OR LOWER(entry_page_name_clean) LIKE '%privacy%'
+      OR LOWER(entry_page_name_clean) LIKE '%legal%'
+    THEN 'Support'
 
     ELSE 'Other'
   END AS entry_page_group
 
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_clickstream_bronze_entryPagesSession_daily`;
+FROM base;

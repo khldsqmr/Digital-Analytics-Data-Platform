@@ -34,10 +34,6 @@ LY LOGIC:
   on:
     DATE_SUB(session_day, INTERVAL 1 YEAR)
 
-EXAMPLE:
-  If current row is 2026-01-04 / PDP / Direct, then *_LY columns come from:
-    2025-01-04 / PDP / Direct
-
 NOTES:
   - If no matching prior-year row exists, LY values default to 0.
   - This is same-calendar-date last year logic, not same-weekday or same-QGP-week logic.
