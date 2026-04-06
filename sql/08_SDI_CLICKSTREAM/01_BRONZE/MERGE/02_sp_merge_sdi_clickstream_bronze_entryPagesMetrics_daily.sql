@@ -13,6 +13,7 @@ TARGET:
 PURPOSE:
   Refresh Bronze session-level metrics table for Entry Pages funnel analysis using a recent
   lookback window.
+  Refresh Bronze session-level metrics table from a caller-supplied start date.
 
 BUSINESS GRAIN:
   session_id + session_day
@@ -43,7 +44,7 @@ NOTES:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_clickstream_bronze_entryPagesMetrics_daily`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_clickstream_bronze_entryPagesMetrics_daily`(p_start_date DATE)
 OPTIONS(strict_mode=false)
 BEGIN
 
@@ -53,7 +54,7 @@ BEGIN
   WHERE session_day IN (
     SELECT DISTINCT src.day
     FROM `prj-dbi-prd-1.ds_dbi_marketing.fact_all_hits` src
-    WHERE src.day >= DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY)
+    WHERE src.day >= p_start_date
       AND src.lob = 'Postpaid'
   );
 
@@ -71,13 +72,12 @@ BEGIN
     src.session_id,
     src.day AS session_day,
     'POSTPAID' AS lob,
-
     MAX(IF(COALESCE(src.postpaid_voice_pspvplus, 0) > 0, 1, 0)) AS has_pspv,
     MAX(IF(COALESCE(src.cart_opens, 0) > 0, 1, 0)) AS has_cart_start,
     MAX(IF(COALESCE(src.checkouts, 0) > 0, 1, 0)) AS has_checkout,
     MAX(IF(COALESCE(src.orders, 0) > 0, 1, 0)) AS has_order
   FROM `prj-dbi-prd-1.ds_dbi_marketing.fact_all_hits` src
-  WHERE src.day >= DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY)
+  WHERE src.day >= p_start_date
     AND src.lob = 'Postpaid'
   GROUP BY
     src.session_id,

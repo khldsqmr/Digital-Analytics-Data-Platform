@@ -13,6 +13,7 @@ TARGET:
 PURPOSE:
   Refresh Bronze Entry Pages session table by replacing recent affected dates and keeping the
   canonical first valid pageview row per session/day.
+  Refresh Bronze Entry Pages session table from a caller-supplied start date.
 
 BUSINESS GRAIN:
   session_id + session_day
@@ -64,7 +65,7 @@ DELETE / INSERT STRATEGY:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_clickstream_bronze_entryPagesSession_daily`()
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_merge_sdi_clickstream_bronze_entryPagesSession_daily`(p_start_date DATE)
 OPTIONS(strict_mode=false)
 BEGIN
 
@@ -74,7 +75,7 @@ BEGIN
   WHERE session_day IN (
     SELECT DISTINCT src.day
     FROM `prj-dbi-prd-1.ds_dbi_marketing.fact_all_hits` src
-    WHERE src.day >= DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY)
+    WHERE src.day >= p_start_date
       AND src.lob = 'Postpaid'
       AND src.session_page_num = 1
       AND src.page_views >= 1
@@ -86,26 +87,20 @@ BEGIN
     session_id,
     session_day,
     lob,
-
     entry_page_name_raw,
     visit_start_pagename,
-
     full_url,
     url_path,
     visit_start_page_url,
-
     site_name,
     device_type,
-
     session_channel_name,
     adobe_last_touch_channel_name,
     page_view_channel_name,
-
     session_page_num,
     page_views,
     hit_id,
     date_time,
-
     entry_row_rank
   )
   WITH ranked AS (
@@ -113,35 +108,28 @@ BEGIN
       src.session_id,
       src.day AS session_day,
       'POSTPAID' AS lob,
-
       src.page_name AS entry_page_name_raw,
       src.visit_start_pagename,
-
       src.full_url,
       src.url_path,
       src.visit_start_page_url,
-
       src.site_name,
       src.device_type,
-
       src.session_channel_name,
       src.adobe_last_touch_channel_name,
       src.page_view_channel_name,
-
       src.session_page_num,
       src.page_views,
       src.hit_id,
       src.date_time,
-
       ROW_NUMBER() OVER (
         PARTITION BY src.session_id, src.day
         ORDER BY
           src.date_time ASC,
-          src.session_page_num ASC,
-          src.hit_id ASC
+          COALESCE(src.hit_id, '') ASC
       ) AS entry_row_rank
     FROM `prj-dbi-prd-1.ds_dbi_marketing.fact_all_hits` src
-    WHERE src.day >= DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY)
+    WHERE src.day >= p_start_date
       AND src.lob = 'Postpaid'
       AND src.session_page_num = 1
       AND src.page_views >= 1
@@ -151,26 +139,20 @@ BEGIN
     session_id,
     session_day,
     lob,
-
     entry_page_name_raw,
     visit_start_pagename,
-
     full_url,
     url_path,
     visit_start_page_url,
-
     site_name,
     device_type,
-
     session_channel_name,
     adobe_last_touch_channel_name,
     page_view_channel_name,
-
     session_page_num,
     page_views,
     hit_id,
     date_time,
-
     entry_row_rank
   FROM ranked
   WHERE entry_row_rank = 1;
