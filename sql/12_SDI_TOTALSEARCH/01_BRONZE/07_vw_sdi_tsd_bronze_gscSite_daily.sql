@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 07_vw_sdi_tsd_bronze_gscSite_daily.sql
+FILE: 08_vw_sdi_tsd_bronze_gscSite_daily.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_bronze_gscSite_daily
@@ -40,7 +40,7 @@ WITH ranked AS (
         raw.account_name,
         raw.site_url,
         CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
-        DATE(raw.date) AS event_date,
+        PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS event_date,
 
         SAFE_CAST(raw.clicks AS FLOAT64) AS clicks,
         SAFE_CAST(raw.impressions AS FLOAT64) AS impressions,

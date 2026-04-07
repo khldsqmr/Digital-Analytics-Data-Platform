@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 06_vw_sdi_tsd_bronze_gscQuery_daily.sql
+FILE: 07_vw_sdi_tsd_bronze_gscQuery_daily.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_bronze_gscQuery_daily
@@ -32,11 +32,6 @@ DEDUPE LOGIC:
       filename DESC,
       __insert_date DESC
 
-KEY MODELING NOTES:
-  - This is a source-close Bronze object
-  - No brand / nonbrand logic is applied here
-  - No LOB/channel standardization is applied here; that happens in Silver
-
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
@@ -51,7 +46,7 @@ WITH ranked AS (
         raw.query,
         raw.search_type,
         CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
-        DATE(raw.date) AS event_date,
+        PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS event_date,
 
         SAFE_CAST(raw.clicks AS FLOAT64) AS clicks,
         SAFE_CAST(raw.impressions AS FLOAT64) AS impressions,
