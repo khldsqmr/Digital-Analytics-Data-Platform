@@ -30,7 +30,8 @@ KEY MODELING NOTES:
   - Silver maps all raw spend channels into the Adobe-aligned channel set only
   - No new spend-only channels are created in Silver
   - Similar / adjacent spend channels are collapsed into existing Adobe-aligned channels
-  - Any remaining unexpected channels are assigned to UNMAPPED for QA review
+  - Remaining unexpected channels are collapsed into OTHER CAMPAIGNS so final spend
+    channels stay aligned with Adobe and do not introduce UNMAPPED as a final channel
 
 CONFORMED CHANNEL OUTPUT SET:
   AFFILIATE
@@ -55,7 +56,6 @@ CONFORMED CHANNEL OUTPUT SET:
   SMS
   SOCIAL NETWORK - CAMPAIGN
   SOCIAL NETWORK - NATURAL
-  UNMAPPED
 
 ================================================================================================= */
 
@@ -121,9 +121,9 @@ WITH mapped AS (
             ) THEN 'OTHER CAMPAIGNS'
 
             /* -------------------------------------------------------------------------------------------------
-               3) ANYTHING ELSE
+               3) ANY REMAINING / UNKNOWN CHANNELS
                ------------------------------------------------------------------------------------------------- */
-            ELSE 'UNMAPPED'
+            ELSE 'OTHER CAMPAIGNS'
         END AS channel,
 
         COALESCE(spend, 0) AS spend

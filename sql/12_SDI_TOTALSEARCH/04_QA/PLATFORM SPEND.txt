@@ -1,0 +1,39 @@
+/* =================================================================================================
+RECON: Raw platform spend vs Bronze platform spend
+PURPOSE:
+  Confirms that vw_sdi_tsd_bronze_platformSpend_daily correctly aggregates raw Postpaid spend
+  from agg_day_media_and_outcomes at event_date + lob + channel_raw.
+================================================================================================= */
+
+WITH raw_agg AS (
+    SELECT
+        DATE(day) AS event_date,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel_name)) AS channel_raw,
+        SUM(COALESCE(spend, 0)) AS raw_spend
+    FROM `prj-dbi-prd-1.ds_dbi_marketing.agg_day_media_and_outcomes`
+    WHERE UPPER(TRIM(lob)) = 'POSTPAID'
+    GROUP BY 1,2,3
+),
+bronze AS (
+    SELECT
+        event_date,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel_raw)) AS channel_raw,
+        SUM(COALESCE(spend, 0)) AS bronze_spend
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_platformSpend_daily`
+    GROUP BY 1,2,3
+)
+SELECT
+    COALESCE(r.event_date, b.event_date) AS event_date,
+    COALESCE(r.lob, b.lob) AS lob,
+    COALESCE(r.channel_raw, b.channel_raw) AS channel_raw,
+    r.raw_spend,
+    b.bronze_spend,
+    COALESCE(b.bronze_spend, 0) - COALESCE(r.raw_spend, 0) AS diff_spend
+FROM raw_agg r
+FULL OUTER JOIN bronze b
+    ON r.event_date = b.event_date
+   AND r.lob = b.lob
+   AND r.channel_raw = b.channel_raw
+ORDER BY event_date DESC, channel_raw;
