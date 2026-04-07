@@ -33,12 +33,12 @@ OUTPUT METRICS:
 CLASSIFICATION LOGIC:
   - BRAND: query matches Postpaid brand regex
   - NONBRAND: query does not match Postpaid brand regex
-  - EXCLUDED: query matches Postpaid LOB exclusion regex
+  - EXCLUDED: query matches Postpaid LOB exclusion regex or query is null/blank
 
 KEY MODELING NOTES:
   - LOB is standardized as UPPER(TRIM('POSTPAID'))
   - Channel is standardized as UPPER(TRIM('ORGANIC SEARCH'))
-  - search_type is kept only if source filtering is later needed; currently not used in final output
+  - Query-level rows are classified first, then aggregated
 
 ================================================================================================= */
 
@@ -63,7 +63,10 @@ WITH classified AS (
 
         CASE
             WHEN query IS NULL OR TRIM(query) = '' THEN 'EXCLUDE'
-            WHEN REGEXP_CONTAINS(LOWER(TRIM(query)), r'(business|home-internet|prepaid.|fiber.|careers.|promotions.)') THEN 'EXCLUDE'
+            WHEN REGEXP_CONTAINS(
+                LOWER(TRIM(query)),
+                r'(business|home-internet|prepaid.|fiber.|careers.|promotions.)'
+            ) THEN 'EXCLUDE'
             WHEN REGEXP_CONTAINS(
                 LOWER(TRIM(query)),
                 r'(^t$|\. t|\.t|â„¢obile|aorint|apeint|aprint|atmobile|deutsche|digits|go 5g|go5g|i mobile|itmobile|jump on|jump2|layer 3|layer3|magenta|metro|mibile|mobile t|mtmobile|my tmo|myobile|mysprin|mytmo|mytobile|on us|onus|project 10|project ten|rmob|rtmobile|simple global|slrint|soeint|soribt|sorint|spei|sperint|spirint|spirit cell phone|spirnt|spprint|spri\.t|spriint|sprijt|sprimt|sprin|spritn|sprjnt|sprnt|spront|sprrint|sptint|srint|srpint|stateside international|switch to t|sync up|syncup|t-|t - mobile|t – mobile|t \.|t â€“ mobile|t bision|t channel|t cision|t com|t kobile|t life|t lobile|t m9bile|t mÃ³vil|t mbile|t mboile|t metro|t mib|t minile|t mo|t- mo|t mp|t mus|t nmobile|t nobile|t obil|t remote|t television|t tv|t vibe|t vidion|t vis|t vizion|t-,obile|t\.|t\. obile|t\.com t|t\.mo|t\.obil|t\.obile|t:|t_mobil|t\+mobile|t=mobile|tâ€‘mobile|tbile|t-bile|tbision|tbmobile|tbo|t-com|tdigit|te mobile|team|team mobile|teen mobile|teenmobile|temobil|temobile|temoble|ten mobile|the mobile|the vibe|t-home|tim|ti-mobile|tkobile|tlife|t-life|tlivetv|tlobile|tm coverage map|tm mobile|tm plans|tm tv|tm,obile|tm0bile|t-m0bile|tm9bile|tmabole|tmaobile|tmb|t-mbile|tmbilw|tmbiole|tmblie|t-mbo|tmbo|t-mbo|tmbpile|tmib|t-mib|tmlbile|tm-mobile|tmmoble|tmo|t-mo|tmpbile|t-mpbile|tmus|tnmobile|tnob|t-nob|to mobile|tobile|t-obile|toblie|tobmile|tomb|tomi|tomo|toobile|tpbile|t-phone|ttmobile|tv sion|tv vision|tviaion|tvibe channels|tvidion|tviosion|tvis|t-vis|tvivion|tvizion|tvmo|tv-mobile|tvsion|tv-t|tvusion|tvvis|tvzion activate|t-모바일|vibe|www t\.|www\.t|y mo|ymo|ytmobile|т мобил|8997|5guc|5g uc|tuesday|million)'

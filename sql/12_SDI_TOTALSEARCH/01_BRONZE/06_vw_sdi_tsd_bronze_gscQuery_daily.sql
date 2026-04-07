@@ -5,7 +5,7 @@ DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_bronze_gscQuery_daily
 
 SOURCE:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_gsc_query_daily
+  prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily
@@ -75,7 +75,7 @@ WITH ranked AS (
                 raw.filename DESC,
                 SAFE_CAST(raw.__insert_date AS INT64) DESC
         ) AS rn
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_bronze_gsc_query_daily` raw
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo` raw
 )
 
 SELECT
