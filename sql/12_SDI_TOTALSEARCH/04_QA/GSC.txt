@@ -1,0 +1,61 @@
+/* =================================================================================================
+RECON: Raw GSC query source vs Bronze Query
+PURPOSE:
+  Confirms that vw_sdi_tsd_bronze_gscQuery_daily matches the latest deduplicated raw query rows.
+================================================================================================= */
+
+WITH raw_latest AS (
+    SELECT
+        raw.account_id,
+        raw.site_url,
+        raw.page,
+        raw.query,
+        raw.search_type,
+        CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
+        PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS event_date,
+        SAFE_CAST(raw.clicks AS FLOAT64) AS clicks,
+        SAFE_CAST(raw.impressions AS FLOAT64) AS impressions,
+        ROW_NUMBER() OVER (
+            PARTITION BY
+                raw.account_id,
+                raw.site_url,
+                raw.page,
+                raw.query,
+                raw.search_type,
+                CAST(raw.date_yyyymmdd AS STRING)
+            ORDER BY
+                TIMESTAMP(raw.file_load_datetime) DESC,
+                raw.filename DESC,
+                SAFE_CAST(raw.__insert_date AS INT64) DESC
+        ) AS rn
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo` raw
+),
+raw_deduped AS (
+    SELECT
+        event_date,
+        SUM(COALESCE(clicks, 0)) AS raw_clicks,
+        SUM(COALESCE(impressions, 0)) AS raw_impressions
+    FROM raw_latest
+    WHERE rn = 1
+    GROUP BY event_date
+),
+bronze AS (
+    SELECT
+        event_date,
+        SUM(COALESCE(clicks, 0)) AS bronze_clicks,
+        SUM(COALESCE(impressions, 0)) AS bronze_impressions
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
+    GROUP BY event_date
+)
+SELECT
+    COALESCE(r.event_date, b.event_date) AS event_date,
+    r.raw_clicks,
+    b.bronze_clicks,
+    b.bronze_clicks - r.raw_clicks AS diff_clicks,
+    r.raw_impressions,
+    b.bronze_impressions,
+    b.bronze_impressions - r.raw_impressions AS diff_impressions
+FROM raw_deduped r
+FULL OUTER JOIN bronze b
+    ON r.event_date = b.event_date
+ORDER BY event_date DESC;
