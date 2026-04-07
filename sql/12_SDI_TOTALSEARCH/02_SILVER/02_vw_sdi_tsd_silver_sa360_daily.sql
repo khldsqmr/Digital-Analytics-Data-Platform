@@ -25,8 +25,10 @@ BUSINESS GRAIN:
 OUTPUT METRICS:
   - sa360_clicks_brand
   - sa360_clicks_nonbrand
+  - sa360_clicks_all
   - sa360_cart_start_plus_brand
   - sa360_cart_start_plus_nonbrand
+  - sa360_cart_start_plus_all
 
 CAMPAIGN TYPE RULES:
   Brand    -> BRAND
@@ -34,12 +36,6 @@ CAMPAIGN TYPE RULES:
   PMax     -> NONBRAND
   Shopping -> NONBRAND
   DemandGen / Unclassified -> excluded
-
-KEY MODELING NOTES:
-  - campaign_name is used upstream in Bronze Entity only for campaign_type derivation
-  - campaign_name is not carried into Silver
-  - LOB is standardized as UPPER(TRIM('POSTPAID'))
-  - Channel is standardized as UPPER(TRIM('PAID SEARCH'))
 
 ================================================================================================= */
 
@@ -83,6 +79,25 @@ filtered AS (
     SELECT *
     FROM classified
     WHERE brand_type IN ('BRAND', 'NONBRAND')
+),
+
+aggregated AS (
+    SELECT
+        event_date,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel)) AS channel,
+
+        SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS sa360_clicks_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS sa360_clicks_nonbrand,
+
+        SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(postpaid_cart_start, 0) ELSE 0 END) AS sa360_cart_start_plus_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(postpaid_cart_start, 0) ELSE 0 END) AS sa360_cart_start_plus_nonbrand
+
+    FROM filtered
+    GROUP BY
+        event_date,
+        lob,
+        channel
 )
 
 SELECT
@@ -90,14 +105,12 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS sa360_clicks_brand,
-    SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS sa360_clicks_nonbrand,
+    sa360_clicks_brand,
+    sa360_clicks_nonbrand,
+    COALESCE(sa360_clicks_brand, 0) + COALESCE(sa360_clicks_nonbrand, 0) AS sa360_clicks_all,
 
-    SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(postpaid_cart_start, 0) ELSE 0 END) AS sa360_cart_start_plus_brand,
-    SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(postpaid_cart_start, 0) ELSE 0 END) AS sa360_cart_start_plus_nonbrand
+    sa360_cart_start_plus_brand,
+    sa360_cart_start_plus_nonbrand,
+    COALESCE(sa360_cart_start_plus_brand, 0) + COALESCE(sa360_cart_start_plus_nonbrand, 0) AS sa360_cart_start_plus_all
 
-FROM filtered
-GROUP BY
-    event_date,
-    lob,
-    channel;
+FROM aggregated;
