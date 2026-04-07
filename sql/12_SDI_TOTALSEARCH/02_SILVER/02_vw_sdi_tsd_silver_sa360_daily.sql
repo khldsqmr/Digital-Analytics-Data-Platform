@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 02_vw_sdi_tsd_silver_sa360_daily.sql
+FILE: 06_vw_sdi_tsd_silver_sa360_daily.sql
 LAYER: Silver View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_silver_sa360_daily
@@ -13,7 +13,7 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver SA360 daily source mart for the Total Search Dashboard.
-  This view joins deduplicated SA360 performance data with deduplicated SA360 entity metadata,
+  This view joins deduplicated SA360 performance data with deduplicated SA360 entity data,
   then classifies campaign traffic into BRAND and NONBRAND using campaign type rules.
 
 BUSINESS GRAIN:
@@ -37,8 +37,8 @@ CAMPAIGN TYPE RULES:
 KEY MODELING NOTES:
   - LOB is standardized as UPPER(TRIM('POSTPAID'))
   - Channel is standardized as UPPER(TRIM('PAID SEARCH'))
-  - Campaign type classification is applied after joining entity metadata
-  - Only BRAND and NONBRAND are retained in the final output
+  - Campaign type mapping is derived from the entity source
+  - postpaid_cart_start is used as the low-funnel metric feeding cart-start-plus split
 
 ================================================================================================= */
 
@@ -58,8 +58,8 @@ WITH joined AS (
         ent.campaign_name,
         ent.campaign_type,
 
-        perf.clicks,
-        perf.postpaid_cart_start
+        SAFE_CAST(perf.clicks AS FLOAT64) AS clicks,
+        SAFE_CAST(perf.postpaid_cart_start AS FLOAT64) AS postpaid_cart_start
 
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Perf_daily` perf
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Entity_daily` ent
