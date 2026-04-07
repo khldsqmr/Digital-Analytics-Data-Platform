@@ -33,12 +33,13 @@ CAMPAIGN TYPE RULES:
   Generic  -> NONBRAND
   PMax     -> NONBRAND
   Shopping -> NONBRAND
+  DemandGen / Unclassified -> excluded
 
 KEY MODELING NOTES:
+  - campaign_name is used upstream in Bronze Entity only for campaign_type derivation
+  - campaign_name is not carried into Silver
   - LOB is standardized as UPPER(TRIM('POSTPAID'))
   - Channel is standardized as UPPER(TRIM('PAID SEARCH'))
-  - Campaign type mapping is derived from the entity source
-  - postpaid_cart_start is used as the low-funnel metric feeding cart-start-plus split
 
 ================================================================================================= */
 
@@ -51,15 +52,9 @@ WITH joined AS (
         UPPER(TRIM('POSTPAID')) AS lob,
         UPPER(TRIM('PAID SEARCH')) AS channel,
 
-        perf.account_id,
-        perf.campaign_id,
-        perf.date_yyyymmdd,
-
-        ent.campaign_name,
-        ent.campaign_type,
-
         SAFE_CAST(perf.clicks AS FLOAT64) AS clicks,
-        SAFE_CAST(perf.postpaid_cart_start AS FLOAT64) AS postpaid_cart_start
+        SAFE_CAST(perf.postpaid_cart_start AS FLOAT64) AS postpaid_cart_start,
+        ent.campaign_type
 
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Perf_daily` perf
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Entity_daily` ent
@@ -73,18 +68,13 @@ classified AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        account_id,
-        campaign_id,
-        date_yyyymmdd,
-        campaign_name,
-        campaign_type,
         clicks,
         postpaid_cart_start,
 
         CASE
             WHEN UPPER(TRIM(campaign_type)) = 'BRAND' THEN 'BRAND'
             WHEN UPPER(TRIM(campaign_type)) IN ('GENERIC', 'PMAX', 'SHOPPING') THEN 'NONBRAND'
-            ELSE 'UNMAPPED'
+            ELSE 'EXCLUDE'
         END AS brand_type
     FROM joined
 ),
