@@ -31,7 +31,7 @@ SOURCE LOGIC:
       __insert_date DESC
 
 KEY MODELING NOTES:
-  - LOB is standardized to 'Postpaid'
+  - LOB is standardized as UPPER(TRIM('Postpaid'))
   - Channel is standardized from last_touch_channel
   - Deduplication is applied before outputting the reporting grain
 
@@ -68,7 +68,7 @@ WITH ranked AS (
 
 SELECT
     event_date,
-    'Postpaid' AS lob,
+    UPPER(TRIM('Postpaid')) AS lob,
     channel,
     adobe_cart_start_plus
 FROM ranked

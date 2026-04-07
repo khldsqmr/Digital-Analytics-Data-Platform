@@ -45,6 +45,7 @@ METRICS INCLUDED:
   - adobe_orders_all
 
 KEY MODELING NOTES:
+  - LOB is already standardized in all Bronze sources as UPPER(TRIM(...))
   - Uses FULL OUTER JOIN to preserve valid keys from any Adobe Bronze source
   - Common business keys are coalesced across all source marts
   - Null metrics are standardized to 0 for reporting convenience
@@ -57,8 +58,8 @@ AS
 WITH adobe_v2 AS (
     SELECT
         event_date,
-        lob,
-        channel,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel)) AS channel,
         adobe_entries,
         adobe_pspv_actuals,
         adobe_cart_starts,
@@ -71,8 +72,8 @@ WITH adobe_v2 AS (
 adobe_orders AS (
     SELECT
         event_date,
-        lob,
-        channel,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel)) AS channel,
         adobe_orders_web_unassisted,
         adobe_orders_web_assisted,
         adobe_orders_app_unassisted,
@@ -88,8 +89,8 @@ adobe_orders AS (
 adobe_cartplus AS (
     SELECT
         event_date,
-        lob,
-        channel,
+        UPPER(TRIM(lob)) AS lob,
+        UPPER(TRIM(channel)) AS channel,
         adobe_cart_start_plus
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeCartStartPlus_daily`
 ),
@@ -97,8 +98,8 @@ adobe_cartplus AS (
 joined AS (
     SELECT
         COALESCE(v2.event_date, ord.event_date, cp.event_date) AS event_date,
-        COALESCE(v2.lob, ord.lob, cp.lob) AS lob,
-        COALESCE(v2.channel, ord.channel, cp.channel) AS channel,
+        UPPER(TRIM(COALESCE(v2.lob, ord.lob, cp.lob))) AS lob,
+        UPPER(TRIM(COALESCE(v2.channel, ord.channel, cp.channel))) AS channel,
 
         v2.adobe_entries,
         v2.adobe_pspv_actuals,
@@ -131,8 +132,8 @@ joined AS (
 
 SELECT
     event_date,
-    lob,
-    channel,
+    UPPER(TRIM(lob)) AS lob,
+    UPPER(TRIM(channel)) AS channel,
 
     COALESCE(adobe_entries, 0)                    AS adobe_entries,
     COALESCE(adobe_pspv_actuals, 0)              AS adobe_pspv_actuals,

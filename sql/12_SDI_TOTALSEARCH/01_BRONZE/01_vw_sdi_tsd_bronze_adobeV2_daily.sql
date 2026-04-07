@@ -30,7 +30,7 @@ METRICS INCLUDED:
   - adobe_postpaid_orders_tsr
 
 KEY MODELING NOTES:
-  - LOB is standardized to 'Postpaid'
+  - LOB is standardized as UPPER(TRIM('Postpaid'))
   - Channel is standardized from Adobe last_touch_channel
   - This object is source-close and does not join to other Adobe sources
 
@@ -41,7 +41,7 @@ AS
 
 SELECT
     PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS event_date,
-    'Postpaid' AS lob,
+    UPPER(TRIM('Postpaid')) AS lob,
     UPPER(TRIM(last_touch_channel)) AS channel,
 
     SUM(COALESCE(visits_enterprise_prospect_visits, 0))            AS adobe_entries,

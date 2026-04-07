@@ -34,7 +34,7 @@ METRICS INCLUDED:
 
 KEY MODELING NOTES:
   - Source already contains cleaned Adobe Orders logic
-  - LOB is standardized to 'Postpaid'
+  - LOB is standardized as UPPER(TRIM('Postpaid'))
   - Channel is standardized from last_touch_channel
 
 ================================================================================================= */
@@ -44,7 +44,7 @@ AS
 
 SELECT
     DATE(event_date) AS event_date,
-    'Postpaid' AS lob,
+    UPPER(TRIM('Postpaid')) AS lob,
     UPPER(TRIM(last_touch_channel)) AS channel,
 
     SUM(COALESCE(orders_web_unassisted, 0))   AS adobe_orders_web_unassisted,
