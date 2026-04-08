@@ -45,61 +45,113 @@ METRICS INCLUDED:
   - adobe_orders_all
 
 KEY MODELING NOTES:
-  - LOB is already standardized in all Bronze sources as UPPER(TRIM(...))
-  - Uses FULL OUTER JOIN to preserve valid keys from any Adobe Bronze source
-  - Common business keys are coalesced across all source marts
-  - Null metrics are standardized to 0 for reporting convenience
+  - Adobe source channels are conformed before joining
+  - ORGANIC/NATURAL SEARCH is standardized to ORGANIC SEARCH
+  - Adobe paid search child channels are rolled up into PAID SEARCH
+  - Each source is re-aggregated after channel mapping to protect the reporting grain
+  - FULL OUTER JOIN is applied only after each source is uniquely at event_date + lob + channel
 
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily`
 AS
 
-WITH adobe_v2 AS (
+WITH adobe_v2_mapped AS (
     SELECT
         event_date,
         UPPER(TRIM(lob)) AS lob,
-        UPPER(TRIM(channel)) AS channel,
-        adobe_entries,
-        adobe_pspv_actuals,
-        adobe_cart_starts,
-        adobe_cart_checkout_visits,
-        adobe_checkout_review_visits,
-        adobe_postpaid_orders_tsr
+        CASE
+            WHEN UPPER(TRIM(channel)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX'
+            ) THEN 'PAID SEARCH'
+            WHEN UPPER(TRIM(channel)) IN (
+                'NATURAL SEARCH',
+                'ORGANIC SEARCH'
+            ) THEN 'ORGANIC SEARCH'
+            ELSE UPPER(TRIM(channel))
+        END AS channel,
+
+        SUM(COALESCE(adobe_entries, 0))                 AS adobe_entries,
+        SUM(COALESCE(adobe_pspv_actuals, 0))           AS adobe_pspv_actuals,
+        SUM(COALESCE(adobe_cart_starts, 0))            AS adobe_cart_starts,
+        SUM(COALESCE(adobe_cart_checkout_visits, 0))   AS adobe_cart_checkout_visits,
+        SUM(COALESCE(adobe_checkout_review_visits, 0)) AS adobe_checkout_review_visits,
+        SUM(COALESCE(adobe_postpaid_orders_tsr, 0))    AS adobe_postpaid_orders_tsr
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeV2_daily`
+    GROUP BY
+        event_date,
+        lob,
+        channel
 ),
 
-adobe_orders AS (
+adobe_orders_mapped AS (
     SELECT
         event_date,
         UPPER(TRIM(lob)) AS lob,
-        UPPER(TRIM(channel)) AS channel,
-        adobe_orders_web_unassisted,
-        adobe_orders_web_assisted,
-        adobe_orders_app_unassisted,
-        adobe_orders_app_assisted,
-        adobe_orders_web_all,
-        adobe_orders_app_all,
-        adobe_orders_fully_unassisted,
-        adobe_orders_fully_assisted,
-        adobe_orders_all
+        CASE
+            WHEN UPPER(TRIM(channel)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX'
+            ) THEN 'PAID SEARCH'
+            WHEN UPPER(TRIM(channel)) IN (
+                'NATURAL SEARCH',
+                'ORGANIC SEARCH'
+            ) THEN 'ORGANIC SEARCH'
+            ELSE UPPER(TRIM(channel))
+        END AS channel,
+
+        SUM(COALESCE(adobe_orders_web_unassisted, 0))   AS adobe_orders_web_unassisted,
+        SUM(COALESCE(adobe_orders_web_assisted, 0))     AS adobe_orders_web_assisted,
+        SUM(COALESCE(adobe_orders_app_unassisted, 0))   AS adobe_orders_app_unassisted,
+        SUM(COALESCE(adobe_orders_app_assisted, 0))     AS adobe_orders_app_assisted,
+        SUM(COALESCE(adobe_orders_web_all, 0))          AS adobe_orders_web_all,
+        SUM(COALESCE(adobe_orders_app_all, 0))          AS adobe_orders_app_all,
+        SUM(COALESCE(adobe_orders_fully_unassisted, 0)) AS adobe_orders_fully_unassisted,
+        SUM(COALESCE(adobe_orders_fully_assisted, 0))   AS adobe_orders_fully_assisted,
+        SUM(COALESCE(adobe_orders_all, 0))              AS adobe_orders_all
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeOrders_daily`
+    GROUP BY
+        event_date,
+        lob,
+        channel
 ),
 
-adobe_cartplus AS (
+adobe_cartplus_mapped AS (
     SELECT
         event_date,
         UPPER(TRIM(lob)) AS lob,
-        UPPER(TRIM(channel)) AS channel,
-        adobe_cart_start_plus
+        CASE
+            WHEN UPPER(TRIM(channel)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX'
+            ) THEN 'PAID SEARCH'
+            WHEN UPPER(TRIM(channel)) IN (
+                'NATURAL SEARCH',
+                'ORGANIC SEARCH'
+            ) THEN 'ORGANIC SEARCH'
+            ELSE UPPER(TRIM(channel))
+        END AS channel,
+
+        SUM(COALESCE(adobe_cart_start_plus, 0)) AS adobe_cart_start_plus
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeCartStartPlus_daily`
+    GROUP BY
+        event_date,
+        lob,
+        channel
 ),
 
 joined AS (
     SELECT
         COALESCE(v2.event_date, ord.event_date, cp.event_date) AS event_date,
-        UPPER(TRIM(COALESCE(v2.lob, ord.lob, cp.lob))) AS lob,
-        UPPER(TRIM(COALESCE(v2.channel, ord.channel, cp.channel))) AS channel,
+        COALESCE(v2.lob, ord.lob, cp.lob) AS lob,
+        COALESCE(v2.channel, ord.channel, cp.channel) AS channel,
 
         v2.adobe_entries,
         v2.adobe_pspv_actuals,
@@ -119,12 +171,12 @@ joined AS (
         ord.adobe_orders_fully_assisted,
         ord.adobe_orders_all
 
-    FROM adobe_v2 v2
-    FULL OUTER JOIN adobe_orders ord
+    FROM adobe_v2_mapped v2
+    FULL OUTER JOIN adobe_orders_mapped ord
         ON v2.event_date = ord.event_date
        AND v2.lob        = ord.lob
        AND v2.channel    = ord.channel
-    FULL OUTER JOIN adobe_cartplus cp
+    FULL OUTER JOIN adobe_cartplus_mapped cp
         ON COALESCE(v2.event_date, ord.event_date) = cp.event_date
        AND COALESCE(v2.lob, ord.lob)               = cp.lob
        AND COALESCE(v2.channel, ord.channel)       = cp.channel

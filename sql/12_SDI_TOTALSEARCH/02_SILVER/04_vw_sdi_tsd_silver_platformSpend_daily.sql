@@ -12,7 +12,7 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver platform spend daily source mart for the Total Search Dashboard.
-  This view maps raw spend channels into the Adobe-aligned conformed dashboard channel set
+  This view maps raw spend channels into the conformed dashboard channel set
   and aggregates spend at the reporting grain:
       event_date + lob + channel
 
@@ -27,11 +27,9 @@ OUTPUT METRICS:
 
 KEY MODELING NOTES:
   - Bronze preserves source truth in channel_raw
-  - Silver maps all raw spend channels into the Adobe-aligned channel set only
-  - No new spend-only channels are created in Silver
-  - Similar / adjacent spend channels are collapsed into existing Adobe-aligned channels
-  - Remaining unexpected channels are collapsed into OTHER CAMPAIGNS so final spend
-    channels stay aligned with Adobe and do not introduce UNMAPPED as a final channel
+  - NATURAL SEARCH is standardized to ORGANIC SEARCH
+  - Paid search child channels are rolled up into PAID SEARCH
+  - Remaining unexpected channels are collapsed into OTHER CAMPAIGNS
 
 CONFORMED CHANNEL OUTPUT SET:
   AFFILIATE
@@ -41,15 +39,12 @@ CONFORMED CHANNEL OUTPUT SET:
   DISPLAY
   EMAIL - CAMPAIGN
   EMAIL - ORGANIC
-  NATURAL SEARCH
+  ORGANIC SEARCH
   ON DEVICE
   ONLINE VIDEO
   OTHER CAMPAIGNS
   OUT OF HOME
-  PAID SEARCH: BRAND
-  PAID SEARCH: NON-BRAND
-  PAID SEARCH: PLAS
-  PERFORMANCE MAX
+  PAID SEARCH
   REFERRING DOMAINS
   RETAIL STORE
   SESSION REFRESH
@@ -70,7 +65,7 @@ WITH mapped AS (
 
         CASE
             /* -------------------------------------------------------------------------------------------------
-               1) DIRECT 1:1 MAPPINGS TO ADOBE-ALIGNED CHANNELS
+               1) DIRECT 1:1 MAPPINGS TO FINAL CHANNELS
                ------------------------------------------------------------------------------------------------- */
             WHEN UPPER(TRIM(channel_raw)) = 'AFFILIATE' THEN 'AFFILIATE'
             WHEN UPPER(TRIM(channel_raw)) = 'DIRECT' THEN 'DIRECT'
@@ -79,15 +74,18 @@ WITH mapped AS (
             WHEN UPPER(TRIM(channel_raw)) = 'DISPLAY' THEN 'DISPLAY'
             WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - CAMPAIGN' THEN 'EMAIL - CAMPAIGN'
             WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - ORGANIC' THEN 'EMAIL - ORGANIC'
-            WHEN UPPER(TRIM(channel_raw)) = 'NATURAL SEARCH' THEN 'NATURAL SEARCH'
+            WHEN UPPER(TRIM(channel_raw)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             WHEN UPPER(TRIM(channel_raw)) = 'ON DEVICE' THEN 'ON DEVICE'
             WHEN UPPER(TRIM(channel_raw)) = 'ONLINE VIDEO' THEN 'ONLINE VIDEO'
             WHEN UPPER(TRIM(channel_raw)) = 'OTHER CAMPAIGNS' THEN 'OTHER CAMPAIGNS'
             WHEN UPPER(TRIM(channel_raw)) = 'OUT OF HOME' THEN 'OUT OF HOME'
-            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: BRAND' THEN 'PAID SEARCH: BRAND'
-            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: NON-BRAND' THEN 'PAID SEARCH: NON-BRAND'
-            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: PLAS' THEN 'PAID SEARCH: PLAS'
-            WHEN UPPER(TRIM(channel_raw)) = 'PERFORMANCE MAX' THEN 'PERFORMANCE MAX'
+            WHEN UPPER(TRIM(channel_raw)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX',
+                'PAID SEARCH'
+            ) THEN 'PAID SEARCH'
             WHEN UPPER(TRIM(channel_raw)) = 'REFERRING DOMAINS' THEN 'REFERRING DOMAINS'
             WHEN UPPER(TRIM(channel_raw)) = 'RETAIL STORE' THEN 'RETAIL STORE'
             WHEN UPPER(TRIM(channel_raw)) = 'SESSION REFRESH' THEN 'SESSION REFRESH'
@@ -96,7 +94,7 @@ WITH mapped AS (
             WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - NATURAL' THEN 'SOCIAL NETWORK - NATURAL'
 
             /* -------------------------------------------------------------------------------------------------
-               2) COLLAPSE SPEND-ONLY CHANNELS INTO EXISTING ADOBE-ALIGNED CHANNELS
+               2) COLLAPSE SPEND-ONLY CHANNELS INTO EXISTING FINAL CHANNELS
                ------------------------------------------------------------------------------------------------- */
             WHEN UPPER(TRIM(channel_raw)) = 'PROGRAMMATIC DISPLAY' THEN 'DISPLAY'
             WHEN UPPER(TRIM(channel_raw)) = 'CONTENT SYNDICATION' THEN 'DISPLAY'
