@@ -18,4 +18,22 @@ Hi team — I’ve now created the final Gold layer for the TSD model.
 
 The unified Gold tables contain the conformed Adobe, SA360, GSC, Platform Spend, and GMB metrics. ProFound remains in separate weekly and monthly Gold tables. I also created a long-format Gold table with the structure: `data_source, time_granularity, date, lob, channel, metric_name, metric_value`.
 
-Please use the unified Gold tables when you need wide-format reporting by grain, and use `vw_sdi_tsd_gold_long` when you need flexible metric-level filtering, source-level filtering, or easier dashboarding in long format.
+Please use the unified Gold  tables when you need wide-format reporting by grain, and use `vw_sdi_tsd_gold_long` when you need flexible metric-level filtering, source-level filtering, or easier dashboarding in long format.
+
+
+
+Hi team — I’ve finalized the TSD Gold layer.
+
+`vw_sdi_tsd_gold_unified_daily`: wide daily Gold at `event_date + lob + channel` with conformed Adobe, SA360, GSC, Platform Spend, and GMB metrics for base reporting.
+
+`vw_sdi_tsd_gold_unifiedMonSun_weekly`: wide weekly Gold at `weekMonToSun + lob + channel` with the same non-ProFound metrics rolled to Monday–Sunday weeks for standard weekly reporting.
+
+`vw_sdi_tsd_gold_unifiedSunSat_weekly`: wide weekly Gold at `weekSunToSat + lob + channel` with the same non-ProFound metrics rolled to Sunday–Saturday weeks for QGP-style reporting.
+
+`vw_sdi_tsd_gold_unified_monthly`: wide monthly Gold at `monthStart + lob + channel` with the same non-ProFound metrics rolled to monthly grain.
+
+`vw_sdi_tsd_gold_profound_weekly`: wide weekly Gold at `period_date + lob + channel` with ProFound/GoFish AI Search citation share and visibility score metrics.
+
+`vw_sdi_tsd_gold_profound_monthly`: wide monthly Gold at `period_date + lob + channel` with ProFound/GoFish AI Search citation share and visibility score metrics.
+
+`vw_sdi_tsd_gold_long`: long Gold at `data_source + time_granularity + date + lob + channel + metric_name` for flexible metric-level reporting and dashboarding.
