@@ -39,6 +39,13 @@ BUSINESS RULES:
       AT&T / att.com          -> ATT
       Verizon / verizon.com   -> VERIZON
 
+KEY DEDUPE FIX:
+  - When multiple raw rows collapse into the same standardized business key
+    (for example, 'AT&T' and 'At&t' both mapping to ATT),
+    metadata alone may tie.
+  - Visibility rows now use mentions_count / executions / visibility_score as deterministic tie-breakers.
+  - Citation rows now use citation_count / citation_share as deterministic tie-breakers.
+
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
@@ -86,10 +93,14 @@ vis_nonbrand AS (
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
-                    insert_date DESC
+                    insert_date DESC,
+                    mentions_count DESC,
+                    executions DESC,
+                    visibility_score DESC
             ) AS rn
         FROM vis_nonbrand_base
-        WHERE lob IS NOT NULL AND company IS NOT NULL
+        WHERE lob IS NOT NULL
+          AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
@@ -136,10 +147,13 @@ cit_nonbrand AS (
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
-                    insert_date DESC
+                    insert_date DESC,
+                    citation_count DESC,
+                    citation_share DESC
             ) AS rn
         FROM cit_nonbrand_base
-        WHERE lob IS NOT NULL AND company IS NOT NULL
+        WHERE lob IS NOT NULL
+          AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
@@ -186,10 +200,14 @@ vis_brand AS (
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
-                    insert_date DESC
+                    insert_date DESC,
+                    mentions_count DESC,
+                    executions DESC,
+                    visibility_score DESC
             ) AS rn
         FROM vis_brand_base
-        WHERE lob IS NOT NULL AND company IS NOT NULL
+        WHERE lob IS NOT NULL
+          AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
@@ -236,10 +254,13 @@ cit_brand AS (
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
-                    insert_date DESC
+                    insert_date DESC,
+                    citation_count DESC,
+                    citation_share DESC
             ) AS rn
         FROM cit_brand_base
-        WHERE lob IS NOT NULL AND company IS NOT NULL
+        WHERE lob IS NOT NULL
+          AND company IS NOT NULL
     )
     WHERE rn = 1
 )

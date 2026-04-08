@@ -1,0 +1,21 @@
+Hi team — I’ve now created the final Gold layer for the TSD model.
+
+**Unified Gold tables**
+
+* `vw_sdi_tsd_gold_unified_daily`
+* `vw_sdi_tsd_gold_unifiedMonSun_weekly`
+* `vw_sdi_tsd_gold_unifiedSunSat_weekly`
+* `vw_sdi_tsd_gold_unified_monthly`
+
+**ProFound Gold tables**
+
+* `vw_sdi_tsd_gold_profound_weekly`
+* `vw_sdi_tsd_gold_profound_monthly`
+
+**Long-format Gold table**
+
+* `vw_sdi_tsd_gold_long`
+
+The unified Gold tables contain the conformed Adobe, SA360, GSC, Platform Spend, and GMB metrics. ProFound remains in separate weekly and monthly Gold tables. I also created a long-format Gold table with the structure: `data_source, time_granularity, date, lob, channel, metric_name, metric_value`.
+
+Please use the unified Gold tables when you need wide-format reporting by grain, and use `vw_sdi_tsd_gold_long` when you need flexible metric-level filtering, source-level filtering, or easier dashboarding in long format.
