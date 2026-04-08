@@ -21,6 +21,7 @@ PURPOSE:
 OUTPUT COLUMNS:
   - data_source
   - time_granularity
+  - time_granularity_type
   - date
   - lob
   - channel
@@ -34,6 +35,8 @@ KEY MODELING NOTES:
   - Uses actual source-family values in data_source:
       ADOBE, SA360, GSC, PLATFORM_SPEND, GMB, PROFOUND
   - Weekly ProFound is tagged as WEEKLY_MON_SUN because the weekly source is Sunday-ending
+  - time_granularity_type makes weekly calendar filtering explicit:
+      MON_SUN, SUN_SAT, NOT_APPLICABLE
   - metric_value is standardized to FLOAT64
 
 ================================================================================================= */
@@ -48,6 +51,7 @@ WITH daily_adobe_base AS (
     SELECT
         'ADOBE' AS data_source,
         'DAILY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         event_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -75,6 +79,7 @@ daily_adobe_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -110,6 +115,7 @@ daily_sa360_base AS (
     SELECT
         'SA360' AS data_source,
         'DAILY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         event_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -127,6 +133,7 @@ daily_sa360_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -152,6 +159,7 @@ daily_gsc_base AS (
     SELECT
         'GSC' AS data_source,
         'DAILY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         event_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -169,6 +177,7 @@ daily_gsc_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -194,6 +203,7 @@ daily_spend_long AS (
     SELECT
         'PLATFORM_SPEND' AS data_source,
         'DAILY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         event_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -209,6 +219,7 @@ daily_gmb_base AS (
     SELECT
         'GMB' AS data_source,
         'DAILY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         event_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -226,6 +237,7 @@ daily_gmb_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -251,6 +263,7 @@ weekly_monsun_adobe_base AS (
     SELECT
         'ADOBE' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         weekMonToSun AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -278,6 +291,7 @@ weekly_monsun_adobe_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -313,6 +327,7 @@ weekly_monsun_sa360_base AS (
     SELECT
         'SA360' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         weekMonToSun AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -330,6 +345,7 @@ weekly_monsun_sa360_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -355,6 +371,7 @@ weekly_monsun_gsc_base AS (
     SELECT
         'GSC' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         weekMonToSun AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -372,6 +389,7 @@ weekly_monsun_gsc_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -397,6 +415,7 @@ weekly_monsun_spend_long AS (
     SELECT
         'PLATFORM_SPEND' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         weekMonToSun AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -412,6 +431,7 @@ weekly_monsun_gmb_base AS (
     SELECT
         'GMB' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         weekMonToSun AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -429,6 +449,7 @@ weekly_monsun_gmb_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -454,6 +475,7 @@ weekly_sunsat_adobe_base AS (
     SELECT
         'ADOBE' AS data_source,
         'WEEKLY_SUN_SAT' AS time_granularity,
+        'SUN_SAT' AS time_granularity_type,
         weekSunToSat AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -481,6 +503,7 @@ weekly_sunsat_adobe_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -516,6 +539,7 @@ weekly_sunsat_sa360_base AS (
     SELECT
         'SA360' AS data_source,
         'WEEKLY_SUN_SAT' AS time_granularity,
+        'SUN_SAT' AS time_granularity_type,
         weekSunToSat AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -533,6 +557,7 @@ weekly_sunsat_sa360_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -558,6 +583,7 @@ weekly_sunsat_gsc_base AS (
     SELECT
         'GSC' AS data_source,
         'WEEKLY_SUN_SAT' AS time_granularity,
+        'SUN_SAT' AS time_granularity_type,
         weekSunToSat AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -575,6 +601,7 @@ weekly_sunsat_gsc_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -600,6 +627,7 @@ weekly_sunsat_spend_long AS (
     SELECT
         'PLATFORM_SPEND' AS data_source,
         'WEEKLY_SUN_SAT' AS time_granularity,
+        'SUN_SAT' AS time_granularity_type,
         weekSunToSat AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -615,6 +643,7 @@ weekly_sunsat_gmb_base AS (
     SELECT
         'GMB' AS data_source,
         'WEEKLY_SUN_SAT' AS time_granularity,
+        'SUN_SAT' AS time_granularity_type,
         weekSunToSat AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -632,6 +661,7 @@ weekly_sunsat_gmb_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -657,6 +687,7 @@ monthly_adobe_base AS (
     SELECT
         'ADOBE' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         monthStart AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -684,6 +715,7 @@ monthly_adobe_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -719,6 +751,7 @@ monthly_sa360_base AS (
     SELECT
         'SA360' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         monthStart AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -736,6 +769,7 @@ monthly_sa360_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -761,6 +795,7 @@ monthly_gsc_base AS (
     SELECT
         'GSC' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         monthStart AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -778,6 +813,7 @@ monthly_gsc_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -803,6 +839,7 @@ monthly_spend_long AS (
     SELECT
         'PLATFORM_SPEND' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         monthStart AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -818,6 +855,7 @@ monthly_gmb_base AS (
     SELECT
         'GMB' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         monthStart AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -835,6 +873,7 @@ monthly_gmb_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -860,6 +899,7 @@ profound_weekly_base AS (
     SELECT
         'PROFOUND' AS data_source,
         'WEEKLY_MON_SUN' AS time_granularity,
+        'MON_SUN' AS time_granularity_type,
         period_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -885,6 +925,7 @@ profound_weekly_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
@@ -916,6 +957,7 @@ profound_monthly_base AS (
     SELECT
         'PROFOUND' AS data_source,
         'MONTHLY' AS time_granularity,
+        'NOT_APPLICABLE' AS time_granularity_type,
         period_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
@@ -941,6 +983,7 @@ profound_monthly_long AS (
     SELECT
         data_source,
         time_granularity,
+        time_granularity_type,
         date,
         lob,
         channel,
