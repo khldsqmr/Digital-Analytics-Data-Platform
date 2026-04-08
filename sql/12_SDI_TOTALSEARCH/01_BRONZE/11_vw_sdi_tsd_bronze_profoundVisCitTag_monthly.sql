@@ -5,10 +5,10 @@ DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_bronze_profoundVisCitTag_monthly
 
 SOURCES:
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_monthly
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_monthly
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_monthly
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_monthly
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_monthly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_monthly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_monthly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_monthly_tmo
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly
@@ -71,7 +71,7 @@ WITH vis_nonbrand_base AS (
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_monthly`
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_monthly_tmo`
     WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
       AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
 ),
@@ -121,7 +121,7 @@ cit_nonbrand_base AS (
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_monthly`
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_monthly_tmo`
     WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
       AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
 ),
@@ -171,7 +171,7 @@ vis_brand_base AS (
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_monthly`
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_monthly_tmo`
     WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
       AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
 ),
@@ -221,7 +221,7 @@ cit_brand_base AS (
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_monthly`
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_monthly_tmo`
     WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
       AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
 ),
