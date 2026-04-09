@@ -43,7 +43,7 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_
 AS
 
 SELECT
-    DATE(event_date) AS event_date,
+    PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS event_date,
     UPPER(TRIM('Postpaid')) AS lob,
     UPPER(TRIM(last_touch_channel)) AS channel,
 
