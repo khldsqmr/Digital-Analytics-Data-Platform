@@ -70,24 +70,17 @@ WITH adobe_v2_mapped AS (
                 'PAID SEARCH: PLAS',
                 'PERFORMANCE MAX'
             ) THEN 'PAID SEARCH'
-            WHEN UPPER(TRIM(channel)) IN (
-                'NATURAL SEARCH',
-                'ORGANIC SEARCH'
-            ) THEN 'ORGANIC SEARCH'
+            WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             ELSE UPPER(TRIM(channel))
         END AS channel,
-
-        SUM(COALESCE(adobe_entries, 0))                 AS adobe_entries,
-        SUM(COALESCE(adobe_pspv_actuals, 0))           AS adobe_pspv_actuals,
-        SUM(COALESCE(adobe_cart_starts, 0))            AS adobe_cart_starts,
-        SUM(COALESCE(adobe_cart_checkout_visits, 0))   AS adobe_cart_checkout_visits,
-        SUM(COALESCE(adobe_checkout_review_visits, 0)) AS adobe_checkout_review_visits,
-        SUM(COALESCE(adobe_postpaid_orders_tsr, 0))    AS adobe_postpaid_orders_tsr
+        SUM(adobe_entries)                 AS adobe_entries,
+        SUM(adobe_pspv_actuals)            AS adobe_pspv_actuals,
+        SUM(adobe_cart_starts)             AS adobe_cart_starts,
+        SUM(adobe_cart_checkout_visits)    AS adobe_cart_checkout_visits,
+        SUM(adobe_checkout_review_visits)  AS adobe_checkout_review_visits,
+        SUM(adobe_postpaid_orders_tsr)     AS adobe_postpaid_orders_tsr
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeV2_daily`
-    GROUP BY
-        event_date,
-        lob,
-        channel
+    GROUP BY event_date, lob, channel
 ),
 
 adobe_orders_mapped AS (
@@ -101,27 +94,20 @@ adobe_orders_mapped AS (
                 'PAID SEARCH: PLAS',
                 'PERFORMANCE MAX'
             ) THEN 'PAID SEARCH'
-            WHEN UPPER(TRIM(channel)) IN (
-                'NATURAL SEARCH',
-                'ORGANIC SEARCH'
-            ) THEN 'ORGANIC SEARCH'
+            WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             ELSE UPPER(TRIM(channel))
         END AS channel,
-
-        SUM(COALESCE(adobe_orders_web_unassisted, 0))   AS adobe_orders_web_unassisted,
-        SUM(COALESCE(adobe_orders_web_assisted, 0))     AS adobe_orders_web_assisted,
-        SUM(COALESCE(adobe_orders_app_unassisted, 0))   AS adobe_orders_app_unassisted,
-        SUM(COALESCE(adobe_orders_app_assisted, 0))     AS adobe_orders_app_assisted,
-        SUM(COALESCE(adobe_orders_web_all, 0))          AS adobe_orders_web_all,
-        SUM(COALESCE(adobe_orders_app_all, 0))          AS adobe_orders_app_all,
-        SUM(COALESCE(adobe_orders_fully_unassisted, 0)) AS adobe_orders_fully_unassisted,
-        SUM(COALESCE(adobe_orders_fully_assisted, 0))   AS adobe_orders_fully_assisted,
-        SUM(COALESCE(adobe_orders_all, 0))              AS adobe_orders_all
+        SUM(adobe_orders_web_unassisted)    AS adobe_orders_web_unassisted,
+        SUM(adobe_orders_web_assisted)      AS adobe_orders_web_assisted,
+        SUM(adobe_orders_app_unassisted)    AS adobe_orders_app_unassisted,
+        SUM(adobe_orders_app_assisted)      AS adobe_orders_app_assisted,
+        SUM(adobe_orders_web_all)           AS adobe_orders_web_all,
+        SUM(adobe_orders_app_all)           AS adobe_orders_app_all,
+        SUM(adobe_orders_fully_unassisted)  AS adobe_orders_fully_unassisted,
+        SUM(adobe_orders_fully_assisted)    AS adobe_orders_fully_assisted,
+        SUM(adobe_orders_all)               AS adobe_orders_all
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeOrders_daily`
-    GROUP BY
-        event_date,
-        lob,
-        channel
+    GROUP BY event_date, lob, channel
 ),
 
 adobe_cartplus_mapped AS (
@@ -135,19 +121,12 @@ adobe_cartplus_mapped AS (
                 'PAID SEARCH: PLAS',
                 'PERFORMANCE MAX'
             ) THEN 'PAID SEARCH'
-            WHEN UPPER(TRIM(channel)) IN (
-                'NATURAL SEARCH',
-                'ORGANIC SEARCH'
-            ) THEN 'ORGANIC SEARCH'
+            WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             ELSE UPPER(TRIM(channel))
         END AS channel,
-
-        SUM(COALESCE(adobe_cart_start_plus, 0)) AS adobe_cart_start_plus
+        SUM(adobe_cart_start_plus) AS adobe_cart_start_plus
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeCartStartPlus_daily`
-    GROUP BY
-        event_date,
-        lob,
-        channel
+    GROUP BY event_date, lob, channel
 ),
 
 adobe_storelocator_mapped AS (
@@ -161,19 +140,12 @@ adobe_storelocator_mapped AS (
                 'PAID SEARCH: PLAS',
                 'PERFORMANCE MAX'
             ) THEN 'PAID SEARCH'
-            WHEN UPPER(TRIM(channel)) IN (
-                'NATURAL SEARCH',
-                'ORGANIC SEARCH'
-            ) THEN 'ORGANIC SEARCH'
+            WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             ELSE UPPER(TRIM(channel))
         END AS channel,
-
-        SUM(COALESCE(adobe_storelocator_visits, 0)) AS adobe_storelocator_visits
+        SUM(adobe_storelocator_visits) AS adobe_storelocator_visits
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeStoreLocator_daily`
-    GROUP BY
-        event_date,
-        lob,
-        channel
+    GROUP BY event_date, lob, channel
 ),
 
 joined AS (
@@ -201,7 +173,6 @@ joined AS (
         ord.adobe_orders_all,
 
         sl.adobe_storelocator_visits
-
     FROM adobe_v2_mapped v2
     FULL OUTER JOIN adobe_orders_mapped ord
         ON v2.event_date = ord.event_date
@@ -222,22 +193,22 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    COALESCE(adobe_entries, 0)                    AS adobe_entries,
-    COALESCE(adobe_pspv_actuals, 0)              AS adobe_pspv_actuals,
-    COALESCE(adobe_cart_starts, 0)               AS adobe_cart_starts,
-    COALESCE(adobe_cart_start_plus, 0)           AS adobe_cart_start_plus,
-    COALESCE(adobe_cart_checkout_visits, 0)      AS adobe_cart_checkout_visits,
-    COALESCE(adobe_checkout_review_visits, 0)    AS adobe_checkout_review_visits,
-    COALESCE(adobe_postpaid_orders_tsr, 0)       AS adobe_postpaid_orders_tsr,
+    adobe_entries,
+    adobe_pspv_actuals,
+    adobe_cart_starts,
+    adobe_cart_start_plus,
+    adobe_cart_checkout_visits,
+    adobe_checkout_review_visits,
+    adobe_postpaid_orders_tsr,
 
-    COALESCE(adobe_orders_web_unassisted, 0)     AS adobe_orders_web_unassisted,
-    COALESCE(adobe_orders_web_assisted, 0)       AS adobe_orders_web_assisted,
-    COALESCE(adobe_orders_app_unassisted, 0)     AS adobe_orders_app_unassisted,
-    COALESCE(adobe_orders_app_assisted, 0)       AS adobe_orders_app_assisted,
-    COALESCE(adobe_orders_web_all, 0)            AS adobe_orders_web_all,
-    COALESCE(adobe_orders_app_all, 0)            AS adobe_orders_app_all,
-    COALESCE(adobe_orders_fully_unassisted, 0)   AS adobe_orders_fully_unassisted,
-    COALESCE(adobe_orders_fully_assisted, 0)     AS adobe_orders_fully_assisted,
-    COALESCE(adobe_orders_all, 0)                AS adobe_orders_all,
-    COALESCE(adobe_storelocator_visits, 0)       AS adobe_storelocator_visits
+    adobe_orders_web_unassisted,
+    adobe_orders_web_assisted,
+    adobe_orders_app_unassisted,
+    adobe_orders_app_assisted,
+    adobe_orders_web_all,
+    adobe_orders_app_all,
+    adobe_orders_fully_unassisted,
+    adobe_orders_fully_assisted,
+    adobe_orders_all,
+    adobe_storelocator_visits
 FROM joined;

@@ -27,6 +27,12 @@ OUTPUT COLUMNS:
   - metric_name
   - metric_value
 
+KEY MODELING NOTES:
+  - Uses NULL-preserving upstream gold views
+  - Weekly date is standardized to WEEK ENDING SATURDAY
+  - Monthly date is standardized to MONTH END
+  - PROFOUND and GOFISH are emitted separately
+
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_long`
@@ -182,7 +188,7 @@ monthly_base AS (
 
 profound_weekly_base AS (
     SELECT
-        DATE_ADD(DATE_TRUNC(period_date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS date,
+        period_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
 

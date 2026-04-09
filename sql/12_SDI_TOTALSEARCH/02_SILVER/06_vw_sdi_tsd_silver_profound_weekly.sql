@@ -1,4 +1,3 @@
-
 /* =================================================================================================
 FILE: 06_vw_sdi_tsd_silver_profound_weekly.sql
 LAYER: Silver View
@@ -13,7 +12,6 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver weekly ProFound / GoFish source mart for the Total Search Dashboard.
-  This view pivots the Bronze object into the 12 wide reporting metrics.
 
 BUSINESS GRAIN:
   One row per:
@@ -21,19 +19,9 @@ BUSINESS GRAIN:
       lob
       channel
 
-OUTPUT METRICS:
-  - profound_tmo_citation_share_brand
-  - profound_tmo_citation_share_nonbrand
-  - profound_tmo_visibility_score_brand
-  - profound_tmo_visibility_score_nonbrand
-  - profound_att_citation_share_brand
-  - profound_att_citation_share_nonbrand
-  - profound_att_visibility_score_brand
-  - profound_att_visibility_score_nonbrand
-  - profound_verizon_citation_share_brand
-  - profound_verizon_citation_share_nonbrand
-  - profound_verizon_visibility_score_brand
-  - profound_verizon_visibility_score_nonbrand
+KEY MODELING NOTES:
+  - Converts source week-start / source period date into WEEK ENDING SATURDAY
+  - This makes weekly profound alignment consistent with unified weekly gold and long outputs
 
 ================================================================================================= */
 
@@ -41,7 +29,7 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_
 AS
 
 SELECT
-    period_date,
+    DATE_ADD(DATE_TRUNC(period_date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS period_date,
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
@@ -52,12 +40,12 @@ SELECT
     MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS profound_verizon_citation_share,
     MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_verizon_visibility_score,
 
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_tmo_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_tmo_visibility_score,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_att_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_att_visibility_score,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_verizon_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_tmo_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_tmo_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_att_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_att_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_verizon_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_weekly`
 GROUP BY

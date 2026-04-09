@@ -21,7 +21,7 @@ BUSINESS GRAIN:
 
 KEY MODELING NOTES:
   - Thin gold wrapper over the weekly ProFound silver
-  - No joins required because the silver is already conformed and wide
+  - period_date is already standardized to WEEK ENDING SATURDAY in Silver
 
 ================================================================================================= */
 

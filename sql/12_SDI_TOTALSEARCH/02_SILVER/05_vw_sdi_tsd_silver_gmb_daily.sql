@@ -49,44 +49,35 @@ AS
 WITH classified AS (
     SELECT
         event_date,
-
         CASE
             WHEN REGEXP_CONTAINS(UPPER(TRIM(account_name)), r'T[- ]?MOBILE STORES') THEN 'POSTPAID'
             ELSE 'UNMAPPED'
         END AS lob,
-
-        UPPER(TRIM('MAPS & LOCAL SEARCH')) AS channel,
-
+        'MAPS & LOCAL SEARCH' AS channel,
         gmb_search_impressions_all,
         gmb_maps_impressions_all,
         gmb_impressions_all,
         gmb_call_clicks,
         gmb_website_clicks,
         gmb_directions_clicks
-
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gmb_daily`
 ),
 
 filtered AS (
     SELECT *
     FROM classified
-    WHERE UPPER(TRIM(lob)) = 'POSTPAID'
+    WHERE lob = 'POSTPAID'
 )
 
 SELECT
     event_date,
-    UPPER(TRIM(lob)) AS lob,
-    UPPER(TRIM(channel)) AS channel,
-
-    SUM(COALESCE(gmb_search_impressions_all, 0)) AS gmb_search_impressions_all,
-    SUM(COALESCE(gmb_maps_impressions_all, 0)) AS gmb_maps_impressions_all,
-    SUM(COALESCE(gmb_impressions_all, 0)) AS gmb_impressions_all,
-    SUM(COALESCE(gmb_call_clicks, 0)) AS gmb_call_clicks,
-    SUM(COALESCE(gmb_website_clicks, 0)) AS gmb_website_clicks,
-    SUM(COALESCE(gmb_directions_clicks, 0)) AS gmb_directions_clicks
-
-FROM filtered
-GROUP BY
-    event_date,
     lob,
-    channel;
+    channel,
+    SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
+    SUM(gmb_maps_impressions_all) AS gmb_maps_impressions_all,
+    SUM(gmb_impressions_all) AS gmb_impressions_all,
+    SUM(gmb_call_clicks) AS gmb_call_clicks,
+    SUM(gmb_website_clicks) AS gmb_website_clicks,
+    SUM(gmb_directions_clicks) AS gmb_directions_clicks
+FROM filtered
+GROUP BY event_date, lob, channel;

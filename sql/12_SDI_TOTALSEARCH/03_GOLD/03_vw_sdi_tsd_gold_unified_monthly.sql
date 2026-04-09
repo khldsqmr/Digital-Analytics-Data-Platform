@@ -19,6 +19,10 @@ BUSINESS GRAIN:
       lob
       channel
 
+KEY MODELING NOTES:
+  - Uses NULL-aware aggregation
+  - If a metric is NULL for all contributing daily rows, monthly result stays NULL
+
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly`
@@ -29,49 +33,50 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    SUM(adobe_entries) AS adobe_entries,
-    SUM(adobe_pspv_actuals) AS adobe_pspv_actuals,
-    SUM(adobe_cart_starts) AS adobe_cart_starts,
-    SUM(adobe_cart_start_plus) AS adobe_cart_start_plus,
-    SUM(adobe_cart_checkout_visits) AS adobe_cart_checkout_visits,
-    SUM(adobe_checkout_review_visits) AS adobe_checkout_review_visits,
-    SUM(adobe_postpaid_orders_tsr) AS adobe_postpaid_orders_tsr,
-    SUM(adobe_orders_web_unassisted) AS adobe_orders_web_unassisted,
-    SUM(adobe_orders_web_assisted) AS adobe_orders_web_assisted,
-    SUM(adobe_orders_app_unassisted) AS adobe_orders_app_unassisted,
-    SUM(adobe_orders_app_assisted) AS adobe_orders_app_assisted,
-    SUM(adobe_orders_web_all) AS adobe_orders_web_all,
-    SUM(adobe_orders_app_all) AS adobe_orders_app_all,
-    SUM(adobe_orders_fully_unassisted) AS adobe_orders_fully_unassisted,
-    SUM(adobe_orders_fully_assisted) AS adobe_orders_fully_assisted,
-    SUM(adobe_orders_all) AS adobe_orders_all,
-    SUM(adobe_storelocator_visits) AS adobe_storelocator_visits,
+    CASE WHEN COUNT(adobe_entries) = 0 THEN NULL ELSE SUM(adobe_entries) END AS adobe_entries,
+    CASE WHEN COUNT(adobe_pspv_actuals) = 0 THEN NULL ELSE SUM(adobe_pspv_actuals) END AS adobe_pspv_actuals,
+    CASE WHEN COUNT(adobe_cart_starts) = 0 THEN NULL ELSE SUM(adobe_cart_starts) END AS adobe_cart_starts,
+    CASE WHEN COUNT(adobe_cart_start_plus) = 0 THEN NULL ELSE SUM(adobe_cart_start_plus) END AS adobe_cart_start_plus,
+    CASE WHEN COUNT(adobe_cart_checkout_visits) = 0 THEN NULL ELSE SUM(adobe_cart_checkout_visits) END AS adobe_cart_checkout_visits,
+    CASE WHEN COUNT(adobe_checkout_review_visits) = 0 THEN NULL ELSE SUM(adobe_checkout_review_visits) END AS adobe_checkout_review_visits,
+    CASE WHEN COUNT(adobe_postpaid_orders_tsr) = 0 THEN NULL ELSE SUM(adobe_postpaid_orders_tsr) END AS adobe_postpaid_orders_tsr,
+    CASE WHEN COUNT(adobe_orders_web_unassisted) = 0 THEN NULL ELSE SUM(adobe_orders_web_unassisted) END AS adobe_orders_web_unassisted,
+    CASE WHEN COUNT(adobe_orders_web_assisted) = 0 THEN NULL ELSE SUM(adobe_orders_web_assisted) END AS adobe_orders_web_assisted,
+    CASE WHEN COUNT(adobe_orders_app_unassisted) = 0 THEN NULL ELSE SUM(adobe_orders_app_unassisted) END AS adobe_orders_app_unassisted,
+    CASE WHEN COUNT(adobe_orders_app_assisted) = 0 THEN NULL ELSE SUM(adobe_orders_app_assisted) END AS adobe_orders_app_assisted,
+    CASE WHEN COUNT(adobe_orders_web_all) = 0 THEN NULL ELSE SUM(adobe_orders_web_all) END AS adobe_orders_web_all,
+    CASE WHEN COUNT(adobe_orders_app_all) = 0 THEN NULL ELSE SUM(adobe_orders_app_all) END AS adobe_orders_app_all,
+    CASE WHEN COUNT(adobe_orders_fully_unassisted) = 0 THEN NULL ELSE SUM(adobe_orders_fully_unassisted) END AS adobe_orders_fully_unassisted,
+    CASE WHEN COUNT(adobe_orders_fully_assisted) = 0 THEN NULL ELSE SUM(adobe_orders_fully_assisted) END AS adobe_orders_fully_assisted,
+    CASE WHEN COUNT(adobe_orders_all) = 0 THEN NULL ELSE SUM(adobe_orders_all) END AS adobe_orders_all,
+    CASE WHEN COUNT(adobe_storelocator_visits) = 0 THEN NULL ELSE SUM(adobe_storelocator_visits) END AS adobe_storelocator_visits,
 
-    SUM(sa360_clicks_brand) AS sa360_clicks_brand,
-    SUM(sa360_clicks_nonbrand) AS sa360_clicks_nonbrand,
-    SUM(sa360_clicks_all) AS sa360_clicks_all,
-    SUM(sa360_cart_start_plus_brand) AS sa360_cart_start_plus_brand,
-    SUM(sa360_cart_start_plus_nonbrand) AS sa360_cart_start_plus_nonbrand,
-    SUM(sa360_cart_start_plus_all) AS sa360_cart_start_plus_all,
+    CASE WHEN COUNT(sa360_clicks_brand) = 0 THEN NULL ELSE SUM(sa360_clicks_brand) END AS sa360_clicks_brand,
+    CASE WHEN COUNT(sa360_clicks_nonbrand) = 0 THEN NULL ELSE SUM(sa360_clicks_nonbrand) END AS sa360_clicks_nonbrand,
+    CASE WHEN COUNT(sa360_clicks_all) = 0 THEN NULL ELSE SUM(sa360_clicks_all) END AS sa360_clicks_all,
+    CASE WHEN COUNT(sa360_cart_start_plus_brand) = 0 THEN NULL ELSE SUM(sa360_cart_start_plus_brand) END AS sa360_cart_start_plus_brand,
+    CASE WHEN COUNT(sa360_cart_start_plus_nonbrand) = 0 THEN NULL ELSE SUM(sa360_cart_start_plus_nonbrand) END AS sa360_cart_start_plus_nonbrand,
+    CASE WHEN COUNT(sa360_cart_start_plus_all) = 0 THEN NULL ELSE SUM(sa360_cart_start_plus_all) END AS sa360_cart_start_plus_all,
 
-    SUM(gsc_clicks_brand) AS gsc_clicks_brand,
-    SUM(gsc_clicks_nonbrand) AS gsc_clicks_nonbrand,
-    SUM(gsc_clicks_all) AS gsc_clicks_all,
-    SUM(gsc_impressions_brand) AS gsc_impressions_brand,
-    SUM(gsc_impressions_nonbrand) AS gsc_impressions_nonbrand,
-    SUM(gsc_impressions_all) AS gsc_impressions_all,
+    CASE WHEN COUNT(gsc_clicks_brand) = 0 THEN NULL ELSE SUM(gsc_clicks_brand) END AS gsc_clicks_brand,
+    CASE WHEN COUNT(gsc_clicks_nonbrand) = 0 THEN NULL ELSE SUM(gsc_clicks_nonbrand) END AS gsc_clicks_nonbrand,
+    CASE WHEN COUNT(gsc_clicks_all) = 0 THEN NULL ELSE SUM(gsc_clicks_all) END AS gsc_clicks_all,
+    CASE WHEN COUNT(gsc_impressions_brand) = 0 THEN NULL ELSE SUM(gsc_impressions_brand) END AS gsc_impressions_brand,
+    CASE WHEN COUNT(gsc_impressions_nonbrand) = 0 THEN NULL ELSE SUM(gsc_impressions_nonbrand) END AS gsc_impressions_nonbrand,
+    CASE WHEN COUNT(gsc_impressions_all) = 0 THEN NULL ELSE SUM(gsc_impressions_all) END AS gsc_impressions_all,
 
-    SUM(platform_spend) AS platform_spend,
+    CASE WHEN COUNT(platform_spend) = 0 THEN NULL ELSE SUM(platform_spend) END AS platform_spend,
 
-    SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
-    SUM(gmb_maps_impressions_all) AS gmb_maps_impressions_all,
-    SUM(gmb_impressions_all) AS gmb_impressions_all,
-    SUM(gmb_call_clicks) AS gmb_call_clicks,
-    SUM(gmb_website_clicks) AS gmb_website_clicks,
-    SUM(gmb_directions_clicks) AS gmb_directions_clicks
+    CASE WHEN COUNT(gmb_search_impressions_all) = 0 THEN NULL ELSE SUM(gmb_search_impressions_all) END AS gmb_search_impressions_all,
+    CASE WHEN COUNT(gmb_maps_impressions_all) = 0 THEN NULL ELSE SUM(gmb_maps_impressions_all) END AS gmb_maps_impressions_all,
+    CASE WHEN COUNT(gmb_impressions_all) = 0 THEN NULL ELSE SUM(gmb_impressions_all) END AS gmb_impressions_all,
+    CASE WHEN COUNT(gmb_call_clicks) = 0 THEN NULL ELSE SUM(gmb_call_clicks) END AS gmb_call_clicks,
+    CASE WHEN COUNT(gmb_website_clicks) = 0 THEN NULL ELSE SUM(gmb_website_clicks) END AS gmb_website_clicks,
+    CASE WHEN COUNT(gmb_directions_clicks) = 0 THEN NULL ELSE SUM(gmb_directions_clicks) END AS gmb_directions_clicks
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
 GROUP BY
     monthStart,
     lob,
-    channel;
+    channel
+;

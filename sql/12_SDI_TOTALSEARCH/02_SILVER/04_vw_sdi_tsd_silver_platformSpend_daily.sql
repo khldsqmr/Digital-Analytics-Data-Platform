@@ -62,11 +62,7 @@ WITH mapped AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel_raw)) AS channel_raw,
-
         CASE
-            /* -------------------------------------------------------------------------------------------------
-               1) DIRECT 1:1 MAPPINGS TO FINAL CHANNELS
-               ------------------------------------------------------------------------------------------------- */
             WHEN UPPER(TRIM(channel_raw)) = 'AFFILIATE' THEN 'AFFILIATE'
             WHEN UPPER(TRIM(channel_raw)) = 'DIRECT' THEN 'DIRECT'
             WHEN UPPER(TRIM(channel_raw)) = 'DIRECT MAIL' THEN 'DIRECT MAIL'
@@ -92,49 +88,21 @@ WITH mapped AS (
             WHEN UPPER(TRIM(channel_raw)) = 'SMS' THEN 'SMS'
             WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - CAMPAIGN' THEN 'SOCIAL NETWORK - CAMPAIGN'
             WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - NATURAL' THEN 'SOCIAL NETWORK - NATURAL'
-
-            /* -------------------------------------------------------------------------------------------------
-               2) COLLAPSE SPEND-ONLY CHANNELS INTO EXISTING FINAL CHANNELS
-               ------------------------------------------------------------------------------------------------- */
             WHEN UPPER(TRIM(channel_raw)) = 'PROGRAMMATIC DISPLAY' THEN 'DISPLAY'
             WHEN UPPER(TRIM(channel_raw)) = 'CONTENT SYNDICATION' THEN 'DISPLAY'
-
             WHEN UPPER(TRIM(channel_raw)) = 'OVER THE TOP' THEN 'ONLINE VIDEO'
-
-            WHEN UPPER(TRIM(channel_raw)) IN (
-                'BROADCAST TV',
-                'CABLE TV',
-                'LIVE SPORTS TV',
-                'LOCAL TV',
-                'SL TV'
-            ) THEN 'DIRECT TV'
-
-            WHEN UPPER(TRIM(channel_raw)) IN (
-                'STREAMING RADIO',
-                'PODCAST',
-                'SUPER BOWL',
-                'TUESDAYS',
-                'OFFLINE',
-                '? TFB _EFL_ _SLN_ ?'
-            ) THEN 'OTHER CAMPAIGNS'
-
-            /* -------------------------------------------------------------------------------------------------
-               3) ANY REMAINING / UNKNOWN CHANNELS
-               ------------------------------------------------------------------------------------------------- */
+            WHEN UPPER(TRIM(channel_raw)) IN ('BROADCAST TV', 'CABLE TV', 'LIVE SPORTS TV', 'LOCAL TV', 'SL TV') THEN 'DIRECT TV'
+            WHEN UPPER(TRIM(channel_raw)) IN ('STREAMING RADIO', 'PODCAST', 'SUPER BOWL', 'TUESDAYS', 'OFFLINE', '? TFB _EFL_ _SLN_ ?') THEN 'OTHER CAMPAIGNS'
             ELSE 'OTHER CAMPAIGNS'
         END AS channel,
-
-        COALESCE(spend, 0) AS spend
+        spend
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_platformSpend_daily`
 )
 
 SELECT
     event_date,
-    UPPER(TRIM(lob)) AS lob,
-    UPPER(TRIM(channel)) AS channel,
-    SUM(COALESCE(spend, 0)) AS platform_spend
-FROM mapped
-GROUP BY
-    event_date,
     lob,
-    channel;
+    UPPER(TRIM(channel)) AS channel,
+    SUM(spend) AS platform_spend
+FROM mapped
+GROUP BY event_date, lob, channel;

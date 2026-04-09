@@ -48,19 +48,10 @@ AS
 WITH classified AS (
     SELECT
         event_date,
-        UPPER(TRIM('POSTPAID')) AS lob,
-        UPPER(TRIM('ORGANIC SEARCH')) AS channel,
-
-        account_id,
-        account_name,
-        site_url,
-        page,
-        query,
-        search_type,
-
+        'POSTPAID' AS lob,
+        'ORGANIC SEARCH' AS channel,
         SAFE_CAST(clicks AS FLOAT64) AS clicks,
         SAFE_CAST(impressions AS FLOAT64) AS impressions,
-
         CASE
             WHEN query IS NULL OR TRIM(query) = '' THEN 'EXCLUDE'
             WHEN REGEXP_CONTAINS(
@@ -73,7 +64,6 @@ WITH classified AS (
             ) THEN 'BRAND'
             ELSE 'NONBRAND'
         END AS brand_type
-
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
 ),
 
@@ -86,33 +76,32 @@ filtered AS (
 aggregated AS (
     SELECT
         event_date,
-        UPPER(TRIM(lob)) AS lob,
-        UPPER(TRIM(channel)) AS channel,
-
-        SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS gsc_clicks_brand,
-        SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(clicks, 0) ELSE 0 END) AS gsc_clicks_nonbrand,
-
-        SUM(CASE WHEN brand_type = 'BRAND' THEN COALESCE(impressions, 0) ELSE 0 END) AS gsc_impressions_brand,
-        SUM(CASE WHEN brand_type = 'NONBRAND' THEN COALESCE(impressions, 0) ELSE 0 END) AS gsc_impressions_nonbrand
-
-    FROM filtered
-    GROUP BY
-        event_date,
         lob,
-        channel
+        channel,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END) AS gsc_clicks_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END) AS gsc_clicks_nonbrand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN impressions END) AS gsc_impressions_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN impressions END) AS gsc_impressions_nonbrand
+    FROM filtered
+    GROUP BY event_date, lob, channel
 )
 
 SELECT
     event_date,
-    UPPER(TRIM(lob)) AS lob,
-    UPPER(TRIM(channel)) AS channel,
+    lob,
+    channel,
 
     gsc_clicks_brand,
     gsc_clicks_nonbrand,
-    COALESCE(gsc_clicks_brand, 0) + COALESCE(gsc_clicks_nonbrand, 0) AS gsc_clicks_all,
+    CASE
+        WHEN gsc_clicks_brand IS NULL AND gsc_clicks_nonbrand IS NULL THEN NULL
+        ELSE COALESCE(gsc_clicks_brand, 0) + COALESCE(gsc_clicks_nonbrand, 0)
+    END AS gsc_clicks_all,
 
     gsc_impressions_brand,
     gsc_impressions_nonbrand,
-    COALESCE(gsc_impressions_brand, 0) + COALESCE(gsc_impressions_nonbrand, 0) AS gsc_impressions_all
-
+    CASE
+        WHEN gsc_impressions_brand IS NULL AND gsc_impressions_nonbrand IS NULL THEN NULL
+        ELSE COALESCE(gsc_impressions_brand, 0) + COALESCE(gsc_impressions_nonbrand, 0)
+    END AS gsc_impressions_all
 FROM aggregated;

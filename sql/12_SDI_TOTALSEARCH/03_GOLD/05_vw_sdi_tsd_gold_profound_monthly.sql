@@ -21,7 +21,8 @@ BUSINESS GRAIN:
 
 KEY MODELING NOTES:
   - Thin gold wrapper over the monthly ProFound silver
-  - No joins required because the silver is already conformed and wide
+  - period_date remains the monthly period date from Silver
+  - month-end standardization is applied in gold_long
 
 ================================================================================================= */
 

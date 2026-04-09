@@ -12,27 +12,12 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver monthly ProFound / GoFish source mart for the Total Search Dashboard.
-  This view pivots the Bronze object into the 12 wide reporting metrics.
 
 BUSINESS GRAIN:
   One row per:
       period_date
       lob
       channel
-
-OUTPUT METRICS:
-  - profound_tmo_citation_share_brand
-  - profound_tmo_citation_share_nonbrand
-  - profound_tmo_visibility_score_brand
-  - profound_tmo_visibility_score_nonbrand
-  - profound_att_citation_share_brand
-  - profound_att_citation_share_nonbrand
-  - profound_att_visibility_score_brand
-  - profound_att_visibility_score_nonbrand
-  - profound_verizon_citation_share_brand
-  - profound_verizon_citation_share_nonbrand
-  - profound_verizon_visibility_score_brand
-  - profound_verizon_visibility_score_nonbrand
 
 ================================================================================================= */
 
@@ -51,12 +36,12 @@ SELECT
     MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS profound_verizon_citation_share,
     MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_verizon_visibility_score,
 
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_tmo_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_tmo_visibility_score,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_att_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_att_visibility_score,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_verizon_citation_share,
-    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_tmo_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_tmo_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_att_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_att_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_verizon_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
 GROUP BY
