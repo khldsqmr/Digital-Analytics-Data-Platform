@@ -19,13 +19,6 @@ BUSINESS GRAIN:
       lob
       channel
 
-PERIOD LOGIC:
-  - monthStart = first day of the month
-
-KEY MODELING NOTES:
-  - Built by aggregating the unified daily gold
-  - ProFound is intentionally excluded and remains available in separate gold views
-
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly`
@@ -36,49 +29,49 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    SUM(COALESCE(adobe_entries, 0)) AS adobe_entries,
-    SUM(COALESCE(adobe_pspv_actuals, 0)) AS adobe_pspv_actuals,
-    SUM(COALESCE(adobe_cart_starts, 0)) AS adobe_cart_starts,
-    SUM(COALESCE(adobe_cart_start_plus, 0)) AS adobe_cart_start_plus,
-    SUM(COALESCE(adobe_cart_checkout_visits, 0)) AS adobe_cart_checkout_visits,
-    SUM(COALESCE(adobe_checkout_review_visits, 0)) AS adobe_checkout_review_visits,
-    SUM(COALESCE(adobe_postpaid_orders_tsr, 0)) AS adobe_postpaid_orders_tsr,
-    SUM(COALESCE(adobe_orders_web_unassisted, 0)) AS adobe_orders_web_unassisted,
-    SUM(COALESCE(adobe_orders_web_assisted, 0)) AS adobe_orders_web_assisted,
-    SUM(COALESCE(adobe_orders_app_unassisted, 0)) AS adobe_orders_app_unassisted,
-    SUM(COALESCE(adobe_orders_app_assisted, 0)) AS adobe_orders_app_assisted,
-    SUM(COALESCE(adobe_orders_web_all, 0)) AS adobe_orders_web_all,
-    SUM(COALESCE(adobe_orders_app_all, 0)) AS adobe_orders_app_all,
-    SUM(COALESCE(adobe_orders_fully_unassisted, 0)) AS adobe_orders_fully_unassisted,
-    SUM(COALESCE(adobe_orders_fully_assisted, 0)) AS adobe_orders_fully_assisted,
-    SUM(COALESCE(adobe_orders_all, 0)) AS adobe_orders_all,
+    SUM(adobe_entries) AS adobe_entries,
+    SUM(adobe_pspv_actuals) AS adobe_pspv_actuals,
+    SUM(adobe_cart_starts) AS adobe_cart_starts,
+    SUM(adobe_cart_start_plus) AS adobe_cart_start_plus,
+    SUM(adobe_cart_checkout_visits) AS adobe_cart_checkout_visits,
+    SUM(adobe_checkout_review_visits) AS adobe_checkout_review_visits,
+    SUM(adobe_postpaid_orders_tsr) AS adobe_postpaid_orders_tsr,
+    SUM(adobe_orders_web_unassisted) AS adobe_orders_web_unassisted,
+    SUM(adobe_orders_web_assisted) AS adobe_orders_web_assisted,
+    SUM(adobe_orders_app_unassisted) AS adobe_orders_app_unassisted,
+    SUM(adobe_orders_app_assisted) AS adobe_orders_app_assisted,
+    SUM(adobe_orders_web_all) AS adobe_orders_web_all,
+    SUM(adobe_orders_app_all) AS adobe_orders_app_all,
+    SUM(adobe_orders_fully_unassisted) AS adobe_orders_fully_unassisted,
+    SUM(adobe_orders_fully_assisted) AS adobe_orders_fully_assisted,
+    SUM(adobe_orders_all) AS adobe_orders_all,
+    SUM(adobe_storelocator_visits) AS adobe_storelocator_visits,
 
-    SUM(COALESCE(sa360_clicks_brand, 0)) AS sa360_clicks_brand,
-    SUM(COALESCE(sa360_clicks_nonbrand, 0)) AS sa360_clicks_nonbrand,
-    SUM(COALESCE(sa360_clicks_all, 0)) AS sa360_clicks_all,
-    SUM(COALESCE(sa360_cart_start_plus_brand, 0)) AS sa360_cart_start_plus_brand,
-    SUM(COALESCE(sa360_cart_start_plus_nonbrand, 0)) AS sa360_cart_start_plus_nonbrand,
-    SUM(COALESCE(sa360_cart_start_plus_all, 0)) AS sa360_cart_start_plus_all,
+    SUM(sa360_clicks_brand) AS sa360_clicks_brand,
+    SUM(sa360_clicks_nonbrand) AS sa360_clicks_nonbrand,
+    SUM(sa360_clicks_all) AS sa360_clicks_all,
+    SUM(sa360_cart_start_plus_brand) AS sa360_cart_start_plus_brand,
+    SUM(sa360_cart_start_plus_nonbrand) AS sa360_cart_start_plus_nonbrand,
+    SUM(sa360_cart_start_plus_all) AS sa360_cart_start_plus_all,
 
-    SUM(COALESCE(gsc_clicks_brand, 0)) AS gsc_clicks_brand,
-    SUM(COALESCE(gsc_clicks_nonbrand, 0)) AS gsc_clicks_nonbrand,
-    SUM(COALESCE(gsc_clicks_all, 0)) AS gsc_clicks_all,
-    SUM(COALESCE(gsc_impressions_brand, 0)) AS gsc_impressions_brand,
-    SUM(COALESCE(gsc_impressions_nonbrand, 0)) AS gsc_impressions_nonbrand,
-    SUM(COALESCE(gsc_impressions_all, 0)) AS gsc_impressions_all,
+    SUM(gsc_clicks_brand) AS gsc_clicks_brand,
+    SUM(gsc_clicks_nonbrand) AS gsc_clicks_nonbrand,
+    SUM(gsc_clicks_all) AS gsc_clicks_all,
+    SUM(gsc_impressions_brand) AS gsc_impressions_brand,
+    SUM(gsc_impressions_nonbrand) AS gsc_impressions_nonbrand,
+    SUM(gsc_impressions_all) AS gsc_impressions_all,
 
-    SUM(COALESCE(platform_spend, 0)) AS platform_spend,
+    SUM(platform_spend) AS platform_spend,
 
-    SUM(COALESCE(gmb_search_impressions_all, 0)) AS gmb_search_impressions_all,
-    SUM(COALESCE(gmb_maps_impressions_all, 0)) AS gmb_maps_impressions_all,
-    SUM(COALESCE(gmb_impressions_all, 0)) AS gmb_impressions_all,
-    SUM(COALESCE(gmb_call_clicks, 0)) AS gmb_call_clicks,
-    SUM(COALESCE(gmb_website_clicks, 0)) AS gmb_website_clicks,
-    SUM(COALESCE(gmb_directions_clicks, 0)) AS gmb_directions_clicks
+    SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
+    SUM(gmb_maps_impressions_all) AS gmb_maps_impressions_all,
+    SUM(gmb_impressions_all) AS gmb_impressions_all,
+    SUM(gmb_call_clicks) AS gmb_call_clicks,
+    SUM(gmb_website_clicks) AS gmb_website_clicks,
+    SUM(gmb_directions_clicks) AS gmb_directions_clicks
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
 GROUP BY
     monthStart,
     lob,
-    channel
-;
+    channel;

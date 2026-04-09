@@ -27,27 +27,12 @@ OUTPUT COLUMNS:
   - metric_name
   - metric_value
 
-KEY MODELING NOTES:
-  - Uses the already-built gold views as the source of truth
-  - Does not re-aggregate metrics
-  - Reads each source gold view once per grain for better efficiency
-  - Unpivots each source family separately to preserve lineage and avoid value mixing
-  - Uses actual source-family values in data_source:
-      ADOBE, SA360, GSC, PLATFORM_SPEND, GMB, PROFOUND, GOFISH
-  - Filters out NULL metric_value rows so only valid source/channel/metric combinations remain
-  - Standardizes weekly date to WEEK ENDING SATURDAY
-  - Standardizes monthly date to MONTH END DATE
-  - metric_value is standardized to FLOAT64
-
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_long`
 AS
 
 WITH
-/* -------------------------------------------------------------------------------------------------
-   1) READ EACH GOLD VIEW ONCE
-------------------------------------------------------------------------------------------------- */
 daily_base AS (
     SELECT
         event_date AS date,
@@ -70,6 +55,7 @@ daily_base AS (
         CAST(adobe_orders_fully_unassisted AS FLOAT64) AS adobe_orders_fully_unassisted,
         CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
         CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
+        CAST(adobe_storelocator_visits AS FLOAT64) AS adobe_storelocator_visits,
 
         CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
@@ -118,6 +104,7 @@ weekly_sunsat_base AS (
         CAST(adobe_orders_fully_unassisted AS FLOAT64) AS adobe_orders_fully_unassisted,
         CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
         CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
+        CAST(adobe_storelocator_visits AS FLOAT64) AS adobe_storelocator_visits,
 
         CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
@@ -166,6 +153,7 @@ monthly_base AS (
         CAST(adobe_orders_fully_unassisted AS FLOAT64) AS adobe_orders_fully_unassisted,
         CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
         CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
+        CAST(adobe_storelocator_visits AS FLOAT64) AS adobe_storelocator_visits,
 
         CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
@@ -236,9 +224,6 @@ profound_monthly_base AS (
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_monthly`
 ),
 
-/* -------------------------------------------------------------------------------------------------
-   2) DAILY LONG
-------------------------------------------------------------------------------------------------- */
 daily_adobe_long AS (
     SELECT
         'ADOBE' AS data_source,
@@ -267,7 +252,8 @@ daily_adobe_long AS (
             adobe_orders_app_all,
             adobe_orders_fully_unassisted,
             adobe_orders_fully_assisted,
-            adobe_orders_all
+            adobe_orders_all,
+            adobe_storelocator_visits
         )
     )
 ),
@@ -354,9 +340,6 @@ daily_gmb_long AS (
     )
 ),
 
-/* -------------------------------------------------------------------------------------------------
-   3) WEEKLY SUN-SAT LONG
-------------------------------------------------------------------------------------------------- */
 weekly_sunsat_adobe_long AS (
     SELECT
         'ADOBE' AS data_source,
@@ -385,7 +368,8 @@ weekly_sunsat_adobe_long AS (
             adobe_orders_app_all,
             adobe_orders_fully_unassisted,
             adobe_orders_fully_assisted,
-            adobe_orders_all
+            adobe_orders_all,
+            adobe_storelocator_visits
         )
     )
 ),
@@ -472,9 +456,6 @@ weekly_sunsat_gmb_long AS (
     )
 ),
 
-/* -------------------------------------------------------------------------------------------------
-   4) MONTHLY LONG
-------------------------------------------------------------------------------------------------- */
 monthly_adobe_long AS (
     SELECT
         'ADOBE' AS data_source,
@@ -503,7 +484,8 @@ monthly_adobe_long AS (
             adobe_orders_app_all,
             adobe_orders_fully_unassisted,
             adobe_orders_fully_assisted,
-            adobe_orders_all
+            adobe_orders_all,
+            adobe_storelocator_visits
         )
     )
 ),
@@ -590,9 +572,6 @@ monthly_gmb_long AS (
     )
 ),
 
-/* -------------------------------------------------------------------------------------------------
-   5) PROFOUND / GOFISH LONG
-------------------------------------------------------------------------------------------------- */
 profound_weekly_long AS (
     SELECT
         'PROFOUND' AS data_source,
@@ -685,87 +664,37 @@ profound_monthly_long AS (
     )
 )
 
-SELECT *
-FROM daily_adobe_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM daily_adobe_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM daily_sa360_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM daily_sa360_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM daily_gsc_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM daily_gsc_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM daily_spend_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM daily_spend_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM daily_gmb_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM daily_gmb_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM weekly_sunsat_adobe_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM weekly_sunsat_adobe_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM weekly_sunsat_sa360_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM weekly_sunsat_sa360_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM weekly_sunsat_gsc_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM weekly_sunsat_gsc_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM weekly_sunsat_spend_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM weekly_sunsat_spend_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM weekly_sunsat_gmb_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM weekly_sunsat_gmb_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM monthly_adobe_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM monthly_adobe_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM monthly_sa360_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM monthly_sa360_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM monthly_gsc_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM monthly_gsc_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM monthly_spend_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM monthly_spend_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM monthly_gmb_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM monthly_gmb_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM profound_weekly_long
-WHERE metric_value IS NOT NULL
-
+SELECT * FROM profound_weekly_long WHERE metric_value IS NOT NULL
 UNION ALL
-SELECT *
-FROM profound_monthly_long
-WHERE metric_value IS NOT NULL
+SELECT * FROM profound_monthly_long WHERE metric_value IS NOT NULL
 ;
