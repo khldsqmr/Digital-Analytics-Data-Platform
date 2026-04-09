@@ -30,8 +30,13 @@ KEY MODELING NOTES:
   - Uses a DISTINCT key spine from all daily silvers
   - Uses LEFT JOIN from the spine to each silver
   - Assumes each silver is already unique at event_date + lob + channel
-  - Missing metrics are standardized to 0
+  - Source-specific metrics are intentionally left as NULL when that source does not
+    exist for the given event_date + lob + channel row
+  - platform_spend remains COALESCE(..., 0) because spend is often expected to be
+    additive and easier to consume as zero when absent
   - ProFound sources are intentionally excluded from this unified daily gold
+  - This design prevents the misleading interpretation that SA360 / GSC / GMB / Adobe
+    belong to every channel in the unified spine
 
 ================================================================================================= */
 
@@ -159,45 +164,50 @@ SELECT
     ks.lob,
     ks.channel,
 
-    COALESCE(a.adobe_entries, 0) AS adobe_entries,
-    COALESCE(a.adobe_pspv_actuals, 0) AS adobe_pspv_actuals,
-    COALESCE(a.adobe_cart_starts, 0) AS adobe_cart_starts,
-    COALESCE(a.adobe_cart_start_plus, 0) AS adobe_cart_start_plus,
-    COALESCE(a.adobe_cart_checkout_visits, 0) AS adobe_cart_checkout_visits,
-    COALESCE(a.adobe_checkout_review_visits, 0) AS adobe_checkout_review_visits,
-    COALESCE(a.adobe_postpaid_orders_tsr, 0) AS adobe_postpaid_orders_tsr,
-    COALESCE(a.adobe_orders_web_unassisted, 0) AS adobe_orders_web_unassisted,
-    COALESCE(a.adobe_orders_web_assisted, 0) AS adobe_orders_web_assisted,
-    COALESCE(a.adobe_orders_app_unassisted, 0) AS adobe_orders_app_unassisted,
-    COALESCE(a.adobe_orders_app_assisted, 0) AS adobe_orders_app_assisted,
-    COALESCE(a.adobe_orders_web_all, 0) AS adobe_orders_web_all,
-    COALESCE(a.adobe_orders_app_all, 0) AS adobe_orders_app_all,
-    COALESCE(a.adobe_orders_fully_unassisted, 0) AS adobe_orders_fully_unassisted,
-    COALESCE(a.adobe_orders_fully_assisted, 0) AS adobe_orders_fully_assisted,
-    COALESCE(a.adobe_orders_all, 0) AS adobe_orders_all,
+    /* Adobe metrics: NULL when Adobe does not exist for this spine row */
+    a.adobe_entries AS adobe_entries,
+    a.adobe_pspv_actuals AS adobe_pspv_actuals,
+    a.adobe_cart_starts AS adobe_cart_starts,
+    a.adobe_cart_start_plus AS adobe_cart_start_plus,
+    a.adobe_cart_checkout_visits AS adobe_cart_checkout_visits,
+    a.adobe_checkout_review_visits AS adobe_checkout_review_visits,
+    a.adobe_postpaid_orders_tsr AS adobe_postpaid_orders_tsr,
+    a.adobe_orders_web_unassisted AS adobe_orders_web_unassisted,
+    a.adobe_orders_web_assisted AS adobe_orders_web_assisted,
+    a.adobe_orders_app_unassisted AS adobe_orders_app_unassisted,
+    a.adobe_orders_app_assisted AS adobe_orders_app_assisted,
+    a.adobe_orders_web_all AS adobe_orders_web_all,
+    a.adobe_orders_app_all AS adobe_orders_app_all,
+    a.adobe_orders_fully_unassisted AS adobe_orders_fully_unassisted,
+    a.adobe_orders_fully_assisted AS adobe_orders_fully_assisted,
+    a.adobe_orders_all AS adobe_orders_all,
 
-    COALESCE(sa.sa360_clicks_brand, 0) AS sa360_clicks_brand,
-    COALESCE(sa.sa360_clicks_nonbrand, 0) AS sa360_clicks_nonbrand,
-    COALESCE(sa.sa360_clicks_all, 0) AS sa360_clicks_all,
-    COALESCE(sa.sa360_cart_start_plus_brand, 0) AS sa360_cart_start_plus_brand,
-    COALESCE(sa.sa360_cart_start_plus_nonbrand, 0) AS sa360_cart_start_plus_nonbrand,
-    COALESCE(sa.sa360_cart_start_plus_all, 0) AS sa360_cart_start_plus_all,
+    /* SA360 metrics: NULL when SA360 does not exist for this spine row */
+    sa.sa360_clicks_brand AS sa360_clicks_brand,
+    sa.sa360_clicks_nonbrand AS sa360_clicks_nonbrand,
+    sa.sa360_clicks_all AS sa360_clicks_all,
+    sa.sa360_cart_start_plus_brand AS sa360_cart_start_plus_brand,
+    sa.sa360_cart_start_plus_nonbrand AS sa360_cart_start_plus_nonbrand,
+    sa.sa360_cart_start_plus_all AS sa360_cart_start_plus_all,
 
-    COALESCE(g.gsc_clicks_brand, 0) AS gsc_clicks_brand,
-    COALESCE(g.gsc_clicks_nonbrand, 0) AS gsc_clicks_nonbrand,
-    COALESCE(g.gsc_clicks_all, 0) AS gsc_clicks_all,
-    COALESCE(g.gsc_impressions_brand, 0) AS gsc_impressions_brand,
-    COALESCE(g.gsc_impressions_nonbrand, 0) AS gsc_impressions_nonbrand,
-    COALESCE(g.gsc_impressions_all, 0) AS gsc_impressions_all,
+    /* GSC metrics: NULL when GSC does not exist for this spine row */
+    g.gsc_clicks_brand AS gsc_clicks_brand,
+    g.gsc_clicks_nonbrand AS gsc_clicks_nonbrand,
+    g.gsc_clicks_all AS gsc_clicks_all,
+    g.gsc_impressions_brand AS gsc_impressions_brand,
+    g.gsc_impressions_nonbrand AS gsc_impressions_nonbrand,
+    g.gsc_impressions_all AS gsc_impressions_all,
 
+    /* Spend: keep zero when absent */
     COALESCE(sp.platform_spend, 0) AS platform_spend,
 
-    COALESCE(m.gmb_search_impressions_all, 0) AS gmb_search_impressions_all,
-    COALESCE(m.gmb_maps_impressions_all, 0) AS gmb_maps_impressions_all,
-    COALESCE(m.gmb_impressions_all, 0) AS gmb_impressions_all,
-    COALESCE(m.gmb_call_clicks, 0) AS gmb_call_clicks,
-    COALESCE(m.gmb_website_clicks, 0) AS gmb_website_clicks,
-    COALESCE(m.gmb_directions_clicks, 0) AS gmb_directions_clicks
+    /* GMB metrics: NULL when GMB does not exist for this spine row */
+    m.gmb_search_impressions_all AS gmb_search_impressions_all,
+    m.gmb_maps_impressions_all AS gmb_maps_impressions_all,
+    m.gmb_impressions_all AS gmb_impressions_all,
+    m.gmb_call_clicks AS gmb_call_clicks,
+    m.gmb_website_clicks AS gmb_website_clicks,
+    m.gmb_directions_clicks AS gmb_directions_clicks
 
 FROM key_spine ks
 LEFT JOIN adobe a
