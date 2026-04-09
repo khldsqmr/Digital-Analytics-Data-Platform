@@ -419,18 +419,6 @@ It preserves the difference between:
 
 ---
 
-## Notes and Caveats
-
-| Item | Note |
-|---|---|
-| Bronze GSC numbering | both GSC Bronze comments were labeled `07`; repository numbering can be normalized |
-| Gold ProFound weekly block | the supplied weekly ProFound section appeared duplicated; only one canonical version should be retained |
-| Daily output in final long | daily rows are intentionally excluded from `vw_sdi_tsd_gold_long` |
-| GSC site totals | used primarily for QA / reconciliation, not directly in final Gold reporting path |
-| Spend in final long | current final long logic emits `platform_spend` for `PAID SEARCH` only |
-
----
-
 ## End State
 The final architecture gives the Total Search Dashboard a reporting model that is:
 - source-standardized
