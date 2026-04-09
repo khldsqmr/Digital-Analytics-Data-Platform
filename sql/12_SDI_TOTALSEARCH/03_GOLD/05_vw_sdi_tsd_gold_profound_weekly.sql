@@ -33,20 +33,19 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    profound_tmo_citation_share_brand,
-    profound_tmo_citation_share_nonbrand,
-    profound_tmo_visibility_score_brand,
-    profound_tmo_visibility_score_nonbrand,
+    profound_tmo_citation_share,
+    profound_tmo_visibility_score,
+    profound_att_citation_share,
+    profound_att_visibility_score,
+    profound_verizon_citation_share,
+    profound_verizon_visibility_score,
 
-    profound_att_citation_share_brand,
-    profound_att_citation_share_nonbrand,
-    profound_att_visibility_score_brand,
-    profound_att_visibility_score_nonbrand,
-
-    profound_verizon_citation_share_brand,
-    profound_verizon_citation_share_nonbrand,
-    profound_verizon_visibility_score_brand,
-    profound_verizon_visibility_score_nonbrand
+    gofish_tmo_citation_share,
+    gofish_tmo_visibility_score,
+    gofish_att_citation_share,
+    gofish_att_visibility_score,
+    gofish_verizon_citation_share,
+    gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
 ;

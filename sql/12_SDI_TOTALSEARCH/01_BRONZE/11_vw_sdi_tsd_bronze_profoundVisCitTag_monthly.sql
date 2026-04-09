@@ -51,14 +51,15 @@ KEY DEDUPE FIX:
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
 AS
 
-WITH vis_nonbrand_base AS (
+WITH vis_profound_base AS (
     SELECT
         PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
         CASE
             WHEN UPPER(TRIM(tag)) = 'LOB - POSTPAID' THEN 'POSTPAID'
             ELSE NULL
         END AS lob,
-        UPPER(TRIM('AI SEARCH')) AS channel,
+        'AI SEARCH' AS channel,
+        'PROFOUND' AS source_system,
         CASE
             WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
             WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
@@ -67,14 +68,12 @@ WITH vis_nonbrand_base AS (
         END AS company,
         'NONBRAND' AS brand_type,
         'VISIBILITY' AS metric_source,
-
         SAFE_CAST(executions AS FLOAT64) AS executions,
         SAFE_CAST(mentions_count AS FLOAT64) AS mentions_count,
         SAFE_CAST(share_of_voice AS FLOAT64) AS visibility_share_of_voice,
         SAFE_CAST(visibility_score AS FLOAT64) AS visibility_score,
         CAST(NULL AS FLOAT64) AS citation_count,
         CAST(NULL AS FLOAT64) AS citation_share,
-
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
@@ -83,13 +82,13 @@ WITH vis_nonbrand_base AS (
       AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
 ),
 
-vis_nonbrand AS (
+vis_profound AS (
     SELECT *
     FROM (
         SELECT
             *,
             ROW_NUMBER() OVER (
-                PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                PARTITION BY period_date, lob, channel, source_system, company, brand_type, metric_source
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
@@ -98,21 +97,22 @@ vis_nonbrand AS (
                     executions DESC,
                     visibility_score DESC
             ) AS rn
-        FROM vis_nonbrand_base
+        FROM vis_profound_base
         WHERE lob IS NOT NULL
           AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
 
-cit_nonbrand_base AS (
+cit_profound_base AS (
     SELECT
         PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
         CASE
             WHEN UPPER(TRIM(tag)) = 'LOB - POSTPAID' THEN 'POSTPAID'
             ELSE NULL
         END AS lob,
-        UPPER(TRIM('AI SEARCH')) AS channel,
+        'AI SEARCH' AS channel,
+        'PROFOUND' AS source_system,
         CASE
             WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
             WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
@@ -121,14 +121,12 @@ cit_nonbrand_base AS (
         END AS company,
         'NONBRAND' AS brand_type,
         'CITATION' AS metric_source,
-
         CAST(NULL AS FLOAT64) AS executions,
         CAST(NULL AS FLOAT64) AS mentions_count,
         CAST(NULL AS FLOAT64) AS visibility_share_of_voice,
         CAST(NULL AS FLOAT64) AS visibility_score,
         SAFE_CAST(count AS FLOAT64) AS citation_count,
         SAFE_CAST(share_of_voice AS FLOAT64) AS citation_share,
-
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
@@ -137,13 +135,13 @@ cit_nonbrand_base AS (
       AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
 ),
 
-cit_nonbrand AS (
+cit_profound AS (
     SELECT *
     FROM (
         SELECT
             *,
             ROW_NUMBER() OVER (
-                PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                PARTITION BY period_date, lob, channel, source_system, company, brand_type, metric_source
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
@@ -151,21 +149,22 @@ cit_nonbrand AS (
                     citation_count DESC,
                     citation_share DESC
             ) AS rn
-        FROM cit_nonbrand_base
+        FROM cit_profound_base
         WHERE lob IS NOT NULL
           AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
 
-vis_brand_base AS (
+vis_gofish_base AS (
     SELECT
         PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
         CASE
             WHEN UPPER(TRIM(tag)) = 'LOB - POSTPAID' THEN 'POSTPAID'
             ELSE NULL
         END AS lob,
-        UPPER(TRIM('AI SEARCH')) AS channel,
+        'AI SEARCH' AS channel,
+        'GOFISH' AS source_system,
         CASE
             WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
             WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
@@ -174,14 +173,12 @@ vis_brand_base AS (
         END AS company,
         'BRAND' AS brand_type,
         'VISIBILITY' AS metric_source,
-
         SAFE_CAST(executions AS FLOAT64) AS executions,
         SAFE_CAST(mentions_count AS FLOAT64) AS mentions_count,
         SAFE_CAST(share_of_voice AS FLOAT64) AS visibility_share_of_voice,
         SAFE_CAST(visibility_score AS FLOAT64) AS visibility_score,
         CAST(NULL AS FLOAT64) AS citation_count,
         CAST(NULL AS FLOAT64) AS citation_share,
-
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
@@ -190,13 +187,13 @@ vis_brand_base AS (
       AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
 ),
 
-vis_brand AS (
+vis_gofish AS (
     SELECT *
     FROM (
         SELECT
             *,
             ROW_NUMBER() OVER (
-                PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                PARTITION BY period_date, lob, channel, source_system, company, brand_type, metric_source
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
@@ -205,21 +202,22 @@ vis_brand AS (
                     executions DESC,
                     visibility_score DESC
             ) AS rn
-        FROM vis_brand_base
+        FROM vis_gofish_base
         WHERE lob IS NOT NULL
           AND company IS NOT NULL
     )
     WHERE rn = 1
 ),
 
-cit_brand_base AS (
+cit_gofish_base AS (
     SELECT
         PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
         CASE
             WHEN UPPER(TRIM(tag)) = 'LOB - POSTPAID' THEN 'POSTPAID'
             ELSE NULL
         END AS lob,
-        UPPER(TRIM('AI SEARCH')) AS channel,
+        'AI SEARCH' AS channel,
+        'GOFISH' AS source_system,
         CASE
             WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
             WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
@@ -228,14 +226,12 @@ cit_brand_base AS (
         END AS company,
         'BRAND' AS brand_type,
         'CITATION' AS metric_source,
-
         CAST(NULL AS FLOAT64) AS executions,
         CAST(NULL AS FLOAT64) AS mentions_count,
         CAST(NULL AS FLOAT64) AS visibility_share_of_voice,
         CAST(NULL AS FLOAT64) AS visibility_score,
         SAFE_CAST(count AS FLOAT64) AS citation_count,
         SAFE_CAST(share_of_voice AS FLOAT64) AS citation_share,
-
         SAFE_CAST(__insert_date AS INT64) AS insert_date,
         TIMESTAMP(File_Load_datetime) AS file_load_datetime,
         Filename AS filename
@@ -244,13 +240,13 @@ cit_brand_base AS (
       AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
 ),
 
-cit_brand AS (
+cit_gofish AS (
     SELECT *
     FROM (
         SELECT
             *,
             ROW_NUMBER() OVER (
-                PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                PARTITION BY period_date, lob, channel, source_system, company, brand_type, metric_source
                 ORDER BY
                     file_load_datetime DESC,
                     filename DESC,
@@ -258,7 +254,7 @@ cit_brand AS (
                     citation_count DESC,
                     citation_share DESC
             ) AS rn
-        FROM cit_brand_base
+        FROM cit_gofish_base
         WHERE lob IS NOT NULL
           AND company IS NOT NULL
     )
@@ -269,6 +265,7 @@ SELECT
     period_date,
     lob,
     channel,
+    source_system,
     company,
     brand_type,
     metric_source,
@@ -278,7 +275,7 @@ SELECT
     visibility_score,
     citation_count,
     citation_share
-FROM vis_nonbrand
+FROM vis_profound
 
 UNION ALL
 
@@ -286,6 +283,7 @@ SELECT
     period_date,
     lob,
     channel,
+    source_system,
     company,
     brand_type,
     metric_source,
@@ -295,7 +293,7 @@ SELECT
     visibility_score,
     citation_count,
     citation_share
-FROM cit_nonbrand
+FROM cit_profound
 
 UNION ALL
 
@@ -303,6 +301,7 @@ SELECT
     period_date,
     lob,
     channel,
+    source_system,
     company,
     brand_type,
     metric_source,
@@ -312,7 +311,7 @@ SELECT
     visibility_score,
     citation_count,
     citation_share
-FROM vis_brand
+FROM vis_gofish
 
 UNION ALL
 
@@ -320,6 +319,7 @@ SELECT
     period_date,
     lob,
     channel,
+    source_system,
     company,
     brand_type,
     metric_source,
@@ -329,5 +329,5 @@ SELECT
     visibility_score,
     citation_count,
     citation_share
-FROM cit_brand
+FROM cit_gofish
 ;

@@ -44,20 +44,19 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
-    MAX(CASE WHEN company = 'TMO'     AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_tmo_citation_share_brand,
-    MAX(CASE WHEN company = 'TMO'     AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_tmo_citation_share_nonbrand,
-    MAX(CASE WHEN company = 'TMO'     AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_tmo_visibility_score_brand,
-    MAX(CASE WHEN company = 'TMO'     AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_tmo_visibility_score_nonbrand,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS profound_tmo_citation_share,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_tmo_visibility_score,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS profound_att_citation_share,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_att_visibility_score,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS profound_verizon_citation_share,
+    MAX(CASE WHEN source_system = 'PROFOUND' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_verizon_visibility_score,
 
-    MAX(CASE WHEN company = 'ATT'     AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_att_citation_share_brand,
-    MAX(CASE WHEN company = 'ATT'     AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_att_citation_share_nonbrand,
-    MAX(CASE WHEN company = 'ATT'     AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_att_visibility_score_brand,
-    MAX(CASE WHEN company = 'ATT'     AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_att_visibility_score_nonbrand,
-
-    MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_verizon_citation_share_brand,
-    MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN citation_share END)   AS profound_verizon_citation_share_nonbrand,
-    MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_verizon_visibility_score_brand,
-    MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS profound_verizon_visibility_score_nonbrand
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_tmo_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'TMO'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_tmo_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_att_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'ATT'     AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_att_visibility_score,
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'CITATION'   THEN citation_share   END) AS gofish_verizon_citation_share,
+    MAX(CASE WHEN source_system = 'GOFISH'   AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
 GROUP BY
