@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 06_vw_sdi_tsd_gold_long.sql
+FILE: 07_vw_sdi_tsd_gold_long.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_gold_long
@@ -35,7 +35,8 @@ KEY MODELING NOTES:
   - Uses actual source-family values in data_source:
       ADOBE, SA360, GSC, PLATFORM_SPEND, GMB, PROFOUND, GOFISH
   - Filters out NULL metric_value rows so only valid source/channel/metric combinations remain
-  - Assumes upstream unified gold views already keep non-applicable source metrics as NULL
+  - Standardizes weekly date to WEEK ENDING SATURDAY
+  - Standardizes monthly date to MONTH END DATE
   - metric_value is standardized to FLOAT64
 
 ================================================================================================= */
@@ -145,7 +146,7 @@ weekly_sunsat_base AS (
 
 monthly_base AS (
     SELECT
-        monthStart AS date,
+        DATE_SUB(DATE_ADD(DATE_TRUNC(monthStart, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY) AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
 
@@ -193,7 +194,7 @@ monthly_base AS (
 
 profound_weekly_base AS (
     SELECT
-        period_date AS date,
+        DATE_ADD(DATE_TRUNC(period_date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
 
@@ -215,7 +216,7 @@ profound_weekly_base AS (
 
 profound_monthly_base AS (
     SELECT
-        period_date AS date,
+        DATE_SUB(DATE_ADD(DATE_TRUNC(period_date, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY) AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
 
@@ -478,7 +479,7 @@ monthly_adobe_long AS (
     SELECT
         'ADOBE' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -511,7 +512,7 @@ monthly_sa360_long AS (
     SELECT
         'SA360' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -534,7 +535,7 @@ monthly_gsc_long AS (
     SELECT
         'GSC' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -557,7 +558,7 @@ monthly_spend_long AS (
     SELECT
         'PLATFORM_SPEND' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -570,7 +571,7 @@ monthly_gmb_long AS (
     SELECT
         'GMB' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -642,7 +643,7 @@ profound_monthly_long AS (
     SELECT
         'PROFOUND' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
@@ -665,7 +666,7 @@ profound_monthly_long AS (
     SELECT
         'GOFISH' AS data_source,
         'MONTHLY' AS time_granularity,
-        'CALENDAR_MONTH' AS time_granularity_type,
+        'MONTH_END' AS time_granularity_type,
         date,
         lob,
         channel,
