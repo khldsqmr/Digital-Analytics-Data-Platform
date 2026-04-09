@@ -32,8 +32,8 @@ KEY MODELING NOTES:
   - Assumes each silver is already unique at event_date + lob + channel
   - Source-specific metrics are intentionally left as NULL when that source does not
     exist for the given event_date + lob + channel row
-  - platform_spend remains COALESCE(..., 0) because spend is often expected to be
-    additive and easier to consume as zero when absent
+  - platform_spend is also intentionally left as NULL when absent so downstream long
+    tables do not create misleading zero-valued rows for non-applicable channels
   - ProFound sources are intentionally excluded from this unified daily gold
   - This design prevents the misleading interpretation that SA360 / GSC / GMB / Adobe
     belong to every channel in the unified spine
@@ -198,8 +198,8 @@ SELECT
     g.gsc_impressions_nonbrand AS gsc_impressions_nonbrand,
     g.gsc_impressions_all AS gsc_impressions_all,
 
-    /* Spend: keep zero when absent */
-    COALESCE(sp.platform_spend, 0) AS platform_spend,
+    /* Spend: NULL when spend does not exist for this spine row */
+    sp.platform_spend AS platform_spend,
 
     /* GMB metrics: NULL when GMB does not exist for this spine row */
     m.gmb_search_impressions_all AS gmb_search_impressions_all,
