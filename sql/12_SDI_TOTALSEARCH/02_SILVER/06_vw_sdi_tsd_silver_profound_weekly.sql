@@ -48,8 +48,5 @@ SELECT
     MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_weekly`
-GROUP BY
-    period_date,
-    lob,
-    channel
+GROUP BY 1, 2, 3
 ;

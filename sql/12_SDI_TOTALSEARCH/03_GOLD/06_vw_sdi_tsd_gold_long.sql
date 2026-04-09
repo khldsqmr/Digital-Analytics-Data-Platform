@@ -210,7 +210,7 @@ profound_weekly_base AS (
 
 profound_monthly_base AS (
     SELECT
-        DATE_SUB(DATE_ADD(DATE_TRUNC(period_date, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY) AS date,
+        period_date AS date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
 
@@ -231,443 +231,178 @@ profound_monthly_base AS (
 ),
 
 daily_adobe_long AS (
-    SELECT
-        'ADOBE' AS data_source,
-        'DAILY' AS time_granularity,
-        'CALENDAR_DAY' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'ADOBE' AS data_source, 'DAILY' AS time_granularity, 'CALENDAR_DAY' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM daily_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            adobe_entries,
-            adobe_pspv_actuals,
-            adobe_cart_starts,
-            adobe_cart_start_plus,
-            adobe_cart_checkout_visits,
-            adobe_checkout_review_visits,
-            adobe_postpaid_orders_tsr,
-            adobe_orders_web_unassisted,
-            adobe_orders_web_assisted,
-            adobe_orders_app_unassisted,
-            adobe_orders_app_assisted,
-            adobe_orders_web_all,
-            adobe_orders_app_all,
-            adobe_orders_fully_unassisted,
-            adobe_orders_fully_assisted,
-            adobe_orders_all,
-            adobe_storelocator_visits
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        adobe_entries, adobe_pspv_actuals, adobe_cart_starts, adobe_cart_start_plus,
+        adobe_cart_checkout_visits, adobe_checkout_review_visits, adobe_postpaid_orders_tsr,
+        adobe_orders_web_unassisted, adobe_orders_web_assisted, adobe_orders_app_unassisted,
+        adobe_orders_app_assisted, adobe_orders_web_all, adobe_orders_app_all,
+        adobe_orders_fully_unassisted, adobe_orders_fully_assisted, adobe_orders_all,
+        adobe_storelocator_visits
+    ))
 ),
 
 daily_sa360_long AS (
-    SELECT
-        'SA360' AS data_source,
-        'DAILY' AS time_granularity,
-        'CALENDAR_DAY' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'SA360' AS data_source, 'DAILY' AS time_granularity, 'CALENDAR_DAY' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM daily_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            sa360_clicks_brand,
-            sa360_clicks_nonbrand,
-            sa360_clicks_all,
-            sa360_cart_start_plus_brand,
-            sa360_cart_start_plus_nonbrand,
-            sa360_cart_start_plus_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        sa360_clicks_brand, sa360_clicks_nonbrand, sa360_clicks_all,
+        sa360_cart_start_plus_brand, sa360_cart_start_plus_nonbrand, sa360_cart_start_plus_all
+    ))
 ),
 
 daily_gsc_long AS (
-    SELECT
-        'GSC' AS data_source,
-        'DAILY' AS time_granularity,
-        'CALENDAR_DAY' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GSC' AS data_source, 'DAILY' AS time_granularity, 'CALENDAR_DAY' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM daily_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gsc_clicks_brand,
-            gsc_clicks_nonbrand,
-            gsc_clicks_all,
-            gsc_impressions_brand,
-            gsc_impressions_nonbrand,
-            gsc_impressions_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gsc_clicks_brand, gsc_clicks_nonbrand, gsc_clicks_all,
+        gsc_impressions_brand, gsc_impressions_nonbrand, gsc_impressions_all
+    ))
 ),
 
 daily_spend_long AS (
-    SELECT
-        'PLATFORM_SPEND' AS data_source,
-        'DAILY' AS time_granularity,
-        'CALENDAR_DAY' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        'platform_spend' AS metric_name,
-        platform_spend AS metric_value
+    SELECT 'PLATFORM_SPEND' AS data_source, 'DAILY' AS time_granularity, 'CALENDAR_DAY' AS time_granularity_type, date, lob, channel, 'platform_spend' AS metric_name, platform_spend AS metric_value
     FROM daily_base
 ),
 
 daily_gmb_long AS (
-    SELECT
-        'GMB' AS data_source,
-        'DAILY' AS time_granularity,
-        'CALENDAR_DAY' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GMB' AS data_source, 'DAILY' AS time_granularity, 'CALENDAR_DAY' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM daily_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gmb_search_impressions_all,
-            gmb_maps_impressions_all,
-            gmb_impressions_all,
-            gmb_call_clicks,
-            gmb_website_clicks,
-            gmb_directions_clicks
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gmb_search_impressions_all, gmb_maps_impressions_all, gmb_impressions_all,
+        gmb_call_clicks, gmb_website_clicks, gmb_directions_clicks
+    ))
 ),
 
 weekly_sunsat_adobe_long AS (
-    SELECT
-        'ADOBE' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'ADOBE' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM weekly_sunsat_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            adobe_entries,
-            adobe_pspv_actuals,
-            adobe_cart_starts,
-            adobe_cart_start_plus,
-            adobe_cart_checkout_visits,
-            adobe_checkout_review_visits,
-            adobe_postpaid_orders_tsr,
-            adobe_orders_web_unassisted,
-            adobe_orders_web_assisted,
-            adobe_orders_app_unassisted,
-            adobe_orders_app_assisted,
-            adobe_orders_web_all,
-            adobe_orders_app_all,
-            adobe_orders_fully_unassisted,
-            adobe_orders_fully_assisted,
-            adobe_orders_all,
-            adobe_storelocator_visits
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        adobe_entries, adobe_pspv_actuals, adobe_cart_starts, adobe_cart_start_plus,
+        adobe_cart_checkout_visits, adobe_checkout_review_visits, adobe_postpaid_orders_tsr,
+        adobe_orders_web_unassisted, adobe_orders_web_assisted, adobe_orders_app_unassisted,
+        adobe_orders_app_assisted, adobe_orders_web_all, adobe_orders_app_all,
+        adobe_orders_fully_unassisted, adobe_orders_fully_assisted, adobe_orders_all,
+        adobe_storelocator_visits
+    ))
 ),
 
 weekly_sunsat_sa360_long AS (
-    SELECT
-        'SA360' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'SA360' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM weekly_sunsat_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            sa360_clicks_brand,
-            sa360_clicks_nonbrand,
-            sa360_clicks_all,
-            sa360_cart_start_plus_brand,
-            sa360_cart_start_plus_nonbrand,
-            sa360_cart_start_plus_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        sa360_clicks_brand, sa360_clicks_nonbrand, sa360_clicks_all,
+        sa360_cart_start_plus_brand, sa360_cart_start_plus_nonbrand, sa360_cart_start_plus_all
+    ))
 ),
 
 weekly_sunsat_gsc_long AS (
-    SELECT
-        'GSC' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GSC' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM weekly_sunsat_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gsc_clicks_brand,
-            gsc_clicks_nonbrand,
-            gsc_clicks_all,
-            gsc_impressions_brand,
-            gsc_impressions_nonbrand,
-            gsc_impressions_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gsc_clicks_brand, gsc_clicks_nonbrand, gsc_clicks_all,
+        gsc_impressions_brand, gsc_impressions_nonbrand, gsc_impressions_all
+    ))
 ),
 
 weekly_sunsat_spend_long AS (
-    SELECT
-        'PLATFORM_SPEND' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        'platform_spend' AS metric_name,
-        platform_spend AS metric_value
+    SELECT 'PLATFORM_SPEND' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, 'platform_spend' AS metric_name, platform_spend AS metric_value
     FROM weekly_sunsat_base
 ),
 
 weekly_sunsat_gmb_long AS (
-    SELECT
-        'GMB' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GMB' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM weekly_sunsat_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gmb_search_impressions_all,
-            gmb_maps_impressions_all,
-            gmb_impressions_all,
-            gmb_call_clicks,
-            gmb_website_clicks,
-            gmb_directions_clicks
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gmb_search_impressions_all, gmb_maps_impressions_all, gmb_impressions_all,
+        gmb_call_clicks, gmb_website_clicks, gmb_directions_clicks
+    ))
 ),
 
 monthly_adobe_long AS (
-    SELECT
-        'ADOBE' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'ADOBE' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            adobe_entries,
-            adobe_pspv_actuals,
-            adobe_cart_starts,
-            adobe_cart_start_plus,
-            adobe_cart_checkout_visits,
-            adobe_checkout_review_visits,
-            adobe_postpaid_orders_tsr,
-            adobe_orders_web_unassisted,
-            adobe_orders_web_assisted,
-            adobe_orders_app_unassisted,
-            adobe_orders_app_assisted,
-            adobe_orders_web_all,
-            adobe_orders_app_all,
-            adobe_orders_fully_unassisted,
-            adobe_orders_fully_assisted,
-            adobe_orders_all,
-            adobe_storelocator_visits
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        adobe_entries, adobe_pspv_actuals, adobe_cart_starts, adobe_cart_start_plus,
+        adobe_cart_checkout_visits, adobe_checkout_review_visits, adobe_postpaid_orders_tsr,
+        adobe_orders_web_unassisted, adobe_orders_web_assisted, adobe_orders_app_unassisted,
+        adobe_orders_app_assisted, adobe_orders_web_all, adobe_orders_app_all,
+        adobe_orders_fully_unassisted, adobe_orders_fully_assisted, adobe_orders_all,
+        adobe_storelocator_visits
+    ))
 ),
 
 monthly_sa360_long AS (
-    SELECT
-        'SA360' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'SA360' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            sa360_clicks_brand,
-            sa360_clicks_nonbrand,
-            sa360_clicks_all,
-            sa360_cart_start_plus_brand,
-            sa360_cart_start_plus_nonbrand,
-            sa360_cart_start_plus_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        sa360_clicks_brand, sa360_clicks_nonbrand, sa360_clicks_all,
+        sa360_cart_start_plus_brand, sa360_cart_start_plus_nonbrand, sa360_cart_start_plus_all
+    ))
 ),
 
 monthly_gsc_long AS (
-    SELECT
-        'GSC' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GSC' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gsc_clicks_brand,
-            gsc_clicks_nonbrand,
-            gsc_clicks_all,
-            gsc_impressions_brand,
-            gsc_impressions_nonbrand,
-            gsc_impressions_all
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gsc_clicks_brand, gsc_clicks_nonbrand, gsc_clicks_all,
+        gsc_impressions_brand, gsc_impressions_nonbrand, gsc_impressions_all
+    ))
 ),
 
 monthly_spend_long AS (
-    SELECT
-        'PLATFORM_SPEND' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        'platform_spend' AS metric_name,
-        platform_spend AS metric_value
+    SELECT 'PLATFORM_SPEND' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, 'platform_spend' AS metric_name, platform_spend AS metric_value
     FROM monthly_base
 ),
 
 monthly_gmb_long AS (
-    SELECT
-        'GMB' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GMB' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gmb_search_impressions_all,
-            gmb_maps_impressions_all,
-            gmb_impressions_all,
-            gmb_call_clicks,
-            gmb_website_clicks,
-            gmb_directions_clicks
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gmb_search_impressions_all, gmb_maps_impressions_all, gmb_impressions_all,
+        gmb_call_clicks, gmb_website_clicks, gmb_directions_clicks
+    ))
 ),
 
 profound_weekly_long AS (
-    SELECT
-        'PROFOUND' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'PROFOUND' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM profound_weekly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            profound_tmo_citation_share,
-            profound_tmo_visibility_score,
-            profound_att_citation_share,
-            profound_att_visibility_score,
-            profound_verizon_citation_share,
-            profound_verizon_visibility_score
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        profound_tmo_citation_share, profound_tmo_visibility_score,
+        profound_att_citation_share, profound_att_visibility_score,
+        profound_verizon_citation_share, profound_verizon_visibility_score
+    ))
 
     UNION ALL
 
-    SELECT
-        'GOFISH' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'SUN_SAT' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GOFISH' AS data_source, 'WEEKLY' AS time_granularity, 'SUN_SAT' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM profound_weekly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gofish_tmo_citation_share,
-            gofish_tmo_visibility_score,
-            gofish_att_citation_share,
-            gofish_att_visibility_score,
-            gofish_verizon_citation_share,
-            gofish_verizon_visibility_score
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gofish_tmo_citation_share, gofish_tmo_visibility_score,
+        gofish_att_citation_share, gofish_att_visibility_score,
+        gofish_verizon_citation_share, gofish_verizon_visibility_score
+    ))
 ),
 
 profound_monthly_long AS (
-    SELECT
-        'PROFOUND' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'PROFOUND' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM profound_monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            profound_tmo_citation_share,
-            profound_tmo_visibility_score,
-            profound_att_citation_share,
-            profound_att_visibility_score,
-            profound_verizon_citation_share,
-            profound_verizon_visibility_score
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        profound_tmo_citation_share, profound_tmo_visibility_score,
+        profound_att_citation_share, profound_att_visibility_score,
+        profound_verizon_citation_share, profound_verizon_visibility_score
+    ))
 
     UNION ALL
 
-    SELECT
-        'GOFISH' AS data_source,
-        'MONTHLY' AS time_granularity,
-        'MONTH_END' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
+    SELECT 'GOFISH' AS data_source, 'MONTHLY' AS time_granularity, 'MONTH_END' AS time_granularity_type, date, lob, channel, metric_name, metric_value
     FROM profound_monthly_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gofish_tmo_citation_share,
-            gofish_tmo_visibility_score,
-            gofish_att_citation_share,
-            gofish_att_visibility_score,
-            gofish_verizon_citation_share,
-            gofish_verizon_visibility_score
-        )
-    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        gofish_tmo_citation_share, gofish_tmo_visibility_score,
+        gofish_att_citation_share, gofish_att_visibility_score,
+        gofish_verizon_citation_share, gofish_verizon_visibility_score
+    ))
 )
 
 SELECT * FROM daily_adobe_long WHERE metric_value IS NOT NULL

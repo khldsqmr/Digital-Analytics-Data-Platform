@@ -25,7 +25,7 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_
 AS
 
 SELECT
-    period_date,
+    DATE_SUB(DATE_ADD(DATE_TRUNC(period_date, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY) AS period_date,
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
@@ -44,8 +44,5 @@ SELECT
     MAX(CASE WHEN source_system = 'GOFISH' AND company = 'VERIZON' AND metric_source = 'VISIBILITY' THEN visibility_score END) AS gofish_verizon_visibility_score
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
-GROUP BY
-    period_date,
-    lob,
-    channel
+GROUP BY 1, 2, 3
 ;
