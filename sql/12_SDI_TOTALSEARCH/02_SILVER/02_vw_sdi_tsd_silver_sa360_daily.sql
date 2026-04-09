@@ -13,8 +13,6 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver SA360 daily source mart for the Total Search Dashboard.
-  This view joins deduplicated SA360 performance data with deduplicated SA360 entity data,
-  then classifies campaign traffic into BRAND and NONBRAND using campaign type rules.
 
 BUSINESS GRAIN:
   One row per:
@@ -30,12 +28,9 @@ OUTPUT METRICS:
   - sa360_cart_start_plus_nonbrand
   - sa360_cart_start_plus_all
 
-CAMPAIGN TYPE RULES:
-  Brand    -> BRAND
-  Generic  -> NONBRAND
-  PMax     -> NONBRAND
-  Shopping -> NONBRAND
-  DemandGen / Unclassified -> excluded
+KEY MODELING NOTES:
+  - SA360 only maps to PAID SEARCH in Silver
+  - Nulls are preserved; no new zeroes are introduced
 
 ================================================================================================= */
 
@@ -83,12 +78,12 @@ aggregated AS (
         event_date,
         lob,
         channel,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END) AS sa360_clicks_brand,
-        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END) AS sa360_clicks_nonbrand,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN postpaid_cart_start END) AS sa360_cart_start_plus_brand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END)             AS sa360_clicks_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END)          AS sa360_clicks_nonbrand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN postpaid_cart_start END)    AS sa360_cart_start_plus_brand,
         SUM(CASE WHEN brand_type = 'NONBRAND' THEN postpaid_cart_start END) AS sa360_cart_start_plus_nonbrand
     FROM filtered
-    GROUP BY event_date, lob, channel
+    GROUP BY 1, 2, 3
 )
 
 SELECT
@@ -109,4 +104,5 @@ SELECT
         WHEN sa360_cart_start_plus_brand IS NULL AND sa360_cart_start_plus_nonbrand IS NULL THEN NULL
         ELSE COALESCE(sa360_cart_start_plus_brand, 0) + COALESCE(sa360_cart_start_plus_nonbrand, 0)
     END AS sa360_cart_start_plus_all
-FROM aggregated;
+FROM aggregated
+;

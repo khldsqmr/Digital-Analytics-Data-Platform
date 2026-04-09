@@ -23,38 +23,12 @@ BUSINESS GRAIN:
       lob
       channel
 
-================================================================================================= */
-/* =================================================================================================
-FILE: 01_vw_sdi_tsd_gold_unified_daily.sql
-LAYER: Gold View
-DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_tsd_gold_unified_daily
-
-SOURCES:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_sa360_daily
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gsc_daily
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_platformSpend_daily
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gmb_daily
-
-DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily
-
-PURPOSE:
-  Unified Gold daily source mart for the Total Search Dashboard.
-
-BUSINESS GRAIN:
-  One row per:
-      event_date
-      lob
-      channel
-
 KEY MODELING NOTES:
   - Uses a DISTINCT key spine from all daily silvers
   - Uses LEFT JOIN from the spine to each silver
   - Assumes each silver is already unique at event_date + lob + channel
   - Source-specific metrics remain NULL when not applicable for that source/channel/day
-  - This preserves true sparsity and avoids fake zero-valued long rows downstream
+  - This preserves true sparsity and avoids fake zero-valued rows downstream
 
 ================================================================================================= */
 

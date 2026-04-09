@@ -12,8 +12,6 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver GMB daily source mart for the Total Search Dashboard.
-  This view maps GMB daily metrics into the conformed TSD reporting grain:
-      event_date + lob + channel
 
 BUSINESS GRAIN:
   One row per:
@@ -29,17 +27,10 @@ OUTPUT METRICS:
   - gmb_website_clicks
   - gmb_directions_clicks
 
-LOB DERIVATION LOGIC:
-  - account_name containing T-MOBILE STORES -> POSTPAID
-  - everything else -> UNMAPPED
-
-CHANNEL LOGIC:
-  - all GMB rows map to MAPS & LOCAL SEARCH
-
 KEY MODELING NOTES:
   - account_name is used only to derive LOB and is not carried into final Silver output
-  - rows with unmapped LOB are excluded from the final Silver view
-  - channel is intentionally kept distinct to represent local discovery intent
+  - rows with unmapped LOB are excluded from final Silver
+  - channel is intentionally MAPS & LOCAL SEARCH
 
 ================================================================================================= */
 
@@ -74,10 +65,11 @@ SELECT
     lob,
     channel,
     SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
-    SUM(gmb_maps_impressions_all) AS gmb_maps_impressions_all,
-    SUM(gmb_impressions_all) AS gmb_impressions_all,
-    SUM(gmb_call_clicks) AS gmb_call_clicks,
-    SUM(gmb_website_clicks) AS gmb_website_clicks,
-    SUM(gmb_directions_clicks) AS gmb_directions_clicks
+    SUM(gmb_maps_impressions_all)   AS gmb_maps_impressions_all,
+    SUM(gmb_impressions_all)        AS gmb_impressions_all,
+    SUM(gmb_call_clicks)            AS gmb_call_clicks,
+    SUM(gmb_website_clicks)         AS gmb_website_clicks,
+    SUM(gmb_directions_clicks)      AS gmb_directions_clicks
 FROM filtered
-GROUP BY event_date, lob, channel;
+GROUP BY 1, 2, 3
+;

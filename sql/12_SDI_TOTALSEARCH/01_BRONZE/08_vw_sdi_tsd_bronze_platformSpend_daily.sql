@@ -24,8 +24,9 @@ BUSINESS GRAIN:
 
 KEY MODELING NOTES:
   - Only POSTPAID LOB is included
-  - channel_raw is preserved exactly in standardized uppercase trimmed form
+  - channel_raw is preserved in uppercase trimmed form for downstream conformance
   - spend is aggregated at day + lob + channel_raw
+  - This is a source-close Bronze object and does not yet apply TSD conformed channel mapping
 
 ================================================================================================= */
 
@@ -38,7 +39,9 @@ SELECT
     UPPER(TRIM(channel_name)) AS channel_raw,
     SUM(COALESCE(spend, 0)) AS spend
 FROM `prj-dbi-prd-1.ds_dbi_marketing.agg_day_media_and_outcomes`
-WHERE UPPER(TRIM(lob)) = 'POSTPAID'
+WHERE DATE(day) IS NOT NULL
+  AND UPPER(TRIM(lob)) = 'POSTPAID'
+  AND channel_name IS NOT NULL
 GROUP BY
     event_date,
     lob,

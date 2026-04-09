@@ -21,8 +21,7 @@ BUSINESS GRAIN:
 
 KEY MODELING NOTES:
   - Thin gold wrapper over the monthly ProFound silver
-  - period_date remains the monthly period date from Silver
-  - month-end standardization is applied in gold_long
+  - period_date is already standardized to month-end in Silver
 
 ================================================================================================= */
 
@@ -34,17 +33,33 @@ SELECT
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
+    profound_tmo_executions,
+    profound_tmo_citation_count,
     profound_tmo_citation_share,
     profound_tmo_visibility_score,
+
+    profound_att_executions,
+    profound_att_citation_count,
     profound_att_citation_share,
     profound_att_visibility_score,
+
+    profound_verizon_executions,
+    profound_verizon_citation_count,
     profound_verizon_citation_share,
     profound_verizon_visibility_score,
 
+    gofish_tmo_executions,
+    gofish_tmo_citation_count,
     gofish_tmo_citation_share,
     gofish_tmo_visibility_score,
+
+    gofish_att_executions,
+    gofish_att_citation_count,
     gofish_att_citation_share,
     gofish_att_visibility_score,
+
+    gofish_verizon_executions,
+    gofish_verizon_citation_count,
     gofish_verizon_citation_share,
     gofish_verizon_visibility_score
 

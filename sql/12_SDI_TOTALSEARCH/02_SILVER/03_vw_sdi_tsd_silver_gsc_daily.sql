@@ -12,9 +12,6 @@ DESTINATION:
 
 PURPOSE:
   Canonical Silver GSC daily source mart for the Total Search Dashboard.
-  This view classifies query-level GSC traffic into BRAND and NONBRAND using
-  the provided Postpaid brand regex, excludes non-Postpaid LOB queries using
-  the provided exclusion regex, and aggregates results to the reporting grain.
 
 BUSINESS GRAIN:
   One row per:
@@ -30,15 +27,9 @@ OUTPUT METRICS:
   - gsc_impressions_nonbrand
   - gsc_impressions_all
 
-CLASSIFICATION LOGIC:
-  - BRAND: query matches Postpaid brand regex
-  - NONBRAND: query does not match Postpaid brand regex
-  - EXCLUDED: query matches Postpaid LOB exclusion regex or query is null/blank
-
 KEY MODELING NOTES:
-  - LOB is standardized as UPPER(TRIM('POSTPAID'))
-  - Channel is standardized as UPPER(TRIM('ORGANIC SEARCH'))
   - Query-level rows are classified first, then aggregated
+  - Nulls are preserved; no new zeroes are introduced
 
 ================================================================================================= */
 
@@ -78,12 +69,12 @@ aggregated AS (
         event_date,
         lob,
         channel,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END) AS gsc_clicks_brand,
-        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END) AS gsc_clicks_nonbrand,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN impressions END) AS gsc_impressions_brand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END)      AS gsc_clicks_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END)   AS gsc_clicks_nonbrand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN impressions END)    AS gsc_impressions_brand,
         SUM(CASE WHEN brand_type = 'NONBRAND' THEN impressions END) AS gsc_impressions_nonbrand
     FROM filtered
-    GROUP BY event_date, lob, channel
+    GROUP BY 1, 2, 3
 )
 
 SELECT
@@ -104,4 +95,5 @@ SELECT
         WHEN gsc_impressions_brand IS NULL AND gsc_impressions_nonbrand IS NULL THEN NULL
         ELSE COALESCE(gsc_impressions_brand, 0) + COALESCE(gsc_impressions_nonbrand, 0)
     END AS gsc_impressions_all
-FROM aggregated;
+FROM aggregated
+;

@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 08_vw_sdi_tsd_bronze_gscSite_daily.sql
+FILE: 07_vw_sdi_tsd_bronze_gscSite_daily.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_bronze_gscSite_daily
@@ -28,6 +28,11 @@ DEDUPE LOGIC:
       file_load_datetime DESC,
       filename DESC,
       __insert_date DESC
+
+KEY MODELING NOTES:
+  - This is a source-close Bronze object
+  - Site-level totals are preserved for reconciliation and QA against query-level GSC
+  - No brand / nonbrand logic is applied here
 
 ================================================================================================= */
 
@@ -61,6 +66,9 @@ WITH ranked AS (
                 SAFE_CAST(raw.__insert_date AS INT64) DESC
         ) AS rn
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_site_totals_tmo` raw
+    WHERE raw.account_id IS NOT NULL
+      AND raw.site_url IS NOT NULL
+      AND raw.date_yyyymmdd IS NOT NULL
 )
 
 SELECT

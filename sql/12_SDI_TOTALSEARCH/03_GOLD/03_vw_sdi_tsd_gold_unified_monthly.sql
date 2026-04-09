@@ -15,11 +15,12 @@ PURPOSE:
 
 BUSINESS GRAIN:
   One row per:
-      monthStart
+      monthEnd
       lob
       channel
 
 KEY MODELING NOTES:
+  - Uses month-end as the canonical monthly reporting date
   - Uses NULL-aware aggregation
   - If a metric is NULL for all contributing daily rows, monthly result stays NULL
 
@@ -29,7 +30,7 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_
 AS
 
 SELECT
-    DATE_TRUNC(event_date, MONTH) AS monthStart,
+    DATE_SUB(DATE_ADD(DATE_TRUNC(event_date, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY) AS monthEnd,
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
@@ -76,7 +77,7 @@ SELECT
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
 GROUP BY
-    monthStart,
+    monthEnd,
     lob,
     channel
 ;
