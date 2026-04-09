@@ -1,29 +1,26 @@
 /* =================================================================================================
-FILE: 03_vw_sdi_tsd_gold_unifiedSunSat_weekly.sql
+FILE: 03_vw_sdi_tsd_gold_unified_monthly.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_tsd_gold_unifiedSunSat_weekly
+VIEW: vw_sdi_tsd_gold_unified_monthly
 
 SOURCE:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily
 
 DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedSunSat_weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly
 
 PURPOSE:
-  Unified Gold weekly reporting mart for the Total Search Dashboard using
-  Sunday-to-Saturday weeks.
+  Unified Gold monthly reporting mart for the Total Search Dashboard.
 
 BUSINESS GRAIN:
   One row per:
-      weekSunToSat
+      monthStart
       lob
       channel
 
 PERIOD LOGIC:
-  - week starts Sunday
-  - week ends Saturday
-  - weekSunToSat = Saturday of the reporting week
+  - monthStart = first day of the month
 
 KEY MODELING NOTES:
   - Built by aggregating the unified daily gold
@@ -31,11 +28,11 @@ KEY MODELING NOTES:
 
 ================================================================================================= */
 
-CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedSunSat_weekly`
+CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly`
 AS
 
 SELECT
-    DATE_ADD(DATE_TRUNC(event_date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS weekSunToSat,
+    DATE_TRUNC(event_date, MONTH) AS monthStart,
     UPPER(TRIM(lob)) AS lob,
     UPPER(TRIM(channel)) AS channel,
 
@@ -81,7 +78,7 @@ SELECT
 
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
 GROUP BY
-    weekSunToSat,
+    monthStart,
     lob,
     channel
 ;

@@ -1,12 +1,11 @@
 /* =================================================================================================
-FILE: 07_vw_sdi_tsd_gold_long.sql
+FILE: 06_vw_sdi_tsd_gold_long.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_gold_long
 
 SOURCES:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedMonSun_weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedSunSat_weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_weekly
@@ -34,7 +33,7 @@ KEY MODELING NOTES:
   - Reads each source gold view once per grain for better efficiency
   - Unpivots each source family separately to preserve lineage and avoid value mixing
   - Uses actual source-family values in data_source:
-      ADOBE, SA360, GSC, PLATFORM_SPEND, GMB, PROFOUND
+      ADOBE, SA360, GSC, PLATFORM_SPEND, GMB, PROFOUND, GOFISH
   - Filters out NULL metric_value rows so only valid source/channel/metric combinations remain
   - Assumes upstream unified gold views already keep non-applicable source metrics as NULL
   - metric_value is standardized to FLOAT64
@@ -94,54 +93,6 @@ daily_base AS (
         CAST(gmb_website_clicks AS FLOAT64) AS gmb_website_clicks,
         CAST(gmb_directions_clicks AS FLOAT64) AS gmb_directions_clicks
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
-),
-
-weekly_monsun_base AS (
-    SELECT
-        weekMonToSun AS date,
-        UPPER(TRIM(lob)) AS lob,
-        UPPER(TRIM(channel)) AS channel,
-
-        CAST(adobe_entries AS FLOAT64) AS adobe_entries,
-        CAST(adobe_pspv_actuals AS FLOAT64) AS adobe_pspv_actuals,
-        CAST(adobe_cart_starts AS FLOAT64) AS adobe_cart_starts,
-        CAST(adobe_cart_start_plus AS FLOAT64) AS adobe_cart_start_plus,
-        CAST(adobe_cart_checkout_visits AS FLOAT64) AS adobe_cart_checkout_visits,
-        CAST(adobe_checkout_review_visits AS FLOAT64) AS adobe_checkout_review_visits,
-        CAST(adobe_postpaid_orders_tsr AS FLOAT64) AS adobe_postpaid_orders_tsr,
-        CAST(adobe_orders_web_unassisted AS FLOAT64) AS adobe_orders_web_unassisted,
-        CAST(adobe_orders_web_assisted AS FLOAT64) AS adobe_orders_web_assisted,
-        CAST(adobe_orders_app_unassisted AS FLOAT64) AS adobe_orders_app_unassisted,
-        CAST(adobe_orders_app_assisted AS FLOAT64) AS adobe_orders_app_assisted,
-        CAST(adobe_orders_web_all AS FLOAT64) AS adobe_orders_web_all,
-        CAST(adobe_orders_app_all AS FLOAT64) AS adobe_orders_app_all,
-        CAST(adobe_orders_fully_unassisted AS FLOAT64) AS adobe_orders_fully_unassisted,
-        CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
-        CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
-
-        CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
-        CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
-        CAST(sa360_clicks_all AS FLOAT64) AS sa360_clicks_all,
-        CAST(sa360_cart_start_plus_brand AS FLOAT64) AS sa360_cart_start_plus_brand,
-        CAST(sa360_cart_start_plus_nonbrand AS FLOAT64) AS sa360_cart_start_plus_nonbrand,
-        CAST(sa360_cart_start_plus_all AS FLOAT64) AS sa360_cart_start_plus_all,
-
-        CAST(gsc_clicks_brand AS FLOAT64) AS gsc_clicks_brand,
-        CAST(gsc_clicks_nonbrand AS FLOAT64) AS gsc_clicks_nonbrand,
-        CAST(gsc_clicks_all AS FLOAT64) AS gsc_clicks_all,
-        CAST(gsc_impressions_brand AS FLOAT64) AS gsc_impressions_brand,
-        CAST(gsc_impressions_nonbrand AS FLOAT64) AS gsc_impressions_nonbrand,
-        CAST(gsc_impressions_all AS FLOAT64) AS gsc_impressions_all,
-
-        CAST(platform_spend AS FLOAT64) AS platform_spend,
-
-        CAST(gmb_search_impressions_all AS FLOAT64) AS gmb_search_impressions_all,
-        CAST(gmb_maps_impressions_all AS FLOAT64) AS gmb_maps_impressions_all,
-        CAST(gmb_impressions_all AS FLOAT64) AS gmb_impressions_all,
-        CAST(gmb_call_clicks AS FLOAT64) AS gmb_call_clicks,
-        CAST(gmb_website_clicks AS FLOAT64) AS gmb_website_clicks,
-        CAST(gmb_directions_clicks AS FLOAT64) AS gmb_directions_clicks
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedMonSun_weekly`
 ),
 
 weekly_sunsat_base AS (
@@ -403,125 +354,7 @@ daily_gmb_long AS (
 ),
 
 /* -------------------------------------------------------------------------------------------------
-   3) WEEKLY MON-SUN LONG
-------------------------------------------------------------------------------------------------- */
-weekly_monsun_adobe_long AS (
-    SELECT
-        'ADOBE' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'MON_SUN' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
-    FROM weekly_monsun_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            adobe_entries,
-            adobe_pspv_actuals,
-            adobe_cart_starts,
-            adobe_cart_start_plus,
-            adobe_cart_checkout_visits,
-            adobe_checkout_review_visits,
-            adobe_postpaid_orders_tsr,
-            adobe_orders_web_unassisted,
-            adobe_orders_web_assisted,
-            adobe_orders_app_unassisted,
-            adobe_orders_app_assisted,
-            adobe_orders_web_all,
-            adobe_orders_app_all,
-            adobe_orders_fully_unassisted,
-            adobe_orders_fully_assisted,
-            adobe_orders_all
-        )
-    )
-),
-
-weekly_monsun_sa360_long AS (
-    SELECT
-        'SA360' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'MON_SUN' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
-    FROM weekly_monsun_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            sa360_clicks_brand,
-            sa360_clicks_nonbrand,
-            sa360_clicks_all,
-            sa360_cart_start_plus_brand,
-            sa360_cart_start_plus_nonbrand,
-            sa360_cart_start_plus_all
-        )
-    )
-),
-
-weekly_monsun_gsc_long AS (
-    SELECT
-        'GSC' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'MON_SUN' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
-    FROM weekly_monsun_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gsc_clicks_brand,
-            gsc_clicks_nonbrand,
-            gsc_clicks_all,
-            gsc_impressions_brand,
-            gsc_impressions_nonbrand,
-            gsc_impressions_all
-        )
-    )
-),
-
-weekly_monsun_spend_long AS (
-    SELECT
-        'PLATFORM_SPEND' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'MON_SUN' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        'platform_spend' AS metric_name,
-        platform_spend AS metric_value
-    FROM weekly_monsun_base
-),
-
-weekly_monsun_gmb_long AS (
-    SELECT
-        'GMB' AS data_source,
-        'WEEKLY' AS time_granularity,
-        'MON_SUN' AS time_granularity_type,
-        date,
-        lob,
-        channel,
-        metric_name,
-        metric_value
-    FROM weekly_monsun_base
-    UNPIVOT (
-        metric_value FOR metric_name IN (
-            gmb_search_impressions_all,
-            gmb_maps_impressions_all,
-            gmb_impressions_all,
-            gmb_call_clicks,
-            gmb_website_clicks,
-            gmb_directions_clicks
-        )
-    )
-),
-
-/* -------------------------------------------------------------------------------------------------
-   4) WEEKLY SUN-SAT LONG
+   3) WEEKLY SUN-SAT LONG
 ------------------------------------------------------------------------------------------------- */
 weekly_sunsat_adobe_long AS (
     SELECT
@@ -639,7 +472,7 @@ weekly_sunsat_gmb_long AS (
 ),
 
 /* -------------------------------------------------------------------------------------------------
-   5) MONTHLY LONG
+   4) MONTHLY LONG
 ------------------------------------------------------------------------------------------------- */
 monthly_adobe_long AS (
     SELECT
@@ -757,7 +590,7 @@ monthly_gmb_long AS (
 ),
 
 /* -------------------------------------------------------------------------------------------------
-   6) PROFOUND LONG
+   5) PROFOUND / GOFISH LONG
 ------------------------------------------------------------------------------------------------- */
 profound_weekly_long AS (
     SELECT
@@ -849,11 +682,8 @@ profound_monthly_long AS (
             gofish_verizon_visibility_score
         )
     )
-),
+)
 
-/* -------------------------------------------------------------------------------------------------
-   7) FINAL STACK
-------------------------------------------------------------------------------------------------- */
 SELECT *
 FROM daily_adobe_long
 WHERE metric_value IS NOT NULL
@@ -876,31 +706,6 @@ WHERE metric_value IS NOT NULL
 UNION ALL
 SELECT *
 FROM daily_gmb_long
-WHERE metric_value IS NOT NULL
-
-UNION ALL
-SELECT *
-FROM weekly_monsun_adobe_long
-WHERE metric_value IS NOT NULL
-
-UNION ALL
-SELECT *
-FROM weekly_monsun_sa360_long
-WHERE metric_value IS NOT NULL
-
-UNION ALL
-SELECT *
-FROM weekly_monsun_gsc_long
-WHERE metric_value IS NOT NULL
-
-UNION ALL
-SELECT *
-FROM weekly_monsun_spend_long
-WHERE metric_value IS NOT NULL
-
-UNION ALL
-SELECT *
-FROM weekly_monsun_gmb_long
 WHERE metric_value IS NOT NULL
 
 UNION ALL

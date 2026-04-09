@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 06_vw_sdi_tsd_gold_profound_monthly.sql
+FILE: 05_vw_sdi_tsd_gold_profound_monthly.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_gold_profound_monthly
