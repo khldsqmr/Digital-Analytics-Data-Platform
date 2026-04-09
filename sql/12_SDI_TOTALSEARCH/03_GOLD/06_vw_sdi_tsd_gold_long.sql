@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 07_vw_sdi_tsd_gold_long.sql
+FILE: 06_vw_sdi_tsd_gold_long.sql
 LAYER: Gold View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_tsd_gold_long
