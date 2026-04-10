@@ -26,13 +26,18 @@ BUSINESS GRAIN:
 
 DEDUPE LOGIC:
   Latest row per:
-      account_id + site_url + page + query + search_type + date_yyyymmdd
+      account_id + normalized site_url + normalized page + normalized query
+      + normalized search_type + date_yyyymmdd
   ordered by:
       file_load_datetime DESC,
       filename DESC,
       __insert_date DESC
 
+KEY MODELING NOTES:
+  - Output text keys are normalized using UPPER(TRIM())
+  - This reduces false duplicates caused by casing / spacing inconsistencies
 ================================================================================================= */
+
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
 AS
 
