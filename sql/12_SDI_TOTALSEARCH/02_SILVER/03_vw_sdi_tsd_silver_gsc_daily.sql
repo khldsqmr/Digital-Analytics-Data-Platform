@@ -56,6 +56,7 @@ WITH classified AS (
             ELSE 'NONBRAND'
         END AS brand_type
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
+    WHERE UPPER(TRIM(site_url)) = 'SC-DOMAIN:T-MOBILE.COM'
 ),
 
 filtered AS (
