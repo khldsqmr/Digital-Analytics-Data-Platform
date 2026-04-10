@@ -33,18 +33,17 @@ DEDUPE LOGIC:
       __insert_date DESC
 
 ================================================================================================= */
-
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
 AS
 
 WITH ranked AS (
     SELECT
-        raw.account_id,
-        raw.account_name,
-        raw.site_url,
-        raw.page,
-        raw.query,
-        raw.search_type,
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        UPPER(TRIM(raw.account_name)) AS account_name,
+        UPPER(TRIM(raw.site_url)) AS site_url,
+        UPPER(TRIM(raw.page)) AS page,
+        UPPER(TRIM(raw.query)) AS query,
+        UPPER(TRIM(raw.search_type)) AS search_type,
         CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
         PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS event_date,
 
@@ -59,11 +58,11 @@ WITH ranked AS (
 
         ROW_NUMBER() OVER (
             PARTITION BY
-                raw.account_id,
-                raw.site_url,
-                raw.page,
-                raw.query,
-                raw.search_type,
+                SAFE_CAST(raw.account_id AS STRING),
+                UPPER(TRIM(raw.site_url)),
+                UPPER(TRIM(raw.page)),
+                UPPER(TRIM(raw.query)),
+                UPPER(TRIM(raw.search_type)),
                 CAST(raw.date_yyyymmdd AS STRING)
             ORDER BY
                 TIMESTAMP(raw.file_load_datetime) DESC,
@@ -71,6 +70,9 @@ WITH ranked AS (
                 SAFE_CAST(raw.__insert_date AS INT64) DESC
         ) AS rn
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo` raw
+    WHERE raw.account_id IS NOT NULL
+      AND raw.site_url IS NOT NULL
+      AND raw.date_yyyymmdd IS NOT NULL
 )
 
 SELECT
