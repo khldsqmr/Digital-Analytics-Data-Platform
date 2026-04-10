@@ -9,6 +9,7 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeOrders_daily
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeCartStartPlus_daily
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeStoreLocator_daily
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeTLifeAppVisits_daily
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily
@@ -29,6 +30,7 @@ KEY MODELING NOTES:
   - Each source is re-aggregated after channel mapping to protect the reporting grain
   - Sources are joined using a unioned keyset to avoid duplicate expansion
   - Nulls are preserved; no new zeroes are introduced
+  - Adobe T-Life App Visits is incorporated as a separate Adobe source family
 
 ================================================================================================= */
 
@@ -50,12 +52,12 @@ WITH adobe_v2_mapped AS (
             WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
             ELSE UPPER(TRIM(channel))
         END AS channel,
-        SUM(adobe_entries)                AS adobe_entries,
-        SUM(adobe_pspv_actuals)           AS adobe_pspv_actuals,
-        SUM(adobe_cart_starts)           AS adobe_cart_starts,
-        SUM(adobe_cart_checkout_visits)   AS adobe_cart_checkout_visits,
-        SUM(adobe_checkout_review_visits) AS adobe_checkout_review_visits,
-        SUM(adobe_postpaid_orders_tsr)    AS adobe_postpaid_orders_tsr
+        SUM(adobe_entries)                 AS adobe_entries,
+        SUM(adobe_pspv_actuals)            AS adobe_pspv_actuals,
+        SUM(adobe_cart_starts)             AS adobe_cart_starts,
+        SUM(adobe_cart_checkout_visits)    AS adobe_cart_checkout_visits,
+        SUM(adobe_checkout_review_visits)  AS adobe_checkout_review_visits,
+        SUM(adobe_postpaid_orders_tsr)     AS adobe_postpaid_orders_tsr
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeV2_daily`
     GROUP BY 1, 2, 3
 ),
@@ -128,6 +130,26 @@ adobe_storelocator_mapped AS (
     GROUP BY 1, 2, 3
 ),
 
+adobe_tlifeappvisits_mapped AS (
+    SELECT
+        event_date,
+        UPPER(TRIM(lob)) AS lob,
+        CASE
+            WHEN UPPER(TRIM(channel)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX',
+                'PAID SEARCH'
+            ) THEN 'PAID SEARCH'
+            WHEN UPPER(TRIM(channel)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
+            ELSE UPPER(TRIM(channel))
+        END AS channel,
+        SUM(adobeTLifeAppVisits) AS adobeTLifeAppVisits
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_adobeTLifeAppVisits_daily`
+    GROUP BY 1, 2, 3
+),
+
 all_keys AS (
     SELECT event_date, lob, channel FROM adobe_v2_mapped
     UNION DISTINCT
@@ -136,6 +158,8 @@ all_keys AS (
     SELECT event_date, lob, channel FROM adobe_cartplus_mapped
     UNION DISTINCT
     SELECT event_date, lob, channel FROM adobe_storelocator_mapped
+    UNION DISTINCT
+    SELECT event_date, lob, channel FROM adobe_tlifeappvisits_mapped
 )
 
 SELECT
@@ -161,7 +185,8 @@ SELECT
     ord.adobe_orders_fully_assisted,
     ord.adobe_orders_all,
 
-    sl.adobe_storelocator_visits
+    sl.adobe_storelocator_visits,
+    tl.adobeTLifeAppVisits
 FROM all_keys k
 LEFT JOIN adobe_v2_mapped v2
     ON k.event_date = v2.event_date
@@ -179,4 +204,8 @@ LEFT JOIN adobe_storelocator_mapped sl
     ON k.event_date = sl.event_date
    AND k.lob        = sl.lob
    AND k.channel    = sl.channel
+LEFT JOIN adobe_tlifeappvisits_mapped tl
+    ON k.event_date = tl.event_date
+   AND k.lob        = tl.lob
+   AND k.channel    = tl.channel
 ;

@@ -34,6 +34,7 @@ KEY MODELING NOTES:
   - Monthly date is standardized to MONTH END
   - PROFOUND and GOFISH are emitted separately
   - Metric rows are emitted only when metric_value IS NOT NULL, so real zeros are retained
+  - Adobe T-Life App Visits is included in both weekly and monthly Adobe long outputs
 
 ================================================================================================= */
 
@@ -64,6 +65,7 @@ weekly_sunsat_base AS (
         CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
         CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
         CAST(adobe_storelocator_visits AS FLOAT64) AS adobe_storelocator_visits,
+        CAST(adobeTLifeAppVisits AS FLOAT64) AS adobeTLifeAppVisits,
 
         CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
@@ -113,6 +115,7 @@ monthly_base AS (
         CAST(adobe_orders_fully_assisted AS FLOAT64) AS adobe_orders_fully_assisted,
         CAST(adobe_orders_all AS FLOAT64) AS adobe_orders_all,
         CAST(adobe_storelocator_visits AS FLOAT64) AS adobe_storelocator_visits,
+        CAST(adobeTLifeAppVisits AS FLOAT64) AS adobeTLifeAppVisits,
 
         CAST(sa360_clicks_brand AS FLOAT64) AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64) AS sa360_clicks_nonbrand,
@@ -247,7 +250,8 @@ weekly_sunsat_adobe_long AS (
         adobe_orders_fully_unassisted,
         adobe_orders_fully_assisted,
         adobe_orders_all,
-        adobe_storelocator_visits
+        adobe_storelocator_visits,
+        adobeTLifeAppVisits
     ))
 ),
 
@@ -372,7 +376,8 @@ monthly_adobe_long AS (
         adobe_orders_fully_unassisted,
         adobe_orders_fully_assisted,
         adobe_orders_all,
-        adobe_storelocator_visits
+        adobe_storelocator_visits,
+        adobeTLifeAppVisits
     ))
 ),
 

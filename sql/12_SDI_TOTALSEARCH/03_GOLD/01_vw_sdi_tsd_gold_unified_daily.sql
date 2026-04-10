@@ -30,6 +30,7 @@ KEY MODELING NOTES:
   - Each source CTE is re-aggregated defensively to guarantee uniqueness before the join
   - Source-specific metrics remain NULL when not applicable for that source/channel/day
   - This preserves true sparsity and avoids fake zero-valued rows downstream
+  - Adobe T-Life App Visits is flowed through from Silver Adobe into the unified Gold daily mart
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
@@ -97,7 +98,8 @@ adobe AS (
         SUM(adobe_orders_fully_unassisted) AS adobe_orders_fully_unassisted,
         SUM(adobe_orders_fully_assisted) AS adobe_orders_fully_assisted,
         SUM(adobe_orders_all) AS adobe_orders_all,
-        SUM(adobe_storelocator_visits) AS adobe_storelocator_visits
+        SUM(adobe_storelocator_visits) AS adobe_storelocator_visits,
+        SUM(adobeTLifeAppVisits) AS adobeTLifeAppVisits
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily`
     GROUP BY 1, 2, 3
 ),
@@ -183,6 +185,7 @@ SELECT
     a.adobe_orders_fully_assisted,
     a.adobe_orders_all,
     a.adobe_storelocator_visits,
+    a.adobeTLifeAppVisits,
 
     sa.sa360_clicks_brand,
     sa.sa360_clicks_nonbrand,

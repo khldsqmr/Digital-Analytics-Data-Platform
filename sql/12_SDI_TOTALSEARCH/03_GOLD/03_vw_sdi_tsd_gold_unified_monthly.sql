@@ -23,6 +23,7 @@ KEY MODELING NOTES:
   - Uses month-end as the canonical monthly reporting date
   - Uses NULL-aware aggregation
   - If a metric is NULL for all contributing daily rows, monthly result stays NULL
+  - Adobe T-Life App Visits is aggregated from Gold daily using the same NULL-aware monthly logic
 
 ================================================================================================= */
 
@@ -51,6 +52,7 @@ SELECT
     CASE WHEN COUNT(adobe_orders_fully_assisted) = 0 THEN NULL ELSE SUM(adobe_orders_fully_assisted) END AS adobe_orders_fully_assisted,
     CASE WHEN COUNT(adobe_orders_all) = 0 THEN NULL ELSE SUM(adobe_orders_all) END AS adobe_orders_all,
     CASE WHEN COUNT(adobe_storelocator_visits) = 0 THEN NULL ELSE SUM(adobe_storelocator_visits) END AS adobe_storelocator_visits,
+    CASE WHEN COUNT(adobeTLifeAppVisits) = 0 THEN NULL ELSE SUM(adobeTLifeAppVisits) END AS adobeTLifeAppVisits,
 
     CASE WHEN COUNT(sa360_clicks_brand) = 0 THEN NULL ELSE SUM(sa360_clicks_brand) END AS sa360_clicks_brand,
     CASE WHEN COUNT(sa360_clicks_nonbrand) = 0 THEN NULL ELSE SUM(sa360_clicks_nonbrand) END AS sa360_clicks_nonbrand,
