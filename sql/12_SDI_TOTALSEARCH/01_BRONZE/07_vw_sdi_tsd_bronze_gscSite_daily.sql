@@ -23,17 +23,22 @@ BUSINESS GRAIN:
 
 DEDUPE LOGIC:
   Latest row per:
-      account_id + site_url + date_yyyymmdd
+      account_id + normalized site_url + date_yyyymmdd
+
   ordered by:
       file_load_datetime DESC,
       filename DESC,
-      __insert_date DESC
+      __insert_date DESC,
+      impressions DESC,
+      clicks DESC,
+      sum_position DESC
 
 KEY MODELING NOTES:
-  - This is a source-close Bronze object
+  - Output text keys are normalized using UPPER(TRIM()) for consistency with query-level Bronze
   - Site-level totals are preserved for reconciliation and QA against query-level GSC
   - No brand / nonbrand logic is applied here
-
+  - Additional metric-based tie breakers are used to ensure deterministic retention
+    if the source contains conflicting duplicate rows with identical audit metadata
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscSite_daily`
@@ -41,9 +46,9 @@ AS
 
 WITH ranked AS (
     SELECT
-        raw.account_id,
-        raw.account_name,
-        raw.site_url,
+        SAFE_CAST(raw.account_id AS STRING) AS account_id,
+        UPPER(TRIM(raw.account_name)) AS account_name,
+        UPPER(TRIM(raw.site_url)) AS site_url,
         CAST(raw.date_yyyymmdd AS STRING) AS date_yyyymmdd,
         PARSE_DATE('%Y%m%d', CAST(raw.date_yyyymmdd AS STRING)) AS event_date,
 
@@ -57,13 +62,16 @@ WITH ranked AS (
 
         ROW_NUMBER() OVER (
             PARTITION BY
-                raw.account_id,
-                raw.site_url,
+                SAFE_CAST(raw.account_id AS STRING),
+                UPPER(TRIM(raw.site_url)),
                 CAST(raw.date_yyyymmdd AS STRING)
             ORDER BY
                 TIMESTAMP(raw.file_load_datetime) DESC,
                 raw.filename DESC,
-                SAFE_CAST(raw.__insert_date AS INT64) DESC
+                SAFE_CAST(raw.__insert_date AS INT64) DESC,
+                SAFE_CAST(raw.impressions AS FLOAT64) DESC,
+                SAFE_CAST(raw.clicks AS FLOAT64) DESC,
+                SAFE_CAST(raw.sum_position AS FLOAT64) DESC
         ) AS rn
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_site_totals_tmo` raw
     WHERE raw.account_id IS NOT NULL

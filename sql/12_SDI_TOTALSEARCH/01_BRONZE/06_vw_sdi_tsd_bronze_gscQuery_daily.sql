@@ -28,14 +28,22 @@ DEDUPE LOGIC:
   Latest row per:
       account_id + normalized site_url + normalized page + normalized query
       + normalized search_type + date_yyyymmdd
+
   ordered by:
       file_load_datetime DESC,
       filename DESC,
-      __insert_date DESC
+      __insert_date DESC,
+      impressions DESC,
+      clicks DESC,
+      sum_position DESC,
+      position DESC
 
 KEY MODELING NOTES:
   - Output text keys are normalized using UPPER(TRIM())
   - This reduces false duplicates caused by casing / spacing inconsistencies
+  - Additional metric-based tie breakers are used because the source can contain
+    conflicting duplicate rows with identical audit metadata
+  - The deterministic tie-break logic ensures the higher-signal record is retained
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gscQuery_daily`
@@ -72,7 +80,11 @@ WITH ranked AS (
             ORDER BY
                 TIMESTAMP(raw.file_load_datetime) DESC,
                 raw.filename DESC,
-                SAFE_CAST(raw.__insert_date AS INT64) DESC
+                SAFE_CAST(raw.__insert_date AS INT64) DESC,
+                SAFE_CAST(raw.impressions AS FLOAT64) DESC,
+                SAFE_CAST(raw.clicks AS FLOAT64) DESC,
+                SAFE_CAST(raw.sum_position AS FLOAT64) DESC,
+                SAFE_CAST(raw.position AS FLOAT64) DESC
         ) AS rn
     FROM `prj-dbi-prd-1.ds_dbi_improvado_master.google_search_console_query_search_type_tmo` raw
     WHERE raw.account_id IS NOT NULL
