@@ -27,9 +27,9 @@ KEY MODELING NOTES:
   - Uses a DISTINCT key spine from all daily silvers
   - Uses LEFT JOIN from the spine to each silver
   - Assumes each silver is already unique at event_date + lob + channel
+  - Each source CTE is re-aggregated defensively to guarantee uniqueness before the join
   - Source-specific metrics remain NULL when not applicable for that source/channel/day
   - This preserves true sparsity and avoids fake zero-valued rows downstream
-
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_daily`
@@ -80,24 +80,26 @@ adobe AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        adobe_entries,
-        adobe_pspv_actuals,
-        adobe_cart_starts,
-        adobe_cart_start_plus,
-        adobe_cart_checkout_visits,
-        adobe_checkout_review_visits,
-        adobe_postpaid_orders_tsr,
-        adobe_orders_web_unassisted,
-        adobe_orders_web_assisted,
-        adobe_orders_app_unassisted,
-        adobe_orders_app_assisted,
-        adobe_orders_web_all,
-        adobe_orders_app_all,
-        adobe_orders_fully_unassisted,
-        adobe_orders_fully_assisted,
-        adobe_orders_all,
-        adobe_storelocator_visits
+
+        SUM(adobe_entries) AS adobe_entries,
+        SUM(adobe_pspv_actuals) AS adobe_pspv_actuals,
+        SUM(adobe_cart_starts) AS adobe_cart_starts,
+        SUM(adobe_cart_start_plus) AS adobe_cart_start_plus,
+        SUM(adobe_cart_checkout_visits) AS adobe_cart_checkout_visits,
+        SUM(adobe_checkout_review_visits) AS adobe_checkout_review_visits,
+        SUM(adobe_postpaid_orders_tsr) AS adobe_postpaid_orders_tsr,
+        SUM(adobe_orders_web_unassisted) AS adobe_orders_web_unassisted,
+        SUM(adobe_orders_web_assisted) AS adobe_orders_web_assisted,
+        SUM(adobe_orders_app_unassisted) AS adobe_orders_app_unassisted,
+        SUM(adobe_orders_app_assisted) AS adobe_orders_app_assisted,
+        SUM(adobe_orders_web_all) AS adobe_orders_web_all,
+        SUM(adobe_orders_app_all) AS adobe_orders_app_all,
+        SUM(adobe_orders_fully_unassisted) AS adobe_orders_fully_unassisted,
+        SUM(adobe_orders_fully_assisted) AS adobe_orders_fully_assisted,
+        SUM(adobe_orders_all) AS adobe_orders_all,
+        SUM(adobe_storelocator_visits) AS adobe_storelocator_visits
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily`
+    GROUP BY 1, 2, 3
 ),
 
 sa360 AS (
@@ -105,13 +107,15 @@ sa360 AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        sa360_clicks_brand,
-        sa360_clicks_nonbrand,
-        sa360_clicks_all,
-        sa360_cart_start_plus_brand,
-        sa360_cart_start_plus_nonbrand,
-        sa360_cart_start_plus_all
+
+        SUM(sa360_clicks_brand) AS sa360_clicks_brand,
+        SUM(sa360_clicks_nonbrand) AS sa360_clicks_nonbrand,
+        SUM(sa360_clicks_all) AS sa360_clicks_all,
+        SUM(sa360_cart_start_plus_brand) AS sa360_cart_start_plus_brand,
+        SUM(sa360_cart_start_plus_nonbrand) AS sa360_cart_start_plus_nonbrand,
+        SUM(sa360_cart_start_plus_all) AS sa360_cart_start_plus_all
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_sa360_daily`
+    GROUP BY 1, 2, 3
 ),
 
 gsc AS (
@@ -119,13 +123,15 @@ gsc AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        gsc_clicks_brand,
-        gsc_clicks_nonbrand,
-        gsc_clicks_all,
-        gsc_impressions_brand,
-        gsc_impressions_nonbrand,
-        gsc_impressions_all
+
+        SUM(gsc_clicks_brand) AS gsc_clicks_brand,
+        SUM(gsc_clicks_nonbrand) AS gsc_clicks_nonbrand,
+        SUM(gsc_clicks_all) AS gsc_clicks_all,
+        SUM(gsc_impressions_brand) AS gsc_impressions_brand,
+        SUM(gsc_impressions_nonbrand) AS gsc_impressions_nonbrand,
+        SUM(gsc_impressions_all) AS gsc_impressions_all
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gsc_daily`
+    GROUP BY 1, 2, 3
 ),
 
 spend AS (
@@ -133,8 +139,10 @@ spend AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        platform_spend
+
+        SUM(platform_spend) AS platform_spend
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_platformSpend_daily`
+    GROUP BY 1, 2, 3
 ),
 
 gmb AS (
@@ -142,13 +150,15 @@ gmb AS (
         event_date,
         UPPER(TRIM(lob)) AS lob,
         UPPER(TRIM(channel)) AS channel,
-        gmb_search_impressions_all,
-        gmb_maps_impressions_all,
-        gmb_impressions_all,
-        gmb_call_clicks,
-        gmb_website_clicks,
-        gmb_directions_clicks
+
+        SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
+        SUM(gmb_maps_impressions_all) AS gmb_maps_impressions_all,
+        SUM(gmb_impressions_all) AS gmb_impressions_all,
+        SUM(gmb_call_clicks) AS gmb_call_clicks,
+        SUM(gmb_website_clicks) AS gmb_website_clicks,
+        SUM(gmb_directions_clicks) AS gmb_directions_clicks
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gmb_daily`
+    GROUP BY 1, 2, 3
 )
 
 SELECT

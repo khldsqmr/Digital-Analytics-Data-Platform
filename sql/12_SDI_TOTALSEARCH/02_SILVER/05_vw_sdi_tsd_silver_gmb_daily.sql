@@ -31,7 +31,8 @@ KEY MODELING NOTES:
   - account_name is used only to derive LOB and is not carried into final Silver output
   - rows with unmapped LOB are excluded from final Silver
   - channel is intentionally MAPS & LOCAL SEARCH
-
+  - Silver aggregates from corrected Bronze location grain, where dedupe is based on
+    account_id + location_id + date_yyyymmdd
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gmb_daily`
@@ -41,7 +42,8 @@ WITH classified AS (
     SELECT
         event_date,
         CASE
-            WHEN REGEXP_CONTAINS(UPPER(TRIM(account_name)), r'T[- ]?MOBILE STORES') THEN 'POSTPAID'
+            WHEN UPPER(TRIM(account_name)) = 'T-MOBILE STORES' THEN 'POSTPAID'
+            WHEN UPPER(TRIM(account_name)) = 'METROPCS PLA BUSINESS ACCOUNT' THEN 'METRO'
             ELSE 'UNMAPPED'
         END AS lob,
         'MAPS & LOCAL SEARCH' AS channel,
@@ -57,19 +59,19 @@ WITH classified AS (
 filtered AS (
     SELECT *
     FROM classified
-    WHERE lob = 'POSTPAID'
+    WHERE lob IN ('POSTPAID', 'METRO')
 )
 
 SELECT
     event_date,
     lob,
     channel,
-    SUM(gmb_search_impressions_all) AS gmb_search_impressions_all,
-    SUM(gmb_maps_impressions_all)   AS gmb_maps_impressions_all,
-    SUM(gmb_impressions_all)        AS gmb_impressions_all,
-    SUM(gmb_call_clicks)            AS gmb_call_clicks,
-    SUM(gmb_website_clicks)         AS gmb_website_clicks,
-    SUM(gmb_directions_clicks)      AS gmb_directions_clicks
+    SUM(COALESCE(gmb_search_impressions_all, 0)) AS gmb_search_impressions_all,
+    SUM(COALESCE(gmb_maps_impressions_all, 0))   AS gmb_maps_impressions_all,
+    SUM(COALESCE(gmb_impressions_all, 0))        AS gmb_impressions_all,
+    SUM(COALESCE(gmb_call_clicks, 0))            AS gmb_call_clicks,
+    SUM(COALESCE(gmb_website_clicks, 0))         AS gmb_website_clicks,
+    SUM(COALESCE(gmb_directions_clicks, 0))      AS gmb_directions_clicks
 FROM filtered
 GROUP BY 1, 2, 3
 ;
