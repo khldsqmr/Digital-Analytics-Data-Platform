@@ -73,5 +73,6 @@ SELECT
     SUM(COALESCE(gmb_website_clicks, 0))         AS gmb_website_clicks,
     SUM(COALESCE(gmb_directions_clicks, 0))      AS gmb_directions_clicks
 FROM filtered
+WHERE lob = 'POSTPAID'
 GROUP BY 1, 2, 3
 ;
