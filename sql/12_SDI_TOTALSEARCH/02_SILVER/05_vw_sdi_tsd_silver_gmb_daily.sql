@@ -54,7 +54,7 @@ WITH classified AS (
         gmb_website_clicks,
         gmb_directions_clicks
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_gmb_daily`
-    WHERE location_name NOT IN ("UScellular")
+    WHERE UPPER(TRIM(location_name)) NOT IN ("USCELLULAR")
 ),
 
 filtered AS (
