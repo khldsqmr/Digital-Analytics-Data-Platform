@@ -29,8 +29,9 @@ OUTPUT METRICS:
 
 KEY MODELING NOTES:
   - Query-level rows are classified first, then aggregated
+  - Postpaid LOB logic excludes queries matching the provided Postpaid exclusion regex
+  - Brand / non-brand logic uses the provided brand regex exactly as supplied
   - Nulls are preserved; no new zeroes are introduced
-
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gsc_daily`
@@ -70,9 +71,9 @@ aggregated AS (
         event_date,
         lob,
         channel,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END)      AS gsc_clicks_brand,
-        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END)   AS gsc_clicks_nonbrand,
-        SUM(CASE WHEN brand_type = 'BRAND' THEN impressions END)    AS gsc_impressions_brand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN clicks END) AS gsc_clicks_brand,
+        SUM(CASE WHEN brand_type = 'NONBRAND' THEN clicks END) AS gsc_clicks_nonbrand,
+        SUM(CASE WHEN brand_type = 'BRAND' THEN impressions END) AS gsc_impressions_brand,
         SUM(CASE WHEN brand_type = 'NONBRAND' THEN impressions END) AS gsc_impressions_nonbrand
     FROM filtered
     GROUP BY 1, 2, 3
