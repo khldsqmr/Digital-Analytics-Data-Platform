@@ -81,7 +81,7 @@ into one long-format reporting layer.
 
 | Source Family | Business Role | Downstream Purpose |
 |---|---|---|
-| Adobe | funnel and digital order metrics | search funnel and conversion reporting |
+| Adobe | funnel, digital order, store locator, and T-Life app visit metrics | search funnel, conversion, local intent, and app-visit reporting |
 | SA360 | paid search performance | paid search clicks and cart-start reporting |
 | GSC | organic query demand and visibility | organic search demand and impression reporting |
 | Platform Spend | marketing spend | paid search spend reporting and spend alignment |
@@ -184,6 +184,8 @@ Bronze is the **source-close standardization layer**. It:
 | `adobe_analytics_custom_postpaid_voice_v2_tmo` | `vw_sdi_tsd_bronze_adobeV2_daily` | `event_date + lob + channel` | standardizes Adobe Postpaid funnel metrics |
 | `vw_sdi_adobePpPulsePro_gold_orders_daily` | `vw_sdi_tsd_bronze_adobeOrders_daily` | `event_date + lob + channel` | standardizes Adobe digital order metrics |
 | `adobe_cs_day_tmo` | `vw_sdi_tsd_bronze_adobeCartStartPlus_daily` | `event_date + lob + channel` | deduplicates Adobe cart-start-plus metric |
+| `sdi_raw_adobe_pp_ts_pro_storelocator_visits_daily_tmo` | `vw_sdi_tsd_bronze_adobeStoreLocator_daily` | `event_date + lob + channel` | deduplicated Adobe Store Locator visits mart |
+| `adobe_analytics_prospect_customer_web_app_da_all_postpaid_apps_visits_da_enterprise_prospect_visits_tmo` | `vw_sdi_tsd_bronze_adobeTLifeAppVisits_daily` | `event_date + lob + channel` | deduplicated Adobe T-Life App Visits mart |
 | `google_search_ads_360_campaigns_tmo` | `vw_sdi_tsd_bronze_sa360Perf_daily` | `account_id + campaign_id + event_date` | deduplicated SA360 campaign performance base |
 | `google_search_ads_360_beta_campaign_entity_custom_tmo` | `vw_sdi_tsd_bronze_sa360Entity_daily` | `account_id + campaign_id + event_date` | deduplicated SA360 campaign metadata base |
 | `google_search_console_query_search_type_tmo` | `vw_sdi_tsd_bronze_gscQuery_daily` | `account_id + site_url + page + query + search_type + event_date` | query-level GSC mart for brand/nonbrand classification |
@@ -192,10 +194,10 @@ Bronze is the **source-close standardization layer**. It:
 | `google_business_profile_google_my_business_location_insights_tmo` | `vw_sdi_tsd_bronze_gmb_daily` | `event_date + date_yyyymmdd + account_name` | deduplicated GMB / GBP location-insights mart |
 | `sdi_seo_profound_vis_tag_weekly_sunday_tmo`, `sdi_seo_profound_cit_tag_weekly_sunday_tmo`, `sdi_seo_profound_gofish_vis_tag_weekly_sunday_tmo`, `sdi_seo_profound_gofish_cit_tag_weekly_sunday_tmo` | `vw_sdi_tsd_bronze_profoundVisCitTag_weekly` | `period_date + lob + channel + company + brand_type + metric_source` | weekly canonical ProFound / GoFish mart |
 | `sdi_seo_profound_vis_tag_monthly_tmo`, `sdi_seo_profound_cit_tag_monthly_tmo`, `sdi_seo_profound_gofish_vis_tag_monthly_tmo`, `sdi_seo_profound_gofish_cit_tag_monthly_tmo` | `vw_sdi_tsd_bronze_profoundVisCitTag_monthly` | `period_date + lob + channel + company + brand_type + metric_source` | monthly canonical ProFound / GoFish mart |
-| `sdi_raw_adobe_pp_ts_pro_storelocator_visits_daily_tmo` | `vw_sdi_tsd_bronze_adobeStoreLocator_daily` | `event_date + lob + channel` | deduplicated Adobe Store Locator visits mart |
 
 ## Bronze design notes
 - Bronze remains intentionally close to source truth
+- Adobe T-Life App Visits is modeled as a separate Bronze Adobe mart because it is sourced from a separate snapshot-style Adobe feed and requires latest-row deduplication before downstream conformance
 - SA360 performance and entity metadata are modeled separately on purpose
 - GSC query-level and site-level outputs are separated so classification and QA stay clean
 - ProFound / GoFish are standardized into canonical weekly and monthly source marts
@@ -216,7 +218,7 @@ Silver is the **business-conformance layer**. It:
 
 | Sources | Destination View | Grain | Summary |
 |---|---|---|---|
-| `vw_sdi_tsd_bronze_adobeV2_daily`, `vw_sdi_tsd_bronze_adobeOrders_daily`, `vw_sdi_tsd_bronze_adobeCartStartPlus_daily`, `vw_sdi_tsd_bronze_adobeStoreLocator_daily` | `vw_sdi_tsd_silver_adobe_daily` | `event_date + lob + channel` | conformed Adobe daily source mart |
+| `vw_sdi_tsd_bronze_adobeV2_daily`, `vw_sdi_tsd_bronze_adobeOrders_daily`, `vw_sdi_tsd_bronze_adobeCartStartPlus_daily`, `vw_sdi_tsd_bronze_adobeStoreLocator_daily`, `vw_sdi_tsd_bronze_adobeTLifeAppVisits_daily` | `vw_sdi_tsd_silver_adobe_daily` | `event_date + lob + channel` | conformed Adobe daily source mart |
 | `vw_sdi_tsd_bronze_gscQuery_daily` | `vw_sdi_tsd_silver_gsc_daily` | `event_date + lob + channel` | query-level GSC classification and aggregation mart |
 | `vw_sdi_tsd_bronze_platformSpend_daily` | `vw_sdi_tsd_silver_platformSpend_daily` | `event_date + lob + channel` | conformed platform spend mart |
 | `vw_sdi_tsd_bronze_gmb_daily` | `vw_sdi_tsd_silver_gmb_daily` | `event_date + lob + channel` | conformed GMB mart |
@@ -229,7 +231,7 @@ Silver is the **business-conformance layer**. It:
 |---|---|
 | channel normalization | paid-search variants collapse to `PAID SEARCH`; natural search maps to `ORGANIC SEARCH` |
 | LOB derivation | GMB derives `POSTPAID` from account naming; most others are already standardized |
-| Adobe consolidation | all Adobe sub-marts are channel-mapped first, re-aggregated, then joined by a unioned keyset |
+| Adobe consolidation | all Adobe sub-marts, including T-Life App Visits, are channel-mapped first, re-aggregated, then joined by a unioned keyset |
 | SA360 classification | latest entity metadata is joined to performance; in-scope campaigns are classified into brand/nonbrand |
 | GSC classification | query-level regex classification is applied before aggregation |
 | AI Search shaping | ProFound / GoFish are pivoted wide at weekly/monthly reporting grain |
@@ -325,6 +327,7 @@ This object:
 | TSR orders | `adobe_postpaid_orders_tsr` |
 | Digital orders | web/app assisted and unassisted order metrics, plus totals |
 | Local intent | `adobe_storelocator_visits` |
+| App engagement | `adobeTLifeAppVisits` |
 
 ## SA360 metrics
 | Family | Metrics |
@@ -383,6 +386,9 @@ Otherwise, clicks and impressions could be incorrectly rolled up.
 Performance and campaign metadata come from different source structures.  
 Keeping them separate avoids premature joins and makes Silver logic cleaner and more maintainable.
 
+## Why separate Adobe T-Life App Visits in Bronze?
+Because Adobe T-Life App Visits comes from its own snapshot-style Adobe source and requires independent deduplication before channel conformance and downstream integration into the shared Adobe Silver mart.
+
 ## Why null-aware aggregation?
 This keeps non-applicable rows from showing as zero in weekly/monthly output.  
 It preserves the difference between:
@@ -396,7 +402,7 @@ It preserves the difference between:
 
 | Path | Flow |
 |---|---|
-| Adobe | Bronze Adobe marts -> Silver Adobe mart -> Gold Unified Daily -> Weekly / Monthly -> Gold Long |
+| Adobe | Bronze Adobe marts, including T-Life App Visits -> Silver Adobe mart -> Gold Unified Daily -> Weekly / Monthly -> Gold Long |
 | SA360 | Bronze Perf + Bronze Entity -> Silver SA360 mart -> Gold Unified Daily -> Weekly / Monthly -> Gold Long |
 | GSC | Bronze GSC Query -> Silver GSC mart -> Gold Unified Daily -> Weekly / Monthly -> Gold Long |
 | GSC QA | Bronze GSC Site -> reconciliation / QA support |
