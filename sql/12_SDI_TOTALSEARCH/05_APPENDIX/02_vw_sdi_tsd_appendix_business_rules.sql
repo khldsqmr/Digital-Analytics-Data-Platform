@@ -55,25 +55,25 @@ UNION ALL
 SELECT
     2,
     'DATE LOGIC',
-    'Weekly Reporting Date',
-    'Weekly reporting uses week ending Saturday as the canonical weekly reporting date.' ,
-    'Operational Gold marts and final Gold long output',
-    'Gold',
-    'Daily records are rolled up into weekSunToSat using week ending Saturday logic.',
-    'Keeps weekly reporting consistent across Adobe, SA360, GSC, Spend, and GMB.',
-    'Daily data must be reconciled to the correct week ending Saturday when comparing across layers.'
+    'AI Search Weekly Source Granularity',
+    'ProFound and GoFish weekly reporting is sourced directly from weekly source extracts rather than being rolled up from daily data.' ,
+    'ProFound, GoFish',
+    'Bronze / Silver / Gold',
+    'Weekly AI Search data is ingested from weekly ProFound and GoFish source tables, standardized in Bronze, shaped in Silver, and published through the weekly Gold AI Search mart.',
+    'Clarifies that weekly AI Search outputs are source-native weekly metrics and should be interpreted independently from daily operational reporting.',
+    'Weekly AI Search reporting should not be reconciled as a daily-to-weekly rollup because the source is already weekly.'
 
 UNION ALL
 SELECT
     3,
     'DATE LOGIC',
-    'Monthly Reporting Date',
-    'Monthly reporting uses month end as the canonical monthly reporting date.' ,
-    'Operational Gold marts and final Gold long output',
-    'Gold',
-    'Daily records are rolled up using monthEnd derived from the last calendar day of the month.',
-    'Creates one standard monthly reporting key for Tableau.',
-    'Month-start or source-native monthly dates should not be compared directly to final monthEnd outputs without transformation.'
+    'AI Search Monthly Source Granularity',
+    'ProFound and GoFish monthly reporting is sourced directly from monthly source extracts rather than being rolled up from daily data.' ,
+    'ProFound, GoFish',
+    'Bronze / Silver / Gold',
+    'Monthly AI Search data is ingested from monthly ProFound and GoFish source tables, standardized in Bronze, shaped in Silver, and published through the monthly Gold AI Search mart.',
+    'Clarifies that monthly AI Search outputs are source-native monthly metrics and should be interpreted independently from daily operational reporting.',
+    'Monthly AI Search reporting should not be reconciled as a daily-to-monthly rollup because the source is already monthly.'
 
 UNION ALL
 SELECT
