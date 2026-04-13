@@ -1,0 +1,1 @@
+CALL `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_refresh_tsr_postpaid_daily_combined`();
