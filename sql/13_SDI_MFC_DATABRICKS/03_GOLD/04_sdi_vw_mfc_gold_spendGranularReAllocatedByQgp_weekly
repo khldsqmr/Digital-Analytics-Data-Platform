@@ -1,0 +1,134 @@
+-- =====================================================================
+-- GOLD: QGP Reallocated Granular (built on silver_spendGranular_weekly)
+-- =====================================================================
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranularReAllocatedByQgp_weekly AS
+
+WITH daily_spend AS (
+  SELECT
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Period_Start,
+    Period_End,
+    LAST_DAY(
+      TO_DATE(
+        CONCAT(
+          YEAR(Period_End), '-',
+          LPAD(CAST(
+            CASE
+              WHEN MONTH(Period_End) <= 3  THEN 3
+              WHEN MONTH(Period_End) <= 6  THEN 6
+              WHEN MONTH(Period_End) <= 9  THEN 9
+              ELSE 12
+            END AS STRING), 2, '0'), '-01'
+        ), 'yyyy-MM-dd'
+      )
+    )                                                             AS Quarter_End_Date,
+    weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_actual,
+    weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_forecast,
+    weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_display,
+    EXPLODE(
+      SEQUENCE(Period_Start, Period_End, INTERVAL 1 DAY)
+    )                                                             AS calendar_date
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly
+  WHERE Period_End >= Period_Start
+),
+daily_with_qgp AS (
+  SELECT
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Quarter_End_Date,
+    daily_actual,
+    daily_forecast,
+    daily_display,
+    calendar_date,
+    CASE
+      WHEN DATE_ADD(
+             calendar_date,
+             CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+                  ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           ) > Quarter_End_Date
+      THEN Quarter_End_Date
+      ELSE DATE_ADD(
+             calendar_date,
+             CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+                  ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+    END                                                           AS QGP_Date
+  FROM daily_spend
+),
+aggregated AS (
+  SELECT
+    QGP_Date,
+    MAX(FileLoad_Date)                                            AS FileLoad_Date,
+    UPPER(TRIM(LOB_Supported))                                    AS LOB_Supported,
+    UPPER(TRIM(Channel))                                          AS Channel,
+    UPPER(TRIM(Tactic))                                           AS Tactic,
+    UPPER(TRIM(Message_Type))                                     AS Message_Type,
+    ROUND(SUM(daily_actual),   2)                                 AS spend_actual,
+    ROUND(SUM(daily_forecast), 2)                                 AS spend_forecast,
+    ROUND(SUM(daily_display),  2)                                 AS spend_display
+  FROM daily_with_qgp
+  GROUP BY
+    QGP_Date,
+    UPPER(TRIM(LOB_Supported)),
+    UPPER(TRIM(Channel)),
+    UPPER(TRIM(Tactic)),
+    UPPER(TRIM(Message_Type))
+)
+SELECT
+  CONCAT(
+    YEAR(QGP_Date), ' Q',
+    CASE
+      WHEN MONTH(QGP_Date) <= 3  THEN '1'
+      WHEN MONTH(QGP_Date) <= 6  THEN '2'
+      WHEN MONTH(QGP_Date) <= 9  THEN '3'
+      ELSE '4'
+    END
+  )                                                               AS Quarter,
+
+  LAST_DAY(
+    TO_DATE(
+      CONCAT(
+        YEAR(QGP_Date), '-',
+        LPAD(CAST(
+          CASE
+            WHEN MONTH(QGP_Date) <= 3  THEN 3
+            WHEN MONTH(QGP_Date) <= 6  THEN 6
+            WHEN MONTH(QGP_Date) <= 9  THEN 9
+            ELSE 12
+          END AS STRING), 2, '0'), '-01'
+      ), 'yyyy-MM-dd'
+    )
+  )                                                               AS Quarter_End_Date,
+
+  CASE
+    WHEN DAYOFWEEK(QGP_Date) = 7
+      THEN DATE_SUB(QGP_Date, 6)
+    ELSE
+      DATE_SUB(QGP_Date, DAYOFWEEK(QGP_Date) - 1)
+  END                                                             AS Period_Start,
+
+  QGP_Date                                                        AS Period_End,
+  QGP_Date,
+  FileLoad_Date,
+  LOB_Supported,
+  Channel,
+  Tactic,
+  Message_Type,
+  spend_actual,
+  spend_forecast,
+  spend_display
+
+FROM aggregated
+ORDER BY
+  QGP_Date DESC,
+  Channel,
+  Tactic;

@@ -1,0 +1,23 @@
+-- =============================================
+-- GOLD: Weekly
+-- =============================================
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly AS
+
+SELECT
+  Quarter,
+  Period_Start,
+  Period_End,
+  QGP_Week,
+  Quarter_End_Date,
+  FileLoad_Date,
+  weekly_actual as spend_actual,
+  weekly_forecast as spend_forecast,
+  weekly_display as spend_display,
+  UPPER(TRIM(week_type))                    AS week_type
+
+FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly
+
+ORDER BY
+  Quarter DESC,
+  QGP_Week DESC;
+

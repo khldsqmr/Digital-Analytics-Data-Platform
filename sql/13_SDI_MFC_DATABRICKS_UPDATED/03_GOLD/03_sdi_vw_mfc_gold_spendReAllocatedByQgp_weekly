@@ -1,0 +1,125 @@
+-- =====================================================================
+-- GOLD: QGP Reallocated Weekly (built on silver_spend_weekly)
+-- =====================================================================
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spendReAllocatedByQgp_weekly AS
+
+WITH daily_spend AS (
+  SELECT
+    FileLoad_Date,
+    Period_Start,
+    Period_End,
+
+    LAST_DAY(
+      TO_DATE(
+        CONCAT(
+          YEAR(Period_End), '-',
+          LPAD(CAST(
+            CASE
+              WHEN MONTH(Period_End) <= 3  THEN 3
+              WHEN MONTH(Period_End) <= 6  THEN 6
+              WHEN MONTH(Period_End) <= 9  THEN 9
+              ELSE 12
+            END AS STRING), 2, '0'), '-01'
+        ), 'yyyy-MM-dd'
+      )
+    )                                                             AS Quarter_End_Date,
+
+    weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_actual,
+    weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_forecast,
+    weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1)    AS daily_display,
+
+    EXPLODE(
+      SEQUENCE(Period_Start, Period_End, INTERVAL 1 DAY)
+    )                                                             AS calendar_date
+
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly
+  WHERE Period_End >= Period_Start
+),
+
+daily_with_qgp AS (
+  SELECT
+    FileLoad_Date,
+    Quarter_End_Date,
+    daily_actual,
+    daily_forecast,
+    daily_display,
+    calendar_date,
+
+    CASE
+      WHEN DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           ) > Quarter_End_Date
+      THEN Quarter_End_Date
+      ELSE DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+    END                                                           AS QGP_Date
+
+  FROM daily_spend
+),
+
+aggregated AS (
+  SELECT
+    QGP_Date,
+    MIN(calendar_date)                                            AS Period_Start,
+    MAX(calendar_date)                                            AS Period_End,
+    MAX(FileLoad_Date)                                            AS FileLoad_Date,
+    ROUND(SUM(daily_actual),   2)                                 AS spend_actual,
+    ROUND(SUM(daily_forecast), 2)                                 AS spend_forecast,
+    ROUND(SUM(daily_display),  2)                                 AS spend_display
+
+  FROM daily_with_qgp
+  GROUP BY
+    QGP_Date
+)
+
+SELECT
+  -- Quarter derived from QGP_Date
+  CONCAT(
+    YEAR(QGP_Date), ' Q',
+    CASE
+      WHEN MONTH(QGP_Date) <= 3  THEN '1'
+      WHEN MONTH(QGP_Date) <= 6  THEN '2'
+      WHEN MONTH(QGP_Date) <= 9  THEN '3'
+      ELSE '4'
+    END
+  )                                                               AS Quarter,
+
+  -- Quarter_End_Date derived from QGP_Date
+  LAST_DAY(
+    TO_DATE(
+      CONCAT(
+        YEAR(QGP_Date), '-',
+        LPAD(CAST(
+          CASE
+            WHEN MONTH(QGP_Date) <= 3  THEN 3
+            WHEN MONTH(QGP_Date) <= 6  THEN 6
+            WHEN MONTH(QGP_Date) <= 9  THEN 9
+            ELSE 12
+          END AS STRING), 2, '0'), '-01'
+      ), 'yyyy-MM-dd'
+    )
+  )                                                               AS Quarter_End_Date,
+
+  -- Period boundaries are derived from actual exploded dates
+  -- This correctly handles quarter-start and quarter-end partial weeks
+  Period_Start,
+  Period_End,
+
+  QGP_Date,
+  FileLoad_Date,
+  spend_actual,
+  spend_forecast,
+  spend_display
+
+FROM aggregated
+ORDER BY
+  QGP_Date DESC;
