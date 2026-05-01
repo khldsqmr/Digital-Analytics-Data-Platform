@@ -1,0 +1,55 @@
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly AS
+
+WITH weekly_snapshots AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+    SUM(Spend_Actual) AS weekly_actual
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE LOB_Supported = 'Consumer Postpaid'
+    AND WM_V_NWM = 'Working'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
+    AND Week_Beginning_Monday <= Week_Ending_Sunday
+    AND Spend_Actual IS NOT NULL
+  GROUP BY
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date
+),
+ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week
+      ORDER BY FileLoad_Date DESC
+    ) AS rn
+  FROM weekly_snapshots
+),
+best AS (
+  SELECT * FROM ranked WHERE rn = 1
+),
+week_type AS (
+  SELECT
+    QGP_Week,
+    CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
+  FROM best
+  GROUP BY QGP_Week
+)
+SELECT
+  b.Quarter,
+  b.Week_Beginning_Monday,
+  b.Week_Ending_Sunday,
+  b.QGP_Week,
+  b.FileLoad_Date,
+  b.weekly_actual,
+  w.week_type
+FROM best b
+JOIN week_type w ON b.QGP_Week = w.QGP_Week
+WHERE b.weekly_actual IS NOT NULL
+  AND b.weekly_actual != 0
+ORDER BY
+  b.QGP_Week DESC,
+  CAST(SUBSTR(b.Quarter, 4, 2) AS INT) DESC,
+  CAST(SUBSTR(b.Quarter, 2, 1) AS INT) DESC;

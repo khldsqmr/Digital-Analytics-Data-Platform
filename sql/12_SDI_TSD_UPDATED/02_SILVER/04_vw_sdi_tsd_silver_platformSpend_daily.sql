@@ -1,0 +1,81 @@
+/* =================================================================================================
+FILE: 04_vw_sdi_tsd_silver_platformSpend_daily.sql
+LAYER: Silver View
+DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+VIEW: vw_sdi_tsd_silver_platformSpend_daily
+
+SOURCE:
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_platformSpend_daily
+
+DESTINATION:
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_platformSpend_daily
+
+PURPOSE:
+  Canonical Silver platform spend daily source mart for the Total Search Dashboard.
+
+BUSINESS GRAIN:
+  One row per:
+      event_date
+      lob
+      channel
+
+OUTPUT METRICS:
+  - platform_spend
+
+KEY MODELING NOTES:
+  - Bronze preserves source truth in channel_raw
+  - NATURAL SEARCH is standardized to ORGANIC SEARCH
+  - Paid search child channels are rolled up into PAID SEARCH
+  - Remaining unexpected channels are collapsed into OTHER CAMPAIGNS
+
+================================================================================================= */
+
+CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_platformSpend_daily`
+AS
+
+WITH mapped AS (
+    SELECT
+        event_date,
+        UPPER(TRIM(lob)) AS lob,
+        CASE
+            WHEN UPPER(TRIM(channel_raw)) = 'AFFILIATE' THEN 'AFFILIATE'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT' THEN 'DIRECT'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT MAIL' THEN 'DIRECT MAIL'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT TV' THEN 'DIRECT TV'
+            WHEN UPPER(TRIM(channel_raw)) IN ('DISPLAY', 'PROGRAMMATIC DISPLAY', 'CONTENT SYNDICATION') THEN 'DISPLAY'
+            WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - CAMPAIGN' THEN 'EMAIL - CAMPAIGN'
+            WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - ORGANIC' THEN 'EMAIL - ORGANIC'
+            WHEN UPPER(TRIM(channel_raw)) IN ('NATURAL SEARCH', 'ORGANIC SEARCH') THEN 'ORGANIC SEARCH'
+            WHEN UPPER(TRIM(channel_raw)) = 'ON DEVICE' THEN 'ON DEVICE'
+            WHEN UPPER(TRIM(channel_raw)) IN ('ONLINE VIDEO', 'OVER THE TOP') THEN 'ONLINE VIDEO'
+            WHEN UPPER(TRIM(channel_raw)) = 'OUT OF HOME' THEN 'OUT OF HOME'
+            WHEN UPPER(TRIM(channel_raw)) IN (
+                'PAID SEARCH: BRAND',
+                'PAID SEARCH: NON-BRAND',
+                'PAID SEARCH: PLAS',
+                'PERFORMANCE MAX',
+                'PAID SEARCH'
+            ) THEN 'PAID SEARCH'
+            WHEN UPPER(TRIM(channel_raw)) = 'REFERRING DOMAINS' THEN 'REFERRING DOMAINS'
+            WHEN UPPER(TRIM(channel_raw)) = 'RETAIL STORE' THEN 'RETAIL STORE'
+            WHEN UPPER(TRIM(channel_raw)) = 'SESSION REFRESH' THEN 'SESSION REFRESH'
+            WHEN UPPER(TRIM(channel_raw)) = 'SMS' THEN 'SMS'
+            WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - CAMPAIGN' THEN 'SOCIAL NETWORK - CAMPAIGN'
+            WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - NATURAL' THEN 'SOCIAL NETWORK - NATURAL'
+            WHEN UPPER(TRIM(channel_raw)) IN ('BROADCAST TV', 'CABLE TV', 'LIVE SPORTS TV', 'LOCAL TV', 'SL TV') THEN 'DIRECT TV'
+            WHEN UPPER(TRIM(channel_raw)) IN ('STREAMING RADIO', 'PODCAST', 'SUPER BOWL', 'TUESDAYS', 'OFFLINE', '? TFB _EFL_ _SLN_ ?') THEN 'OTHER CAMPAIGNS'
+            WHEN UPPER(TRIM(channel_raw)) = 'OTHER CAMPAIGNS' THEN 'OTHER CAMPAIGNS'
+            ELSE 'OTHER CAMPAIGNS'
+        END AS channel,
+        spend
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_platformSpend_daily`
+)
+
+SELECT
+    event_date,
+    lob,
+    UPPER(TRIM(channel)) AS channel,
+    SUM(spend) AS platform_spend
+FROM mapped
+GROUP BY 1, 2, 3
+;

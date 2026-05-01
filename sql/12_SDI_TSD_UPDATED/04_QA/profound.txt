@@ -1,0 +1,603 @@
+/* =================================================================================================
+RECON 01: WEEKLY RAW SOURCES -> EXPECTED VALUES -> COMPARE TO SILVER
+PURPOSE:
+  Rebuild the 12 weekly ProFound metrics directly from raw sources using the same canonical
+  row-picking logic as Bronze, then compare against vw_sdi_tsd_silver_profound_weekly.
+================================================================================================= */
+
+WITH vis_nonbrand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
+            WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
+            WHEN UPPER(TRIM(asset_name)) = 'VERIZON' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'NONBRAND' AS brand_type,
+        'VISIBILITY' AS metric_source,
+        SAFE_CAST(visibility_score AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_weekly_sunday_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
+),
+vis_nonbrand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM vis_nonbrand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+cit_nonbrand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
+            WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
+            WHEN LOWER(TRIM(root_domain)) = 'verizon.com' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'NONBRAND' AS brand_type,
+        'CITATION' AS metric_source,
+        SAFE_CAST(share_of_voice AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_weekly_sunday_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
+),
+cit_nonbrand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM cit_nonbrand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+vis_brand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
+            WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
+            WHEN UPPER(TRIM(asset_name)) = 'VERIZON' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'BRAND' AS brand_type,
+        'VISIBILITY' AS metric_source,
+        SAFE_CAST(visibility_score AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_weekly_sunday_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
+),
+vis_brand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM vis_brand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+cit_brand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
+            WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
+            WHEN LOWER(TRIM(root_domain)) = 'verizon.com' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'BRAND' AS brand_type,
+        'CITATION' AS metric_source,
+        SAFE_CAST(share_of_voice AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_weekly_sunday_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
+),
+cit_brand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM cit_brand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+expected AS (
+    SELECT
+        period_date,
+        lob,
+        channel,
+
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_tmo_citation_share_brand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_tmo_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_tmo_visibility_score_brand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_tmo_visibility_score_nonbrand,
+
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_att_citation_share_brand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_att_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_att_visibility_score_brand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_att_visibility_score_nonbrand,
+
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_verizon_citation_share_brand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_verizon_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_verizon_visibility_score_brand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_verizon_visibility_score_nonbrand
+    FROM (
+        SELECT * FROM vis_nonbrand
+        UNION ALL
+        SELECT * FROM cit_nonbrand
+        UNION ALL
+        SELECT * FROM vis_brand
+        UNION ALL
+        SELECT * FROM cit_brand
+    )
+    GROUP BY 1,2,3
+),
+
+actual AS (
+    SELECT *
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
+)
+
+SELECT
+    COALESCE(e.period_date, a.period_date) AS period_date,
+    COALESCE(e.lob, a.lob) AS lob,
+    COALESCE(e.channel, a.channel) AS channel,
+
+    e.profound_tmo_citation_share_brand,
+    a.profound_tmo_citation_share_brand AS actual_profound_tmo_citation_share_brand,
+    a.profound_tmo_citation_share_brand - e.profound_tmo_citation_share_brand AS diff_profound_tmo_citation_share_brand,
+
+    e.profound_tmo_citation_share_nonbrand,
+    a.profound_tmo_citation_share_nonbrand AS actual_profound_tmo_citation_share_nonbrand,
+    a.profound_tmo_citation_share_nonbrand - e.profound_tmo_citation_share_nonbrand AS diff_profound_tmo_citation_share_nonbrand,
+
+    e.profound_tmo_visibility_score_brand,
+    a.profound_tmo_visibility_score_brand AS actual_profound_tmo_visibility_score_brand,
+    a.profound_tmo_visibility_score_brand - e.profound_tmo_visibility_score_brand AS diff_profound_tmo_visibility_score_brand,
+
+    e.profound_tmo_visibility_score_nonbrand,
+    a.profound_tmo_visibility_score_nonbrand AS actual_profound_tmo_visibility_score_nonbrand,
+    a.profound_tmo_visibility_score_nonbrand - e.profound_tmo_visibility_score_nonbrand AS diff_profound_tmo_visibility_score_nonbrand,
+
+    e.profound_att_citation_share_brand,
+    a.profound_att_citation_share_brand AS actual_profound_att_citation_share_brand,
+    a.profound_att_citation_share_brand - e.profound_att_citation_share_brand AS diff_profound_att_citation_share_brand,
+
+    e.profound_att_citation_share_nonbrand,
+    a.profound_att_citation_share_nonbrand AS actual_profound_att_citation_share_nonbrand,
+    a.profound_att_citation_share_nonbrand - e.profound_att_citation_share_nonbrand AS diff_profound_att_citation_share_nonbrand,
+
+    e.profound_att_visibility_score_brand,
+    a.profound_att_visibility_score_brand AS actual_profound_att_visibility_score_brand,
+    a.profound_att_visibility_score_brand - e.profound_att_visibility_score_brand AS diff_profound_att_visibility_score_brand,
+
+    e.profound_att_visibility_score_nonbrand,
+    a.profound_att_visibility_score_nonbrand AS actual_profound_att_visibility_score_nonbrand,
+    a.profound_att_visibility_score_nonbrand - e.profound_att_visibility_score_nonbrand AS diff_profound_att_visibility_score_nonbrand,
+
+    e.profound_verizon_citation_share_brand,
+    a.profound_verizon_citation_share_brand AS actual_profound_verizon_citation_share_brand,
+    a.profound_verizon_citation_share_brand - e.profound_verizon_citation_share_brand AS diff_profound_verizon_citation_share_brand,
+
+    e.profound_verizon_citation_share_nonbrand,
+    a.profound_verizon_citation_share_nonbrand AS actual_profound_verizon_citation_share_nonbrand,
+    a.profound_verizon_citation_share_nonbrand - e.profound_verizon_citation_share_nonbrand AS diff_profound_verizon_citation_share_nonbrand,
+
+    e.profound_verizon_visibility_score_brand,
+    a.profound_verizon_visibility_score_brand AS actual_profound_verizon_visibility_score_brand,
+    a.profound_verizon_visibility_score_brand - e.profound_verizon_visibility_score_brand AS diff_profound_verizon_visibility_score_brand,
+
+    e.profound_verizon_visibility_score_nonbrand,
+    a.profound_verizon_visibility_score_nonbrand AS actual_profound_verizon_visibility_score_nonbrand,
+    a.profound_verizon_visibility_score_nonbrand - e.profound_verizon_visibility_score_nonbrand AS diff_profound_verizon_visibility_score_nonbrand
+
+FROM expected e
+FULL OUTER JOIN actual a
+    ON e.period_date = a.period_date
+   AND e.lob = a.lob
+   AND e.channel = a.channel
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 02: MONTHLY RAW SOURCES -> EXPECTED VALUES -> COMPARE TO SILVER
+PURPOSE:
+  Same reconciliation as above, but for monthly ProFound / GoFish.
+================================================================================================= */
+
+WITH vis_nonbrand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
+            WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
+            WHEN UPPER(TRIM(asset_name)) = 'VERIZON' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'NONBRAND' AS brand_type,
+        'VISIBILITY' AS metric_source,
+        SAFE_CAST(visibility_score AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_monthly_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
+),
+vis_nonbrand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM vis_nonbrand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+cit_nonbrand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
+            WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
+            WHEN LOWER(TRIM(root_domain)) = 'verizon.com' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'NONBRAND' AS brand_type,
+        'CITATION' AS metric_source,
+        SAFE_CAST(share_of_voice AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_monthly_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
+),
+cit_nonbrand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM cit_nonbrand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+vis_brand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN UPPER(TRIM(asset_name)) = 'T-MOBILE' THEN 'TMO'
+            WHEN UPPER(TRIM(asset_name)) = 'AT&T' THEN 'ATT'
+            WHEN UPPER(TRIM(asset_name)) = 'VERIZON' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'BRAND' AS brand_type,
+        'VISIBILITY' AS metric_source,
+        SAFE_CAST(visibility_score AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_vis_tag_monthly_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND UPPER(TRIM(asset_name)) IN ('T-MOBILE', 'AT&T', 'VERIZON')
+),
+vis_brand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM vis_brand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+cit_brand_base AS (
+    SELECT
+        PARSE_DATE('%Y%m%d', CAST(date_yyyymmdd AS STRING)) AS period_date,
+        'POSTPAID' AS lob,
+        'AI SEARCH' AS channel,
+        CASE
+            WHEN LOWER(TRIM(root_domain)) = 't-mobile.com' THEN 'TMO'
+            WHEN LOWER(TRIM(root_domain)) = 'att.com' THEN 'ATT'
+            WHEN LOWER(TRIM(root_domain)) = 'verizon.com' THEN 'VERIZON'
+            ELSE NULL
+        END AS company,
+        'BRAND' AS brand_type,
+        'CITATION' AS metric_source,
+        SAFE_CAST(share_of_voice AS FLOAT64) AS metric_value,
+        SAFE_CAST(__insert_date AS INT64) AS insert_date,
+        TIMESTAMP(File_Load_datetime) AS file_load_datetime,
+        Filename AS filename
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_gofish_cit_tag_monthly_tmo`
+    WHERE UPPER(TRIM(tag)) = 'LOB - POSTPAID'
+      AND LOWER(TRIM(root_domain)) IN ('t-mobile.com', 'att.com', 'verizon.com')
+),
+cit_brand AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (
+                   PARTITION BY period_date, lob, channel, company, brand_type, metric_source
+                   ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+               ) AS rn
+        FROM cit_brand_base
+        WHERE company IS NOT NULL
+    )
+    WHERE rn = 1
+),
+
+expected AS (
+    SELECT
+        period_date,
+        lob,
+        channel,
+
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_tmo_citation_share_brand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_tmo_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_tmo_visibility_score_brand,
+        MAX(CASE WHEN company = 'TMO' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_tmo_visibility_score_nonbrand,
+
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_att_citation_share_brand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_att_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_att_visibility_score_brand,
+        MAX(CASE WHEN company = 'ATT' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_att_visibility_score_nonbrand,
+
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'CITATION'   THEN metric_value END) AS profound_verizon_citation_share_brand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'CITATION'   THEN metric_value END) AS profound_verizon_citation_share_nonbrand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'BRAND'    AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_verizon_visibility_score_brand,
+        MAX(CASE WHEN company = 'VERIZON' AND brand_type = 'NONBRAND' AND metric_source = 'VISIBILITY' THEN metric_value END) AS profound_verizon_visibility_score_nonbrand
+    FROM (
+        SELECT * FROM vis_nonbrand
+        UNION ALL
+        SELECT * FROM cit_nonbrand
+        UNION ALL
+        SELECT * FROM vis_brand
+        UNION ALL
+        SELECT * FROM cit_brand
+    )
+    GROUP BY 1,2,3
+),
+
+actual AS (
+    SELECT *
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_monthly`
+)
+
+SELECT
+    COALESCE(e.period_date, a.period_date) AS period_date,
+    COALESCE(e.lob, a.lob) AS lob,
+    COALESCE(e.channel, a.channel) AS channel,
+
+    e.profound_tmo_citation_share_brand,
+    a.profound_tmo_citation_share_brand AS actual_profound_tmo_citation_share_brand,
+    a.profound_tmo_citation_share_brand - e.profound_tmo_citation_share_brand AS diff_profound_tmo_citation_share_brand,
+
+    e.profound_tmo_citation_share_nonbrand,
+    a.profound_tmo_citation_share_nonbrand AS actual_profound_tmo_citation_share_nonbrand,
+    a.profound_tmo_citation_share_nonbrand - e.profound_tmo_citation_share_nonbrand AS diff_profound_tmo_citation_share_nonbrand,
+
+    e.profound_tmo_visibility_score_brand,
+    a.profound_tmo_visibility_score_brand AS actual_profound_tmo_visibility_score_brand,
+    a.profound_tmo_visibility_score_brand - e.profound_tmo_visibility_score_brand AS diff_profound_tmo_visibility_score_brand,
+
+    e.profound_tmo_visibility_score_nonbrand,
+    a.profound_tmo_visibility_score_nonbrand AS actual_profound_tmo_visibility_score_nonbrand,
+    a.profound_tmo_visibility_score_nonbrand - e.profound_tmo_visibility_score_nonbrand AS diff_profound_tmo_visibility_score_nonbrand,
+
+    e.profound_att_citation_share_brand,
+    a.profound_att_citation_share_brand AS actual_profound_att_citation_share_brand,
+    a.profound_att_citation_share_brand - e.profound_att_citation_share_brand AS diff_profound_att_citation_share_brand,
+
+    e.profound_att_citation_share_nonbrand,
+    a.profound_att_citation_share_nonbrand AS actual_profound_att_citation_share_nonbrand,
+    a.profound_att_citation_share_nonbrand - e.profound_att_citation_share_nonbrand AS diff_profound_att_citation_share_nonbrand,
+
+    e.profound_att_visibility_score_brand,
+    a.profound_att_visibility_score_brand AS actual_profound_att_visibility_score_brand,
+    a.profound_att_visibility_score_brand - e.profound_att_visibility_score_brand AS diff_profound_att_visibility_score_brand,
+
+    e.profound_att_visibility_score_nonbrand,
+    a.profound_att_visibility_score_nonbrand AS actual_profound_att_visibility_score_nonbrand,
+    a.profound_att_visibility_score_nonbrand - e.profound_att_visibility_score_nonbrand AS diff_profound_att_visibility_score_nonbrand,
+
+    e.profound_verizon_citation_share_brand,
+    a.profound_verizon_citation_share_brand AS actual_profound_verizon_citation_share_brand,
+    a.profound_verizon_citation_share_brand - e.profound_verizon_citation_share_brand AS diff_profound_verizon_citation_share_brand,
+
+    e.profound_verizon_citation_share_nonbrand,
+    a.profound_verizon_citation_share_nonbrand AS actual_profound_verizon_citation_share_nonbrand,
+    a.profound_verizon_citation_share_nonbrand - e.profound_verizon_citation_share_nonbrand AS diff_profound_verizon_citation_share_nonbrand,
+
+    e.profound_verizon_visibility_score_brand,
+    a.profound_verizon_visibility_score_brand AS actual_profound_verizon_visibility_score_brand,
+    a.profound_verizon_visibility_score_brand - e.profound_verizon_visibility_score_brand AS diff_profound_verizon_visibility_score_brand,
+
+    e.profound_verizon_visibility_score_nonbrand,
+    a.profound_verizon_visibility_score_nonbrand AS actual_profound_verizon_visibility_score_nonbrand,
+    a.profound_verizon_visibility_score_nonbrand - e.profound_verizon_visibility_score_nonbrand AS diff_profound_verizon_visibility_score_nonbrand
+
+FROM expected e
+FULL OUTER JOIN actual a
+    ON e.period_date = a.period_date
+   AND e.lob = a.lob
+   AND e.channel = a.channel
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 03: WEEKLY BRONZE DUPLICATE CHECK
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    company,
+    brand_type,
+    metric_source,
+    COUNT(*) AS cnt
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_weekly`
+GROUP BY 1,2,3,4,5,6
+HAVING COUNT(*) > 1
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 04: WEEKLY SILVER DUPLICATE CHECK
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    COUNT(*) AS cnt
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
+GROUP BY 1,2,3
+HAVING COUNT(*) > 1
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 05: MONTHLY BRONZE DUPLICATE CHECK
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    company,
+    brand_type,
+    metric_source,
+    COUNT(*) AS cnt
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_profoundVisCitTag_monthly`
+GROUP BY 1,2,3,4,5,6
+HAVING COUNT(*) > 1
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 06: MONTHLY SILVER DUPLICATE CHECK
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    COUNT(*) AS cnt
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_monthly`
+GROUP BY 1,2,3
+HAVING COUNT(*) > 1
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 07: WEEKLY SILVER NULL COVERAGE CHECK
+PURPOSE:
+  Shows how often the 12 weekly metrics are null by date.
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    IF(profound_tmo_citation_share_brand IS NULL, 1, 0) AS is_null_profound_tmo_citation_share_brand,
+    IF(profound_tmo_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_tmo_citation_share_nonbrand,
+    IF(profound_tmo_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_tmo_visibility_score_brand,
+    IF(profound_tmo_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_tmo_visibility_score_nonbrand,
+    IF(profound_att_citation_share_brand IS NULL, 1, 0) AS is_null_profound_att_citation_share_brand,
+    IF(profound_att_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_att_citation_share_nonbrand,
+    IF(profound_att_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_att_visibility_score_brand,
+    IF(profound_att_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_att_visibility_score_nonbrand,
+    IF(profound_verizon_citation_share_brand IS NULL, 1, 0) AS is_null_profound_verizon_citation_share_brand,
+    IF(profound_verizon_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_verizon_citation_share_nonbrand,
+    IF(profound_verizon_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_verizon_visibility_score_brand,
+    IF(profound_verizon_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_verizon_visibility_score_nonbrand
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
+ORDER BY period_date DESC;
+
+
+/* =================================================================================================
+RECON 08: MONTHLY SILVER NULL COVERAGE CHECK
+================================================================================================= */
+
+SELECT
+    period_date,
+    lob,
+    channel,
+    IF(profound_tmo_citation_share_brand IS NULL, 1, 0) AS is_null_profound_tmo_citation_share_brand,
+    IF(profound_tmo_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_tmo_citation_share_nonbrand,
+    IF(profound_tmo_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_tmo_visibility_score_brand,
+    IF(profound_tmo_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_tmo_visibility_score_nonbrand,
+    IF(profound_att_citation_share_brand IS NULL, 1, 0) AS is_null_profound_att_citation_share_brand,
+    IF(profound_att_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_att_citation_share_nonbrand,
+    IF(profound_att_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_att_visibility_score_brand,
+    IF(profound_att_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_att_visibility_score_nonbrand,
+    IF(profound_verizon_citation_share_brand IS NULL, 1, 0) AS is_null_profound_verizon_citation_share_brand,
+    IF(profound_verizon_citation_share_nonbrand IS NULL, 1, 0) AS is_null_profound_verizon_citation_share_nonbrand,
+    IF(profound_verizon_visibility_score_brand IS NULL, 1, 0) AS is_null_profound_verizon_visibility_score_brand,
+    IF(profound_verizon_visibility_score_nonbrand IS NULL, 1, 0) AS is_null_profound_verizon_visibility_score_nonbrand
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_monthly`
+ORDER BY period_date DESC;

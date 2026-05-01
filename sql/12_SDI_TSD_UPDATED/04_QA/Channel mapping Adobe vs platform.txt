@@ -1,0 +1,43 @@
+WITH mapped AS (
+    SELECT
+        UPPER(TRIM(channel_raw)) AS channel_raw,
+        CASE
+            WHEN UPPER(TRIM(channel_raw)) = 'AFFILIATE' THEN 'AFFILIATE'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT' THEN 'DIRECT'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT MAIL' THEN 'DIRECT MAIL'
+            WHEN UPPER(TRIM(channel_raw)) = 'DIRECT TV' THEN 'DIRECT TV'
+            WHEN UPPER(TRIM(channel_raw)) = 'DISPLAY' THEN 'DISPLAY'
+            WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - CAMPAIGN' THEN 'EMAIL - CAMPAIGN'
+            WHEN UPPER(TRIM(channel_raw)) = 'EMAIL - ORGANIC' THEN 'EMAIL - ORGANIC'
+            WHEN UPPER(TRIM(channel_raw)) = 'NATURAL SEARCH' THEN 'NATURAL SEARCH'
+            WHEN UPPER(TRIM(channel_raw)) = 'ON DEVICE' THEN 'ON DEVICE'
+            WHEN UPPER(TRIM(channel_raw)) = 'ONLINE VIDEO' THEN 'ONLINE VIDEO'
+            WHEN UPPER(TRIM(channel_raw)) = 'OTHER CAMPAIGNS' THEN 'OTHER CAMPAIGNS'
+            WHEN UPPER(TRIM(channel_raw)) = 'OUT OF HOME' THEN 'OUT OF HOME'
+            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: BRAND' THEN 'PAID SEARCH: BRAND'
+            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: NON-BRAND' THEN 'PAID SEARCH: NON-BRAND'
+            WHEN UPPER(TRIM(channel_raw)) = 'PAID SEARCH: PLAS' THEN 'PAID SEARCH: PLAS'
+            WHEN UPPER(TRIM(channel_raw)) = 'PERFORMANCE MAX' THEN 'PERFORMANCE MAX'
+            WHEN UPPER(TRIM(channel_raw)) = 'REFERRING DOMAINS' THEN 'REFERRING DOMAINS'
+            WHEN UPPER(TRIM(channel_raw)) = 'RETAIL STORE' THEN 'RETAIL STORE'
+            WHEN UPPER(TRIM(channel_raw)) = 'SESSION REFRESH' THEN 'SESSION REFRESH'
+            WHEN UPPER(TRIM(channel_raw)) = 'SMS' THEN 'SMS'
+            WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - CAMPAIGN' THEN 'SOCIAL NETWORK - CAMPAIGN'
+            WHEN UPPER(TRIM(channel_raw)) = 'SOCIAL NETWORK - NATURAL' THEN 'SOCIAL NETWORK - NATURAL'
+            WHEN UPPER(TRIM(channel_raw)) = 'PROGRAMMATIC DISPLAY' THEN 'DISPLAY'
+            WHEN UPPER(TRIM(channel_raw)) = 'CONTENT SYNDICATION' THEN 'DISPLAY'
+            WHEN UPPER(TRIM(channel_raw)) = 'OVER THE TOP' THEN 'ONLINE VIDEO'
+            WHEN UPPER(TRIM(channel_raw)) IN ('BROADCAST TV','CABLE TV','LIVE SPORTS TV','LOCAL TV','SL TV') THEN 'DIRECT TV'
+            WHEN UPPER(TRIM(channel_raw)) IN ('STREAMING RADIO','PODCAST','SUPER BOWL','TUESDAYS','OFFLINE','? TFB _EFL_ _SLN_ ?') THEN 'OTHER CAMPAIGNS'
+            ELSE 'OTHER CAMPAIGNS'
+        END AS mapped_channel,
+        spend
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_platformSpend_daily`
+)
+SELECT
+    channel_raw,
+    SUM(spend) AS total_spend
+FROM mapped
+WHERE mapped_channel = 'OTHER CAMPAIGNS'
+GROUP BY 1
+ORDER BY total_spend DESC;
