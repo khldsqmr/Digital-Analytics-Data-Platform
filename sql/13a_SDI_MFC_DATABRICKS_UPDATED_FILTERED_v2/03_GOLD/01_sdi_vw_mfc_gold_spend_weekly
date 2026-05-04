@@ -1,3 +1,4 @@
+
 -- =============================================
 -- GOLD: Weekly
 -- =============================================
@@ -10,14 +11,11 @@ SELECT
   QGP_Week,
   Quarter_End_Date,
   FileLoad_Date,
-  weekly_actual as spend_actual,
-  weekly_forecast as spend_forecast,
-  weekly_display as spend_display,
-  UPPER(TRIM(week_type))                    AS week_type
-
+  weekly_actual   AS spend_actual,
+  weekly_forecast AS spend_forecast,
+  weekly_display  AS spend_display,
+  UPPER(TRIM(week_type)) AS week_type
 FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly
-
 ORDER BY
   Quarter DESC,
   QGP_Week DESC;
-
