@@ -10,12 +10,30 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_monthly
 
+DESTINATION:
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_long
+
+PURPOSE:
+  Final long-form Gold reporting mart for the Total Search Dashboard.
+
+BUSINESS GRAIN:
+  One row per:
+      data_source
+      time_granularity
+      time_granularity_type
+      date
+      lob
+      channel
+      metric_name
+
 KEY MODELING NOTES:
-  - Two new CTEs: weekly_sunsat_mais_spend_long, monthly_mais_spend_long
-  - PAID SEARCH: sub-channel metrics only (branded, nonbranded, pla, pmax)
-    no total — developer aggregates to get Paid Search total
-  - Non-Paid Search: mais_platform_spend total only
-  - All existing CTEs and UNION ALL blocks unchanged
+  - Final output includes source_max_available_date
+  - source_max_available_date is calculated from the relevant Silver source
+  - Freshness is joined by data_source and time_granularity to avoid duplicate rows
+  - For Adobe, SA360, GSC, platform spend, GMB, and MAIS, weekly and monthly use the same Silver daily source max event_date
+  - For ProFound and GoFish, weekly and monthly use their respective Silver weekly and monthly source max period_date
+  - PAID SEARCH MAIS: sub-channel metrics only, no total
+  - Non-Paid Search MAIS: mais_platform_spend total only
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_long`
@@ -27,6 +45,7 @@ weekly_sunsat_base AS (
         weekSunToSat                                            AS date,
         UPPER(TRIM(lob))                                        AS lob,
         UPPER(TRIM(channel))                                    AS channel,
+
         CAST(adobe_entries AS FLOAT64)                          AS adobe_entries,
         CAST(adobe_pspv_actuals AS FLOAT64)                     AS adobe_pspv_actuals,
         CAST(adobe_cart_starts AS FLOAT64)                      AS adobe_cart_starts,
@@ -45,31 +64,36 @@ weekly_sunsat_base AS (
         CAST(adobe_orders_all AS FLOAT64)                       AS adobe_orders_all,
         CAST(adobe_storelocator_visits AS FLOAT64)              AS adobe_storelocator_visits,
         CAST(adobeTLifeAppVisits AS FLOAT64)                    AS adobeTLifeAppVisits,
+
         CAST(sa360_clicks_brand AS FLOAT64)                     AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64)                  AS sa360_clicks_nonbrand,
         CAST(sa360_clicks_all AS FLOAT64)                       AS sa360_clicks_all,
         CAST(sa360_cart_start_plus_brand AS FLOAT64)            AS sa360_cart_start_plus_brand,
         CAST(sa360_cart_start_plus_nonbrand AS FLOAT64)         AS sa360_cart_start_plus_nonbrand,
         CAST(sa360_cart_start_plus_all AS FLOAT64)              AS sa360_cart_start_plus_all,
+
         CAST(gsc_clicks_brand AS FLOAT64)                       AS gsc_clicks_brand,
         CAST(gsc_clicks_nonbrand AS FLOAT64)                    AS gsc_clicks_nonbrand,
         CAST(gsc_clicks_all AS FLOAT64)                         AS gsc_clicks_all,
         CAST(gsc_impressions_brand AS FLOAT64)                  AS gsc_impressions_brand,
         CAST(gsc_impressions_nonbrand AS FLOAT64)               AS gsc_impressions_nonbrand,
         CAST(gsc_impressions_all AS FLOAT64)                    AS gsc_impressions_all,
+
         CAST(platform_spend AS FLOAT64)                         AS platform_spend,
+
         CAST(gmb_search_impressions_all AS FLOAT64)             AS gmb_search_impressions_all,
         CAST(gmb_maps_impressions_all AS FLOAT64)               AS gmb_maps_impressions_all,
         CAST(gmb_impressions_all AS FLOAT64)                    AS gmb_impressions_all,
         CAST(gmb_call_clicks AS FLOAT64)                        AS gmb_call_clicks,
         CAST(gmb_website_clicks AS FLOAT64)                     AS gmb_website_clicks,
         CAST(gmb_directions_clicks AS FLOAT64)                  AS gmb_directions_clicks,
-        -- NEW
+
         CAST(mais_platform_spend AS FLOAT64)                    AS mais_platform_spend,
         CAST(mais_platform_spend_branded AS FLOAT64)            AS mais_platform_spend_branded,
         CAST(mais_platform_spend_nonbranded AS FLOAT64)         AS mais_platform_spend_nonbranded,
         CAST(mais_platform_spend_pla AS FLOAT64)                AS mais_platform_spend_pla,
         CAST(mais_platform_spend_pmax AS FLOAT64)               AS mais_platform_spend_pmax
+
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unifiedSunSat_weekly`
 ),
 
@@ -78,6 +102,7 @@ monthly_base AS (
         monthEnd                                                AS date,
         UPPER(TRIM(lob))                                        AS lob,
         UPPER(TRIM(channel))                                    AS channel,
+
         CAST(adobe_entries AS FLOAT64)                          AS adobe_entries,
         CAST(adobe_pspv_actuals AS FLOAT64)                     AS adobe_pspv_actuals,
         CAST(adobe_cart_starts AS FLOAT64)                      AS adobe_cart_starts,
@@ -96,31 +121,36 @@ monthly_base AS (
         CAST(adobe_orders_all AS FLOAT64)                       AS adobe_orders_all,
         CAST(adobe_storelocator_visits AS FLOAT64)              AS adobe_storelocator_visits,
         CAST(adobeTLifeAppVisits AS FLOAT64)                    AS adobeTLifeAppVisits,
+
         CAST(sa360_clicks_brand AS FLOAT64)                     AS sa360_clicks_brand,
         CAST(sa360_clicks_nonbrand AS FLOAT64)                  AS sa360_clicks_nonbrand,
         CAST(sa360_clicks_all AS FLOAT64)                       AS sa360_clicks_all,
         CAST(sa360_cart_start_plus_brand AS FLOAT64)            AS sa360_cart_start_plus_brand,
         CAST(sa360_cart_start_plus_nonbrand AS FLOAT64)         AS sa360_cart_start_plus_nonbrand,
         CAST(sa360_cart_start_plus_all AS FLOAT64)              AS sa360_cart_start_plus_all,
+
         CAST(gsc_clicks_brand AS FLOAT64)                       AS gsc_clicks_brand,
         CAST(gsc_clicks_nonbrand AS FLOAT64)                    AS gsc_clicks_nonbrand,
         CAST(gsc_clicks_all AS FLOAT64)                         AS gsc_clicks_all,
         CAST(gsc_impressions_brand AS FLOAT64)                  AS gsc_impressions_brand,
         CAST(gsc_impressions_nonbrand AS FLOAT64)               AS gsc_impressions_nonbrand,
         CAST(gsc_impressions_all AS FLOAT64)                    AS gsc_impressions_all,
+
         CAST(platform_spend AS FLOAT64)                         AS platform_spend,
+
         CAST(gmb_search_impressions_all AS FLOAT64)             AS gmb_search_impressions_all,
         CAST(gmb_maps_impressions_all AS FLOAT64)               AS gmb_maps_impressions_all,
         CAST(gmb_impressions_all AS FLOAT64)                    AS gmb_impressions_all,
         CAST(gmb_call_clicks AS FLOAT64)                        AS gmb_call_clicks,
         CAST(gmb_website_clicks AS FLOAT64)                     AS gmb_website_clicks,
         CAST(gmb_directions_clicks AS FLOAT64)                  AS gmb_directions_clicks,
-        -- NEW
+
         CAST(mais_platform_spend AS FLOAT64)                    AS mais_platform_spend,
         CAST(mais_platform_spend_branded AS FLOAT64)            AS mais_platform_spend_branded,
         CAST(mais_platform_spend_nonbranded AS FLOAT64)         AS mais_platform_spend_nonbranded,
         CAST(mais_platform_spend_pla AS FLOAT64)                AS mais_platform_spend_pla,
         CAST(mais_platform_spend_pmax AS FLOAT64)               AS mais_platform_spend_pmax
+
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_unified_monthly`
 ),
 
@@ -129,30 +159,37 @@ profound_weekly_base AS (
         period_date                                             AS date,
         UPPER(TRIM(lob))                                        AS lob,
         UPPER(TRIM(channel))                                    AS channel,
+
         CAST(profound_tmo_executions AS FLOAT64)                AS profound_tmo_executions,
         CAST(profound_tmo_citation_count AS FLOAT64)            AS profound_tmo_citation_count,
         CAST(profound_tmo_citation_share AS FLOAT64)            AS profound_tmo_citation_share,
         CAST(profound_tmo_visibility_score AS FLOAT64)          AS profound_tmo_visibility_score,
+
         CAST(profound_att_executions AS FLOAT64)                AS profound_att_executions,
         CAST(profound_att_citation_count AS FLOAT64)            AS profound_att_citation_count,
         CAST(profound_att_citation_share AS FLOAT64)            AS profound_att_citation_share,
         CAST(profound_att_visibility_score AS FLOAT64)          AS profound_att_visibility_score,
+
         CAST(profound_verizon_executions AS FLOAT64)            AS profound_verizon_executions,
         CAST(profound_verizon_citation_count AS FLOAT64)        AS profound_verizon_citation_count,
         CAST(profound_verizon_citation_share AS FLOAT64)        AS profound_verizon_citation_share,
         CAST(profound_verizon_visibility_score AS FLOAT64)      AS profound_verizon_visibility_score,
+
         CAST(gofish_tmo_executions AS FLOAT64)                  AS gofish_tmo_executions,
         CAST(gofish_tmo_citation_count AS FLOAT64)              AS gofish_tmo_citation_count,
         CAST(gofish_tmo_citation_share AS FLOAT64)              AS gofish_tmo_citation_share,
         CAST(gofish_tmo_visibility_score AS FLOAT64)            AS gofish_tmo_visibility_score,
+
         CAST(gofish_att_executions AS FLOAT64)                  AS gofish_att_executions,
         CAST(gofish_att_citation_count AS FLOAT64)              AS gofish_att_citation_count,
         CAST(gofish_att_citation_share AS FLOAT64)              AS gofish_att_citation_share,
         CAST(gofish_att_visibility_score AS FLOAT64)            AS gofish_att_visibility_score,
+
         CAST(gofish_verizon_executions AS FLOAT64)              AS gofish_verizon_executions,
         CAST(gofish_verizon_citation_count AS FLOAT64)          AS gofish_verizon_citation_count,
         CAST(gofish_verizon_citation_share AS FLOAT64)          AS gofish_verizon_citation_share,
         CAST(gofish_verizon_visibility_score AS FLOAT64)        AS gofish_verizon_visibility_score
+
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_weekly`
 ),
 
@@ -161,36 +198,137 @@ profound_monthly_base AS (
         period_date                                             AS date,
         UPPER(TRIM(lob))                                        AS lob,
         UPPER(TRIM(channel))                                    AS channel,
+
         CAST(profound_tmo_executions AS FLOAT64)                AS profound_tmo_executions,
         CAST(profound_tmo_citation_count AS FLOAT64)            AS profound_tmo_citation_count,
         CAST(profound_tmo_citation_share AS FLOAT64)            AS profound_tmo_citation_share,
         CAST(profound_tmo_visibility_score AS FLOAT64)          AS profound_tmo_visibility_score,
+
         CAST(profound_att_executions AS FLOAT64)                AS profound_att_executions,
         CAST(profound_att_citation_count AS FLOAT64)            AS profound_att_citation_count,
         CAST(profound_att_citation_share AS FLOAT64)            AS profound_att_citation_share,
         CAST(profound_att_visibility_score AS FLOAT64)          AS profound_att_visibility_score,
+
         CAST(profound_verizon_executions AS FLOAT64)            AS profound_verizon_executions,
         CAST(profound_verizon_citation_count AS FLOAT64)        AS profound_verizon_citation_count,
         CAST(profound_verizon_citation_share AS FLOAT64)        AS profound_verizon_citation_share,
         CAST(profound_verizon_visibility_score AS FLOAT64)      AS profound_verizon_visibility_score,
+
         CAST(gofish_tmo_executions AS FLOAT64)                  AS gofish_tmo_executions,
         CAST(gofish_tmo_citation_count AS FLOAT64)              AS gofish_tmo_citation_count,
         CAST(gofish_tmo_citation_share AS FLOAT64)              AS gofish_tmo_citation_share,
         CAST(gofish_tmo_visibility_score AS FLOAT64)            AS gofish_tmo_visibility_score,
+
         CAST(gofish_att_executions AS FLOAT64)                  AS gofish_att_executions,
         CAST(gofish_att_citation_count AS FLOAT64)              AS gofish_att_citation_count,
         CAST(gofish_att_citation_share AS FLOAT64)              AS gofish_att_citation_share,
         CAST(gofish_att_visibility_score AS FLOAT64)            AS gofish_att_visibility_score,
+
         CAST(gofish_verizon_executions AS FLOAT64)              AS gofish_verizon_executions,
         CAST(gofish_verizon_citation_count AS FLOAT64)          AS gofish_verizon_citation_count,
         CAST(gofish_verizon_citation_share AS FLOAT64)          AS gofish_verizon_citation_share,
         CAST(gofish_verizon_visibility_score AS FLOAT64)        AS gofish_verizon_visibility_score
+
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_gold_profound_monthly`
 ),
 
--- =====================================================================
--- EXISTING LONG CTEs — UNCHANGED
--- =====================================================================
+/* ================================================================================================
+SOURCE FRESHNESS
+- This creates one source_max_available_date per data_source and time_granularity
+- Joining by both fields prevents row duplication for PROFOUND and GOFISH
+================================================================================================ */
+
+source_max_dates AS (
+    SELECT
+        'ADOBE' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_adobe_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'SA360' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_sa360_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'GSC' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gsc_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'PLATFORM_SPEND' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_platformSpend_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'GMB' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_gmb_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'MAIS_PLATFORM_SPEND' AS data_source,
+        tg AS time_granularity,
+        MAX(event_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_maisSpend_daily`
+    CROSS JOIN UNNEST(['WEEKLY', 'MONTHLY']) AS tg
+    GROUP BY 1, 2
+
+    UNION ALL
+
+    SELECT
+        'PROFOUND' AS data_source,
+        'WEEKLY' AS time_granularity,
+        MAX(period_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
+
+    UNION ALL
+
+    SELECT
+        'PROFOUND' AS data_source,
+        'MONTHLY' AS time_granularity,
+        MAX(period_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_monthly`
+
+    UNION ALL
+
+    SELECT
+        'GOFISH' AS data_source,
+        'WEEKLY' AS time_granularity,
+        MAX(period_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_weekly`
+
+    UNION ALL
+
+    SELECT
+        'GOFISH' AS data_source,
+        'MONTHLY' AS time_granularity,
+        MAX(period_date) AS source_max_available_date
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_silver_profound_monthly`
+),
 
 weekly_sunsat_adobe_long AS (
     SELECT
@@ -294,6 +432,37 @@ weekly_sunsat_gmb_long AS (
         gmb_website_clicks,
         gmb_directions_clicks
     ))
+),
+
+weekly_sunsat_mais_spend_long AS (
+    SELECT
+        'MAIS_PLATFORM_SPEND'   AS data_source,
+        'WEEKLY'                AS time_granularity,
+        'SUN_SAT'               AS time_granularity_type,
+        date, lob, channel, metric_name, metric_value
+    FROM (
+        SELECT * FROM weekly_sunsat_base
+        WHERE channel = 'PAID SEARCH'
+    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        mais_platform_spend_branded,
+        mais_platform_spend_nonbranded,
+        mais_platform_spend_pla,
+        mais_platform_spend_pmax
+    ))
+
+    UNION ALL
+
+    SELECT
+        'MAIS_PLATFORM_SPEND'   AS data_source,
+        'WEEKLY'                AS time_granularity,
+        'SUN_SAT'               AS time_granularity_type,
+        date, lob, channel,
+        'mais_platform_spend'   AS metric_name,
+        mais_platform_spend     AS metric_value
+    FROM weekly_sunsat_base
+    WHERE channel != 'PAID SEARCH'
+      AND mais_platform_spend IS NOT NULL
 ),
 
 monthly_adobe_long AS (
@@ -400,13 +569,47 @@ monthly_gmb_long AS (
     ))
 ),
 
+monthly_mais_spend_long AS (
+    SELECT
+        'MAIS_PLATFORM_SPEND'   AS data_source,
+        'MONTHLY'               AS time_granularity,
+        'MONTH_END'             AS time_granularity_type,
+        date, lob, channel, metric_name, metric_value
+    FROM (
+        SELECT * FROM monthly_base
+        WHERE channel = 'PAID SEARCH'
+    )
+    UNPIVOT (metric_value FOR metric_name IN (
+        mais_platform_spend_branded,
+        mais_platform_spend_nonbranded,
+        mais_platform_spend_pla,
+        mais_platform_spend_pmax
+    ))
+
+    UNION ALL
+
+    SELECT
+        'MAIS_PLATFORM_SPEND'   AS data_source,
+        'MONTHLY'               AS time_granularity,
+        'MONTH_END'             AS time_granularity_type,
+        date, lob, channel,
+        'mais_platform_spend'   AS metric_name,
+        mais_platform_spend     AS metric_value
+    FROM monthly_base
+    WHERE channel != 'PAID SEARCH'
+      AND mais_platform_spend IS NOT NULL
+),
+
 profound_weekly_long AS (
     SELECT
         'PROFOUND'          AS data_source,
         'WEEKLY'            AS time_granularity,
         'SUN_SAT'           AS time_granularity_type,
         date, lob, channel, metric_name, metric_value
-    FROM (SELECT * FROM profound_weekly_base WHERE channel = 'AI SEARCH')
+    FROM (
+        SELECT * FROM profound_weekly_base
+        WHERE channel = 'AI SEARCH'
+    )
     UNPIVOT (metric_value FOR metric_name IN (
         profound_tmo_executions,
         profound_tmo_citation_count,
@@ -429,7 +632,10 @@ profound_weekly_long AS (
         'WEEKLY'            AS time_granularity,
         'SUN_SAT'           AS time_granularity_type,
         date, lob, channel, metric_name, metric_value
-    FROM (SELECT * FROM profound_weekly_base WHERE channel = 'AI SEARCH')
+    FROM (
+        SELECT * FROM profound_weekly_base
+        WHERE channel = 'AI SEARCH'
+    )
     UNPIVOT (metric_value FOR metric_name IN (
         gofish_tmo_executions,
         gofish_tmo_citation_count,
@@ -452,7 +658,10 @@ profound_monthly_long AS (
         'MONTHLY'           AS time_granularity,
         'MONTH_END'         AS time_granularity_type,
         date, lob, channel, metric_name, metric_value
-    FROM (SELECT * FROM profound_monthly_base WHERE channel = 'AI SEARCH')
+    FROM (
+        SELECT * FROM profound_monthly_base
+        WHERE channel = 'AI SEARCH'
+    )
     UNPIVOT (metric_value FOR metric_name IN (
         profound_tmo_executions,
         profound_tmo_citation_count,
@@ -475,7 +684,10 @@ profound_monthly_long AS (
         'MONTHLY'           AS time_granularity,
         'MONTH_END'         AS time_granularity_type,
         date, lob, channel, metric_name, metric_value
-    FROM (SELECT * FROM profound_monthly_base WHERE channel = 'AI SEARCH')
+    FROM (
+        SELECT * FROM profound_monthly_base
+        WHERE channel = 'AI SEARCH'
+    )
     UNPIVOT (metric_value FOR metric_name IN (
         gofish_tmo_executions,
         gofish_tmo_citation_count,
@@ -492,108 +704,50 @@ profound_monthly_long AS (
     ))
 ),
 
--- =====================================================================
--- NEW: mais spend long CTEs
--- PAID SEARCH: sub-channel breakdown only, no total
---   developer creates calculated field to sum them for Paid Search total
--- All other channels: mais_platform_spend total only
--- =====================================================================
-
-weekly_sunsat_mais_spend_long AS (
-    -- PAID SEARCH: sub-channel metrics only
-    SELECT
-        'MAIS_PLATFORM_SPEND'   AS data_source,
-        'WEEKLY'                AS time_granularity,
-        'SUN_SAT'               AS time_granularity_type,
-        date, lob, channel, metric_name, metric_value
-    FROM (
-        SELECT * FROM weekly_sunsat_base
-        WHERE channel = 'PAID SEARCH'
-    )
-    UNPIVOT (metric_value FOR metric_name IN (
-        mais_platform_spend_branded,
-        mais_platform_spend_nonbranded,
-        mais_platform_spend_pla,
-        mais_platform_spend_pmax
-    ))
+all_long AS (
+    SELECT * FROM weekly_sunsat_adobe_long          WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM weekly_sunsat_sa360_long          WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM weekly_sunsat_gsc_long            WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM weekly_sunsat_spend_long          WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM weekly_sunsat_gmb_long            WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM weekly_sunsat_mais_spend_long     WHERE metric_value IS NOT NULL
 
     UNION ALL
-
-    -- All other channels: total spend only
-    SELECT
-        'MAIS_PLATFORM_SPEND'   AS data_source,
-        'WEEKLY'                AS time_granularity,
-        'SUN_SAT'               AS time_granularity_type,
-        date, lob, channel,
-        'mais_platform_spend'   AS metric_name,
-        mais_platform_spend     AS metric_value
-    FROM weekly_sunsat_base
-    WHERE channel != 'PAID SEARCH'
-      AND mais_platform_spend IS NOT NULL
-),
-
-monthly_mais_spend_long AS (
-    -- PAID SEARCH: sub-channel metrics only
-    SELECT
-        'MAIS_PLATFORM_SPEND'   AS data_source,
-        'MONTHLY'               AS time_granularity,
-        'MONTH_END'             AS time_granularity_type,
-        date, lob, channel, metric_name, metric_value
-    FROM (
-        SELECT * FROM monthly_base
-        WHERE channel = 'PAID SEARCH'
-    )
-    UNPIVOT (metric_value FOR metric_name IN (
-        mais_platform_spend_branded,
-        mais_platform_spend_nonbranded,
-        mais_platform_spend_pla,
-        mais_platform_spend_pmax
-    ))
+    SELECT * FROM monthly_adobe_long                WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM monthly_sa360_long                WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM monthly_gsc_long                  WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM monthly_spend_long                WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM monthly_gmb_long                  WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM monthly_mais_spend_long           WHERE metric_value IS NOT NULL
 
     UNION ALL
-
-    -- All other channels: total spend only
-    SELECT
-        'MAIS_PLATFORM_SPEND'   AS data_source,
-        'MONTHLY'               AS time_granularity,
-        'MONTH_END'             AS time_granularity_type,
-        date, lob, channel,
-        'mais_platform_spend'   AS metric_name,
-        mais_platform_spend     AS metric_value
-    FROM monthly_base
-    WHERE channel != 'PAID SEARCH'
-      AND mais_platform_spend IS NOT NULL
+    SELECT * FROM profound_weekly_long              WHERE metric_value IS NOT NULL
+    UNION ALL
+    SELECT * FROM profound_monthly_long             WHERE metric_value IS NOT NULL
 )
 
--- =====================================================================
--- FINAL UNION ALL
--- =====================================================================
+SELECT
+    al.data_source,
+    al.time_granularity,
+    al.time_granularity_type,
+    al.date,
+    al.lob,
+    al.channel,
+    al.metric_name,
+    al.metric_value,
+    smd.source_max_available_date
 
-SELECT * FROM weekly_sunsat_adobe_long          WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM weekly_sunsat_sa360_long          WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM weekly_sunsat_gsc_long            WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM weekly_sunsat_spend_long          WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM weekly_sunsat_gmb_long            WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_adobe_long                WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_sa360_long                WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_gsc_long                  WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_spend_long                WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_gmb_long                  WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM profound_weekly_long              WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM profound_monthly_long             WHERE metric_value IS NOT NULL
-UNION ALL
--- NEW
-SELECT * FROM weekly_sunsat_mais_spend_long     WHERE metric_value IS NOT NULL
-UNION ALL
-SELECT * FROM monthly_mais_spend_long           WHERE metric_value IS NOT NULL;
+FROM all_long al
+LEFT JOIN source_max_dates smd
+  ON al.data_source = smd.data_source
+ AND al.time_granularity = smd.time_granularity;
