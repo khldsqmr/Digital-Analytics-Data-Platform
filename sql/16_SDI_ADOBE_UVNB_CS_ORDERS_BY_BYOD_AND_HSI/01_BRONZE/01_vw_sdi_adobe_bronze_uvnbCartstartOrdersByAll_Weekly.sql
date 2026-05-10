@@ -20,7 +20,7 @@ DESTINATION:
 
 PURPOSE:
   Canonical Bronze weekly Adobe UVNB, Cartstart, and Orders source mart at ALL_CHANNELS granularity.
-  This view keeps Adobe ALL-channel values source-faithful, deduplicated, and wide-format.
+  This view uses Adobe ALL-channel source tables directly and does not calculate ALL from channel rows.
 
 BUSINESS GRAIN:
   One row per:
@@ -31,6 +31,7 @@ BUSINESS RULES:
   - DataGranularity is fixed as ALL_CHANNELS.
   - LastTouchChannel is NULL.
   - LtcGroup is NULL.
+  - Postpaid / HSI / BYOD columns are separate metrics and are not summed together.
   - Missing metric values remain NULL.
   - MetricName / MetricValue are used internally only and are not exposed in final output.
 
@@ -53,7 +54,7 @@ WITH RawUnion AS (
     'ALL_CHANNELS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
     CAST(NULL AS STRING) AS LtcGroup,
-    'Uvnb' AS MetricName,
+    'UvnbPostpaid' AS MetricName,
     SAFE_CAST(visitors AS FLOAT64) AS MetricValue,
     'sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
@@ -95,7 +96,7 @@ WITH RawUnion AS (
     'ALL_CHANNELS',
     CAST(NULL AS STRING),
     CAST(NULL AS STRING),
-    'Cartstart',
+    'CartstartPostpaid',
     SAFE_CAST(visits AS FLOAT64),
     'sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo',
     __insert_date,
@@ -137,7 +138,7 @@ WITH RawUnion AS (
     'ALL_CHANNELS',
     CAST(NULL AS STRING),
     CAST(NULL AS STRING),
-    'OrdersAll',
+    'OrdersPostpaid',
     SAFE_CAST(orders AS FLOAT64),
     'sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo',
     __insert_date,
@@ -196,17 +197,17 @@ SELECT
   LastTouchChannel,
   LtcGroup,
 
-  SUM(IF(MetricName = 'Uvnb', MetricValue, NULL)) AS Uvnb,
-  SUM(IF(MetricName = 'UvnbHsi', MetricValue, NULL)) AS UvnbHsi,
-  SUM(IF(MetricName = 'UvnbByod', MetricValue, NULL)) AS UvnbByod,
+  MAX(IF(MetricName = 'UvnbPostpaid', MetricValue, NULL)) AS UvnbPostpaid,
+  MAX(IF(MetricName = 'UvnbHsi', MetricValue, NULL)) AS UvnbHsi,
+  MAX(IF(MetricName = 'UvnbByod', MetricValue, NULL)) AS UvnbByod,
 
-  SUM(IF(MetricName = 'Cartstart', MetricValue, NULL)) AS Cartstart,
-  SUM(IF(MetricName = 'CartstartHsi', MetricValue, NULL)) AS CartstartHsi,
-  SUM(IF(MetricName = 'CartstartByod', MetricValue, NULL)) AS CartstartByod,
+  MAX(IF(MetricName = 'CartstartPostpaid', MetricValue, NULL)) AS CartstartPostpaid,
+  MAX(IF(MetricName = 'CartstartHsi', MetricValue, NULL)) AS CartstartHsi,
+  MAX(IF(MetricName = 'CartstartByod', MetricValue, NULL)) AS CartstartByod,
 
-  SUM(IF(MetricName = 'OrdersAll', MetricValue, NULL)) AS OrdersAll,
-  SUM(IF(MetricName = 'OrdersHsi', MetricValue, NULL)) AS OrdersHsi,
-  SUM(IF(MetricName = 'OrdersByod', MetricValue, NULL)) AS OrdersByod,
+  MAX(IF(MetricName = 'OrdersPostpaid', MetricValue, NULL)) AS OrdersPostpaid,
+  MAX(IF(MetricName = 'OrdersHsi', MetricValue, NULL)) AS OrdersHsi,
+  MAX(IF(MetricName = 'OrdersByod', MetricValue, NULL)) AS OrdersByod,
 
   STRING_AGG(DISTINCT SourceTable, ', ' ORDER BY SourceTable) AS SourceTablesUsed,
   MAX(FileLoadDatetime) AS MaxFileLoadDatetime,

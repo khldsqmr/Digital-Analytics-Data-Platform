@@ -13,12 +13,7 @@ DESTINATION:
 
 PURPOSE:
   Tableau-ready weekly Adobe UVNB, Cartstart, and Orders view by Channel.
-  This view combines:
-    - ALL_CHANNELS
-    - LAST_TOUCH_CHANNEL
-
-  ALL_CHANNELS rows are exposed as Channel = ALL.
-  LAST_TOUCH_CHANNEL rows are exposed as Channel = LastTouchChannel.
+  This view combines ALL_CHANNELS and LAST_TOUCH_CHANNEL into one reporting object.
 
 BUSINESS GRAIN:
   One row per:
@@ -26,25 +21,12 @@ BUSINESS GRAIN:
       Channel
 
 BUSINESS RULES:
-  - Uses deduplicated Bronze ALL_CHANNELS and LAST_TOUCH_CHANNEL views.
-  - ALL_CHANNELS rows are labeled as Channel = ALL.
-  - LAST_TOUCH_CHANNEL rows use the standardized LastTouchChannel value from Bronze.
+  - ALL_CHANNELS rows are exposed as Channel = ALL.
+  - LAST_TOUCH_CHANNEL rows are exposed as Channel = LastTouchChannel.
+  - ALL values come directly from Adobe ALL tables through Bronze ALL.
+  - Postpaid / HSI / BYOD columns are separate metrics and are not summed together.
   - Missing metric values remain NULL.
   - Bronze lineage/load metadata is not exposed in Silver.
-
-OUTPUT COLUMNS:
-  - WeekSunSat
-  - ReportingGrain
-  - Channel
-  - Uvnb
-  - UvnbHsi
-  - UvnbByod
-  - Cartstart
-  - CartstartHsi
-  - CartstartByod
-  - OrdersAll
-  - OrdersHsi
-  - OrdersByod
 
 ================================================================================================= */
 
@@ -52,24 +34,20 @@ CREATE OR REPLACE VIEW
 `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelPlusAll_Weekly`
 AS
 
-/* -------------------------------------------------------------------------------------------------
-   ALL CHANNELS
-   - Converts the ALL_CHANNELS Bronze row into Channel = ALL.
-------------------------------------------------------------------------------------------------- */
 SELECT
   WeekSunSat,
   'CHANNEL' AS ReportingGrain,
   'ALL' AS Channel,
 
-  Uvnb,
+  UvnbPostpaid,
   UvnbHsi,
   UvnbByod,
 
-  Cartstart,
+  CartstartPostpaid,
   CartstartHsi,
   CartstartByod,
 
-  OrdersAll,
+  OrdersPostpaid,
   OrdersHsi,
   OrdersByod
 
@@ -77,24 +55,20 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCarts
 
 UNION ALL
 
-/* -------------------------------------------------------------------------------------------------
-   LAST TOUCH CHANNEL
-   - Converts LastTouchChannel into the Tableau-facing Channel column.
-------------------------------------------------------------------------------------------------- */
 SELECT
   WeekSunSat,
   'CHANNEL' AS ReportingGrain,
   LastTouchChannel AS Channel,
 
-  Uvnb,
+  UvnbPostpaid,
   UvnbHsi,
   UvnbByod,
 
-  Cartstart,
+  CartstartPostpaid,
   CartstartHsi,
   CartstartByod,
 
-  OrdersAll,
+  OrdersPostpaid,
   OrdersHsi,
   OrdersByod
 
