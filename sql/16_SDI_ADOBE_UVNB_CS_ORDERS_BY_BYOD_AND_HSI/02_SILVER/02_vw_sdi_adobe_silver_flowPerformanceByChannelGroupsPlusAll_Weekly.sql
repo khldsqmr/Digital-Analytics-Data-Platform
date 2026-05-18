@@ -26,9 +26,23 @@ BUSINESS RULES:
   - ChannelGroup rows use Bronze LTC Groups flow metrics and Bronze ChannelGroup total UVNB.
   - UvnbTotalAdobe comes from the total UVNB stream.
   - UvnbPostpaid / UvnbHsi / UvnbByod come from flow-specific tables.
-  - CartstartTotal is currently Postpaid + HSI + BYOD.
-  - OrdersTotal is currently Postpaid + HSI + BYOD.
-  - No COALESCE is used. If any component is NULL, the calculated total remains NULL.
+  - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE — NULL if any component is NULL.
+  - OrdersUnassistedTotal is Postpaid + HSI + BYOD unassisted. No COALESCE.
+  - OrdersAssistedTotal is Postpaid + HSI + BYOD assisted. No COALESCE.
+  - OrdersTotal is OrdersUnassistedTotal + OrdersAssistedTotal.
+  - No COALESCE is used anywhere. If any component is NULL, the derived total remains NULL.
+
+COLUMN CHANGES vs PREVIOUS VERSION:
+  - OrdersPostpaid        renamed to  OrdersUnassistedPostpaid
+  - OrdersHsi             renamed to  OrdersUnassistedHsi
+  - OrdersByod            renamed to  OrdersUnassistedByod
+  - OrdersTrackedFlowSum  renamed to  OrdersUnassistedTotal
+  - OrdersTotal           was unassisted sum — now means grand total (unassisted + assisted)
+  - OrdersAssistedPostpaid  ADDED
+  - OrdersAssistedHsi       ADDED
+  - OrdersAssistedByod      ADDED
+  - OrdersAssistedTotal     ADDED
+  - OrdersTotal             REDEFINED as OrdersUnassistedTotal + OrdersAssistedTotal
 
 OUTPUT COLUMNS:
   - WeekSunSat
@@ -45,11 +59,14 @@ OUTPUT COLUMNS:
   - CartstartByod
   - CartstartTrackedFlowSum
   - OrdersTotal
-  - OrdersPostpaid
-  - OrdersHsi
-  - OrdersByod
-  - OrdersTrackedFlowSum
-
+  - OrdersUnassistedTotal
+  - OrdersUnassistedPostpaid
+  - OrdersUnassistedHsi
+  - OrdersUnassistedByod
+  - OrdersAssistedTotal
+  - OrdersAssistedPostpaid
+  - OrdersAssistedHsi
+  - OrdersAssistedByod
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -58,44 +75,44 @@ AS
 
 WITH FlowRows AS (
 
+  -- ALL grain
   SELECT
     WeekSunSat,
     'CHANNEL_GROUP' AS ReportingGrain,
     'ALL' AS ChannelGroup,
-
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
-
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
-
-    OrdersPostpaid,
-    OrdersHsi,
-    OrdersByod
-
+    OrdersUnassistedPostpaid,
+    OrdersUnassistedHsi,
+    OrdersUnassistedByod,
+    OrdersAssistedPostpaid,
+    OrdersAssistedHsi,
+    OrdersAssistedByod
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly`
 
   UNION ALL
 
+  -- Channel Group grain
   SELECT
     WeekSunSat,
     'CHANNEL_GROUP' AS ReportingGrain,
     LtcGroup AS ChannelGroup,
-
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
-
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
-
-    OrdersPostpaid,
-    OrdersHsi,
-    OrdersByod
-
+    OrdersUnassistedPostpaid,
+    OrdersUnassistedHsi,
+    OrdersUnassistedByod,
+    OrdersAssistedPostpaid,
+    OrdersAssistedHsi,
+    OrdersAssistedByod
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtcGroups_Weekly`
 ),
 
@@ -106,7 +123,6 @@ TotalUvnbRows AS (
     'CHANNEL_GROUP' AS ReportingGrain,
     'ALL' AS ChannelGroup,
     UvnbTotalAdobe
-
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByAll_Weekly`
 
   UNION ALL
@@ -116,7 +132,6 @@ TotalUvnbRows AS (
     'CHANNEL_GROUP' AS ReportingGrain,
     LtcGroup AS ChannelGroup,
     UvnbTotalAdobe
-
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly`
 )
 
@@ -125,28 +140,40 @@ SELECT
   f.ReportingGrain,
   f.ChannelGroup,
 
+  -- Total UVNB (unchanged)
   t.UvnbTotalAdobe,
 
+  -- UVNB flows (unchanged)
   f.UvnbPostpaid,
   f.UvnbHsi,
   f.UvnbByod,
-  f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod AS UvnbTrackedFlowSum,
+  f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod                                                     AS UvnbTrackedFlowSum,
 
-  f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod AS CartstartTotal,
+  -- Cartstart (unchanged)
+  f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTotal,
   f.CartstartPostpaid,
   f.CartstartHsi,
   f.CartstartByod,
-  f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod AS CartstartTrackedFlowSum,
+  f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTrackedFlowSum,
 
-  f.OrdersPostpaid + f.OrdersHsi + f.OrdersByod AS OrdersTotal,
-  f.OrdersPostpaid,
-  f.OrdersHsi,
-  f.OrdersByod,
-  f.OrdersPostpaid + f.OrdersHsi + f.OrdersByod AS OrdersTrackedFlowSum
+  -- Orders grand total (unassisted + assisted)
+  (f.OrdersUnassistedPostpaid + f.OrdersUnassistedHsi + f.OrdersUnassistedByod)
+  + (f.OrdersAssistedPostpaid + f.OrdersAssistedHsi + f.OrdersAssistedByod)                   AS OrdersTotal,
+
+  -- Orders unassisted branch
+  f.OrdersUnassistedPostpaid + f.OrdersUnassistedHsi + f.OrdersUnassistedByod                 AS OrdersUnassistedTotal,
+  f.OrdersUnassistedPostpaid,
+  f.OrdersUnassistedHsi,
+  f.OrdersUnassistedByod,
+
+  -- Orders assisted branch
+  f.OrdersAssistedPostpaid + f.OrdersAssistedHsi + f.OrdersAssistedByod                       AS OrdersAssistedTotal,
+  f.OrdersAssistedPostpaid,
+  f.OrdersAssistedHsi,
+  f.OrdersAssistedByod
 
 FROM FlowRows f
-
 LEFT JOIN TotalUvnbRows t
-ON f.WeekSunSat = t.WeekSunSat
-AND f.ReportingGrain = t.ReportingGrain
-AND f.ChannelGroup = t.ChannelGroup;
+  ON f.WeekSunSat      = t.WeekSunSat
+  AND f.ReportingGrain  = t.ReportingGrain
+  AND f.ChannelGroup    = t.ChannelGroup;
