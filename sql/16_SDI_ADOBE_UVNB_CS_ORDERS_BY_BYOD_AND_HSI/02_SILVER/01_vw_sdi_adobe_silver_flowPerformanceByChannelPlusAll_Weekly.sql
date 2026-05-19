@@ -24,28 +24,19 @@ BUSINESS GRAIN:
 BUSINESS RULES:
   - ALL row uses Bronze ALL flow metrics and Bronze ALL total UVNB.
   - Channel rows use Bronze LTC flow metrics and Bronze Channel total UVNB.
-  - UvnbTotalAdobe comes from the total UVNB stream.
+  - UvnbTotalAdobe comes from the total UVNB stream (Bronze 04/05).
   - UvnbPostpaid / UvnbHsi / UvnbByod come from flow-specific tables.
-  - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE — NULL if any component is NULL.
+  - UvnbFlowTotal comes from the Adobe flow total source table — not computed from LOB flows.
+    At LTC grain: NULL placeholder until LTC flow total table is available.
+  - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE.
   - OrdersUnassistedTotal is Postpaid + HSI + BYOD unassisted. No COALESCE.
   - OrdersAssistedTotal is Postpaid + HSI + BYOD assisted. No COALESCE.
-    NOTE: At LAST_TOUCH_CHANNEL grain, OrdersAssisted* are NULL placeholders
-    until LTC assisted source tables are ingested.
+    At LTC grain: NULL placeholder until LTC assisted tables are ingested.
   - OrdersTotal is OrdersUnassistedTotal + OrdersAssistedTotal.
-    At LTC grain, OrdersTotal = OrdersUnassistedTotal only (assisted is NULL).
   - No COALESCE is used anywhere. If any component is NULL, the derived total remains NULL.
 
 COLUMN CHANGES vs PREVIOUS VERSION:
-  - OrdersPostpaid        renamed to  OrdersUnassistedPostpaid
-  - OrdersHsi             renamed to  OrdersUnassistedHsi
-  - OrdersByod            renamed to  OrdersUnassistedByod
-  - OrdersTrackedFlowSum  renamed to  OrdersUnassistedTotal
-  - OrdersTotal           was unassisted sum — now means grand total (unassisted + assisted)
-  - OrdersAssistedPostpaid  ADDED
-  - OrdersAssistedHsi       ADDED
-  - OrdersAssistedByod      ADDED
-  - OrdersAssistedTotal     ADDED
-  - OrdersTotal             REDEFINED as OrdersUnassistedTotal + OrdersAssistedTotal
+  - UvnbFlowTotal  ADDED (new)
 
 OUTPUT COLUMNS:
   - WeekSunSat
@@ -56,6 +47,7 @@ OUTPUT COLUMNS:
   - UvnbHsi
   - UvnbByod
   - UvnbTrackedFlowSum
+  - UvnbFlowTotal
   - CartstartTotal
   - CartstartPostpaid
   - CartstartHsi
@@ -86,6 +78,7 @@ WITH FlowRows AS (
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
+    UvnbFlowTotal,
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
@@ -100,7 +93,7 @@ WITH FlowRows AS (
   UNION ALL
 
   -- Channel (LTC) grain
-  -- NOTE: OrdersAssisted* are NULL placeholders at this grain
+  -- NOTE: UvnbFlowTotal and OrdersAssisted* are NULL placeholders at this grain
   SELECT
     WeekSunSat,
     'CHANNEL' AS ReportingGrain,
@@ -108,6 +101,7 @@ WITH FlowRows AS (
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
+    UvnbFlowTotal,            -- NULL placeholder until LTC flow total table is available
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
@@ -144,7 +138,7 @@ SELECT
   f.ReportingGrain,
   f.Channel,
 
-  -- Total UVNB (unchanged)
+  -- Total UVNB (from Bronze 04/05 — unchanged)
   t.UvnbTotalAdobe,
 
   -- UVNB flows (unchanged)
@@ -152,6 +146,11 @@ SELECT
   f.UvnbHsi,
   f.UvnbByod,
   f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod                                                     AS UvnbTrackedFlowSum,
+
+  -- UVNB Flow Total (new)
+  -- Sourced directly from Adobe flow total table — not computed from LOB flows.
+  -- NULL at LTC grain until source table is available.
+  f.UvnbFlowTotal,
 
   -- Cartstart (unchanged)
   f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTotal,
@@ -161,7 +160,6 @@ SELECT
   f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTrackedFlowSum,
 
   -- Orders grand total (unassisted + assisted)
-  -- At LTC grain: OrdersAssistedTotal is NULL so OrdersTotal = NULL (no COALESCE by design)
   (f.OrdersUnassistedPostpaid + f.OrdersUnassistedHsi + f.OrdersUnassistedByod)
   + (f.OrdersAssistedPostpaid + f.OrdersAssistedHsi + f.OrdersAssistedByod)                   AS OrdersTotal,
 
@@ -171,8 +169,7 @@ SELECT
   f.OrdersUnassistedHsi,
   f.OrdersUnassistedByod,
 
-  -- Orders assisted branch
-  -- NULL at LTC grain until source tables are ingested
+  -- Orders assisted branch (NULL at LTC grain)
   f.OrdersAssistedPostpaid + f.OrdersAssistedHsi + f.OrdersAssistedByod                       AS OrdersAssistedTotal,
   f.OrdersAssistedPostpaid,
   f.OrdersAssistedHsi,
@@ -180,6 +177,6 @@ SELECT
 
 FROM FlowRows f
 LEFT JOIN TotalUvnbRows t
-  ON f.WeekSunSat    = t.WeekSunSat
+  ON f.WeekSunSat      = t.WeekSunSat
   AND f.ReportingGrain = t.ReportingGrain
   AND f.Channel        = t.Channel;

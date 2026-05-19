@@ -27,9 +27,10 @@ PURPOSE:
         sdi_raw_adobe_pp_uvnb_ltc_postpaid_order_assisted_weekly_tmo  (not yet available)
         sdi_raw_adobe_pp_uvnb_ltc_hsi_order_assisted_weekly_tmo       (not yet available)
         sdi_raw_adobe_pp_uvnb_ltc_byod_order_assisted_weekly_tmo      (not yet available)
-      When these tables land, replace the CAST(NULL AS FLOAT64) placeholders below
-      with SAFE_CAST(orders AS FLOAT64) from the respective source tables,
-      following the exact same pattern as Bronze 01 and Bronze 03.
+
+  UvnbFlowTotal — NULL PLACEHOLDER at this grain:
+    sdi_raw_adobe_pp_uvnb_ltc_flow_total_visitors_weekly_tmo          (not yet available)
+    When available, add to RawUnion following same pattern as Bronze 01 and Bronze 03.
 
 BUSINESS GRAIN:
   One row per:
@@ -46,12 +47,7 @@ BUSINESS RULES:
   - MetricName / MetricValue are used internally only and are not exposed in final output.
 
 COLUMN CHANGES vs PREVIOUS VERSION:
-  - OrdersPostpaid  renamed to  OrdersUnassistedPostpaid
-  - OrdersHsi       renamed to  OrdersUnassistedHsi
-  - OrdersByod      renamed to  OrdersUnassistedByod
-  - OrdersAssistedPostpaid  ADDED as NULL placeholder
-  - OrdersAssistedHsi       ADDED as NULL placeholder
-  - OrdersAssistedByod      ADDED as NULL placeholder
+  - UvnbFlowTotal  ADDED as NULL placeholder
 
 KEY DEDUPE RULE:
   - Deduplicate each source table at weekly + LastTouchChannel grain using latest:
@@ -162,7 +158,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Unassisted Postpaid (renamed from OrdersPostpaid)
+  -- Orders Unassisted Postpaid
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'LAST_TOUCH_CHANNEL',
@@ -178,7 +174,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Unassisted HSI (renamed from OrdersHsi)
+  -- Orders Unassisted HSI
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'LAST_TOUCH_CHANNEL',
@@ -194,7 +190,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Unassisted BYOD (renamed from OrdersByod)
+  -- Orders Unassisted BYOD
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'LAST_TOUCH_CHANNEL',
@@ -232,17 +228,21 @@ SELECT
   LastTouchChannel,
   LtcGroup,
 
-  -- UVNB flows (unchanged)
+  -- UVNB flows
   MAX(IF(MetricName = 'UvnbPostpaid',             MetricValue, NULL)) AS UvnbPostpaid,
   MAX(IF(MetricName = 'UvnbHsi',                  MetricValue, NULL)) AS UvnbHsi,
   MAX(IF(MetricName = 'UvnbByod',                 MetricValue, NULL)) AS UvnbByod,
 
-  -- Cartstart (unchanged)
+  -- UVNB Flow Total — NULL placeholder until LTC flow total table is ingested
+  -- TODO: replace when sdi_raw_adobe_pp_uvnb_ltc_flow_total_visitors_weekly_tmo is available
+  CAST(NULL AS FLOAT64) AS UvnbFlowTotal,
+
+  -- Cartstart
   MAX(IF(MetricName = 'CartstartPostpaid',         MetricValue, NULL)) AS CartstartPostpaid,
   MAX(IF(MetricName = 'CartstartHsi',              MetricValue, NULL)) AS CartstartHsi,
   MAX(IF(MetricName = 'CartstartByod',             MetricValue, NULL)) AS CartstartByod,
 
-  -- Orders Unassisted (renamed from OrdersPostpaid/Hsi/Byod)
+  -- Orders Unassisted
   MAX(IF(MetricName = 'OrdersUnassistedPostpaid',  MetricValue, NULL)) AS OrdersUnassistedPostpaid,
   MAX(IF(MetricName = 'OrdersUnassistedHsi',       MetricValue, NULL)) AS OrdersUnassistedHsi,
   MAX(IF(MetricName = 'OrdersUnassistedByod',      MetricValue, NULL)) AS OrdersUnassistedByod,

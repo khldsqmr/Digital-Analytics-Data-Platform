@@ -8,15 +8,16 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo       -- NEW
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo  -- NEW
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo       -- NEW
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo      -- NEW
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
@@ -27,7 +28,10 @@ PURPOSE:
 
   Orders are split into:
     - Unassisted (digital web unassisted orders) — renamed from original OrdersPostpaid/Hsi/Byod
-    - Assisted (digital web assisted orders)     — new as of this version
+    - Assisted (digital web assisted orders)     — added in previous version
+
+  UvnbFlowTotal is sourced directly from the Adobe all-flow total visitors table.
+  It is the canonical sum of all LOB flows and is not calculated from UvnbPostpaid + UvnbHsi + UvnbByod.
 
 BUSINESS GRAIN:
   One row per:
@@ -43,12 +47,7 @@ BUSINESS RULES:
   - MetricName / MetricValue are used internally only and are not exposed in final output.
 
 COLUMN CHANGES vs PREVIOUS VERSION:
-  - OrdersPostpaid  renamed to  OrdersUnassistedPostpaid
-  - OrdersHsi       renamed to  OrdersUnassistedHsi
-  - OrdersByod      renamed to  OrdersUnassistedByod
-  - OrdersAssistedPostpaid  ADDED (new)
-  - OrdersAssistedHsi       ADDED (new)
-  - OrdersAssistedByod      ADDED (new)
+  - UvnbFlowTotal  ADDED (new) — from sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
 
 KEY DEDUPE RULE:
   - Deduplicate each source table at weekly grain using latest:
@@ -111,6 +110,24 @@ WITH RawUnion AS (
 
   UNION ALL
 
+  -- UVNB Flow Total (NEW)
+  -- Sourced directly from Adobe all-flow total table.
+  -- Not calculated from UvnbPostpaid + UvnbHsi + UvnbByod.
+  SELECT
+    DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
+    'ALL_CHANNELS',
+    CAST(NULL AS STRING),
+    CAST(NULL AS STRING),
+    'UvnbFlowTotal',
+    SAFE_CAST(visitors AS FLOAT64),
+    'sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo',
+    __insert_date,
+    File_Load_datetime,
+    Filename
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo`
+
+  UNION ALL
+
   -- Cartstart Postpaid
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
@@ -159,7 +176,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Unassisted Postpaid (digital web unassisted)
+  -- Orders Unassisted Postpaid
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'ALL_CHANNELS',
@@ -207,7 +224,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Assisted Postpaid (NEW)
+  -- Orders Assisted Postpaid
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'ALL_CHANNELS',
@@ -223,7 +240,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Assisted HSI (NEW)
+  -- Orders Assisted HSI
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'ALL_CHANNELS',
@@ -239,7 +256,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- Orders Assisted BYOD (NEW)
+  -- Orders Assisted BYOD
   SELECT
     DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY),
     'ALL_CHANNELS',
@@ -276,22 +293,25 @@ SELECT
   LastTouchChannel,
   LtcGroup,
 
-  -- UVNB flows (unchanged)
+  -- UVNB flows
   MAX(IF(MetricName = 'UvnbPostpaid',             MetricValue, NULL)) AS UvnbPostpaid,
   MAX(IF(MetricName = 'UvnbHsi',                  MetricValue, NULL)) AS UvnbHsi,
   MAX(IF(MetricName = 'UvnbByod',                 MetricValue, NULL)) AS UvnbByod,
 
-  -- Cartstart (unchanged)
+  -- UVNB Flow Total (new)
+  MAX(IF(MetricName = 'UvnbFlowTotal',            MetricValue, NULL)) AS UvnbFlowTotal,
+
+  -- Cartstart
   MAX(IF(MetricName = 'CartstartPostpaid',         MetricValue, NULL)) AS CartstartPostpaid,
   MAX(IF(MetricName = 'CartstartHsi',              MetricValue, NULL)) AS CartstartHsi,
   MAX(IF(MetricName = 'CartstartByod',             MetricValue, NULL)) AS CartstartByod,
 
-  -- Orders Unassisted (renamed from OrdersPostpaid/Hsi/Byod)
+  -- Orders Unassisted
   MAX(IF(MetricName = 'OrdersUnassistedPostpaid',  MetricValue, NULL)) AS OrdersUnassistedPostpaid,
   MAX(IF(MetricName = 'OrdersUnassistedHsi',       MetricValue, NULL)) AS OrdersUnassistedHsi,
   MAX(IF(MetricName = 'OrdersUnassistedByod',      MetricValue, NULL)) AS OrdersUnassistedByod,
 
-  -- Orders Assisted (new)
+  -- Orders Assisted
   MAX(IF(MetricName = 'OrdersAssistedPostpaid',    MetricValue, NULL)) AS OrdersAssistedPostpaid,
   MAX(IF(MetricName = 'OrdersAssistedHsi',         MetricValue, NULL)) AS OrdersAssistedHsi,
   MAX(IF(MetricName = 'OrdersAssistedByod',        MetricValue, NULL)) AS OrdersAssistedByod,

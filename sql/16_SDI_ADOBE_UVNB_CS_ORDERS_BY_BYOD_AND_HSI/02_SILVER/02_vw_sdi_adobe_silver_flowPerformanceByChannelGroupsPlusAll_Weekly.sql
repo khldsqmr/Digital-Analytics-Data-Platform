@@ -24,25 +24,17 @@ BUSINESS GRAIN:
 BUSINESS RULES:
   - ALL row uses Bronze ALL flow metrics and Bronze ALL total UVNB.
   - ChannelGroup rows use Bronze LTC Groups flow metrics and Bronze ChannelGroup total UVNB.
-  - UvnbTotalAdobe comes from the total UVNB stream.
+  - UvnbTotalAdobe comes from the total UVNB stream (Bronze 04/06).
   - UvnbPostpaid / UvnbHsi / UvnbByod come from flow-specific tables.
-  - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE — NULL if any component is NULL.
+  - UvnbFlowTotal comes from the Adobe flow total source table — not computed from LOB flows.
+  - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE.
   - OrdersUnassistedTotal is Postpaid + HSI + BYOD unassisted. No COALESCE.
   - OrdersAssistedTotal is Postpaid + HSI + BYOD assisted. No COALESCE.
   - OrdersTotal is OrdersUnassistedTotal + OrdersAssistedTotal.
   - No COALESCE is used anywhere. If any component is NULL, the derived total remains NULL.
 
 COLUMN CHANGES vs PREVIOUS VERSION:
-  - OrdersPostpaid        renamed to  OrdersUnassistedPostpaid
-  - OrdersHsi             renamed to  OrdersUnassistedHsi
-  - OrdersByod            renamed to  OrdersUnassistedByod
-  - OrdersTrackedFlowSum  renamed to  OrdersUnassistedTotal
-  - OrdersTotal           was unassisted sum — now means grand total (unassisted + assisted)
-  - OrdersAssistedPostpaid  ADDED
-  - OrdersAssistedHsi       ADDED
-  - OrdersAssistedByod      ADDED
-  - OrdersAssistedTotal     ADDED
-  - OrdersTotal             REDEFINED as OrdersUnassistedTotal + OrdersAssistedTotal
+  - UvnbFlowTotal  ADDED (new)
 
 OUTPUT COLUMNS:
   - WeekSunSat
@@ -53,6 +45,7 @@ OUTPUT COLUMNS:
   - UvnbHsi
   - UvnbByod
   - UvnbTrackedFlowSum
+  - UvnbFlowTotal
   - CartstartTotal
   - CartstartPostpaid
   - CartstartHsi
@@ -83,6 +76,7 @@ WITH FlowRows AS (
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
+    UvnbFlowTotal,
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
@@ -104,6 +98,7 @@ WITH FlowRows AS (
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
+    UvnbFlowTotal,
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
@@ -140,7 +135,7 @@ SELECT
   f.ReportingGrain,
   f.ChannelGroup,
 
-  -- Total UVNB (unchanged)
+  -- Total UVNB (from Bronze 04/06 — unchanged)
   t.UvnbTotalAdobe,
 
   -- UVNB flows (unchanged)
@@ -148,6 +143,10 @@ SELECT
   f.UvnbHsi,
   f.UvnbByod,
   f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod                                                     AS UvnbTrackedFlowSum,
+
+  -- UVNB Flow Total (new)
+  -- Sourced directly from Adobe flow total table — not computed from LOB flows.
+  f.UvnbFlowTotal,
 
   -- Cartstart (unchanged)
   f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTotal,
@@ -175,5 +174,5 @@ SELECT
 FROM FlowRows f
 LEFT JOIN TotalUvnbRows t
   ON f.WeekSunSat      = t.WeekSunSat
-  AND f.ReportingGrain  = t.ReportingGrain
-  AND f.ChannelGroup    = t.ChannelGroup;
+  AND f.ReportingGrain = t.ReportingGrain
+  AND f.ChannelGroup   = t.ChannelGroup;
