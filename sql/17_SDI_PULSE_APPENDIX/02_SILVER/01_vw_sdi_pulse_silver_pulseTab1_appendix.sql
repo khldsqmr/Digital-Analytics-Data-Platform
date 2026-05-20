@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulse_silver_pulseTab1_appendix`
-OPTIONS(description="Silver: structural transformation of bronze. Unpivots build/excl/source bullets into one row per bullet using GENERATE_ARRAY + SAFE_OFFSET zip. apx_row_type: metric_header | glossary_header | bullet_build | bullet_excl | bullet_source. Join all bullet types to header rows on apx_id.")
+OPTIONS(description="Silver: structural transformation of bronze. Unpivots build/excl/source bullets into one row per bullet using GENERATE_ARRAY + SAFE_OFFSET array access. apx_row_type: metric_header | glossary_header | bullet_build | bullet_excl | bullet_source. Join bullet rows to header rows on apx_id.")
 AS
 WITH
 b AS (
@@ -53,11 +53,11 @@ build_bullets AS (
     CAST(NULL AS STRING)         AS apx_cvr_numerator_id,
     CAST(NULL AS STRING)         AS apx_cvr_denominator_id,
     CAST(NULL AS STRING)         AS apx_glossary_category,
-    pos + 1                      AS apx_bullet_order,
-    SAFE_OFFSET(SPLIT(b.apx_build_labels,'\n'), pos) AS apx_bullet_label,
-    SAFE_OFFSET(SPLIT(b.apx_build_details,'\n'), pos) AS apx_bullet_detail
+    pos + 1                                              AS apx_bullet_order,
+    SPLIT(b.apx_build_labels,  '\n')[SAFE_OFFSET(pos)]  AS apx_bullet_label,
+    SPLIT(b.apx_build_details, '\n')[SAFE_OFFSET(pos)]  AS apx_bullet_detail
   FROM b
-  CROSS JOIN UNNEST(GENERATE_ARRAY(0, ARRAY_LENGTH(SPLIT(b.apx_build_labels,'\n')) - 1)) AS pos
+  CROSS JOIN UNNEST(GENERATE_ARRAY(0, ARRAY_LENGTH(SPLIT(b.apx_build_labels, '\n')) - 1)) AS pos
   WHERE b.apx_record_type = 'Metric'
     AND b.apx_build_labels IS NOT NULL
 ),
@@ -87,11 +87,11 @@ excl_bullets AS (
     CAST(NULL AS STRING)         AS apx_cvr_numerator_id,
     CAST(NULL AS STRING)         AS apx_cvr_denominator_id,
     CAST(NULL AS STRING)         AS apx_glossary_category,
-    pos + 1                      AS apx_bullet_order,
-    SAFE_OFFSET(SPLIT(b.apx_excl_labels,'\n'), pos) AS apx_bullet_label,
-    SAFE_OFFSET(SPLIT(b.apx_excl_details,'\n'), pos) AS apx_bullet_detail
+    pos + 1                                             AS apx_bullet_order,
+    SPLIT(b.apx_excl_labels,  '\n')[SAFE_OFFSET(pos)]  AS apx_bullet_label,
+    SPLIT(b.apx_excl_details, '\n')[SAFE_OFFSET(pos)]  AS apx_bullet_detail
   FROM b
-  CROSS JOIN UNNEST(GENERATE_ARRAY(0, ARRAY_LENGTH(SPLIT(b.apx_excl_labels,'\n')) - 1)) AS pos
+  CROSS JOIN UNNEST(GENERATE_ARRAY(0, ARRAY_LENGTH(SPLIT(b.apx_excl_labels, '\n')) - 1)) AS pos
   WHERE b.apx_record_type = 'Metric'
     AND b.apx_excl_labels IS NOT NULL
 ),
@@ -126,10 +126,10 @@ source_bullets AS (
     src.bullet_detail            AS apx_bullet_detail
   FROM b
   CROSS JOIN UNNEST([
-    STRUCT(1 AS bullet_order, 'SOURCE'   AS bullet_label, IFNULL(b.apx_source_system,'—')   AS bullet_detail),
-    STRUCT(2,                 'TABLE',                    IFNULL(b.apx_source_table,'—')),
-    STRUCT(3,                 'OWNER',                    IFNULL(b.apx_data_owner,'—')),
-    STRUCT(4,                 'REFRESH',                  IFNULL(b.apx_refresh_cadence,'—'))
+    STRUCT(1 AS bullet_order, 'SOURCE'  AS bullet_label, IFNULL(b.apx_source_system,  '—') AS bullet_detail),
+    STRUCT(2,                 'TABLE',                   IFNULL(b.apx_source_table,   '—')),
+    STRUCT(3,                 'OWNER',                   IFNULL(b.apx_data_owner,     '—')),
+    STRUCT(4,                 'REFRESH',                 IFNULL(b.apx_refresh_cadence,'—'))
   ]) AS src
   WHERE b.apx_record_type = 'Metric'
 )
