@@ -1,5 +1,5 @@
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulse_gold_pulseTab1_appendix`
-OPTIONS(description="Gold: Tableau-ready layer. Adds funnel_stage_key, display labels, boolean filter flags, and label_options for parameter dropdown. Connect Tableau to this view only. Filter on apx_row_type to drive each panel section.")
+OPTIONS(description="Gold: Tableau-ready layer on top of silver. Adds funnel_stage_key, funnel_stage_label, and apx_label_options. All boolean fields removed - use apx_row_type directly in Tableau calculated fields to avoid True/False string type issues.")
 AS
 SELECT
   s.*,
@@ -15,10 +15,9 @@ SELECT
     WHEN 'Bottom Funnel' THEN 'Bottom Funnel'
     ELSE                      'Glossary'
   END AS apx_funnel_stage_label,
-  s.apx_row_type IN ('metric_header','bullet_build','bullet_excl','bullet_source') AS apx_is_metric,
-  s.apx_row_type = 'glossary_header'                                               AS apx_is_glossary,
   CASE
-    WHEN s.apx_row_type IN ('metric_header','glossary_header') THEN s.apx_label
-    ELSE CAST(NULL AS STRING)
+    WHEN s.apx_row_type IN ('metric_header','glossary_header')
+    THEN s.apx_label
+    ELSE NULL
   END AS apx_label_options
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulse_silver_pulseTab1_appendix` s;
