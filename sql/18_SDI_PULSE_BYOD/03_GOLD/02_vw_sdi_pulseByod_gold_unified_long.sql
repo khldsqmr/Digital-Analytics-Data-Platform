@@ -323,17 +323,70 @@ trends_keywords_long AS (
 -- Each source scanned exactly once via its own CTE
 -- -----------------------------------------------------------------------
 combined AS (
-    SELECT *, CAST(NULL AS STRING) AS dimension_name, CAST(NULL AS STRING) AS dimension_value FROM profound_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        CAST(NULL AS STRING)    AS dimension_name,
+        CAST(NULL AS STRING)    AS dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM profound_long
+
     UNION ALL
-    SELECT *, CAST(NULL AS STRING), CAST(NULL AS STRING) FROM gofish_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        CAST(NULL AS STRING)    AS dimension_name,
+        CAST(NULL AS STRING)    AS dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM gofish_long
+
     UNION ALL
-    SELECT *, CAST(NULL AS STRING), CAST(NULL AS STRING) FROM sa360_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        CAST(NULL AS STRING)    AS dimension_name,
+        CAST(NULL AS STRING)    AS dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM sa360_long
+
     UNION ALL
-    SELECT *, CAST(NULL AS STRING), CAST(NULL AS STRING) FROM gsc_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        CAST(NULL AS STRING)    AS dimension_name,
+        CAST(NULL AS STRING)    AS dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM gsc_long
+
     UNION ALL
-    SELECT *, CAST(NULL AS STRING), CAST(NULL AS STRING) FROM trends_index_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        CAST(NULL AS STRING)    AS dimension_name,
+        CAST(NULL AS STRING)    AS dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM trends_index_long
+
     UNION ALL
-    SELECT * FROM trends_keywords_long
+
+    SELECT
+        week_sun_to_sat, data_source, channel, max_data_date,
+        dimension_name,
+        dimension_value,
+        metric_name, metric_value,
+        metric_value_wow, metric_value_ly,
+        wow_pct, yoy_pct
+    FROM trends_keywords_long
 )
 
 -- -----------------------------------------------------------------------
