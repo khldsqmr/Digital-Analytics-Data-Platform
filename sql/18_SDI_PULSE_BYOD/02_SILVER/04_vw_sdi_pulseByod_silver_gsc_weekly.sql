@@ -12,167 +12,229 @@ DESTINATION:
 
 PURPOSE:
   Silver view for Google Search Console organic search data.
-  Applies site URL filter, BYOD query filters, brand/nonbrand classification
-  via the full T-Mobile brand regex, weekly aggregation, and week-end Saturday
-  conversion on top of the Bronze view.
-  Output is one row per week + brand_type ready for Gold unpivoting.
+  Outputs a WIDE table — one row per week_sun_to_sat.
+  All metric columns prefixed with 'gsc_' for unambiguous
+  identification in Gold Wide spine join and Gold Long unpivot.
+  Applies site URL filter, BYOD query filters, brand/nonbrand classification,
+  daily → weekly aggregation, WoW/LY comparisons, and max_data_date.
 
 BUSINESS GRAIN:
   One row per:
-    week_sun_to_sat + brand_type
+    week_sun_to_sat
 
 FILTERS APPLIED:
-  - site_url = 'SC-DOMAIN:T-MOBILE.COM' (T-Mobile domain only)
-  - BYOD query inclusion filters:
-      query LIKE '%bring%phone%'
-      OR query LIKE '%bring%device%'
-      OR query LIKE '%byod%'
-  - BYOD query exclusion filters:
-      query NOT LIKE '%near%'
-      query NOT LIKE '%pairing%'
-      query NOT LIKE '%starlink%'
-      query NOT LIKE '%animation%'
-      query NOT LIKE '%iphone setup%'
-      query NOT LIKE '%ipad setup%'
+  - site_url = 'SC-DOMAIN:T-MOBILE.COM'
+  - BYOD query inclusion:
+      query LIKE '%bring%phone%' OR '%bring%device%' OR '%byod%'
+  - BYOD query exclusions:
+      NOT LIKE '%near%', '%pairing%', '%starlink%',
+      '%animation%', '%iphone setup%', '%ipad setup%'
 
 BUSINESS LOGIC APPLIED:
-  - Brand classification via full T-Mobile brand regex on query text
-    Consistent with existing vw_sdi_tsd_silver_gsc_daily classification logic
-    BRAND    : query matches T-Mobile brand regex (tmo, t-mobile, tmobile, magenta, metro, sprint etc.)
-    NONBRAND : all other BYOD queries not matching brand regex
-    EXCLUDE  : queries matching LOB exclusion regex — removed before aggregation
-  - Daily → weekly aggregation via SUM
+  - data_source = 'GSC'
+  - channel     = 'ORGANIC SEARCH'
+  - Brand classification via full T-Mobile brand regex
+    Matches exactly vw_sdi_tsd_silver_gsc_daily as of 2026-05-24
+    Do not modify without updating vw_sdi_tsd_silver_gsc_daily in parallel
+  - Daily → weekly SUM aggregation
   - week_sun_to_sat = DATE_ADD(DATE_TRUNC(event_date, WEEK(SUNDAY)), INTERVAL 6 DAY)
+  - All metric columns prefixed: gsc_tmo_{brand/nonbrand}_{metric}
+  - WoW/LY self-joins on small weekly CTE
+  - max_data_date per source
+
+COLUMN NAMING CONVENTION:
+  gsc_tmo_{brand_type}_{metric}
+  gsc_tmo_{brand_type}_{metric}_wow
+  gsc_tmo_{brand_type}_{metric}_ly
+  gsc_tmo_{brand_type}_{metric}_wow_pct
+  gsc_tmo_{brand_type}_{metric}_yoy_pct
+
+  Where brand_type : brand, nonbrand
+  Where metric     : impressions, clicks
 
 KEY MODELING NOTES:
-  - Query text normalized (LOWER, TRIM) for classification only — raw text not output
-  - SUM aggregation used for all additive metrics (impressions, clicks)
-  - NULLs preserved — no COALESCE to zero applied here (pushed to Gold if needed)
-  - Brand regex sourced from vw_sdi_tsd_silver_gsc_daily for consistency
-    across Total Search Dashboard and Pulse BYOD
+  - Query normalized for classification only — raw text not stored
+  - Aggregation before pivot keeps grain clean
+  - Self-joins on tiny pivoted CTE (1 row per week — extremely cheap)
+  - NULLs preserved — no fake zeroes
+  - No ORDER BY — applied in Gold only
 
 DOWNSTREAM:
-  Gold : vw_sdi_pulseByod_gold_unified_weekly
+  Gold Wide : vw_sdi_pulseByod_gold_unified_wide
+  Gold Long : vw_sdi_pulseByod_gold_unified_long
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_gsc_weekly`
 AS
 
-WITH standardized AS (
+-- -----------------------------------------------------------------------
+-- STEP 1: Normalize, filter, classify
+-- -----------------------------------------------------------------------
+WITH classified AS (
     SELECT
-        -- Week-end Saturday conversion
-        -- Daily source rolled up to week ending Saturday
-        DATE_ADD(DATE_TRUNC(event_date, WEEK(SUNDAY)), INTERVAL 6 DAY) AS week_sun_to_sat,
-
-        -- Metrics (daily grain — aggregated to weekly in classified CTE)
+        DATE_ADD(DATE_TRUNC(event_date, WEEK(SUNDAY)), INTERVAL 6 DAY)  AS week_sun_to_sat,
         impressions,
         clicks,
-
-        -- Normalized query text for classification only
-        -- Raw query text not carried forward — classification label used instead
-        LOWER(TRIM(query))                                              AS query_normalized,
-
-        -- Standardized site_url for filtering
-        UPPER(TRIM(site_url))                                           AS site_url_standardized
-
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_bronze_gscQuery_daily`
-),
-
-classified AS (
-    SELECT
-        week_sun_to_sat,
-        impressions,
-        clicks,
-
-        -- Brand classification via full T-Mobile brand regex
-        -- Sourced from vw_sdi_tsd_silver_gsc_daily for consistency
-        -- BRAND    : query contains any T-Mobile brand signal
-        -- NONBRAND : all other BYOD queries
-        -- EXCLUDE  : queries matching LOB exclusion patterns
         CASE
-            WHEN query_normalized IS NULL
-              OR TRIM(query_normalized) = ''                            THEN 'EXCLUDE'
-            WHEN REGEXP_CONTAINS(
-                query_normalized,
-                r'(business|home-internet|prepaid.|fiber.|careers.|promotions.)'
-            )                                                           THEN 'EXCLUDE'
-            WHEN REGEXP_CONTAINS(
-                query_normalized,
-                r'(^t$|\. t|\.t|tmobile|t-mobile|t mobile|aorint|apeint|aprint|atmobile|'
-                r'deutsche|digits|go 5g|go5g|i mobile|itmobile|jump on|jump2|layer 3|layer3|'
-                r'magenta|metro|mibile|mobile t|mtmobile|my tmo|myobile|mysprin|mytmo|'
-                r'mytobile|on us|onus|project 10|project ten|rmob|rtmobile|simple global|'
-                r'slrint|soeint|soribt|sorint|spei|sperint|spirint|spirit cell phone|spirnt|'
-                r'spprint|spri\.t|spriint|sprijt|sprimt|sprin|spritn|sprjnt|sprnt|spront|'
-                r'sprrint|sptint|srint|srpint|stateside international|switch to t|sync up|'
-                r'syncup|t-|t - mobile|t – mobile|t \.|t â€" mobile|t bision|t channel|'
-                r't cision|t com|t kobile|t life|t lobile|t m9bile|t mbile|t mboile|t metro|'
-                r't mib|t minile|t mo|t- mo|t mp|t mus|t nmobile|t nobile|t obil|t remote|'
-                r't television|t tv|t vibe|t vidion|t vis|t vizion|t-,obile|t\.|t\. obile|'
-                r't\.com t|t\.mo|t\.obil|t\.obile|t:|t_mobil|t\+mobile|t=mobile|tâ€'mobile|'
-                r'tbile|t-bile|tbision|tbmobile|tbo|t-com|tdigit|te mobile|team mobile|'
-                r'teen mobile|teenmobile|temobil|temobile|temoble|ten mobile|the mobile|'
-                r'the vibe|t-home|ti-mobile|tkobile|tlife|t-life|tlivetv|tlobile|'
-                r'tm coverage map|tm mobile|tm plans|tm tv|tm,obile|tm0bile|t-m0bile|tm9bile|'
-                r'tmabole|tmaobile|tmb|t-mbile|tmbilw|tmbiole|tmblie|t-mbo|tmbo|tmbpile|'
-                r'tmib|t-mib|tmlbile|tm-mobile|tmmoble|tmo|t-mo|tmpbile|t-mpbile|tmus|'
-                r'tnmobile|tnob|t-nob|to mobile|tobile|t-obile|toblie|tobmile|tomb|tomi|'
-                r'tomo|toobile|tpbile|t-phone|ttmobile|tv sion|tv vision|tviaion|'
-                r'tvibe channels|tvidion|tviosion|tvis|t-vis|tvivion|tvizion|tvmo|tv-mobile|'
-                r'tvsion|tv-t|tvusion|tvvis|tvzion activate|t-모바일|vibe|www t\.|www\.t|'
-                r'y mo|ymo|ytmobile|т мобил|8997|5guc|5g uc|tuesday|million)'
-            )                                                           THEN 'BRAND'
-            ELSE 'NONBRAND'
-        END AS brand_type
-
-    FROM standardized
-
-    -- Site URL filter: T-Mobile domain only
-    WHERE site_url_standardized = 'SC-DOMAIN:T-MOBILE.COM'
-
-      -- BYOD query inclusion filters
+            WHEN LOWER(TRIM(query)) IS NULL OR TRIM(LOWER(TRIM(query))) = '' THEN 'EXCLUDE'
+            WHEN REGEXP_CONTAINS(LOWER(TRIM(query)), r'(business|home-internet|prepaid.|fiber.|careers.|promotions.)') THEN 'EXCLUDE'
+            WHEN REGEXP_CONTAINS(LOWER(TRIM(query)),
+                r'(^t$|\. t|\.t|â„¢obile|aorint|apeint|aprint|atmobile|deutsche|digits|go 5g|go5g|i mobile|itmobile|jump on|jump2|layer 3|layer3|magenta|metro|mibile|mobile t|mtmobile|my tmo|myobile|mysprin|mytmo|mytobile|on us|onus|project 10|project ten|rmob|rtmobile|simple global|slrint|soeint|soribt|sorint|spei|sperint|spirint|spirit cell phone|spirnt|spprint|spri\.t|spriint|sprijt|sprimt|sprin|spritn|sprjnt|sprnt|spront|sprrint|sptint|srint|srpint|stateside international|switch to t|sync up|syncup|t-|t - mobile|t – mobile|t \.|t â€" mobile|t bision|t channel|t cision|t com|t kobile|t life|t lobile|t m9bile|t mÃ³vil|t mbile|t mboile|t metro|t mib|t minile|t mo|t- mo|t mp|t mus|t nmobile|t nobile|t obil|t remote|t television|t tv|t vibe|t vidion|t vis|t vizion|t-,obile|t\.|t\. obile|t\.com t|t\.mo|t\.obil|t\.obile|t:|t_mobil|t\+mobile|t=mobile|tâ€'mobile|tbile|t-bile|tbision|tbmobile|tbo|t-com|tdigit|te mobile|team|team mobile|teen mobile|teenmobile|temobil|temobile|temoble|ten mobile|the mobile|the vibe|t-home|tim|ti-mobile|tkobile|tlife|t-life|tlivetv|tlobile|tm coverage map|tm mobile|tm plans|tm tv|tm,obile|tm0bile|t-m0bile|tm9bile|tmabole|tmaobile|tmb|t-mbile|tmbilw|tmbiole|tmblie|t-mbo|tmbo|t-mbo|tmbpile|tmib|t-mib|tmlbile|tm-mobile|tmmoble|tmo|t-mo|tmpbile|t-mpbile|tmus|tnmobile|tnob|t-nob|to mobile|tobile|t-obile|toblie|tobmile|tomb|tomi|tomo|toobile|tpbile|t-phone|ttmobile|tv sion|tv vision|tviaion|tvibe channels|tvidion|tviosion|tvis|t-vis|tvivion|tvizion|tvmo|tv-mobile|tvsion|tv-t|tvusion|tvvis|tvzion activate|t-모바일|vibe|www t\.|www\.t|y mo|ymo|ytmobile|т мобил|8997|5guc|5g uc|tuesday|million)'
+            ) THEN 'brand'
+            ELSE 'nonbrand'
+        END                                                              AS brand_type
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_bronze_gscQuery_daily`
+    WHERE UPPER(TRIM(site_url)) = 'SC-DOMAIN:T-MOBILE.COM'
       AND (
-          query_normalized LIKE '%bring%phone%'
-          OR query_normalized LIKE '%bring%device%'
-          OR query_normalized LIKE '%byod%'
+          LOWER(TRIM(query)) LIKE '%bring%phone%'
+          OR LOWER(TRIM(query)) LIKE '%bring%device%'
+          OR LOWER(TRIM(query)) LIKE '%byod%'
       )
-
-      -- BYOD query exclusion filters
-      AND query_normalized NOT LIKE '%near%'
-      AND query_normalized NOT LIKE '%pairing%'
-      AND query_normalized NOT LIKE '%starlink%'
-      AND query_normalized NOT LIKE '%animation%'
-      AND query_normalized NOT LIKE '%iphone setup%'
-      AND query_normalized NOT LIKE '%ipad setup%'
+      AND LOWER(TRIM(query)) NOT LIKE '%near%'
+      AND LOWER(TRIM(query)) NOT LIKE '%pairing%'
+      AND LOWER(TRIM(query)) NOT LIKE '%starlink%'
+      AND LOWER(TRIM(query)) NOT LIKE '%animation%'
+      AND LOWER(TRIM(query)) NOT LIKE '%iphone setup%'
+      AND LOWER(TRIM(query)) NOT LIKE '%ipad setup%'
 ),
 
-filtered AS (
-    -- Remove EXCLUDE rows before aggregation
-    SELECT *
-    FROM classified
-    WHERE brand_type IN ('BRAND', 'NONBRAND')
-),
-
+-- -----------------------------------------------------------------------
+-- STEP 2: Remove EXCLUDE, aggregate daily → weekly
+-- -----------------------------------------------------------------------
 aggregated AS (
     SELECT
         week_sun_to_sat,
         brand_type,
+        SUM(impressions) AS impressions,
+        SUM(clicks)      AS clicks
+    FROM classified
+    WHERE brand_type IN ('brand', 'nonbrand')
+    GROUP BY week_sun_to_sat, brand_type
+),
 
-        -- Additive metrics aggregated from daily to weekly
-        SUM(impressions)    AS impressions,
-        SUM(clicks)         AS clicks
-
-    FROM filtered
-    GROUP BY
+-- -----------------------------------------------------------------------
+-- STEP 3: Pivot long → wide
+-- -----------------------------------------------------------------------
+pivoted AS (
+    SELECT
         week_sun_to_sat,
-        brand_type
+        MAX(CASE WHEN brand_type = 'brand'    THEN impressions END) AS gsc_tmo_brand_impressions,
+        MAX(CASE WHEN brand_type = 'brand'    THEN clicks      END) AS gsc_tmo_brand_clicks,
+        MAX(CASE WHEN brand_type = 'nonbrand' THEN impressions END) AS gsc_tmo_nonbrand_impressions,
+        MAX(CASE WHEN brand_type = 'nonbrand' THEN clicks      END) AS gsc_tmo_nonbrand_clicks
+    FROM aggregated
+    GROUP BY week_sun_to_sat
+),
+
+-- -----------------------------------------------------------------------
+-- STEP 4: Add custom week number
+-- -----------------------------------------------------------------------
+with_week_num AS (
+    SELECT *,
+        DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK) AS custom_week_num
+    FROM pivoted
+),
+
+-- -----------------------------------------------------------------------
+-- STEP 5: WoW and LY self-joins
+-- -----------------------------------------------------------------------
+with_comparisons AS (
+    SELECT
+        c.week_sun_to_sat,
+        c.custom_week_num,
+        c.gsc_tmo_brand_impressions,
+        c.gsc_tmo_brand_clicks,
+        c.gsc_tmo_nonbrand_impressions,
+        c.gsc_tmo_nonbrand_clicks,
+        w.gsc_tmo_brand_impressions    AS gsc_tmo_brand_impressions_wow,
+        w.gsc_tmo_brand_clicks         AS gsc_tmo_brand_clicks_wow,
+        w.gsc_tmo_nonbrand_impressions AS gsc_tmo_nonbrand_impressions_wow,
+        w.gsc_tmo_nonbrand_clicks      AS gsc_tmo_nonbrand_clicks_wow,
+        l.gsc_tmo_brand_impressions    AS gsc_tmo_brand_impressions_ly,
+        l.gsc_tmo_brand_clicks         AS gsc_tmo_brand_clicks_ly,
+        l.gsc_tmo_nonbrand_impressions AS gsc_tmo_nonbrand_impressions_ly,
+        l.gsc_tmo_nonbrand_clicks      AS gsc_tmo_nonbrand_clicks_ly
+    FROM with_week_num c
+    LEFT JOIN with_week_num w ON c.week_sun_to_sat = DATE_ADD(w.week_sun_to_sat, INTERVAL 7 DAY)
+    LEFT JOIN with_week_num l ON (c.custom_week_num - l.custom_week_num) = 52
+),
+
+-- -----------------------------------------------------------------------
+-- STEP 6: Compute wow_pct and yoy_pct
+-- -----------------------------------------------------------------------
+with_pcts AS (
+    SELECT
+        week_sun_to_sat,
+        custom_week_num,
+
+        gsc_tmo_brand_impressions,
+        gsc_tmo_brand_impressions_wow,
+        gsc_tmo_brand_impressions_ly,
+        CASE WHEN gsc_tmo_brand_impressions_wow IS NULL OR gsc_tmo_brand_impressions_wow = 0 THEN NULL ELSE ROUND((gsc_tmo_brand_impressions - gsc_tmo_brand_impressions_wow) / gsc_tmo_brand_impressions_wow, 6) END AS gsc_tmo_brand_impressions_wow_pct,
+        CASE WHEN gsc_tmo_brand_impressions_ly  IS NULL OR gsc_tmo_brand_impressions_ly  = 0 THEN NULL ELSE ROUND((gsc_tmo_brand_impressions - gsc_tmo_brand_impressions_ly)  / gsc_tmo_brand_impressions_ly,  6) END AS gsc_tmo_brand_impressions_yoy_pct,
+
+        gsc_tmo_brand_clicks,
+        gsc_tmo_brand_clicks_wow,
+        gsc_tmo_brand_clicks_ly,
+        CASE WHEN gsc_tmo_brand_clicks_wow IS NULL OR gsc_tmo_brand_clicks_wow = 0 THEN NULL ELSE ROUND((gsc_tmo_brand_clicks - gsc_tmo_brand_clicks_wow) / gsc_tmo_brand_clicks_wow, 6) END AS gsc_tmo_brand_clicks_wow_pct,
+        CASE WHEN gsc_tmo_brand_clicks_ly  IS NULL OR gsc_tmo_brand_clicks_ly  = 0 THEN NULL ELSE ROUND((gsc_tmo_brand_clicks - gsc_tmo_brand_clicks_ly)  / gsc_tmo_brand_clicks_ly,  6) END AS gsc_tmo_brand_clicks_yoy_pct,
+
+        gsc_tmo_nonbrand_impressions,
+        gsc_tmo_nonbrand_impressions_wow,
+        gsc_tmo_nonbrand_impressions_ly,
+        CASE WHEN gsc_tmo_nonbrand_impressions_wow IS NULL OR gsc_tmo_nonbrand_impressions_wow = 0 THEN NULL ELSE ROUND((gsc_tmo_nonbrand_impressions - gsc_tmo_nonbrand_impressions_wow) / gsc_tmo_nonbrand_impressions_wow, 6) END AS gsc_tmo_nonbrand_impressions_wow_pct,
+        CASE WHEN gsc_tmo_nonbrand_impressions_ly  IS NULL OR gsc_tmo_nonbrand_impressions_ly  = 0 THEN NULL ELSE ROUND((gsc_tmo_nonbrand_impressions - gsc_tmo_nonbrand_impressions_ly)  / gsc_tmo_nonbrand_impressions_ly,  6) END AS gsc_tmo_nonbrand_impressions_yoy_pct,
+
+        gsc_tmo_nonbrand_clicks,
+        gsc_tmo_nonbrand_clicks_wow,
+        gsc_tmo_nonbrand_clicks_ly,
+        CASE WHEN gsc_tmo_nonbrand_clicks_wow IS NULL OR gsc_tmo_nonbrand_clicks_wow = 0 THEN NULL ELSE ROUND((gsc_tmo_nonbrand_clicks - gsc_tmo_nonbrand_clicks_wow) / gsc_tmo_nonbrand_clicks_wow, 6) END AS gsc_tmo_nonbrand_clicks_wow_pct,
+        CASE WHEN gsc_tmo_nonbrand_clicks_ly  IS NULL OR gsc_tmo_nonbrand_clicks_ly  = 0 THEN NULL ELSE ROUND((gsc_tmo_nonbrand_clicks - gsc_tmo_nonbrand_clicks_ly)  / gsc_tmo_nonbrand_clicks_ly,  6) END AS gsc_tmo_nonbrand_clicks_yoy_pct
+
+    FROM with_comparisons
+),
+
+-- -----------------------------------------------------------------------
+-- STEP 7: max_data_date
+-- -----------------------------------------------------------------------
+with_max_date AS (
+    SELECT *,
+        MAX(CASE
+            WHEN gsc_tmo_brand_impressions    IS NOT NULL
+              OR gsc_tmo_nonbrand_impressions IS NOT NULL
+            THEN week_sun_to_sat END) OVER ()   AS max_data_date
+    FROM with_pcts
 )
 
 SELECT
     week_sun_to_sat,
-    brand_type,
-    impressions,
-    clicks
-FROM aggregated
-ORDER BY week_sun_to_sat ASC, brand_type ASC
+    'GSC'                                           AS data_source,
+    'ORGANIC SEARCH'                                AS channel,
+    max_data_date,
+
+    gsc_tmo_brand_impressions,
+    gsc_tmo_brand_impressions_wow,
+    gsc_tmo_brand_impressions_ly,
+    gsc_tmo_brand_impressions_wow_pct,
+    gsc_tmo_brand_impressions_yoy_pct,
+
+    gsc_tmo_brand_clicks,
+    gsc_tmo_brand_clicks_wow,
+    gsc_tmo_brand_clicks_ly,
+    gsc_tmo_brand_clicks_wow_pct,
+    gsc_tmo_brand_clicks_yoy_pct,
+
+    gsc_tmo_nonbrand_impressions,
+    gsc_tmo_nonbrand_impressions_wow,
+    gsc_tmo_nonbrand_impressions_ly,
+    gsc_tmo_nonbrand_impressions_wow_pct,
+    gsc_tmo_nonbrand_impressions_yoy_pct,
+
+    gsc_tmo_nonbrand_clicks,
+    gsc_tmo_nonbrand_clicks_wow,
+    gsc_tmo_nonbrand_clicks_ly,
+    gsc_tmo_nonbrand_clicks_wow_pct,
+    gsc_tmo_nonbrand_clicks_yoy_pct
+
+FROM with_max_date
 ;

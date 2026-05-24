@@ -12,265 +12,179 @@ DESTINATION:
 
 PURPOSE:
   Silver view for Google Trends BYOD weekly search interest data.
-  Applies week-end Saturday conversion, preserves byod_index as-is,
-  and unpivots the wide keyword columns (kw1-kw5) into long format
-  so each keyword becomes its own row. This powers the Top N Keywords
-  visualization in the dashboard.
-  Output has two row types per week:
-    1. One row for byod_index (no keyword dimension)
-    2. Up to 5 rows for keywords (one per keyword with interest and wow_change)
+  Outputs a WIDE table — one row per week_sun_to_sat.
+  All metric columns prefixed with 'trends_' for unambiguous
+  identification in Gold Wide spine join and Gold Long unpivot.
+  Applies week-end Saturday conversion, WoW/LY for byod_index only,
+  and preserves keyword columns wide (top_kw_1 through top_kw_5).
+  Keywords are NOT unpivoted here — unpivoting happens in Gold Long.
 
 BUSINESS GRAIN:
   One row per:
-    week_sun_to_sat + metric_name + dimension_value
-  where dimension_value is NULL for byod_index rows
-  and the keyword text for keyword rows
-
-FILTERS APPLIED:
-  - Keyword rows only included where keyword text is not null and not empty
-    (filters out pre-2026-05-09 rows where keyword data is not yet populated)
+    week_sun_to_sat
 
 BUSINESS LOGIC APPLIED:
+  - data_source = 'TRENDS'
+  - channel     = 'ORGANIC SEARCH'
   - week_sun_to_sat = DATE_ADD(event_date_sun, INTERVAL 6 DAY)
-  - Keyword unpivot: wide columns (top_kw_1 through top_kw_5) → long rows
-  - keyword_rank assigned 1-5 to preserve original ordering from source
+  - byod_index: WoW and LY computed (stable metric)
+  - Keywords: kept wide as trends_top_kw_1 through trends_top_kw_5
+    with trends_kw{n}_interest and trends_kw{n}_change
+    No WoW/LY for keywords — they change week to week
+  - max_data_date per source
+
+COLUMN NAMING CONVENTION:
+  trends_byod_index
+  trends_byod_index_wow
+  trends_byod_index_ly
+  trends_byod_index_wow_pct
+  trends_byod_index_yoy_pct
+  trends_top_kw_{1-5}
+  trends_kw{n}_interest
+  trends_kw{n}_change
 
 KEY MODELING NOTES:
-  - byod_index rows have dimension_name = NULL, dimension_value = NULL
-  - keyword rows have dimension_name = 'KEYWORD', dimension_value = keyword text
-  - kw_interest and kw_wow_change are keyword-level metrics, NULL for byod_index rows
-  - Keywords preserve natural language casing (e.g. 'byod', 'bring your device')
-    as they are human-readable labels, not programmatic identifiers
-  - Pre-2026-05-09 keyword data excluded via NULLIF check — byod_index still
-    included for those weeks since it is reliable across full history
+  - byod_index WoW/LY self-join on 1-row-per-week CTE — essentially free
+  - Keyword columns kept wide — unpivot in Gold Long for Top N visualization
+  - Keywords only populated from 2026-05-09 onward (pipeline backfill issue)
+    NULL/empty values preserved as-is — not a Silver concern
+  - NULLs preserved — no fake zeroes
+  - No ORDER BY — applied in Gold only
 
 DOWNSTREAM:
-  Gold : vw_sdi_pulseByod_gold_unified_weekly
+  Gold Wide : vw_sdi_pulseByod_gold_unified_wide
+  Gold Long : vw_sdi_pulseByod_gold_unified_long
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
 AS
 
+-- -----------------------------------------------------------------------
+-- STEP 1: Convert dates, prefix all columns with 'trends_'
+-- -----------------------------------------------------------------------
 WITH base AS (
     SELECT
-        -- Week-end Saturday conversion
         DATE_ADD(event_date_sun, INTERVAL 6 DAY)    AS week_sun_to_sat,
-        byod_index,
-        top_kw_1, kw1_interest, kw1_change,
-        top_kw_2, kw2_interest, kw2_change,
-        top_kw_3, kw3_interest, kw3_change,
-        top_kw_4, kw4_interest, kw4_change,
-        top_kw_5, kw5_interest, kw5_change
+        byod_index                                  AS trends_byod_index,
+        top_kw_1                                    AS trends_top_kw_1,
+        kw1_interest                                AS trends_kw1_interest,
+        kw1_change                                  AS trends_kw1_change,
+        top_kw_2                                    AS trends_top_kw_2,
+        kw2_interest                                AS trends_kw2_interest,
+        kw2_change                                  AS trends_kw2_change,
+        top_kw_3                                    AS trends_top_kw_3,
+        kw3_interest                                AS trends_kw3_interest,
+        kw3_change                                  AS trends_kw3_change,
+        top_kw_4                                    AS trends_top_kw_4,
+        kw4_interest                                AS trends_kw4_interest,
+        kw4_change                                  AS trends_kw4_change,
+        top_kw_5                                    AS trends_top_kw_5,
+        kw5_interest                                AS trends_kw5_interest,
+        kw5_change                                  AS trends_kw5_change
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_bronze_googleTrends_weekly`
 ),
 
--- byod_index rows: one per week, no keyword dimension
-byod_index_rows AS (
-    SELECT
-        week_sun_to_sat,
-        'byod_index'        AS metric_name,
-        byod_index          AS metric_value,
-        NULL                AS dimension_name,
-        NULL                AS dimension_value,
-        NULL                AS kw_interest,
-        NULL                AS kw_wow_change,
-        NULL                AS keyword_rank
+-- -----------------------------------------------------------------------
+-- STEP 2: Add custom week number for gap-safe LY matching
+-- -----------------------------------------------------------------------
+with_week_num AS (
+    SELECT *,
+        DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK) AS custom_week_num
     FROM base
 ),
 
--- Keyword rows: unpivot wide keyword columns into long format
--- Each keyword rank becomes its own row with interest and wow_change
--- Only included where keyword text is not null/empty (post-2026-05-09)
-keyword_rows AS (
-
-    -- Keyword rank 1
+-- -----------------------------------------------------------------------
+-- STEP 3: WoW and LY self-joins for byod_index only
+-- Joins on 1-row-per-week CTE — essentially free
+-- Keywords excluded — they change week to week
+-- -----------------------------------------------------------------------
+with_comparisons AS (
     SELECT
-        week_sun_to_sat,
-        'kw_interest'       AS metric_name,
-        kw1_interest        AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_1            AS dimension_value,
-        kw1_interest        AS kw_interest,
-        kw1_change          AS kw_wow_change,
-        1                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_1), '') IS NOT NULL
+        c.week_sun_to_sat,
+        c.custom_week_num,
+        c.trends_byod_index,
+        c.trends_top_kw_1, c.trends_kw1_interest, c.trends_kw1_change,
+        c.trends_top_kw_2, c.trends_kw2_interest, c.trends_kw2_change,
+        c.trends_top_kw_3, c.trends_kw3_interest, c.trends_kw3_change,
+        c.trends_top_kw_4, c.trends_kw4_interest, c.trends_kw4_change,
+        c.trends_top_kw_5, c.trends_kw5_interest, c.trends_kw5_change,
 
-    UNION ALL
+        -- WoW and LY for byod_index only
+        w.trends_byod_index                         AS trends_byod_index_wow,
+        l.trends_byod_index                         AS trends_byod_index_ly
 
-    -- Keyword rank 2
-    SELECT
-        week_sun_to_sat,
-        'kw_interest'       AS metric_name,
-        kw2_interest        AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_2            AS dimension_value,
-        kw2_interest        AS kw_interest,
-        kw2_change          AS kw_wow_change,
-        2                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_2), '') IS NOT NULL
-
-    UNION ALL
-
-    -- Keyword rank 3
-    SELECT
-        week_sun_to_sat,
-        'kw_interest'       AS metric_name,
-        kw3_interest        AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_3            AS dimension_value,
-        kw3_interest        AS kw_interest,
-        kw3_change          AS kw_wow_change,
-        3                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_3), '') IS NOT NULL
-
-    UNION ALL
-
-    -- Keyword rank 4
-    SELECT
-        week_sun_to_sat,
-        'kw_interest'       AS metric_name,
-        kw4_interest        AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_4            AS dimension_value,
-        kw4_interest        AS kw_interest,
-        kw4_change          AS kw_wow_change,
-        4                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_4), '') IS NOT NULL
-
-    UNION ALL
-
-    -- Keyword rank 5
-    SELECT
-        week_sun_to_sat,
-        'kw_interest'       AS metric_name,
-        kw5_interest        AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_5            AS dimension_value,
-        kw5_interest        AS kw_interest,
-        kw5_change          AS kw_wow_change,
-        5                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_5), '') IS NOT NULL
+    FROM with_week_num c
+    LEFT JOIN with_week_num w ON c.week_sun_to_sat = DATE_ADD(w.week_sun_to_sat, INTERVAL 7 DAY)
+    LEFT JOIN with_week_num l ON (c.custom_week_num - l.custom_week_num) = 52
 ),
 
--- Keyword wow_change rows: separate rows for wow_change metric per keyword
-kw_change_rows AS (
-
-    -- Keyword rank 1 wow_change
+-- -----------------------------------------------------------------------
+-- STEP 4: Compute wow_pct and yoy_pct for byod_index
+-- -----------------------------------------------------------------------
+with_pcts AS (
     SELECT
         week_sun_to_sat,
-        'kw_wow_change'     AS metric_name,
-        kw1_change          AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_1            AS dimension_value,
-        kw1_interest        AS kw_interest,
-        kw1_change          AS kw_wow_change,
-        1                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_1), '') IS NOT NULL
+        custom_week_num,
 
-    UNION ALL
+        trends_byod_index,
+        trends_byod_index_wow,
+        trends_byod_index_ly,
+        CASE WHEN trends_byod_index_wow IS NULL OR trends_byod_index_wow = 0 THEN NULL
+             ELSE ROUND((trends_byod_index - trends_byod_index_wow) / trends_byod_index_wow, 6)
+        END                                         AS trends_byod_index_wow_pct,
+        CASE WHEN trends_byod_index_ly  IS NULL OR trends_byod_index_ly  = 0 THEN NULL
+             ELSE ROUND((trends_byod_index - trends_byod_index_ly)  / trends_byod_index_ly,  6)
+        END                                         AS trends_byod_index_yoy_pct,
 
-    -- Keyword rank 2 wow_change
-    SELECT
-        week_sun_to_sat,
-        'kw_wow_change'     AS metric_name,
-        kw2_change          AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_2            AS dimension_value,
-        kw2_interest        AS kw_interest,
-        kw2_change          AS kw_wow_change,
-        2                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_2), '') IS NOT NULL
+        -- Keywords kept wide — no WoW/LY
+        trends_top_kw_1, trends_kw1_interest, trends_kw1_change,
+        trends_top_kw_2, trends_kw2_interest, trends_kw2_change,
+        trends_top_kw_3, trends_kw3_interest, trends_kw3_change,
+        trends_top_kw_4, trends_kw4_interest, trends_kw4_change,
+        trends_top_kw_5, trends_kw5_interest, trends_kw5_change
 
-    UNION ALL
+    FROM with_comparisons
+),
 
-    -- Keyword rank 3 wow_change
-    SELECT
-        week_sun_to_sat,
-        'kw_wow_change'     AS metric_name,
-        kw3_change          AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_3            AS dimension_value,
-        kw3_interest        AS kw_interest,
-        kw3_change          AS kw_wow_change,
-        3                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_3), '') IS NOT NULL
-
-    UNION ALL
-
-    -- Keyword rank 4 wow_change
-    SELECT
-        week_sun_to_sat,
-        'kw_wow_change'     AS metric_name,
-        kw4_change          AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_4            AS dimension_value,
-        kw4_interest        AS kw_interest,
-        kw4_change          AS kw_wow_change,
-        4                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_4), '') IS NOT NULL
-
-    UNION ALL
-
-    -- Keyword rank 5 wow_change
-    SELECT
-        week_sun_to_sat,
-        'kw_wow_change'     AS metric_name,
-        kw5_change          AS metric_value,
-        'KEYWORD'           AS dimension_name,
-        top_kw_5            AS dimension_value,
-        kw5_interest        AS kw_interest,
-        kw5_change          AS kw_wow_change,
-        5                   AS keyword_rank
-    FROM base
-    WHERE NULLIF(TRIM(top_kw_5), '') IS NOT NULL
+-- -----------------------------------------------------------------------
+-- STEP 5: max_data_date per source
+-- -----------------------------------------------------------------------
+with_max_date AS (
+    SELECT *,
+        MAX(CASE WHEN trends_byod_index IS NOT NULL THEN week_sun_to_sat END)
+            OVER ()                                 AS max_data_date
+    FROM with_pcts
 )
 
--- Combine byod_index rows + keyword interest rows + keyword wow_change rows
 SELECT
     week_sun_to_sat,
-    metric_name,
-    metric_value,
-    dimension_name,
-    dimension_value,
-    kw_interest,
-    kw_wow_change,
-    keyword_rank
-FROM byod_index_rows
+    'TRENDS'                                        AS data_source,
+    'ORGANIC SEARCH'                                AS channel,
+    max_data_date,
 
-UNION ALL
+    -- byod_index with WoW/LY
+    trends_byod_index,
+    trends_byod_index_wow,
+    trends_byod_index_ly,
+    trends_byod_index_wow_pct,
+    trends_byod_index_yoy_pct,
 
-SELECT
-    week_sun_to_sat,
-    metric_name,
-    metric_value,
-    dimension_name,
-    dimension_value,
-    kw_interest,
-    kw_wow_change,
-    keyword_rank
-FROM keyword_rows
+    -- Keywords wide — unpivoted in Gold Long
+    trends_top_kw_1,
+    trends_kw1_interest,
+    trends_kw1_change,
+    trends_top_kw_2,
+    trends_kw2_interest,
+    trends_kw2_change,
+    trends_top_kw_3,
+    trends_kw3_interest,
+    trends_kw3_change,
+    trends_top_kw_4,
+    trends_kw4_interest,
+    trends_kw4_change,
+    trends_top_kw_5,
+    trends_kw5_interest,
+    trends_kw5_change
 
-UNION ALL
-
-SELECT
-    week_sun_to_sat,
-    metric_name,
-    metric_value,
-    dimension_name,
-    dimension_value,
-    kw_interest,
-    kw_wow_change,
-    keyword_rank
-FROM kw_change_rows
-
-ORDER BY week_sun_to_sat ASC, keyword_rank ASC, metric_name ASC
+FROM with_max_date
 ;
