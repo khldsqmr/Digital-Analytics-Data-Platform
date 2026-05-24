@@ -18,25 +18,42 @@ PURPOSE:
   Gold Wide view for the Pulse BYOD pipeline.
   Spine join of all 5 Silver views on week_sun_to_sat.
   One row per week with all metrics from all sources as columns.
-  All columns are source-prefixed (profound_, gofish_, sa360_, gsc_, trends_)
-  so every column is unambiguous without needing a data_source dimension.
-  Used for: ad-hoc analysis, Excel exports, and as the source for Gold Long.
+  All metric columns are source-prefixed (profound_, gofish_, sa360_,
+  gsc_, trends_) so every column is unambiguous.
+  Per-source data_source and channel columns included for future
+  compatibility when Adobe brings multiple channels per source.
+  Used for: ad-hoc analysis, Excel exports, and as the source
+  for Gold Long unpivot.
 
 BUSINESS GRAIN:
   One row per:
     week_sun_to_sat
 
 JOIN LOGIC:
-  - Spine: DISTINCT week_sun_to_sat from all Silver views via UNION
+  - Spine: DISTINCT week_sun_to_sat from all Silver views via UNION DISTINCT
   - LEFT JOIN each Silver view on week_sun_to_sat
-  - NULL where source has no data for a given week (e.g. Profound only
-    starts 2026-03-22 so earlier weeks have NULL for all profound_ columns)
+  - NULL where source has no data for a given week
+
+DATA SOURCE AND CHANNEL COLUMNS:
+  Per-source data_source and channel columns are included now
+  to future-proof the schema for Adobe which will bring multiple
+  channels per source. Pattern:
+    {source}_data_source : e.g. sa360_data_source = 'SA360'
+    {source}_channel     : e.g. sa360_channel     = 'PAID SEARCH'
+
+MAX DATA DATE:
+  Per-source max_data_date columns carried through from Silver:
+    profound_max_data_date
+    gofish_max_data_date
+    sa360_max_data_date
+    gsc_max_data_date
+    trends_max_data_date
 
 KEY MODELING NOTES:
   - No computation in Gold Wide — all WoW/LY/pct done in Silver
-  - data_source and channel not needed as columns — source implicit in prefix
-  - max_data_date per source carried through from Silver
   - No ORDER BY in CTEs — final ORDER BY on week_sun_to_sat only
+  - Adding Adobe: create Bronze + Silver views, add LEFT JOIN here,
+    add adobe_data_source and adobe_channel columns
 
 DOWNSTREAM:
   Gold Long : vw_sdi_pulseByod_gold_unified_long
@@ -53,15 +70,28 @@ AS
 -- Ensures every week appears even if one source has no data
 -- -----------------------------------------------------------------------
 WITH spine AS (
-    SELECT DISTINCT week_sun_to_sat FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profound_weekly`
+    SELECT DISTINCT week_sun_to_sat
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profound_weekly`
+
     UNION DISTINCT
-    SELECT DISTINCT week_sun_to_sat FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profoundGofish_weekly`
+
+    SELECT DISTINCT week_sun_to_sat
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profoundGofish_weekly`
+
     UNION DISTINCT
-    SELECT DISTINCT week_sun_to_sat FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_sa360_weekly`
+
+    SELECT DISTINCT week_sun_to_sat
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_sa360_weekly`
+
     UNION DISTINCT
-    SELECT DISTINCT week_sun_to_sat FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_gsc_weekly`
+
+    SELECT DISTINCT week_sun_to_sat
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_gsc_weekly`
+
     UNION DISTINCT
-    SELECT DISTINCT week_sun_to_sat FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
+
+    SELECT DISTINCT week_sun_to_sat
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
 )
 
 SELECT
@@ -69,76 +99,90 @@ SELECT
 
     -- -----------------------------------------------------------------------
     -- PROFOUND: NON-BRAND AI Visibility
-    -- max_data_date tells dashboard when Profound data was last available
     -- -----------------------------------------------------------------------
+    -- Source metadata
+    p.data_source                                   AS profound_data_source,
+    p.channel                                       AS profound_channel,
     p.max_data_date                                 AS profound_max_data_date,
 
+    -- T-Mobile visibility_score
     p.profound_tmo_nonbrand_visibility_score,
     p.profound_tmo_nonbrand_visibility_score_wow,
     p.profound_tmo_nonbrand_visibility_score_ly,
     p.profound_tmo_nonbrand_visibility_score_wow_pct,
     p.profound_tmo_nonbrand_visibility_score_yoy_pct,
 
+    -- T-Mobile executions
     p.profound_tmo_nonbrand_executions,
     p.profound_tmo_nonbrand_executions_wow,
     p.profound_tmo_nonbrand_executions_ly,
     p.profound_tmo_nonbrand_executions_wow_pct,
     p.profound_tmo_nonbrand_executions_yoy_pct,
 
+    -- T-Mobile mentions_count
     p.profound_tmo_nonbrand_mentions_count,
     p.profound_tmo_nonbrand_mentions_count_wow,
     p.profound_tmo_nonbrand_mentions_count_ly,
     p.profound_tmo_nonbrand_mentions_count_wow_pct,
     p.profound_tmo_nonbrand_mentions_count_yoy_pct,
 
+    -- T-Mobile share_of_voice
     p.profound_tmo_nonbrand_share_of_voice,
     p.profound_tmo_nonbrand_share_of_voice_wow,
     p.profound_tmo_nonbrand_share_of_voice_ly,
     p.profound_tmo_nonbrand_share_of_voice_wow_pct,
     p.profound_tmo_nonbrand_share_of_voice_yoy_pct,
 
+    -- Verizon visibility_score
     p.profound_verizon_nonbrand_visibility_score,
     p.profound_verizon_nonbrand_visibility_score_wow,
     p.profound_verizon_nonbrand_visibility_score_ly,
     p.profound_verizon_nonbrand_visibility_score_wow_pct,
     p.profound_verizon_nonbrand_visibility_score_yoy_pct,
 
+    -- Verizon executions
     p.profound_verizon_nonbrand_executions,
     p.profound_verizon_nonbrand_executions_wow,
     p.profound_verizon_nonbrand_executions_ly,
     p.profound_verizon_nonbrand_executions_wow_pct,
     p.profound_verizon_nonbrand_executions_yoy_pct,
 
+    -- Verizon mentions_count
     p.profound_verizon_nonbrand_mentions_count,
     p.profound_verizon_nonbrand_mentions_count_wow,
     p.profound_verizon_nonbrand_mentions_count_ly,
     p.profound_verizon_nonbrand_mentions_count_wow_pct,
     p.profound_verizon_nonbrand_mentions_count_yoy_pct,
 
+    -- Verizon share_of_voice
     p.profound_verizon_nonbrand_share_of_voice,
     p.profound_verizon_nonbrand_share_of_voice_wow,
     p.profound_verizon_nonbrand_share_of_voice_ly,
     p.profound_verizon_nonbrand_share_of_voice_wow_pct,
     p.profound_verizon_nonbrand_share_of_voice_yoy_pct,
 
+    -- AT&T visibility_score
     p.profound_att_nonbrand_visibility_score,
     p.profound_att_nonbrand_visibility_score_wow,
     p.profound_att_nonbrand_visibility_score_ly,
     p.profound_att_nonbrand_visibility_score_wow_pct,
     p.profound_att_nonbrand_visibility_score_yoy_pct,
 
+    -- AT&T executions
     p.profound_att_nonbrand_executions,
     p.profound_att_nonbrand_executions_wow,
     p.profound_att_nonbrand_executions_ly,
     p.profound_att_nonbrand_executions_wow_pct,
     p.profound_att_nonbrand_executions_yoy_pct,
 
+    -- AT&T mentions_count
     p.profound_att_nonbrand_mentions_count,
     p.profound_att_nonbrand_mentions_count_wow,
     p.profound_att_nonbrand_mentions_count_ly,
     p.profound_att_nonbrand_mentions_count_wow_pct,
     p.profound_att_nonbrand_mentions_count_yoy_pct,
 
+    -- AT&T share_of_voice
     p.profound_att_nonbrand_share_of_voice,
     p.profound_att_nonbrand_share_of_voice_wow,
     p.profound_att_nonbrand_share_of_voice_ly,
@@ -148,74 +192,89 @@ SELECT
     -- -----------------------------------------------------------------------
     -- GOFISH: BRAND AI Visibility
     -- -----------------------------------------------------------------------
+    -- Source metadata
+    g.data_source                                   AS gofish_data_source,
+    g.channel                                       AS gofish_channel,
     g.max_data_date                                 AS gofish_max_data_date,
 
+    -- T-Mobile visibility_score
     g.gofish_tmo_brand_visibility_score,
     g.gofish_tmo_brand_visibility_score_wow,
     g.gofish_tmo_brand_visibility_score_ly,
     g.gofish_tmo_brand_visibility_score_wow_pct,
     g.gofish_tmo_brand_visibility_score_yoy_pct,
 
+    -- T-Mobile executions
     g.gofish_tmo_brand_executions,
     g.gofish_tmo_brand_executions_wow,
     g.gofish_tmo_brand_executions_ly,
     g.gofish_tmo_brand_executions_wow_pct,
     g.gofish_tmo_brand_executions_yoy_pct,
 
+    -- T-Mobile mentions_count
     g.gofish_tmo_brand_mentions_count,
     g.gofish_tmo_brand_mentions_count_wow,
     g.gofish_tmo_brand_mentions_count_ly,
     g.gofish_tmo_brand_mentions_count_wow_pct,
     g.gofish_tmo_brand_mentions_count_yoy_pct,
 
+    -- T-Mobile share_of_voice
     g.gofish_tmo_brand_share_of_voice,
     g.gofish_tmo_brand_share_of_voice_wow,
     g.gofish_tmo_brand_share_of_voice_ly,
     g.gofish_tmo_brand_share_of_voice_wow_pct,
     g.gofish_tmo_brand_share_of_voice_yoy_pct,
 
+    -- Verizon visibility_score
     g.gofish_verizon_brand_visibility_score,
     g.gofish_verizon_brand_visibility_score_wow,
     g.gofish_verizon_brand_visibility_score_ly,
     g.gofish_verizon_brand_visibility_score_wow_pct,
     g.gofish_verizon_brand_visibility_score_yoy_pct,
 
+    -- Verizon executions
     g.gofish_verizon_brand_executions,
     g.gofish_verizon_brand_executions_wow,
     g.gofish_verizon_brand_executions_ly,
     g.gofish_verizon_brand_executions_wow_pct,
     g.gofish_verizon_brand_executions_yoy_pct,
 
+    -- Verizon mentions_count
     g.gofish_verizon_brand_mentions_count,
     g.gofish_verizon_brand_mentions_count_wow,
     g.gofish_verizon_brand_mentions_count_ly,
     g.gofish_verizon_brand_mentions_count_wow_pct,
     g.gofish_verizon_brand_mentions_count_yoy_pct,
 
+    -- Verizon share_of_voice
     g.gofish_verizon_brand_share_of_voice,
     g.gofish_verizon_brand_share_of_voice_wow,
     g.gofish_verizon_brand_share_of_voice_ly,
     g.gofish_verizon_brand_share_of_voice_wow_pct,
     g.gofish_verizon_brand_share_of_voice_yoy_pct,
 
+    -- AT&T visibility_score
     g.gofish_att_brand_visibility_score,
     g.gofish_att_brand_visibility_score_wow,
     g.gofish_att_brand_visibility_score_ly,
     g.gofish_att_brand_visibility_score_wow_pct,
     g.gofish_att_brand_visibility_score_yoy_pct,
 
+    -- AT&T executions
     g.gofish_att_brand_executions,
     g.gofish_att_brand_executions_wow,
     g.gofish_att_brand_executions_ly,
     g.gofish_att_brand_executions_wow_pct,
     g.gofish_att_brand_executions_yoy_pct,
 
+    -- AT&T mentions_count
     g.gofish_att_brand_mentions_count,
     g.gofish_att_brand_mentions_count_wow,
     g.gofish_att_brand_mentions_count_ly,
     g.gofish_att_brand_mentions_count_wow_pct,
     g.gofish_att_brand_mentions_count_yoy_pct,
 
+    -- AT&T share_of_voice
     g.gofish_att_brand_share_of_voice,
     g.gofish_att_brand_share_of_voice_wow,
     g.gofish_att_brand_share_of_voice_ly,
@@ -225,74 +284,89 @@ SELECT
     -- -----------------------------------------------------------------------
     -- SA360: Paid Search Performance
     -- -----------------------------------------------------------------------
+    -- Source metadata
+    sa.data_source                                  AS sa360_data_source,
+    sa.channel                                      AS sa360_channel,
     sa.max_data_date                                AS sa360_max_data_date,
 
+    -- Brand impressions
     sa.sa360_tmo_brand_impressions,
     sa.sa360_tmo_brand_impressions_wow,
     sa.sa360_tmo_brand_impressions_ly,
     sa.sa360_tmo_brand_impressions_wow_pct,
     sa.sa360_tmo_brand_impressions_yoy_pct,
 
+    -- Brand clicks
     sa.sa360_tmo_brand_clicks,
     sa.sa360_tmo_brand_clicks_wow,
     sa.sa360_tmo_brand_clicks_ly,
     sa.sa360_tmo_brand_clicks_wow_pct,
     sa.sa360_tmo_brand_clicks_yoy_pct,
 
+    -- Brand cost
     sa.sa360_tmo_brand_cost,
     sa.sa360_tmo_brand_cost_wow,
     sa.sa360_tmo_brand_cost_ly,
     sa.sa360_tmo_brand_cost_wow_pct,
     sa.sa360_tmo_brand_cost_yoy_pct,
 
+    -- Brand orders
     sa.sa360_tmo_brand_orders,
     sa.sa360_tmo_brand_orders_wow,
     sa.sa360_tmo_brand_orders_ly,
     sa.sa360_tmo_brand_orders_wow_pct,
     sa.sa360_tmo_brand_orders_yoy_pct,
 
+    -- Brand cart_start
     sa.sa360_tmo_brand_cart_start,
     sa.sa360_tmo_brand_cart_start_wow,
     sa.sa360_tmo_brand_cart_start_ly,
     sa.sa360_tmo_brand_cart_start_wow_pct,
     sa.sa360_tmo_brand_cart_start_yoy_pct,
 
+    -- Brand postpaid_pspv
     sa.sa360_tmo_brand_postpaid_pspv,
     sa.sa360_tmo_brand_postpaid_pspv_wow,
     sa.sa360_tmo_brand_postpaid_pspv_ly,
     sa.sa360_tmo_brand_postpaid_pspv_wow_pct,
     sa.sa360_tmo_brand_postpaid_pspv_yoy_pct,
 
+    -- Nonbrand impressions
     sa.sa360_tmo_nonbrand_impressions,
     sa.sa360_tmo_nonbrand_impressions_wow,
     sa.sa360_tmo_nonbrand_impressions_ly,
     sa.sa360_tmo_nonbrand_impressions_wow_pct,
     sa.sa360_tmo_nonbrand_impressions_yoy_pct,
 
+    -- Nonbrand clicks
     sa.sa360_tmo_nonbrand_clicks,
     sa.sa360_tmo_nonbrand_clicks_wow,
     sa.sa360_tmo_nonbrand_clicks_ly,
     sa.sa360_tmo_nonbrand_clicks_wow_pct,
     sa.sa360_tmo_nonbrand_clicks_yoy_pct,
 
+    -- Nonbrand cost
     sa.sa360_tmo_nonbrand_cost,
     sa.sa360_tmo_nonbrand_cost_wow,
     sa.sa360_tmo_nonbrand_cost_ly,
     sa.sa360_tmo_nonbrand_cost_wow_pct,
     sa.sa360_tmo_nonbrand_cost_yoy_pct,
 
+    -- Nonbrand orders
     sa.sa360_tmo_nonbrand_orders,
     sa.sa360_tmo_nonbrand_orders_wow,
     sa.sa360_tmo_nonbrand_orders_ly,
     sa.sa360_tmo_nonbrand_orders_wow_pct,
     sa.sa360_tmo_nonbrand_orders_yoy_pct,
 
+    -- Nonbrand cart_start
     sa.sa360_tmo_nonbrand_cart_start,
     sa.sa360_tmo_nonbrand_cart_start_wow,
     sa.sa360_tmo_nonbrand_cart_start_ly,
     sa.sa360_tmo_nonbrand_cart_start_wow_pct,
     sa.sa360_tmo_nonbrand_cart_start_yoy_pct,
 
+    -- Nonbrand postpaid_pspv
     sa.sa360_tmo_nonbrand_postpaid_pspv,
     sa.sa360_tmo_nonbrand_postpaid_pspv_wow,
     sa.sa360_tmo_nonbrand_postpaid_pspv_ly,
@@ -302,26 +376,33 @@ SELECT
     -- -----------------------------------------------------------------------
     -- GSC: Organic Search Performance
     -- -----------------------------------------------------------------------
+    -- Source metadata
+    gsc.data_source                                 AS gsc_data_source,
+    gsc.channel                                     AS gsc_channel,
     gsc.max_data_date                               AS gsc_max_data_date,
 
+    -- Brand impressions
     gsc.gsc_tmo_brand_impressions,
     gsc.gsc_tmo_brand_impressions_wow,
     gsc.gsc_tmo_brand_impressions_ly,
     gsc.gsc_tmo_brand_impressions_wow_pct,
     gsc.gsc_tmo_brand_impressions_yoy_pct,
 
+    -- Brand clicks
     gsc.gsc_tmo_brand_clicks,
     gsc.gsc_tmo_brand_clicks_wow,
     gsc.gsc_tmo_brand_clicks_ly,
     gsc.gsc_tmo_brand_clicks_wow_pct,
     gsc.gsc_tmo_brand_clicks_yoy_pct,
 
+    -- Nonbrand impressions
     gsc.gsc_tmo_nonbrand_impressions,
     gsc.gsc_tmo_nonbrand_impressions_wow,
     gsc.gsc_tmo_nonbrand_impressions_ly,
     gsc.gsc_tmo_nonbrand_impressions_wow_pct,
     gsc.gsc_tmo_nonbrand_impressions_yoy_pct,
 
+    -- Nonbrand clicks
     gsc.gsc_tmo_nonbrand_clicks,
     gsc.gsc_tmo_nonbrand_clicks_wow,
     gsc.gsc_tmo_nonbrand_clicks_ly,
@@ -331,8 +412,12 @@ SELECT
     -- -----------------------------------------------------------------------
     -- TRENDS: Market Interest + Keywords (wide)
     -- -----------------------------------------------------------------------
+    -- Source metadata
+    t.data_source                                   AS trends_data_source,
+    t.channel                                       AS trends_channel,
     t.max_data_date                                 AS trends_max_data_date,
 
+    -- byod_index with WoW/LY
     t.trends_byod_index,
     t.trends_byod_index_wow,
     t.trends_byod_index_ly,
@@ -357,6 +442,7 @@ SELECT
     t.trends_kw5_change
 
 FROM spine s
+
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profound_weekly`       p   ON s.week_sun_to_sat = p.week_sun_to_sat
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profoundGofish_weekly` g   ON s.week_sun_to_sat = g.week_sun_to_sat
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_sa360_weekly`          sa  ON s.week_sun_to_sat = sa.week_sun_to_sat
