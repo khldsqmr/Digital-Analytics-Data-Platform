@@ -22,6 +22,7 @@ PURPOSE:
   gsc_, trends_) so every column is unambiguous.
   Per-source data_source and channel columns included for future
   compatibility when Adobe brings multiple channels per source.
+  time_granularity = 'WEEKLY' for self-describing schema.
   Used for: ad-hoc analysis, Excel exports, and as the source
   for Gold Long unpivot.
 
@@ -29,25 +30,23 @@ BUSINESS GRAIN:
   One row per:
     week_sun_to_sat
 
+COLUMN ORDER:
+  1. week_sun_to_sat   — time dimension
+  2. time_granularity  — always 'WEEKLY'
+  3. Per source blocks in order:
+       {source}_data_source
+       {source}_channel
+       {source}_max_data_date
+       {source}_{metric}
+       {source}_{metric}_wow
+       {source}_{metric}_ly
+       {source}_{metric}_wow_pct
+       {source}_{metric}_yoy_pct
+
 JOIN LOGIC:
   - Spine: DISTINCT week_sun_to_sat from all Silver views via UNION DISTINCT
   - LEFT JOIN each Silver view on week_sun_to_sat
   - NULL where source has no data for a given week
-
-DATA SOURCE AND CHANNEL COLUMNS:
-  Per-source data_source and channel columns are included now
-  to future-proof the schema for Adobe which will bring multiple
-  channels per source. Pattern:
-    {source}_data_source : e.g. sa360_data_source = 'SA360'
-    {source}_channel     : e.g. sa360_channel     = 'PAID SEARCH'
-
-MAX DATA DATE:
-  Per-source max_data_date columns carried through from Silver:
-    profound_max_data_date
-    gofish_max_data_date
-    sa360_max_data_date
-    gsc_max_data_date
-    trends_max_data_date
 
 KEY MODELING NOTES:
   - No computation in Gold Wide — all WoW/LY/pct done in Silver
@@ -72,35 +71,30 @@ AS
 WITH spine AS (
     SELECT DISTINCT week_sun_to_sat
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profound_weekly`
-
     UNION DISTINCT
-
     SELECT DISTINCT week_sun_to_sat
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profoundGofish_weekly`
-
     UNION DISTINCT
-
     SELECT DISTINCT week_sun_to_sat
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_sa360_weekly`
-
     UNION DISTINCT
-
     SELECT DISTINCT week_sun_to_sat
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_gsc_weekly`
-
     UNION DISTINCT
-
     SELECT DISTINCT week_sun_to_sat
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
 )
 
 SELECT
+    -- -----------------------------------------------------------------------
+    -- TIME DIMENSIONS
+    -- -----------------------------------------------------------------------
     s.week_sun_to_sat,
+    'WEEKLY'                                        AS time_granularity,
 
     -- -----------------------------------------------------------------------
     -- PROFOUND: NON-BRAND AI Visibility
     -- -----------------------------------------------------------------------
-    -- Source metadata
     p.data_source                                   AS profound_data_source,
     p.channel                                       AS profound_channel,
     p.max_data_date                                 AS profound_max_data_date,
@@ -192,7 +186,6 @@ SELECT
     -- -----------------------------------------------------------------------
     -- GOFISH: BRAND AI Visibility
     -- -----------------------------------------------------------------------
-    -- Source metadata
     g.data_source                                   AS gofish_data_source,
     g.channel                                       AS gofish_channel,
     g.max_data_date                                 AS gofish_max_data_date,
@@ -284,7 +277,6 @@ SELECT
     -- -----------------------------------------------------------------------
     -- SA360: Paid Search Performance
     -- -----------------------------------------------------------------------
-    -- Source metadata
     sa.data_source                                  AS sa360_data_source,
     sa.channel                                      AS sa360_channel,
     sa.max_data_date                                AS sa360_max_data_date,
@@ -376,7 +368,6 @@ SELECT
     -- -----------------------------------------------------------------------
     -- GSC: Organic Search Performance
     -- -----------------------------------------------------------------------
-    -- Source metadata
     gsc.data_source                                 AS gsc_data_source,
     gsc.channel                                     AS gsc_channel,
     gsc.max_data_date                               AS gsc_max_data_date,
@@ -412,7 +403,6 @@ SELECT
     -- -----------------------------------------------------------------------
     -- TRENDS: Market Interest + Keywords (wide)
     -- -----------------------------------------------------------------------
-    -- Source metadata
     t.data_source                                   AS trends_data_source,
     t.channel                                       AS trends_channel,
     t.max_data_date                                 AS trends_max_data_date,
@@ -442,7 +432,6 @@ SELECT
     t.trends_kw5_change
 
 FROM spine s
-
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profound_weekly`       p   ON s.week_sun_to_sat = p.week_sun_to_sat
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_profoundGofish_weekly` g   ON s.week_sun_to_sat = g.week_sun_to_sat
 LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_sa360_weekly`          sa  ON s.week_sun_to_sat = sa.week_sun_to_sat
