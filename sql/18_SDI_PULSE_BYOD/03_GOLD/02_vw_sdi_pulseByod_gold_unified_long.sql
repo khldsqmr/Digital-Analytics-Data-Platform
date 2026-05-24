@@ -236,9 +236,8 @@ trends_index_long AS (
 -- -----------------------------------------------------------------------
 trends_keywords_long AS (
 
-    -- Keyword rank 1 — interest
     SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD' AS dimension_name, trends_top_kw_1 AS dimension_value,
+        'KEYWORD_RANK_1' AS dimension_name, trends_top_kw_1 AS dimension_value,
         'trends_kw_interest' AS metric_name, trends_kw1_interest AS metric_value,
         CAST(NULL AS FLOAT64) AS metric_value_wow, CAST(NULL AS FLOAT64) AS metric_value_ly,
         CAST(NULL AS FLOAT64) AS wow_pct, CAST(NULL AS FLOAT64) AS yoy_pct
@@ -246,7 +245,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_1,
+        'KEYWORD_RANK_1', trends_top_kw_1,
         'trends_kw_wow_change', trends_kw1_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -254,7 +253,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_2,
+        'KEYWORD_RANK_2', trends_top_kw_2,
         'trends_kw_interest', trends_kw2_interest,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -262,7 +261,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_2,
+        'KEYWORD_RANK_2', trends_top_kw_2,
         'trends_kw_wow_change', trends_kw2_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -270,7 +269,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_3,
+        'KEYWORD_RANK_3', trends_top_kw_3,
         'trends_kw_interest', trends_kw3_interest,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -278,7 +277,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_3,
+        'KEYWORD_RANK_3', trends_top_kw_3,
         'trends_kw_wow_change', trends_kw3_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -286,7 +285,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_4,
+        'KEYWORD_RANK_4', trends_top_kw_4,
         'trends_kw_interest', trends_kw4_interest,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -294,7 +293,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_4,
+        'KEYWORD_RANK_4', trends_top_kw_4,
         'trends_kw_wow_change', trends_kw4_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -302,7 +301,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_5,
+        'KEYWORD_RANK_5', trends_top_kw_5,
         'trends_kw_interest', trends_kw5_interest,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
@@ -310,7 +309,7 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD', trends_top_kw_5,
+        'KEYWORD_RANK_5', trends_top_kw_5,
         'trends_kw_wow_change', trends_kw5_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
