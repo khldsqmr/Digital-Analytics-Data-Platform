@@ -55,8 +55,6 @@ ADDING NEW SOURCES:
   3. Add to combined CTE UNION ALL
   No structural changes needed
 
-AUTHOR:       Pulse BYOD Team
-CREATED:      2026-05-24
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_long`
