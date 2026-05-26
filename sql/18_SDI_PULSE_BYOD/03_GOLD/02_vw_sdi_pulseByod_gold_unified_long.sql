@@ -24,6 +24,8 @@ PURPOSE:
   time_granularity = 'WEEKLY' for self-describing schema.
   Keywords unpivoted from Trends Silver with KEYWORD_RANK_1 through
   KEYWORD_RANK_5 as dimension_name for Top N Keywords visualization.
+  trends_kw_wow_change rows excluded — keywords change week to week
+  making WoW comparison unreliable; only trends_kw_interest retained.
   Adobe channel derived from metric_name suffix in combined CTE.
 
 OUTPUT SCHEMA:
@@ -49,12 +51,19 @@ PERFORMANCE NOTES:
   - UNION ALL in combined CTE assembles all sources
   - max_data_date per data_source via MAX() OVER (PARTITION BY data_source)
 
+CHANGES:
+  - trends_kw_wow_change rows removed from trends_keywords_long
+    Keywords change week to week — WoW comparison is unreliable
+    Only trends_kw_interest rows retained (max 5 rows per week)
+
 ADDING NEW SOURCES:
   1. Create Bronze + Silver views
   2. Add new UNPIVOT CTE below
   3. Add to combined CTE UNION ALL
   No structural changes needed
 
+DOWNSTREAM:
+  Gold Long : this view — used directly by dashboard
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_long`
@@ -232,10 +241,13 @@ trends_index_long AS (
 
 -- -----------------------------------------------------------------------
 -- TRENDS: Keywords unpivoted
--- Up to 10 rows per week (5 keywords × 2 metrics: interest + wow_change)
--- No WoW/LY — keywords change week to week
+-- Up to 5 rows per week (5 keywords × 1 metric: interest only)
+-- trends_kw_wow_change excluded — keywords change week to week,
+-- making WoW comparison unreliable and potentially misleading
+-- Only trends_kw_interest retained as ground truth for the week
 -- dimension_name = 'KEYWORD_RANK_1' through 'KEYWORD_RANK_5'
 -- dimension_value = keyword text
+-- wow_pct, yoy_pct, metric_value_wow, metric_value_ly all NULL
 -- -----------------------------------------------------------------------
 trends_keywords_long AS (
 
@@ -248,24 +260,8 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD_RANK_1', trends_top_kw_1,
-        'trends_kw_wow_change', trends_kw1_change,
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
-    WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
-
-    UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
         'KEYWORD_RANK_2', trends_top_kw_2,
         'trends_kw_interest', trends_kw2_interest,
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
-    WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
-
-    UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD_RANK_2', trends_top_kw_2,
-        'trends_kw_wow_change', trends_kw2_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
@@ -280,14 +276,6 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD_RANK_3', trends_top_kw_3,
-        'trends_kw_wow_change', trends_kw3_change,
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
-    WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
-
-    UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
         'KEYWORD_RANK_4', trends_top_kw_4,
         'trends_kw_interest', trends_kw4_interest,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
@@ -296,24 +284,8 @@ trends_keywords_long AS (
     WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
 
     UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD_RANK_4', trends_top_kw_4,
-        'trends_kw_wow_change', trends_kw4_change,
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
-    WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
-
-    UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
         'KEYWORD_RANK_5', trends_top_kw_5,
         'trends_kw_interest', trends_kw5_interest,
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
-        CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
-    WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
-
-    UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date,
-        'KEYWORD_RANK_5', trends_top_kw_5,
-        'trends_kw_wow_change', trends_kw5_change,
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64),
         CAST(NULL AS FLOAT64), CAST(NULL AS FLOAT64)
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_googleTrends_weekly`
@@ -443,7 +415,7 @@ combined AS (
 
     UNION ALL
 
-    -- TRENDS: keywords
+    -- TRENDS: keywords (interest only — no wow_change rows)
     SELECT
         week_sun_to_sat, data_source, channel, max_data_date,
         dimension_name, dimension_value,
