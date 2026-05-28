@@ -89,7 +89,6 @@ WITH ranked AS (
         -- Dedup: latest row per account_id + asset_id + date_yyyymmdd + tag
         ROW_NUMBER() OVER (
             PARTITION BY
-                PARTITION BY
                 SAFE_CAST(raw.account_id  AS STRING),
                 SAFE_CAST(raw.asset_id    AS STRING),
                 SAFE_CAST(raw.asset_name  AS STRING),
