@@ -23,6 +23,6 @@ GROUP BY
   UPPER(TRIM(LOB_Supported)),
   UPPER(TRIM(week_type))
 ORDER BY
+  LOB_Supported DESC,
   Quarter DESC,
-  QGP_Week DESC,
-  LOB_Supported;
+  QGP_Week DESC;
