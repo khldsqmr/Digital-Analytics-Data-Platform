@@ -2,23 +2,36 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_
 
 WITH joined AS (
   SELECT
-    a.Quarter, a.Week_Beginning_Monday, a.Week_Ending_Sunday, a.QGP_Week,
-    a.FileLoad_Date, a.weekly_actual, f.weekly_forecast,
+    a.Quarter,
+    a.Week_Beginning_Monday,
+    a.Week_Ending_Sunday,
+    a.QGP_Week,
+    a.FileLoad_Date,
+    a.weekly_actual,
+    f.weekly_forecast,
     COALESCE(NULLIF(a.weekly_actual, 0), f.weekly_forecast) AS weekly_display,
     a.week_type
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendActuals_weekly` a
   LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendForecasts_weekly` f
-    ON a.Quarter = f.Quarter AND a.QGP_Week = f.QGP_Week
+    ON a.Quarter  = f.Quarter
+   AND a.QGP_Week = f.QGP_Week
 ),
 
 forecast_only AS (
   SELECT
-    f.Quarter, f.Week_Beginning_Monday, f.Week_Ending_Sunday, f.QGP_Week,
-    f.FileLoad_Date, NULL AS weekly_actual, f.weekly_forecast,
-    f.weekly_forecast AS weekly_display, f.week_type
+    f.Quarter,
+    f.Week_Beginning_Monday,
+    f.Week_Ending_Sunday,
+    f.QGP_Week,
+    f.FileLoad_Date,
+    NULL              AS weekly_actual,
+    f.weekly_forecast,
+    f.weekly_forecast AS weekly_display,
+    f.week_type
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendForecasts_weekly` f
   LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendActuals_weekly` a
-    ON f.Quarter = a.Quarter AND f.QGP_Week = a.QGP_Week
+    ON f.Quarter  = a.Quarter
+   AND f.QGP_Week = a.QGP_Week
   WHERE a.QGP_Week IS NULL
 ),
 
@@ -60,73 +73,66 @@ with_proration AS (
     *,
     DATE_DIFF(Week_Ending_Sunday, Week_Beginning_Monday, DAY) + 1 AS total_week_days,
     CASE
-      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date
+      WHEN week_type != 'boundary_week'
+        AND Week_Ending_Sunday > Quarter_End_Date
         THEN DATE_DIFF(Quarter_End_Date, Week_Beginning_Monday, DAY) + 1
       ELSE NULL
     END AS days_in_quarter
   FROM with_quarter_bounds
-),
-
-deduped AS (
-  SELECT
-    CONCAT(
-      CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
-      LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
-      CAST(qtr_num AS STRING)
-    ) AS Quarter,
-    CASE
-      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday < Quarter_Start_Date
-        THEN Quarter_Start_Date
-      ELSE Week_Beginning_Monday
-    END AS Period_Start,
-    CASE
-      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
-      ELSE Week_Ending_Sunday
-    END AS Period_End,
-    CASE
-      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
-      ELSE QGP_Week
-    END AS QGP_Week,
-    Quarter_End_Date,
-    FileLoad_Date,
-    CASE WHEN days_in_quarter IS NOT NULL
-      THEN ROUND(weekly_actual * (days_in_quarter / total_week_days), 2)
-      ELSE weekly_actual END AS weekly_actual,
-    CASE WHEN days_in_quarter IS NOT NULL
-      THEN ROUND(weekly_forecast * (days_in_quarter / total_week_days), 2)
-      ELSE weekly_forecast END AS weekly_forecast,
-    CASE WHEN days_in_quarter IS NOT NULL
-      THEN ROUND(weekly_display * (days_in_quarter / total_week_days), 2)
-      ELSE weekly_display END AS weekly_display,
-    CASE
-      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
-      ELSE week_type
-    END AS week_type,
-    days_in_quarter,
-    total_week_days,
-    CASE WHEN days_in_quarter IS NOT NULL
-      THEN ROUND(days_in_quarter / total_week_days, 4)
-      ELSE NULL END AS proration_factor,
-    ROW_NUMBER() OVER (
-      PARTITION BY
-        CONCAT(
-          CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
-          LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
-          CAST(qtr_num AS STRING)
-        ),
-        CASE
-          WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-          WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
-          ELSE QGP_Week
-        END
-      ORDER BY FileLoad_Date DESC
-    ) AS rn
-  FROM with_proration
 )
 
-SELECT * EXCEPT (rn)
-FROM deduped
-WHERE rn = 1
-ORDER BY Quarter DESC, QGP_Week DESC;
+SELECT
+  CONCAT(
+    CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
+    LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
+    CAST(qtr_num AS STRING)
+  ) AS Quarter,
+
+  CASE
+    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday < Quarter_Start_Date
+      THEN Quarter_Start_Date
+    ELSE Week_Beginning_Monday
+  END AS Period_Start,
+
+  CASE
+    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+    ELSE Week_Ending_Sunday
+  END AS Period_End,
+
+  CASE
+    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+    ELSE QGP_Week
+  END AS QGP_Week,
+
+  Quarter_End_Date,
+  FileLoad_Date,
+
+  CASE WHEN days_in_quarter IS NOT NULL
+    THEN ROUND(weekly_actual   * (days_in_quarter / total_week_days), 2)
+    ELSE weekly_actual   END AS weekly_actual,
+
+  CASE WHEN days_in_quarter IS NOT NULL
+    THEN ROUND(weekly_forecast * (days_in_quarter / total_week_days), 2)
+    ELSE weekly_forecast END AS weekly_forecast,
+
+  CASE WHEN days_in_quarter IS NOT NULL
+    THEN ROUND(weekly_display  * (days_in_quarter / total_week_days), 2)
+    ELSE weekly_display  END AS weekly_display,
+
+  CASE
+    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
+    ELSE week_type
+  END AS week_type,
+
+  days_in_quarter,
+  total_week_days,
+
+  CASE WHEN days_in_quarter IS NOT NULL
+    THEN ROUND(days_in_quarter / total_week_days, 4)
+    ELSE NULL
+  END AS proration_factor
+
+FROM with_proration
+ORDER BY qtr_year_2digit DESC, qtr_num DESC, QGP_Week DESC;
