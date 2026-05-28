@@ -71,54 +71,64 @@ with_proration AS (
       ELSE NULL
     END AS days_in_quarter
   FROM with_quarter_bounds
+),
+
+deduped AS (
+  SELECT
+    CONCAT(
+      CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
+      LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
+      CAST(qtr_num AS STRING)
+    ) AS Quarter,
+    CASE
+      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday < Quarter_Start_Date
+        THEN Quarter_Start_Date
+      ELSE Week_Beginning_Monday
+    END AS Period_Start,
+    CASE
+      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+      ELSE Week_Ending_Sunday
+    END AS Period_End,
+    CASE
+      WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+      ELSE QGP_Week
+    END AS QGP_Week,
+    Quarter_End_Date,
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
+    CASE WHEN days_in_quarter IS NOT NULL
+      THEN ROUND(weekly_actual * (days_in_quarter / total_week_days), 2)
+      ELSE weekly_actual END AS weekly_actual,
+    CASE WHEN days_in_quarter IS NOT NULL
+      THEN ROUND(weekly_forecast * (days_in_quarter / total_week_days), 2)
+      ELSE weekly_forecast END AS weekly_forecast,
+    CASE WHEN days_in_quarter IS NOT NULL
+      THEN ROUND(weekly_display * (days_in_quarter / total_week_days), 2)
+      ELSE weekly_display END AS weekly_display,
+    CASE
+      WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
+      ELSE week_type
+    END AS week_type,
+    days_in_quarter,
+    total_week_days,
+    CASE WHEN days_in_quarter IS NOT NULL
+      THEN ROUND(days_in_quarter / total_week_days, 4)
+      ELSE NULL END AS proration_factor,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      ORDER BY FileLoad_Date DESC
+    ) AS rn
+  FROM with_proration
 )
 
-SELECT
-  CONCAT(
-    CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
-    LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
-    CAST(qtr_num AS STRING)
-  ) AS Quarter,
-  CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday < Quarter_Start_Date
-      THEN Quarter_Start_Date
-    ELSE Week_Beginning_Monday
-  END AS Period_Start,
-  CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
-    ELSE Week_Ending_Sunday
-  END AS Period_End,
-  CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
-    ELSE QGP_Week
-  END AS QGP_Week,
-  Quarter_End_Date,
-  FileLoad_Date,
-  LOB_Supported,
-  Channel,
-  Tactic,
-  Message_Type,
-  Agency,
-  CASE WHEN days_in_quarter IS NOT NULL
-    THEN ROUND(weekly_actual * (days_in_quarter / total_week_days), 2)
-    ELSE weekly_actual END AS weekly_actual,
-  CASE WHEN days_in_quarter IS NOT NULL
-    THEN ROUND(weekly_forecast * (days_in_quarter / total_week_days), 2)
-    ELSE weekly_forecast END AS weekly_forecast,
-  CASE WHEN days_in_quarter IS NOT NULL
-    THEN ROUND(weekly_display * (days_in_quarter / total_week_days), 2)
-    ELSE weekly_display END AS weekly_display,
-  CASE
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
-    ELSE week_type
-  END AS week_type,
-  days_in_quarter,
-  total_week_days,
-  CASE WHEN days_in_quarter IS NOT NULL
-    THEN ROUND(days_in_quarter / total_week_days, 4)
-    ELSE NULL END AS proration_factor
-FROM with_proration
-WHERE weekly_display IS NOT NULL AND weekly_display != 0
-ORDER BY qtr_year_2digit DESC, qtr_num DESC, QGP_Week DESC, LOB_Supported, Channel, Tactic;
+SELECT * EXCEPT (rn)
+FROM deduped
+WHERE rn = 1
+  AND weekly_display IS NOT NULL AND weekly_display != 0
+ORDER BY Quarter DESC, QGP_Week DESC, LOB_Supported, Channel, Tactic;
