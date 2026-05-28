@@ -121,7 +121,22 @@ deduped AS (
       THEN ROUND(days_in_quarter / total_week_days, 4)
       ELSE NULL END AS proration_factor,
     ROW_NUMBER() OVER (
-      PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      PARTITION BY
+        CONCAT(
+          CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
+          LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), ' Q',
+          CAST(qtr_num AS STRING)
+        ),
+        CASE
+          WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+          WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+          ELSE QGP_Week
+        END,
+        LOB_Supported,
+        Channel,
+        Tactic,
+        Message_Type,
+        Agency
       ORDER BY FileLoad_Date DESC
     ) AS rn
   FROM with_proration
