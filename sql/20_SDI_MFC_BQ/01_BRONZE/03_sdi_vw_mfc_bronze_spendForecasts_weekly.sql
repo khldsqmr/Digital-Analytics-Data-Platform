@@ -7,6 +7,7 @@ WITH raw AS (
     CAST(Week_Ending_Sunday AS DATE)    AS Week_Ending_Sunday,
     CAST(QGP_Week AS DATE)              AS QGP_Week,
     File_Date                           AS FileLoad_Date,
+    UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
     CASE WHEN QGP = 'Forecast' THEN Spend ELSE NULL END AS Spend_Forecast,
     CASE WHEN QGP = 'Actual'   THEN Spend ELSE NULL END AS Spend_Actual
   FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
@@ -34,6 +35,7 @@ weekly_snapshots AS (
     Week_Ending_Sunday,
     QGP_Week,
     FileLoad_Date,
+    LOB_Supported,
     SUM(Spend_Forecast) AS weekly_forecast
   FROM raw
   WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
@@ -43,32 +45,35 @@ weekly_snapshots AS (
     Week_Beginning_Monday,
     Week_Ending_Sunday,
     QGP_Week,
-    FileLoad_Date
+    FileLoad_Date,
+    LOB_Supported
 ),
 
 first_actual_date AS (
   SELECT
     Quarter,
     QGP_Week,
+    LOB_Supported,
     MIN(FileLoad_Date) AS first_actual_file_load_date
   FROM raw
   WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
     AND Spend_Actual IS NOT NULL
     AND Spend_Actual != 0
-  GROUP BY Quarter, QGP_Week
+  GROUP BY Quarter, QGP_Week, LOB_Supported
 ),
 
 ranked AS (
   SELECT
     s.*,
     ROW_NUMBER() OVER (
-      PARTITION BY s.Quarter, s.QGP_Week
+      PARTITION BY s.Quarter, s.QGP_Week, s.LOB_Supported
       ORDER BY s.FileLoad_Date DESC
     ) AS rn
   FROM weekly_snapshots s
   LEFT JOIN first_actual_date a
-    ON s.Quarter  = a.Quarter
-   AND s.QGP_Week = a.QGP_Week
+    ON s.Quarter       = a.Quarter
+   AND s.QGP_Week      = a.QGP_Week
+   AND s.LOB_Supported = a.LOB_Supported
   WHERE a.first_actual_file_load_date IS NULL
      OR s.FileLoad_Date < a.first_actual_file_load_date
 ),
@@ -128,6 +133,7 @@ boundary_with_forecast AS (
       b.Week_Beginning_Monday,
       b.Week_Ending_Sunday,
       b.FileLoad_Date,
+      b.LOB_Supported,
       b.weekly_forecast                                                 AS source_forecast,
       bd.quarter_end_in_week,
       CASE
@@ -146,8 +152,9 @@ boundary_with_forecast AS (
     JOIN boundary_dates bd ON b.QGP_Week = bd.QGP_Week
     WHERE NOT EXISTS (
       SELECT 1 FROM best other_best
-      WHERE other_best.QGP_Week = b.QGP_Week
-        AND other_best.Quarter != b.Quarter
+      WHERE other_best.QGP_Week      = b.QGP_Week
+        AND other_best.Quarter       != b.Quarter
+        AND other_best.LOB_Supported = b.LOB_Supported
     )
   )
   WHERE source_days > 0 AND missing_days > 0
@@ -160,6 +167,7 @@ derived_forecasts AS (
     bwf.Week_Ending_Sunday,
     bwf.QGP_Week,
     bwf.FileLoad_Date,
+    bwf.LOB_Supported,
     ROUND((bwf.source_forecast / bwf.source_days) * bwf.missing_days, 2) AS weekly_forecast,
     'boundary_week' AS week_type,
     TRUE            AS is_derived
@@ -167,7 +175,9 @@ derived_forecasts AS (
   JOIN actuals_quarters aq
     ON aq.QGP_Week = bwf.QGP_Week AND aq.Quarter != bwf.source_quarter
   LEFT JOIN best existing
-    ON existing.QGP_Week = bwf.QGP_Week AND existing.Quarter = aq.Quarter
+    ON existing.QGP_Week      = bwf.QGP_Week
+   AND existing.Quarter       = aq.Quarter
+   AND existing.LOB_Supported = bwf.LOB_Supported
   WHERE existing.Quarter IS NULL
 )
 
@@ -175,7 +185,8 @@ SELECT *
 FROM (
   SELECT
     b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
-    b.FileLoad_Date, b.weekly_forecast, w.week_type, FALSE AS is_derived
+    b.FileLoad_Date, b.LOB_Supported, b.weekly_forecast, w.week_type,
+    FALSE AS is_derived
   FROM best b
   JOIN week_type w ON b.QGP_Week = w.QGP_Week
 
@@ -183,11 +194,12 @@ FROM (
 
   SELECT
     Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-    FileLoad_Date, weekly_forecast, week_type, is_derived
+    FileLoad_Date, LOB_Supported, weekly_forecast, week_type, is_derived
   FROM derived_forecasts
 )
 WHERE weekly_forecast IS NOT NULL AND weekly_forecast != 0
 ORDER BY
   QGP_Week DESC,
   CAST(SUBSTR(Quarter, 4, 2) AS INT64) DESC,
-  CAST(SUBSTR(Quarter, 2, 1) AS INT64) DESC;
+  CAST(SUBSTR(Quarter, 2, 1) AS INT64) DESC,
+  LOB_Supported;

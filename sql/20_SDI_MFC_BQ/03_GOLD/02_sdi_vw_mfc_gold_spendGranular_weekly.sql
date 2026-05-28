@@ -5,16 +5,9 @@ WITH deduped AS (
     *,
     ROW_NUMBER() OVER (
       PARTITION BY
-        CONCAT(
-          CASE WHEN CAST(SUBSTR(Quarter, 4, 2) AS INT64) < 50 THEN '20' ELSE '19' END,
-          LPAD(SUBSTR(Quarter, 4, 2), 2, '0'), ' Q', SUBSTR(Quarter, 2, 1)
-        ),
-        CASE
-          WHEN UPPER(week_type) = 'BOUNDARY_WEEK'
-            AND Period_Start = Quarter_End_Date THEN Quarter_End_Date
-          ELSE QGP_Week
-        END,
-        UPPER(TRIM(LOB_Supported)),
+        Quarter,
+        QGP_Week,
+        LOB_Supported,
         Channel,
         Tactic,
         Message_Type,
@@ -31,15 +24,15 @@ SELECT
   QGP_Week,
   Quarter_End_Date,
   FileLoad_Date,
-  UPPER(TRIM(LOB_Supported))  AS LOB_Supported,
+  LOB_Supported,
   Channel,
   Tactic,
   Message_Type,
   Agency,
-  weekly_actual               AS spend_actual,
-  weekly_forecast             AS spend_forecast,
-  weekly_display              AS spend_display,
-  UPPER(TRIM(week_type))      AS week_type
+  weekly_actual    AS spend_actual,
+  weekly_forecast  AS spend_forecast,
+  weekly_display   AS spend_display,
+  week_type
 FROM deduped
 WHERE rn = 1
-ORDER BY Quarter DESC, QGP_Week DESC, LOB_Supported, Channel, Tactic;
+ORDER BY LOB_Supported DESC, Quarter DESC, QGP_Week DESC, Channel, Tactic;

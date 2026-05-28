@@ -23,15 +23,15 @@ latest AS (
 
 SELECT
   Quarter,
-  MIN(Period_Start)              AS Period_Start,
-  MAX(Period_End)                AS Period_End,
+  MIN(Period_Start)                                                          AS Period_Start,
+  MAX(Period_End)                                                            AS Period_End,
   QGP_Week,
   Quarter_End_Date,
-  MAX(FileLoad_Date)             AS FileLoad_Date,
+  MAX(FileLoad_Date)                                                         AS FileLoad_Date,
   LOB_Supported,
-  SUM(weekly_actual)             AS spend_actual,
-  SUM(weekly_forecast)           AS spend_forecast,
-  SUM(weekly_display)            AS spend_display,
+  NULLIF(SUM(weekly_actual), 0)                                              AS spend_actual,
+  NULLIF(SUM(weekly_forecast), 0)                                            AS spend_forecast,
+  COALESCE(NULLIF(SUM(weekly_actual), 0), NULLIF(SUM(weekly_forecast), 0))  AS spend_display,
   week_type
 FROM latest
 GROUP BY
@@ -40,4 +40,4 @@ GROUP BY
   Quarter_End_Date,
   LOB_Supported,
   week_type
-ORDER BY Quarter DESC, QGP_Week DESC, LOB_Supported;
+ORDER BY LOB_Supported DESC, Quarter DESC, QGP_Week DESC;

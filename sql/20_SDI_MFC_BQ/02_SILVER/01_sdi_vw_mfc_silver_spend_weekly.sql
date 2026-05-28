@@ -7,14 +7,16 @@ WITH joined AS (
     a.Week_Ending_Sunday,
     a.QGP_Week,
     a.FileLoad_Date,
+    a.LOB_Supported,
     a.weekly_actual,
     f.weekly_forecast,
     COALESCE(NULLIF(a.weekly_actual, 0), f.weekly_forecast) AS weekly_display,
     a.week_type
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendActuals_weekly` a
   LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendForecasts_weekly` f
-    ON a.Quarter  = f.Quarter
-   AND a.QGP_Week = f.QGP_Week
+    ON a.Quarter       = f.Quarter
+   AND a.QGP_Week      = f.QGP_Week
+   AND a.LOB_Supported = f.LOB_Supported
 ),
 
 forecast_only AS (
@@ -24,14 +26,16 @@ forecast_only AS (
     f.Week_Ending_Sunday,
     f.QGP_Week,
     f.FileLoad_Date,
+    f.LOB_Supported,
     NULL              AS weekly_actual,
     f.weekly_forecast,
     f.weekly_forecast AS weekly_display,
     f.week_type
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendForecasts_weekly` f
   LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_bronze_spendActuals_weekly` a
-    ON f.Quarter  = a.Quarter
-   AND f.QGP_Week = a.QGP_Week
+    ON f.Quarter       = a.Quarter
+   AND f.QGP_Week      = a.QGP_Week
+   AND f.LOB_Supported = a.LOB_Supported
   WHERE a.QGP_Week IS NULL
 ),
 
@@ -108,6 +112,7 @@ SELECT
 
   Quarter_End_Date,
   FileLoad_Date,
+  LOB_Supported,
 
   CASE WHEN days_in_quarter IS NOT NULL
     THEN ROUND(weekly_actual   * (days_in_quarter / total_week_days), 2)
@@ -135,4 +140,4 @@ SELECT
   END AS proration_factor
 
 FROM with_proration
-ORDER BY qtr_year_2digit DESC, qtr_num DESC, QGP_Week DESC;
+ORDER BY qtr_year_2digit DESC, qtr_num DESC, QGP_Week DESC, LOB_Supported;

@@ -7,6 +7,7 @@ WITH raw AS (
     CAST(Week_Ending_Sunday AS DATE)    AS Week_Ending_Sunday,
     CAST(QGP_Week AS DATE)              AS QGP_Week,
     File_Date                           AS FileLoad_Date,
+    UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
     CASE WHEN QGP = 'Actual' THEN Spend ELSE NULL END AS Spend_Actual
   FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
@@ -34,6 +35,7 @@ weekly_snapshots AS (
     Week_Ending_Sunday,
     QGP_Week,
     FileLoad_Date,
+    LOB_Supported,
     SUM(Spend_Actual) AS weekly_actual
   FROM raw
   WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
@@ -42,14 +44,15 @@ weekly_snapshots AS (
     Week_Beginning_Monday,
     Week_Ending_Sunday,
     QGP_Week,
-    FileLoad_Date
+    FileLoad_Date,
+    LOB_Supported
 ),
 
 ranked AS (
   SELECT
     *,
     ROW_NUMBER() OVER (
-      PARTITION BY Quarter, QGP_Week
+      PARTITION BY Quarter, QGP_Week, LOB_Supported
       ORDER BY FileLoad_Date DESC
     ) AS rn
   FROM weekly_snapshots
@@ -73,6 +76,7 @@ SELECT
   b.Week_Ending_Sunday,
   b.QGP_Week,
   b.FileLoad_Date,
+  b.LOB_Supported,
   b.weekly_actual,
   w.week_type
 FROM best b
@@ -82,4 +86,5 @@ WHERE b.weekly_actual IS NOT NULL
 ORDER BY
   b.QGP_Week DESC,
   CAST(SUBSTR(b.Quarter, 4, 2) AS INT64) DESC,
-  CAST(SUBSTR(b.Quarter, 2, 1) AS INT64) DESC;
+  CAST(SUBSTR(b.Quarter, 2, 1) AS INT64) DESC,
+  b.LOB_Supported;
