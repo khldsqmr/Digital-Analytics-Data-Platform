@@ -1,8 +1,3 @@
-
--- =============================================
--- BRONZE: Granular Actuals
--- CHANGED: Agency mapping added
--- =============================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActualsGranular_weekly AS
 
 WITH weekly_snapshots AS (
@@ -17,12 +12,12 @@ WITH weekly_snapshots AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
-    END AS Agency,
-    SUM(Spend_Actual) AS weekly_actual
+    END                        AS Agency,
+    SUM(Spend_Actual)          AS weekly_actual
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -30,13 +25,8 @@ WITH weekly_snapshots AS (
     AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Actual IS NOT NULL
-    -- Keep BTS. Only exclude MICRO message type.
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    -- Do not exclude SEM 5G BROADBAND MICRO.
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
   GROUP BY
     Quarter,
     Week_Beginning_Monday,
@@ -48,8 +38,8 @@ WITH weekly_snapshots AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
     END
@@ -60,22 +50,15 @@ ranked AS (
     *,
     ROW_NUMBER() OVER (
       PARTITION BY
-        Quarter,
-        QGP_Week,
-        LOB_Supported,
-        Channel,
-        Tactic,
-        Message_Type,
-        Agency
+        Quarter, QGP_Week, LOB_Supported,
+        Channel, Tactic, Message_Type, Agency
       ORDER BY FileLoad_Date DESC
     ) AS rn
   FROM weekly_snapshots
 ),
 
 best AS (
-  SELECT *
-  FROM ranked
-  WHERE rn = 1
+  SELECT * FROM ranked WHERE rn = 1
 ),
 
 week_type AS (
@@ -103,8 +86,7 @@ SELECT
   b.weekly_actual,
   w.week_type
 FROM best b
-JOIN week_type w
-  ON b.QGP_Week = w.QGP_Week
+JOIN week_type w ON b.QGP_Week = w.QGP_Week
 WHERE b.weekly_actual IS NOT NULL
   AND b.weekly_actual != 0
 ORDER BY
@@ -114,4 +96,3 @@ ORDER BY
   b.LOB_Supported,
   b.Channel,
   b.Tactic;
-

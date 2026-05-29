@@ -8,7 +8,7 @@ WITH weekly_snapshots AS (
     QGP_Week,
     FileLoad_Date,
     UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
-    SUM(Spend_Forecast) AS weekly_forecast
+    SUM(Spend_Forecast)        AS weekly_forecast
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -17,10 +17,7 @@ WITH weekly_snapshots AS (
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Forecast IS NOT NULL
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
   GROUP BY
     Quarter,
     Week_Beginning_Monday,
@@ -35,7 +32,7 @@ first_actual_date AS (
     Quarter,
     QGP_Week,
     UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
-    MIN(FileLoad_Date) AS first_actual_file_load_date
+    MIN(FileLoad_Date)         AS first_actual_file_load_date
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -45,10 +42,7 @@ first_actual_date AS (
     AND Spend_Actual IS NOT NULL
     AND Spend_Actual != 0
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
   GROUP BY
     Quarter,
     QGP_Week,
@@ -84,10 +78,7 @@ actuals_quarters AS (
     AND Spend_Actual IS NOT NULL
     AND Spend_Actual != 0
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
 ),
 
 week_type AS (
@@ -159,15 +150,13 @@ boundary_with_forecast AS (
     JOIN boundary_dates bd
       ON b.QGP_Week = bd.QGP_Week
     WHERE NOT EXISTS (
-      SELECT 1
-      FROM best other_best
+      SELECT 1 FROM best other_best
       WHERE other_best.QGP_Week      = b.QGP_Week
         AND other_best.Quarter       != b.Quarter
         AND other_best.LOB_Supported = b.LOB_Supported
     )
   )
-  WHERE source_days > 0
-    AND missing_days > 0
+  WHERE source_days > 0 AND missing_days > 0
 ),
 
 derived_forecasts AS (
@@ -178,10 +167,7 @@ derived_forecasts AS (
     bwf.QGP_Week,
     bwf.FileLoad_Date,
     bwf.LOB_Supported,
-    ROUND(
-      (bwf.source_forecast / bwf.source_days) * bwf.missing_days,
-      2
-    )               AS weekly_forecast,
+    ROUND((bwf.source_forecast / bwf.source_days) * bwf.missing_days, 2) AS weekly_forecast,
     'boundary_week' AS week_type,
     TRUE            AS is_derived
   FROM boundary_with_forecast bwf
@@ -198,14 +184,8 @@ derived_forecasts AS (
 SELECT *
 FROM (
   SELECT
-    b.Quarter,
-    b.Week_Beginning_Monday,
-    b.Week_Ending_Sunday,
-    b.QGP_Week,
-    b.FileLoad_Date,
-    b.LOB_Supported,
-    b.weekly_forecast,
-    w.week_type,
+    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
+    b.FileLoad_Date, b.LOB_Supported, b.weekly_forecast, w.week_type,
     FALSE AS is_derived
   FROM best b
   JOIN week_type w ON b.QGP_Week = w.QGP_Week
@@ -213,15 +193,8 @@ FROM (
   UNION ALL
 
   SELECT
-    Quarter,
-    Week_Beginning_Monday,
-    Week_Ending_Sunday,
-    QGP_Week,
-    FileLoad_Date,
-    LOB_Supported,
-    weekly_forecast,
-    week_type,
-    is_derived
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    FileLoad_Date, LOB_Supported, weekly_forecast, week_type, is_derived
   FROM derived_forecasts
 )
 WHERE weekly_forecast IS NOT NULL

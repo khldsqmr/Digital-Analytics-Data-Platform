@@ -1,8 +1,3 @@
-
--- =============================================
--- BRONZE: Granular Forecasts
--- CHANGED: Agency mapping added
--- =============================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecastsGranular_weekly AS
 
 WITH weekly_snapshots AS (
@@ -17,12 +12,12 @@ WITH weekly_snapshots AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
-    END AS Agency,
-    SUM(Spend_Forecast) AS weekly_forecast
+    END                        AS Agency,
+    SUM(Spend_Forecast)        AS weekly_forecast
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -30,13 +25,8 @@ WITH weekly_snapshots AS (
     AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Forecast IS NOT NULL
-    -- Keep BTS. Only exclude MICRO message type.
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    -- Do not exclude SEM 5G BROADBAND MICRO.
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
   GROUP BY
     Quarter,
     Week_Beginning_Monday,
@@ -48,8 +38,8 @@ WITH weekly_snapshots AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
     END
@@ -64,12 +54,12 @@ first_actual_date AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
-    END AS Agency,
-    MIN(FileLoad_Date) AS first_actual_file_load_date
+    END                        AS Agency,
+    MIN(FileLoad_Date)         AS first_actual_file_load_date
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -78,12 +68,8 @@ first_actual_date AS (
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Actual IS NOT NULL
     AND Spend_Actual != 0
-    -- Keep filters consistent with actuals.
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
   GROUP BY
     Quarter,
     QGP_Week,
@@ -92,8 +78,8 @@ first_actual_date AS (
     Tactic,
     Message_Type,
     CASE
-      WHEN lower(Agency) = 'ini'                                                      THEN 'Initiative'
-      WHEN lower(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN LOWER(Agency) = 'ini'                                                      THEN 'Initiative'
+      WHEN LOWER(Agency) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
       WHEN Agency IS NULL                                                              THEN NULL
       ELSE Agency
     END
@@ -104,13 +90,8 @@ ranked AS (
     s.*,
     ROW_NUMBER() OVER (
       PARTITION BY
-        s.Quarter,
-        s.QGP_Week,
-        s.LOB_Supported,
-        s.Channel,
-        s.Tactic,
-        s.Message_Type,
-        s.Agency
+        s.Quarter, s.QGP_Week, s.LOB_Supported,
+        s.Channel, s.Tactic, s.Message_Type, s.Agency
       ORDER BY s.FileLoad_Date DESC
     ) AS rn
   FROM weekly_snapshots s
@@ -126,16 +107,10 @@ ranked AS (
      OR s.FileLoad_Date < a.first_actual_file_load_date
 ),
 
-best AS (
-  SELECT *
-  FROM ranked
-  WHERE rn = 1
-),
+best AS (SELECT * FROM ranked WHERE rn = 1),
 
 actuals_quarters AS (
-  SELECT DISTINCT
-    Quarter,
-    QGP_Week
+  SELECT DISTINCT Quarter, QGP_Week
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND WM_V_NWM = 'Working'
@@ -144,12 +119,8 @@ actuals_quarters AS (
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Actual IS NOT NULL
     AND Spend_Actual != 0
-    -- Keep filters consistent with actuals.
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN (
-        'SEM POSTPAID/MICRO',
-        'MICRO POSTPAID OFFERS'
-    )
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
 ),
 
 week_type AS (
@@ -168,9 +139,7 @@ week_type AS (
 ),
 
 boundary_dates AS (
-  SELECT
-    QGP_Week,
-    quarter_end_in_week
+  SELECT QGP_Week, quarter_end_in_week
   FROM (
     SELECT DISTINCT
       QGP_Week,
@@ -209,21 +178,17 @@ boundary_with_forecast AS (
       b.Agency,
       b.weekly_forecast                                            AS source_forecast,
       bd.quarter_end_in_week,
-
       CASE
         WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
           THEN DATEDIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday) + 1
         ELSE DATEDIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week)
       END                                                          AS source_days,
-
       DATEDIFF(b.Week_Ending_Sunday, b.Week_Beginning_Monday) + 1  AS total_week_days,
-
       CASE
         WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
           THEN DATEDIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week)
         ELSE DATEDIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday) + 1
       END                                                          AS missing_days
-
     FROM best b
     JOIN week_type w
       ON b.QGP_Week = w.QGP_Week
@@ -231,8 +196,7 @@ boundary_with_forecast AS (
     JOIN boundary_dates bd
       ON b.QGP_Week = bd.QGP_Week
     WHERE NOT EXISTS (
-      SELECT 1
-      FROM best other_best
+      SELECT 1 FROM best other_best
       WHERE other_best.QGP_Week      = b.QGP_Week
         AND other_best.Quarter       != b.Quarter
         AND other_best.LOB_Supported = b.LOB_Supported
@@ -242,8 +206,7 @@ boundary_with_forecast AS (
         AND other_best.Agency        = b.Agency
     )
   )
-  WHERE source_days > 0
-    AND missing_days > 0
+  WHERE source_days > 0 AND missing_days > 0
 ),
 
 derived_forecasts AS (
@@ -258,10 +221,7 @@ derived_forecasts AS (
     bwf.Tactic,
     bwf.Message_Type,
     bwf.Agency,
-    ROUND(
-      (bwf.source_forecast / bwf.source_days) * bwf.missing_days,
-      2
-    )               AS weekly_forecast,
+    ROUND((bwf.source_forecast / bwf.source_days) * bwf.missing_days, 2) AS weekly_forecast,
     'boundary_week' AS week_type,
     TRUE            AS is_derived
   FROM boundary_with_forecast bwf
@@ -282,39 +242,18 @@ derived_forecasts AS (
 SELECT *
 FROM (
   SELECT
-    b.Quarter,
-    b.Week_Beginning_Monday,
-    b.Week_Ending_Sunday,
-    b.QGP_Week,
-    b.FileLoad_Date,
-    b.LOB_Supported,
-    b.Channel,
-    b.Tactic,
-    b.Message_Type,
-    b.Agency,
-    b.weekly_forecast,
-    w.week_type,
-    FALSE AS is_derived
+    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
+    b.FileLoad_Date, b.LOB_Supported, b.Channel, b.Tactic, b.Message_Type, b.Agency,
+    b.weekly_forecast, w.week_type, FALSE AS is_derived
   FROM best b
-  JOIN week_type w
-    ON b.QGP_Week = w.QGP_Week
+  JOIN week_type w ON b.QGP_Week = w.QGP_Week
 
   UNION ALL
 
   SELECT
-    Quarter,
-    Week_Beginning_Monday,
-    Week_Ending_Sunday,
-    QGP_Week,
-    FileLoad_Date,
-    LOB_Supported,
-    Channel,
-    Tactic,
-    Message_Type,
-    Agency,
-    weekly_forecast,
-    week_type,
-    is_derived
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
+    weekly_forecast, week_type, is_derived
   FROM derived_forecasts
 )
 WHERE weekly_forecast IS NOT NULL
@@ -323,7 +262,4 @@ ORDER BY
   QGP_Week DESC,
   CAST(SUBSTR(Quarter, 4, 2) AS INT) DESC,
   CAST(SUBSTR(Quarter, 2, 1) AS INT) DESC,
-  LOB_Supported,
-  Channel,
-  Tactic;
-
+  LOB_Supported, Channel, Tactic;

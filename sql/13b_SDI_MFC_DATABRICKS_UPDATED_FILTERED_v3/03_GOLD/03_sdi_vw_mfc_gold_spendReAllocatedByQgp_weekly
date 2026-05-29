@@ -1,6 +1,26 @@
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spendReAllocatedByQgp_weekly AS
 
-WITH daily_spend AS (
+WITH latest_file AS (
+  SELECT
+    Quarter,
+    QGP_Week,
+    LOB_Supported,
+    MAX(FileLoad_Date) AS latest_file_load_date
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly
+  GROUP BY Quarter, QGP_Week, LOB_Supported
+),
+
+silver_latest AS (
+  SELECT s.*
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly s
+  JOIN latest_file f
+    ON s.Quarter       = f.Quarter
+   AND s.QGP_Week      = f.QGP_Week
+   AND s.LOB_Supported = f.LOB_Supported
+   AND s.FileLoad_Date = f.latest_file_load_date
+),
+
+daily_spend AS (
   SELECT
     FileLoad_Date,
     LOB_Supported,
@@ -23,10 +43,8 @@ WITH daily_spend AS (
     weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
     weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_forecast,
     weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_display,
-    EXPLODE(
-      SEQUENCE(Period_Start, Period_End, INTERVAL 1 DAY)
-    ) AS calendar_date
-  FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly
+    EXPLODE(SEQUENCE(Period_Start, Period_End, INTERVAL 1 DAY)) AS calendar_date
+  FROM silver_latest
   WHERE Period_End >= Period_Start
 ),
 
@@ -70,9 +88,7 @@ aggregated AS (
     ROUND(SUM(daily_forecast), 2) AS spend_forecast,
     ROUND(SUM(daily_display),  2) AS spend_display
   FROM daily_with_qgp
-  GROUP BY
-    QGP_Date,
-    LOB_Supported
+  GROUP BY QGP_Date, LOB_Supported
 )
 
 SELECT
@@ -108,7 +124,4 @@ SELECT
   spend_forecast,
   spend_display
 FROM aggregated
-ORDER BY
-  LOB_Supported DESC,
-  QGP_Date DESC;
-  
+ORDER BY QGP_Date DESC, LOB_Supported;
