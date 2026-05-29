@@ -93,20 +93,24 @@ SELECT
   ) AS Quarter,
 
   CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday < Quarter_Start_Date
-      THEN Quarter_Start_Date
+    WHEN week_type = 'boundary_week'
+      AND Week_Beginning_Monday < Quarter_Start_Date THEN Quarter_Start_Date
     ELSE Week_Beginning_Monday
   END AS Period_Start,
 
   CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+    WHEN week_type = 'boundary_week'
+      AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+    WHEN week_type != 'boundary_week'
+      AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
     ELSE Week_Ending_Sunday
   END AS Period_End,
 
   CASE
-    WHEN week_type = 'boundary_week' AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
+    WHEN week_type = 'boundary_week'
+      AND Week_Beginning_Monday >= Quarter_Start_Date THEN Quarter_End_Date
+    WHEN week_type != 'boundary_week'
+      AND Week_Ending_Sunday > Quarter_End_Date      THEN Quarter_End_Date
     ELSE QGP_Week
   END AS QGP_Week,
 
@@ -127,7 +131,8 @@ SELECT
     ELSE weekly_display  END AS weekly_display,
 
   CASE
-    WHEN week_type != 'boundary_week' AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
+    WHEN week_type != 'boundary_week'
+      AND Week_Ending_Sunday > Quarter_End_Date THEN 'boundary_week'
     ELSE week_type
   END AS week_type,
 

@@ -39,37 +39,22 @@ WITH raw AS (
 
 weekly_snapshots AS (
   SELECT
-    Quarter,
-    Week_Beginning_Monday,
-    Week_Ending_Sunday,
-    QGP_Week,
-    FileLoad_Date,
-    LOB_Supported,
-    Channel,
-    Tactic,
-    Message_Type,
-    Agency,
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
     SUM(Spend_Actual) AS weekly_actual
   FROM raw
   WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
   GROUP BY
-    Quarter,
-    Week_Beginning_Monday,
-    Week_Ending_Sunday,
-    QGP_Week,
-    FileLoad_Date,
-    LOB_Supported,
-    Channel,
-    Tactic,
-    Message_Type,
-    Agency
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
 ),
 
 ranked AS (
   SELECT
     *,
     ROW_NUMBER() OVER (
-      PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      PARTITION BY Quarter, QGP_Week, LOB_Supported,
+                   Channel, Tactic, Message_Type, Agency
       ORDER BY FileLoad_Date DESC
     ) AS rn
   FROM weekly_snapshots
@@ -106,6 +91,4 @@ ORDER BY
   b.QGP_Week DESC,
   CAST(SUBSTR(b.Quarter, 4, 2) AS INT64) DESC,
   CAST(SUBSTR(b.Quarter, 2, 1) AS INT64) DESC,
-  b.LOB_Supported,
-  b.Channel,
-  b.Tactic;
+  b.LOB_Supported, b.Channel, b.Tactic;

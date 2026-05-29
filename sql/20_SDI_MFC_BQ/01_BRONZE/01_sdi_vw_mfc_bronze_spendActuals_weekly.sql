@@ -40,12 +40,8 @@ weekly_snapshots AS (
   FROM raw
   WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
   GROUP BY
-    Quarter,
-    Week_Beginning_Monday,
-    Week_Ending_Sunday,
-    QGP_Week,
-    FileLoad_Date,
-    LOB_Supported
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday,
+    QGP_Week, FileLoad_Date, LOB_Supported
 ),
 
 ranked AS (
@@ -58,9 +54,7 @@ ranked AS (
   FROM weekly_snapshots
 ),
 
-best AS (
-  SELECT * FROM ranked WHERE rn = 1
-),
+best AS (SELECT * FROM ranked WHERE rn = 1),
 
 week_type AS (
   SELECT
