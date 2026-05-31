@@ -16,8 +16,6 @@ PURPOSE:
   Pivots ChannelGroup rows into columns so each channel
   becomes its own set of prefixed metric columns.
   Applies WoW/LY comparisons and max_data_date.
-  Only BYOD-specific metrics retained — Postpaid and HSI excluded.
-  uvnbByodPctOfUvnbFlow computed for allChannels only.
 
 BUSINESS GRAIN:
   One row per:
@@ -28,65 +26,55 @@ SOURCE GRAIN:
   ChannelGroup values: ALL, PAID SEARCH, ORGANIC SEARCH,
                        DIRECT, SOCIAL, PROGRAMMATIC, OTHER
 
-FILTERS APPLIED:
-  - All 7 ChannelGroup values included
-  - Only BYOD metrics retained (UvnbByod, UvnbFlowTotal,
-    CartstartByod, OrdersUnassistedByod, OrdersAssistedByod)
-
-BUSINESS LOGIC APPLIED:
-  - data_source = 'ADOBE'
-  - week_sun_to_sat sourced directly from WeekSunSat
-    (source already uses Sun-to-Sat convention)
-  - ordersTotalByod = OrdersUnassistedByod + OrdersAssistedByod
-    NULL if either component is NULL (no COALESCE — consistent
-    with source business rules)
-  - uvnbByodPctOfUvnbFlow = UvnbByod / NULLIF(UvnbFlowTotal, 0)
-    allChannels only — NULL if UvnbFlowTotal is NULL or 0
-  - Pivot: MAX(CASE WHEN ChannelGroup = ...) per week
-  - WoW: self-join on week_sun_to_sat - 7 days (gap-safe)
-  - LY : self-join on custom_week_num - 52 (gap-safe, Sun-to-Sat)
-  - wow_pct and yoy_pct as decimals — NULL when prior NULL or 0
-  - max_data_date: latest week_sun_to_sat with any non-null metric
-
 COLUMN NAMING CONVENTION:
-  adobe_{metric}_{channel}
-  adobe_{metric}_{channel}_wow
-  adobe_{metric}_{channel}_ly
-  adobe_{metric}_{channel}_wow_pct
-  adobe_{metric}_{channel}_yoy_pct
+  adobe_{metric}_{channel}  where pct/cvr metrics are prefixed with type:
+    adobe_pct{subject}Of{denominator}_{channel}  — percentage ratios
+    adobe_cvr{scope}_{channel}                   — conversion rates
 
   Channel suffixes:
-    ALL           → allChannels
-    PAID SEARCH   → paidSearch
-    ORGANIC SEARCH→ organicSearch
-    DIRECT        → direct
-    SOCIAL        → social
-    PROGRAMMATIC  → programmatic
-    OTHER         → other
+    ALL            → allChannels
+    PAID SEARCH    → paidSearch
+    ORGANIC SEARCH → organicSearch
+    DIRECT         → direct
+    SOCIAL         → social
+    PROGRAMMATIC   → programmatic
+    OTHER          → other
 
-  Metrics:
+  Raw metrics (all channels unless noted):
     uvnbByod
-    uvnbFlowTotal          (allChannels only)
-    uvnbByodPctOfUvnbFlow  (allChannels only)
+    uvnbTotal              (allChannels only — site-wide UVNB)
+    uvnbFlowTotal          (allChannels only — postpaid flow UVNB)
     cartStartByod
     ordersUnassistedByod
     ordersAssistedByod
     ordersTotalByod
+    ordersTotal            (allChannels only — all-product orders)
+
+  Derived metrics (allChannels only):
+    pctUvnbByodOfUvnbFlow  — BYOD UVNB / postpaid flow UVNB
+    pctOrdersByodOfOrdersTotal — BYOD orders / all-product orders
+    cvrByod                — BYOD CVR: ordersTotalByod / uvnbByod
+    cvrSite                — site CVR: ordersTotal / uvnbTotal
+
+  Derived metrics (per non-ALL channel — sums to 100% per week):
+    pctUvnbByodOfTotal     — channel share of total BYOD UVNB
+
+BUSINESS LOGIC:
+  - data_source = 'ADOBE'
+  - week_sun_to_sat from WeekSunSat (source already Sun-to-Sat)
+  - ordersTotalByod = OrdersUnassistedByod + OrdersAssistedByod
+    NULL if either component is NULL
+  - pctUvnbByodOfUvnbFlow, pctOrdersByodOfOrdersTotal, cvrByod, cvrSite,
+    pctUvnbByodOfTotal computed in with_channel_mix after pivot
+    (requires multiple channel values on same row)
+  - WoW: self-join on week_sun_to_sat - 7 days (gap-safe)
+  - LY : self-join on custom_week_num - 52 (gap-safe)
+  - wow_pct and yoy_pct as decimals — NULL when prior NULL or 0
+  - max_data_date: latest week_sun_to_sat with any non-null metric
 
 CUSTOM WEEK NUMBER:
-  Anchored to 2023-01-01 (a Sunday):
-    custom_week_num = DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK)
+  custom_week_num = DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK)
   LY match: current.custom_week_num - prior.custom_week_num = 52
-
-KEY MODELING NOTES:
-  - Source WeekSunSat already follows Sun-to-Sat convention
-    matching our pipeline standard — no conversion needed
-  - ordersTotalByod computed before pivot so NULL propagation
-    is consistent with source business rules
-  - uvnbByodPctOfUvnbFlow computed before pivot for same reason
-  - Self-joins on small pivoted CTE (1 row per week — very cheap)
-  - NULLs preserved — no fake zeroes
-  - No ORDER BY — applied in Gold only
 
 DOWNSTREAM:
   Gold Wide : vw_sdi_pulseByod_gold_unified_wide
@@ -97,62 +85,39 @@ CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_puls
 AS
 
 -- -----------------------------------------------------------------------
--- STEP 1: Extract BYOD metrics per channel, compute derived metrics
--- ordersTotalByod and uvnbByodPctOfUvnbFlow computed here
--- before pivot so NULL propagation is correct
+-- STEP 1: Extract metrics per channel, compute row-level derived metrics
 -- -----------------------------------------------------------------------
 WITH base AS (
     SELECT
-        -- week_sun_to_sat: source already uses Sun-to-Sat convention
         WeekSunSat                                                      AS week_sun_to_sat,
         ChannelGroup,
-
-        -- BYOD UVNB
         UvnbByod,
-
-        -- UVNB Flow Total (allChannels only — kept for all, filtered in pivot)
+        UvnbTotalAdobe,
         UvnbFlowTotal,
-
-        -- UVNB BYOD as % of UVNB Flow Total
-        -- Computed here for allChannels — NULL if UvnbFlowTotal is NULL or 0
-        -- For non-ALL channels this will be available but only used for allChannels
-        CASE
-            WHEN UvnbFlowTotal IS NULL OR UvnbFlowTotal = 0 THEN NULL
-            ELSE ROUND(UvnbByod / UvnbFlowTotal, 6)
-        END                                                             AS uvnbByodPctOfUvnbFlow,
-
-        -- BYOD Cart Start
         CartstartByod,
-
-        -- BYOD Orders
         OrdersUnassistedByod,
         OrdersAssistedByod,
-
-        -- BYOD Orders Total: Unassisted + Assisted
-        -- NULL if either component is NULL — consistent with source business rules
-        OrdersUnassistedByod + OrdersAssistedByod                      AS ordersTotalByod
-
+        OrdersUnassistedByod + OrdersAssistedByod                      AS ordersTotalByod,
+        OrdersTotal
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_flowPerformanceByChannelGroupsPlusAll_Weekly`
 ),
 
 -- -----------------------------------------------------------------------
 -- STEP 2: Pivot long → wide
--- One row per week with each ChannelGroup as separate columns
--- Prefixed with 'adobe_' for unambiguous Gold identification
--- uvnbFlowTotal and uvnbByodPctOfUvnbFlow: allChannels only
 -- -----------------------------------------------------------------------
 pivoted AS (
     SELECT
         week_sun_to_sat,
 
         -- ---- ALL CHANNELS ----
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbByod              END) AS adobe_uvnbByod_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbFlowTotal         END) AS adobe_uvnbFlowTotal_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN uvnbByodPctOfUvnbFlow END) AS adobe_uvnbByodPctOfUvnbFlow_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN CartstartByod         END) AS adobe_cartStartByod_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN OrdersUnassistedByod  END) AS adobe_ordersUnassistedByod_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN OrdersAssistedByod    END) AS adobe_ordersAssistedByod_allChannels,
-        MAX(CASE WHEN ChannelGroup = 'ALL' THEN ordersTotalByod       END) AS adobe_ordersTotalByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbByod      END) AS adobe_uvnbByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbTotalAdobe END) AS adobe_uvnbTotal_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbFlowTotal  END) AS adobe_uvnbFlowTotal_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN CartstartByod  END) AS adobe_cartStartByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN OrdersUnassistedByod END) AS adobe_ordersUnassistedByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN OrdersAssistedByod   END) AS adobe_ordersAssistedByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN ordersTotalByod      END) AS adobe_ordersTotalByod_allChannels,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN OrdersTotal          END) AS adobe_ordersTotal_allChannels,
 
         -- ---- PAID SEARCH ----
         MAX(CASE WHEN ChannelGroup = 'PAID SEARCH' THEN UvnbByod             END) AS adobe_uvnbByod_paidSearch,
@@ -201,437 +166,465 @@ pivoted AS (
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 3: Add custom Sun-to-Sat week number for gap-safe LY matching
+-- STEP 3: Compute post-pivot derived metrics
+-- These require multiple channel values on the same row so cannot be
+-- computed before pivot. All derived metrics use pct/cvr prefix naming.
+--   pctUvnbByodOfUvnbFlow      : BYOD UVNB / postpaid flow UVNB (allChannels)
+--   pctOrdersByodOfOrdersTotal : BYOD orders / all-product orders (allChannels)
+--   cvrByod                    : BYOD CVR = ordersTotalByod / uvnbByod (allChannels)
+--   cvrSite                    : site CVR = ordersTotal / uvnbTotal (allChannels)
+--   pctUvnbByodOfTotal         : channel share of total BYOD UVNB (per channel)
+--                                sums to 1.0 (100%) across all 6 channels per week
 -- -----------------------------------------------------------------------
-with_week_num AS (
+with_channel_mix AS (
     SELECT
         *,
-        DATE_DIFF(
-            DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY),
-            DATE '2023-01-01',
-            WEEK
-        )                                                               AS custom_week_num
+
+        -- ---- allChannels derived ----
+        CASE WHEN adobe_uvnbFlowTotal_allChannels IS NULL OR adobe_uvnbFlowTotal_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_allChannels / adobe_uvnbFlowTotal_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfUvnbFlow_allChannels,
+
+        CASE WHEN adobe_ordersTotal_allChannels IS NULL OR adobe_ordersTotal_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_ordersTotalByod_allChannels / adobe_ordersTotal_allChannels, 6)
+        END                                                             AS adobe_pctOrdersByodOfOrdersTotal_allChannels,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_ordersTotalByod_allChannels / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_cvrByod_allChannels,
+
+        CASE WHEN adobe_uvnbTotal_allChannels IS NULL OR adobe_uvnbTotal_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_ordersTotal_allChannels / adobe_uvnbTotal_allChannels, 6)
+        END                                                             AS adobe_cvrSite_allChannels,
+
+        -- ---- UVNB BYOD channel mix ----
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_paidSearch    / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_paidSearch,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_organicSearch / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_organicSearch,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_direct        / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_direct,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_social        / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_social,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_programmatic  / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_programmatic,
+
+        CASE WHEN adobe_uvnbByod_allChannels IS NULL OR adobe_uvnbByod_allChannels = 0 THEN NULL
+             ELSE ROUND(adobe_uvnbByod_other         / adobe_uvnbByod_allChannels, 6)
+        END                                                             AS adobe_pctUvnbByodOfTotal_other
+
     FROM pivoted
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 4: WoW and LY self-joins
--- Joins on small pivoted CTE (1 row per week — very cheap)
+-- STEP 4: Custom week number — references with_channel_mix
+-- -----------------------------------------------------------------------
+with_week_num AS (
+    SELECT
+        *,
+        DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK) AS custom_week_num
+    FROM with_channel_mix
+),
+
+-- -----------------------------------------------------------------------
+-- STEP 5: WoW and LY self-joins
 -- -----------------------------------------------------------------------
 with_comparisons AS (
     SELECT
         c.week_sun_to_sat,
         c.custom_week_num,
 
-        -- ALL CHANNELS current
+        -- ================================================================ ALL CHANNELS current
         c.adobe_uvnbByod_allChannels,
+        c.adobe_uvnbTotal_allChannels,
         c.adobe_uvnbFlowTotal_allChannels,
-        c.adobe_uvnbByodPctOfUvnbFlow_allChannels,
+        c.adobe_pctUvnbByodOfUvnbFlow_allChannels,
         c.adobe_cartStartByod_allChannels,
         c.adobe_ordersUnassistedByod_allChannels,
         c.adobe_ordersAssistedByod_allChannels,
         c.adobe_ordersTotalByod_allChannels,
-
+        c.adobe_ordersTotal_allChannels,
+        c.adobe_pctOrdersByodOfOrdersTotal_allChannels,
+        c.adobe_cvrByod_allChannels,
+        c.adobe_cvrSite_allChannels,
         -- ALL CHANNELS WoW
-        w.adobe_uvnbByod_allChannels                AS adobe_uvnbByod_allChannels_wow,
-        w.adobe_uvnbFlowTotal_allChannels           AS adobe_uvnbFlowTotal_allChannels_wow,
-        w.adobe_uvnbByodPctOfUvnbFlow_allChannels   AS adobe_uvnbByodPctOfUvnbFlow_allChannels_wow,
-        w.adobe_cartStartByod_allChannels           AS adobe_cartStartByod_allChannels_wow,
-        w.adobe_ordersUnassistedByod_allChannels    AS adobe_ordersUnassistedByod_allChannels_wow,
-        w.adobe_ordersAssistedByod_allChannels      AS adobe_ordersAssistedByod_allChannels_wow,
-        w.adobe_ordersTotalByod_allChannels         AS adobe_ordersTotalByod_allChannels_wow,
-
+        w.adobe_uvnbByod_allChannels                      AS adobe_uvnbByod_allChannels_wow,
+        w.adobe_uvnbTotal_allChannels                     AS adobe_uvnbTotal_allChannels_wow,
+        w.adobe_uvnbFlowTotal_allChannels                 AS adobe_uvnbFlowTotal_allChannels_wow,
+        w.adobe_pctUvnbByodOfUvnbFlow_allChannels         AS adobe_pctUvnbByodOfUvnbFlow_allChannels_wow,
+        w.adobe_cartStartByod_allChannels                 AS adobe_cartStartByod_allChannels_wow,
+        w.adobe_ordersUnassistedByod_allChannels          AS adobe_ordersUnassistedByod_allChannels_wow,
+        w.adobe_ordersAssistedByod_allChannels            AS adobe_ordersAssistedByod_allChannels_wow,
+        w.adobe_ordersTotalByod_allChannels               AS adobe_ordersTotalByod_allChannels_wow,
+        w.adobe_ordersTotal_allChannels                   AS adobe_ordersTotal_allChannels_wow,
+        w.adobe_pctOrdersByodOfOrdersTotal_allChannels    AS adobe_pctOrdersByodOfOrdersTotal_allChannels_wow,
+        w.adobe_cvrByod_allChannels                       AS adobe_cvrByod_allChannels_wow,
+        w.adobe_cvrSite_allChannels                       AS adobe_cvrSite_allChannels_wow,
         -- ALL CHANNELS LY
-        l.adobe_uvnbByod_allChannels                AS adobe_uvnbByod_allChannels_ly,
-        l.adobe_uvnbFlowTotal_allChannels           AS adobe_uvnbFlowTotal_allChannels_ly,
-        l.adobe_uvnbByodPctOfUvnbFlow_allChannels   AS adobe_uvnbByodPctOfUvnbFlow_allChannels_ly,
-        l.adobe_cartStartByod_allChannels           AS adobe_cartStartByod_allChannels_ly,
-        l.adobe_ordersUnassistedByod_allChannels    AS adobe_ordersUnassistedByod_allChannels_ly,
-        l.adobe_ordersAssistedByod_allChannels      AS adobe_ordersAssistedByod_allChannels_ly,
-        l.adobe_ordersTotalByod_allChannels         AS adobe_ordersTotalByod_allChannels_ly,
+        l.adobe_uvnbByod_allChannels                      AS adobe_uvnbByod_allChannels_ly,
+        l.adobe_uvnbTotal_allChannels                     AS adobe_uvnbTotal_allChannels_ly,
+        l.adobe_uvnbFlowTotal_allChannels                 AS adobe_uvnbFlowTotal_allChannels_ly,
+        l.adobe_pctUvnbByodOfUvnbFlow_allChannels         AS adobe_pctUvnbByodOfUvnbFlow_allChannels_ly,
+        l.adobe_cartStartByod_allChannels                 AS adobe_cartStartByod_allChannels_ly,
+        l.adobe_ordersUnassistedByod_allChannels          AS adobe_ordersUnassistedByod_allChannels_ly,
+        l.adobe_ordersAssistedByod_allChannels            AS adobe_ordersAssistedByod_allChannels_ly,
+        l.adobe_ordersTotalByod_allChannels               AS adobe_ordersTotalByod_allChannels_ly,
+        l.adobe_ordersTotal_allChannels                   AS adobe_ordersTotal_allChannels_ly,
+        l.adobe_pctOrdersByodOfOrdersTotal_allChannels    AS adobe_pctOrdersByodOfOrdersTotal_allChannels_ly,
+        l.adobe_cvrByod_allChannels                       AS adobe_cvrByod_allChannels_ly,
+        l.adobe_cvrSite_allChannels                       AS adobe_cvrSite_allChannels_ly,
 
-        -- PAID SEARCH current
+        -- ================================================================ PAID SEARCH current
         c.adobe_uvnbByod_paidSearch,
+        c.adobe_pctUvnbByodOfTotal_paidSearch,
         c.adobe_cartStartByod_paidSearch,
         c.adobe_ordersUnassistedByod_paidSearch,
         c.adobe_ordersAssistedByod_paidSearch,
         c.adobe_ordersTotalByod_paidSearch,
-
         -- PAID SEARCH WoW
-        w.adobe_uvnbByod_paidSearch                 AS adobe_uvnbByod_paidSearch_wow,
-        w.adobe_cartStartByod_paidSearch            AS adobe_cartStartByod_paidSearch_wow,
-        w.adobe_ordersUnassistedByod_paidSearch     AS adobe_ordersUnassistedByod_paidSearch_wow,
-        w.adobe_ordersAssistedByod_paidSearch       AS adobe_ordersAssistedByod_paidSearch_wow,
-        w.adobe_ordersTotalByod_paidSearch          AS adobe_ordersTotalByod_paidSearch_wow,
-
+        w.adobe_uvnbByod_paidSearch                       AS adobe_uvnbByod_paidSearch_wow,
+        w.adobe_pctUvnbByodOfTotal_paidSearch             AS adobe_pctUvnbByodOfTotal_paidSearch_wow,
+        w.adobe_cartStartByod_paidSearch                  AS adobe_cartStartByod_paidSearch_wow,
+        w.adobe_ordersUnassistedByod_paidSearch           AS adobe_ordersUnassistedByod_paidSearch_wow,
+        w.adobe_ordersAssistedByod_paidSearch             AS adobe_ordersAssistedByod_paidSearch_wow,
+        w.adobe_ordersTotalByod_paidSearch                AS adobe_ordersTotalByod_paidSearch_wow,
         -- PAID SEARCH LY
-        l.adobe_uvnbByod_paidSearch                 AS adobe_uvnbByod_paidSearch_ly,
-        l.adobe_cartStartByod_paidSearch            AS adobe_cartStartByod_paidSearch_ly,
-        l.adobe_ordersUnassistedByod_paidSearch     AS adobe_ordersUnassistedByod_paidSearch_ly,
-        l.adobe_ordersAssistedByod_paidSearch       AS adobe_ordersAssistedByod_paidSearch_ly,
-        l.adobe_ordersTotalByod_paidSearch          AS adobe_ordersTotalByod_paidSearch_ly,
+        l.adobe_uvnbByod_paidSearch                       AS adobe_uvnbByod_paidSearch_ly,
+        l.adobe_pctUvnbByodOfTotal_paidSearch             AS adobe_pctUvnbByodOfTotal_paidSearch_ly,
+        l.adobe_cartStartByod_paidSearch                  AS adobe_cartStartByod_paidSearch_ly,
+        l.adobe_ordersUnassistedByod_paidSearch           AS adobe_ordersUnassistedByod_paidSearch_ly,
+        l.adobe_ordersAssistedByod_paidSearch             AS adobe_ordersAssistedByod_paidSearch_ly,
+        l.adobe_ordersTotalByod_paidSearch                AS adobe_ordersTotalByod_paidSearch_ly,
 
-        -- ORGANIC SEARCH current
+        -- ================================================================ ORGANIC SEARCH current
         c.adobe_uvnbByod_organicSearch,
+        c.adobe_pctUvnbByodOfTotal_organicSearch,
         c.adobe_cartStartByod_organicSearch,
         c.adobe_ordersUnassistedByod_organicSearch,
         c.adobe_ordersAssistedByod_organicSearch,
         c.adobe_ordersTotalByod_organicSearch,
-
         -- ORGANIC SEARCH WoW
-        w.adobe_uvnbByod_organicSearch              AS adobe_uvnbByod_organicSearch_wow,
-        w.adobe_cartStartByod_organicSearch         AS adobe_cartStartByod_organicSearch_wow,
-        w.adobe_ordersUnassistedByod_organicSearch  AS adobe_ordersUnassistedByod_organicSearch_wow,
-        w.adobe_ordersAssistedByod_organicSearch    AS adobe_ordersAssistedByod_organicSearch_wow,
-        w.adobe_ordersTotalByod_organicSearch       AS adobe_ordersTotalByod_organicSearch_wow,
-
+        w.adobe_uvnbByod_organicSearch                    AS adobe_uvnbByod_organicSearch_wow,
+        w.adobe_pctUvnbByodOfTotal_organicSearch          AS adobe_pctUvnbByodOfTotal_organicSearch_wow,
+        w.adobe_cartStartByod_organicSearch               AS adobe_cartStartByod_organicSearch_wow,
+        w.adobe_ordersUnassistedByod_organicSearch        AS adobe_ordersUnassistedByod_organicSearch_wow,
+        w.adobe_ordersAssistedByod_organicSearch          AS adobe_ordersAssistedByod_organicSearch_wow,
+        w.adobe_ordersTotalByod_organicSearch             AS adobe_ordersTotalByod_organicSearch_wow,
         -- ORGANIC SEARCH LY
-        l.adobe_uvnbByod_organicSearch              AS adobe_uvnbByod_organicSearch_ly,
-        l.adobe_cartStartByod_organicSearch         AS adobe_cartStartByod_organicSearch_ly,
-        l.adobe_ordersUnassistedByod_organicSearch  AS adobe_ordersUnassistedByod_organicSearch_ly,
-        l.adobe_ordersAssistedByod_organicSearch    AS adobe_ordersAssistedByod_organicSearch_ly,
-        l.adobe_ordersTotalByod_organicSearch       AS adobe_ordersTotalByod_organicSearch_ly,
+        l.adobe_uvnbByod_organicSearch                    AS adobe_uvnbByod_organicSearch_ly,
+        l.adobe_pctUvnbByodOfTotal_organicSearch          AS adobe_pctUvnbByodOfTotal_organicSearch_ly,
+        l.adobe_cartStartByod_organicSearch               AS adobe_cartStartByod_organicSearch_ly,
+        l.adobe_ordersUnassistedByod_organicSearch        AS adobe_ordersUnassistedByod_organicSearch_ly,
+        l.adobe_ordersAssistedByod_organicSearch          AS adobe_ordersAssistedByod_organicSearch_ly,
+        l.adobe_ordersTotalByod_organicSearch             AS adobe_ordersTotalByod_organicSearch_ly,
 
-        -- DIRECT current
+        -- ================================================================ DIRECT current
         c.adobe_uvnbByod_direct,
+        c.adobe_pctUvnbByodOfTotal_direct,
         c.adobe_cartStartByod_direct,
         c.adobe_ordersUnassistedByod_direct,
         c.adobe_ordersAssistedByod_direct,
         c.adobe_ordersTotalByod_direct,
-
         -- DIRECT WoW
-        w.adobe_uvnbByod_direct                     AS adobe_uvnbByod_direct_wow,
-        w.adobe_cartStartByod_direct                AS adobe_cartStartByod_direct_wow,
-        w.adobe_ordersUnassistedByod_direct         AS adobe_ordersUnassistedByod_direct_wow,
-        w.adobe_ordersAssistedByod_direct           AS adobe_ordersAssistedByod_direct_wow,
-        w.adobe_ordersTotalByod_direct              AS adobe_ordersTotalByod_direct_wow,
-
+        w.adobe_uvnbByod_direct                           AS adobe_uvnbByod_direct_wow,
+        w.adobe_pctUvnbByodOfTotal_direct                 AS adobe_pctUvnbByodOfTotal_direct_wow,
+        w.adobe_cartStartByod_direct                      AS adobe_cartStartByod_direct_wow,
+        w.adobe_ordersUnassistedByod_direct               AS adobe_ordersUnassistedByod_direct_wow,
+        w.adobe_ordersAssistedByod_direct                 AS adobe_ordersAssistedByod_direct_wow,
+        w.adobe_ordersTotalByod_direct                    AS adobe_ordersTotalByod_direct_wow,
         -- DIRECT LY
-        l.adobe_uvnbByod_direct                     AS adobe_uvnbByod_direct_ly,
-        l.adobe_cartStartByod_direct                AS adobe_cartStartByod_direct_ly,
-        l.adobe_ordersUnassistedByod_direct         AS adobe_ordersUnassistedByod_direct_ly,
-        l.adobe_ordersAssistedByod_direct           AS adobe_ordersAssistedByod_direct_ly,
-        l.adobe_ordersTotalByod_direct              AS adobe_ordersTotalByod_direct_ly,
+        l.adobe_uvnbByod_direct                           AS adobe_uvnbByod_direct_ly,
+        l.adobe_pctUvnbByodOfTotal_direct                 AS adobe_pctUvnbByodOfTotal_direct_ly,
+        l.adobe_cartStartByod_direct                      AS adobe_cartStartByod_direct_ly,
+        l.adobe_ordersUnassistedByod_direct               AS adobe_ordersUnassistedByod_direct_ly,
+        l.adobe_ordersAssistedByod_direct                 AS adobe_ordersAssistedByod_direct_ly,
+        l.adobe_ordersTotalByod_direct                    AS adobe_ordersTotalByod_direct_ly,
 
-        -- SOCIAL current
+        -- ================================================================ SOCIAL current
         c.adobe_uvnbByod_social,
+        c.adobe_pctUvnbByodOfTotal_social,
         c.adobe_cartStartByod_social,
         c.adobe_ordersUnassistedByod_social,
         c.adobe_ordersAssistedByod_social,
         c.adobe_ordersTotalByod_social,
-
         -- SOCIAL WoW
-        w.adobe_uvnbByod_social                     AS adobe_uvnbByod_social_wow,
-        w.adobe_cartStartByod_social                AS adobe_cartStartByod_social_wow,
-        w.adobe_ordersUnassistedByod_social         AS adobe_ordersUnassistedByod_social_wow,
-        w.adobe_ordersAssistedByod_social           AS adobe_ordersAssistedByod_social_wow,
-        w.adobe_ordersTotalByod_social              AS adobe_ordersTotalByod_social_wow,
-
+        w.adobe_uvnbByod_social                           AS adobe_uvnbByod_social_wow,
+        w.adobe_pctUvnbByodOfTotal_social                 AS adobe_pctUvnbByodOfTotal_social_wow,
+        w.adobe_cartStartByod_social                      AS adobe_cartStartByod_social_wow,
+        w.adobe_ordersUnassistedByod_social               AS adobe_ordersUnassistedByod_social_wow,
+        w.adobe_ordersAssistedByod_social                 AS adobe_ordersAssistedByod_social_wow,
+        w.adobe_ordersTotalByod_social                    AS adobe_ordersTotalByod_social_wow,
         -- SOCIAL LY
-        l.adobe_uvnbByod_social                     AS adobe_uvnbByod_social_ly,
-        l.adobe_cartStartByod_social                AS adobe_cartStartByod_social_ly,
-        l.adobe_ordersUnassistedByod_social         AS adobe_ordersUnassistedByod_social_ly,
-        l.adobe_ordersAssistedByod_social           AS adobe_ordersAssistedByod_social_ly,
-        l.adobe_ordersTotalByod_social              AS adobe_ordersTotalByod_social_ly,
+        l.adobe_uvnbByod_social                           AS adobe_uvnbByod_social_ly,
+        l.adobe_pctUvnbByodOfTotal_social                 AS adobe_pctUvnbByodOfTotal_social_ly,
+        l.adobe_cartStartByod_social                      AS adobe_cartStartByod_social_ly,
+        l.adobe_ordersUnassistedByod_social               AS adobe_ordersUnassistedByod_social_ly,
+        l.adobe_ordersAssistedByod_social                 AS adobe_ordersAssistedByod_social_ly,
+        l.adobe_ordersTotalByod_social                    AS adobe_ordersTotalByod_social_ly,
 
-        -- PROGRAMMATIC current
+        -- ================================================================ PROGRAMMATIC current
         c.adobe_uvnbByod_programmatic,
+        c.adobe_pctUvnbByodOfTotal_programmatic,
         c.adobe_cartStartByod_programmatic,
         c.adobe_ordersUnassistedByod_programmatic,
         c.adobe_ordersAssistedByod_programmatic,
         c.adobe_ordersTotalByod_programmatic,
-
         -- PROGRAMMATIC WoW
-        w.adobe_uvnbByod_programmatic               AS adobe_uvnbByod_programmatic_wow,
-        w.adobe_cartStartByod_programmatic          AS adobe_cartStartByod_programmatic_wow,
-        w.adobe_ordersUnassistedByod_programmatic   AS adobe_ordersUnassistedByod_programmatic_wow,
-        w.adobe_ordersAssistedByod_programmatic     AS adobe_ordersAssistedByod_programmatic_wow,
-        w.adobe_ordersTotalByod_programmatic        AS adobe_ordersTotalByod_programmatic_wow,
-
+        w.adobe_uvnbByod_programmatic                     AS adobe_uvnbByod_programmatic_wow,
+        w.adobe_pctUvnbByodOfTotal_programmatic           AS adobe_pctUvnbByodOfTotal_programmatic_wow,
+        w.adobe_cartStartByod_programmatic                AS adobe_cartStartByod_programmatic_wow,
+        w.adobe_ordersUnassistedByod_programmatic         AS adobe_ordersUnassistedByod_programmatic_wow,
+        w.adobe_ordersAssistedByod_programmatic           AS adobe_ordersAssistedByod_programmatic_wow,
+        w.adobe_ordersTotalByod_programmatic              AS adobe_ordersTotalByod_programmatic_wow,
         -- PROGRAMMATIC LY
-        l.adobe_uvnbByod_programmatic               AS adobe_uvnbByod_programmatic_ly,
-        l.adobe_cartStartByod_programmatic          AS adobe_cartStartByod_programmatic_ly,
-        l.adobe_ordersUnassistedByod_programmatic   AS adobe_ordersUnassistedByod_programmatic_ly,
-        l.adobe_ordersAssistedByod_programmatic     AS adobe_ordersAssistedByod_programmatic_ly,
-        l.adobe_ordersTotalByod_programmatic        AS adobe_ordersTotalByod_programmatic_ly,
+        l.adobe_uvnbByod_programmatic                     AS adobe_uvnbByod_programmatic_ly,
+        l.adobe_pctUvnbByodOfTotal_programmatic           AS adobe_pctUvnbByodOfTotal_programmatic_ly,
+        l.adobe_cartStartByod_programmatic                AS adobe_cartStartByod_programmatic_ly,
+        l.adobe_ordersUnassistedByod_programmatic         AS adobe_ordersUnassistedByod_programmatic_ly,
+        l.adobe_ordersAssistedByod_programmatic           AS adobe_ordersAssistedByod_programmatic_ly,
+        l.adobe_ordersTotalByod_programmatic              AS adobe_ordersTotalByod_programmatic_ly,
 
-        -- OTHER current
+        -- ================================================================ OTHER current
         c.adobe_uvnbByod_other,
+        c.adobe_pctUvnbByodOfTotal_other,
         c.adobe_cartStartByod_other,
         c.adobe_ordersUnassistedByod_other,
         c.adobe_ordersAssistedByod_other,
         c.adobe_ordersTotalByod_other,
-
         -- OTHER WoW
-        w.adobe_uvnbByod_other                      AS adobe_uvnbByod_other_wow,
-        w.adobe_cartStartByod_other                 AS adobe_cartStartByod_other_wow,
-        w.adobe_ordersUnassistedByod_other          AS adobe_ordersUnassistedByod_other_wow,
-        w.adobe_ordersAssistedByod_other            AS adobe_ordersAssistedByod_other_wow,
-        w.adobe_ordersTotalByod_other               AS adobe_ordersTotalByod_other_wow,
-
+        w.adobe_uvnbByod_other                            AS adobe_uvnbByod_other_wow,
+        w.adobe_pctUvnbByodOfTotal_other                  AS adobe_pctUvnbByodOfTotal_other_wow,
+        w.adobe_cartStartByod_other                       AS adobe_cartStartByod_other_wow,
+        w.adobe_ordersUnassistedByod_other                AS adobe_ordersUnassistedByod_other_wow,
+        w.adobe_ordersAssistedByod_other                  AS adobe_ordersAssistedByod_other_wow,
+        w.adobe_ordersTotalByod_other                     AS adobe_ordersTotalByod_other_wow,
         -- OTHER LY
-        l.adobe_uvnbByod_other                      AS adobe_uvnbByod_other_ly,
-        l.adobe_cartStartByod_other                 AS adobe_cartStartByod_other_ly,
-        l.adobe_ordersUnassistedByod_other          AS adobe_ordersUnassistedByod_other_ly,
-        l.adobe_ordersAssistedByod_other            AS adobe_ordersAssistedByod_other_ly,
-        l.adobe_ordersTotalByod_other               AS adobe_ordersTotalByod_other_ly
+        l.adobe_uvnbByod_other                            AS adobe_uvnbByod_other_ly,
+        l.adobe_pctUvnbByodOfTotal_other                  AS adobe_pctUvnbByodOfTotal_other_ly,
+        l.adobe_cartStartByod_other                       AS adobe_cartStartByod_other_ly,
+        l.adobe_ordersUnassistedByod_other                AS adobe_ordersUnassistedByod_other_ly,
+        l.adobe_ordersAssistedByod_other                  AS adobe_ordersAssistedByod_other_ly,
+        l.adobe_ordersTotalByod_other                     AS adobe_ordersTotalByod_other_ly
 
     FROM with_week_num c
-    LEFT JOIN with_week_num w
-        ON c.week_sun_to_sat = DATE_ADD(w.week_sun_to_sat, INTERVAL 7 DAY)
-    LEFT JOIN with_week_num l
-        ON (c.custom_week_num - l.custom_week_num) = 52
+    LEFT JOIN with_week_num w ON c.week_sun_to_sat = DATE_ADD(w.week_sun_to_sat, INTERVAL 7 DAY)
+    LEFT JOIN with_week_num l ON (c.custom_week_num - l.custom_week_num) = 52
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 5: Compute wow_pct and yoy_pct for all metrics
--- Reusable macro pattern: NULL when prior NULL or 0
+-- STEP 6: Compute wow_pct and yoy_pct
+-- NULL when prior NULL or 0 — no fake zeroes
 -- -----------------------------------------------------------------------
 with_pcts AS (
     SELECT
         week_sun_to_sat,
         custom_week_num,
 
-        -- ================================================================
-        -- ALL CHANNELS
-        -- ================================================================
-        adobe_uvnbByod_allChannels,
-        adobe_uvnbByod_allChannels_wow,
-        adobe_uvnbByod_allChannels_ly,
+        -- ================================================================ ALL CHANNELS
+        adobe_uvnbByod_allChannels, adobe_uvnbByod_allChannels_wow, adobe_uvnbByod_allChannels_ly,
         CASE WHEN adobe_uvnbByod_allChannels_wow IS NULL OR adobe_uvnbByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_allChannels - adobe_uvnbByod_allChannels_wow) / adobe_uvnbByod_allChannels_wow, 6) END AS adobe_uvnbByod_allChannels_wow_pct,
         CASE WHEN adobe_uvnbByod_allChannels_ly  IS NULL OR adobe_uvnbByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_allChannels - adobe_uvnbByod_allChannels_ly)  / adobe_uvnbByod_allChannels_ly,  6) END AS adobe_uvnbByod_allChannels_yoy_pct,
 
-        adobe_uvnbFlowTotal_allChannels,
-        adobe_uvnbFlowTotal_allChannels_wow,
-        adobe_uvnbFlowTotal_allChannels_ly,
+        adobe_uvnbTotal_allChannels, adobe_uvnbTotal_allChannels_wow, adobe_uvnbTotal_allChannels_ly,
+        CASE WHEN adobe_uvnbTotal_allChannels_wow IS NULL OR adobe_uvnbTotal_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbTotal_allChannels - adobe_uvnbTotal_allChannels_wow) / adobe_uvnbTotal_allChannels_wow, 6) END AS adobe_uvnbTotal_allChannels_wow_pct,
+        CASE WHEN adobe_uvnbTotal_allChannels_ly  IS NULL OR adobe_uvnbTotal_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbTotal_allChannels - adobe_uvnbTotal_allChannels_ly)  / adobe_uvnbTotal_allChannels_ly,  6) END AS adobe_uvnbTotal_allChannels_yoy_pct,
+
+        adobe_uvnbFlowTotal_allChannels, adobe_uvnbFlowTotal_allChannels_wow, adobe_uvnbFlowTotal_allChannels_ly,
         CASE WHEN adobe_uvnbFlowTotal_allChannels_wow IS NULL OR adobe_uvnbFlowTotal_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbFlowTotal_allChannels - adobe_uvnbFlowTotal_allChannels_wow) / adobe_uvnbFlowTotal_allChannels_wow, 6) END AS adobe_uvnbFlowTotal_allChannels_wow_pct,
         CASE WHEN adobe_uvnbFlowTotal_allChannels_ly  IS NULL OR adobe_uvnbFlowTotal_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbFlowTotal_allChannels - adobe_uvnbFlowTotal_allChannels_ly)  / adobe_uvnbFlowTotal_allChannels_ly,  6) END AS adobe_uvnbFlowTotal_allChannels_yoy_pct,
 
-        adobe_uvnbByodPctOfUvnbFlow_allChannels,
-        adobe_uvnbByodPctOfUvnbFlow_allChannels_wow,
-        adobe_uvnbByodPctOfUvnbFlow_allChannels_ly,
-        CASE WHEN adobe_uvnbByodPctOfUvnbFlow_allChannels_wow IS NULL OR adobe_uvnbByodPctOfUvnbFlow_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByodPctOfUvnbFlow_allChannels - adobe_uvnbByodPctOfUvnbFlow_allChannels_wow) / adobe_uvnbByodPctOfUvnbFlow_allChannels_wow, 6) END AS adobe_uvnbByodPctOfUvnbFlow_allChannels_wow_pct,
-        CASE WHEN adobe_uvnbByodPctOfUvnbFlow_allChannels_ly  IS NULL OR adobe_uvnbByodPctOfUvnbFlow_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByodPctOfUvnbFlow_allChannels - adobe_uvnbByodPctOfUvnbFlow_allChannels_ly)  / adobe_uvnbByodPctOfUvnbFlow_allChannels_ly,  6) END AS adobe_uvnbByodPctOfUvnbFlow_allChannels_yoy_pct,
+        adobe_pctUvnbByodOfUvnbFlow_allChannels, adobe_pctUvnbByodOfUvnbFlow_allChannels_wow, adobe_pctUvnbByodOfUvnbFlow_allChannels_ly,
+        CASE WHEN adobe_pctUvnbByodOfUvnbFlow_allChannels_wow IS NULL OR adobe_pctUvnbByodOfUvnbFlow_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfUvnbFlow_allChannels - adobe_pctUvnbByodOfUvnbFlow_allChannels_wow) / adobe_pctUvnbByodOfUvnbFlow_allChannels_wow, 6) END AS adobe_pctUvnbByodOfUvnbFlow_allChannels_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfUvnbFlow_allChannels_ly  IS NULL OR adobe_pctUvnbByodOfUvnbFlow_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfUvnbFlow_allChannels - adobe_pctUvnbByodOfUvnbFlow_allChannels_ly)  / adobe_pctUvnbByodOfUvnbFlow_allChannels_ly,  6) END AS adobe_pctUvnbByodOfUvnbFlow_allChannels_yoy_pct,
 
-        adobe_cartStartByod_allChannels,
-        adobe_cartStartByod_allChannels_wow,
-        adobe_cartStartByod_allChannels_ly,
+        adobe_cartStartByod_allChannels, adobe_cartStartByod_allChannels_wow, adobe_cartStartByod_allChannels_ly,
         CASE WHEN adobe_cartStartByod_allChannels_wow IS NULL OR adobe_cartStartByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_allChannels - adobe_cartStartByod_allChannels_wow) / adobe_cartStartByod_allChannels_wow, 6) END AS adobe_cartStartByod_allChannels_wow_pct,
         CASE WHEN adobe_cartStartByod_allChannels_ly  IS NULL OR adobe_cartStartByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_allChannels - adobe_cartStartByod_allChannels_ly)  / adobe_cartStartByod_allChannels_ly,  6) END AS adobe_cartStartByod_allChannels_yoy_pct,
 
-        adobe_ordersUnassistedByod_allChannels,
-        adobe_ordersUnassistedByod_allChannels_wow,
-        adobe_ordersUnassistedByod_allChannels_ly,
+        adobe_ordersUnassistedByod_allChannels, adobe_ordersUnassistedByod_allChannels_wow, adobe_ordersUnassistedByod_allChannels_ly,
         CASE WHEN adobe_ordersUnassistedByod_allChannels_wow IS NULL OR adobe_ordersUnassistedByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_allChannels - adobe_ordersUnassistedByod_allChannels_wow) / adobe_ordersUnassistedByod_allChannels_wow, 6) END AS adobe_ordersUnassistedByod_allChannels_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_allChannels_ly  IS NULL OR adobe_ordersUnassistedByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_allChannels - adobe_ordersUnassistedByod_allChannels_ly)  / adobe_ordersUnassistedByod_allChannels_ly,  6) END AS adobe_ordersUnassistedByod_allChannels_yoy_pct,
 
-        adobe_ordersAssistedByod_allChannels,
-        adobe_ordersAssistedByod_allChannels_wow,
-        adobe_ordersAssistedByod_allChannels_ly,
+        adobe_ordersAssistedByod_allChannels, adobe_ordersAssistedByod_allChannels_wow, adobe_ordersAssistedByod_allChannels_ly,
         CASE WHEN adobe_ordersAssistedByod_allChannels_wow IS NULL OR adobe_ordersAssistedByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_allChannels - adobe_ordersAssistedByod_allChannels_wow) / adobe_ordersAssistedByod_allChannels_wow, 6) END AS adobe_ordersAssistedByod_allChannels_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_allChannels_ly  IS NULL OR adobe_ordersAssistedByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_allChannels - adobe_ordersAssistedByod_allChannels_ly)  / adobe_ordersAssistedByod_allChannels_ly,  6) END AS adobe_ordersAssistedByod_allChannels_yoy_pct,
 
-        adobe_ordersTotalByod_allChannels,
-        adobe_ordersTotalByod_allChannels_wow,
-        adobe_ordersTotalByod_allChannels_ly,
+        adobe_ordersTotalByod_allChannels, adobe_ordersTotalByod_allChannels_wow, adobe_ordersTotalByod_allChannels_ly,
         CASE WHEN adobe_ordersTotalByod_allChannels_wow IS NULL OR adobe_ordersTotalByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_allChannels - adobe_ordersTotalByod_allChannels_wow) / adobe_ordersTotalByod_allChannels_wow, 6) END AS adobe_ordersTotalByod_allChannels_wow_pct,
         CASE WHEN adobe_ordersTotalByod_allChannels_ly  IS NULL OR adobe_ordersTotalByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_allChannels - adobe_ordersTotalByod_allChannels_ly)  / adobe_ordersTotalByod_allChannels_ly,  6) END AS adobe_ordersTotalByod_allChannels_yoy_pct,
 
-        -- ================================================================
-        -- PAID SEARCH
-        -- ================================================================
-        adobe_uvnbByod_paidSearch,
-        adobe_uvnbByod_paidSearch_wow,
-        adobe_uvnbByod_paidSearch_ly,
+        adobe_ordersTotal_allChannels, adobe_ordersTotal_allChannels_wow, adobe_ordersTotal_allChannels_ly,
+        CASE WHEN adobe_ordersTotal_allChannels_wow IS NULL OR adobe_ordersTotal_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotal_allChannels - adobe_ordersTotal_allChannels_wow) / adobe_ordersTotal_allChannels_wow, 6) END AS adobe_ordersTotal_allChannels_wow_pct,
+        CASE WHEN adobe_ordersTotal_allChannels_ly  IS NULL OR adobe_ordersTotal_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotal_allChannels - adobe_ordersTotal_allChannels_ly)  / adobe_ordersTotal_allChannels_ly,  6) END AS adobe_ordersTotal_allChannels_yoy_pct,
+
+        adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, adobe_pctOrdersByodOfOrdersTotal_allChannels_ly,
+        CASE WHEN adobe_pctOrdersByodOfOrdersTotal_allChannels_wow IS NULL OR adobe_pctOrdersByodOfOrdersTotal_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_pctOrdersByodOfOrdersTotal_allChannels - adobe_pctOrdersByodOfOrdersTotal_allChannels_wow) / adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, 6) END AS adobe_pctOrdersByodOfOrdersTotal_allChannels_wow_pct,
+        CASE WHEN adobe_pctOrdersByodOfOrdersTotal_allChannels_ly  IS NULL OR adobe_pctOrdersByodOfOrdersTotal_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_pctOrdersByodOfOrdersTotal_allChannels - adobe_pctOrdersByodOfOrdersTotal_allChannels_ly)  / adobe_pctOrdersByodOfOrdersTotal_allChannels_ly,  6) END AS adobe_pctOrdersByodOfOrdersTotal_allChannels_yoy_pct,
+
+        adobe_cvrByod_allChannels, adobe_cvrByod_allChannels_wow, adobe_cvrByod_allChannels_ly,
+        CASE WHEN adobe_cvrByod_allChannels_wow IS NULL OR adobe_cvrByod_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cvrByod_allChannels - adobe_cvrByod_allChannels_wow) / adobe_cvrByod_allChannels_wow, 6) END AS adobe_cvrByod_allChannels_wow_pct,
+        CASE WHEN adobe_cvrByod_allChannels_ly  IS NULL OR adobe_cvrByod_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cvrByod_allChannels - adobe_cvrByod_allChannels_ly)  / adobe_cvrByod_allChannels_ly,  6) END AS adobe_cvrByod_allChannels_yoy_pct,
+
+        adobe_cvrSite_allChannels, adobe_cvrSite_allChannels_wow, adobe_cvrSite_allChannels_ly,
+        CASE WHEN adobe_cvrSite_allChannels_wow IS NULL OR adobe_cvrSite_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cvrSite_allChannels - adobe_cvrSite_allChannels_wow) / adobe_cvrSite_allChannels_wow, 6) END AS adobe_cvrSite_allChannels_wow_pct,
+        CASE WHEN adobe_cvrSite_allChannels_ly  IS NULL OR adobe_cvrSite_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cvrSite_allChannels - adobe_cvrSite_allChannels_ly)  / adobe_cvrSite_allChannels_ly,  6) END AS adobe_cvrSite_allChannels_yoy_pct,
+
+        -- ================================================================ PAID SEARCH
+        adobe_uvnbByod_paidSearch, adobe_uvnbByod_paidSearch_wow, adobe_uvnbByod_paidSearch_ly,
         CASE WHEN adobe_uvnbByod_paidSearch_wow IS NULL OR adobe_uvnbByod_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_paidSearch - adobe_uvnbByod_paidSearch_wow) / adobe_uvnbByod_paidSearch_wow, 6) END AS adobe_uvnbByod_paidSearch_wow_pct,
         CASE WHEN adobe_uvnbByod_paidSearch_ly  IS NULL OR adobe_uvnbByod_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_paidSearch - adobe_uvnbByod_paidSearch_ly)  / adobe_uvnbByod_paidSearch_ly,  6) END AS adobe_uvnbByod_paidSearch_yoy_pct,
 
-        adobe_cartStartByod_paidSearch,
-        adobe_cartStartByod_paidSearch_wow,
-        adobe_cartStartByod_paidSearch_ly,
+        adobe_pctUvnbByodOfTotal_paidSearch, adobe_pctUvnbByodOfTotal_paidSearch_wow, adobe_pctUvnbByodOfTotal_paidSearch_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_paidSearch_wow IS NULL OR adobe_pctUvnbByodOfTotal_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_paidSearch - adobe_pctUvnbByodOfTotal_paidSearch_wow) / adobe_pctUvnbByodOfTotal_paidSearch_wow, 6) END AS adobe_pctUvnbByodOfTotal_paidSearch_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_paidSearch_ly  IS NULL OR adobe_pctUvnbByodOfTotal_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_paidSearch - adobe_pctUvnbByodOfTotal_paidSearch_ly)  / adobe_pctUvnbByodOfTotal_paidSearch_ly,  6) END AS adobe_pctUvnbByodOfTotal_paidSearch_yoy_pct,
+
+        adobe_cartStartByod_paidSearch, adobe_cartStartByod_paidSearch_wow, adobe_cartStartByod_paidSearch_ly,
         CASE WHEN adobe_cartStartByod_paidSearch_wow IS NULL OR adobe_cartStartByod_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_paidSearch - adobe_cartStartByod_paidSearch_wow) / adobe_cartStartByod_paidSearch_wow, 6) END AS adobe_cartStartByod_paidSearch_wow_pct,
         CASE WHEN adobe_cartStartByod_paidSearch_ly  IS NULL OR adobe_cartStartByod_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_paidSearch - adobe_cartStartByod_paidSearch_ly)  / adobe_cartStartByod_paidSearch_ly,  6) END AS adobe_cartStartByod_paidSearch_yoy_pct,
 
-        adobe_ordersUnassistedByod_paidSearch,
-        adobe_ordersUnassistedByod_paidSearch_wow,
-        adobe_ordersUnassistedByod_paidSearch_ly,
+        adobe_ordersUnassistedByod_paidSearch, adobe_ordersUnassistedByod_paidSearch_wow, adobe_ordersUnassistedByod_paidSearch_ly,
         CASE WHEN adobe_ordersUnassistedByod_paidSearch_wow IS NULL OR adobe_ordersUnassistedByod_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_paidSearch - adobe_ordersUnassistedByod_paidSearch_wow) / adobe_ordersUnassistedByod_paidSearch_wow, 6) END AS adobe_ordersUnassistedByod_paidSearch_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_paidSearch_ly  IS NULL OR adobe_ordersUnassistedByod_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_paidSearch - adobe_ordersUnassistedByod_paidSearch_ly)  / adobe_ordersUnassistedByod_paidSearch_ly,  6) END AS adobe_ordersUnassistedByod_paidSearch_yoy_pct,
 
-        adobe_ordersAssistedByod_paidSearch,
-        adobe_ordersAssistedByod_paidSearch_wow,
-        adobe_ordersAssistedByod_paidSearch_ly,
+        adobe_ordersAssistedByod_paidSearch, adobe_ordersAssistedByod_paidSearch_wow, adobe_ordersAssistedByod_paidSearch_ly,
         CASE WHEN adobe_ordersAssistedByod_paidSearch_wow IS NULL OR adobe_ordersAssistedByod_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_paidSearch - adobe_ordersAssistedByod_paidSearch_wow) / adobe_ordersAssistedByod_paidSearch_wow, 6) END AS adobe_ordersAssistedByod_paidSearch_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_paidSearch_ly  IS NULL OR adobe_ordersAssistedByod_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_paidSearch - adobe_ordersAssistedByod_paidSearch_ly)  / adobe_ordersAssistedByod_paidSearch_ly,  6) END AS adobe_ordersAssistedByod_paidSearch_yoy_pct,
 
-        adobe_ordersTotalByod_paidSearch,
-        adobe_ordersTotalByod_paidSearch_wow,
-        adobe_ordersTotalByod_paidSearch_ly,
+        adobe_ordersTotalByod_paidSearch, adobe_ordersTotalByod_paidSearch_wow, adobe_ordersTotalByod_paidSearch_ly,
         CASE WHEN adobe_ordersTotalByod_paidSearch_wow IS NULL OR adobe_ordersTotalByod_paidSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_paidSearch - adobe_ordersTotalByod_paidSearch_wow) / adobe_ordersTotalByod_paidSearch_wow, 6) END AS adobe_ordersTotalByod_paidSearch_wow_pct,
         CASE WHEN adobe_ordersTotalByod_paidSearch_ly  IS NULL OR adobe_ordersTotalByod_paidSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_paidSearch - adobe_ordersTotalByod_paidSearch_ly)  / adobe_ordersTotalByod_paidSearch_ly,  6) END AS adobe_ordersTotalByod_paidSearch_yoy_pct,
 
-        -- ================================================================
-        -- ORGANIC SEARCH
-        -- ================================================================
-        adobe_uvnbByod_organicSearch,
-        adobe_uvnbByod_organicSearch_wow,
-        adobe_uvnbByod_organicSearch_ly,
+        -- ================================================================ ORGANIC SEARCH
+        adobe_uvnbByod_organicSearch, adobe_uvnbByod_organicSearch_wow, adobe_uvnbByod_organicSearch_ly,
         CASE WHEN adobe_uvnbByod_organicSearch_wow IS NULL OR adobe_uvnbByod_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_organicSearch - adobe_uvnbByod_organicSearch_wow) / adobe_uvnbByod_organicSearch_wow, 6) END AS adobe_uvnbByod_organicSearch_wow_pct,
         CASE WHEN adobe_uvnbByod_organicSearch_ly  IS NULL OR adobe_uvnbByod_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_organicSearch - adobe_uvnbByod_organicSearch_ly)  / adobe_uvnbByod_organicSearch_ly,  6) END AS adobe_uvnbByod_organicSearch_yoy_pct,
 
-        adobe_cartStartByod_organicSearch,
-        adobe_cartStartByod_organicSearch_wow,
-        adobe_cartStartByod_organicSearch_ly,
+        adobe_pctUvnbByodOfTotal_organicSearch, adobe_pctUvnbByodOfTotal_organicSearch_wow, adobe_pctUvnbByodOfTotal_organicSearch_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_organicSearch_wow IS NULL OR adobe_pctUvnbByodOfTotal_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_organicSearch - adobe_pctUvnbByodOfTotal_organicSearch_wow) / adobe_pctUvnbByodOfTotal_organicSearch_wow, 6) END AS adobe_pctUvnbByodOfTotal_organicSearch_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_organicSearch_ly  IS NULL OR adobe_pctUvnbByodOfTotal_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_organicSearch - adobe_pctUvnbByodOfTotal_organicSearch_ly)  / adobe_pctUvnbByodOfTotal_organicSearch_ly,  6) END AS adobe_pctUvnbByodOfTotal_organicSearch_yoy_pct,
+
+        adobe_cartStartByod_organicSearch, adobe_cartStartByod_organicSearch_wow, adobe_cartStartByod_organicSearch_ly,
         CASE WHEN adobe_cartStartByod_organicSearch_wow IS NULL OR adobe_cartStartByod_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_organicSearch - adobe_cartStartByod_organicSearch_wow) / adobe_cartStartByod_organicSearch_wow, 6) END AS adobe_cartStartByod_organicSearch_wow_pct,
         CASE WHEN adobe_cartStartByod_organicSearch_ly  IS NULL OR adobe_cartStartByod_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_organicSearch - adobe_cartStartByod_organicSearch_ly)  / adobe_cartStartByod_organicSearch_ly,  6) END AS adobe_cartStartByod_organicSearch_yoy_pct,
 
-        adobe_ordersUnassistedByod_organicSearch,
-        adobe_ordersUnassistedByod_organicSearch_wow,
-        adobe_ordersUnassistedByod_organicSearch_ly,
+        adobe_ordersUnassistedByod_organicSearch, adobe_ordersUnassistedByod_organicSearch_wow, adobe_ordersUnassistedByod_organicSearch_ly,
         CASE WHEN adobe_ordersUnassistedByod_organicSearch_wow IS NULL OR adobe_ordersUnassistedByod_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_organicSearch - adobe_ordersUnassistedByod_organicSearch_wow) / adobe_ordersUnassistedByod_organicSearch_wow, 6) END AS adobe_ordersUnassistedByod_organicSearch_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_organicSearch_ly  IS NULL OR adobe_ordersUnassistedByod_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_organicSearch - adobe_ordersUnassistedByod_organicSearch_ly)  / adobe_ordersUnassistedByod_organicSearch_ly,  6) END AS adobe_ordersUnassistedByod_organicSearch_yoy_pct,
 
-        adobe_ordersAssistedByod_organicSearch,
-        adobe_ordersAssistedByod_organicSearch_wow,
-        adobe_ordersAssistedByod_organicSearch_ly,
+        adobe_ordersAssistedByod_organicSearch, adobe_ordersAssistedByod_organicSearch_wow, adobe_ordersAssistedByod_organicSearch_ly,
         CASE WHEN adobe_ordersAssistedByod_organicSearch_wow IS NULL OR adobe_ordersAssistedByod_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_organicSearch - adobe_ordersAssistedByod_organicSearch_wow) / adobe_ordersAssistedByod_organicSearch_wow, 6) END AS adobe_ordersAssistedByod_organicSearch_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_organicSearch_ly  IS NULL OR adobe_ordersAssistedByod_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_organicSearch - adobe_ordersAssistedByod_organicSearch_ly)  / adobe_ordersAssistedByod_organicSearch_ly,  6) END AS adobe_ordersAssistedByod_organicSearch_yoy_pct,
 
-        adobe_ordersTotalByod_organicSearch,
-        adobe_ordersTotalByod_organicSearch_wow,
-        adobe_ordersTotalByod_organicSearch_ly,
+        adobe_ordersTotalByod_organicSearch, adobe_ordersTotalByod_organicSearch_wow, adobe_ordersTotalByod_organicSearch_ly,
         CASE WHEN adobe_ordersTotalByod_organicSearch_wow IS NULL OR adobe_ordersTotalByod_organicSearch_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_organicSearch - adobe_ordersTotalByod_organicSearch_wow) / adobe_ordersTotalByod_organicSearch_wow, 6) END AS adobe_ordersTotalByod_organicSearch_wow_pct,
         CASE WHEN adobe_ordersTotalByod_organicSearch_ly  IS NULL OR adobe_ordersTotalByod_organicSearch_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_organicSearch - adobe_ordersTotalByod_organicSearch_ly)  / adobe_ordersTotalByod_organicSearch_ly,  6) END AS adobe_ordersTotalByod_organicSearch_yoy_pct,
 
-        -- ================================================================
-        -- DIRECT
-        -- ================================================================
-        adobe_uvnbByod_direct,
-        adobe_uvnbByod_direct_wow,
-        adobe_uvnbByod_direct_ly,
+        -- ================================================================ DIRECT
+        adobe_uvnbByod_direct, adobe_uvnbByod_direct_wow, adobe_uvnbByod_direct_ly,
         CASE WHEN adobe_uvnbByod_direct_wow IS NULL OR adobe_uvnbByod_direct_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_direct - adobe_uvnbByod_direct_wow) / adobe_uvnbByod_direct_wow, 6) END AS adobe_uvnbByod_direct_wow_pct,
         CASE WHEN adobe_uvnbByod_direct_ly  IS NULL OR adobe_uvnbByod_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_direct - adobe_uvnbByod_direct_ly)  / adobe_uvnbByod_direct_ly,  6) END AS adobe_uvnbByod_direct_yoy_pct,
 
-        adobe_cartStartByod_direct,
-        adobe_cartStartByod_direct_wow,
-        adobe_cartStartByod_direct_ly,
+        adobe_pctUvnbByodOfTotal_direct, adobe_pctUvnbByodOfTotal_direct_wow, adobe_pctUvnbByodOfTotal_direct_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_direct_wow IS NULL OR adobe_pctUvnbByodOfTotal_direct_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_direct - adobe_pctUvnbByodOfTotal_direct_wow) / adobe_pctUvnbByodOfTotal_direct_wow, 6) END AS adobe_pctUvnbByodOfTotal_direct_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_direct_ly  IS NULL OR adobe_pctUvnbByodOfTotal_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_direct - adobe_pctUvnbByodOfTotal_direct_ly)  / adobe_pctUvnbByodOfTotal_direct_ly,  6) END AS adobe_pctUvnbByodOfTotal_direct_yoy_pct,
+
+        adobe_cartStartByod_direct, adobe_cartStartByod_direct_wow, adobe_cartStartByod_direct_ly,
         CASE WHEN adobe_cartStartByod_direct_wow IS NULL OR adobe_cartStartByod_direct_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_direct - adobe_cartStartByod_direct_wow) / adobe_cartStartByod_direct_wow, 6) END AS adobe_cartStartByod_direct_wow_pct,
         CASE WHEN adobe_cartStartByod_direct_ly  IS NULL OR adobe_cartStartByod_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_direct - adobe_cartStartByod_direct_ly)  / adobe_cartStartByod_direct_ly,  6) END AS adobe_cartStartByod_direct_yoy_pct,
 
-        adobe_ordersUnassistedByod_direct,
-        adobe_ordersUnassistedByod_direct_wow,
-        adobe_ordersUnassistedByod_direct_ly,
+        adobe_ordersUnassistedByod_direct, adobe_ordersUnassistedByod_direct_wow, adobe_ordersUnassistedByod_direct_ly,
         CASE WHEN adobe_ordersUnassistedByod_direct_wow IS NULL OR adobe_ordersUnassistedByod_direct_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_direct - adobe_ordersUnassistedByod_direct_wow) / adobe_ordersUnassistedByod_direct_wow, 6) END AS adobe_ordersUnassistedByod_direct_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_direct_ly  IS NULL OR adobe_ordersUnassistedByod_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_direct - adobe_ordersUnassistedByod_direct_ly)  / adobe_ordersUnassistedByod_direct_ly,  6) END AS adobe_ordersUnassistedByod_direct_yoy_pct,
 
-        adobe_ordersAssistedByod_direct,
-        adobe_ordersAssistedByod_direct_wow,
-        adobe_ordersAssistedByod_direct_ly,
+        adobe_ordersAssistedByod_direct, adobe_ordersAssistedByod_direct_wow, adobe_ordersAssistedByod_direct_ly,
         CASE WHEN adobe_ordersAssistedByod_direct_wow IS NULL OR adobe_ordersAssistedByod_direct_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_direct - adobe_ordersAssistedByod_direct_wow) / adobe_ordersAssistedByod_direct_wow, 6) END AS adobe_ordersAssistedByod_direct_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_direct_ly  IS NULL OR adobe_ordersAssistedByod_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_direct - adobe_ordersAssistedByod_direct_ly)  / adobe_ordersAssistedByod_direct_ly,  6) END AS adobe_ordersAssistedByod_direct_yoy_pct,
 
-        adobe_ordersTotalByod_direct,
-        adobe_ordersTotalByod_direct_wow,
-        adobe_ordersTotalByod_direct_ly,
+        adobe_ordersTotalByod_direct, adobe_ordersTotalByod_direct_wow, adobe_ordersTotalByod_direct_ly,
         CASE WHEN adobe_ordersTotalByod_direct_wow IS NULL OR adobe_ordersTotalByod_direct_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_direct - adobe_ordersTotalByod_direct_wow) / adobe_ordersTotalByod_direct_wow, 6) END AS adobe_ordersTotalByod_direct_wow_pct,
         CASE WHEN adobe_ordersTotalByod_direct_ly  IS NULL OR adobe_ordersTotalByod_direct_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_direct - adobe_ordersTotalByod_direct_ly)  / adobe_ordersTotalByod_direct_ly,  6) END AS adobe_ordersTotalByod_direct_yoy_pct,
 
-        -- ================================================================
-        -- SOCIAL
-        -- ================================================================
-        adobe_uvnbByod_social,
-        adobe_uvnbByod_social_wow,
-        adobe_uvnbByod_social_ly,
+        -- ================================================================ SOCIAL
+        adobe_uvnbByod_social, adobe_uvnbByod_social_wow, adobe_uvnbByod_social_ly,
         CASE WHEN adobe_uvnbByod_social_wow IS NULL OR adobe_uvnbByod_social_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_social - adobe_uvnbByod_social_wow) / adobe_uvnbByod_social_wow, 6) END AS adobe_uvnbByod_social_wow_pct,
         CASE WHEN adobe_uvnbByod_social_ly  IS NULL OR adobe_uvnbByod_social_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_social - adobe_uvnbByod_social_ly)  / adobe_uvnbByod_social_ly,  6) END AS adobe_uvnbByod_social_yoy_pct,
 
-        adobe_cartStartByod_social,
-        adobe_cartStartByod_social_wow,
-        adobe_cartStartByod_social_ly,
+        adobe_pctUvnbByodOfTotal_social, adobe_pctUvnbByodOfTotal_social_wow, adobe_pctUvnbByodOfTotal_social_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_social_wow IS NULL OR adobe_pctUvnbByodOfTotal_social_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_social - adobe_pctUvnbByodOfTotal_social_wow) / adobe_pctUvnbByodOfTotal_social_wow, 6) END AS adobe_pctUvnbByodOfTotal_social_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_social_ly  IS NULL OR adobe_pctUvnbByodOfTotal_social_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_social - adobe_pctUvnbByodOfTotal_social_ly)  / adobe_pctUvnbByodOfTotal_social_ly,  6) END AS adobe_pctUvnbByodOfTotal_social_yoy_pct,
+
+        adobe_cartStartByod_social, adobe_cartStartByod_social_wow, adobe_cartStartByod_social_ly,
         CASE WHEN adobe_cartStartByod_social_wow IS NULL OR adobe_cartStartByod_social_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_social - adobe_cartStartByod_social_wow) / adobe_cartStartByod_social_wow, 6) END AS adobe_cartStartByod_social_wow_pct,
         CASE WHEN adobe_cartStartByod_social_ly  IS NULL OR adobe_cartStartByod_social_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_social - adobe_cartStartByod_social_ly)  / adobe_cartStartByod_social_ly,  6) END AS adobe_cartStartByod_social_yoy_pct,
 
-        adobe_ordersUnassistedByod_social,
-        adobe_ordersUnassistedByod_social_wow,
-        adobe_ordersUnassistedByod_social_ly,
+        adobe_ordersUnassistedByod_social, adobe_ordersUnassistedByod_social_wow, adobe_ordersUnassistedByod_social_ly,
         CASE WHEN adobe_ordersUnassistedByod_social_wow IS NULL OR adobe_ordersUnassistedByod_social_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_social - adobe_ordersUnassistedByod_social_wow) / adobe_ordersUnassistedByod_social_wow, 6) END AS adobe_ordersUnassistedByod_social_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_social_ly  IS NULL OR adobe_ordersUnassistedByod_social_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_social - adobe_ordersUnassistedByod_social_ly)  / adobe_ordersUnassistedByod_social_ly,  6) END AS adobe_ordersUnassistedByod_social_yoy_pct,
 
-        adobe_ordersAssistedByod_social,
-        adobe_ordersAssistedByod_social_wow,
-        adobe_ordersAssistedByod_social_ly,
+        adobe_ordersAssistedByod_social, adobe_ordersAssistedByod_social_wow, adobe_ordersAssistedByod_social_ly,
         CASE WHEN adobe_ordersAssistedByod_social_wow IS NULL OR adobe_ordersAssistedByod_social_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_social - adobe_ordersAssistedByod_social_wow) / adobe_ordersAssistedByod_social_wow, 6) END AS adobe_ordersAssistedByod_social_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_social_ly  IS NULL OR adobe_ordersAssistedByod_social_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_social - adobe_ordersAssistedByod_social_ly)  / adobe_ordersAssistedByod_social_ly,  6) END AS adobe_ordersAssistedByod_social_yoy_pct,
 
-        adobe_ordersTotalByod_social,
-        adobe_ordersTotalByod_social_wow,
-        adobe_ordersTotalByod_social_ly,
+        adobe_ordersTotalByod_social, adobe_ordersTotalByod_social_wow, adobe_ordersTotalByod_social_ly,
         CASE WHEN adobe_ordersTotalByod_social_wow IS NULL OR adobe_ordersTotalByod_social_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_social - adobe_ordersTotalByod_social_wow) / adobe_ordersTotalByod_social_wow, 6) END AS adobe_ordersTotalByod_social_wow_pct,
         CASE WHEN adobe_ordersTotalByod_social_ly  IS NULL OR adobe_ordersTotalByod_social_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_social - adobe_ordersTotalByod_social_ly)  / adobe_ordersTotalByod_social_ly,  6) END AS adobe_ordersTotalByod_social_yoy_pct,
 
-        -- ================================================================
-        -- PROGRAMMATIC
-        -- ================================================================
-        adobe_uvnbByod_programmatic,
-        adobe_uvnbByod_programmatic_wow,
-        adobe_uvnbByod_programmatic_ly,
+        -- ================================================================ PROGRAMMATIC
+        adobe_uvnbByod_programmatic, adobe_uvnbByod_programmatic_wow, adobe_uvnbByod_programmatic_ly,
         CASE WHEN adobe_uvnbByod_programmatic_wow IS NULL OR adobe_uvnbByod_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_programmatic - adobe_uvnbByod_programmatic_wow) / adobe_uvnbByod_programmatic_wow, 6) END AS adobe_uvnbByod_programmatic_wow_pct,
         CASE WHEN adobe_uvnbByod_programmatic_ly  IS NULL OR adobe_uvnbByod_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_programmatic - adobe_uvnbByod_programmatic_ly)  / adobe_uvnbByod_programmatic_ly,  6) END AS adobe_uvnbByod_programmatic_yoy_pct,
 
-        adobe_cartStartByod_programmatic,
-        adobe_cartStartByod_programmatic_wow,
-        adobe_cartStartByod_programmatic_ly,
+        adobe_pctUvnbByodOfTotal_programmatic, adobe_pctUvnbByodOfTotal_programmatic_wow, adobe_pctUvnbByodOfTotal_programmatic_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_programmatic_wow IS NULL OR adobe_pctUvnbByodOfTotal_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_programmatic - adobe_pctUvnbByodOfTotal_programmatic_wow) / adobe_pctUvnbByodOfTotal_programmatic_wow, 6) END AS adobe_pctUvnbByodOfTotal_programmatic_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_programmatic_ly  IS NULL OR adobe_pctUvnbByodOfTotal_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_programmatic - adobe_pctUvnbByodOfTotal_programmatic_ly)  / adobe_pctUvnbByodOfTotal_programmatic_ly,  6) END AS adobe_pctUvnbByodOfTotal_programmatic_yoy_pct,
+
+        adobe_cartStartByod_programmatic, adobe_cartStartByod_programmatic_wow, adobe_cartStartByod_programmatic_ly,
         CASE WHEN adobe_cartStartByod_programmatic_wow IS NULL OR adobe_cartStartByod_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_programmatic - adobe_cartStartByod_programmatic_wow) / adobe_cartStartByod_programmatic_wow, 6) END AS adobe_cartStartByod_programmatic_wow_pct,
         CASE WHEN adobe_cartStartByod_programmatic_ly  IS NULL OR adobe_cartStartByod_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_programmatic - adobe_cartStartByod_programmatic_ly)  / adobe_cartStartByod_programmatic_ly,  6) END AS adobe_cartStartByod_programmatic_yoy_pct,
 
-        adobe_ordersUnassistedByod_programmatic,
-        adobe_ordersUnassistedByod_programmatic_wow,
-        adobe_ordersUnassistedByod_programmatic_ly,
+        adobe_ordersUnassistedByod_programmatic, adobe_ordersUnassistedByod_programmatic_wow, adobe_ordersUnassistedByod_programmatic_ly,
         CASE WHEN adobe_ordersUnassistedByod_programmatic_wow IS NULL OR adobe_ordersUnassistedByod_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_programmatic - adobe_ordersUnassistedByod_programmatic_wow) / adobe_ordersUnassistedByod_programmatic_wow, 6) END AS adobe_ordersUnassistedByod_programmatic_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_programmatic_ly  IS NULL OR adobe_ordersUnassistedByod_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_programmatic - adobe_ordersUnassistedByod_programmatic_ly)  / adobe_ordersUnassistedByod_programmatic_ly,  6) END AS adobe_ordersUnassistedByod_programmatic_yoy_pct,
 
-        adobe_ordersAssistedByod_programmatic,
-        adobe_ordersAssistedByod_programmatic_wow,
-        adobe_ordersAssistedByod_programmatic_ly,
+        adobe_ordersAssistedByod_programmatic, adobe_ordersAssistedByod_programmatic_wow, adobe_ordersAssistedByod_programmatic_ly,
         CASE WHEN adobe_ordersAssistedByod_programmatic_wow IS NULL OR adobe_ordersAssistedByod_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_programmatic - adobe_ordersAssistedByod_programmatic_wow) / adobe_ordersAssistedByod_programmatic_wow, 6) END AS adobe_ordersAssistedByod_programmatic_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_programmatic_ly  IS NULL OR adobe_ordersAssistedByod_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_programmatic - adobe_ordersAssistedByod_programmatic_ly)  / adobe_ordersAssistedByod_programmatic_ly,  6) END AS adobe_ordersAssistedByod_programmatic_yoy_pct,
 
-        adobe_ordersTotalByod_programmatic,
-        adobe_ordersTotalByod_programmatic_wow,
-        adobe_ordersTotalByod_programmatic_ly,
+        adobe_ordersTotalByod_programmatic, adobe_ordersTotalByod_programmatic_wow, adobe_ordersTotalByod_programmatic_ly,
         CASE WHEN adobe_ordersTotalByod_programmatic_wow IS NULL OR adobe_ordersTotalByod_programmatic_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_programmatic - adobe_ordersTotalByod_programmatic_wow) / adobe_ordersTotalByod_programmatic_wow, 6) END AS adobe_ordersTotalByod_programmatic_wow_pct,
         CASE WHEN adobe_ordersTotalByod_programmatic_ly  IS NULL OR adobe_ordersTotalByod_programmatic_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_programmatic - adobe_ordersTotalByod_programmatic_ly)  / adobe_ordersTotalByod_programmatic_ly,  6) END AS adobe_ordersTotalByod_programmatic_yoy_pct,
 
-        -- ================================================================
-        -- OTHER
-        -- ================================================================
-        adobe_uvnbByod_other,
-        adobe_uvnbByod_other_wow,
-        adobe_uvnbByod_other_ly,
+        -- ================================================================ OTHER
+        adobe_uvnbByod_other, adobe_uvnbByod_other_wow, adobe_uvnbByod_other_ly,
         CASE WHEN adobe_uvnbByod_other_wow IS NULL OR adobe_uvnbByod_other_wow = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_other - adobe_uvnbByod_other_wow) / adobe_uvnbByod_other_wow, 6) END AS adobe_uvnbByod_other_wow_pct,
         CASE WHEN adobe_uvnbByod_other_ly  IS NULL OR adobe_uvnbByod_other_ly  = 0 THEN NULL ELSE ROUND((adobe_uvnbByod_other - adobe_uvnbByod_other_ly)  / adobe_uvnbByod_other_ly,  6) END AS adobe_uvnbByod_other_yoy_pct,
 
-        adobe_cartStartByod_other,
-        adobe_cartStartByod_other_wow,
-        adobe_cartStartByod_other_ly,
+        adobe_pctUvnbByodOfTotal_other, adobe_pctUvnbByodOfTotal_other_wow, adobe_pctUvnbByodOfTotal_other_ly,
+        CASE WHEN adobe_pctUvnbByodOfTotal_other_wow IS NULL OR adobe_pctUvnbByodOfTotal_other_wow = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_other - adobe_pctUvnbByodOfTotal_other_wow) / adobe_pctUvnbByodOfTotal_other_wow, 6) END AS adobe_pctUvnbByodOfTotal_other_wow_pct,
+        CASE WHEN adobe_pctUvnbByodOfTotal_other_ly  IS NULL OR adobe_pctUvnbByodOfTotal_other_ly  = 0 THEN NULL ELSE ROUND((adobe_pctUvnbByodOfTotal_other - adobe_pctUvnbByodOfTotal_other_ly)  / adobe_pctUvnbByodOfTotal_other_ly,  6) END AS adobe_pctUvnbByodOfTotal_other_yoy_pct,
+
+        adobe_cartStartByod_other, adobe_cartStartByod_other_wow, adobe_cartStartByod_other_ly,
         CASE WHEN adobe_cartStartByod_other_wow IS NULL OR adobe_cartStartByod_other_wow = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_other - adobe_cartStartByod_other_wow) / adobe_cartStartByod_other_wow, 6) END AS adobe_cartStartByod_other_wow_pct,
         CASE WHEN adobe_cartStartByod_other_ly  IS NULL OR adobe_cartStartByod_other_ly  = 0 THEN NULL ELSE ROUND((adobe_cartStartByod_other - adobe_cartStartByod_other_ly)  / adobe_cartStartByod_other_ly,  6) END AS adobe_cartStartByod_other_yoy_pct,
 
-        adobe_ordersUnassistedByod_other,
-        adobe_ordersUnassistedByod_other_wow,
-        adobe_ordersUnassistedByod_other_ly,
+        adobe_ordersUnassistedByod_other, adobe_ordersUnassistedByod_other_wow, adobe_ordersUnassistedByod_other_ly,
         CASE WHEN adobe_ordersUnassistedByod_other_wow IS NULL OR adobe_ordersUnassistedByod_other_wow = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_other - adobe_ordersUnassistedByod_other_wow) / adobe_ordersUnassistedByod_other_wow, 6) END AS adobe_ordersUnassistedByod_other_wow_pct,
         CASE WHEN adobe_ordersUnassistedByod_other_ly  IS NULL OR adobe_ordersUnassistedByod_other_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersUnassistedByod_other - adobe_ordersUnassistedByod_other_ly)  / adobe_ordersUnassistedByod_other_ly,  6) END AS adobe_ordersUnassistedByod_other_yoy_pct,
 
-        adobe_ordersAssistedByod_other,
-        adobe_ordersAssistedByod_other_wow,
-        adobe_ordersAssistedByod_other_ly,
+        adobe_ordersAssistedByod_other, adobe_ordersAssistedByod_other_wow, adobe_ordersAssistedByod_other_ly,
         CASE WHEN adobe_ordersAssistedByod_other_wow IS NULL OR adobe_ordersAssistedByod_other_wow = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_other - adobe_ordersAssistedByod_other_wow) / adobe_ordersAssistedByod_other_wow, 6) END AS adobe_ordersAssistedByod_other_wow_pct,
         CASE WHEN adobe_ordersAssistedByod_other_ly  IS NULL OR adobe_ordersAssistedByod_other_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersAssistedByod_other - adobe_ordersAssistedByod_other_ly)  / adobe_ordersAssistedByod_other_ly,  6) END AS adobe_ordersAssistedByod_other_yoy_pct,
 
-        adobe_ordersTotalByod_other,
-        adobe_ordersTotalByod_other_wow,
-        adobe_ordersTotalByod_other_ly,
+        adobe_ordersTotalByod_other, adobe_ordersTotalByod_other_wow, adobe_ordersTotalByod_other_ly,
         CASE WHEN adobe_ordersTotalByod_other_wow IS NULL OR adobe_ordersTotalByod_other_wow = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_other - adobe_ordersTotalByod_other_wow) / adobe_ordersTotalByod_other_wow, 6) END AS adobe_ordersTotalByod_other_wow_pct,
         CASE WHEN adobe_ordersTotalByod_other_ly  IS NULL OR adobe_ordersTotalByod_other_ly  = 0 THEN NULL ELSE ROUND((adobe_ordersTotalByod_other - adobe_ordersTotalByod_other_ly)  / adobe_ordersTotalByod_other_ly,  6) END AS adobe_ordersTotalByod_other_yoy_pct
 
@@ -639,272 +632,85 @@ with_pcts AS (
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 6: max_data_date per source
+-- STEP 7: max_data_date
 -- -----------------------------------------------------------------------
 with_max_date AS (
     SELECT
         *,
         MAX(CASE
-            WHEN adobe_uvnbByod_allChannels IS NOT NULL
+            WHEN adobe_uvnbByod_allChannels      IS NOT NULL
               OR adobe_ordersTotalByod_allChannels IS NOT NULL
             THEN week_sun_to_sat
         END) OVER ()                                                    AS max_data_date
     FROM with_pcts
 )
 
--- -----------------------------------------------------------------------
--- FINAL OUTPUT
--- Wide table — one row per week_sun_to_sat
--- All columns prefixed with 'adobe_'
--- data_source as static column
--- -----------------------------------------------------------------------
 SELECT
     week_sun_to_sat,
     'ADOBE'                                                             AS data_source,
     max_data_date,
 
-    -- ================================================================
-    -- ALL CHANNELS
-    -- ================================================================
-    adobe_uvnbByod_allChannels,
-    adobe_uvnbByod_allChannels_wow,
-    adobe_uvnbByod_allChannels_ly,
-    adobe_uvnbByod_allChannels_wow_pct,
-    adobe_uvnbByod_allChannels_yoy_pct,
+    -- ================================================================ ALL CHANNELS
+    adobe_uvnbByod_allChannels, adobe_uvnbByod_allChannels_wow, adobe_uvnbByod_allChannels_ly, adobe_uvnbByod_allChannels_wow_pct, adobe_uvnbByod_allChannels_yoy_pct,
+    adobe_uvnbTotal_allChannels, adobe_uvnbTotal_allChannels_wow, adobe_uvnbTotal_allChannels_ly, adobe_uvnbTotal_allChannels_wow_pct, adobe_uvnbTotal_allChannels_yoy_pct,
+    adobe_uvnbFlowTotal_allChannels, adobe_uvnbFlowTotal_allChannels_wow, adobe_uvnbFlowTotal_allChannels_ly, adobe_uvnbFlowTotal_allChannels_wow_pct, adobe_uvnbFlowTotal_allChannels_yoy_pct,
+    adobe_pctUvnbByodOfUvnbFlow_allChannels, adobe_pctUvnbByodOfUvnbFlow_allChannels_wow, adobe_pctUvnbByodOfUvnbFlow_allChannels_ly, adobe_pctUvnbByodOfUvnbFlow_allChannels_wow_pct, adobe_pctUvnbByodOfUvnbFlow_allChannels_yoy_pct,
+    adobe_cartStartByod_allChannels, adobe_cartStartByod_allChannels_wow, adobe_cartStartByod_allChannels_ly, adobe_cartStartByod_allChannels_wow_pct, adobe_cartStartByod_allChannels_yoy_pct,
+    adobe_ordersUnassistedByod_allChannels, adobe_ordersUnassistedByod_allChannels_wow, adobe_ordersUnassistedByod_allChannels_ly, adobe_ordersUnassistedByod_allChannels_wow_pct, adobe_ordersUnassistedByod_allChannels_yoy_pct,
+    adobe_ordersAssistedByod_allChannels, adobe_ordersAssistedByod_allChannels_wow, adobe_ordersAssistedByod_allChannels_ly, adobe_ordersAssistedByod_allChannels_wow_pct, adobe_ordersAssistedByod_allChannels_yoy_pct,
+    adobe_ordersTotalByod_allChannels, adobe_ordersTotalByod_allChannels_wow, adobe_ordersTotalByod_allChannels_ly, adobe_ordersTotalByod_allChannels_wow_pct, adobe_ordersTotalByod_allChannels_yoy_pct,
+    adobe_ordersTotal_allChannels, adobe_ordersTotal_allChannels_wow, adobe_ordersTotal_allChannels_ly, adobe_ordersTotal_allChannels_wow_pct, adobe_ordersTotal_allChannels_yoy_pct,
+    adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, adobe_pctOrdersByodOfOrdersTotal_allChannels_ly, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow_pct, adobe_pctOrdersByodOfOrdersTotal_allChannels_yoy_pct,
+    adobe_cvrByod_allChannels, adobe_cvrByod_allChannels_wow, adobe_cvrByod_allChannels_ly, adobe_cvrByod_allChannels_wow_pct, adobe_cvrByod_allChannels_yoy_pct,
+    adobe_cvrSite_allChannels, adobe_cvrSite_allChannels_wow, adobe_cvrSite_allChannels_ly, adobe_cvrSite_allChannels_wow_pct, adobe_cvrSite_allChannels_yoy_pct,
 
-    adobe_uvnbFlowTotal_allChannels,
-    adobe_uvnbFlowTotal_allChannels_wow,
-    adobe_uvnbFlowTotal_allChannels_ly,
-    adobe_uvnbFlowTotal_allChannels_wow_pct,
-    adobe_uvnbFlowTotal_allChannels_yoy_pct,
+    -- ================================================================ PAID SEARCH
+    adobe_uvnbByod_paidSearch, adobe_uvnbByod_paidSearch_wow, adobe_uvnbByod_paidSearch_ly, adobe_uvnbByod_paidSearch_wow_pct, adobe_uvnbByod_paidSearch_yoy_pct,
+    adobe_pctUvnbByodOfTotal_paidSearch, adobe_pctUvnbByodOfTotal_paidSearch_wow, adobe_pctUvnbByodOfTotal_paidSearch_ly, adobe_pctUvnbByodOfTotal_paidSearch_wow_pct, adobe_pctUvnbByodOfTotal_paidSearch_yoy_pct,
+    adobe_cartStartByod_paidSearch, adobe_cartStartByod_paidSearch_wow, adobe_cartStartByod_paidSearch_ly, adobe_cartStartByod_paidSearch_wow_pct, adobe_cartStartByod_paidSearch_yoy_pct,
+    adobe_ordersUnassistedByod_paidSearch, adobe_ordersUnassistedByod_paidSearch_wow, adobe_ordersUnassistedByod_paidSearch_ly, adobe_ordersUnassistedByod_paidSearch_wow_pct, adobe_ordersUnassistedByod_paidSearch_yoy_pct,
+    adobe_ordersAssistedByod_paidSearch, adobe_ordersAssistedByod_paidSearch_wow, adobe_ordersAssistedByod_paidSearch_ly, adobe_ordersAssistedByod_paidSearch_wow_pct, adobe_ordersAssistedByod_paidSearch_yoy_pct,
+    adobe_ordersTotalByod_paidSearch, adobe_ordersTotalByod_paidSearch_wow, adobe_ordersTotalByod_paidSearch_ly, adobe_ordersTotalByod_paidSearch_wow_pct, adobe_ordersTotalByod_paidSearch_yoy_pct,
 
-    adobe_uvnbByodPctOfUvnbFlow_allChannels,
-    adobe_uvnbByodPctOfUvnbFlow_allChannels_wow,
-    adobe_uvnbByodPctOfUvnbFlow_allChannels_ly,
-    adobe_uvnbByodPctOfUvnbFlow_allChannels_wow_pct,
-    adobe_uvnbByodPctOfUvnbFlow_allChannels_yoy_pct,
+    -- ================================================================ ORGANIC SEARCH
+    adobe_uvnbByod_organicSearch, adobe_uvnbByod_organicSearch_wow, adobe_uvnbByod_organicSearch_ly, adobe_uvnbByod_organicSearch_wow_pct, adobe_uvnbByod_organicSearch_yoy_pct,
+    adobe_pctUvnbByodOfTotal_organicSearch, adobe_pctUvnbByodOfTotal_organicSearch_wow, adobe_pctUvnbByodOfTotal_organicSearch_ly, adobe_pctUvnbByodOfTotal_organicSearch_wow_pct, adobe_pctUvnbByodOfTotal_organicSearch_yoy_pct,
+    adobe_cartStartByod_organicSearch, adobe_cartStartByod_organicSearch_wow, adobe_cartStartByod_organicSearch_ly, adobe_cartStartByod_organicSearch_wow_pct, adobe_cartStartByod_organicSearch_yoy_pct,
+    adobe_ordersUnassistedByod_organicSearch, adobe_ordersUnassistedByod_organicSearch_wow, adobe_ordersUnassistedByod_organicSearch_ly, adobe_ordersUnassistedByod_organicSearch_wow_pct, adobe_ordersUnassistedByod_organicSearch_yoy_pct,
+    adobe_ordersAssistedByod_organicSearch, adobe_ordersAssistedByod_organicSearch_wow, adobe_ordersAssistedByod_organicSearch_ly, adobe_ordersAssistedByod_organicSearch_wow_pct, adobe_ordersAssistedByod_organicSearch_yoy_pct,
+    adobe_ordersTotalByod_organicSearch, adobe_ordersTotalByod_organicSearch_wow, adobe_ordersTotalByod_organicSearch_ly, adobe_ordersTotalByod_organicSearch_wow_pct, adobe_ordersTotalByod_organicSearch_yoy_pct,
 
-    adobe_cartStartByod_allChannels,
-    adobe_cartStartByod_allChannels_wow,
-    adobe_cartStartByod_allChannels_ly,
-    adobe_cartStartByod_allChannels_wow_pct,
-    adobe_cartStartByod_allChannels_yoy_pct,
+    -- ================================================================ DIRECT
+    adobe_uvnbByod_direct, adobe_uvnbByod_direct_wow, adobe_uvnbByod_direct_ly, adobe_uvnbByod_direct_wow_pct, adobe_uvnbByod_direct_yoy_pct,
+    adobe_pctUvnbByodOfTotal_direct, adobe_pctUvnbByodOfTotal_direct_wow, adobe_pctUvnbByodOfTotal_direct_ly, adobe_pctUvnbByodOfTotal_direct_wow_pct, adobe_pctUvnbByodOfTotal_direct_yoy_pct,
+    adobe_cartStartByod_direct, adobe_cartStartByod_direct_wow, adobe_cartStartByod_direct_ly, adobe_cartStartByod_direct_wow_pct, adobe_cartStartByod_direct_yoy_pct,
+    adobe_ordersUnassistedByod_direct, adobe_ordersUnassistedByod_direct_wow, adobe_ordersUnassistedByod_direct_ly, adobe_ordersUnassistedByod_direct_wow_pct, adobe_ordersUnassistedByod_direct_yoy_pct,
+    adobe_ordersAssistedByod_direct, adobe_ordersAssistedByod_direct_wow, adobe_ordersAssistedByod_direct_ly, adobe_ordersAssistedByod_direct_wow_pct, adobe_ordersAssistedByod_direct_yoy_pct,
+    adobe_ordersTotalByod_direct, adobe_ordersTotalByod_direct_wow, adobe_ordersTotalByod_direct_ly, adobe_ordersTotalByod_direct_wow_pct, adobe_ordersTotalByod_direct_yoy_pct,
 
-    adobe_ordersUnassistedByod_allChannels,
-    adobe_ordersUnassistedByod_allChannels_wow,
-    adobe_ordersUnassistedByod_allChannels_ly,
-    adobe_ordersUnassistedByod_allChannels_wow_pct,
-    adobe_ordersUnassistedByod_allChannels_yoy_pct,
+    -- ================================================================ SOCIAL
+    adobe_uvnbByod_social, adobe_uvnbByod_social_wow, adobe_uvnbByod_social_ly, adobe_uvnbByod_social_wow_pct, adobe_uvnbByod_social_yoy_pct,
+    adobe_pctUvnbByodOfTotal_social, adobe_pctUvnbByodOfTotal_social_wow, adobe_pctUvnbByodOfTotal_social_ly, adobe_pctUvnbByodOfTotal_social_wow_pct, adobe_pctUvnbByodOfTotal_social_yoy_pct,
+    adobe_cartStartByod_social, adobe_cartStartByod_social_wow, adobe_cartStartByod_social_ly, adobe_cartStartByod_social_wow_pct, adobe_cartStartByod_social_yoy_pct,
+    adobe_ordersUnassistedByod_social, adobe_ordersUnassistedByod_social_wow, adobe_ordersUnassistedByod_social_ly, adobe_ordersUnassistedByod_social_wow_pct, adobe_ordersUnassistedByod_social_yoy_pct,
+    adobe_ordersAssistedByod_social, adobe_ordersAssistedByod_social_wow, adobe_ordersAssistedByod_social_ly, adobe_ordersAssistedByod_social_wow_pct, adobe_ordersAssistedByod_social_yoy_pct,
+    adobe_ordersTotalByod_social, adobe_ordersTotalByod_social_wow, adobe_ordersTotalByod_social_ly, adobe_ordersTotalByod_social_wow_pct, adobe_ordersTotalByod_social_yoy_pct,
 
-    adobe_ordersAssistedByod_allChannels,
-    adobe_ordersAssistedByod_allChannels_wow,
-    adobe_ordersAssistedByod_allChannels_ly,
-    adobe_ordersAssistedByod_allChannels_wow_pct,
-    adobe_ordersAssistedByod_allChannels_yoy_pct,
+    -- ================================================================ PROGRAMMATIC
+    adobe_uvnbByod_programmatic, adobe_uvnbByod_programmatic_wow, adobe_uvnbByod_programmatic_ly, adobe_uvnbByod_programmatic_wow_pct, adobe_uvnbByod_programmatic_yoy_pct,
+    adobe_pctUvnbByodOfTotal_programmatic, adobe_pctUvnbByodOfTotal_programmatic_wow, adobe_pctUvnbByodOfTotal_programmatic_ly, adobe_pctUvnbByodOfTotal_programmatic_wow_pct, adobe_pctUvnbByodOfTotal_programmatic_yoy_pct,
+    adobe_cartStartByod_programmatic, adobe_cartStartByod_programmatic_wow, adobe_cartStartByod_programmatic_ly, adobe_cartStartByod_programmatic_wow_pct, adobe_cartStartByod_programmatic_yoy_pct,
+    adobe_ordersUnassistedByod_programmatic, adobe_ordersUnassistedByod_programmatic_wow, adobe_ordersUnassistedByod_programmatic_ly, adobe_ordersUnassistedByod_programmatic_wow_pct, adobe_ordersUnassistedByod_programmatic_yoy_pct,
+    adobe_ordersAssistedByod_programmatic, adobe_ordersAssistedByod_programmatic_wow, adobe_ordersAssistedByod_programmatic_ly, adobe_ordersAssistedByod_programmatic_wow_pct, adobe_ordersAssistedByod_programmatic_yoy_pct,
+    adobe_ordersTotalByod_programmatic, adobe_ordersTotalByod_programmatic_wow, adobe_ordersTotalByod_programmatic_ly, adobe_ordersTotalByod_programmatic_wow_pct, adobe_ordersTotalByod_programmatic_yoy_pct,
 
-    adobe_ordersTotalByod_allChannels,
-    adobe_ordersTotalByod_allChannels_wow,
-    adobe_ordersTotalByod_allChannels_ly,
-    adobe_ordersTotalByod_allChannels_wow_pct,
-    adobe_ordersTotalByod_allChannels_yoy_pct,
-
-    -- ================================================================
-    -- PAID SEARCH
-    -- ================================================================
-    adobe_uvnbByod_paidSearch,
-    adobe_uvnbByod_paidSearch_wow,
-    adobe_uvnbByod_paidSearch_ly,
-    adobe_uvnbByod_paidSearch_wow_pct,
-    adobe_uvnbByod_paidSearch_yoy_pct,
-
-    adobe_cartStartByod_paidSearch,
-    adobe_cartStartByod_paidSearch_wow,
-    adobe_cartStartByod_paidSearch_ly,
-    adobe_cartStartByod_paidSearch_wow_pct,
-    adobe_cartStartByod_paidSearch_yoy_pct,
-
-    adobe_ordersUnassistedByod_paidSearch,
-    adobe_ordersUnassistedByod_paidSearch_wow,
-    adobe_ordersUnassistedByod_paidSearch_ly,
-    adobe_ordersUnassistedByod_paidSearch_wow_pct,
-    adobe_ordersUnassistedByod_paidSearch_yoy_pct,
-
-    adobe_ordersAssistedByod_paidSearch,
-    adobe_ordersAssistedByod_paidSearch_wow,
-    adobe_ordersAssistedByod_paidSearch_ly,
-    adobe_ordersAssistedByod_paidSearch_wow_pct,
-    adobe_ordersAssistedByod_paidSearch_yoy_pct,
-
-    adobe_ordersTotalByod_paidSearch,
-    adobe_ordersTotalByod_paidSearch_wow,
-    adobe_ordersTotalByod_paidSearch_ly,
-    adobe_ordersTotalByod_paidSearch_wow_pct,
-    adobe_ordersTotalByod_paidSearch_yoy_pct,
-
-    -- ================================================================
-    -- ORGANIC SEARCH
-    -- ================================================================
-    adobe_uvnbByod_organicSearch,
-    adobe_uvnbByod_organicSearch_wow,
-    adobe_uvnbByod_organicSearch_ly,
-    adobe_uvnbByod_organicSearch_wow_pct,
-    adobe_uvnbByod_organicSearch_yoy_pct,
-
-    adobe_cartStartByod_organicSearch,
-    adobe_cartStartByod_organicSearch_wow,
-    adobe_cartStartByod_organicSearch_ly,
-    adobe_cartStartByod_organicSearch_wow_pct,
-    adobe_cartStartByod_organicSearch_yoy_pct,
-
-    adobe_ordersUnassistedByod_organicSearch,
-    adobe_ordersUnassistedByod_organicSearch_wow,
-    adobe_ordersUnassistedByod_organicSearch_ly,
-    adobe_ordersUnassistedByod_organicSearch_wow_pct,
-    adobe_ordersUnassistedByod_organicSearch_yoy_pct,
-
-    adobe_ordersAssistedByod_organicSearch,
-    adobe_ordersAssistedByod_organicSearch_wow,
-    adobe_ordersAssistedByod_organicSearch_ly,
-    adobe_ordersAssistedByod_organicSearch_wow_pct,
-    adobe_ordersAssistedByod_organicSearch_yoy_pct,
-
-    adobe_ordersTotalByod_organicSearch,
-    adobe_ordersTotalByod_organicSearch_wow,
-    adobe_ordersTotalByod_organicSearch_ly,
-    adobe_ordersTotalByod_organicSearch_wow_pct,
-    adobe_ordersTotalByod_organicSearch_yoy_pct,
-
-    -- ================================================================
-    -- DIRECT
-    -- ================================================================
-    adobe_uvnbByod_direct,
-    adobe_uvnbByod_direct_wow,
-    adobe_uvnbByod_direct_ly,
-    adobe_uvnbByod_direct_wow_pct,
-    adobe_uvnbByod_direct_yoy_pct,
-
-    adobe_cartStartByod_direct,
-    adobe_cartStartByod_direct_wow,
-    adobe_cartStartByod_direct_ly,
-    adobe_cartStartByod_direct_wow_pct,
-    adobe_cartStartByod_direct_yoy_pct,
-
-    adobe_ordersUnassistedByod_direct,
-    adobe_ordersUnassistedByod_direct_wow,
-    adobe_ordersUnassistedByod_direct_ly,
-    adobe_ordersUnassistedByod_direct_wow_pct,
-    adobe_ordersUnassistedByod_direct_yoy_pct,
-
-    adobe_ordersAssistedByod_direct,
-    adobe_ordersAssistedByod_direct_wow,
-    adobe_ordersAssistedByod_direct_ly,
-    adobe_ordersAssistedByod_direct_wow_pct,
-    adobe_ordersAssistedByod_direct_yoy_pct,
-
-    adobe_ordersTotalByod_direct,
-    adobe_ordersTotalByod_direct_wow,
-    adobe_ordersTotalByod_direct_ly,
-    adobe_ordersTotalByod_direct_wow_pct,
-    adobe_ordersTotalByod_direct_yoy_pct,
-
-    -- ================================================================
-    -- SOCIAL
-    -- ================================================================
-    adobe_uvnbByod_social,
-    adobe_uvnbByod_social_wow,
-    adobe_uvnbByod_social_ly,
-    adobe_uvnbByod_social_wow_pct,
-    adobe_uvnbByod_social_yoy_pct,
-
-    adobe_cartStartByod_social,
-    adobe_cartStartByod_social_wow,
-    adobe_cartStartByod_social_ly,
-    adobe_cartStartByod_social_wow_pct,
-    adobe_cartStartByod_social_yoy_pct,
-
-    adobe_ordersUnassistedByod_social,
-    adobe_ordersUnassistedByod_social_wow,
-    adobe_ordersUnassistedByod_social_ly,
-    adobe_ordersUnassistedByod_social_wow_pct,
-    adobe_ordersUnassistedByod_social_yoy_pct,
-
-    adobe_ordersAssistedByod_social,
-    adobe_ordersAssistedByod_social_wow,
-    adobe_ordersAssistedByod_social_ly,
-    adobe_ordersAssistedByod_social_wow_pct,
-    adobe_ordersAssistedByod_social_yoy_pct,
-
-    adobe_ordersTotalByod_social,
-    adobe_ordersTotalByod_social_wow,
-    adobe_ordersTotalByod_social_ly,
-    adobe_ordersTotalByod_social_wow_pct,
-    adobe_ordersTotalByod_social_yoy_pct,
-
-    -- ================================================================
-    -- PROGRAMMATIC
-    -- ================================================================
-    adobe_uvnbByod_programmatic,
-    adobe_uvnbByod_programmatic_wow,
-    adobe_uvnbByod_programmatic_ly,
-    adobe_uvnbByod_programmatic_wow_pct,
-    adobe_uvnbByod_programmatic_yoy_pct,
-
-    adobe_cartStartByod_programmatic,
-    adobe_cartStartByod_programmatic_wow,
-    adobe_cartStartByod_programmatic_ly,
-    adobe_cartStartByod_programmatic_wow_pct,
-    adobe_cartStartByod_programmatic_yoy_pct,
-
-    adobe_ordersUnassistedByod_programmatic,
-    adobe_ordersUnassistedByod_programmatic_wow,
-    adobe_ordersUnassistedByod_programmatic_ly,
-    adobe_ordersUnassistedByod_programmatic_wow_pct,
-    adobe_ordersUnassistedByod_programmatic_yoy_pct,
-
-    adobe_ordersAssistedByod_programmatic,
-    adobe_ordersAssistedByod_programmatic_wow,
-    adobe_ordersAssistedByod_programmatic_ly,
-    adobe_ordersAssistedByod_programmatic_wow_pct,
-    adobe_ordersAssistedByod_programmatic_yoy_pct,
-
-    adobe_ordersTotalByod_programmatic,
-    adobe_ordersTotalByod_programmatic_wow,
-    adobe_ordersTotalByod_programmatic_ly,
-    adobe_ordersTotalByod_programmatic_wow_pct,
-    adobe_ordersTotalByod_programmatic_yoy_pct,
-
-    -- ================================================================
-    -- OTHER
-    -- ================================================================
-    adobe_uvnbByod_other,
-    adobe_uvnbByod_other_wow,
-    adobe_uvnbByod_other_ly,
-    adobe_uvnbByod_other_wow_pct,
-    adobe_uvnbByod_other_yoy_pct,
-
-    adobe_cartStartByod_other,
-    adobe_cartStartByod_other_wow,
-    adobe_cartStartByod_other_ly,
-    adobe_cartStartByod_other_wow_pct,
-    adobe_cartStartByod_other_yoy_pct,
-
-    adobe_ordersUnassistedByod_other,
-    adobe_ordersUnassistedByod_other_wow,
-    adobe_ordersUnassistedByod_other_ly,
-    adobe_ordersUnassistedByod_other_wow_pct,
-    adobe_ordersUnassistedByod_other_yoy_pct,
-
-    adobe_ordersAssistedByod_other,
-    adobe_ordersAssistedByod_other_wow,
-    adobe_ordersAssistedByod_other_ly,
-    adobe_ordersAssistedByod_other_wow_pct,
-    adobe_ordersAssistedByod_other_yoy_pct,
-
-    adobe_ordersTotalByod_other,
-    adobe_ordersTotalByod_other_wow,
-    adobe_ordersTotalByod_other_ly,
-    adobe_ordersTotalByod_other_wow_pct,
-    adobe_ordersTotalByod_other_yoy_pct
+    -- ================================================================ OTHER
+    adobe_uvnbByod_other, adobe_uvnbByod_other_wow, adobe_uvnbByod_other_ly, adobe_uvnbByod_other_wow_pct, adobe_uvnbByod_other_yoy_pct,
+    adobe_pctUvnbByodOfTotal_other, adobe_pctUvnbByodOfTotal_other_wow, adobe_pctUvnbByodOfTotal_other_ly, adobe_pctUvnbByodOfTotal_other_wow_pct, adobe_pctUvnbByodOfTotal_other_yoy_pct,
+    adobe_cartStartByod_other, adobe_cartStartByod_other_wow, adobe_cartStartByod_other_ly, adobe_cartStartByod_other_wow_pct, adobe_cartStartByod_other_yoy_pct,
+    adobe_ordersUnassistedByod_other, adobe_ordersUnassistedByod_other_wow, adobe_ordersUnassistedByod_other_ly, adobe_ordersUnassistedByod_other_wow_pct, adobe_ordersUnassistedByod_other_yoy_pct,
+    adobe_ordersAssistedByod_other, adobe_ordersAssistedByod_other_wow, adobe_ordersAssistedByod_other_ly, adobe_ordersAssistedByod_other_wow_pct, adobe_ordersAssistedByod_other_yoy_pct,
+    adobe_ordersTotalByod_other, adobe_ordersTotalByod_other_wow, adobe_ordersTotalByod_other_ly, adobe_ordersTotalByod_other_wow_pct, adobe_ordersTotalByod_other_yoy_pct
 
 FROM with_max_date
 ;
