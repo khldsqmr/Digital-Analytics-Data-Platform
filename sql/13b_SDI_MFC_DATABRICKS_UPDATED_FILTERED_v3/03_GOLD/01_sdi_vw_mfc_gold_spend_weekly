@@ -51,9 +51,10 @@ aggregated AS (
 -- Use MAX(QGP_Week) to key on the Saturday date
 boundary_combined AS (
   SELECT
-    MAX(QGP_Week)     AS QGP_Week,
+    DATE_TRUNC('week', Period_Start) AS week_monday,
+    MAX(QGP_Week)                    AS QGP_Week,
     LOB_Supported,
-    SUM(spend_actual) AS combined_actual
+    SUM(spend_actual)                AS combined_actual
   FROM aggregated
   WHERE week_type = 'BOUNDARY_WEEK'
   GROUP BY
@@ -94,17 +95,21 @@ wow_calc AS (
 with_wow AS (
   SELECT
     a.*,
-    w.prior_week_actual
+    w.prior_week_actual,
+    bc.combined_actual
   FROM aggregated a
   LEFT JOIN wow_calc w
     ON a.QGP_Week      = w.QGP_Week
    AND a.LOB_Supported = w.LOB_Supported
-   -- Only join WoW for normal weeks and Saturday boundary rows
-   -- Quarter-end boundary rows never get prior_week_actual
    AND (
      a.week_type = 'NORMAL'
      OR (a.week_type = 'BOUNDARY_WEEK' AND a.QGP_Week != a.Quarter_End_Date)
    )
+  LEFT JOIN boundary_combined bc
+    ON a.QGP_Week      = bc.QGP_Week
+   AND a.LOB_Supported = bc.LOB_Supported
+   AND a.week_type     = 'BOUNDARY_WEEK'
+   AND a.QGP_Week     != a.Quarter_End_Date
 )
 
 SELECT
@@ -121,10 +126,17 @@ SELECT
   week_type,
 
   CASE
-    WHEN prior_week_actual IS NOT NULL
+    WHEN week_type = 'NORMAL'
+      AND prior_week_actual IS NOT NULL
       AND prior_week_actual != 0
       AND spend_actual IS NOT NULL
       THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
+    WHEN week_type = 'BOUNDARY_WEEK'
+      AND QGP_Week != Quarter_End_Date
+      AND prior_week_actual IS NOT NULL
+      AND prior_week_actual != 0
+      AND combined_actual IS NOT NULL
+      THEN ROUND((combined_actual - prior_week_actual) / prior_week_actual * 100, 2)
     ELSE NULL
   END AS spend_actual_wow_pct
 

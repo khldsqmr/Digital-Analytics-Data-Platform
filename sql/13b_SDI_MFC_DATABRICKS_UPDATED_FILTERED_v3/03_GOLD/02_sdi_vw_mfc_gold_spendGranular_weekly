@@ -50,13 +50,14 @@ base AS (
 -- Use MAX(QGP_Week) to key on the Saturday date
 boundary_combined AS (
   SELECT
-    MAX(QGP_Week)     AS QGP_Week,
+    DATE_TRUNC('week', Period_Start) AS week_monday,
+    MAX(QGP_Week)                    AS QGP_Week,
     LOB_Supported,
     Channel,
     Tactic,
     Message_Type,
     Agency,
-    SUM(spend_actual) AS combined_actual
+    SUM(spend_actual)                AS combined_actual
   FROM base
   WHERE week_type = 'BOUNDARY_WEEK'
   GROUP BY
@@ -118,7 +119,8 @@ wow_calc AS (
 with_wow AS (
   SELECT
     b.*,
-    w.prior_week_actual
+    w.prior_week_actual,
+    bc.combined_actual
   FROM base b
   LEFT JOIN wow_calc w
     ON b.QGP_Week      = w.QGP_Week
@@ -127,12 +129,19 @@ with_wow AS (
    AND b.Tactic        = w.Tactic
    AND b.Message_Type  = w.Message_Type
    AND b.Agency        = w.Agency
-   -- Only join WoW for normal weeks and Saturday boundary rows
-   -- Quarter-end boundary rows never get prior_week_actual
    AND (
      b.week_type = 'NORMAL'
      OR (b.week_type = 'BOUNDARY_WEEK' AND b.QGP_Week != b.Quarter_End_Date)
    )
+  LEFT JOIN boundary_combined bc
+    ON b.QGP_Week      = bc.QGP_Week
+   AND b.LOB_Supported = bc.LOB_Supported
+   AND b.Channel       = bc.Channel
+   AND b.Tactic        = bc.Tactic
+   AND b.Message_Type  = bc.Message_Type
+   AND b.Agency        = bc.Agency
+   AND b.week_type     = 'BOUNDARY_WEEK'
+   AND b.QGP_Week     != b.Quarter_End_Date
 )
 
 SELECT
@@ -153,10 +162,17 @@ SELECT
   week_type,
 
   CASE
-    WHEN prior_week_actual IS NOT NULL
+    WHEN week_type = 'NORMAL'
+      AND prior_week_actual IS NOT NULL
       AND prior_week_actual != 0
       AND spend_actual IS NOT NULL
       THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
+    WHEN week_type = 'BOUNDARY_WEEK'
+      AND QGP_Week != Quarter_End_Date
+      AND prior_week_actual IS NOT NULL
+      AND prior_week_actual != 0
+      AND combined_actual IS NOT NULL
+      THEN ROUND((combined_actual - prior_week_actual) / prior_week_actual * 100, 2)
     ELSE NULL
   END AS spend_actual_wow_pct
 
