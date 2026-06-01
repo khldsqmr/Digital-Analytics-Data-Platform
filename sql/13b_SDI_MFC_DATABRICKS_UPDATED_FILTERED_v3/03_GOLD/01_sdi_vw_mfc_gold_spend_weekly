@@ -46,25 +46,58 @@ aggregated AS (
     week_type
 ),
 
+-- Temporarily combine both boundary week partials per QGP_Week + LOB
+-- to get a full 7-day spend for WoW comparison only
+boundary_combined AS (
+  SELECT
+    QGP_Week,
+    LOB_Supported,
+    SUM(spend_actual) AS combined_actual
+  FROM aggregated
+  WHERE week_type = 'BOUNDARY_WEEK'
+  GROUP BY
+    QGP_Week,
+    LOB_Supported
+),
+
+-- Build the WoW-ready series: normal weeks + one combined boundary row per QGP_Week
+wow_series AS (
+  SELECT
+    QGP_Week,
+    LOB_Supported,
+    spend_actual AS actual_for_wow
+  FROM aggregated
+  WHERE week_type = 'NORMAL'
+
+  UNION ALL
+
+  SELECT
+    QGP_Week,
+    LOB_Supported,
+    combined_actual AS actual_for_wow
+  FROM boundary_combined
+),
+
+wow_calc AS (
+  SELECT
+    QGP_Week,
+    LOB_Supported,
+    actual_for_wow,
+    LAG(actual_for_wow) OVER (
+      PARTITION BY LOB_Supported
+      ORDER BY QGP_Week ASC
+    ) AS prior_week_actual
+  FROM wow_series
+),
+
 with_wow AS (
   SELECT
-    *,
-    CASE
-      WHEN week_type = 'NORMAL'
-        AND period_days = 7
-        THEN LAG(spend_actual) OVER (
-          PARTITION BY LOB_Supported
-          ORDER BY QGP_Week ASC
-        )
-      WHEN week_type = 'BOUNDARY_WEEK'
-        AND QGP_Week != Quarter_End_Date
-        THEN LAG(spend_actual) OVER (
-          PARTITION BY LOB_Supported
-          ORDER BY QGP_Week ASC
-        )
-      ELSE NULL
-    END AS prior_week_actual
-  FROM aggregated
+    a.*,
+    w.prior_week_actual
+  FROM aggregated a
+  LEFT JOIN wow_calc w
+    ON a.QGP_Week      = w.QGP_Week
+   AND a.LOB_Supported = w.LOB_Supported
 )
 
 SELECT
@@ -80,12 +113,16 @@ SELECT
   spend_display,
   week_type,
 
+  -- Only populate WoW on Saturday boundary row (QGP_Week != Quarter_End_Date)
+  -- and normal full weeks. Quarter-end-date boundary row stays null.
   CASE
-    WHEN (
-      (week_type = 'NORMAL' AND period_days = 7)
-      OR
-      (week_type = 'BOUNDARY_WEEK' AND QGP_Week != Quarter_End_Date)
-    )
+    WHEN week_type = 'NORMAL'
+      AND prior_week_actual IS NOT NULL
+      AND prior_week_actual != 0
+      AND spend_actual IS NOT NULL
+      THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
+    WHEN week_type = 'BOUNDARY_WEEK'
+      AND QGP_Week != Quarter_End_Date
       AND prior_week_actual IS NOT NULL
       AND prior_week_actual != 0
       AND spend_actual IS NOT NULL
