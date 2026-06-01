@@ -46,21 +46,22 @@ aggregated AS (
     week_type
 ),
 
--- Temporarily combine both boundary week partials per QGP_Week + LOB
--- to get a full 7-day spend for WoW comparison only
+-- Combine both boundary week partials that belong to the same calendar week
+-- Group by Monday of the week so both partials (different QGP_Weeks) pair correctly
+-- Use MAX(QGP_Week) to key on the Saturday date
 boundary_combined AS (
   SELECT
-    QGP_Week,
+    MAX(QGP_Week)     AS QGP_Week,
     LOB_Supported,
     SUM(spend_actual) AS combined_actual
   FROM aggregated
   WHERE week_type = 'BOUNDARY_WEEK'
   GROUP BY
-    QGP_Week,
+    DATE_TRUNC('week', Period_Start),
     LOB_Supported
 ),
 
--- Build the WoW-ready series: normal weeks + one combined boundary row per QGP_Week
+-- Build the WoW-ready series: normal weeks + one combined boundary row per calendar week
 wow_series AS (
   SELECT
     QGP_Week,
