@@ -98,6 +98,12 @@ with_wow AS (
   LEFT JOIN wow_calc w
     ON a.QGP_Week      = w.QGP_Week
    AND a.LOB_Supported = w.LOB_Supported
+   -- Only join WoW for normal weeks and Saturday boundary rows
+   -- Quarter-end boundary rows never get prior_week_actual
+   AND (
+     a.week_type = 'NORMAL'
+     OR (a.week_type = 'BOUNDARY_WEEK' AND a.QGP_Week != a.Quarter_End_Date)
+   )
 )
 
 SELECT
@@ -113,17 +119,8 @@ SELECT
   spend_display,
   week_type,
 
-  -- Only populate WoW on Saturday boundary row (QGP_Week != Quarter_End_Date)
-  -- and normal full weeks. Quarter-end-date boundary row stays null.
   CASE
-    WHEN week_type = 'NORMAL'
-      AND prior_week_actual IS NOT NULL
-      AND prior_week_actual != 0
-      AND spend_actual IS NOT NULL
-      THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
-    WHEN week_type = 'BOUNDARY_WEEK'
-      AND QGP_Week != Quarter_End_Date
-      AND prior_week_actual IS NOT NULL
+    WHEN prior_week_actual IS NOT NULL
       AND prior_week_actual != 0
       AND spend_actual IS NOT NULL
       THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
