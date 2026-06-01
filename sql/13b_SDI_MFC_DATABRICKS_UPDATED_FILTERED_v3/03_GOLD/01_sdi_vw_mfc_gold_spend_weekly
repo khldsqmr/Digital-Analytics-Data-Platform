@@ -1,3 +1,49 @@
+-- CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly AS
+
+-- WITH latest_file AS (
+--   SELECT
+--     Quarter,
+--     QGP_Week,
+--     LOB_Supported,
+--     MAX(FileLoad_Date) AS latest_file_load_date
+--   FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly
+--   GROUP BY Quarter, QGP_Week, LOB_Supported
+-- ),
+
+-- latest AS (
+--   SELECT s.*
+--   FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly s
+--   JOIN latest_file f
+--     ON s.Quarter       = f.Quarter
+--    AND s.QGP_Week      = f.QGP_Week
+--    AND s.LOB_Supported = f.LOB_Supported
+--    AND s.FileLoad_Date = f.latest_file_load_date
+-- )
+
+-- SELECT
+--   Quarter,
+--   MIN(Period_Start)                                                         AS Period_Start,
+--   MAX(Period_End)                                                           AS Period_End,
+--   QGP_Week,
+--   Quarter_End_Date,
+--   MAX(FileLoad_Date)                                                        AS FileLoad_Date,
+--   LOB_Supported,
+--   NULLIF(SUM(weekly_actual), 0)                                             AS spend_actual,
+--   NULLIF(SUM(weekly_forecast), 0)                                           AS spend_forecast,
+--   COALESCE(NULLIF(SUM(weekly_actual), 0), NULLIF(SUM(weekly_forecast), 0)) AS spend_display,
+--   UPPER(TRIM(week_type))                                                    AS week_type
+-- FROM latest
+-- GROUP BY
+--   Quarter,
+--   QGP_Week,
+--   Quarter_End_Date,
+--   LOB_Supported,
+--   week_type
+-- ORDER BY
+--   LOB_Supported DESC, 
+--   Quarter DESC,
+--   QGP_Week DESC;
+
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly AS
 
 WITH latest_file AS (
@@ -18,28 +64,71 @@ latest AS (
    AND s.QGP_Week      = f.QGP_Week
    AND s.LOB_Supported = f.LOB_Supported
    AND s.FileLoad_Date = f.latest_file_load_date
+),
+
+aggregated AS (
+  SELECT
+    Quarter,
+    MIN(Period_Start)                                                         AS Period_Start,
+    MAX(Period_End)                                                           AS Period_End,
+    QGP_Week,
+    Quarter_End_Date,
+    MAX(FileLoad_Date)                                                        AS FileLoad_Date,
+    LOB_Supported,
+    NULLIF(SUM(weekly_actual), 0)                                             AS spend_actual,
+    NULLIF(SUM(weekly_forecast), 0)                                           AS spend_forecast,
+    COALESCE(NULLIF(SUM(weekly_actual), 0), NULLIF(SUM(weekly_forecast), 0)) AS spend_display,
+    UPPER(TRIM(week_type))                                                    AS week_type,
+    DATEDIFF(MAX(Period_End), MIN(Period_Start)) + 1                         AS period_days
+  FROM latest
+  GROUP BY
+    Quarter,
+    QGP_Week,
+    Quarter_End_Date,
+    LOB_Supported,
+    week_type
+),
+
+with_wow AS (
+  SELECT
+    *,
+    CASE
+      WHEN week_type = 'NORMAL'
+        AND period_days = 7
+        THEN LAG(spend_actual) OVER (
+          PARTITION BY LOB_Supported
+          ORDER BY QGP_Week ASC
+        )
+      ELSE NULL
+    END AS prior_week_actual
+  FROM aggregated
 )
 
 SELECT
   Quarter,
-  MIN(Period_Start)                                                         AS Period_Start,
-  MAX(Period_End)                                                           AS Period_End,
+  Period_Start,
+  Period_End,
   QGP_Week,
   Quarter_End_Date,
-  MAX(FileLoad_Date)                                                        AS FileLoad_Date,
+  FileLoad_Date,
   LOB_Supported,
-  NULLIF(SUM(weekly_actual), 0)                                             AS spend_actual,
-  NULLIF(SUM(weekly_forecast), 0)                                           AS spend_forecast,
-  COALESCE(NULLIF(SUM(weekly_actual), 0), NULLIF(SUM(weekly_forecast), 0)) AS spend_display,
-  UPPER(TRIM(week_type))                                                    AS week_type
-FROM latest
-GROUP BY
-  Quarter,
-  QGP_Week,
-  Quarter_End_Date,
-  LOB_Supported,
-  week_type
+  spend_actual,
+  spend_forecast,
+  spend_display,
+  week_type,
+
+  CASE
+    WHEN week_type = 'NORMAL'
+      AND period_days = 7
+      AND prior_week_actual IS NOT NULL
+      AND prior_week_actual != 0
+      AND spend_actual IS NOT NULL
+      THEN ROUND((spend_actual - prior_week_actual) / prior_week_actual * 100, 2)
+    ELSE NULL
+  END AS spend_actual_wow_pct
+
+FROM with_wow
 ORDER BY
-  LOB_Supported DESC, 
+  LOB_Supported DESC,
   Quarter DESC,
   QGP_Week DESC;
