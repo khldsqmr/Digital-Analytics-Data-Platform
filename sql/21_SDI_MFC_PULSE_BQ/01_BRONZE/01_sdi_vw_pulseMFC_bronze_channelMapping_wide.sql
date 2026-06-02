@@ -1,9 +1,3 @@
--- =============================================
--- BRONZE: Channel Group Mapping Reference (Wide)
--- Readable reference table showing every
--- Channel + Tactic combination and its
--- Channel Group mapping with reasoning
--- =============================================
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_pulseMFC_bronze_channelMapping_wide` AS
 
 SELECT
@@ -46,15 +40,11 @@ FROM (
     UPPER(TRIM(Channel)) AS Channel,
     UPPER(TRIM(Tactic))  AS Tactic
   FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
-  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-    AND WM_NWM = 'Working'
-    AND Channel IS NOT NULL
+  WHERE Channel IS NOT NULL
     AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
-    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+    AND Tactic IS NOT NULL
 )
 ORDER BY
   Channel_Group,
   Channel,
   Tactic;
-

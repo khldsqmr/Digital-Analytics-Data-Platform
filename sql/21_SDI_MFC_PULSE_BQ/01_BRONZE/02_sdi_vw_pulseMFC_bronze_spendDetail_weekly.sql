@@ -52,6 +52,12 @@ WITH base AS (
     UPPER(TRIM(week_type))                                        AS week_type,
     DATE_DIFF(Period_End, Period_Start, DAY) + 1                  AS period_days
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly`
+  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+    AND spend_display IS NOT NULL
+    AND spend_display != 0
 ),
 
 -- -----------------------------------------------
