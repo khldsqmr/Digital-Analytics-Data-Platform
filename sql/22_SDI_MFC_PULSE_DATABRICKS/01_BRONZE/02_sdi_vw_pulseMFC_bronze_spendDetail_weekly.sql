@@ -2,27 +2,32 @@
 -- =============================================
 -- BRONZE: Spend Detail Weekly
 --
--- KEY CHANGE from previous version:
--- All rows have exclude_wow_helper_from_display = FALSE
--- Helper rows identified by is_wow_helper = TRUE
---
--- This ensures ALL rows are in the same Tableau
--- partition so LOOKUP(-1) can traverse helper rows
--- to find prior week values.
---
--- In Tableau:
---   - DO NOT filter on exclude_wow_helper_from_display
---   - DO NOT filter on is_wow_helper
---   - Use IF NOT [is_wow_helper] to suppress
---     helper row values in display measures
---   - LOOKUP traverses all rows freely
---
 -- Three row types:
 -- 1. Original rows — is_wow_helper = FALSE
+--    spend_actual, spend_forecast, spend_display populated
+--    spend_wow_ref:
+--      normal weeks = spend_actual
+--      saturday boundary = combined_actual (full week)
+--      quarter-end boundary = NULL
+--
 -- 2. Combined boundary helper — is_wow_helper = TRUE
---    (both partials summed, keyed on Saturday)
+--    spend_actual = NULL (no inflation in Tableau SUM)
+--    spend_forecast = NULL
+--    spend_display = NULL
+--    spend_wow_ref = combined_actual (full week for LOOKUP)
+--    Created for ALL boundary weeks (partial_count 1 or 2)
+--    If only one partial exists, combined = that partial
+--
 -- 3. Prior quarter last normal week — is_wow_helper = TRUE
---    (bumped into next quarter for LOOKUP(-1))
+--    spend_actual = NULL
+--    spend_forecast = NULL
+--    spend_display = NULL
+--    spend_wow_ref = spend_actual (for LOOKUP prior week)
+--    Bumped into next quarter for LOOKUP(-1)
+--
+-- All rows: exclude_wow_helper_from_display = FALSE
+-- This keeps ALL rows in same Tableau partition
+-- so LOOKUP(-1) traverses helper rows freely
 -- =============================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_pulseMFC_bronze_spendDetail_weekly AS
 
@@ -67,6 +72,14 @@ WITH base AS (
     AND spend_display != 0
 ),
 
+-- -----------------------------------------------
+-- Combine boundary week partials per calendar week
+-- Groups by Monday to pair different QGP_Weeks
+-- No partial_count restriction — creates helper
+-- for ALL boundary weeks regardless of how many
+-- partials exist. If only one partial exists,
+-- combined = that partial's spend_actual
+-- -----------------------------------------------
 boundary_combined AS (
   SELECT
     CAST(DATE_TRUNC('week', Period_Start) AS DATE) AS week_monday,
@@ -94,6 +107,10 @@ boundary_combined AS (
     Agency
 ),
 
+-- -----------------------------------------------
+-- Last normal week per quarter
+-- Used to create prior quarter reference rows
+-- -----------------------------------------------
 last_qgp_week_per_quarter AS (
   SELECT
     Actual_Quarter,
@@ -129,9 +146,6 @@ prior_quarter_reference AS (
     b.Tactic,
     b.Message_Type,
     b.Agency,
-    b.spend_actual,
-    b.spend_forecast,
-    b.spend_display,
     b.spend_actual                                                AS spend_wow_ref,
     b.week_type,
     b.period_days
@@ -143,8 +157,10 @@ prior_quarter_reference AS (
 )
 
 -- -----------------------------------------------
--- Part 1: Original rows — is_wow_helper = FALSE
--- These are the displayed rows in Tableau
+-- Part 1: Original rows — displayed in Tableau
+-- spend_actual, spend_forecast, spend_display
+-- are populated for correct display values
+-- spend_wow_ref used for WoW LOOKUP
 -- -----------------------------------------------
 SELECT
   b.Actual_Quarter,
@@ -187,16 +203,19 @@ LEFT JOIN boundary_combined bc
  AND b.Agency                                         = bc.Agency
  AND b.week_type                                      = 'BOUNDARY_WEEK'
  AND b.QGP_Week                                      != b.Quarter_End_Date
- AND bc.partial_count                                 = 2
 
 UNION ALL
 
 -- -----------------------------------------------
 -- Part 2: Combined boundary helper rows
--- is_wow_helper = TRUE — suppress display values
--- exclude_wow_helper_from_display = FALSE — keep
--- in same Tableau partition as display rows so
--- LOOKUP(-1) can traverse them
+-- is_wow_helper = TRUE
+-- spend_actual/forecast/display = NULL
+--   → NULLs don't inflate Tableau SUM
+-- spend_wow_ref = combined_actual
+--   → full week value for LOOKUP(-1)
+-- Created for ALL boundary weeks
+-- exclude_wow_helper_from_display = FALSE
+--   → same Tableau partition, LOOKUP can traverse
 -- -----------------------------------------------
 SELECT
   CONCAT(
@@ -249,25 +268,28 @@ SELECT
   bc.Tactic,
   bc.Message_Type,
   bc.Agency,
-  bc.combined_actual                                              AS spend_actual,
-  bc.combined_forecast                                            AS spend_forecast,
-  bc.combined_display                                             AS spend_display,
+  NULL                                                            AS spend_actual,
+  NULL                                                            AS spend_forecast,
+  NULL                                                            AS spend_display,
   bc.combined_actual                                              AS spend_wow_ref,
   'BOUNDARY_WEEK'                                                 AS week_type,
   7                                                               AS period_days,
   TRUE                                                            AS is_wow_helper,
   FALSE                                                           AS exclude_wow_helper_from_display
 FROM boundary_combined bc
-WHERE bc.partial_count = 2
 
 UNION ALL
 
 -- -----------------------------------------------
 -- Part 3: Prior quarter last normal week reference
--- is_wow_helper = TRUE — suppress display values
--- exclude_wow_helper_from_display = FALSE — keep
--- in same Tableau partition so LOOKUP(-1) works
--- for first week of each quarter
+-- is_wow_helper = TRUE
+-- spend_actual/forecast/display = NULL
+--   → NULLs don't inflate Tableau SUM
+-- spend_wow_ref = spend_actual of last normal week
+--   → prior week reference for LOOKUP(-1)
+-- Bumped into next quarter
+-- exclude_wow_helper_from_display = FALSE
+--   → same Tableau partition, LOOKUP can traverse
 -- -----------------------------------------------
 SELECT
   Actual_Quarter,
@@ -283,9 +305,9 @@ SELECT
   Tactic,
   Message_Type,
   Agency,
-  spend_actual,
-  spend_forecast,
-  spend_display,
+  NULL                                                            AS spend_actual,
+  NULL                                                            AS spend_forecast,
+  NULL                                                            AS spend_display,
   spend_wow_ref,
   week_type,
   period_days,
