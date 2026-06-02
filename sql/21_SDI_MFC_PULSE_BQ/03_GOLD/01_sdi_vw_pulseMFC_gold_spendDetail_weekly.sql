@@ -5,7 +5,7 @@
 -- HOW TO USE IN TABLEAU:
 -- 1. Connect to this view as data source
 -- 2. Quarter parameter filter:
---    Use [Quarter] column (adjusted) — NOT [Actual_Quarter]
+--    Use [Quarter] column (adjusted) NOT [Actual_Quarter]
 --    This ensures WoW helper rows are included
 -- 3. Add [exclude_wow_helper_from_display] to Filters
 --    Set to TRUE — DO NOT add to context

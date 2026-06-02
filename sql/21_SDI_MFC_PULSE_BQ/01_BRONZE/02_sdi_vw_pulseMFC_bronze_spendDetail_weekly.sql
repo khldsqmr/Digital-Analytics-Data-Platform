@@ -20,7 +20,6 @@ WITH base AS (
     UPPER(TRIM(Tactic))                                           AS Tactic,
     UPPER(TRIM(Message_Type))                                     AS Message_Type,
     Agency,
-    -- Channel Group mapping
     CASE
       WHEN UPPER(TRIM(Channel)) = 'PAID SEARCH'
         THEN 'Paid Search'
@@ -48,9 +47,9 @@ WITH base AS (
 -- WoW Helper 1: Combined boundary week rows
 -- Both partials (Q-end + Saturday) summed into
 -- one row keyed on Saturday QGP_Week.
--- Used so LOOKUP(-1) sees full combined week
--- for the first full week of next quarter.
--- Labeled with the Saturday's quarter.
+-- Only created when BOTH partials exist
+-- (partial_count = 2) — ensures future boundary
+-- weeks with only one partial don't get a helper.
 -- exclude_wow_helper_from_display = TRUE
 -- -----------------------------------------------
 boundary_combined AS (
@@ -66,7 +65,8 @@ boundary_combined AS (
     SUM(spend_actual)                         AS combined_actual,
     SUM(spend_forecast)                       AS combined_forecast,
     SUM(spend_display)                        AS combined_display,
-    MAX(FileLoad_Date)                        AS FileLoad_Date
+    MAX(FileLoad_Date)                        AS FileLoad_Date,
+    COUNT(DISTINCT QGP_Week)                  AS partial_count
   FROM base
   WHERE week_type = 'BOUNDARY_WEEK'
   GROUP BY
@@ -109,15 +109,15 @@ prior_quarter_reference AS (
     Actual_Quarter,
     -- Bump Quarter to next quarter
     CASE
-      WHEN CAST(SUBSTR(Actual_Quarter, 2, 1) AS INT64) = 4
+      WHEN CAST(SUBSTR(Actual_Quarter, 7, 1) AS INT64) = 4
         THEN CONCAT(
-          CAST(CAST(SUBSTR(Actual_Quarter, 4, 2) AS INT64) + 1 + 2000 AS STRING),
+          CAST(CAST(SUBSTR(Actual_Quarter, 1, 4) AS INT64) + 1 AS STRING),
           ' Q1'
         )
       ELSE CONCAT(
         SUBSTR(Actual_Quarter, 1, 4),
         ' Q',
-        CAST(CAST(SUBSTR(Actual_Quarter, 2, 1) AS INT64) + 1 AS STRING)
+        CAST(CAST(SUBSTR(Actual_Quarter, 7, 1) AS INT64) + 1 AS STRING)
       )
     END                                                           AS Quarter,
     Period_Start,
@@ -170,9 +170,9 @@ UNION ALL
 -- -----------------------------------------------
 -- Part 2: Combined boundary week rows
 -- Hidden from display, used for LOOKUP(-1)
+-- Only created when both partials exist
 -- -----------------------------------------------
 SELECT
-  -- Actual quarter derived from Saturday QGP_Week
   CONCAT(
     CAST(EXTRACT(YEAR FROM bc.saturday_qgp_week) AS STRING),
     ' Q',
@@ -185,7 +185,6 @@ SELECT
       END AS STRING
     )
   )                                                               AS Actual_Quarter,
-  -- Quarter same as Actual_Quarter for combined boundary row
   CONCAT(
     CAST(EXTRACT(YEAR FROM bc.saturday_qgp_week) AS STRING),
     ' Q',
@@ -201,7 +200,6 @@ SELECT
   bc.week_monday                                                  AS Period_Start,
   DATE_ADD(bc.week_monday, INTERVAL 6 DAY)                       AS Period_End,
   bc.saturday_qgp_week                                            AS QGP_Week,
-  -- Quarter_End_Date derived from Saturday
   LAST_DAY(
     DATE(
       EXTRACT(YEAR FROM bc.saturday_qgp_week),
@@ -229,6 +227,7 @@ SELECT
   TRUE                                                            AS exclude_wow_helper_from_display
 
 FROM boundary_combined bc
+WHERE bc.partial_count = 2  -- Only when both boundary partials exist
 
 UNION ALL
 

@@ -10,24 +10,18 @@ SELECT
   UPPER(TRIM(Channel))  AS Channel,
   UPPER(TRIM(Tactic))   AS Tactic,
   CASE
-    -- Paid Search
     WHEN UPPER(TRIM(Channel)) = 'PAID SEARCH'
       THEN 'Paid Search'
-    -- Paid Social
     WHEN UPPER(TRIM(Channel)) = 'PAID SOCIAL'
       THEN 'Paid Social'
-    -- Programmatic: Display, OLV, Audio always programmatic
     WHEN UPPER(TRIM(Channel)) IN ('DISPLAY', 'OLV', 'AUDIO')
       THEN 'Programmatic'
-    -- Programmatic: OTT only when tactic contains PROGRAMMATIC
     WHEN UPPER(TRIM(Channel)) = 'OTT'
       AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%'
       THEN 'Programmatic'
-    -- Programmatic: OOH only when tactic contains PROGRAMMATIC
     WHEN UPPER(TRIM(Channel)) = 'OOH'
       AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%'
       THEN 'Programmatic'
-    -- Everything else is Other
     ELSE 'Other'
   END AS Channel_Group,
 
