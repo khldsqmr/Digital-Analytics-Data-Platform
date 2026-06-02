@@ -14,7 +14,7 @@ SELECT
   Period_End,
   QGP_Week,
   Quarter_End_Date,
-  MAX(FileLoad_Date)                                              AS FileLoad_Date,
+  CAST(MAX(FileLoad_Date) AS DATE)                                AS FileLoad_Date,
   LOB_Supported,
   Channel,
   Channel_Group,

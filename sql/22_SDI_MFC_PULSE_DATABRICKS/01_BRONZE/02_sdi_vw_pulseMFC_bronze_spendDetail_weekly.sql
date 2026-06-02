@@ -27,11 +27,11 @@ WITH base AS (
   SELECT
     Quarter                                                       AS Actual_Quarter,
     Quarter                                                       AS Quarter,
-    Period_Start,
-    Period_End,
-    QGP_Week,
-    Quarter_End_Date,
-    FileLoad_Date,
+    CAST(Period_Start AS DATE)                                    AS Period_Start,
+    CAST(Period_End AS DATE)                                      AS Period_End,
+    CAST(QGP_Week AS DATE)                                        AS QGP_Week,
+    CAST(Quarter_End_Date AS DATE)                                AS Quarter_End_Date,
+    CAST(FileLoad_Date AS DATE)                                   AS FileLoad_Date,
     UPPER(TRIM(LOB_Supported))                                    AS LOB_Supported,
     UPPER(TRIM(Channel))                                          AS Channel,
     UPPER(TRIM(Tactic))                                           AS Tactic,
@@ -56,7 +56,7 @@ WITH base AS (
     spend_forecast,
     spend_display,
     UPPER(TRIM(week_type))                                        AS week_type,
-    DATEDIFF(Period_End, Period_Start) + 1                        AS period_days
+    DATEDIFF(CAST(Period_End AS DATE), CAST(Period_Start AS DATE)) + 1 AS period_days
   FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
   -- Explicit filters: kept here so pulseMFC pipeline stays
   -- correctly scoped when underlying views are broadened later
@@ -81,23 +81,23 @@ WITH base AS (
 -- -----------------------------------------------
 boundary_combined AS (
   SELECT
-    DATE_TRUNC('week', Period_Start)          AS week_monday,
-    MAX(QGP_Week)                             AS saturday_qgp_week,
+    CAST(DATE_TRUNC('week', Period_Start) AS DATE) AS week_monday,
+    CAST(MAX(QGP_Week) AS DATE)                    AS saturday_qgp_week,
     LOB_Supported,
     Channel,
     Channel_Group,
     Tactic,
     Message_Type,
     Agency,
-    SUM(spend_actual)                         AS combined_actual,
-    SUM(spend_forecast)                       AS combined_forecast,
-    SUM(spend_display)                        AS combined_display,
-    MAX(FileLoad_Date)                        AS FileLoad_Date,
-    COUNT(DISTINCT QGP_Week)                  AS partial_count
+    SUM(spend_actual)                              AS combined_actual,
+    SUM(spend_forecast)                            AS combined_forecast,
+    SUM(spend_display)                             AS combined_display,
+    MAX(FileLoad_Date)                             AS FileLoad_Date,
+    COUNT(DISTINCT QGP_Week)                       AS partial_count
   FROM base
   WHERE week_type = 'BOUNDARY_WEEK'
   GROUP BY
-    DATE_TRUNC('week', Period_Start),
+    CAST(DATE_TRUNC('week', Period_Start) AS DATE),
     LOB_Supported,
     Channel,
     Channel_Group,
@@ -116,7 +116,7 @@ boundary_combined AS (
 last_qgp_week_per_quarter AS (
   SELECT
     Actual_Quarter,
-    MAX(QGP_Week)                             AS last_qgp_week
+    CAST(MAX(QGP_Week) AS DATE)                    AS last_qgp_week
   FROM base
   WHERE week_type = 'NORMAL'
   GROUP BY Actual_Quarter
@@ -202,15 +202,15 @@ SELECT
   FALSE                                                           AS exclude_wow_helper_from_display
 FROM base b
 LEFT JOIN boundary_combined bc
-  ON DATE_TRUNC('week', b.Period_Start)       = bc.week_monday
- AND b.LOB_Supported                          = bc.LOB_Supported
- AND b.Channel                                = bc.Channel
- AND b.Tactic                                 = bc.Tactic
- AND b.Message_Type                           = bc.Message_Type
- AND b.Agency                                 = bc.Agency
- AND b.week_type                              = 'BOUNDARY_WEEK'
- AND b.QGP_Week                              != b.Quarter_End_Date
- AND bc.partial_count                         = 2
+  ON CAST(DATE_TRUNC('week', b.Period_Start) AS DATE) = bc.week_monday
+ AND b.LOB_Supported                                  = bc.LOB_Supported
+ AND b.Channel                                        = bc.Channel
+ AND b.Tactic                                         = bc.Tactic
+ AND b.Message_Type                                   = bc.Message_Type
+ AND b.Agency                                         = bc.Agency
+ AND b.week_type                                      = 'BOUNDARY_WEEK'
+ AND b.QGP_Week                                      != b.Quarter_End_Date
+ AND bc.partial_count                                 = 2
 
 UNION ALL
 
@@ -246,23 +246,25 @@ SELECT
     )
   )                                                               AS Quarter,
   bc.week_monday                                                  AS Period_Start,
-  DATE_ADD(bc.week_monday, 6)                                     AS Period_End,
+  CAST(DATE_ADD(bc.week_monday, 6) AS DATE)                      AS Period_End,
   bc.saturday_qgp_week                                            AS QGP_Week,
-  LAST_DAY(
-    TO_DATE(
-      CONCAT(
-        CAST(YEAR(bc.saturday_qgp_week) AS STRING), '-',
-        LPAD(CAST(
-          CASE
-            WHEN MONTH(bc.saturday_qgp_week) <= 3 THEN 3
-            WHEN MONTH(bc.saturday_qgp_week) <= 6 THEN 6
-            WHEN MONTH(bc.saturday_qgp_week) <= 9 THEN 9
-            ELSE 12
-          END AS STRING), 2, '0'), '-01'
-      ), 'yyyy-MM-dd'
-    )
+  CAST(
+    LAST_DAY(
+      TO_DATE(
+        CONCAT(
+          CAST(YEAR(bc.saturday_qgp_week) AS STRING), '-',
+          LPAD(CAST(
+            CASE
+              WHEN MONTH(bc.saturday_qgp_week) <= 3 THEN 3
+              WHEN MONTH(bc.saturday_qgp_week) <= 6 THEN 6
+              WHEN MONTH(bc.saturday_qgp_week) <= 9 THEN 9
+              ELSE 12
+            END AS STRING), 2, '0'), '-01'
+        ), 'yyyy-MM-dd'
+      )
+    ) AS DATE
   )                                                               AS Quarter_End_Date,
-  bc.FileLoad_Date,
+  CAST(bc.FileLoad_Date AS DATE)                                  AS FileLoad_Date,
   bc.LOB_Supported,
   bc.Channel,
   bc.Channel_Group,
