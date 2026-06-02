@@ -58,4 +58,3 @@ ORDER BY
   Channel,
   Tactic;
 
-

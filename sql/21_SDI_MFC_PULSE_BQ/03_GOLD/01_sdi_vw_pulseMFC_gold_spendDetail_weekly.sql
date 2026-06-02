@@ -2,26 +2,32 @@
 -- GOLD: Spend Detail Weekly
 -- Final Tableau-ready view
 --
+-- COLUMNS:
+--   Actual_Quarter  — real quarter, use for display and totals
+--   Quarter         — adjusted quarter, use for parameter filter
+--   spend_actual    — actual spend (quarterly reporting)
+--   spend_forecast  — forecast spend (quarterly reporting)
+--   spend_display   — actuals if available, else forecast (display)
+--   spend_wow_ref   — full week spend for WoW calculation:
+--                     normal weeks    = spend_display
+--                     saturday boundary = combined full week spend
+--                     quarter-end boundary = NULL
+--                     helper rows     = spend_display
+--
 -- HOW TO USE IN TABLEAU:
--- 1. Connect to this view as data source
--- 2. Quarter parameter filter:
---    Use [Quarter] column (adjusted) NOT [Actual_Quarter]
---    This ensures WoW helper rows are included
--- 3. Add [exclude_wow_helper_from_display] to Filters
---    Set to TRUE — DO NOT add to context
---    This hides helper rows from display
---    but keeps them visible to LOOKUP
--- 4. Use [Actual_Quarter] for quarterly totals
---    and quarter-level display
--- 5. WoW calculated field in Tableau:
+-- 1. Parameter filter: use [Quarter] (adjusted), NOT [Actual_Quarter]
+-- 2. Filter [exclude_wow_helper_from_display] = TRUE
+--    DO NOT add to context — keeps helpers visible to LOOKUP
+-- 3. Use [Actual_Quarter] for quarterly totals and display
+-- 4. WoW calculated field:
 --    IF ATTR([week_type]) = 'BOUNDARY_WEEK'
 --      AND ATTR([QGP_Week]) = ATTR([Quarter_End_Date])
 --    THEN NULL
---    ELSEIF NOT ISNULL(LOOKUP(SUM([spend_actual]), -1))
---      AND LOOKUP(SUM([spend_actual]), -1) <> 0
+--    ELSEIF NOT ISNULL(LOOKUP(SUM([spend_wow_ref]), -1))
+--      AND LOOKUP(SUM([spend_wow_ref]), -1) <> 0
 --    THEN
---      (SUM([spend_actual]) - LOOKUP(SUM([spend_actual]), -1))
---      / ABS(LOOKUP(SUM([spend_actual]), -1))
+--      (SUM([spend_wow_ref]) - LOOKUP(SUM([spend_wow_ref]), -1))
+--      / ABS(LOOKUP(SUM([spend_wow_ref]), -1))
 --    ELSE NULL
 --    END
 -- =============================================
@@ -44,6 +50,7 @@ SELECT
   spend_actual,
   spend_forecast,
   spend_display,
+  spend_wow_ref,
   week_type,
   exclude_wow_helper_from_display
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_pulseMFC_silver_spendDetail_weekly`

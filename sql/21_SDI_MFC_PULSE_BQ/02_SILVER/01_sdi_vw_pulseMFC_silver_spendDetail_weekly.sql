@@ -1,7 +1,7 @@
 -- =============================================
 -- SILVER: Spend Detail Weekly
 -- Aggregates to final grain, passes through
--- all columns including WoW helper flags
+-- all columns including spend_wow_ref
 -- =============================================
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_pulseMFC_silver_spendDetail_weekly` AS
 
@@ -22,6 +22,7 @@ SELECT
   SUM(spend_actual)                                               AS spend_actual,
   SUM(spend_forecast)                                             AS spend_forecast,
   SUM(spend_display)                                              AS spend_display,
+  SUM(spend_wow_ref)                                              AS spend_wow_ref,
   week_type,
   period_days,
   exclude_wow_helper_from_display

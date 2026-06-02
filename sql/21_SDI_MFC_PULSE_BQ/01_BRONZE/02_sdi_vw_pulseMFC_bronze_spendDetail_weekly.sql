@@ -1,8 +1,19 @@
+
 -- =============================================
 -- BRONZE: Spend Detail Weekly
--- Pulls from gold granular, adds Channel Group,
--- Actual_Quarter, adjusted Quarter, and
--- WoW helper rows for Tableau LOOKUP
+-- Pulls from gold granular, adds:
+--   - Channel_Group mapping
+--   - Actual_Quarter (real quarter for display)
+--   - Quarter (adjusted for WoW LOOKUP)
+--   - spend_wow_ref (full week spend for WoW)
+--   - exclude_wow_helper_from_display flag
+--
+-- Three types of rows:
+-- 1. Original rows (displayed, FALSE)
+-- 2. Combined boundary rows (hidden, TRUE)
+--    Only when both partials exist
+-- 3. Prior quarter last normal week (hidden, TRUE)
+--    Bumped into next quarter for LOOKUP(-1)
 -- =============================================
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_pulseMFC_bronze_spendDetail_weekly` AS
 
@@ -44,13 +55,12 @@ WITH base AS (
 ),
 
 -- -----------------------------------------------
--- WoW Helper 1: Combined boundary week rows
--- Both partials (Q-end + Saturday) summed into
--- one row keyed on Saturday QGP_Week.
--- Only created when BOTH partials exist
--- (partial_count = 2) — ensures future boundary
--- weeks with only one partial don't get a helper.
--- exclude_wow_helper_from_display = TRUE
+-- Combined boundary week rows
+-- Both partials summed per calendar week + grain
+-- Only when both partials exist (partial_count = 2)
+-- Used to:
+--   1. Populate spend_wow_ref on Saturday displayed row
+--   2. Create hidden helper row for LOOKUP(-1)
 -- -----------------------------------------------
 boundary_combined AS (
   SELECT
@@ -80,97 +90,121 @@ boundary_combined AS (
 ),
 
 -- -----------------------------------------------
--- WoW Helper 2: Prior quarter last normal week
--- The last full normal week of each quarter
--- is duplicated and bumped into the next quarter
--- so LOOKUP(-1) can reach it for the first week
--- of the next quarter.
--- exclude_wow_helper_from_display = TRUE
+-- Prior quarter last normal week reference
+-- Uses the single last QGP_Week per quarter
+-- so only ONE week's rows get bumped — not
+-- every combination's last appearance
 -- -----------------------------------------------
-last_normal_week AS (
+last_qgp_week_per_quarter AS (
   SELECT
-    *,
-    ROW_NUMBER() OVER (
-      PARTITION BY
-        Actual_Quarter,
-        LOB_Supported,
-        Channel,
-        Tactic,
-        Message_Type,
-        Agency
-      ORDER BY QGP_Week DESC
-    ) AS rn
+    Actual_Quarter,
+    MAX(QGP_Week) AS last_qgp_week
   FROM base
   WHERE week_type = 'NORMAL'
+  GROUP BY Actual_Quarter
 ),
 
 prior_quarter_reference AS (
   SELECT
-    Actual_Quarter,
+    b.Actual_Quarter,
     -- Bump Quarter to next quarter
     CASE
-      WHEN CAST(SUBSTR(Actual_Quarter, 7, 1) AS INT64) = 4
+      WHEN CAST(SUBSTR(b.Actual_Quarter, 7, 1) AS INT64) = 4
         THEN CONCAT(
-          CAST(CAST(SUBSTR(Actual_Quarter, 1, 4) AS INT64) + 1 AS STRING),
+          CAST(CAST(SUBSTR(b.Actual_Quarter, 1, 4) AS INT64) + 1 AS STRING),
           ' Q1'
         )
       ELSE CONCAT(
-        SUBSTR(Actual_Quarter, 1, 4),
+        SUBSTR(b.Actual_Quarter, 1, 4),
         ' Q',
-        CAST(CAST(SUBSTR(Actual_Quarter, 7, 1) AS INT64) + 1 AS STRING)
+        CAST(CAST(SUBSTR(b.Actual_Quarter, 7, 1) AS INT64) + 1 AS STRING)
       )
     END                                                           AS Quarter,
-    Period_Start,
-    Period_End,
-    QGP_Week,
-    Quarter_End_Date,
-    FileLoad_Date,
-    LOB_Supported,
-    Channel,
-    Channel_Group,
-    Tactic,
-    Message_Type,
-    Agency,
-    spend_actual,
-    spend_forecast,
-    spend_display,
-    week_type,
-    period_days
-  FROM last_normal_week
-  WHERE rn = 1
+    b.Period_Start,
+    b.Period_End,
+    b.QGP_Week,
+    b.Quarter_End_Date,
+    b.FileLoad_Date,
+    b.LOB_Supported,
+    b.Channel,
+    b.Channel_Group,
+    b.Tactic,
+    b.Message_Type,
+    b.Agency,
+    b.spend_actual,
+    b.spend_forecast,
+    b.spend_display,
+    -- spend_wow_ref = spend_display for helper rows
+    b.spend_display                                               AS spend_wow_ref,
+    b.week_type,
+    b.period_days
+  FROM base b
+  JOIN last_qgp_week_per_quarter l
+    ON b.Actual_Quarter = l.Actual_Quarter
+   AND b.QGP_Week       = l.last_qgp_week
+  WHERE b.week_type = 'NORMAL'
 )
 
 -- -----------------------------------------------
 -- Part 1: All original rows — displayed in Tableau
+-- spend_wow_ref:
+--   - Normal weeks: spend_display
+--   - Saturday boundary: combined_display (full week)
+--   - Quarter-end boundary: NULL (WoW is null)
 -- -----------------------------------------------
 SELECT
-  Actual_Quarter,
-  Quarter,
-  Period_Start,
-  Period_End,
-  QGP_Week,
-  Quarter_End_Date,
-  FileLoad_Date,
-  LOB_Supported,
-  Channel,
-  Channel_Group,
-  Tactic,
-  Message_Type,
-  Agency,
-  spend_actual,
-  spend_forecast,
-  spend_display,
-  week_type,
-  period_days,
+  b.Actual_Quarter,
+  b.Quarter,
+  b.Period_Start,
+  b.Period_End,
+  b.QGP_Week,
+  b.Quarter_End_Date,
+  b.FileLoad_Date,
+  b.LOB_Supported,
+  b.Channel,
+  b.Channel_Group,
+  b.Tactic,
+  b.Message_Type,
+  b.Agency,
+  b.spend_actual,
+  b.spend_forecast,
+  b.spend_display,
+  -- spend_wow_ref logic:
+  -- Saturday boundary row gets combined spend
+  -- Quarter-end boundary row gets NULL
+  -- All other rows get spend_display
+  CASE
+    WHEN b.week_type = 'BOUNDARY_WEEK'
+      AND b.QGP_Week != b.Quarter_End_Date
+      AND bc.combined_display IS NOT NULL
+      THEN bc.combined_display
+    WHEN b.week_type = 'BOUNDARY_WEEK'
+      AND b.QGP_Week = b.Quarter_End_Date
+      THEN NULL
+    ELSE b.spend_display
+  END                                                             AS spend_wow_ref,
+  b.week_type,
+  b.period_days,
   FALSE                                                           AS exclude_wow_helper_from_display
-FROM base
+FROM base b
+LEFT JOIN boundary_combined bc
+  ON DATE_TRUNC(b.Period_Start, WEEK(MONDAY)) = bc.week_monday
+ AND b.LOB_Supported                          = bc.LOB_Supported
+ AND b.Channel                                = bc.Channel
+ AND b.Tactic                                 = bc.Tactic
+ AND b.Message_Type                           = bc.Message_Type
+ AND b.Agency                                 = bc.Agency
+ AND b.week_type                              = 'BOUNDARY_WEEK'
+ AND b.QGP_Week                              != b.Quarter_End_Date
+ AND bc.partial_count                         = 2
 
 UNION ALL
 
 -- -----------------------------------------------
--- Part 2: Combined boundary week rows
+-- Part 2: Combined boundary week helper rows
 -- Hidden from display, used for LOOKUP(-1)
 -- Only created when both partials exist
+-- spend_wow_ref = combined_display
 -- -----------------------------------------------
 SELECT
   CONCAT(
@@ -222,12 +256,12 @@ SELECT
   bc.combined_actual                                              AS spend_actual,
   bc.combined_forecast                                            AS spend_forecast,
   bc.combined_display                                             AS spend_display,
+  bc.combined_display                                             AS spend_wow_ref,
   'BOUNDARY_WEEK'                                                 AS week_type,
   7                                                               AS period_days,
   TRUE                                                            AS exclude_wow_helper_from_display
-
 FROM boundary_combined bc
-WHERE bc.partial_count = 2  -- Only when both boundary partials exist
+WHERE bc.partial_count = 2
 
 UNION ALL
 
@@ -235,6 +269,7 @@ UNION ALL
 -- Part 3: Prior quarter last normal week reference
 -- Hidden from display, bumped into next quarter
 -- so LOOKUP(-1) works for first week of quarter
+-- spend_wow_ref = spend_display
 -- -----------------------------------------------
 SELECT
   Actual_Quarter,
@@ -253,10 +288,10 @@ SELECT
   spend_actual,
   spend_forecast,
   spend_display,
+  spend_wow_ref,
   week_type,
   period_days,
   TRUE                                                            AS exclude_wow_helper_from_display
-
 FROM prior_quarter_reference;
 
 
