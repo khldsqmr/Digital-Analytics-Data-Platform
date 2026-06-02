@@ -1,25 +1,28 @@
 
 -- =============================================
 -- BRONZE: Spend Detail Weekly
--- Pulls from gold granular, adds:
---   - Channel_Group mapping
---   - Actual_Quarter (real quarter for display)
---   - Quarter (adjusted for WoW LOOKUP)
---   - spend_wow_ref (spend_actual based, full week
---     for boundary Saturday row, NULL for
---     quarter-end boundary row)
---   - exclude_wow_helper_from_display flag
 --
--- Three types of rows:
--- 1. Original rows (displayed, FALSE)
--- 2. Combined boundary helper rows (hidden, TRUE)
---    Only when both partials exist (partial_count=2)
--- 3. Prior quarter last normal week (hidden, TRUE)
---    Bumped into next quarter for LOOKUP(-1)
+-- KEY CHANGE from previous version:
+-- All rows have exclude_wow_helper_from_display = FALSE
+-- Helper rows identified by is_wow_helper = TRUE
 --
--- Filters explicitly applied in base CTE so
--- pulseMFC pipeline stays correctly scoped
--- when underlying filters are removed later.
+-- This ensures ALL rows are in the same Tableau
+-- partition so LOOKUP(-1) can traverse helper rows
+-- to find prior week values.
+--
+-- In Tableau:
+--   - DO NOT filter on exclude_wow_helper_from_display
+--   - DO NOT filter on is_wow_helper
+--   - Use IF NOT [is_wow_helper] to suppress
+--     helper row values in display measures
+--   - LOOKUP traverses all rows freely
+--
+-- Three row types:
+-- 1. Original rows — is_wow_helper = FALSE
+-- 2. Combined boundary helper — is_wow_helper = TRUE
+--    (both partials summed, keyed on Saturday)
+-- 3. Prior quarter last normal week — is_wow_helper = TRUE
+--    (bumped into next quarter for LOOKUP(-1))
 -- =============================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_pulseMFC_bronze_spendDetail_weekly AS
 
@@ -38,28 +41,24 @@ WITH base AS (
     UPPER(TRIM(Message_Type))                                     AS Message_Type,
     Agency,
     CASE
-      WHEN UPPER(TRIM(Channel)) = 'PAID SEARCH'
-        THEN 'Paid Search'
-      WHEN UPPER(TRIM(Channel)) = 'PAID SOCIAL'
-        THEN 'Paid Social'
-      WHEN UPPER(TRIM(Channel)) IN ('DISPLAY', 'OLV', 'AUDIO')
-        THEN 'Programmatic'
+      WHEN UPPER(TRIM(Channel)) = 'PAID SEARCH'  THEN 'Paid Search'
+      WHEN UPPER(TRIM(Channel)) = 'PAID SOCIAL'  THEN 'Paid Social'
+      WHEN UPPER(TRIM(Channel)) IN ('DISPLAY', 'OLV', 'AUDIO') THEN 'Programmatic'
       WHEN UPPER(TRIM(Channel)) = 'OTT'
-        AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%'
-        THEN 'Programmatic'
+        AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%' THEN 'Programmatic'
       WHEN UPPER(TRIM(Channel)) = 'OOH'
-        AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%'
-        THEN 'Programmatic'
+        AND UPPER(TRIM(Tactic)) LIKE '%PROGRAMMATIC%' THEN 'Programmatic'
       ELSE 'Other'
     END                                                           AS Channel_Group,
     spend_actual,
     spend_forecast,
     spend_display,
     UPPER(TRIM(week_type))                                        AS week_type,
-    DATEDIFF(CAST(Period_End AS DATE), CAST(Period_Start AS DATE)) + 1 AS period_days
+    DATEDIFF(
+      CAST(Period_End AS DATE),
+      CAST(Period_Start AS DATE)
+    ) + 1                                                         AS period_days
   FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
-  -- Explicit filters: kept here so pulseMFC pipeline stays
-  -- correctly scoped when underlying views are broadened later
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
     AND Channel IS NOT NULL
     AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
@@ -68,17 +67,6 @@ WITH base AS (
     AND spend_display != 0
 ),
 
--- -----------------------------------------------
--- Combined boundary week rows
--- Both partials (quarter-end + Saturday) summed
--- per calendar week + full grain.
--- Only meaningful when both partials exist
--- (partial_count = 2).
--- Used to:
---   1. Populate spend_wow_ref on Saturday
---      displayed row (combined_actual)
---   2. Create hidden helper row for LOOKUP(-1)
--- -----------------------------------------------
 boundary_combined AS (
   SELECT
     CAST(DATE_TRUNC('week', Period_Start) AS DATE) AS week_monday,
@@ -106,13 +94,6 @@ boundary_combined AS (
     Agency
 ),
 
--- -----------------------------------------------
--- Prior quarter last normal week reference
--- Finds the single last QGP_Week per quarter
--- so only ONE week's rows get bumped into the
--- next quarter — not every combination's last
--- appearance independently.
--- -----------------------------------------------
 last_qgp_week_per_quarter AS (
   SELECT
     Actual_Quarter,
@@ -125,7 +106,6 @@ last_qgp_week_per_quarter AS (
 prior_quarter_reference AS (
   SELECT
     b.Actual_Quarter,
-    -- Bump Quarter to next quarter for LOOKUP(-1)
     CASE
       WHEN CAST(SUBSTR(b.Actual_Quarter, 7, 1) AS INT) = 4
         THEN CONCAT(
@@ -163,12 +143,8 @@ prior_quarter_reference AS (
 )
 
 -- -----------------------------------------------
--- Part 1: All original rows — displayed in Tableau
--- spend_wow_ref:
---   Normal weeks           → spend_actual
---   Saturday boundary row  → combined_actual
---                            (full week for WoW)
---   Quarter-end boundary   → NULL (WoW is null)
+-- Part 1: Original rows — is_wow_helper = FALSE
+-- These are the displayed rows in Tableau
 -- -----------------------------------------------
 SELECT
   b.Actual_Quarter,
@@ -199,6 +175,7 @@ SELECT
   END                                                             AS spend_wow_ref,
   b.week_type,
   b.period_days,
+  FALSE                                                           AS is_wow_helper,
   FALSE                                                           AS exclude_wow_helper_from_display
 FROM base b
 LEFT JOIN boundary_combined bc
@@ -215,10 +192,11 @@ LEFT JOIN boundary_combined bc
 UNION ALL
 
 -- -----------------------------------------------
--- Part 2: Combined boundary week helper rows
--- Hidden from display (exclude = TRUE)
--- Only created when both partials exist
--- spend_wow_ref = combined_actual
+-- Part 2: Combined boundary helper rows
+-- is_wow_helper = TRUE — suppress display values
+-- exclude_wow_helper_from_display = FALSE — keep
+-- in same Tableau partition as display rows so
+-- LOOKUP(-1) can traverse them
 -- -----------------------------------------------
 SELECT
   CONCAT(
@@ -277,7 +255,8 @@ SELECT
   bc.combined_actual                                              AS spend_wow_ref,
   'BOUNDARY_WEEK'                                                 AS week_type,
   7                                                               AS period_days,
-  TRUE                                                            AS exclude_wow_helper_from_display
+  TRUE                                                            AS is_wow_helper,
+  FALSE                                                           AS exclude_wow_helper_from_display
 FROM boundary_combined bc
 WHERE bc.partial_count = 2
 
@@ -285,10 +264,10 @@ UNION ALL
 
 -- -----------------------------------------------
 -- Part 3: Prior quarter last normal week reference
--- Hidden from display (exclude = TRUE)
--- Bumped into next quarter so LOOKUP(-1) works
--- for the first week of each quarter
--- spend_wow_ref = spend_actual
+-- is_wow_helper = TRUE — suppress display values
+-- exclude_wow_helper_from_display = FALSE — keep
+-- in same Tableau partition so LOOKUP(-1) works
+-- for first week of each quarter
 -- -----------------------------------------------
 SELECT
   Actual_Quarter,
@@ -310,6 +289,7 @@ SELECT
   spend_wow_ref,
   week_type,
   period_days,
-  TRUE                                                            AS exclude_wow_helper_from_display
+  TRUE                                                            AS is_wow_helper,
+  FALSE                                                           AS exclude_wow_helper_from_display
 FROM prior_quarter_reference;
 

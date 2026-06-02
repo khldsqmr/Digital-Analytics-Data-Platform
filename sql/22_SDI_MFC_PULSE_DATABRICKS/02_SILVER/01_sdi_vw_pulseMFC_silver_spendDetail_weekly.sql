@@ -1,9 +1,6 @@
 
 -- =============================================
 -- SILVER: Spend Detail Weekly
--- Aggregates to final grain, passes through
--- all columns including spend_wow_ref and
--- exclude_wow_helper_from_display flag
 -- =============================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_pulseMFC_silver_spendDetail_weekly AS
 
@@ -27,6 +24,7 @@ SELECT
   SUM(spend_wow_ref)                                              AS spend_wow_ref,
   week_type,
   period_days,
+  is_wow_helper,
   exclude_wow_helper_from_display
 FROM prdrzranalytics.lab42.sdi_vw_pulseMFC_bronze_spendDetail_weekly
 GROUP BY
@@ -44,5 +42,6 @@ GROUP BY
   Agency,
   week_type,
   period_days,
+  is_wow_helper,
   exclude_wow_helper_from_display;
 
