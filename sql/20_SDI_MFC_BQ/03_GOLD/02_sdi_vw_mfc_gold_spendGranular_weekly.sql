@@ -1,3 +1,7 @@
+-- =============================================
+-- GOLD: Granular Weekly (BQ)
+-- CHANGED: Agency added to SELECT and ORDER BY
+-- =============================================
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly` AS
 
 WITH latest_file AS (
@@ -37,4 +41,10 @@ SELECT
   weekly_display   AS spend_display,
   week_type
 FROM latest
-ORDER BY LOB_Supported DESC, Quarter DESC, QGP_Week DESC, Channel, Tactic;
+ORDER BY
+  LOB_Supported DESC,
+  Quarter DESC,
+  QGP_Week DESC,
+  Channel,
+  Tactic,
+  Agency;
