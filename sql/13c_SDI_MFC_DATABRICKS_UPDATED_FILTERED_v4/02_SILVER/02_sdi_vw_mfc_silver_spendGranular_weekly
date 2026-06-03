@@ -391,7 +391,7 @@ qgp_calendar AS (
     ) AS Quarter_End_Date,
 
     GREATEST(
-      DATE_SUB(QGP_Week, 6),
+      DATE_SUB(QGP_Week, DAYOFWEEK(QGP_Week) - 1),
       TO_DATE(DATE_TRUNC('quarter', QGP_Week))
     ) AS Period_Start,
 
@@ -400,7 +400,7 @@ qgp_calendar AS (
     DATEDIFF(
       QGP_Week,
       GREATEST(
-        DATE_SUB(QGP_Week, 6),
+        DATE_SUB(QGP_Week, DAYOFWEEK(QGP_Week) - 1),
         TO_DATE(DATE_TRUNC('quarter', QGP_Week))
       )
     ) + 1 AS period_days
