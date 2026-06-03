@@ -1,0 +1,642 @@
+
+-- ============================================================
+-- SILVER 2: GRANULAR
+-- Independent branch from granular bronze views.
+-- ============================================================
+CREATE OR REPLACE VIEW
+  prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly
+AS
+
+WITH actual_clean AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    UPPER(TRIM(Channel))       AS Channel,
+    UPPER(TRIM(Tactic))        AS Tactic,
+    UPPER(TRIM(Message_Type))  AS Message_Type,
+    TRIM(Agency)               AS Agency,
+
+    weekly_actual,
+    UPPER(TRIM(week_type)) AS source_week_type
+
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActualsGranular_weekly
+),
+
+forecast_clean AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    UPPER(TRIM(Channel))       AS Channel,
+    UPPER(TRIM(Tactic))        AS Tactic,
+    UPPER(TRIM(Message_Type))  AS Message_Type,
+    TRIM(Agency)               AS Agency,
+
+    weekly_forecast,
+    UPPER(TRIM(week_type)) AS source_week_type
+
+  FROM prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecastsGranular_weekly
+),
+
+source_joined AS (
+  SELECT
+    COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
+    COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
+    COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
+    COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
+
+    COALESCE(
+      GREATEST(a.FileLoad_Date, f.FileLoad_Date),
+      a.FileLoad_Date,
+      f.FileLoad_Date
+    ) AS FileLoad_Date,
+
+    COALESCE(a.LOB_Supported, f.LOB_Supported) AS LOB_Supported,
+    COALESCE(a.Channel,       f.Channel)       AS Channel,
+    COALESCE(a.Tactic,        f.Tactic)        AS Tactic,
+    COALESCE(a.Message_Type,  f.Message_Type)  AS Message_Type,
+    COALESCE(a.Agency,        f.Agency)        AS Agency,
+
+    a.weekly_actual,
+    f.weekly_forecast,
+
+    COALESCE(
+      NULLIF(a.weekly_actual, 0),
+      NULLIF(f.weekly_forecast, 0)
+    ) AS weekly_display,
+
+    COALESCE(a.source_week_type, f.source_week_type) AS source_week_type
+
+  FROM actual_clean a
+
+  FULL OUTER JOIN forecast_clean f
+    ON  a.Quarter       = f.Quarter
+    AND a.QGP_Week      = f.QGP_Week
+    AND a.LOB_Supported <=> f.LOB_Supported
+    AND a.Channel       <=> f.Channel
+    AND a.Tactic        <=> f.Tactic
+    AND a.Message_Type  <=> f.Message_Type
+    AND a.Agency        <=> f.Agency
+),
+
+with_quarter_numbers AS (
+  SELECT
+    *,
+    CAST(SUBSTR(Source_Quarter, 2, 1) AS INT) AS qtr_num,
+    CAST(SUBSTR(Source_Quarter, 4, 2) AS INT) AS qtr_year_2digit
+  FROM source_joined
+),
+
+with_source_quarter_bounds AS (
+  SELECT
+    *,
+
+    TO_DATE(
+      CONCAT(
+        CASE
+          WHEN qtr_year_2digit < 50 THEN '20'
+          ELSE '19'
+        END,
+        LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'),
+        '-',
+        LPAD(CAST(((qtr_num - 1) * 3) + 1 AS STRING), 2, '0'),
+        '-01'
+      ),
+      'yyyy-MM-dd'
+    ) AS Source_Quarter_Start_Date,
+
+    LAST_DAY(
+      TO_DATE(
+        CONCAT(
+          CASE
+            WHEN qtr_year_2digit < 50 THEN '20'
+            ELSE '19'
+          END,
+          LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'),
+          '-',
+          LPAD(CAST(qtr_num * 3 AS STRING), 2, '0'),
+          '-01'
+        ),
+        'yyyy-MM-dd'
+      )
+    ) AS Source_Quarter_End_Date
+
+  FROM with_quarter_numbers
+),
+
+source_periods AS (
+  SELECT
+    *,
+
+    GREATEST(
+      Week_Beginning_Monday,
+      Source_Quarter_Start_Date
+    ) AS Period_Start,
+
+    LEAST(
+      Week_Ending_Sunday,
+      Source_Quarter_End_Date
+    ) AS Period_End,
+
+    DATEDIFF(
+      Week_Ending_Sunday,
+      Week_Beginning_Monday
+    ) + 1 AS source_total_week_days
+
+  FROM with_source_quarter_bounds
+),
+
+normalized_weekly AS (
+  SELECT
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
+    Period_Start,
+    Period_End,
+
+    CASE
+      WHEN source_week_type <> 'BOUNDARY_WEEK'
+       AND Week_Ending_Sunday > Source_Quarter_End_Date
+      THEN ROUND(
+        weekly_actual
+        * (
+            (DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1)
+            / source_total_week_days
+          ),
+        2
+      )
+      ELSE weekly_actual
+    END AS weekly_actual,
+
+    CASE
+      WHEN source_week_type <> 'BOUNDARY_WEEK'
+       AND Week_Ending_Sunday > Source_Quarter_End_Date
+      THEN ROUND(
+        weekly_forecast
+        * (
+            (DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1)
+            / source_total_week_days
+          ),
+        2
+      )
+      ELSE weekly_forecast
+    END AS weekly_forecast,
+
+    CASE
+      WHEN source_week_type <> 'BOUNDARY_WEEK'
+       AND Week_Ending_Sunday > Source_Quarter_End_Date
+      THEN ROUND(
+        weekly_display
+        * (
+            (DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1)
+            / source_total_week_days
+          ),
+        2
+      )
+      ELSE weekly_display
+    END AS weekly_display
+
+  FROM source_periods
+
+  WHERE Period_End >= Period_Start
+),
+
+daily_spend AS (
+  SELECT
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
+
+    weekly_actual
+      / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
+
+    weekly_forecast
+      / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_forecast,
+
+    weekly_display
+      / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_display,
+
+    EXPLODE(
+      SEQUENCE(
+        Period_Start,
+        Period_End,
+        INTERVAL 1 DAY
+      )
+    ) AS calendar_date
+
+  FROM normalized_weekly
+),
+
+daily_with_qgp AS (
+  SELECT
+    FileLoad_Date,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
+    calendar_date,
+    daily_actual,
+    daily_forecast,
+    daily_display,
+
+    CASE
+      WHEN DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+           >
+           LAST_DAY(
+             ADD_MONTHS(
+               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+               2
+             )
+           )
+
+      THEN LAST_DAY(
+             ADD_MONTHS(
+               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+               2
+             )
+           )
+
+      ELSE DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+    END AS QGP_Week
+
+  FROM daily_spend
+),
+
+aggregated_existing AS (
+  SELECT
+    QGP_Week,
+    MAX(FileLoad_Date) AS FileLoad_Date,
+
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
+
+    NULLIF(ROUND(SUM(daily_actual),   2), 0) AS spend_actual,
+    NULLIF(ROUND(SUM(daily_forecast), 2), 0) AS spend_forecast,
+    NULLIF(ROUND(SUM(daily_display),  2), 0) AS spend_display
+
+  FROM daily_with_qgp
+
+  GROUP BY
+    QGP_Week,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency
+),
+
+calendar_bounds AS (
+  SELECT
+    MIN(calendar_date) AS min_calendar_date,
+    MAX(calendar_date) AS max_calendar_date
+  FROM daily_with_qgp
+),
+
+calendar_days AS (
+  SELECT
+    EXPLODE(
+      SEQUENCE(
+        min_calendar_date,
+        max_calendar_date,
+        INTERVAL 1 DAY
+      )
+    ) AS calendar_date
+
+  FROM calendar_bounds
+),
+
+calendar_days_with_qgp AS (
+  SELECT
+    calendar_date,
+
+    CASE
+      WHEN DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+           >
+           LAST_DAY(
+             ADD_MONTHS(
+               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+               2
+             )
+           )
+
+      THEN LAST_DAY(
+             ADD_MONTHS(
+               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+               2
+             )
+           )
+
+      ELSE DATE_ADD(
+             calendar_date,
+             CASE
+               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+               ELSE 7 - DAYOFWEEK(calendar_date)
+             END
+           )
+    END AS QGP_Week
+
+  FROM calendar_days
+),
+
+qgp_calendar AS (
+  SELECT DISTINCT
+    QGP_Week,
+
+    TO_DATE(
+      DATE_TRUNC('quarter', QGP_Week)
+    ) AS Quarter_Start_Date,
+
+    LAST_DAY(
+      ADD_MONTHS(
+        TO_DATE(DATE_TRUNC('quarter', QGP_Week)),
+        2
+      )
+    ) AS Quarter_End_Date,
+
+    GREATEST(
+      DATE_SUB(QGP_Week, 6),
+      TO_DATE(DATE_TRUNC('quarter', QGP_Week))
+    ) AS Period_Start,
+
+    QGP_Week AS Period_End,
+
+    DATEDIFF(
+      QGP_Week,
+      GREATEST(
+        DATE_SUB(QGP_Week, 6),
+        TO_DATE(DATE_TRUNC('quarter', QGP_Week))
+      )
+    ) + 1 AS period_days
+
+  FROM calendar_days_with_qgp
+),
+
+qgp_file_dates AS (
+  SELECT
+    QGP_Week,
+    MAX(FileLoad_Date) AS FileLoad_Date
+  FROM aggregated_existing
+  GROUP BY QGP_Week
+),
+
+/* Historically observed tuples are expanded to every QGP_Week.
+   Missing rows intentionally remain NULL after the left join.
+*/
+valid_dimension_combinations AS (
+  SELECT DISTINCT
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency
+
+  FROM aggregated_existing
+),
+
+complete_scaffold AS (
+  SELECT
+    cal.QGP_Week,
+    cal.Quarter_Start_Date,
+    cal.Quarter_End_Date,
+    cal.Period_Start,
+    cal.Period_End,
+    cal.period_days,
+    qfd.FileLoad_Date,
+
+    dims.LOB_Supported,
+    dims.Channel,
+    dims.Tactic,
+    dims.Message_Type,
+    dims.Agency
+
+  FROM qgp_calendar cal
+
+  LEFT JOIN qgp_file_dates qfd
+    ON cal.QGP_Week = qfd.QGP_Week
+
+  CROSS JOIN valid_dimension_combinations dims
+),
+
+dense_spend AS (
+  SELECT
+    scaffold.QGP_Week,
+    scaffold.Quarter_Start_Date,
+    scaffold.Quarter_End_Date,
+    scaffold.Period_Start,
+    scaffold.Period_End,
+    scaffold.period_days,
+
+    COALESCE(
+      actuals.FileLoad_Date,
+      scaffold.FileLoad_Date
+    ) AS FileLoad_Date,
+
+    scaffold.LOB_Supported,
+    scaffold.Channel,
+    scaffold.Tactic,
+    scaffold.Message_Type,
+    scaffold.Agency,
+
+    actuals.spend_actual,
+    actuals.spend_forecast,
+    actuals.spend_display,
+
+    CASE
+      WHEN scaffold.period_days < 7 THEN 'Partial'
+      ELSE 'Full'
+    END AS is_partial_week,
+
+    CASE
+      WHEN scaffold.period_days < 7
+       AND scaffold.QGP_Week = scaffold.Quarter_End_Date
+      THEN TRUE
+      ELSE FALSE
+    END AS is_quarter_end_partial
+
+  FROM complete_scaffold scaffold
+
+  LEFT JOIN aggregated_existing actuals
+    ON  scaffold.QGP_Week      = actuals.QGP_Week
+    AND scaffold.LOB_Supported <=> actuals.LOB_Supported
+    AND scaffold.Channel       <=> actuals.Channel
+    AND scaffold.Tactic        <=> actuals.Tactic
+    AND scaffold.Message_Type  <=> actuals.Message_Type
+    AND scaffold.Agency        <=> actuals.Agency
+),
+
+with_quarter_position AS (
+  SELECT
+    *,
+
+    MIN(QGP_Week) OVER (
+      PARTITION BY Quarter_Start_Date
+    ) AS first_qgp_week_in_quarter,
+
+    LAG(spend_actual) OVER (
+      PARTITION BY
+        Quarter_Start_Date,
+        LOB_Supported,
+        Channel,
+        Tactic,
+        Message_Type,
+        Agency
+      ORDER BY QGP_Week ASC
+    ) AS immediately_preceding_spend_in_quarter
+
+  FROM dense_spend
+),
+
+last_full_week_dates AS (
+  SELECT
+    Quarter_Start_Date,
+    MAX(QGP_Week) AS last_full_qgp_week
+
+  FROM qgp_calendar
+
+  WHERE period_days = 7
+
+  GROUP BY Quarter_Start_Date
+),
+
+last_full_week_spend AS (
+  SELECT
+    dense.Quarter_Start_Date,
+    dense.LOB_Supported,
+    dense.Channel,
+    dense.Tactic,
+    dense.Message_Type,
+    dense.Agency,
+    dense.spend_actual AS previous_quarter_last_full_week_spend
+
+  FROM dense_spend dense
+
+  INNER JOIN last_full_week_dates dates
+    ON  dense.Quarter_Start_Date = dates.Quarter_Start_Date
+    AND dense.QGP_Week           = dates.last_full_qgp_week
+),
+
+with_previous_quarter_spend AS (
+  SELECT
+    current_row.*,
+    previous_quarter.previous_quarter_last_full_week_spend
+
+  FROM with_quarter_position current_row
+
+  LEFT JOIN last_full_week_spend previous_quarter
+    ON  previous_quarter.Quarter_Start_Date =
+          ADD_MONTHS(current_row.Quarter_Start_Date, -3)
+
+    AND previous_quarter.LOB_Supported
+          <=> current_row.LOB_Supported
+
+    AND previous_quarter.Channel
+          <=> current_row.Channel
+
+    AND previous_quarter.Tactic
+          <=> current_row.Tactic
+
+    AND previous_quarter.Message_Type
+          <=> current_row.Message_Type
+
+    AND previous_quarter.Agency
+          <=> current_row.Agency
+),
+
+with_spend_for_wow AS (
+  SELECT
+    *,
+
+    CASE
+      WHEN spend_actual IS NULL
+        THEN NULL
+
+      WHEN is_quarter_end_partial = TRUE
+        THEN NULL
+
+      WHEN QGP_Week = first_qgp_week_in_quarter
+        THEN previous_quarter_last_full_week_spend
+
+      ELSE immediately_preceding_spend_in_quarter
+    END AS spend_for_wow
+
+  FROM with_previous_quarter_spend
+)
+
+SELECT
+  CONCAT(
+    YEAR(QGP_Week),
+    ' Q',
+    QUARTER(QGP_Week)
+  ) AS Quarter,
+
+  Quarter_Start_Date,
+  Quarter_End_Date,
+  Period_Start,
+  Period_End,
+  QGP_Week,
+  FileLoad_Date,
+
+  LOB_Supported,
+  Channel,
+  Tactic,
+  Message_Type,
+  Agency,
+
+  /* Existing silver naming */
+  spend_actual   AS weekly_actual,
+  spend_forecast AS weekly_forecast,
+  spend_display  AS weekly_display,
+
+  /* Tableau-facing naming */
+  spend_actual,
+  spend_forecast,
+  spend_display,
+  spend_for_wow,
+
+  CASE
+    WHEN is_partial_week = 'Partial' THEN 'BOUNDARY_WEEK'
+    ELSE 'NORMAL'
+  END AS week_type,
+
+  is_partial_week
+
+FROM with_spend_for_wow
+;
+
