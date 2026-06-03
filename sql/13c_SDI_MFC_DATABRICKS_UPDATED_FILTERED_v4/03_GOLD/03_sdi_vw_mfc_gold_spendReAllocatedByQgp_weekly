@@ -20,14 +20,15 @@ SELECT
   spend_actual,
   spend_forecast,
   spend_display,
+  spend_actual_for_wow,
   spend_for_wow,
 
   CASE
-    WHEN spend_actual IS NOT NULL
+    WHEN spend_actual_for_wow IS NOT NULL
      AND spend_for_wow IS NOT NULL
      AND spend_for_wow != 0
     THEN ROUND(
-      ((spend_actual - spend_for_wow) / spend_for_wow) * 100,
+      ((spend_actual_for_wow - spend_for_wow) / spend_for_wow) * 100,
       2
     )
     ELSE NULL

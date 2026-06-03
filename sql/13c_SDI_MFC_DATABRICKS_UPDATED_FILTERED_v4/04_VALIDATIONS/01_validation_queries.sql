@@ -141,3 +141,26 @@ WHERE COALESCE(g.granular_spend_actual, 0)
 ORDER BY
   QGP_Week DESC,
   LOB_Supported;
+
+
+-- ============================================================
+-- VALIDATION 6:
+-- VERIFY COMPLETE-WEEK WOW INPUTS AROUND A QUARTER BOUNDARY
+-- ============================================================
+SELECT
+  Quarter,
+  QGP_Week,
+  LOB_Supported,
+  spend_actual,
+  spend_actual_for_wow,
+  spend_for_wow,
+  spend_actual_wow_pct,
+  is_partial_week
+
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
+
+WHERE QGP_Week BETWEEN DATE '2026-03-28' AND DATE '2026-04-18'
+
+ORDER BY
+  LOB_Supported,
+  QGP_Week;

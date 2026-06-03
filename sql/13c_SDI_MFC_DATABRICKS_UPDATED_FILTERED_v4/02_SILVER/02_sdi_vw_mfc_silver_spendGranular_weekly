@@ -501,81 +501,109 @@ dense_spend AS (
     AND scaffold.Agency        <=> actuals.Agency
 ),
 
-with_quarter_position AS (
+/* ------------------------------------------------------------
+   Assign each granular QGP fragment to its enclosing calendar week
+   ending Saturday.
+
+   Example:
+     2026-03-31 -> 2026-04-04
+     2026-04-04 -> 2026-04-04
+   ------------------------------------------------------------ */
+with_calendar_week_end AS (
   SELECT
     *,
 
-    MIN(QGP_Week) OVER (
-      PARTITION BY Quarter_Start_Date
-    ) AS first_qgp_week_in_quarter,
-
-    LAG(spend_actual) OVER (
-      PARTITION BY
-        Quarter_Start_Date,
-        LOB_Supported,
-        Channel,
-        Tactic,
-        Message_Type,
-        Agency
-      ORDER BY QGP_Week ASC
-    ) AS immediately_preceding_spend_in_quarter
+    DATE_ADD(
+      QGP_Week,
+      CASE
+        WHEN DAYOFWEEK(QGP_Week) = 7 THEN 0
+        ELSE 7 - DAYOFWEEK(QGP_Week)
+      END
+    ) AS calendar_week_end
 
   FROM dense_spend
 ),
 
-last_full_week_dates AS (
+/* ------------------------------------------------------------
+   Complete current calendar-week actual at the Tableau-filterable
+   granular grain.
+
+   Missing fragments remain NULL rather than being treated as zero.
+   ------------------------------------------------------------ */
+calendar_week_actuals AS (
   SELECT
-    Quarter_Start_Date,
-    MAX(QGP_Week) AS last_full_qgp_week
+    calendar_week_end,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency,
 
-  FROM qgp_calendar
+    CASE
+      WHEN COUNT(spend_actual) = COUNT(*)
+      THEN SUM(spend_actual)
+      ELSE NULL
+    END AS complete_calendar_week_actual
 
-  WHERE period_days = 7
+  FROM with_calendar_week_end
 
-  GROUP BY Quarter_Start_Date
+  GROUP BY
+    calendar_week_end,
+    LOB_Supported,
+    Channel,
+    Tactic,
+    Message_Type,
+    Agency
 ),
 
-last_full_week_spend AS (
-  SELECT
-    dense.Quarter_Start_Date,
-    dense.LOB_Supported,
-    dense.Channel,
-    dense.Tactic,
-    dense.Message_Type,
-    dense.Agency,
-    dense.spend_actual AS previous_quarter_last_full_week_spend
-
-  FROM dense_spend dense
-
-  INNER JOIN last_full_week_dates dates
-    ON  dense.Quarter_Start_Date = dates.Quarter_Start_Date
-    AND dense.QGP_Week           = dates.last_full_qgp_week
-),
-
-with_previous_quarter_spend AS (
+with_complete_week_values AS (
   SELECT
     current_row.*,
-    previous_quarter.previous_quarter_last_full_week_spend
 
-  FROM with_quarter_position current_row
+    current_week.complete_calendar_week_actual
+      AS current_complete_calendar_week_actual,
 
-  LEFT JOIN last_full_week_spend previous_quarter
-    ON  previous_quarter.Quarter_Start_Date =
-          ADD_MONTHS(current_row.Quarter_Start_Date, -3)
+    previous_week.complete_calendar_week_actual
+      AS previous_complete_calendar_week_actual
 
-    AND previous_quarter.LOB_Supported
+  FROM with_calendar_week_end current_row
+
+  LEFT JOIN calendar_week_actuals current_week
+    ON  current_week.calendar_week_end =
+          current_row.calendar_week_end
+
+    AND current_week.LOB_Supported
           <=> current_row.LOB_Supported
 
-    AND previous_quarter.Channel
+    AND current_week.Channel
           <=> current_row.Channel
 
-    AND previous_quarter.Tactic
+    AND current_week.Tactic
           <=> current_row.Tactic
 
-    AND previous_quarter.Message_Type
+    AND current_week.Message_Type
           <=> current_row.Message_Type
 
-    AND previous_quarter.Agency
+    AND current_week.Agency
+          <=> current_row.Agency
+
+  LEFT JOIN calendar_week_actuals previous_week
+    ON  previous_week.calendar_week_end =
+          DATE_SUB(current_row.calendar_week_end, 7)
+
+    AND previous_week.LOB_Supported
+          <=> current_row.LOB_Supported
+
+    AND previous_week.Channel
+          <=> current_row.Channel
+
+    AND previous_week.Tactic
+          <=> current_row.Tactic
+
+    AND previous_week.Message_Type
+          <=> current_row.Message_Type
+
+    AND previous_week.Agency
           <=> current_row.Agency
 ),
 
@@ -590,13 +618,20 @@ with_spend_for_wow AS (
       WHEN is_quarter_end_partial = TRUE
         THEN NULL
 
-      WHEN QGP_Week = first_qgp_week_in_quarter
-        THEN previous_quarter_last_full_week_spend
+      ELSE current_complete_calendar_week_actual
+    END AS spend_actual_for_wow,
 
-      ELSE immediately_preceding_spend_in_quarter
+    CASE
+      WHEN spend_actual IS NULL
+        THEN NULL
+
+      WHEN is_quarter_end_partial = TRUE
+        THEN NULL
+
+      ELSE previous_complete_calendar_week_actual
     END AS spend_for_wow
 
-  FROM with_previous_quarter_spend
+  FROM with_complete_week_values
 )
 
 SELECT
@@ -628,6 +663,7 @@ SELECT
   spend_actual,
   spend_forecast,
   spend_display,
+  spend_actual_for_wow,
   spend_for_wow,
 
   CASE

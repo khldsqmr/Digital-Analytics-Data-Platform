@@ -1,4 +1,68 @@
 -- ============================================================
+-- MFC SPEND PIPELINE: TWO SILVERS + FOUR GOLDS
+-- REVISION V6:
+--   WoW now compares complete calendar weeks across quarter boundaries.
+--
+--   New field:
+--     spend_actual_for_wow
+--
+--   Example:
+--     2026-03-31 partial fragment = 9.8
+--     2026-04-04 partial fragment = 11.2
+--
+--     For 2026-04-04:
+--       spend_actual         = 11.2
+--       spend_actual_for_wow = 9.8 + 11.2
+--       spend_for_wow        = 2026-03-28 full-week actual
+--
+--     For 2026-04-11:
+--       spend_actual_for_wow = 2026-04-11 full-week actual
+--       spend_for_wow        = 9.8 + 11.2
+--
+-- REVISION V4:
+--   Fixed quarter-end partial-week detection.
+--   For a QGP_Week that is not a Saturday (for example 2026-03-31),
+--   Period_Start now resolves to the prior Sunday rather than QGP_Week - 6 days.
+--   This ensures:
+--     * quarter-end partial rows are labeled Partial
+--     * quarter-end partial rows have spend_for_wow = NULL
+--     * the first row of the next quarter uses the previous quarter's
+--       final FULL week rather than the quarter-end partial row
+--
+-- Databricks / Spark SQL
+--
+-- IMPORTANT:
+--   * Existing bronze views remain unchanged.
+--   * Non-granular and granular branches remain independent.
+--   * QGP_Week is the ONLY reporting week field introduced.
+--   * No QGP_Date column is used.
+--
+-- WoW business rules:
+--   1. Quarter-end partial rows remain visible but:
+--        spend_for_wow = NULL
+--   2. First QGP_Week of a quarter uses the final FULL QGP_Week
+--      from the previous quarter.
+--   3. Later QGP_Weeks within the quarter use the immediately
+--      preceding QGP_Week in the same quarter, including a partial
+--      first week.
+--   4. Missing granular combinations are scaffolded and retain:
+--        spend_actual  = NULL
+--        spend_for_wow = NULL
+--
+-- Final non-granular grain:
+--   QGP_Week + LOB_Supported
+--
+-- Final granular grain:
+--   QGP_Week
+--   + LOB_Supported
+--   + Channel
+--   + Tactic
+--   + Message_Type
+--   + Agency
+-- ============================================================
+
+
+-- ============================================================
 -- SILVER 1: NON-GRANULAR / LOB-LEVEL
 -- Independent branch from non-granular bronze views.
 -- ============================================================
@@ -431,61 +495,79 @@ dense_spend AS (
     AND scaffold.LOB_Supported = actuals.LOB_Supported
 ),
 
-with_quarter_position AS (
+/* ------------------------------------------------------------
+   Assign each QGP fragment to its enclosing calendar week ending
+   Saturday.
+
+   Example:
+     2026-03-31 -> 2026-04-04
+     2026-04-04 -> 2026-04-04
+
+   The two quarter-boundary fragments are combined when they
+   represent one complete calendar week.
+   ------------------------------------------------------------ */
+with_calendar_week_end AS (
   SELECT
     *,
 
-    MIN(QGP_Week) OVER (
-      PARTITION BY Quarter_Start_Date
-    ) AS first_qgp_week_in_quarter,
-
-    LAG(spend_actual) OVER (
-      PARTITION BY
-        Quarter_Start_Date,
-        LOB_Supported
-      ORDER BY QGP_Week ASC
-    ) AS immediately_preceding_spend_in_quarter
+    DATE_ADD(
+      QGP_Week,
+      CASE
+        WHEN DAYOFWEEK(QGP_Week) = 7 THEN 0
+        ELSE 7 - DAYOFWEEK(QGP_Week)
+      END
+    ) AS calendar_week_end
 
   FROM dense_spend
 ),
 
-last_full_week_dates AS (
+/* ------------------------------------------------------------
+   Complete current calendar-week actual for each LOB.
+
+   If any required QGP fragment is missing, the complete-week
+   value remains NULL rather than treating the missing fragment
+   as zero.
+   ------------------------------------------------------------ */
+calendar_week_actuals AS (
   SELECT
-    Quarter_Start_Date,
-    MAX(QGP_Week) AS last_full_qgp_week
+    calendar_week_end,
+    LOB_Supported,
 
-  FROM qgp_calendar
+    CASE
+      WHEN COUNT(spend_actual) = COUNT(*)
+      THEN SUM(spend_actual)
+      ELSE NULL
+    END AS complete_calendar_week_actual
 
-  WHERE period_days = 7
+  FROM with_calendar_week_end
 
-  GROUP BY Quarter_Start_Date
+  GROUP BY
+    calendar_week_end,
+    LOB_Supported
 ),
 
-last_full_week_spend AS (
-  SELECT
-    dense.Quarter_Start_Date,
-    dense.LOB_Supported,
-    dense.spend_actual AS previous_quarter_last_full_week_spend
-
-  FROM dense_spend dense
-
-  INNER JOIN last_full_week_dates dates
-    ON  dense.Quarter_Start_Date = dates.Quarter_Start_Date
-    AND dense.QGP_Week           = dates.last_full_qgp_week
-),
-
-with_previous_quarter_spend AS (
+with_complete_week_values AS (
   SELECT
     current_row.*,
-    previous_quarter.previous_quarter_last_full_week_spend
 
-  FROM with_quarter_position current_row
+    current_week.complete_calendar_week_actual
+      AS current_complete_calendar_week_actual,
 
-  LEFT JOIN last_full_week_spend previous_quarter
-    ON  previous_quarter.Quarter_Start_Date =
-          ADD_MONTHS(current_row.Quarter_Start_Date, -3)
+    previous_week.complete_calendar_week_actual
+      AS previous_complete_calendar_week_actual
 
-    AND previous_quarter.LOB_Supported =
+  FROM with_calendar_week_end current_row
+
+  LEFT JOIN calendar_week_actuals current_week
+    ON  current_week.calendar_week_end =
+          current_row.calendar_week_end
+    AND current_week.LOB_Supported =
+          current_row.LOB_Supported
+
+  LEFT JOIN calendar_week_actuals previous_week
+    ON  previous_week.calendar_week_end =
+          DATE_SUB(current_row.calendar_week_end, 7)
+    AND previous_week.LOB_Supported =
           current_row.LOB_Supported
 ),
 
@@ -494,19 +576,36 @@ with_spend_for_wow AS (
     *,
 
     CASE
+      /* Missing current fragment: retain the scaffold row but do
+         not calculate WoW. */
+      WHEN spend_actual IS NULL
+        THEN NULL
+
+      /* Quarter-end fragment remains visible but should not show
+         a standalone WoW value. */
+      WHEN is_quarter_end_partial = TRUE
+        THEN NULL
+
+      /* For a partial quarter-start Saturday such as 2026-04-04,
+         this contains 2026-03-31 + 2026-04-04.
+         For a normal Saturday, it equals that week's spend. */
+      ELSE current_complete_calendar_week_actual
+    END AS spend_actual_for_wow,
+
+    CASE
       WHEN spend_actual IS NULL
         THEN NULL
 
       WHEN is_quarter_end_partial = TRUE
         THEN NULL
 
-      WHEN QGP_Week = first_qgp_week_in_quarter
-        THEN previous_quarter_last_full_week_spend
-
-      ELSE immediately_preceding_spend_in_quarter
+      /* Prior complete calendar week:
+         - 2026-04-04 -> 2026-03-28
+         - 2026-04-11 -> 2026-03-31 + 2026-04-04 */
+      ELSE previous_complete_calendar_week_actual
     END AS spend_for_wow
 
-  FROM with_previous_quarter_spend
+  FROM with_complete_week_values
 )
 
 SELECT
@@ -533,6 +632,7 @@ SELECT
   spend_actual,
   spend_forecast,
   spend_display,
+  spend_actual_for_wow,
   spend_for_wow,
 
   CASE
