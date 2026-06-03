@@ -1,4 +1,36 @@
-CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly AS
+-- ============================================================
+-- MFC BRONZE VIEWS: SNAPSHOT-ALIGNED UPDATE
+-- Databricks / Spark SQL
+--
+-- Assumption:
+--   Each FileLoad_Date is a complete snapshot for a given:
+--     Quarter + QGP_Week + LOB_Supported
+--
+-- Snapshot rule:
+--   1) Select one authoritative FileLoad_Date at:
+--        Quarter + QGP_Week + LOB_Supported
+--   2) For granular views, retain the detailed rows from ONLY that
+--      selected snapshot before exposing:
+--        Channel + Tactic + Message_Type + Agency
+--
+-- This prevents blended granular snapshots where different
+-- combinations come from different file loads.
+--
+-- Existing forecast rule retained:
+--   Use the latest forecast snapshot strictly BEFORE the first
+--   actual file load date for the same:
+--     Quarter + QGP_Week + LOB_Supported
+-- ============================================================
+
+
+-- ============================================================
+-- BRONZE 1: ACTUALS - NON-GRANULAR / LOB LEVEL
+-- Grain:
+--   Quarter + QGP_Week + LOB_Supported
+-- ============================================================
+CREATE OR REPLACE VIEW
+  prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly
+AS
 
 WITH weekly_snapshots AS (
   SELECT
@@ -9,15 +41,29 @@ WITH weekly_snapshots AS (
     FileLoad_Date,
     UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
     SUM(Spend_Actual)          AS weekly_actual
+
   FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
+
+  WHERE UPPER(TRIM(LOB_Supported)) IN (
+          'CONSUMER POSTPAID',
+          'BROADBAND'
+        )
     AND WM_V_NWM = 'Working'
     AND Channel IS NOT NULL
-    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
+    AND Channel NOT IN (
+          'OTHER (do not use)',
+          'Non-Working',
+          'Unallocated',
+          'Budget Held'
+        )
     AND Week_Beginning_Monday <= Week_Ending_Sunday
     AND Spend_Actual IS NOT NULL
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+    AND UPPER(TRIM(Message)) NOT IN (
+          'SEM POSTPAID/MICRO',
+          'MICRO POSTPAID OFFERS'
+        )
+
   GROUP BY
     Quarter,
     Week_Beginning_Monday,
@@ -31,14 +77,25 @@ ranked AS (
   SELECT
     *,
     ROW_NUMBER() OVER (
-      PARTITION BY Quarter, QGP_Week, LOB_Supported
-      ORDER BY FileLoad_Date DESC
+      PARTITION BY
+        Quarter,
+        QGP_Week,
+        LOB_Supported
+      ORDER BY
+        FileLoad_Date DESC
     ) AS rn
+
   FROM weekly_snapshots
+
+  WHERE weekly_actual IS NOT NULL
+    AND weekly_actual != 0
 ),
 
 best AS (
-  SELECT * FROM ranked WHERE rn = 1
+  SELECT
+    *
+  FROM ranked
+  WHERE rn = 1
 ),
 
 week_type AS (
@@ -48,8 +105,11 @@ week_type AS (
       WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week'
       ELSE 'normal'
     END AS week_type
+
   FROM best
-  GROUP BY QGP_Week
+
+  GROUP BY
+    QGP_Week
 )
 
 SELECT
@@ -61,12 +121,10 @@ SELECT
   b.LOB_Supported,
   b.weekly_actual,
   w.week_type
+
 FROM best b
-JOIN week_type w ON b.QGP_Week = w.QGP_Week
-WHERE b.weekly_actual IS NOT NULL
-  AND b.weekly_actual != 0
-ORDER BY
-  b.QGP_Week DESC,
-  CAST(SUBSTR(b.Quarter, 4, 2) AS INT) DESC,
-  CAST(SUBSTR(b.Quarter, 2, 1) AS INT) DESC,
-  b.LOB_Supported;
+
+INNER JOIN week_type w
+  ON b.QGP_Week = w.QGP_Week
+;
+
