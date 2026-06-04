@@ -40,7 +40,7 @@ BUSINESS LOGIC APPLIED:
   - brand_type  = 'NONBRAND' (entire source is non-branded by definition)
   - week_sun_to_sat = DATE_ADD(event_date_sun, INTERVAL 6 DAY)
   - All VIS metric columns prefixed : profoundVis_{asset}_nonbrand_{metric}
-  - All CIT metric columns prefixed : profoundCit_{asset}_nonbrand_share_of_voice
+  - All CIT metric columns prefixed : profoundCit_{asset}_nonbrand_shareOfVoice
   - WoW: self-join on week_sun_to_sat - 7 days (gap-safe)
   - LY : self-join on custom_week_num - 52 (gap-safe, Sun-to-Sat week)
   - wow_pct and yoy_pct as decimals (e.g. 0.051 = 5.1%)
@@ -57,11 +57,11 @@ COLUMN NAMING CONVENTION:
     profoundVis_{asset}_nonbrand_{metric}_yoy_pct
 
   CIT metrics:
-    profoundCit_{asset}_nonbrand_share_of_voice
-    profoundCit_{asset}_nonbrand_share_of_voice_wow
-    profoundCit_{asset}_nonbrand_share_of_voice_ly
-    profoundCit_{asset}_nonbrand_share_of_voice_wow_pct
-    profoundCit_{asset}_nonbrand_share_of_voice_yoy_pct
+    profoundCit_{asset}_nonbrand_shareOfVoice
+    profoundCit_{asset}_nonbrand_shareOfVoice_wow
+    profoundCit_{asset}_nonbrand_shareOfVoice_ly
+    profoundCit_{asset}_nonbrand_shareOfVoice_wow_pct
+    profoundCit_{asset}_nonbrand_shareOfVoice_yoy_pct
 
   Where asset:
     tmo     = T-Mobile
@@ -69,13 +69,13 @@ COLUMN NAMING CONVENTION:
     att     = AT&T
 
   VIS metrics:
-    nonbrand_visibility_score
+    nonbrand_visibilityScore
     nonbrand_executions
-    nonbrand_mentions_count
-    nonbrand_share_of_voice
+    nonbrand_mentionsCount
+    nonbrand_shareOfVoice
 
   CIT metric:
-    cit_share_of_voice
+    cit_shareOfVoice
 
 CUSTOM WEEK NUMBER:
   Anchored to 2023-01-01 (a Sunday) for consistent Sun-to-Sat week numbering:
@@ -144,22 +144,22 @@ vis_pivoted AS (
         week_sun_to_sat,
 
         -- T-Mobile
-        MAX(CASE WHEN asset_name = 'T-Mobile' THEN visibility_score END) AS profoundVis_tmo_nonbrand_visibility_score,
+        MAX(CASE WHEN asset_name = 'T-Mobile' THEN visibility_score END) AS profoundVis_tmo_nonbrand_visibilityScore,
         MAX(CASE WHEN asset_name = 'T-Mobile' THEN executions      END) AS profoundVis_tmo_nonbrand_executions,
-        MAX(CASE WHEN asset_name = 'T-Mobile' THEN mentions_count  END) AS profoundVis_tmo_nonbrand_mentions_count,
-        MAX(CASE WHEN asset_name = 'T-Mobile' THEN share_of_voice  END) AS profoundVis_tmo_nonbrand_share_of_voice,
+        MAX(CASE WHEN asset_name = 'T-Mobile' THEN mentions_count  END) AS profoundVis_tmo_nonbrand_mentionsCount,
+        MAX(CASE WHEN asset_name = 'T-Mobile' THEN share_of_voice  END) AS profoundVis_tmo_nonbrand_shareOfVoice,
 
         -- Verizon
-        MAX(CASE WHEN asset_name = 'Verizon'  THEN visibility_score END) AS profoundVis_verizon_nonbrand_visibility_score,
+        MAX(CASE WHEN asset_name = 'Verizon'  THEN visibility_score END) AS profoundVis_verizon_nonbrand_visibilityScore,
         MAX(CASE WHEN asset_name = 'Verizon'  THEN executions      END) AS profoundVis_verizon_nonbrand_executions,
-        MAX(CASE WHEN asset_name = 'Verizon'  THEN mentions_count  END) AS profoundVis_verizon_nonbrand_mentions_count,
-        MAX(CASE WHEN asset_name = 'Verizon'  THEN share_of_voice  END) AS profoundVis_verizon_nonbrand_share_of_voice,
+        MAX(CASE WHEN asset_name = 'Verizon'  THEN mentions_count  END) AS profoundVis_verizon_nonbrand_mentionsCount,
+        MAX(CASE WHEN asset_name = 'Verizon'  THEN share_of_voice  END) AS profoundVis_verizon_nonbrand_shareOfVoice,
 
         -- AT&T
-        MAX(CASE WHEN asset_name = 'AT&T'     THEN visibility_score END) AS profoundVis_att_nonbrand_visibility_score,
+        MAX(CASE WHEN asset_name = 'AT&T'     THEN visibility_score END) AS profoundVis_att_nonbrand_visibilityScore,
         MAX(CASE WHEN asset_name = 'AT&T'     THEN executions      END) AS profoundVis_att_nonbrand_executions,
-        MAX(CASE WHEN asset_name = 'AT&T'     THEN mentions_count  END) AS profoundVis_att_nonbrand_mentions_count,
-        MAX(CASE WHEN asset_name = 'AT&T'     THEN share_of_voice  END) AS profoundVis_att_nonbrand_share_of_voice
+        MAX(CASE WHEN asset_name = 'AT&T'     THEN mentions_count  END) AS profoundVis_att_nonbrand_mentionsCount,
+        MAX(CASE WHEN asset_name = 'AT&T'     THEN share_of_voice  END) AS profoundVis_att_nonbrand_shareOfVoice
 
     FROM vis_filtered
     GROUP BY week_sun_to_sat
@@ -174,13 +174,13 @@ cit_pivoted AS (
         week_sun_to_sat,
 
         -- T-Mobile
-        MAX(CASE WHEN asset_name = 'T-Mobile' THEN share_of_voice END) AS profoundCit_tmo_nonbrand_share_of_voice,
+        MAX(CASE WHEN asset_name = 'T-Mobile' THEN share_of_voice END) AS profoundCit_tmo_nonbrand_shareOfVoice,
 
         -- Verizon
-        MAX(CASE WHEN asset_name = 'Verizon'  THEN share_of_voice END) AS profoundCit_verizon_nonbrand_share_of_voice,
+        MAX(CASE WHEN asset_name = 'Verizon'  THEN share_of_voice END) AS profoundCit_verizon_nonbrand_shareOfVoice,
 
         -- AT&T
-        MAX(CASE WHEN asset_name = 'AT&T'     THEN share_of_voice END) AS profoundCit_att_nonbrand_share_of_voice
+        MAX(CASE WHEN asset_name = 'AT&T'     THEN share_of_voice END) AS profoundCit_att_nonbrand_shareOfVoice
 
     FROM cit_filtered
     GROUP BY week_sun_to_sat
@@ -195,23 +195,23 @@ pivoted AS (
         COALESCE(v.week_sun_to_sat, c.week_sun_to_sat)  AS week_sun_to_sat,
 
         -- VIS metrics
-        v.profoundVis_tmo_nonbrand_visibility_score,
+        v.profoundVis_tmo_nonbrand_visibilityScore,
         v.profoundVis_tmo_nonbrand_executions,
-        v.profoundVis_tmo_nonbrand_mentions_count,
-        v.profoundVis_tmo_nonbrand_share_of_voice,
-        v.profoundVis_verizon_nonbrand_visibility_score,
+        v.profoundVis_tmo_nonbrand_mentionsCount,
+        v.profoundVis_tmo_nonbrand_shareOfVoice,
+        v.profoundVis_verizon_nonbrand_visibilityScore,
         v.profoundVis_verizon_nonbrand_executions,
-        v.profoundVis_verizon_nonbrand_mentions_count,
-        v.profoundVis_verizon_nonbrand_share_of_voice,
-        v.profoundVis_att_nonbrand_visibility_score,
+        v.profoundVis_verizon_nonbrand_mentionsCount,
+        v.profoundVis_verizon_nonbrand_shareOfVoice,
+        v.profoundVis_att_nonbrand_visibilityScore,
         v.profoundVis_att_nonbrand_executions,
-        v.profoundVis_att_nonbrand_mentions_count,
-        v.profoundVis_att_nonbrand_share_of_voice,
+        v.profoundVis_att_nonbrand_mentionsCount,
+        v.profoundVis_att_nonbrand_shareOfVoice,
 
         -- CIT metrics
-        c.profoundCit_tmo_nonbrand_share_of_voice,
-        c.profoundCit_verizon_nonbrand_share_of_voice,
-        c.profoundCit_att_nonbrand_share_of_voice
+        c.profoundCit_tmo_nonbrand_shareOfVoice,
+        c.profoundCit_verizon_nonbrand_shareOfVoice,
+        c.profoundCit_att_nonbrand_shareOfVoice
 
     FROM vis_pivoted v
     FULL OUTER JOIN cit_pivoted c
@@ -243,61 +243,61 @@ with_comparisons AS (
         c.custom_week_num,
 
         -- ---- Current VIS values ----
-        c.profoundVis_tmo_nonbrand_visibility_score,
+        c.profoundVis_tmo_nonbrand_visibilityScore,
         c.profoundVis_tmo_nonbrand_executions,
-        c.profoundVis_tmo_nonbrand_mentions_count,
-        c.profoundVis_tmo_nonbrand_share_of_voice,
-        c.profoundVis_verizon_nonbrand_visibility_score,
+        c.profoundVis_tmo_nonbrand_mentionsCount,
+        c.profoundVis_tmo_nonbrand_shareOfVoice,
+        c.profoundVis_verizon_nonbrand_visibilityScore,
         c.profoundVis_verizon_nonbrand_executions,
-        c.profoundVis_verizon_nonbrand_mentions_count,
-        c.profoundVis_verizon_nonbrand_share_of_voice,
-        c.profoundVis_att_nonbrand_visibility_score,
+        c.profoundVis_verizon_nonbrand_mentionsCount,
+        c.profoundVis_verizon_nonbrand_shareOfVoice,
+        c.profoundVis_att_nonbrand_visibilityScore,
         c.profoundVis_att_nonbrand_executions,
-        c.profoundVis_att_nonbrand_mentions_count,
-        c.profoundVis_att_nonbrand_share_of_voice,
+        c.profoundVis_att_nonbrand_mentionsCount,
+        c.profoundVis_att_nonbrand_shareOfVoice,
 
         -- ---- Current CIT values ----
-        c.profoundCit_tmo_nonbrand_share_of_voice,
-        c.profoundCit_verizon_nonbrand_share_of_voice,
-        c.profoundCit_att_nonbrand_share_of_voice,
+        c.profoundCit_tmo_nonbrand_shareOfVoice,
+        c.profoundCit_verizon_nonbrand_shareOfVoice,
+        c.profoundCit_att_nonbrand_shareOfVoice,
 
         -- ---- WoW VIS values ----
-        w.profoundVis_tmo_nonbrand_visibility_score     AS profoundVis_tmo_nonbrand_visibility_score_wow,
+        w.profoundVis_tmo_nonbrand_visibilityScore     AS profoundVis_tmo_nonbrand_visibilityScore_wow,
         w.profoundVis_tmo_nonbrand_executions           AS profoundVis_tmo_nonbrand_executions_wow,
-        w.profoundVis_tmo_nonbrand_mentions_count       AS profoundVis_tmo_nonbrand_mentions_count_wow,
-        w.profoundVis_tmo_nonbrand_share_of_voice       AS profoundVis_tmo_nonbrand_share_of_voice_wow,
-        w.profoundVis_verizon_nonbrand_visibility_score AS profoundVis_verizon_nonbrand_visibility_score_wow,
+        w.profoundVis_tmo_nonbrand_mentionsCount       AS profoundVis_tmo_nonbrand_mentionsCount_wow,
+        w.profoundVis_tmo_nonbrand_shareOfVoice       AS profoundVis_tmo_nonbrand_shareOfVoice_wow,
+        w.profoundVis_verizon_nonbrand_visibilityScore AS profoundVis_verizon_nonbrand_visibilityScore_wow,
         w.profoundVis_verizon_nonbrand_executions       AS profoundVis_verizon_nonbrand_executions_wow,
-        w.profoundVis_verizon_nonbrand_mentions_count   AS profoundVis_verizon_nonbrand_mentions_count_wow,
-        w.profoundVis_verizon_nonbrand_share_of_voice   AS profoundVis_verizon_nonbrand_share_of_voice_wow,
-        w.profoundVis_att_nonbrand_visibility_score     AS profoundVis_att_nonbrand_visibility_score_wow,
+        w.profoundVis_verizon_nonbrand_mentionsCount   AS profoundVis_verizon_nonbrand_mentionsCount_wow,
+        w.profoundVis_verizon_nonbrand_shareOfVoice   AS profoundVis_verizon_nonbrand_shareOfVoice_wow,
+        w.profoundVis_att_nonbrand_visibilityScore     AS profoundVis_att_nonbrand_visibilityScore_wow,
         w.profoundVis_att_nonbrand_executions           AS profoundVis_att_nonbrand_executions_wow,
-        w.profoundVis_att_nonbrand_mentions_count       AS profoundVis_att_nonbrand_mentions_count_wow,
-        w.profoundVis_att_nonbrand_share_of_voice       AS profoundVis_att_nonbrand_share_of_voice_wow,
+        w.profoundVis_att_nonbrand_mentionsCount       AS profoundVis_att_nonbrand_mentionsCount_wow,
+        w.profoundVis_att_nonbrand_shareOfVoice       AS profoundVis_att_nonbrand_shareOfVoice_wow,
 
         -- ---- WoW CIT values ----
-        w.profoundCit_tmo_nonbrand_share_of_voice                       AS profoundCit_tmo_nonbrand_share_of_voice_wow,
-        w.profoundCit_verizon_nonbrand_share_of_voice                   AS profoundCit_verizon_nonbrand_share_of_voice_wow,
-        w.profoundCit_att_nonbrand_share_of_voice                       AS profoundCit_att_nonbrand_share_of_voice_wow,
+        w.profoundCit_tmo_nonbrand_shareOfVoice                       AS profoundCit_tmo_nonbrand_shareOfVoice_wow,
+        w.profoundCit_verizon_nonbrand_shareOfVoice                   AS profoundCit_verizon_nonbrand_shareOfVoice_wow,
+        w.profoundCit_att_nonbrand_shareOfVoice                       AS profoundCit_att_nonbrand_shareOfVoice_wow,
 
         -- ---- LY VIS values ----
-        l.profoundVis_tmo_nonbrand_visibility_score     AS profoundVis_tmo_nonbrand_visibility_score_ly,
+        l.profoundVis_tmo_nonbrand_visibilityScore     AS profoundVis_tmo_nonbrand_visibilityScore_ly,
         l.profoundVis_tmo_nonbrand_executions           AS profoundVis_tmo_nonbrand_executions_ly,
-        l.profoundVis_tmo_nonbrand_mentions_count       AS profoundVis_tmo_nonbrand_mentions_count_ly,
-        l.profoundVis_tmo_nonbrand_share_of_voice       AS profoundVis_tmo_nonbrand_share_of_voice_ly,
-        l.profoundVis_verizon_nonbrand_visibility_score AS profoundVis_verizon_nonbrand_visibility_score_ly,
+        l.profoundVis_tmo_nonbrand_mentionsCount       AS profoundVis_tmo_nonbrand_mentionsCount_ly,
+        l.profoundVis_tmo_nonbrand_shareOfVoice       AS profoundVis_tmo_nonbrand_shareOfVoice_ly,
+        l.profoundVis_verizon_nonbrand_visibilityScore AS profoundVis_verizon_nonbrand_visibilityScore_ly,
         l.profoundVis_verizon_nonbrand_executions       AS profoundVis_verizon_nonbrand_executions_ly,
-        l.profoundVis_verizon_nonbrand_mentions_count   AS profoundVis_verizon_nonbrand_mentions_count_ly,
-        l.profoundVis_verizon_nonbrand_share_of_voice   AS profoundVis_verizon_nonbrand_share_of_voice_ly,
-        l.profoundVis_att_nonbrand_visibility_score     AS profoundVis_att_nonbrand_visibility_score_ly,
+        l.profoundVis_verizon_nonbrand_mentionsCount   AS profoundVis_verizon_nonbrand_mentionsCount_ly,
+        l.profoundVis_verizon_nonbrand_shareOfVoice   AS profoundVis_verizon_nonbrand_shareOfVoice_ly,
+        l.profoundVis_att_nonbrand_visibilityScore     AS profoundVis_att_nonbrand_visibilityScore_ly,
         l.profoundVis_att_nonbrand_executions           AS profoundVis_att_nonbrand_executions_ly,
-        l.profoundVis_att_nonbrand_mentions_count       AS profoundVis_att_nonbrand_mentions_count_ly,
-        l.profoundVis_att_nonbrand_share_of_voice       AS profoundVis_att_nonbrand_share_of_voice_ly,
+        l.profoundVis_att_nonbrand_mentionsCount       AS profoundVis_att_nonbrand_mentionsCount_ly,
+        l.profoundVis_att_nonbrand_shareOfVoice       AS profoundVis_att_nonbrand_shareOfVoice_ly,
 
         -- ---- LY CIT values ----
-        l.profoundCit_tmo_nonbrand_share_of_voice                       AS profoundCit_tmo_nonbrand_share_of_voice_ly,
-        l.profoundCit_verizon_nonbrand_share_of_voice                   AS profoundCit_verizon_nonbrand_share_of_voice_ly,
-        l.profoundCit_att_nonbrand_share_of_voice                       AS profoundCit_att_nonbrand_share_of_voice_ly
+        l.profoundCit_tmo_nonbrand_shareOfVoice                       AS profoundCit_tmo_nonbrand_shareOfVoice_ly,
+        l.profoundCit_verizon_nonbrand_shareOfVoice                   AS profoundCit_verizon_nonbrand_shareOfVoice_ly,
+        l.profoundCit_att_nonbrand_shareOfVoice                       AS profoundCit_att_nonbrand_shareOfVoice_ly
 
     FROM with_week_num c
     LEFT JOIN with_week_num w
@@ -316,13 +316,13 @@ with_pcts AS (
         custom_week_num,
 
         -- ---- T-Mobile visibility_score ----
-        profoundVis_tmo_nonbrand_visibility_score,
-        profoundVis_tmo_nonbrand_visibility_score_wow,
-        profoundVis_tmo_nonbrand_visibility_score_ly,
-        CASE WHEN profoundVis_tmo_nonbrand_visibility_score_wow IS NULL OR profoundVis_tmo_nonbrand_visibility_score_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_visibility_score - profoundVis_tmo_nonbrand_visibility_score_wow) / profoundVis_tmo_nonbrand_visibility_score_wow, 6) END AS profoundVis_tmo_nonbrand_visibility_score_wow_pct,
-        CASE WHEN profoundVis_tmo_nonbrand_visibility_score_ly  IS NULL OR profoundVis_tmo_nonbrand_visibility_score_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_visibility_score - profoundVis_tmo_nonbrand_visibility_score_ly)  / profoundVis_tmo_nonbrand_visibility_score_ly,  6) END AS profoundVis_tmo_nonbrand_visibility_score_yoy_pct,
+        profoundVis_tmo_nonbrand_visibilityScore,
+        profoundVis_tmo_nonbrand_visibilityScore_wow,
+        profoundVis_tmo_nonbrand_visibilityScore_ly,
+        CASE WHEN profoundVis_tmo_nonbrand_visibilityScore_wow IS NULL OR profoundVis_tmo_nonbrand_visibilityScore_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_visibilityScore - profoundVis_tmo_nonbrand_visibilityScore_wow) / profoundVis_tmo_nonbrand_visibilityScore_wow, 6) END AS profoundVis_tmo_nonbrand_visibilityScore_wow_pct,
+        CASE WHEN profoundVis_tmo_nonbrand_visibilityScore_ly  IS NULL OR profoundVis_tmo_nonbrand_visibilityScore_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_visibilityScore - profoundVis_tmo_nonbrand_visibilityScore_ly)  / profoundVis_tmo_nonbrand_visibilityScore_ly,  6) END AS profoundVis_tmo_nonbrand_visibilityScore_yoy_pct,
 
         -- ---- T-Mobile executions ----
         profoundVis_tmo_nonbrand_executions,
@@ -334,40 +334,40 @@ with_pcts AS (
              ELSE ROUND((profoundVis_tmo_nonbrand_executions - profoundVis_tmo_nonbrand_executions_ly)  / profoundVis_tmo_nonbrand_executions_ly,  6) END AS profoundVis_tmo_nonbrand_executions_yoy_pct,
 
         -- ---- T-Mobile mentions_count ----
-        profoundVis_tmo_nonbrand_mentions_count,
-        profoundVis_tmo_nonbrand_mentions_count_wow,
-        profoundVis_tmo_nonbrand_mentions_count_ly,
-        CASE WHEN profoundVis_tmo_nonbrand_mentions_count_wow IS NULL OR profoundVis_tmo_nonbrand_mentions_count_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_mentions_count - profoundVis_tmo_nonbrand_mentions_count_wow) / profoundVis_tmo_nonbrand_mentions_count_wow, 6) END AS profoundVis_tmo_nonbrand_mentions_count_wow_pct,
-        CASE WHEN profoundVis_tmo_nonbrand_mentions_count_ly  IS NULL OR profoundVis_tmo_nonbrand_mentions_count_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_mentions_count - profoundVis_tmo_nonbrand_mentions_count_ly)  / profoundVis_tmo_nonbrand_mentions_count_ly,  6) END AS profoundVis_tmo_nonbrand_mentions_count_yoy_pct,
+        profoundVis_tmo_nonbrand_mentionsCount,
+        profoundVis_tmo_nonbrand_mentionsCount_wow,
+        profoundVis_tmo_nonbrand_mentionsCount_ly,
+        CASE WHEN profoundVis_tmo_nonbrand_mentionsCount_wow IS NULL OR profoundVis_tmo_nonbrand_mentionsCount_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_mentionsCount - profoundVis_tmo_nonbrand_mentionsCount_wow) / profoundVis_tmo_nonbrand_mentionsCount_wow, 6) END AS profoundVis_tmo_nonbrand_mentionsCount_wow_pct,
+        CASE WHEN profoundVis_tmo_nonbrand_mentionsCount_ly  IS NULL OR profoundVis_tmo_nonbrand_mentionsCount_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_mentionsCount - profoundVis_tmo_nonbrand_mentionsCount_ly)  / profoundVis_tmo_nonbrand_mentionsCount_ly,  6) END AS profoundVis_tmo_nonbrand_mentionsCount_yoy_pct,
 
         -- ---- T-Mobile share_of_voice ----
-        profoundVis_tmo_nonbrand_share_of_voice,
-        profoundVis_tmo_nonbrand_share_of_voice_wow,
-        profoundVis_tmo_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundVis_tmo_nonbrand_share_of_voice_wow IS NULL OR profoundVis_tmo_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_share_of_voice - profoundVis_tmo_nonbrand_share_of_voice_wow) / profoundVis_tmo_nonbrand_share_of_voice_wow, 6) END AS profoundVis_tmo_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundVis_tmo_nonbrand_share_of_voice_ly  IS NULL OR profoundVis_tmo_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_tmo_nonbrand_share_of_voice - profoundVis_tmo_nonbrand_share_of_voice_ly)  / profoundVis_tmo_nonbrand_share_of_voice_ly,  6) END AS profoundVis_tmo_nonbrand_share_of_voice_yoy_pct,
+        profoundVis_tmo_nonbrand_shareOfVoice,
+        profoundVis_tmo_nonbrand_shareOfVoice_wow,
+        profoundVis_tmo_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundVis_tmo_nonbrand_shareOfVoice_wow IS NULL OR profoundVis_tmo_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_shareOfVoice - profoundVis_tmo_nonbrand_shareOfVoice_wow) / profoundVis_tmo_nonbrand_shareOfVoice_wow, 6) END AS profoundVis_tmo_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundVis_tmo_nonbrand_shareOfVoice_ly  IS NULL OR profoundVis_tmo_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_tmo_nonbrand_shareOfVoice - profoundVis_tmo_nonbrand_shareOfVoice_ly)  / profoundVis_tmo_nonbrand_shareOfVoice_ly,  6) END AS profoundVis_tmo_nonbrand_shareOfVoice_yoy_pct,
 
-        -- ---- T-Mobile cit_share_of_voice ----
-        profoundCit_tmo_nonbrand_share_of_voice,
-        profoundCit_tmo_nonbrand_share_of_voice_wow,
-        profoundCit_tmo_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundCit_tmo_nonbrand_share_of_voice_wow IS NULL OR profoundCit_tmo_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundCit_tmo_nonbrand_share_of_voice - profoundCit_tmo_nonbrand_share_of_voice_wow) / profoundCit_tmo_nonbrand_share_of_voice_wow, 6) END AS profoundCit_tmo_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundCit_tmo_nonbrand_share_of_voice_ly  IS NULL OR profoundCit_tmo_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundCit_tmo_nonbrand_share_of_voice - profoundCit_tmo_nonbrand_share_of_voice_ly)  / profoundCit_tmo_nonbrand_share_of_voice_ly,  6) END AS profoundCit_tmo_nonbrand_share_of_voice_yoy_pct,
+        -- ---- T-Mobile cit_shareOfVoice ----
+        profoundCit_tmo_nonbrand_shareOfVoice,
+        profoundCit_tmo_nonbrand_shareOfVoice_wow,
+        profoundCit_tmo_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundCit_tmo_nonbrand_shareOfVoice_wow IS NULL OR profoundCit_tmo_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundCit_tmo_nonbrand_shareOfVoice - profoundCit_tmo_nonbrand_shareOfVoice_wow) / profoundCit_tmo_nonbrand_shareOfVoice_wow, 6) END AS profoundCit_tmo_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundCit_tmo_nonbrand_shareOfVoice_ly  IS NULL OR profoundCit_tmo_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundCit_tmo_nonbrand_shareOfVoice - profoundCit_tmo_nonbrand_shareOfVoice_ly)  / profoundCit_tmo_nonbrand_shareOfVoice_ly,  6) END AS profoundCit_tmo_nonbrand_shareOfVoice_yoy_pct,
 
         -- ---- Verizon visibility_score ----
-        profoundVis_verizon_nonbrand_visibility_score,
-        profoundVis_verizon_nonbrand_visibility_score_wow,
-        profoundVis_verizon_nonbrand_visibility_score_ly,
-        CASE WHEN profoundVis_verizon_nonbrand_visibility_score_wow IS NULL OR profoundVis_verizon_nonbrand_visibility_score_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_visibility_score - profoundVis_verizon_nonbrand_visibility_score_wow) / profoundVis_verizon_nonbrand_visibility_score_wow, 6) END AS profoundVis_verizon_nonbrand_visibility_score_wow_pct,
-        CASE WHEN profoundVis_verizon_nonbrand_visibility_score_ly  IS NULL OR profoundVis_verizon_nonbrand_visibility_score_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_visibility_score - profoundVis_verizon_nonbrand_visibility_score_ly)  / profoundVis_verizon_nonbrand_visibility_score_ly,  6) END AS profoundVis_verizon_nonbrand_visibility_score_yoy_pct,
+        profoundVis_verizon_nonbrand_visibilityScore,
+        profoundVis_verizon_nonbrand_visibilityScore_wow,
+        profoundVis_verizon_nonbrand_visibilityScore_ly,
+        CASE WHEN profoundVis_verizon_nonbrand_visibilityScore_wow IS NULL OR profoundVis_verizon_nonbrand_visibilityScore_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_visibilityScore - profoundVis_verizon_nonbrand_visibilityScore_wow) / profoundVis_verizon_nonbrand_visibilityScore_wow, 6) END AS profoundVis_verizon_nonbrand_visibilityScore_wow_pct,
+        CASE WHEN profoundVis_verizon_nonbrand_visibilityScore_ly  IS NULL OR profoundVis_verizon_nonbrand_visibilityScore_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_visibilityScore - profoundVis_verizon_nonbrand_visibilityScore_ly)  / profoundVis_verizon_nonbrand_visibilityScore_ly,  6) END AS profoundVis_verizon_nonbrand_visibilityScore_yoy_pct,
 
         -- ---- Verizon executions ----
         profoundVis_verizon_nonbrand_executions,
@@ -379,40 +379,40 @@ with_pcts AS (
              ELSE ROUND((profoundVis_verizon_nonbrand_executions - profoundVis_verizon_nonbrand_executions_ly)  / profoundVis_verizon_nonbrand_executions_ly,  6) END AS profoundVis_verizon_nonbrand_executions_yoy_pct,
 
         -- ---- Verizon mentions_count ----
-        profoundVis_verizon_nonbrand_mentions_count,
-        profoundVis_verizon_nonbrand_mentions_count_wow,
-        profoundVis_verizon_nonbrand_mentions_count_ly,
-        CASE WHEN profoundVis_verizon_nonbrand_mentions_count_wow IS NULL OR profoundVis_verizon_nonbrand_mentions_count_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_mentions_count - profoundVis_verizon_nonbrand_mentions_count_wow) / profoundVis_verizon_nonbrand_mentions_count_wow, 6) END AS profoundVis_verizon_nonbrand_mentions_count_wow_pct,
-        CASE WHEN profoundVis_verizon_nonbrand_mentions_count_ly  IS NULL OR profoundVis_verizon_nonbrand_mentions_count_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_mentions_count - profoundVis_verizon_nonbrand_mentions_count_ly)  / profoundVis_verizon_nonbrand_mentions_count_ly,  6) END AS profoundVis_verizon_nonbrand_mentions_count_yoy_pct,
+        profoundVis_verizon_nonbrand_mentionsCount,
+        profoundVis_verizon_nonbrand_mentionsCount_wow,
+        profoundVis_verizon_nonbrand_mentionsCount_ly,
+        CASE WHEN profoundVis_verizon_nonbrand_mentionsCount_wow IS NULL OR profoundVis_verizon_nonbrand_mentionsCount_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_mentionsCount - profoundVis_verizon_nonbrand_mentionsCount_wow) / profoundVis_verizon_nonbrand_mentionsCount_wow, 6) END AS profoundVis_verizon_nonbrand_mentionsCount_wow_pct,
+        CASE WHEN profoundVis_verizon_nonbrand_mentionsCount_ly  IS NULL OR profoundVis_verizon_nonbrand_mentionsCount_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_mentionsCount - profoundVis_verizon_nonbrand_mentionsCount_ly)  / profoundVis_verizon_nonbrand_mentionsCount_ly,  6) END AS profoundVis_verizon_nonbrand_mentionsCount_yoy_pct,
 
         -- ---- Verizon share_of_voice ----
-        profoundVis_verizon_nonbrand_share_of_voice,
-        profoundVis_verizon_nonbrand_share_of_voice_wow,
-        profoundVis_verizon_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundVis_verizon_nonbrand_share_of_voice_wow IS NULL OR profoundVis_verizon_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_share_of_voice - profoundVis_verizon_nonbrand_share_of_voice_wow) / profoundVis_verizon_nonbrand_share_of_voice_wow, 6) END AS profoundVis_verizon_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundVis_verizon_nonbrand_share_of_voice_ly  IS NULL OR profoundVis_verizon_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_verizon_nonbrand_share_of_voice - profoundVis_verizon_nonbrand_share_of_voice_ly)  / profoundVis_verizon_nonbrand_share_of_voice_ly,  6) END AS profoundVis_verizon_nonbrand_share_of_voice_yoy_pct,
+        profoundVis_verizon_nonbrand_shareOfVoice,
+        profoundVis_verizon_nonbrand_shareOfVoice_wow,
+        profoundVis_verizon_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundVis_verizon_nonbrand_shareOfVoice_wow IS NULL OR profoundVis_verizon_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_shareOfVoice - profoundVis_verizon_nonbrand_shareOfVoice_wow) / profoundVis_verizon_nonbrand_shareOfVoice_wow, 6) END AS profoundVis_verizon_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundVis_verizon_nonbrand_shareOfVoice_ly  IS NULL OR profoundVis_verizon_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_verizon_nonbrand_shareOfVoice - profoundVis_verizon_nonbrand_shareOfVoice_ly)  / profoundVis_verizon_nonbrand_shareOfVoice_ly,  6) END AS profoundVis_verizon_nonbrand_shareOfVoice_yoy_pct,
 
-        -- ---- Verizon cit_share_of_voice ----
-        profoundCit_verizon_nonbrand_share_of_voice,
-        profoundCit_verizon_nonbrand_share_of_voice_wow,
-        profoundCit_verizon_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundCit_verizon_nonbrand_share_of_voice_wow IS NULL OR profoundCit_verizon_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundCit_verizon_nonbrand_share_of_voice - profoundCit_verizon_nonbrand_share_of_voice_wow) / profoundCit_verizon_nonbrand_share_of_voice_wow, 6) END AS profoundCit_verizon_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundCit_verizon_nonbrand_share_of_voice_ly  IS NULL OR profoundCit_verizon_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundCit_verizon_nonbrand_share_of_voice - profoundCit_verizon_nonbrand_share_of_voice_ly)  / profoundCit_verizon_nonbrand_share_of_voice_ly,  6) END AS profoundCit_verizon_nonbrand_share_of_voice_yoy_pct,
+        -- ---- Verizon cit_shareOfVoice ----
+        profoundCit_verizon_nonbrand_shareOfVoice,
+        profoundCit_verizon_nonbrand_shareOfVoice_wow,
+        profoundCit_verizon_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundCit_verizon_nonbrand_shareOfVoice_wow IS NULL OR profoundCit_verizon_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundCit_verizon_nonbrand_shareOfVoice - profoundCit_verizon_nonbrand_shareOfVoice_wow) / profoundCit_verizon_nonbrand_shareOfVoice_wow, 6) END AS profoundCit_verizon_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundCit_verizon_nonbrand_shareOfVoice_ly  IS NULL OR profoundCit_verizon_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundCit_verizon_nonbrand_shareOfVoice - profoundCit_verizon_nonbrand_shareOfVoice_ly)  / profoundCit_verizon_nonbrand_shareOfVoice_ly,  6) END AS profoundCit_verizon_nonbrand_shareOfVoice_yoy_pct,
 
         -- ---- AT&T visibility_score ----
-        profoundVis_att_nonbrand_visibility_score,
-        profoundVis_att_nonbrand_visibility_score_wow,
-        profoundVis_att_nonbrand_visibility_score_ly,
-        CASE WHEN profoundVis_att_nonbrand_visibility_score_wow IS NULL OR profoundVis_att_nonbrand_visibility_score_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_visibility_score - profoundVis_att_nonbrand_visibility_score_wow) / profoundVis_att_nonbrand_visibility_score_wow, 6) END AS profoundVis_att_nonbrand_visibility_score_wow_pct,
-        CASE WHEN profoundVis_att_nonbrand_visibility_score_ly  IS NULL OR profoundVis_att_nonbrand_visibility_score_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_visibility_score - profoundVis_att_nonbrand_visibility_score_ly)  / profoundVis_att_nonbrand_visibility_score_ly,  6) END AS profoundVis_att_nonbrand_visibility_score_yoy_pct,
+        profoundVis_att_nonbrand_visibilityScore,
+        profoundVis_att_nonbrand_visibilityScore_wow,
+        profoundVis_att_nonbrand_visibilityScore_ly,
+        CASE WHEN profoundVis_att_nonbrand_visibilityScore_wow IS NULL OR profoundVis_att_nonbrand_visibilityScore_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_visibilityScore - profoundVis_att_nonbrand_visibilityScore_wow) / profoundVis_att_nonbrand_visibilityScore_wow, 6) END AS profoundVis_att_nonbrand_visibilityScore_wow_pct,
+        CASE WHEN profoundVis_att_nonbrand_visibilityScore_ly  IS NULL OR profoundVis_att_nonbrand_visibilityScore_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_visibilityScore - profoundVis_att_nonbrand_visibilityScore_ly)  / profoundVis_att_nonbrand_visibilityScore_ly,  6) END AS profoundVis_att_nonbrand_visibilityScore_yoy_pct,
 
         -- ---- AT&T executions ----
         profoundVis_att_nonbrand_executions,
@@ -424,31 +424,31 @@ with_pcts AS (
              ELSE ROUND((profoundVis_att_nonbrand_executions - profoundVis_att_nonbrand_executions_ly)  / profoundVis_att_nonbrand_executions_ly,  6) END AS profoundVis_att_nonbrand_executions_yoy_pct,
 
         -- ---- AT&T mentions_count ----
-        profoundVis_att_nonbrand_mentions_count,
-        profoundVis_att_nonbrand_mentions_count_wow,
-        profoundVis_att_nonbrand_mentions_count_ly,
-        CASE WHEN profoundVis_att_nonbrand_mentions_count_wow IS NULL OR profoundVis_att_nonbrand_mentions_count_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_mentions_count - profoundVis_att_nonbrand_mentions_count_wow) / profoundVis_att_nonbrand_mentions_count_wow, 6) END AS profoundVis_att_nonbrand_mentions_count_wow_pct,
-        CASE WHEN profoundVis_att_nonbrand_mentions_count_ly  IS NULL OR profoundVis_att_nonbrand_mentions_count_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_mentions_count - profoundVis_att_nonbrand_mentions_count_ly)  / profoundVis_att_nonbrand_mentions_count_ly,  6) END AS profoundVis_att_nonbrand_mentions_count_yoy_pct,
+        profoundVis_att_nonbrand_mentionsCount,
+        profoundVis_att_nonbrand_mentionsCount_wow,
+        profoundVis_att_nonbrand_mentionsCount_ly,
+        CASE WHEN profoundVis_att_nonbrand_mentionsCount_wow IS NULL OR profoundVis_att_nonbrand_mentionsCount_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_mentionsCount - profoundVis_att_nonbrand_mentionsCount_wow) / profoundVis_att_nonbrand_mentionsCount_wow, 6) END AS profoundVis_att_nonbrand_mentionsCount_wow_pct,
+        CASE WHEN profoundVis_att_nonbrand_mentionsCount_ly  IS NULL OR profoundVis_att_nonbrand_mentionsCount_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_mentionsCount - profoundVis_att_nonbrand_mentionsCount_ly)  / profoundVis_att_nonbrand_mentionsCount_ly,  6) END AS profoundVis_att_nonbrand_mentionsCount_yoy_pct,
 
         -- ---- AT&T share_of_voice ----
-        profoundVis_att_nonbrand_share_of_voice,
-        profoundVis_att_nonbrand_share_of_voice_wow,
-        profoundVis_att_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundVis_att_nonbrand_share_of_voice_wow IS NULL OR profoundVis_att_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_share_of_voice - profoundVis_att_nonbrand_share_of_voice_wow) / profoundVis_att_nonbrand_share_of_voice_wow, 6) END AS profoundVis_att_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundVis_att_nonbrand_share_of_voice_ly  IS NULL OR profoundVis_att_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundVis_att_nonbrand_share_of_voice - profoundVis_att_nonbrand_share_of_voice_ly)  / profoundVis_att_nonbrand_share_of_voice_ly,  6) END AS profoundVis_att_nonbrand_share_of_voice_yoy_pct,
+        profoundVis_att_nonbrand_shareOfVoice,
+        profoundVis_att_nonbrand_shareOfVoice_wow,
+        profoundVis_att_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundVis_att_nonbrand_shareOfVoice_wow IS NULL OR profoundVis_att_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_shareOfVoice - profoundVis_att_nonbrand_shareOfVoice_wow) / profoundVis_att_nonbrand_shareOfVoice_wow, 6) END AS profoundVis_att_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundVis_att_nonbrand_shareOfVoice_ly  IS NULL OR profoundVis_att_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundVis_att_nonbrand_shareOfVoice - profoundVis_att_nonbrand_shareOfVoice_ly)  / profoundVis_att_nonbrand_shareOfVoice_ly,  6) END AS profoundVis_att_nonbrand_shareOfVoice_yoy_pct,
 
-        -- ---- AT&T cit_share_of_voice ----
-        profoundCit_att_nonbrand_share_of_voice,
-        profoundCit_att_nonbrand_share_of_voice_wow,
-        profoundCit_att_nonbrand_share_of_voice_ly,
-        CASE WHEN profoundCit_att_nonbrand_share_of_voice_wow IS NULL OR profoundCit_att_nonbrand_share_of_voice_wow = 0 THEN NULL
-             ELSE ROUND((profoundCit_att_nonbrand_share_of_voice - profoundCit_att_nonbrand_share_of_voice_wow) / profoundCit_att_nonbrand_share_of_voice_wow, 6) END AS profoundCit_att_nonbrand_share_of_voice_wow_pct,
-        CASE WHEN profoundCit_att_nonbrand_share_of_voice_ly  IS NULL OR profoundCit_att_nonbrand_share_of_voice_ly  = 0 THEN NULL
-             ELSE ROUND((profoundCit_att_nonbrand_share_of_voice - profoundCit_att_nonbrand_share_of_voice_ly)  / profoundCit_att_nonbrand_share_of_voice_ly,  6) END AS profoundCit_att_nonbrand_share_of_voice_yoy_pct
+        -- ---- AT&T cit_shareOfVoice ----
+        profoundCit_att_nonbrand_shareOfVoice,
+        profoundCit_att_nonbrand_shareOfVoice_wow,
+        profoundCit_att_nonbrand_shareOfVoice_ly,
+        CASE WHEN profoundCit_att_nonbrand_shareOfVoice_wow IS NULL OR profoundCit_att_nonbrand_shareOfVoice_wow = 0 THEN NULL
+             ELSE ROUND((profoundCit_att_nonbrand_shareOfVoice - profoundCit_att_nonbrand_shareOfVoice_wow) / profoundCit_att_nonbrand_shareOfVoice_wow, 6) END AS profoundCit_att_nonbrand_shareOfVoice_wow_pct,
+        CASE WHEN profoundCit_att_nonbrand_shareOfVoice_ly  IS NULL OR profoundCit_att_nonbrand_shareOfVoice_ly  = 0 THEN NULL
+             ELSE ROUND((profoundCit_att_nonbrand_shareOfVoice - profoundCit_att_nonbrand_shareOfVoice_ly)  / profoundCit_att_nonbrand_shareOfVoice_ly,  6) END AS profoundCit_att_nonbrand_shareOfVoice_yoy_pct
 
     FROM with_comparisons
 ),
@@ -461,12 +461,12 @@ with_max_date AS (
     SELECT
         *,
         MAX(CASE
-            WHEN profoundVis_tmo_nonbrand_visibility_score     IS NOT NULL
-              OR profoundVis_verizon_nonbrand_visibility_score IS NOT NULL
-              OR profoundVis_att_nonbrand_visibility_score     IS NOT NULL
-              OR profoundCit_tmo_nonbrand_share_of_voice                       IS NOT NULL
-              OR profoundCit_verizon_nonbrand_share_of_voice                   IS NOT NULL
-              OR profoundCit_att_nonbrand_share_of_voice                       IS NOT NULL
+            WHEN profoundVis_tmo_nonbrand_visibilityScore     IS NOT NULL
+              OR profoundVis_verizon_nonbrand_visibilityScore IS NOT NULL
+              OR profoundVis_att_nonbrand_visibilityScore     IS NOT NULL
+              OR profoundCit_tmo_nonbrand_shareOfVoice                       IS NOT NULL
+              OR profoundCit_verizon_nonbrand_shareOfVoice                   IS NOT NULL
+              OR profoundCit_att_nonbrand_shareOfVoice                       IS NOT NULL
             THEN week_sun_to_sat
         END) OVER ()                                AS max_data_date
     FROM with_pcts
@@ -477,7 +477,7 @@ with_max_date AS (
 -- Wide table — one row per week_sun_to_sat
 -- All columns prefixed with 'profound_'
 -- VIS metrics: profound_{asset}_nonbrand_{metric}
--- CIT metrics: profoundCit_{asset}_nonbrand_share_of_voice
+-- CIT metrics: profoundCit_{asset}_nonbrand_shareOfVoice
 -- -----------------------------------------------------------------------
 SELECT
     week_sun_to_sat,
@@ -486,11 +486,11 @@ SELECT
     max_data_date,
 
     -- ---- T-Mobile VIS ----
-    profoundVis_tmo_nonbrand_visibility_score,
-    profoundVis_tmo_nonbrand_visibility_score_wow,
-    profoundVis_tmo_nonbrand_visibility_score_ly,
-    profoundVis_tmo_nonbrand_visibility_score_wow_pct,
-    profoundVis_tmo_nonbrand_visibility_score_yoy_pct,
+    profoundVis_tmo_nonbrand_visibilityScore,
+    profoundVis_tmo_nonbrand_visibilityScore_wow,
+    profoundVis_tmo_nonbrand_visibilityScore_ly,
+    profoundVis_tmo_nonbrand_visibilityScore_wow_pct,
+    profoundVis_tmo_nonbrand_visibilityScore_yoy_pct,
 
     profoundVis_tmo_nonbrand_executions,
     profoundVis_tmo_nonbrand_executions_wow,
@@ -498,31 +498,31 @@ SELECT
     profoundVis_tmo_nonbrand_executions_wow_pct,
     profoundVis_tmo_nonbrand_executions_yoy_pct,
 
-    profoundVis_tmo_nonbrand_mentions_count,
-    profoundVis_tmo_nonbrand_mentions_count_wow,
-    profoundVis_tmo_nonbrand_mentions_count_ly,
-    profoundVis_tmo_nonbrand_mentions_count_wow_pct,
-    profoundVis_tmo_nonbrand_mentions_count_yoy_pct,
+    profoundVis_tmo_nonbrand_mentionsCount,
+    profoundVis_tmo_nonbrand_mentionsCount_wow,
+    profoundVis_tmo_nonbrand_mentionsCount_ly,
+    profoundVis_tmo_nonbrand_mentionsCount_wow_pct,
+    profoundVis_tmo_nonbrand_mentionsCount_yoy_pct,
 
-    profoundVis_tmo_nonbrand_share_of_voice,
-    profoundVis_tmo_nonbrand_share_of_voice_wow,
-    profoundVis_tmo_nonbrand_share_of_voice_ly,
-    profoundVis_tmo_nonbrand_share_of_voice_wow_pct,
-    profoundVis_tmo_nonbrand_share_of_voice_yoy_pct,
+    profoundVis_tmo_nonbrand_shareOfVoice,
+    profoundVis_tmo_nonbrand_shareOfVoice_wow,
+    profoundVis_tmo_nonbrand_shareOfVoice_ly,
+    profoundVis_tmo_nonbrand_shareOfVoice_wow_pct,
+    profoundVis_tmo_nonbrand_shareOfVoice_yoy_pct,
 
     -- ---- T-Mobile CIT ----
-    profoundCit_tmo_nonbrand_share_of_voice,
-    profoundCit_tmo_nonbrand_share_of_voice_wow,
-    profoundCit_tmo_nonbrand_share_of_voice_ly,
-    profoundCit_tmo_nonbrand_share_of_voice_wow_pct,
-    profoundCit_tmo_nonbrand_share_of_voice_yoy_pct,
+    profoundCit_tmo_nonbrand_shareOfVoice,
+    profoundCit_tmo_nonbrand_shareOfVoice_wow,
+    profoundCit_tmo_nonbrand_shareOfVoice_ly,
+    profoundCit_tmo_nonbrand_shareOfVoice_wow_pct,
+    profoundCit_tmo_nonbrand_shareOfVoice_yoy_pct,
 
     -- ---- Verizon VIS ----
-    profoundVis_verizon_nonbrand_visibility_score,
-    profoundVis_verizon_nonbrand_visibility_score_wow,
-    profoundVis_verizon_nonbrand_visibility_score_ly,
-    profoundVis_verizon_nonbrand_visibility_score_wow_pct,
-    profoundVis_verizon_nonbrand_visibility_score_yoy_pct,
+    profoundVis_verizon_nonbrand_visibilityScore,
+    profoundVis_verizon_nonbrand_visibilityScore_wow,
+    profoundVis_verizon_nonbrand_visibilityScore_ly,
+    profoundVis_verizon_nonbrand_visibilityScore_wow_pct,
+    profoundVis_verizon_nonbrand_visibilityScore_yoy_pct,
 
     profoundVis_verizon_nonbrand_executions,
     profoundVis_verizon_nonbrand_executions_wow,
@@ -530,31 +530,31 @@ SELECT
     profoundVis_verizon_nonbrand_executions_wow_pct,
     profoundVis_verizon_nonbrand_executions_yoy_pct,
 
-    profoundVis_verizon_nonbrand_mentions_count,
-    profoundVis_verizon_nonbrand_mentions_count_wow,
-    profoundVis_verizon_nonbrand_mentions_count_ly,
-    profoundVis_verizon_nonbrand_mentions_count_wow_pct,
-    profoundVis_verizon_nonbrand_mentions_count_yoy_pct,
+    profoundVis_verizon_nonbrand_mentionsCount,
+    profoundVis_verizon_nonbrand_mentionsCount_wow,
+    profoundVis_verizon_nonbrand_mentionsCount_ly,
+    profoundVis_verizon_nonbrand_mentionsCount_wow_pct,
+    profoundVis_verizon_nonbrand_mentionsCount_yoy_pct,
 
-    profoundVis_verizon_nonbrand_share_of_voice,
-    profoundVis_verizon_nonbrand_share_of_voice_wow,
-    profoundVis_verizon_nonbrand_share_of_voice_ly,
-    profoundVis_verizon_nonbrand_share_of_voice_wow_pct,
-    profoundVis_verizon_nonbrand_share_of_voice_yoy_pct,
+    profoundVis_verizon_nonbrand_shareOfVoice,
+    profoundVis_verizon_nonbrand_shareOfVoice_wow,
+    profoundVis_verizon_nonbrand_shareOfVoice_ly,
+    profoundVis_verizon_nonbrand_shareOfVoice_wow_pct,
+    profoundVis_verizon_nonbrand_shareOfVoice_yoy_pct,
 
     -- ---- Verizon CIT ----
-    profoundCit_verizon_nonbrand_share_of_voice,
-    profoundCit_verizon_nonbrand_share_of_voice_wow,
-    profoundCit_verizon_nonbrand_share_of_voice_ly,
-    profoundCit_verizon_nonbrand_share_of_voice_wow_pct,
-    profoundCit_verizon_nonbrand_share_of_voice_yoy_pct,
+    profoundCit_verizon_nonbrand_shareOfVoice,
+    profoundCit_verizon_nonbrand_shareOfVoice_wow,
+    profoundCit_verizon_nonbrand_shareOfVoice_ly,
+    profoundCit_verizon_nonbrand_shareOfVoice_wow_pct,
+    profoundCit_verizon_nonbrand_shareOfVoice_yoy_pct,
 
     -- ---- AT&T VIS ----
-    profoundVis_att_nonbrand_visibility_score,
-    profoundVis_att_nonbrand_visibility_score_wow,
-    profoundVis_att_nonbrand_visibility_score_ly,
-    profoundVis_att_nonbrand_visibility_score_wow_pct,
-    profoundVis_att_nonbrand_visibility_score_yoy_pct,
+    profoundVis_att_nonbrand_visibilityScore,
+    profoundVis_att_nonbrand_visibilityScore_wow,
+    profoundVis_att_nonbrand_visibilityScore_ly,
+    profoundVis_att_nonbrand_visibilityScore_wow_pct,
+    profoundVis_att_nonbrand_visibilityScore_yoy_pct,
 
     profoundVis_att_nonbrand_executions,
     profoundVis_att_nonbrand_executions_wow,
@@ -562,24 +562,24 @@ SELECT
     profoundVis_att_nonbrand_executions_wow_pct,
     profoundVis_att_nonbrand_executions_yoy_pct,
 
-    profoundVis_att_nonbrand_mentions_count,
-    profoundVis_att_nonbrand_mentions_count_wow,
-    profoundVis_att_nonbrand_mentions_count_ly,
-    profoundVis_att_nonbrand_mentions_count_wow_pct,
-    profoundVis_att_nonbrand_mentions_count_yoy_pct,
+    profoundVis_att_nonbrand_mentionsCount,
+    profoundVis_att_nonbrand_mentionsCount_wow,
+    profoundVis_att_nonbrand_mentionsCount_ly,
+    profoundVis_att_nonbrand_mentionsCount_wow_pct,
+    profoundVis_att_nonbrand_mentionsCount_yoy_pct,
 
-    profoundVis_att_nonbrand_share_of_voice,
-    profoundVis_att_nonbrand_share_of_voice_wow,
-    profoundVis_att_nonbrand_share_of_voice_ly,
-    profoundVis_att_nonbrand_share_of_voice_wow_pct,
-    profoundVis_att_nonbrand_share_of_voice_yoy_pct,
+    profoundVis_att_nonbrand_shareOfVoice,
+    profoundVis_att_nonbrand_shareOfVoice_wow,
+    profoundVis_att_nonbrand_shareOfVoice_ly,
+    profoundVis_att_nonbrand_shareOfVoice_wow_pct,
+    profoundVis_att_nonbrand_shareOfVoice_yoy_pct,
 
     -- ---- AT&T CIT ----
-    profoundCit_att_nonbrand_share_of_voice,
-    profoundCit_att_nonbrand_share_of_voice_wow,
-    profoundCit_att_nonbrand_share_of_voice_ly,
-    profoundCit_att_nonbrand_share_of_voice_wow_pct,
-    profoundCit_att_nonbrand_share_of_voice_yoy_pct
+    profoundCit_att_nonbrand_shareOfVoice,
+    profoundCit_att_nonbrand_shareOfVoice_wow,
+    profoundCit_att_nonbrand_shareOfVoice_ly,
+    profoundCit_att_nonbrand_shareOfVoice_wow_pct,
+    profoundCit_att_nonbrand_shareOfVoice_yoy_pct
 
 FROM with_max_date
 ;

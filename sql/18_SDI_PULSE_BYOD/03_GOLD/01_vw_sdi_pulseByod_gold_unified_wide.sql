@@ -12,7 +12,7 @@ PURPOSE:
 CHANGES:
   2026-06-04 — Profound CIT & VIS rename:
                VIS columns renamed: profound_{asset}_nonbrand_{metric} → profoundVis_{asset}_nonbrand_{metric}
-               CIT columns added: profoundCit_{asset}_nonbrand_share_of_voice and
+               CIT columns added: profoundCit_{asset}_nonbrand_shareOfVoice and
                wow/ly/wow_pct/yoy_pct variants (15 new columns total) from vw_sdi_pulseByod_silver_profound_weekly
 ================================================================================================= */
 
@@ -27,46 +27,46 @@ SELECT
     p.max_data_date AS profound_max_data_date,
 
     -- T-Mobile VIS
-    p.profoundVis_tmo_nonbrand_visibility_score, p.profoundVis_tmo_nonbrand_visibility_score_wow, p.profoundVis_tmo_nonbrand_visibility_score_ly, p.profoundVis_tmo_nonbrand_visibility_score_wow_pct, p.profoundVis_tmo_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_tmo_nonbrand_visibilityScore, p.profoundVis_tmo_nonbrand_visibilityScore_wow, p.profoundVis_tmo_nonbrand_visibilityScore_ly, p.profoundVis_tmo_nonbrand_visibilityScore_wow_pct, p.profoundVis_tmo_nonbrand_visibilityScore_yoy_pct,
     p.profoundVis_tmo_nonbrand_executions, p.profoundVis_tmo_nonbrand_executions_wow, p.profoundVis_tmo_nonbrand_executions_ly, p.profoundVis_tmo_nonbrand_executions_wow_pct, p.profoundVis_tmo_nonbrand_executions_yoy_pct,
-    p.profoundVis_tmo_nonbrand_mentions_count, p.profoundVis_tmo_nonbrand_mentions_count_wow, p.profoundVis_tmo_nonbrand_mentions_count_ly, p.profoundVis_tmo_nonbrand_mentions_count_wow_pct, p.profoundVis_tmo_nonbrand_mentions_count_yoy_pct,
-    p.profoundVis_tmo_nonbrand_share_of_voice, p.profoundVis_tmo_nonbrand_share_of_voice_wow, p.profoundVis_tmo_nonbrand_share_of_voice_ly, p.profoundVis_tmo_nonbrand_share_of_voice_wow_pct, p.profoundVis_tmo_nonbrand_share_of_voice_yoy_pct,
+    p.profoundVis_tmo_nonbrand_mentionsCount, p.profoundVis_tmo_nonbrand_mentionsCount_wow, p.profoundVis_tmo_nonbrand_mentionsCount_ly, p.profoundVis_tmo_nonbrand_mentionsCount_wow_pct, p.profoundVis_tmo_nonbrand_mentionsCount_yoy_pct,
+    p.profoundVis_tmo_nonbrand_shareOfVoice, p.profoundVis_tmo_nonbrand_shareOfVoice_wow, p.profoundVis_tmo_nonbrand_shareOfVoice_ly, p.profoundVis_tmo_nonbrand_shareOfVoice_wow_pct, p.profoundVis_tmo_nonbrand_shareOfVoice_yoy_pct,
 
     -- T-Mobile CIT
-    p.profoundCit_tmo_nonbrand_share_of_voice, p.profoundCit_tmo_nonbrand_share_of_voice_wow, p.profoundCit_tmo_nonbrand_share_of_voice_ly, p.profoundCit_tmo_nonbrand_share_of_voice_wow_pct, p.profoundCit_tmo_nonbrand_share_of_voice_yoy_pct,
+    p.profoundCit_tmo_nonbrand_shareOfVoice, p.profoundCit_tmo_nonbrand_shareOfVoice_wow, p.profoundCit_tmo_nonbrand_shareOfVoice_ly, p.profoundCit_tmo_nonbrand_shareOfVoice_wow_pct, p.profoundCit_tmo_nonbrand_shareOfVoice_yoy_pct,
 
     -- Verizon VIS
-    p.profoundVis_verizon_nonbrand_visibility_score, p.profoundVis_verizon_nonbrand_visibility_score_wow, p.profoundVis_verizon_nonbrand_visibility_score_ly, p.profoundVis_verizon_nonbrand_visibility_score_wow_pct, p.profoundVis_verizon_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_verizon_nonbrand_visibilityScore, p.profoundVis_verizon_nonbrand_visibilityScore_wow, p.profoundVis_verizon_nonbrand_visibilityScore_ly, p.profoundVis_verizon_nonbrand_visibilityScore_wow_pct, p.profoundVis_verizon_nonbrand_visibilityScore_yoy_pct,
     p.profoundVis_verizon_nonbrand_executions, p.profoundVis_verizon_nonbrand_executions_wow, p.profoundVis_verizon_nonbrand_executions_ly, p.profoundVis_verizon_nonbrand_executions_wow_pct, p.profoundVis_verizon_nonbrand_executions_yoy_pct,
-    p.profoundVis_verizon_nonbrand_mentions_count, p.profoundVis_verizon_nonbrand_mentions_count_wow, p.profoundVis_verizon_nonbrand_mentions_count_ly, p.profoundVis_verizon_nonbrand_mentions_count_wow_pct, p.profoundVis_verizon_nonbrand_mentions_count_yoy_pct,
-    p.profoundVis_verizon_nonbrand_share_of_voice, p.profoundVis_verizon_nonbrand_share_of_voice_wow, p.profoundVis_verizon_nonbrand_share_of_voice_ly, p.profoundVis_verizon_nonbrand_share_of_voice_wow_pct, p.profoundVis_verizon_nonbrand_share_of_voice_yoy_pct,
+    p.profoundVis_verizon_nonbrand_mentionsCount, p.profoundVis_verizon_nonbrand_mentionsCount_wow, p.profoundVis_verizon_nonbrand_mentionsCount_ly, p.profoundVis_verizon_nonbrand_mentionsCount_wow_pct, p.profoundVis_verizon_nonbrand_mentionsCount_yoy_pct,
+    p.profoundVis_verizon_nonbrand_shareOfVoice, p.profoundVis_verizon_nonbrand_shareOfVoice_wow, p.profoundVis_verizon_nonbrand_shareOfVoice_ly, p.profoundVis_verizon_nonbrand_shareOfVoice_wow_pct, p.profoundVis_verizon_nonbrand_shareOfVoice_yoy_pct,
 
     -- Verizon CIT
-    p.profoundCit_verizon_nonbrand_share_of_voice, p.profoundCit_verizon_nonbrand_share_of_voice_wow, p.profoundCit_verizon_nonbrand_share_of_voice_ly, p.profoundCit_verizon_nonbrand_share_of_voice_wow_pct, p.profoundCit_verizon_nonbrand_share_of_voice_yoy_pct,
+    p.profoundCit_verizon_nonbrand_shareOfVoice, p.profoundCit_verizon_nonbrand_shareOfVoice_wow, p.profoundCit_verizon_nonbrand_shareOfVoice_ly, p.profoundCit_verizon_nonbrand_shareOfVoice_wow_pct, p.profoundCit_verizon_nonbrand_shareOfVoice_yoy_pct,
 
     -- AT&T VIS
-    p.profoundVis_att_nonbrand_visibility_score, p.profoundVis_att_nonbrand_visibility_score_wow, p.profoundVis_att_nonbrand_visibility_score_ly, p.profoundVis_att_nonbrand_visibility_score_wow_pct, p.profoundVis_att_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_att_nonbrand_visibilityScore, p.profoundVis_att_nonbrand_visibilityScore_wow, p.profoundVis_att_nonbrand_visibilityScore_ly, p.profoundVis_att_nonbrand_visibilityScore_wow_pct, p.profoundVis_att_nonbrand_visibilityScore_yoy_pct,
     p.profoundVis_att_nonbrand_executions, p.profoundVis_att_nonbrand_executions_wow, p.profoundVis_att_nonbrand_executions_ly, p.profoundVis_att_nonbrand_executions_wow_pct, p.profoundVis_att_nonbrand_executions_yoy_pct,
-    p.profoundVis_att_nonbrand_mentions_count, p.profoundVis_att_nonbrand_mentions_count_wow, p.profoundVis_att_nonbrand_mentions_count_ly, p.profoundVis_att_nonbrand_mentions_count_wow_pct, p.profoundVis_att_nonbrand_mentions_count_yoy_pct,
-    p.profoundVis_att_nonbrand_share_of_voice, p.profoundVis_att_nonbrand_share_of_voice_wow, p.profoundVis_att_nonbrand_share_of_voice_ly, p.profoundVis_att_nonbrand_share_of_voice_wow_pct, p.profoundVis_att_nonbrand_share_of_voice_yoy_pct,
+    p.profoundVis_att_nonbrand_mentionsCount, p.profoundVis_att_nonbrand_mentionsCount_wow, p.profoundVis_att_nonbrand_mentionsCount_ly, p.profoundVis_att_nonbrand_mentionsCount_wow_pct, p.profoundVis_att_nonbrand_mentionsCount_yoy_pct,
+    p.profoundVis_att_nonbrand_shareOfVoice, p.profoundVis_att_nonbrand_shareOfVoice_wow, p.profoundVis_att_nonbrand_shareOfVoice_ly, p.profoundVis_att_nonbrand_shareOfVoice_wow_pct, p.profoundVis_att_nonbrand_shareOfVoice_yoy_pct,
 
     -- AT&T CIT
-    p.profoundCit_att_nonbrand_share_of_voice, p.profoundCit_att_nonbrand_share_of_voice_wow, p.profoundCit_att_nonbrand_share_of_voice_ly, p.profoundCit_att_nonbrand_share_of_voice_wow_pct, p.profoundCit_att_nonbrand_share_of_voice_yoy_pct,
+    p.profoundCit_att_nonbrand_shareOfVoice, p.profoundCit_att_nonbrand_shareOfVoice_wow, p.profoundCit_att_nonbrand_shareOfVoice_ly, p.profoundCit_att_nonbrand_shareOfVoice_wow_pct, p.profoundCit_att_nonbrand_shareOfVoice_yoy_pct,
 
     -- ================================================================ GOFISH
     g.max_data_date AS gofish_max_data_date,
-    g.gofish_tmo_brand_visibility_score, g.gofish_tmo_brand_visibility_score_wow, g.gofish_tmo_brand_visibility_score_ly, g.gofish_tmo_brand_visibility_score_wow_pct, g.gofish_tmo_brand_visibility_score_yoy_pct,
+    g.gofish_tmo_brand_visibilityScore, g.gofish_tmo_brand_visibilityScore_wow, g.gofish_tmo_brand_visibilityScore_ly, g.gofish_tmo_brand_visibilityScore_wow_pct, g.gofish_tmo_brand_visibilityScore_yoy_pct,
     g.gofish_tmo_brand_executions, g.gofish_tmo_brand_executions_wow, g.gofish_tmo_brand_executions_ly, g.gofish_tmo_brand_executions_wow_pct, g.gofish_tmo_brand_executions_yoy_pct,
-    g.gofish_tmo_brand_mentions_count, g.gofish_tmo_brand_mentions_count_wow, g.gofish_tmo_brand_mentions_count_ly, g.gofish_tmo_brand_mentions_count_wow_pct, g.gofish_tmo_brand_mentions_count_yoy_pct,
-    g.gofish_tmo_brand_share_of_voice, g.gofish_tmo_brand_share_of_voice_wow, g.gofish_tmo_brand_share_of_voice_ly, g.gofish_tmo_brand_share_of_voice_wow_pct, g.gofish_tmo_brand_share_of_voice_yoy_pct,
-    g.gofish_verizon_brand_visibility_score, g.gofish_verizon_brand_visibility_score_wow, g.gofish_verizon_brand_visibility_score_ly, g.gofish_verizon_brand_visibility_score_wow_pct, g.gofish_verizon_brand_visibility_score_yoy_pct,
+    g.gofish_tmo_brand_mentionsCount, g.gofish_tmo_brand_mentionsCount_wow, g.gofish_tmo_brand_mentionsCount_ly, g.gofish_tmo_brand_mentionsCount_wow_pct, g.gofish_tmo_brand_mentionsCount_yoy_pct,
+    g.gofish_tmo_brand_shareOfVoice, g.gofish_tmo_brand_shareOfVoice_wow, g.gofish_tmo_brand_shareOfVoice_ly, g.gofish_tmo_brand_shareOfVoice_wow_pct, g.gofish_tmo_brand_shareOfVoice_yoy_pct,
+    g.gofish_verizon_brand_visibilityScore, g.gofish_verizon_brand_visibilityScore_wow, g.gofish_verizon_brand_visibilityScore_ly, g.gofish_verizon_brand_visibilityScore_wow_pct, g.gofish_verizon_brand_visibilityScore_yoy_pct,
     g.gofish_verizon_brand_executions, g.gofish_verizon_brand_executions_wow, g.gofish_verizon_brand_executions_ly, g.gofish_verizon_brand_executions_wow_pct, g.gofish_verizon_brand_executions_yoy_pct,
-    g.gofish_verizon_brand_mentions_count, g.gofish_verizon_brand_mentions_count_wow, g.gofish_verizon_brand_mentions_count_ly, g.gofish_verizon_brand_mentions_count_wow_pct, g.gofish_verizon_brand_mentions_count_yoy_pct,
-    g.gofish_verizon_brand_share_of_voice, g.gofish_verizon_brand_share_of_voice_wow, g.gofish_verizon_brand_share_of_voice_ly, g.gofish_verizon_brand_share_of_voice_wow_pct, g.gofish_verizon_brand_share_of_voice_yoy_pct,
-    g.gofish_att_brand_visibility_score, g.gofish_att_brand_visibility_score_wow, g.gofish_att_brand_visibility_score_ly, g.gofish_att_brand_visibility_score_wow_pct, g.gofish_att_brand_visibility_score_yoy_pct,
+    g.gofish_verizon_brand_mentionsCount, g.gofish_verizon_brand_mentionsCount_wow, g.gofish_verizon_brand_mentionsCount_ly, g.gofish_verizon_brand_mentionsCount_wow_pct, g.gofish_verizon_brand_mentionsCount_yoy_pct,
+    g.gofish_verizon_brand_shareOfVoice, g.gofish_verizon_brand_shareOfVoice_wow, g.gofish_verizon_brand_shareOfVoice_ly, g.gofish_verizon_brand_shareOfVoice_wow_pct, g.gofish_verizon_brand_shareOfVoice_yoy_pct,
+    g.gofish_att_brand_visibilityScore, g.gofish_att_brand_visibilityScore_wow, g.gofish_att_brand_visibilityScore_ly, g.gofish_att_brand_visibilityScore_wow_pct, g.gofish_att_brand_visibilityScore_yoy_pct,
     g.gofish_att_brand_executions, g.gofish_att_brand_executions_wow, g.gofish_att_brand_executions_ly, g.gofish_att_brand_executions_wow_pct, g.gofish_att_brand_executions_yoy_pct,
-    g.gofish_att_brand_mentions_count, g.gofish_att_brand_mentions_count_wow, g.gofish_att_brand_mentions_count_ly, g.gofish_att_brand_mentions_count_wow_pct, g.gofish_att_brand_mentions_count_yoy_pct,
-    g.gofish_att_brand_share_of_voice, g.gofish_att_brand_share_of_voice_wow, g.gofish_att_brand_share_of_voice_ly, g.gofish_att_brand_share_of_voice_wow_pct, g.gofish_att_brand_share_of_voice_yoy_pct,
+    g.gofish_att_brand_mentionsCount, g.gofish_att_brand_mentionsCount_wow, g.gofish_att_brand_mentionsCount_ly, g.gofish_att_brand_mentionsCount_wow_pct, g.gofish_att_brand_mentionsCount_yoy_pct,
+    g.gofish_att_brand_shareOfVoice, g.gofish_att_brand_shareOfVoice_wow, g.gofish_att_brand_shareOfVoice_ly, g.gofish_att_brand_shareOfVoice_wow_pct, g.gofish_att_brand_shareOfVoice_yoy_pct,
 
     -- ================================================================ SA360
     sa.max_data_date AS sa360_max_data_date,
