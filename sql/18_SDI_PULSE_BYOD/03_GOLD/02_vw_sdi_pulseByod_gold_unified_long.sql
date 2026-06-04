@@ -18,6 +18,10 @@ CHANGES:
                     cvrByod, cvrSite (allChannels)
                new: pctUvnbByodOfTotal (per channel)
              — Sort fixed: dimension_name ASC (was dimension_value ASC)
+  2026-06-04 — Profound CIT & VIS rename:
+               VIS columns renamed: profound_{asset}_nonbrand_{metric} → profoundVis_{asset}_nonbrand_{metric}
+               CIT columns added: profoundCit_{asset}_nonbrand_share_of_voice and
+               wow/ly/wow_pct/yoy_pct variants to profound_long UNPIVOT (+3 rows/week in Profound section)
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_long`
@@ -26,7 +30,7 @@ AS
 WITH
 
 -- -----------------------------------------------------------------------
--- PROFOUND: 12 rows/week (4 metrics × 3 assets)
+-- PROFOUND: 15 rows/week (4 profound_vis metrics × 3 assets + 1 profound_cit metric × 3 assets)
 -- -----------------------------------------------------------------------
 profound_long AS (
     SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
@@ -34,18 +38,23 @@ profound_long AS (
     UNPIVOT (
         (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
         FOR metric_name IN (
-            (profound_tmo_nonbrand_visibility_score,    profound_tmo_nonbrand_visibility_score_wow,    profound_tmo_nonbrand_visibility_score_ly,    profound_tmo_nonbrand_visibility_score_wow_pct,    profound_tmo_nonbrand_visibility_score_yoy_pct)    AS 'profound_tmo_nonbrand_visibility_score',
-            (profound_tmo_nonbrand_executions,          profound_tmo_nonbrand_executions_wow,          profound_tmo_nonbrand_executions_ly,          profound_tmo_nonbrand_executions_wow_pct,          profound_tmo_nonbrand_executions_yoy_pct)          AS 'profound_tmo_nonbrand_executions',
-            (profound_tmo_nonbrand_mentions_count,      profound_tmo_nonbrand_mentions_count_wow,      profound_tmo_nonbrand_mentions_count_ly,      profound_tmo_nonbrand_mentions_count_wow_pct,      profound_tmo_nonbrand_mentions_count_yoy_pct)      AS 'profound_tmo_nonbrand_mentions_count',
-            (profound_tmo_nonbrand_share_of_voice,      profound_tmo_nonbrand_share_of_voice_wow,      profound_tmo_nonbrand_share_of_voice_ly,      profound_tmo_nonbrand_share_of_voice_wow_pct,      profound_tmo_nonbrand_share_of_voice_yoy_pct)      AS 'profound_tmo_nonbrand_share_of_voice',
-            (profound_verizon_nonbrand_visibility_score,profound_verizon_nonbrand_visibility_score_wow,profound_verizon_nonbrand_visibility_score_ly,profound_verizon_nonbrand_visibility_score_wow_pct,profound_verizon_nonbrand_visibility_score_yoy_pct) AS 'profound_verizon_nonbrand_visibility_score',
-            (profound_verizon_nonbrand_executions,      profound_verizon_nonbrand_executions_wow,      profound_verizon_nonbrand_executions_ly,      profound_verizon_nonbrand_executions_wow_pct,      profound_verizon_nonbrand_executions_yoy_pct)      AS 'profound_verizon_nonbrand_executions',
-            (profound_verizon_nonbrand_mentions_count,  profound_verizon_nonbrand_mentions_count_wow,  profound_verizon_nonbrand_mentions_count_ly,  profound_verizon_nonbrand_mentions_count_wow_pct,  profound_verizon_nonbrand_mentions_count_yoy_pct)  AS 'profound_verizon_nonbrand_mentions_count',
-            (profound_verizon_nonbrand_share_of_voice,  profound_verizon_nonbrand_share_of_voice_wow,  profound_verizon_nonbrand_share_of_voice_ly,  profound_verizon_nonbrand_share_of_voice_wow_pct,  profound_verizon_nonbrand_share_of_voice_yoy_pct)  AS 'profound_verizon_nonbrand_share_of_voice',
-            (profound_att_nonbrand_visibility_score,    profound_att_nonbrand_visibility_score_wow,    profound_att_nonbrand_visibility_score_ly,    profound_att_nonbrand_visibility_score_wow_pct,    profound_att_nonbrand_visibility_score_yoy_pct)    AS 'profound_att_nonbrand_visibility_score',
-            (profound_att_nonbrand_executions,          profound_att_nonbrand_executions_wow,          profound_att_nonbrand_executions_ly,          profound_att_nonbrand_executions_wow_pct,          profound_att_nonbrand_executions_yoy_pct)          AS 'profound_att_nonbrand_executions',
-            (profound_att_nonbrand_mentions_count,      profound_att_nonbrand_mentions_count_wow,      profound_att_nonbrand_mentions_count_ly,      profound_att_nonbrand_mentions_count_wow_pct,      profound_att_nonbrand_mentions_count_yoy_pct)      AS 'profound_att_nonbrand_mentions_count',
-            (profound_att_nonbrand_share_of_voice,      profound_att_nonbrand_share_of_voice_wow,      profound_att_nonbrand_share_of_voice_ly,      profound_att_nonbrand_share_of_voice_wow_pct,      profound_att_nonbrand_share_of_voice_yoy_pct)      AS 'profound_att_nonbrand_share_of_voice'
+            -- ---- VIS metrics ----
+            (profoundVis_tmo_nonbrand_visibility_score,    profoundVis_tmo_nonbrand_visibility_score_wow,    profoundVis_tmo_nonbrand_visibility_score_ly,    profoundVis_tmo_nonbrand_visibility_score_wow_pct,    profoundVis_tmo_nonbrand_visibility_score_yoy_pct)    AS 'profoundVis_tmo_nonbrand_visibility_score',
+            (profoundVis_tmo_nonbrand_executions,          profoundVis_tmo_nonbrand_executions_wow,          profoundVis_tmo_nonbrand_executions_ly,          profoundVis_tmo_nonbrand_executions_wow_pct,          profoundVis_tmo_nonbrand_executions_yoy_pct)          AS 'profoundVis_tmo_nonbrand_executions',
+            (profoundVis_tmo_nonbrand_mentions_count,      profoundVis_tmo_nonbrand_mentions_count_wow,      profoundVis_tmo_nonbrand_mentions_count_ly,      profoundVis_tmo_nonbrand_mentions_count_wow_pct,      profoundVis_tmo_nonbrand_mentions_count_yoy_pct)      AS 'profoundVis_tmo_nonbrand_mentions_count',
+            (profoundVis_tmo_nonbrand_share_of_voice,      profoundVis_tmo_nonbrand_share_of_voice_wow,      profoundVis_tmo_nonbrand_share_of_voice_ly,      profoundVis_tmo_nonbrand_share_of_voice_wow_pct,      profoundVis_tmo_nonbrand_share_of_voice_yoy_pct)      AS 'profoundVis_tmo_nonbrand_share_of_voice',
+            (profoundVis_verizon_nonbrand_visibility_score,profoundVis_verizon_nonbrand_visibility_score_wow,profoundVis_verizon_nonbrand_visibility_score_ly,profoundVis_verizon_nonbrand_visibility_score_wow_pct,profoundVis_verizon_nonbrand_visibility_score_yoy_pct) AS 'profoundVis_verizon_nonbrand_visibility_score',
+            (profoundVis_verizon_nonbrand_executions,      profoundVis_verizon_nonbrand_executions_wow,      profoundVis_verizon_nonbrand_executions_ly,      profoundVis_verizon_nonbrand_executions_wow_pct,      profoundVis_verizon_nonbrand_executions_yoy_pct)      AS 'profoundVis_verizon_nonbrand_executions',
+            (profoundVis_verizon_nonbrand_mentions_count,  profoundVis_verizon_nonbrand_mentions_count_wow,  profoundVis_verizon_nonbrand_mentions_count_ly,  profoundVis_verizon_nonbrand_mentions_count_wow_pct,  profoundVis_verizon_nonbrand_mentions_count_yoy_pct)  AS 'profoundVis_verizon_nonbrand_mentions_count',
+            (profoundVis_verizon_nonbrand_share_of_voice,  profoundVis_verizon_nonbrand_share_of_voice_wow,  profoundVis_verizon_nonbrand_share_of_voice_ly,  profoundVis_verizon_nonbrand_share_of_voice_wow_pct,  profoundVis_verizon_nonbrand_share_of_voice_yoy_pct)  AS 'profoundVis_verizon_nonbrand_share_of_voice',
+            (profoundVis_att_nonbrand_visibility_score,    profoundVis_att_nonbrand_visibility_score_wow,    profoundVis_att_nonbrand_visibility_score_ly,    profoundVis_att_nonbrand_visibility_score_wow_pct,    profoundVis_att_nonbrand_visibility_score_yoy_pct)    AS 'profoundVis_att_nonbrand_visibility_score',
+            (profoundVis_att_nonbrand_executions,          profoundVis_att_nonbrand_executions_wow,          profoundVis_att_nonbrand_executions_ly,          profoundVis_att_nonbrand_executions_wow_pct,          profoundVis_att_nonbrand_executions_yoy_pct)          AS 'profoundVis_att_nonbrand_executions',
+            (profoundVis_att_nonbrand_mentions_count,      profoundVis_att_nonbrand_mentions_count_wow,      profoundVis_att_nonbrand_mentions_count_ly,      profoundVis_att_nonbrand_mentions_count_wow_pct,      profoundVis_att_nonbrand_mentions_count_yoy_pct)      AS 'profoundVis_att_nonbrand_mentions_count',
+            (profoundVis_att_nonbrand_share_of_voice,      profoundVis_att_nonbrand_share_of_voice_wow,      profoundVis_att_nonbrand_share_of_voice_ly,      profoundVis_att_nonbrand_share_of_voice_wow_pct,      profoundVis_att_nonbrand_share_of_voice_yoy_pct)      AS 'profoundVis_att_nonbrand_share_of_voice',
+            -- ---- CIT metrics ----
+            (profoundCit_tmo_nonbrand_share_of_voice,     profoundCit_tmo_nonbrand_share_of_voice_wow,     profoundCit_tmo_nonbrand_share_of_voice_ly,     profoundCit_tmo_nonbrand_share_of_voice_wow_pct,     profoundCit_tmo_nonbrand_share_of_voice_yoy_pct)     AS 'profoundCit_tmo_nonbrand_share_of_voice',
+            (profoundCit_verizon_nonbrand_share_of_voice, profoundCit_verizon_nonbrand_share_of_voice_wow, profoundCit_verizon_nonbrand_share_of_voice_ly, profoundCit_verizon_nonbrand_share_of_voice_wow_pct, profoundCit_verizon_nonbrand_share_of_voice_yoy_pct) AS 'profoundCit_verizon_nonbrand_share_of_voice',
+            (profoundCit_att_nonbrand_share_of_voice,     profoundCit_att_nonbrand_share_of_voice_wow,     profoundCit_att_nonbrand_share_of_voice_ly,     profoundCit_att_nonbrand_share_of_voice_wow_pct,     profoundCit_att_nonbrand_share_of_voice_yoy_pct)     AS 'profoundCit_att_nonbrand_share_of_voice'
         )
     )
 ),
@@ -306,5 +315,5 @@ ORDER BY
     data_source      ASC,
     channel          ASC,
     metric_name      ASC,
-    dimension_name   ASC   -- fixed: was dimension_value, now sorts keywords by rank
+    dimension_name   ASC
 ;

@@ -8,6 +8,12 @@ PURPOSE:
   Gold Wide view. One row per week, all metrics from all sources as columns.
   Used for ad-hoc analysis and Excel exports.
   Gold Long (used by dashboard) reads Silver directly.
+
+CHANGES:
+  2026-06-04 — Profound CIT & VIS rename:
+               VIS columns renamed: profound_{asset}_nonbrand_{metric} → profoundVis_{asset}_nonbrand_{metric}
+               CIT columns added: profoundCit_{asset}_nonbrand_share_of_voice and
+               wow/ly/wow_pct/yoy_pct variants (15 new columns total) from vw_sdi_pulseByod_silver_profound_weekly
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_wide`
@@ -19,18 +25,33 @@ SELECT
 
     -- ================================================================ PROFOUND
     p.max_data_date AS profound_max_data_date,
-    p.profound_tmo_nonbrand_visibility_score, p.profound_tmo_nonbrand_visibility_score_wow, p.profound_tmo_nonbrand_visibility_score_ly, p.profound_tmo_nonbrand_visibility_score_wow_pct, p.profound_tmo_nonbrand_visibility_score_yoy_pct,
-    p.profound_tmo_nonbrand_executions, p.profound_tmo_nonbrand_executions_wow, p.profound_tmo_nonbrand_executions_ly, p.profound_tmo_nonbrand_executions_wow_pct, p.profound_tmo_nonbrand_executions_yoy_pct,
-    p.profound_tmo_nonbrand_mentions_count, p.profound_tmo_nonbrand_mentions_count_wow, p.profound_tmo_nonbrand_mentions_count_ly, p.profound_tmo_nonbrand_mentions_count_wow_pct, p.profound_tmo_nonbrand_mentions_count_yoy_pct,
-    p.profound_tmo_nonbrand_share_of_voice, p.profound_tmo_nonbrand_share_of_voice_wow, p.profound_tmo_nonbrand_share_of_voice_ly, p.profound_tmo_nonbrand_share_of_voice_wow_pct, p.profound_tmo_nonbrand_share_of_voice_yoy_pct,
-    p.profound_verizon_nonbrand_visibility_score, p.profound_verizon_nonbrand_visibility_score_wow, p.profound_verizon_nonbrand_visibility_score_ly, p.profound_verizon_nonbrand_visibility_score_wow_pct, p.profound_verizon_nonbrand_visibility_score_yoy_pct,
-    p.profound_verizon_nonbrand_executions, p.profound_verizon_nonbrand_executions_wow, p.profound_verizon_nonbrand_executions_ly, p.profound_verizon_nonbrand_executions_wow_pct, p.profound_verizon_nonbrand_executions_yoy_pct,
-    p.profound_verizon_nonbrand_mentions_count, p.profound_verizon_nonbrand_mentions_count_wow, p.profound_verizon_nonbrand_mentions_count_ly, p.profound_verizon_nonbrand_mentions_count_wow_pct, p.profound_verizon_nonbrand_mentions_count_yoy_pct,
-    p.profound_verizon_nonbrand_share_of_voice, p.profound_verizon_nonbrand_share_of_voice_wow, p.profound_verizon_nonbrand_share_of_voice_ly, p.profound_verizon_nonbrand_share_of_voice_wow_pct, p.profound_verizon_nonbrand_share_of_voice_yoy_pct,
-    p.profound_att_nonbrand_visibility_score, p.profound_att_nonbrand_visibility_score_wow, p.profound_att_nonbrand_visibility_score_ly, p.profound_att_nonbrand_visibility_score_wow_pct, p.profound_att_nonbrand_visibility_score_yoy_pct,
-    p.profound_att_nonbrand_executions, p.profound_att_nonbrand_executions_wow, p.profound_att_nonbrand_executions_ly, p.profound_att_nonbrand_executions_wow_pct, p.profound_att_nonbrand_executions_yoy_pct,
-    p.profound_att_nonbrand_mentions_count, p.profound_att_nonbrand_mentions_count_wow, p.profound_att_nonbrand_mentions_count_ly, p.profound_att_nonbrand_mentions_count_wow_pct, p.profound_att_nonbrand_mentions_count_yoy_pct,
-    p.profound_att_nonbrand_share_of_voice, p.profound_att_nonbrand_share_of_voice_wow, p.profound_att_nonbrand_share_of_voice_ly, p.profound_att_nonbrand_share_of_voice_wow_pct, p.profound_att_nonbrand_share_of_voice_yoy_pct,
+
+    -- T-Mobile VIS
+    p.profoundVis_tmo_nonbrand_visibility_score, p.profoundVis_tmo_nonbrand_visibility_score_wow, p.profoundVis_tmo_nonbrand_visibility_score_ly, p.profoundVis_tmo_nonbrand_visibility_score_wow_pct, p.profoundVis_tmo_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_tmo_nonbrand_executions, p.profoundVis_tmo_nonbrand_executions_wow, p.profoundVis_tmo_nonbrand_executions_ly, p.profoundVis_tmo_nonbrand_executions_wow_pct, p.profoundVis_tmo_nonbrand_executions_yoy_pct,
+    p.profoundVis_tmo_nonbrand_mentions_count, p.profoundVis_tmo_nonbrand_mentions_count_wow, p.profoundVis_tmo_nonbrand_mentions_count_ly, p.profoundVis_tmo_nonbrand_mentions_count_wow_pct, p.profoundVis_tmo_nonbrand_mentions_count_yoy_pct,
+    p.profoundVis_tmo_nonbrand_share_of_voice, p.profoundVis_tmo_nonbrand_share_of_voice_wow, p.profoundVis_tmo_nonbrand_share_of_voice_ly, p.profoundVis_tmo_nonbrand_share_of_voice_wow_pct, p.profoundVis_tmo_nonbrand_share_of_voice_yoy_pct,
+
+    -- T-Mobile CIT
+    p.profoundCit_tmo_nonbrand_share_of_voice, p.profoundCit_tmo_nonbrand_share_of_voice_wow, p.profoundCit_tmo_nonbrand_share_of_voice_ly, p.profoundCit_tmo_nonbrand_share_of_voice_wow_pct, p.profoundCit_tmo_nonbrand_share_of_voice_yoy_pct,
+
+    -- Verizon VIS
+    p.profoundVis_verizon_nonbrand_visibility_score, p.profoundVis_verizon_nonbrand_visibility_score_wow, p.profoundVis_verizon_nonbrand_visibility_score_ly, p.profoundVis_verizon_nonbrand_visibility_score_wow_pct, p.profoundVis_verizon_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_verizon_nonbrand_executions, p.profoundVis_verizon_nonbrand_executions_wow, p.profoundVis_verizon_nonbrand_executions_ly, p.profoundVis_verizon_nonbrand_executions_wow_pct, p.profoundVis_verizon_nonbrand_executions_yoy_pct,
+    p.profoundVis_verizon_nonbrand_mentions_count, p.profoundVis_verizon_nonbrand_mentions_count_wow, p.profoundVis_verizon_nonbrand_mentions_count_ly, p.profoundVis_verizon_nonbrand_mentions_count_wow_pct, p.profoundVis_verizon_nonbrand_mentions_count_yoy_pct,
+    p.profoundVis_verizon_nonbrand_share_of_voice, p.profoundVis_verizon_nonbrand_share_of_voice_wow, p.profoundVis_verizon_nonbrand_share_of_voice_ly, p.profoundVis_verizon_nonbrand_share_of_voice_wow_pct, p.profoundVis_verizon_nonbrand_share_of_voice_yoy_pct,
+
+    -- Verizon CIT
+    p.profoundCit_verizon_nonbrand_share_of_voice, p.profoundCit_verizon_nonbrand_share_of_voice_wow, p.profoundCit_verizon_nonbrand_share_of_voice_ly, p.profoundCit_verizon_nonbrand_share_of_voice_wow_pct, p.profoundCit_verizon_nonbrand_share_of_voice_yoy_pct,
+
+    -- AT&T VIS
+    p.profoundVis_att_nonbrand_visibility_score, p.profoundVis_att_nonbrand_visibility_score_wow, p.profoundVis_att_nonbrand_visibility_score_ly, p.profoundVis_att_nonbrand_visibility_score_wow_pct, p.profoundVis_att_nonbrand_visibility_score_yoy_pct,
+    p.profoundVis_att_nonbrand_executions, p.profoundVis_att_nonbrand_executions_wow, p.profoundVis_att_nonbrand_executions_ly, p.profoundVis_att_nonbrand_executions_wow_pct, p.profoundVis_att_nonbrand_executions_yoy_pct,
+    p.profoundVis_att_nonbrand_mentions_count, p.profoundVis_att_nonbrand_mentions_count_wow, p.profoundVis_att_nonbrand_mentions_count_ly, p.profoundVis_att_nonbrand_mentions_count_wow_pct, p.profoundVis_att_nonbrand_mentions_count_yoy_pct,
+    p.profoundVis_att_nonbrand_share_of_voice, p.profoundVis_att_nonbrand_share_of_voice_wow, p.profoundVis_att_nonbrand_share_of_voice_ly, p.profoundVis_att_nonbrand_share_of_voice_wow_pct, p.profoundVis_att_nonbrand_share_of_voice_yoy_pct,
+
+    -- AT&T CIT
+    p.profoundCit_att_nonbrand_share_of_voice, p.profoundCit_att_nonbrand_share_of_voice_wow, p.profoundCit_att_nonbrand_share_of_voice_ly, p.profoundCit_att_nonbrand_share_of_voice_wow_pct, p.profoundCit_att_nonbrand_share_of_voice_yoy_pct,
 
     -- ================================================================ GOFISH
     g.max_data_date AS gofish_max_data_date,
