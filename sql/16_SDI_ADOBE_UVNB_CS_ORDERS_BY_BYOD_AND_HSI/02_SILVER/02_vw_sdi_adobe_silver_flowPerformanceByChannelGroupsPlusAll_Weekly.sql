@@ -5,8 +5,8 @@ DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_adobe_silver_flowPerformanceByChannelGroupsPlusAll_Weekly
 
 SOURCES:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtcGroups_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtcGroups_Weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByAll_Weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly
 
@@ -32,9 +32,6 @@ BUSINESS RULES:
   - OrdersAssistedTotal is Postpaid + HSI + BYOD assisted. No COALESCE.
   - OrdersTotal is OrdersUnassistedTotal + OrdersAssistedTotal.
   - No COALESCE is used anywhere. If any component is NULL, the derived total remains NULL.
-
-COLUMN CHANGES vs PREVIOUS VERSION:
-  - UvnbFlowTotal  ADDED (new)
 
 OUTPUT COLUMNS:
   - WeekSunSat
@@ -86,7 +83,7 @@ WITH FlowRows AS (
     OrdersAssistedPostpaid,
     OrdersAssistedHsi,
     OrdersAssistedByod
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly`
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly`
 
   UNION ALL
 
@@ -108,7 +105,7 @@ WITH FlowRows AS (
     OrdersAssistedPostpaid,
     OrdersAssistedHsi,
     OrdersAssistedByod
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtcGroups_Weekly`
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtcGroups_Weekly`
 ),
 
 TotalUvnbRows AS (
@@ -138,17 +135,17 @@ SELECT
   -- Total UVNB (from Bronze 04/06 — unchanged)
   t.UvnbTotalAdobe,
 
-  -- UVNB flows (unchanged)
+  -- UVNB flows
   f.UvnbPostpaid,
   f.UvnbHsi,
   f.UvnbByod,
   f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod                                                     AS UvnbTrackedFlowSum,
 
-  -- UVNB Flow Total (new)
+  -- UVNB Flow Total
   -- Sourced directly from Adobe flow total table — not computed from LOB flows.
   f.UvnbFlowTotal,
 
-  -- Cartstart (unchanged)
+  -- Cartstart
   f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTotal,
   f.CartstartPostpaid,
   f.CartstartHsi,
@@ -173,6 +170,6 @@ SELECT
 
 FROM FlowRows f
 LEFT JOIN TotalUvnbRows t
-  ON f.WeekSunSat      = t.WeekSunSat
-  AND f.ReportingGrain = t.ReportingGrain
-  AND f.ChannelGroup   = t.ChannelGroup;
+  ON  f.WeekSunSat      = t.WeekSunSat
+  AND f.ReportingGrain  = t.ReportingGrain
+  AND f.ChannelGroup    = t.ChannelGroup;

@@ -1,8 +1,10 @@
 /* =================================================================================================
-FILE: 02_vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly.sql
+FILE: 02_vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly
+VIEW: vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly
+
+RENAMED FROM: vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly
 
 SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_ltc_uvnb_postpaid_flow_visitors_weekly_tmo
@@ -16,13 +18,13 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_ltc_byod_order_weekly_tmo
 
 DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly
 
 PURPOSE:
   Canonical Bronze weekly Adobe UVNB, Cartstart, and Orders source mart at LAST_TOUCH_CHANNEL granularity.
 
   Orders are split into:
-    - Unassisted (digital web unassisted orders) — renamed from original OrdersPostpaid/Hsi/Byod
+    - Unassisted (digital web unassisted orders)
     - Assisted — NULL PLACEHOLDERS at this grain pending ingestion of LTC-level assisted tables:
         sdi_raw_adobe_pp_uvnb_ltc_postpaid_order_assisted_weekly_tmo  (not yet available)
         sdi_raw_adobe_pp_uvnb_ltc_hsi_order_assisted_weekly_tmo       (not yet available)
@@ -46,9 +48,6 @@ BUSINESS RULES:
   - Missing metric values remain NULL.
   - MetricName / MetricValue are used internally only and are not exposed in final output.
 
-COLUMN CHANGES vs PREVIOUS VERSION:
-  - UvnbFlowTotal  ADDED as NULL placeholder
-
 KEY DEDUPE RULE:
   - Deduplicate each source table at weekly + LastTouchChannel grain using latest:
       File_Load_datetime DESC
@@ -57,7 +56,7 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly`
 AS
 
 WITH RawUnion AS (

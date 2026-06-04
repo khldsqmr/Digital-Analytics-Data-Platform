@@ -5,8 +5,8 @@ DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW: vw_sdi_adobe_silver_flowPerformanceByChannelPlusAll_Weekly
 
 SOURCES:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByAll_Weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByChannel_Weekly
 
@@ -34,9 +34,6 @@ BUSINESS RULES:
     At LTC grain: NULL placeholder until LTC assisted tables are ingested.
   - OrdersTotal is OrdersUnassistedTotal + OrdersAssistedTotal.
   - No COALESCE is used anywhere. If any component is NULL, the derived total remains NULL.
-
-COLUMN CHANGES vs PREVIOUS VERSION:
-  - UvnbFlowTotal  ADDED (new)
 
 OUTPUT COLUMNS:
   - WeekSunSat
@@ -88,7 +85,7 @@ WITH FlowRows AS (
     OrdersAssistedPostpaid,
     OrdersAssistedHsi,
     OrdersAssistedByod
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly`
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly`
 
   UNION ALL
 
@@ -101,17 +98,17 @@ WITH FlowRows AS (
     UvnbPostpaid,
     UvnbHsi,
     UvnbByod,
-    UvnbFlowTotal,            -- NULL placeholder until LTC flow total table is available
+    UvnbFlowTotal,
     CartstartPostpaid,
     CartstartHsi,
     CartstartByod,
     OrdersUnassistedPostpaid,
     OrdersUnassistedHsi,
     OrdersUnassistedByod,
-    OrdersAssistedPostpaid,   -- NULL placeholder until LTC assisted tables land
-    OrdersAssistedHsi,        -- NULL placeholder until LTC assisted tables land
-    OrdersAssistedByod        -- NULL placeholder until LTC assisted tables land
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly`
+    OrdersAssistedPostpaid,
+    OrdersAssistedHsi,
+    OrdersAssistedByod
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByLtc_Weekly`
 ),
 
 TotalUvnbRows AS (
@@ -141,18 +138,18 @@ SELECT
   -- Total UVNB (from Bronze 04/05 — unchanged)
   t.UvnbTotalAdobe,
 
-  -- UVNB flows (unchanged)
+  -- UVNB flows
   f.UvnbPostpaid,
   f.UvnbHsi,
   f.UvnbByod,
   f.UvnbPostpaid + f.UvnbHsi + f.UvnbByod                                                     AS UvnbTrackedFlowSum,
 
-  -- UVNB Flow Total (new)
+  -- UVNB Flow Total
   -- Sourced directly from Adobe flow total table — not computed from LOB flows.
   -- NULL at LTC grain until source table is available.
   f.UvnbFlowTotal,
 
-  -- Cartstart (unchanged)
+  -- Cartstart
   f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                       AS CartstartTotal,
   f.CartstartPostpaid,
   f.CartstartHsi,
@@ -177,6 +174,6 @@ SELECT
 
 FROM FlowRows f
 LEFT JOIN TotalUvnbRows t
-  ON f.WeekSunSat      = t.WeekSunSat
-  AND f.ReportingGrain = t.ReportingGrain
-  AND f.Channel        = t.Channel;
+  ON  f.WeekSunSat      = t.WeekSunSat
+  AND f.ReportingGrain  = t.ReportingGrain
+  AND f.Channel         = t.Channel;

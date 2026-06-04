@@ -1,14 +1,16 @@
 /* =================================================================================================
-FILE: 01_vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly.sql
+FILE: 01_vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
+VIEW: vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly
+
+RENAMED FROM: vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
 
 SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo       -- NEW
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
@@ -20,15 +22,15 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
 
 DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly
 
 PURPOSE:
   Canonical Bronze weekly Adobe UVNB, Cartstart, and Orders source mart at ALL_CHANNELS granularity.
   This view uses Adobe ALL-channel source tables directly and does not calculate ALL from channel rows.
 
   Orders are split into:
-    - Unassisted (digital web unassisted orders) — renamed from original OrdersPostpaid/Hsi/Byod
-    - Assisted (digital web assisted orders)     — added in previous version
+    - Unassisted (digital web unassisted orders)
+    - Assisted (digital web assisted orders)
 
   UvnbFlowTotal is sourced directly from the Adobe all-flow total visitors table.
   It is the canonical sum of all LOB flows and is not calculated from UvnbPostpaid + UvnbHsi + UvnbByod.
@@ -46,9 +48,6 @@ BUSINESS RULES:
   - Missing metric values remain NULL.
   - MetricName / MetricValue are used internally only and are not exposed in final output.
 
-COLUMN CHANGES vs PREVIOUS VERSION:
-  - UvnbFlowTotal  ADDED (new) — from sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
-
 KEY DEDUPE RULE:
   - Deduplicate each source table at weekly grain using latest:
       File_Load_datetime DESC
@@ -57,7 +56,7 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly`
+`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbFunnelByAll_Weekly`
 AS
 
 WITH RawUnion AS (
@@ -110,7 +109,7 @@ WITH RawUnion AS (
 
   UNION ALL
 
-  -- UVNB Flow Total (NEW)
+  -- UVNB Flow Total
   -- Sourced directly from Adobe all-flow total table.
   -- Not calculated from UvnbPostpaid + UvnbHsi + UvnbByod.
   SELECT
@@ -298,7 +297,7 @@ SELECT
   MAX(IF(MetricName = 'UvnbHsi',                  MetricValue, NULL)) AS UvnbHsi,
   MAX(IF(MetricName = 'UvnbByod',                 MetricValue, NULL)) AS UvnbByod,
 
-  -- UVNB Flow Total (new)
+  -- UVNB Flow Total
   MAX(IF(MetricName = 'UvnbFlowTotal',            MetricValue, NULL)) AS UvnbFlowTotal,
 
   -- Cartstart
