@@ -5,8 +5,8 @@ DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_bronze_profound_weekly
 
 SOURCES:
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profoundVis_tag_weekly_sunday_tmo
-  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profoundCit_tag_weekly_sunday_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_weekly_sunday_tmo
+  prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_weekly_sunday_tmo
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_bronze_profound_weekly
@@ -15,13 +15,13 @@ PURPOSE:
   Source-close Bronze view for Profound NON-BRANDED AI visibility data.
   Combines two Profound non-brand sources via UNION ALL:
 
-    1. VIS (sdi_seo_profoundVis_tag_weekly_sunday_tmo)
+    1. VIS (sdi_seo_profound_vis_tag_weekly_sunday_tmo)
        Tracks how often brand/competitor NAMES are mentioned in AI-generated
        answers (ChatGPT, Perplexity, Gemini etc.) for NON-BRANDED queries
        such as "best BYOD plan" or "bring your own phone carrier".
        Identified by: source_type = 'VIS', asset_name populated, root_domain NULL.
 
-    2. CIT (sdi_seo_profoundCit_tag_weekly_sunday_tmo)
+    2. CIT (sdi_seo_profound_cit_tag_weekly_sunday_tmo)
        Tracks how often brand/competitor DOMAINS are cited as sources in
        AI-generated answers for NON-BRANDED queries.
        Identified by: source_type = 'CIT', root_domain populated, asset_name NULL.
@@ -116,7 +116,7 @@ WITH ranked AS (
                 SAFE_CAST(raw.__insert_date AS INT64) DESC
         ) AS rn
 
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profoundVis_tag_weekly_sunday_tmo` raw
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_vis_tag_weekly_sunday_tmo` raw
 
     WHERE raw.account_id    IS NOT NULL
       AND raw.asset_id      IS NOT NULL
@@ -173,7 +173,7 @@ WITH ranked AS (
                 SAFE_CAST(raw.__insert_date AS INT64) DESC
         ) AS rn
 
-    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profoundCit_tag_weekly_sunday_tmo` raw
+    FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_seo_profound_cit_tag_weekly_sunday_tmo` raw
 
     WHERE raw.account_id    IS NOT NULL
       AND raw.root_domain   IS NOT NULL
