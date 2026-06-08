@@ -1,8 +1,21 @@
+-- ============================================================
+-- MFC SPEND PIPELINE: SILVER 2 - GRANULAR
+-- REVISION V7:
+--   Fixed phantom actuals in future QGP_Weeks (e.g. Jun 6 bleed).
+--
+--   Root cause:
+--     Sunday calendar days (e.g. May 31) were mapping to the
+--     NEXT Saturday (Jun 6) in daily_with_qgp, creating a
+--     phantom actual row for a week that has no real actuals.
+--
+--   Fix:
+--     1. normalized_weekly now passes Source_QGP_Week through.
+--     2. daily_spend carries Source_QGP_Week through the EXPLODE.
+--     3. daily_with_qgp caps the derived QGP_Week with
+--        LEAST(..., Source_QGP_Week) so no daily slice can land
+--        in a later reporting week than its source row.
+-- ============================================================
 
--- ============================================================
--- SILVER 2: GRANULAR
--- Independent branch from granular bronze views.
--- ============================================================
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly
 AS
@@ -165,6 +178,7 @@ normalized_weekly AS (
     Agency,
     Period_Start,
     Period_End,
+    Source_QGP_Week,                           -- V7: carry through for cap
 
     CASE
       WHEN source_week_type <> 'BOUNDARY_WEEK'
@@ -221,6 +235,7 @@ daily_spend AS (
     Tactic,
     Message_Type,
     Agency,
+    Source_QGP_Week,                           -- V7: carry through for cap
 
     weekly_actual
       / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
@@ -242,6 +257,12 @@ daily_spend AS (
   FROM normalized_weekly
 ),
 
+/* Map every calendar day to:
+   - the upcoming Saturday; or
+   - quarter-end when that Saturday falls outside the quarter.
+   V7: cap with Source_QGP_Week so Sunday slices (e.g. May 31)
+   cannot bleed into the next reporting week (e.g. Jun 6).
+*/
 daily_with_qgp AS (
   SELECT
     FileLoad_Date,
@@ -255,37 +276,40 @@ daily_with_qgp AS (
     daily_forecast,
     daily_display,
 
-    CASE
-      WHEN DATE_ADD(
-             calendar_date,
-             CASE
-               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
-               ELSE 7 - DAYOFWEEK(calendar_date)
-             END
-           )
-           >
-           LAST_DAY(
-             ADD_MONTHS(
-               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
-               2
+    LEAST(
+      CASE
+        WHEN DATE_ADD(
+               calendar_date,
+               CASE
+                 WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+                 ELSE 7 - DAYOFWEEK(calendar_date)
+               END
              )
-           )
-
-      THEN LAST_DAY(
-             ADD_MONTHS(
-               TO_DATE(DATE_TRUNC('quarter', calendar_date)),
-               2
+             >
+             LAST_DAY(
+               ADD_MONTHS(
+                 TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+                 2
+               )
              )
-           )
 
-      ELSE DATE_ADD(
-             calendar_date,
-             CASE
-               WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
-               ELSE 7 - DAYOFWEEK(calendar_date)
-             END
-           )
-    END AS QGP_Week
+        THEN LAST_DAY(
+               ADD_MONTHS(
+                 TO_DATE(DATE_TRUNC('quarter', calendar_date)),
+                 2
+               )
+             )
+
+        ELSE DATE_ADD(
+               calendar_date,
+               CASE
+                 WHEN DAYOFWEEK(calendar_date) = 7 THEN 0
+                 ELSE 7 - DAYOFWEEK(calendar_date)
+               END
+             )
+      END,
+      Source_QGP_Week                          -- V7: the cap
+    ) AS QGP_Week
 
   FROM daily_spend
 ),
@@ -416,9 +440,6 @@ qgp_file_dates AS (
   GROUP BY QGP_Week
 ),
 
-/* Historically observed tuples are expanded to every QGP_Week.
-   Missing rows intentionally remain NULL after the left join.
-*/
 valid_dimension_combinations AS (
   SELECT DISTINCT
     LOB_Supported,
@@ -501,14 +522,6 @@ dense_spend AS (
     AND scaffold.Agency        <=> actuals.Agency
 ),
 
-/* ------------------------------------------------------------
-   Assign each granular QGP fragment to its enclosing calendar week
-   ending Saturday.
-
-   Example:
-     2026-03-31 -> 2026-04-04
-     2026-04-04 -> 2026-04-04
-   ------------------------------------------------------------ */
 with_calendar_week_end AS (
   SELECT
     *,
@@ -524,12 +537,6 @@ with_calendar_week_end AS (
   FROM dense_spend
 ),
 
-/* ------------------------------------------------------------
-   Complete current calendar-week actual at the Tableau-filterable
-   granular grain.
-
-   Missing fragments remain NULL rather than being treated as zero.
-   ------------------------------------------------------------ */
 calendar_week_actuals AS (
   SELECT
     calendar_week_end,
@@ -571,40 +578,20 @@ with_complete_week_values AS (
   LEFT JOIN calendar_week_actuals current_week
     ON  current_week.calendar_week_end =
           current_row.calendar_week_end
-
-    AND current_week.LOB_Supported
-          <=> current_row.LOB_Supported
-
-    AND current_week.Channel
-          <=> current_row.Channel
-
-    AND current_week.Tactic
-          <=> current_row.Tactic
-
-    AND current_week.Message_Type
-          <=> current_row.Message_Type
-
-    AND current_week.Agency
-          <=> current_row.Agency
+    AND current_week.LOB_Supported     <=> current_row.LOB_Supported
+    AND current_week.Channel           <=> current_row.Channel
+    AND current_week.Tactic            <=> current_row.Tactic
+    AND current_week.Message_Type      <=> current_row.Message_Type
+    AND current_week.Agency            <=> current_row.Agency
 
   LEFT JOIN calendar_week_actuals previous_week
     ON  previous_week.calendar_week_end =
           DATE_SUB(current_row.calendar_week_end, 7)
-
-    AND previous_week.LOB_Supported
-          <=> current_row.LOB_Supported
-
-    AND previous_week.Channel
-          <=> current_row.Channel
-
-    AND previous_week.Tactic
-          <=> current_row.Tactic
-
-    AND previous_week.Message_Type
-          <=> current_row.Message_Type
-
-    AND previous_week.Agency
-          <=> current_row.Agency
+    AND previous_week.LOB_Supported    <=> current_row.LOB_Supported
+    AND previous_week.Channel          <=> current_row.Channel
+    AND previous_week.Tactic           <=> current_row.Tactic
+    AND previous_week.Message_Type     <=> current_row.Message_Type
+    AND previous_week.Agency           <=> current_row.Agency
 ),
 
 with_spend_for_wow AS (
@@ -614,20 +601,16 @@ with_spend_for_wow AS (
     CASE
       WHEN spend_actual IS NULL
         THEN NULL
-
       WHEN is_quarter_end_partial = TRUE
         THEN NULL
-
       ELSE current_complete_calendar_week_actual
     END AS spend_actual_for_wow,
 
     CASE
       WHEN spend_actual IS NULL
         THEN NULL
-
       WHEN is_quarter_end_partial = TRUE
         THEN NULL
-
       ELSE previous_complete_calendar_week_actual
     END AS spend_for_wow
 
@@ -654,12 +637,10 @@ SELECT
   Message_Type,
   Agency,
 
-  /* Existing silver naming */
   spend_actual   AS weekly_actual,
   spend_forecast AS weekly_forecast,
   spend_display  AS weekly_display,
 
-  /* Tableau-facing naming */
   spend_actual,
   spend_forecast,
   spend_display,
@@ -675,4 +656,3 @@ SELECT
 
 FROM with_spend_for_wow
 ;
-
