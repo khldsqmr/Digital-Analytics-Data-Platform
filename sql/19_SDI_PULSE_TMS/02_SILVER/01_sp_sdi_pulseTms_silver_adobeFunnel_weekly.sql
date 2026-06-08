@@ -32,7 +32,7 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      CASE b.channel_group WHEN 'ALL' THEN 'All Channels' ELSE b.channel_group END AS channel_group,
+      b.channel_group,
       IF(cal.is_complete_period, b.upvPostpaid,              NULL) AS upvPostpaid,
       IF(cal.is_complete_period, b.upvHsi,                   NULL) AS upvHsi,
       IF(cal.is_complete_period, b.upvByod,                  NULL) AS upvByod,
@@ -105,9 +105,10 @@ BEGIN
       WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS wow_numerator,
-    CASE u.week_type
-      WHEN 'BOUNDARY_STUB' THEN NULL
-      ELSE                      wow_prior_lookup.metric_value
+    CASE
+      WHEN u.metric_value IS NULL   THEN NULL
+      WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
+      ELSE wow_prior_lookup.metric_value
     END                                                                           AS wow_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
@@ -127,10 +128,11 @@ BEGIN
       WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS yoy_numerator,
-    CASE u.week_type
-      WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value
-      ELSE                       ly_lookup.metric_value
+    CASE
+      WHEN u.metric_value IS NULL   THEN NULL
+      WHEN u.week_type = 'BOUNDARY_STUB'  THEN NULL
+      WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value
+      ELSE ly_lookup.metric_value
     END                                                                           AS yoy_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL

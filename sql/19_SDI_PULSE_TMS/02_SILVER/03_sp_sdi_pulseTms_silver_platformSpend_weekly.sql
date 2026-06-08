@@ -52,9 +52,9 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.lob, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS wow_numerator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS yoy_numerator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator
     FROM Unpivoted u
     LEFT JOIN MetricLookup wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
     LEFT JOIN MetricLookup ly_lookup ON ly_lookup.qgp_date = u.prior_year_qgp_date AND ly_lookup.lob = u.lob AND ly_lookup.channel_group = u.channel_group AND ly_lookup.metric_name = u.metric_name
