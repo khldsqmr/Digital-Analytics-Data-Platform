@@ -93,7 +93,7 @@ AS
 -- =============================================================================
 SELECT
   'ADOBE'                                                               AS data_source,
-  s.qgp_date,
+  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
   s.week_type,
   s.quarter,
   s.days_in_period,
@@ -107,7 +107,7 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  s.max_date,
+  CAST(s.max_date AS DATE)                                                     AS max_date,
   CAST(NULL AS STRING)                                                  AS lob_mfc,
   CAST(NULL AS STRING)                                                  AS lob_platform,
   CAST(NULL AS STRING)                                                  AS mfc_channel,
@@ -125,7 +125,7 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunn
 UNION ALL
 SELECT
   s.data_source,
-  s.qgp_date,
+  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
   s.week_type,
   s.quarter,
   s.days_in_period,
@@ -139,7 +139,7 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  s.max_date,
+  CAST(s.max_date AS DATE)                                                     AS max_date,
   s.lob_mfc,
   CAST(NULL AS STRING)                                                  AS lob_platform,
   CAST(NULL AS STRING)                                                  AS mfc_channel,
@@ -158,7 +158,7 @@ WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 UNION ALL
 SELECT
   s.data_source,
-  s.qgp_date,
+  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
   s.week_type,
   s.quarter,
   s.days_in_period,
@@ -172,7 +172,7 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  s.max_date,
+  CAST(s.max_date AS DATE)                                                     AS max_date,
   s.lob_mfc,
   CAST(NULL AS STRING)                                                  AS lob_platform,
   s.channel                                                             AS mfc_channel,
@@ -191,7 +191,7 @@ WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 UNION ALL
 SELECT
   'PLATFORM_SPEND_CHANNEL'                                              AS data_source,
-  s.qgp_date,
+  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
   s.week_type,
   s.quarter,
   s.days_in_period,
@@ -205,7 +205,7 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  s.max_date,
+  CAST(s.max_date AS DATE)                                                     AS max_date,
   CAST(NULL AS STRING)                                                  AS lob_mfc,
   s.lob                                                                 AS lob_platform,
   CAST(NULL AS STRING)                                                  AS mfc_channel,
@@ -223,7 +223,7 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformS
   UNION ALL
   SELECT
     'SA360_CHANNEL'         AS data_source,   -- or 'SA360_GRANULAR', 'GSC_CHANNEL', etc.
-    s.qgp_date,
+    CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
     s.week_type,
     s.quarter,
     s.days_in_period,
@@ -237,7 +237,7 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformS
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    s.max_date,
+    CAST(s.max_date AS DATE)                                                     AS max_date,
     CAST(NULL AS STRING)    AS lob_mfc,
     CAST(NULL AS STRING)    AS lob_platform,
     CAST(NULL AS STRING)    AS mfc_channel,
