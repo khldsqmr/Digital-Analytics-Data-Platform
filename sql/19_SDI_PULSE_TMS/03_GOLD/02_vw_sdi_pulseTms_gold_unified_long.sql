@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         08_vw_sdi_pulseTms_gold_unified_long.sql
+FILE:         02_vw_sdi_pulseTms_gold_unified_long.sql
 LAYER:        Gold View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_gold_unified_long
