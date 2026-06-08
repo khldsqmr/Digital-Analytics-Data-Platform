@@ -24,7 +24,7 @@ PURPOSE:
        The ALL row comes directly from Adobe's own all-channel source tables
        and is NOT recomputed as a sum of individual channel groups.
     3. Pivots wide Bronze format → LONG format with camelCase metric_name values.
-    4. Computes derived totals (cartstart_total, orders_total etc).
+    4. Computes derived totals (cartstartTotal, ordersTotal etc).
     5. Attaches metric_value_ly via join to prior_year_qgp_date.
     6. Computes WoW and YoY numerators and denominators:
          NORMAL         : numerator = current value; denominator = prior week value
@@ -105,35 +105,35 @@ BronzeWithCalendar AS (
     END                                                                 AS channel_group,
 
     -- Apply completeness rule inline
-    IF(cal.is_complete_period, b.upv_postpaid,               NULL)     AS upv_postpaid,
-    IF(cal.is_complete_period, b.upv_hsi,                    NULL)     AS upv_hsi,
-    IF(cal.is_complete_period, b.upv_byod,                   NULL)     AS upv_byod,
-    IF(cal.is_complete_period, b.upv_flow_total,             NULL)     AS upv_flow_total,
-    IF(cal.is_complete_period, b.upv_total_adobe,            NULL)     AS upv_total_adobe,
-    IF(cal.is_complete_period, b.cartstart_postpaid,         NULL)     AS cartstart_postpaid,
-    IF(cal.is_complete_period, b.cartstart_hsi,              NULL)     AS cartstart_hsi,
-    IF(cal.is_complete_period, b.cartstart_byod,             NULL)     AS cartstart_byod,
-    IF(cal.is_complete_period, b.orders_unassisted_postpaid, NULL)     AS orders_unassisted_postpaid,
-    IF(cal.is_complete_period, b.orders_unassisted_hsi,      NULL)     AS orders_unassisted_hsi,
-    IF(cal.is_complete_period, b.orders_unassisted_byod,     NULL)     AS orders_unassisted_byod,
-    IF(cal.is_complete_period, b.orders_assisted_postpaid,   NULL)     AS orders_assisted_postpaid,
-    IF(cal.is_complete_period, b.orders_assisted_hsi,        NULL)     AS orders_assisted_hsi,
-    IF(cal.is_complete_period, b.orders_assisted_byod,       NULL)     AS orders_assisted_byod,
+    IF(cal.is_complete_period, b.upvPostpaid,               NULL)     AS upvPostpaid,
+    IF(cal.is_complete_period, b.upvHsi,                    NULL)     AS upvHsi,
+    IF(cal.is_complete_period, b.upvByod,                   NULL)     AS upvByod,
+    IF(cal.is_complete_period, b.upvFlowTotal,             NULL)     AS upvFlowTotal,
+    IF(cal.is_complete_period, b.upvTotalAdobe,            NULL)     AS upvTotalAdobe,
+    IF(cal.is_complete_period, b.cartstartPostpaid,         NULL)     AS cartstartPostpaid,
+    IF(cal.is_complete_period, b.cartstartHsi,              NULL)     AS cartstartHsi,
+    IF(cal.is_complete_period, b.cartstartByod,             NULL)     AS cartstartByod,
+    IF(cal.is_complete_period, b.ordersUnassistedPostpaid, NULL)     AS ordersUnassistedPostpaid,
+    IF(cal.is_complete_period, b.ordersUnassistedHsi,      NULL)     AS ordersUnassistedHsi,
+    IF(cal.is_complete_period, b.ordersUnassistedByod,     NULL)     AS ordersUnassistedByod,
+    IF(cal.is_complete_period, b.ordersAssistedPostpaid,   NULL)     AS ordersAssistedPostpaid,
+    IF(cal.is_complete_period, b.ordersAssistedHsi,        NULL)     AS ordersAssistedHsi,
+    IF(cal.is_complete_period, b.ordersAssistedByod,       NULL)     AS ordersAssistedByod,
 
     -- Derived totals (NULL if any component is NULL — no COALESCE)
     IF(cal.is_complete_period,
-       b.cartstart_postpaid + b.cartstart_hsi + b.cartstart_byod,
-       NULL)                                                            AS cartstart_total,
+       b.cartstartPostpaid + b.cartstartHsi + b.cartstartByod,
+       NULL)                                                            AS cartstartTotal,
     IF(cal.is_complete_period,
-       b.orders_unassisted_postpaid + b.orders_unassisted_hsi + b.orders_unassisted_byod,
-       NULL)                                                            AS orders_unassisted_total,
+       b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod,
+       NULL)                                                            AS ordersUnassistedTotal,
     IF(cal.is_complete_period,
-       b.orders_assisted_postpaid + b.orders_assisted_hsi + b.orders_assisted_byod,
-       NULL)                                                            AS orders_assisted_total,
+       b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod,
+       NULL)                                                            AS ordersAssistedTotal,
     IF(cal.is_complete_period,
-       (b.orders_unassisted_postpaid + b.orders_unassisted_hsi + b.orders_unassisted_byod)
-       + (b.orders_assisted_postpaid + b.orders_assisted_hsi + b.orders_assisted_byod),
-       NULL)                                                            AS orders_total
+       (b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod)
+       + (b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod),
+       NULL)                                                            AS ordersTotal
 
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
   LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_bronze_adobeFunnel_weekly` b
@@ -150,126 +150,126 @@ Unpivoted AS (
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'upvPostpaid'                AS metric_name, upv_postpaid               AS metric_value
+         'upvPostpaid'                AS metric_name, upvPostpaid               AS metric_value
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'upvHsi',                    upv_hsi
+         'upvHsi',                    upvHsi
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'upvByod',                   upv_byod
+         'upvByod',                   upvByod
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'upvFlowTotal',              upv_flow_total
+         'upvFlowTotal',              upvFlowTotal
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'upvTotalAdobe',             upv_total_adobe
+         'upvTotalAdobe',             upvTotalAdobe
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'cartstartPostpaid',         cartstart_postpaid
+         'cartstartPostpaid',         cartstartPostpaid
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'cartstartHsi',              cartstart_hsi
+         'cartstartHsi',              cartstartHsi
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'cartstartByod',             cartstart_byod
+         'cartstartByod',             cartstartByod
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'cartstartTotal',            cartstart_total
+         'cartstartTotal',            cartstartTotal
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersUnassistedPostpaid',  orders_unassisted_postpaid
+         'ordersUnassistedPostpaid',  ordersUnassistedPostpaid
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersUnassistedHsi',       orders_unassisted_hsi
+         'ordersUnassistedHsi',       ordersUnassistedHsi
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersUnassistedByod',      orders_unassisted_byod
+         'ordersUnassistedByod',      ordersUnassistedByod
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersUnassistedTotal',     orders_unassisted_total
+         'ordersUnassistedTotal',     ordersUnassistedTotal
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersAssistedPostpaid',    orders_assisted_postpaid
+         'ordersAssistedPostpaid',    ordersAssistedPostpaid
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersAssistedHsi',         orders_assisted_hsi
+         'ordersAssistedHsi',         ordersAssistedHsi
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersAssistedByod',        orders_assisted_byod
+         'ordersAssistedByod',        ordersAssistedByod
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersAssistedTotal',       orders_assisted_total
+         'ordersAssistedTotal',       ordersAssistedTotal
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
   UNION ALL
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period,
          is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date,
          boundary_stub_date, iso_week_number, iso_year, channel_group,
-         'ordersTotal',               orders_total
+         'ordersTotal',               ordersTotal
   FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 ),
 

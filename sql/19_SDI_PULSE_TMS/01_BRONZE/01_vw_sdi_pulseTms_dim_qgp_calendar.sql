@@ -75,7 +75,8 @@ WITH
 
 -- ---------------------------------------------------------------------------
 -- STEP 1: Generate a daily date spine
---         Covers 2020-01-01 through end of next calendar year (rolling)
+--         Rolling range: 2020-01-01 through end of next calendar year.
+--         Auto-extends each year — no manual updates needed.
 -- ---------------------------------------------------------------------------
 DateSpine AS (
   SELECT day
@@ -179,27 +180,40 @@ Enriched AS (
       CAST(EXTRACT(QUARTER FROM aq.qgp_date) AS STRING)
     )                                                                   AS quarter,
 
+    -- Quarter end date: last day of the quarter containing qgp_date
+    -- Correct approach: truncate to quarter start, add 3 months, subtract 1 day
     DATE_SUB(
-      DATE_TRUNC(DATE_ADD(aq.qgp_date, INTERVAL 1 DAY), QUARTER),
+      DATE_ADD(DATE_TRUNC(aq.qgp_date, QUARTER), INTERVAL 3 MONTH),
       INTERVAL 1 DAY
     )                                                                   AS quarter_end_date,
 
     EXTRACT(ISOWEEK  FROM aq.qgp_date)                                  AS iso_week_number,
     EXTRACT(ISOYEAR  FROM aq.qgp_date)                                  AS iso_year,
 
+    -- Days in period:
+    --   NORMAL         : always 7
+    --   BOUNDARY_STUB  : days from Sunday that opened this week through the quarter-end date
+    --                    (Sunday = day - (DAYOFWEEK - 1); DAYOFWEEK: Sun=1 so Sunday - 0 = itself)
+    --                    Use DATE_DIFF + 1 to count inclusively from Sunday through stub date
+    --   BOUNDARY_FIRST : complement = 7 - stub_days_in_period
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
+        -- Days from the Sunday that opens this week through the quarter-end (stub) date, inclusive
+        -- week_start_sunday = qgp_date - (DAYOFWEEK - 1), where Sun=1 → offset=0, Mon=2 → offset=1...
         DATE_DIFF(
           aq.qgp_date,
           DATE_SUB(aq.qgp_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.qgp_date) - 1) DAY),
           DAY
-        )
+        ) + 1
       WHEN 'BOUNDARY_FIRST' THEN
-        7 - DATE_DIFF(
-          aq.boundary_stub_date,
-          DATE_SUB(aq.boundary_stub_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.boundary_stub_date) - 1) DAY),
-          DAY
+        -- Complement: 7 minus stub days_in_period
+        7 - (
+          DATE_DIFF(
+            aq.boundary_stub_date,
+            DATE_SUB(aq.boundary_stub_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.boundary_stub_date) - 1) DAY),
+            DAY
+          ) + 1
         )
     END                                                                 AS days_in_period,
 
