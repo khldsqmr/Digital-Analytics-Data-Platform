@@ -1,13 +1,13 @@
 /* =================================================================================================
-FILE:         01_vw_sdi_pulseTms_gold_unified_long.sql
+FILE:         08_vw_sdi_pulseTms_gold_unified_long.sql
 LAYER:        Gold View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_gold_unified_long
 
 RAW SOURCES (via Silver):
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_adobeFunnel_weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_mfcSpend_weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_platformSpend_weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly
 
 DESTINATION:
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_gold_unified_long
@@ -115,7 +115,7 @@ SELECT
   CAST(NULL AS STRING)                                                  AS mfc_message_type,
   CAST(NULL AS STRING)                                                  AS mfc_agency
 
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_adobeFunnel_weekly` s
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
 
 -- =============================================================================
 -- BRANCH 2: MFC_SPEND_CHANNEL
@@ -147,7 +147,7 @@ SELECT
   CAST(NULL AS STRING)                                                  AS mfc_message_type,
   CAST(NULL AS STRING)                                                  AS mfc_agency
 
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_mfcSpend_weekly` s
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
 WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 
 -- =============================================================================
@@ -180,7 +180,7 @@ SELECT
   s.message_type                                                        AS mfc_message_type,
   s.agency                                                              AS mfc_agency
 
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_mfcSpend_weekly` s
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
 WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 
 -- =============================================================================
@@ -213,7 +213,7 @@ SELECT
   CAST(NULL AS STRING)                                                  AS mfc_message_type,
   CAST(NULL AS STRING)                                                  AS mfc_agency
 
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_platformSpend_weekly` s
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly` s
 
 /*
   =============================================================================
