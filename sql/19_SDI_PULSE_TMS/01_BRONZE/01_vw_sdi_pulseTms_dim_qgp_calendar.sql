@@ -1,0 +1,283 @@
+/* =================================================================================================
+FILE:         01_vw_sdi_pulseTms_dim_qgp_calendar.sql
+LAYER:        Dimension View
+DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+VIEW NAME:    vw_sdi_pulseTms_dim_qgp_calendar
+
+RAW SOURCES:
+  None — derived entirely from the Gregorian calendar using GENERATE_DATE_ARRAY.
+
+PURPOSE:
+  Foundational QGP (Quarter-Grand-Period) calendar dimension for the PulseTMS pipeline.
+  All Bronze, Silver, and Gold views join to this dim for date alignment, week typing,
+  and WoW / YoY period lookups.
+
+  QGP dates are defined as:
+    1. Every week-ending Saturday                          → week_type = 'NORMAL'
+    2. Quarter-end dates that fall on a non-Saturday       → week_type = 'BOUNDARY_STUB'
+       (e.g. Mar 31 if it falls Mon–Fri)
+    3. The first Saturday after a BOUNDARY_STUB            → week_type = 'BOUNDARY_FIRST'
+       (e.g. Apr 4 if Mar 31 was the stub)
+
+  Quarter boundaries follow standard Gregorian quarters:
+    Q1: Jan 1  – Mar 31
+    Q2: Apr 1  – Jun 30
+    Q3: Jul 1  – Sep 30
+    Q4: Oct 1  – Dec 31
+
+BUSINESS GRAIN:
+  One row per QGP date.
+
+KEY COLUMNS:
+  qgp_date                — Period-end date (Sat or quarter-end non-Sat)
+  qgp_year                — Calendar year of qgp_date
+  qgp_quarter_num         — Quarter number 1–4
+  quarter                 — Display string e.g. '2026 Q1'
+  quarter_end_date        — Last calendar date of the quarter this period belongs to
+  iso_week_number         — ISO 8601 week number (used for YoY same-week matching)
+  iso_year                — ISO year (may differ from calendar year near year boundaries)
+  week_type               — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
+  days_in_period          — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder days for BOUNDARY_FIRST
+  is_complete_period      — TRUE when qgp_date <= CURRENT_DATE()
+  is_current_quarter      — TRUE when qgp_date falls in the current calendar quarter
+  boundary_stub_date      — For BOUNDARY_FIRST rows: the preceding stub date (e.g. Mar 31)
+                            NULL for NORMAL and BOUNDARY_STUB rows
+  wow_prior_qgp_date      — The immediately preceding QGP date (for WoW denominator lookup)
+                            NULL for BOUNDARY_STUB rows (WoW not shown for stubs)
+  prior_year_qgp_date     — QGP date with same ISO week number in the prior ISO year
+                            NULL for BOUNDARY_STUB rows (YoY not shown for stubs)
+
+BUSINESS RULES:
+  - BOUNDARY_STUB rows exist solely to hold partial-period metric values.
+    They are never shown as standalone WoW or YoY comparison points.
+    wow_prior_qgp_date and prior_year_qgp_date are NULL for these rows.
+  - BOUNDARY_FIRST rows carry combined WoW numerator = current value + preceding stub value.
+    wow_denominator = value at wow_prior_qgp_date (the last full NORMAL week).
+  - is_complete_period uses qgp_date <= CURRENT_DATE() inclusive — if today IS the
+    week-ending Saturday or quarter-end date, that period is considered complete.
+  - Date spine covers 2020-01-01 through end of the following calendar year (rolling).
+  - ISO week matching for YoY: same iso_week_number + same week_type in prior iso_year.
+
+DOWNSTREAM:
+  02_vw_sdi_pulseTms_bronze_adobeFunnel_weekly   (joined in Silver)
+  03_vw_sdi_pulseTms_bronze_mfcSpend_weekly      (joined in Silver)
+  04_vw_sdi_pulseTms_bronze_platformSpend_weekly (joined in Silver)
+  05_vw_sdi_pulseTms_silver_adobeFunnel_weekly
+  06_vw_sdi_pulseTms_silver_mfcSpend_weekly
+  07_vw_sdi_pulseTms_silver_platformSpend_weekly
+================================================================================================= */
+
+CREATE OR REPLACE VIEW
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar`
+AS
+
+WITH
+
+-- ---------------------------------------------------------------------------
+-- STEP 1: Generate a daily date spine
+--         Covers 2020-01-01 through end of next calendar year (rolling)
+-- ---------------------------------------------------------------------------
+DateSpine AS (
+  SELECT day
+  FROM UNNEST(
+    GENERATE_DATE_ARRAY(
+      DATE '2020-01-01',
+      DATE_ADD(
+        DATE_TRUNC(DATE_ADD(CURRENT_DATE(), INTERVAL 1 YEAR), YEAR),
+        INTERVAL -1 DAY
+      )
+    )
+  ) AS day
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 2: Identify all Gregorian quarter-end dates within the spine
+-- ---------------------------------------------------------------------------
+QuarterEnds AS (
+  SELECT DISTINCT
+    DATE_SUB(
+      DATE_TRUNC(DATE_ADD(day, INTERVAL 1 DAY), QUARTER),
+      INTERVAL 1 DAY
+    ) AS quarter_end_date
+  FROM DateSpine
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 3A: All Saturdays → NORMAL weeks
+-- ---------------------------------------------------------------------------
+Saturdays AS (
+  SELECT
+    day                  AS qgp_date,
+    'NORMAL'             AS week_type,
+    CAST(NULL AS DATE)   AS boundary_stub_date
+  FROM DateSpine
+  WHERE EXTRACT(DAYOFWEEK FROM day) = 7  -- 7 = Saturday in BigQuery
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 3B: Quarter-end dates that fall on a non-Saturday → BOUNDARY_STUB
+-- ---------------------------------------------------------------------------
+BoundaryStubs AS (
+  SELECT
+    quarter_end_date     AS qgp_date,
+    'BOUNDARY_STUB'      AS week_type,
+    CAST(NULL AS DATE)   AS boundary_stub_date
+  FROM QuarterEnds
+  WHERE EXTRACT(DAYOFWEEK FROM quarter_end_date) != 7
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 3C: First Saturday after each BOUNDARY_STUB → BOUNDARY_FIRST
+--          This Saturday is already in Saturdays CTE as NORMAL;
+--          we override its week_type here and carry the stub date.
+-- ---------------------------------------------------------------------------
+BoundaryFirsts AS (
+  SELECT
+    s.day                       AS qgp_date,
+    'BOUNDARY_FIRST'            AS week_type,
+    bs.qgp_date                 AS boundary_stub_date
+  FROM BoundaryStubs bs
+  JOIN DateSpine s
+    ON  s.day > bs.qgp_date
+    AND EXTRACT(DAYOFWEEK FROM s.day) = 7
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY bs.qgp_date
+    ORDER BY s.day ASC
+  ) = 1
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 4: Combine all QGP dates
+--         BOUNDARY_FIRST overrides the same Saturday's NORMAL entry
+-- ---------------------------------------------------------------------------
+AllQgpDates AS (
+
+  SELECT qgp_date, week_type, boundary_stub_date FROM BoundaryStubs
+  UNION ALL
+  SELECT qgp_date, week_type, boundary_stub_date FROM BoundaryFirsts
+  UNION ALL
+  -- NORMAL Saturdays that are NOT a BOUNDARY_FIRST
+  SELECT s.qgp_date, s.week_type, s.boundary_stub_date
+  FROM Saturdays s
+  WHERE s.qgp_date NOT IN (SELECT qgp_date FROM BoundaryFirsts)
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 5: Enrich with calendar attributes
+-- ---------------------------------------------------------------------------
+Enriched AS (
+  SELECT
+    aq.qgp_date,
+    aq.week_type,
+    aq.boundary_stub_date,
+
+    EXTRACT(YEAR    FROM aq.qgp_date)                                   AS qgp_year,
+    EXTRACT(QUARTER FROM aq.qgp_date)                                   AS qgp_quarter_num,
+    CONCAT(
+      CAST(EXTRACT(YEAR    FROM aq.qgp_date) AS STRING),
+      ' Q',
+      CAST(EXTRACT(QUARTER FROM aq.qgp_date) AS STRING)
+    )                                                                   AS quarter,
+
+    DATE_SUB(
+      DATE_TRUNC(DATE_ADD(aq.qgp_date, INTERVAL 1 DAY), QUARTER),
+      INTERVAL 1 DAY
+    )                                                                   AS quarter_end_date,
+
+    EXTRACT(ISOWEEK  FROM aq.qgp_date)                                  AS iso_week_number,
+    EXTRACT(ISOYEAR  FROM aq.qgp_date)                                  AS iso_year,
+
+    CASE aq.week_type
+      WHEN 'NORMAL' THEN 7
+      WHEN 'BOUNDARY_STUB' THEN
+        DATE_DIFF(
+          aq.qgp_date,
+          DATE_SUB(aq.qgp_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.qgp_date) - 1) DAY),
+          DAY
+        )
+      WHEN 'BOUNDARY_FIRST' THEN
+        7 - DATE_DIFF(
+          aq.boundary_stub_date,
+          DATE_SUB(aq.boundary_stub_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.boundary_stub_date) - 1) DAY),
+          DAY
+        )
+    END                                                                 AS days_in_period,
+
+    aq.qgp_date <= CURRENT_DATE()                                       AS is_complete_period,
+    DATE_TRUNC(aq.qgp_date, QUARTER) = DATE_TRUNC(CURRENT_DATE(), QUARTER)
+                                                                        AS is_current_quarter
+  FROM AllQgpDates aq
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 6: Compute wow_prior_qgp_date via LAG
+--         BOUNDARY_STUB rows get NULL
+-- ---------------------------------------------------------------------------
+WithWow AS (
+  SELECT
+    e.*,
+    CASE
+      WHEN e.week_type = 'BOUNDARY_STUB' THEN NULL
+      ELSE LAG(e.qgp_date) OVER (ORDER BY e.qgp_date ASC)
+    END AS wow_prior_qgp_date
+  FROM Enriched e
+),
+
+-- ---------------------------------------------------------------------------
+-- STEP 7: Prior year lookup for YoY
+--         Match same iso_week_number + same week_type in (iso_year - 1)
+-- ---------------------------------------------------------------------------
+PriorYearLookup AS (
+  SELECT qgp_date, iso_week_number, iso_year, week_type
+  FROM Enriched
+  WHERE week_type IN ('NORMAL', 'BOUNDARY_FIRST')
+)
+
+-- ---------------------------------------------------------------------------
+-- STEP 8: Final output
+-- ---------------------------------------------------------------------------
+
+-- Non-stub rows: resolve prior_year_qgp_date via join
+SELECT
+  w.qgp_date,
+  w.week_type,
+  w.boundary_stub_date,
+  w.qgp_year,
+  w.qgp_quarter_num,
+  w.quarter,
+  w.quarter_end_date,
+  w.iso_week_number,
+  w.iso_year,
+  w.days_in_period,
+  w.is_complete_period,
+  w.is_current_quarter,
+  w.wow_prior_qgp_date,
+  ly.qgp_date                                                           AS prior_year_qgp_date
+FROM WithWow w
+LEFT JOIN PriorYearLookup ly
+  ON  ly.iso_week_number = w.iso_week_number
+  AND ly.iso_year        = w.iso_year - 1
+  AND ly.week_type       = w.week_type
+WHERE w.week_type != 'BOUNDARY_STUB'
+
+UNION ALL
+
+-- Stub rows: all period lookups are NULL
+SELECT
+  w.qgp_date,
+  w.week_type,
+  w.boundary_stub_date,
+  w.qgp_year,
+  w.qgp_quarter_num,
+  w.quarter,
+  w.quarter_end_date,
+  w.iso_week_number,
+  w.iso_year,
+  w.days_in_period,
+  w.is_complete_period,
+  w.is_current_quarter,
+  NULL                                                                  AS wow_prior_qgp_date,
+  NULL                                                                  AS prior_year_qgp_date
+FROM WithWow w
+WHERE w.week_type = 'BOUNDARY_STUB'
+;
