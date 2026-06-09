@@ -69,9 +69,9 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.lob, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub.metric_value IS NOT NULL THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub.metric_value, 0) ELSE COALESCE(wow_prior_lookup.metric_value, 0) END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator
     FROM Unpivoted u
     LEFT JOIN MetricLookup wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
     LEFT JOIN MetricLookup ly_lookup ON ly_lookup.qgp_date = u.prior_year_qgp_date AND ly_lookup.lob = u.lob AND ly_lookup.channel_group = u.channel_group AND ly_lookup.metric_name = u.metric_name

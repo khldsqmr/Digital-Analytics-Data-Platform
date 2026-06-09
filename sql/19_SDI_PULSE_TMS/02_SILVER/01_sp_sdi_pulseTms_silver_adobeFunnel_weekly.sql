@@ -162,7 +162,7 @@ BEGIN
     ly_lookup.metric_value                                                        AS metric_value_ly,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
+      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0)
       ELSE                       u.metric_value
     END                                                                           AS wow_numerator,
     CASE
@@ -170,15 +170,15 @@ BEGIN
       WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
       -- If prior week was BOUNDARY_FIRST, denominator = BOUNDARY_FIRST value + its stub value
       WHEN wow_prior_stub_lookup.metric_value IS NOT NULL
-        THEN wow_prior_lookup.metric_value + wow_prior_stub_lookup.metric_value
-      ELSE wow_prior_lookup.metric_value
+        THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub_lookup.metric_value, 0)
+      ELSE COALESCE(wow_prior_lookup.metric_value, 0)
     END                                                                           AS wow_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB' THEN NULL
       WHEN 'BOUNDARY_FIRST' THEN
         CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
              THEN NULL
-             ELSE (u.metric_value + stub_lookup.metric_value) / wow_prior_lookup.metric_value - 1
+             ELSE (u.metric_value + COALESCE(stub_lookup.metric_value, 0)) / wow_prior_lookup.metric_value - 1
         END
       ELSE
         -- If prior week was BOUNDARY_FIRST, use combined (BOUNDARY_FIRST + stub) as denominator
@@ -194,14 +194,14 @@ BEGIN
     END                                                                           AS wow_pct,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
+      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0)
       ELSE                       u.metric_value
     END                                                                           AS yoy_numerator,
     CASE
       WHEN u.metric_value IS NULL  THEN NULL
       WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
-      WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value
-      ELSE ly_lookup.metric_value
+      WHEN u.week_type = 'BOUNDARY_FIRST' THEN COALESCE(yoy_bf_lookup.metric_value, 0) + COALESCE(yoy_stub_lookup.metric_value, 0)
+      ELSE COALESCE(ly_lookup.metric_value, 0)
     END                                                                           AS yoy_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB' THEN NULL
@@ -209,8 +209,8 @@ BEGIN
         CASE WHEN (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) IS NULL
                   OR (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) = 0
              THEN NULL
-             ELSE (u.metric_value + stub_lookup.metric_value)
-                  / (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) - 1
+             ELSE (u.metric_value + COALESCE(stub_lookup.metric_value, 0))
+                  / (yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0)) - 1
         END
       ELSE
         CASE WHEN ly_lookup.metric_value IS NULL OR ly_lookup.metric_value = 0

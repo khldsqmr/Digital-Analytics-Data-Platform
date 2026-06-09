@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         06_sp_sdi_pulseTms_silver_mfcSpend_weekly.sql
+FILE:         02_sp_sdi_pulseTms_silver_mfcSpend_weekly.sql
 LAYER:        Stored Procedure
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROCEDURE:    sp_sdi_pulseTms_silver_mfcSpend_weekly
@@ -84,9 +84,9 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_ch.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_ch.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_ch.metric_value IS NOT NULL THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub_ch.metric_value, 0) ELSE COALESCE(wow_prior_lookup.metric_value, 0) END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN COALESCE(yoy_bf_lookup.metric_value, 0) + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE COALESCE(ly_lookup.metric_value, 0) END AS yoy_denominator,
       u.lob AS lob_mfc, CAST(NULL AS STRING) AS channel, CAST(NULL AS STRING) AS tactic, CAST(NULL AS STRING) AS message_type, CAST(NULL AS STRING) AS agency
     FROM UnpivotedChannel u
     LEFT JOIN MetricLookupChannel wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
@@ -103,9 +103,9 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + COALESCE(wow_prior_stub_gr.metric_value, 0) ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub_gr.metric_value, 0) ELSE COALESCE(wow_prior_lookup.metric_value, 0) END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN COALESCE(yoy_bf_lookup.metric_value, 0) + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE COALESCE(ly_lookup.metric_value, 0) END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
     LEFT JOIN MetricLookupGranular wow_prior_lookup
