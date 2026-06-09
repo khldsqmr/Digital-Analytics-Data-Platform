@@ -231,8 +231,10 @@ WithWow AS (
   SELECT
     e.*,
     CASE
-      WHEN e.week_type = 'BOUNDARY_STUB' THEN NULL
-      ELSE LAG(e.qgp_date) OVER (ORDER BY e.qgp_date ASC)
+      WHEN e.week_type = 'BOUNDARY_STUB'  THEN NULL
+      -- BOUNDARY_FIRST: skip past the stub to the last NORMAL week (LAG by 2)
+      WHEN e.week_type = 'BOUNDARY_FIRST' THEN LAG(e.qgp_date, 2) OVER (ORDER BY e.qgp_date ASC)
+      ELSE                                     LAG(e.qgp_date, 1) OVER (ORDER BY e.qgp_date ASC)
     END AS wow_prior_qgp_date
   FROM Enriched e
 ),
