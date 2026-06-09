@@ -66,7 +66,7 @@ BEGIN
   MetricLookup AS (SELECT qgp_date, lob, channel_group, metric_name, metric_value FROM Unpivoted),
   WithWowYoy AS (
     SELECT
-      u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.lob, u.channel_group, u.metric_name, u.metric_value,
+      u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.lob, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
@@ -83,7 +83,7 @@ BEGIN
     LEFT JOIN MetricLookup wow_prior_stub ON wow_prior_stub.qgp_date = prior_cal.boundary_stub_date AND wow_prior_stub.lob = u.lob AND wow_prior_stub.channel_group = u.channel_group AND wow_prior_stub.metric_name = u.metric_name
   )
   SELECT
-    qgp_date, week_type, quarter, days_in_period, lob, channel_group, metric_name,
+    qgp_date, week_type, quarter, days_in_period, is_complete_period, lob, channel_group, metric_name,
     metric_value, metric_value_ly, wow_numerator, wow_denominator,
     CASE WHEN wow_denominator IS NULL OR wow_denominator = 0 THEN NULL ELSE wow_numerator / wow_denominator - 1 END AS wow_pct,
     yoy_numerator, yoy_denominator,

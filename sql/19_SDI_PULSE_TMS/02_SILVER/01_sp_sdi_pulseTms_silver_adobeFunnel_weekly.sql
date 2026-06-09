@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         05_sp_sdi_pulseTms_silver_adobeFunnel_weekly.sql
+FILE:         01_sp_sdi_pulseTms_silver_adobeFunnel_weekly.sql
 LAYER:        Stored Procedure
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROCEDURE:    sp_sdi_pulseTms_silver_adobeFunnel_weekly
@@ -157,7 +157,7 @@ BEGIN
     FROM tmp_silver_adobe_unpivoted
   )
   SELECT
-    u.qgp_date, u.week_type, u.quarter, u.days_in_period,
+    u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period,
     u.channel_group, u.metric_name, u.metric_value,
     ly_lookup.metric_value                                                        AS metric_value_ly,
     CASE u.week_type
