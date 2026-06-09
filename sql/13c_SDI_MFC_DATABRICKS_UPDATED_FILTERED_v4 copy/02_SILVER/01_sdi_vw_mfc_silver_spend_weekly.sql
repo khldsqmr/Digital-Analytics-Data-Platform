@@ -36,30 +36,130 @@ BEGIN
     FROM prdrzranalytics.lab42.sdi_mfc_bronze_spendForecasts_weekly
   ),
 
+  -- Aggregate actuals across all quarters per QGP_Week x LOB
+  actual_aggregated AS (
+    SELECT
+      QGP_Week,
+      MIN(Week_Beginning_Monday) AS Week_Beginning_Monday,
+      MAX(Week_Ending_Sunday)    AS Week_Ending_Sunday,
+      LOB_Supported,
+      MAX(FileLoad_Date)         AS FileLoad_Date,
+      SUM(weekly_actual)         AS weekly_actual,
+      MAX(source_week_type)      AS source_week_type
+    FROM actual_clean
+    WHERE QGP_Week IS NOT NULL
+      AND Week_Beginning_Monday IS NOT NULL
+      AND Week_Ending_Sunday IS NOT NULL
+    GROUP BY QGP_Week, LOB_Supported
+  ),
+
+  -- Forecasts: one row per QGP_Week x LOB (latest FileLoad_Date)
+  forecast_deduped AS (
+    SELECT * FROM (
+      SELECT
+        Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date,
+        LOB_Supported, weekly_forecast, source_week_type,
+        ROW_NUMBER() OVER (
+          PARTITION BY QGP_Week, LOB_Supported
+          ORDER BY FileLoad_Date DESC
+        ) AS rn
+      FROM forecast_clean
+      WHERE QGP_Week IS NOT NULL
+    )
+    WHERE rn = 1
+  ),
+
   source_joined AS (
     SELECT
-      COALESCE(a.Quarter, f.Quarter)                           AS Source_Quarter,
+      COALESCE(a.QGP_Week,             f.QGP_Week)             AS Source_QGP_Week,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
-      COALESCE(a.QGP_Week, f.QGP_Week)                         AS Source_QGP_Week,
+      COALESCE(a.LOB_Supported,        f.LOB_Supported)         AS LOB_Supported,
       COALESCE(GREATEST(a.FileLoad_Date, f.FileLoad_Date),
-               a.FileLoad_Date, f.FileLoad_Date)               AS FileLoad_Date,
-      COALESCE(a.LOB_Supported, f.LOB_Supported)               AS LOB_Supported,
+               a.FileLoad_Date, f.FileLoad_Date)                AS FileLoad_Date,
       a.weekly_actual,
       f.weekly_forecast,
       COALESCE(NULLIF(a.weekly_actual, 0),
-               NULLIF(f.weekly_forecast, 0))                   AS weekly_display,
-      UPPER(TRIM(COALESCE(a.source_week_type, f.source_week_type))) AS source_week_type
-    FROM actual_clean a
-    FULL OUTER JOIN forecast_clean f
-      ON  a.Quarter       = f.Quarter
-      AND a.QGP_Week      = f.QGP_Week
+               NULLIF(f.weekly_forecast, 0))                    AS weekly_display,
+      COALESCE(a.source_week_type, f.source_week_type)          AS source_week_type
+    FROM actual_aggregated a
+    FULL OUTER JOIN forecast_deduped f
+      ON  a.QGP_Week    = f.QGP_Week
       AND a.LOB_Supported = f.LOB_Supported
   ),
 
-  lob_universe AS (
-    SELECT DISTINCT LOB_Supported FROM source_joined WHERE Source_QGP_Week IS NOT NULL
+  with_source_quarter_bounds AS (
+    SELECT *,
+      TO_DATE(DATE_TRUNC('quarter', TO_DATE(Source_QGP_Week))) AS Source_Quarter_Start_Date,
+      LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', TO_DATE(Source_QGP_Week))), 2))
+                                                               AS Source_Quarter_End_Date
+    FROM source_joined
   ),
+
+  source_periods AS (
+    SELECT *,
+      GREATEST(Week_Beginning_Monday, Source_Quarter_Start_Date) AS Period_Start,
+      LEAST(Week_Ending_Sunday,       Source_Quarter_End_Date)   AS Period_End,
+      DATEDIFF(Week_Ending_Sunday, Week_Beginning_Monday) + 1    AS source_total_week_days
+    FROM with_source_quarter_bounds
+    WHERE Week_Beginning_Monday IS NOT NULL
+      AND Week_Ending_Sunday IS NOT NULL
+  ),
+
+  normalized_weekly AS (
+    SELECT
+      FileLoad_Date, LOB_Supported, Period_Start, Period_End, Source_QGP_Week,
+      CASE WHEN source_week_type <> 'BOUNDARY_WEEK' AND Week_Ending_Sunday > Source_Quarter_End_Date
+        THEN ROUND(weekly_actual   * ((DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1) / source_total_week_days), 2)
+        ELSE weekly_actual   END AS weekly_actual,
+      CASE WHEN source_week_type <> 'BOUNDARY_WEEK' AND Week_Ending_Sunday > Source_Quarter_End_Date
+        THEN ROUND(weekly_forecast * ((DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1) / source_total_week_days), 2)
+        ELSE weekly_forecast END AS weekly_forecast,
+      CASE WHEN source_week_type <> 'BOUNDARY_WEEK' AND Week_Ending_Sunday > Source_Quarter_End_Date
+        THEN ROUND(weekly_display  * ((DATEDIFF(Source_Quarter_End_Date, Week_Beginning_Monday) + 1) / source_total_week_days), 2)
+        ELSE weekly_display  END AS weekly_display
+    FROM source_periods
+    WHERE Period_End >= Period_Start
+  ),
+
+  daily_spend AS (
+    SELECT
+      FileLoad_Date, LOB_Supported, Source_QGP_Week,
+      weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
+      weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_forecast,
+      weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_display,
+      EXPLODE(SEQUENCE(Period_Start, Period_End, INTERVAL 1 DAY)) AS calendar_date
+    FROM normalized_weekly
+  ),
+
+  daily_with_qgp AS (
+    SELECT
+      FileLoad_Date, LOB_Supported, calendar_date,
+      daily_actual, daily_forecast, daily_display,
+      LEAST(
+        CASE
+          WHEN DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+               > LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+          THEN LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+          ELSE DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+        END,
+        Source_QGP_Week
+      ) AS QGP_Week
+    FROM daily_spend
+  ),
+
+  aggregated AS (
+    SELECT
+      QGP_Week, LOB_Supported,
+      MAX(FileLoad_Date)                           AS FileLoad_Date,
+      NULLIF(ROUND(SUM(daily_actual),   2), 0)     AS spend_actual,
+      NULLIF(ROUND(SUM(daily_forecast), 2), 0)     AS spend_forecast,
+      NULLIF(ROUND(SUM(daily_display),  2), 0)     AS spend_display
+    FROM daily_with_qgp
+    GROUP BY QGP_Week, LOB_Supported
+  ),
+
+  lob_universe AS (SELECT DISTINCT LOB_Supported FROM aggregated),
 
   spine AS (
     SELECT
@@ -67,25 +167,11 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      cal.quarter_end_date,
-      lob.LOB_Supported
+      cal.quarter_end_date, lob.LOB_Supported
     FROM prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar cal
     CROSS JOIN lob_universe lob
-    WHERE cal.qgp_date >= (SELECT MIN(Source_QGP_Week) FROM source_joined WHERE Source_QGP_Week IS NOT NULL)
-      AND cal.qgp_date <= (SELECT MAX(Source_QGP_Week) FROM source_joined WHERE Source_QGP_Week IS NOT NULL)
-  ),
-
-  aggregated AS (
-    SELECT
-      Source_QGP_Week AS QGP_Week,
-      LOB_Supported,
-      MAX(FileLoad_Date)                           AS FileLoad_Date,
-      NULLIF(SUM(COALESCE(weekly_actual, 0)), 0)   AS spend_actual,
-      NULLIF(SUM(COALESCE(weekly_forecast, 0)), 0) AS spend_forecast,
-      NULLIF(SUM(COALESCE(weekly_display, 0)), 0)  AS spend_display
-    FROM source_joined
-    WHERE Source_QGP_Week IS NOT NULL
-    GROUP BY Source_QGP_Week, LOB_Supported
+    WHERE cal.qgp_date >= (SELECT MIN(QGP_Week) FROM aggregated)
+      AND cal.qgp_date <= (SELECT MAX(QGP_Week) FROM aggregated)
   ),
 
   dense_spend AS (
@@ -128,11 +214,9 @@ BEGIN
       END AS spend_for_wow
     FROM dense_spend d
     LEFT JOIN metric_lookup stub_lkp
-      ON stub_lkp.qgp_date = d.boundary_stub_date
-      AND stub_lkp.LOB_Supported = d.LOB_Supported
+      ON stub_lkp.qgp_date = d.boundary_stub_date AND stub_lkp.LOB_Supported = d.LOB_Supported
     LEFT JOIN metric_lookup prior_lkp
-      ON prior_lkp.qgp_date = d.wow_prior_qgp_date
-      AND prior_lkp.LOB_Supported = d.LOB_Supported
+      ON prior_lkp.qgp_date = d.wow_prior_qgp_date AND prior_lkp.LOB_Supported = d.LOB_Supported
     LEFT JOIN prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar prior_cal
       ON prior_cal.qgp_date = d.wow_prior_qgp_date
     LEFT JOIN metric_lookup prior_stub_lkp
@@ -147,16 +231,12 @@ BEGIN
     DATE_SUB(qgp_date, days_in_period - 1)           AS Period_Start,
     qgp_date                                         AS Period_End,
     qgp_date                                         AS QGP_Week,
-    FileLoad_Date,
-    LOB_Supported,
+    FileLoad_Date, LOB_Supported,
     spend_actual     AS weekly_actual,
     spend_forecast   AS weekly_forecast,
     spend_display    AS weekly_display,
-    spend_actual,
-    spend_forecast,
-    spend_display,
-    spend_actual_for_wow,
-    spend_for_wow,
+    spend_actual, spend_forecast, spend_display,
+    spend_actual_for_wow, spend_for_wow,
     CASE
       WHEN spend_actual_for_wow IS NOT NULL AND spend_for_wow IS NOT NULL AND spend_for_wow != 0
       THEN ROUND(((spend_actual_for_wow - spend_for_wow) / spend_for_wow) * 100, 2)
