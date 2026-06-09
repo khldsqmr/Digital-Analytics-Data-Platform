@@ -17,36 +17,50 @@ CREATE OR REPLACE VIEW
 AS
 
 WITH source_joined AS (
-  SELECT
-    COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
-    COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
-    COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
-    COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
+  SELECT * FROM (
+    SELECT
+      COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
+      COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
+      COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
+      COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
 
-    COALESCE(
-      GREATEST(a.FileLoad_Date, f.FileLoad_Date),
-      a.FileLoad_Date,
-      f.FileLoad_Date
-    ) AS FileLoad_Date,
+      COALESCE(
+        GREATEST(a.FileLoad_Date, f.FileLoad_Date),
+        a.FileLoad_Date,
+        f.FileLoad_Date
+      ) AS FileLoad_Date,
 
-    COALESCE(a.LOB_Supported, f.LOB_Supported) AS LOB_Supported,
+      COALESCE(a.LOB_Supported, f.LOB_Supported) AS LOB_Supported,
 
-    a.weekly_actual,
-    f.weekly_forecast,
+      a.weekly_actual,
+      f.weekly_forecast,
 
-    COALESCE(
-      NULLIF(a.weekly_actual, 0),
-      NULLIF(f.weekly_forecast, 0)
-    ) AS weekly_display,
+      COALESCE(
+        NULLIF(a.weekly_actual, 0),
+        NULLIF(f.weekly_forecast, 0)
+      ) AS weekly_display,
 
-    UPPER(TRIM(COALESCE(a.week_type, f.week_type))) AS source_week_type
+      UPPER(TRIM(COALESCE(a.week_type, f.week_type))) AS source_week_type,
 
-  FROM prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly a
+      -- Deduplicate boundary weeks: prefer rows with actuals, then latest FileLoad_Date
+      ROW_NUMBER() OVER (
+        PARTITION BY
+          COALESCE(a.QGP_Week,      f.QGP_Week),
+          COALESCE(a.LOB_Supported, f.LOB_Supported)
+        ORDER BY
+          CASE WHEN a.weekly_actual IS NOT NULL THEN 0 ELSE 1 END,
+          COALESCE(GREATEST(a.FileLoad_Date, f.FileLoad_Date),
+                   a.FileLoad_Date, f.FileLoad_Date) DESC
+      ) AS rn
 
-  FULL OUTER JOIN prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecasts_weekly f
-    ON  a.Quarter       = f.Quarter
-    AND a.QGP_Week      = f.QGP_Week
-    AND a.LOB_Supported = f.LOB_Supported
+    FROM prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly a
+
+    FULL OUTER JOIN prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecasts_weekly f
+      ON  a.Quarter       = f.Quarter
+      AND a.QGP_Week      = f.QGP_Week
+      AND a.LOB_Supported = f.LOB_Supported
+  )
+  WHERE rn = 1
 ),
 
 with_quarter_numbers AS (
