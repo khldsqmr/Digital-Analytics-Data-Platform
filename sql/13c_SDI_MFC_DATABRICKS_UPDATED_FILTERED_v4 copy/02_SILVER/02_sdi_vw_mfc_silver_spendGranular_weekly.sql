@@ -6,13 +6,15 @@
 
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly()
+SQL SECURITY DEFINER
 COMMENT 'Creates/refreshes sdi_mfc_silver_spendGranular_weekly. Granular spend with PulseTMS-style WoW. Refreshed weekly.'
 BEGIN
 
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_mfc_silver_spendGranular_weekly
   USING DELTA
-  COMMENT 'MFC Silver — granular spend with WoW. One row per QGP_Week x LOB x Channel x Tactic x Message_Type x Agency. Refreshed via sdi_sp_mfc_silver_spendGranular_weekly.'
+  SQL SECURITY DEFINER
+COMMENT 'MFC Silver — granular spend with WoW. One row per QGP_Week x LOB x Channel x Tactic x Message_Type x Agency. Refreshed via sdi_sp_mfc_silver_spendGranular_weekly.'
   AS
 
   WITH

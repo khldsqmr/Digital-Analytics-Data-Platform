@@ -6,13 +6,15 @@
 
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly()
+SQL SECURITY DEFINER
 COMMENT 'Creates/refreshes sdi_mfc_silver_spend_weekly. LOB-level spend with PulseTMS-style WoW. Refreshed weekly.'
 BEGIN
 
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_mfc_silver_spend_weekly
   USING DELTA
-  COMMENT 'MFC Silver — LOB-level spend with WoW. One row per QGP_Week x LOB_Supported. Refreshed via sdi_sp_mfc_silver_spend_weekly.'
+  SQL SECURITY DEFINER
+COMMENT 'MFC Silver — LOB-level spend with WoW. One row per QGP_Week x LOB_Supported. Refreshed via sdi_sp_mfc_silver_spend_weekly.'
   AS
 
   WITH

@@ -5,13 +5,15 @@
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecasts_weekly()
+SQL SECURITY DEFINER
 COMMENT 'Creates/refreshes sdi_mfc_bronze_spendForecasts_weekly. Refreshed weekly.'
 BEGIN
 
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_mfc_bronze_spendForecasts_weekly
   USING DELTA
-  COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendForecasts_weekly.'
+  SQL SECURITY DEFINER
+COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendForecasts_weekly.'
   AS
 
 WITH raw AS (
