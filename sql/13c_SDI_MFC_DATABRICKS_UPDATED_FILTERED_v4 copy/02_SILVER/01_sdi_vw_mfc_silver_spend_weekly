@@ -48,6 +48,7 @@ WITH source_joined AS (
           COALESCE(a.QGP_Week,      f.QGP_Week),
           COALESCE(a.LOB_Supported, f.LOB_Supported)
         ORDER BY
+          CASE WHEN COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) IS NOT NULL THEN 0 ELSE 1 END,
           CASE WHEN a.weekly_actual IS NOT NULL THEN 0 ELSE 1 END,
           COALESCE(GREATEST(a.FileLoad_Date, f.FileLoad_Date),
                    a.FileLoad_Date, f.FileLoad_Date) DESC

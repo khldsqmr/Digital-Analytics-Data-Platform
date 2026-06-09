@@ -108,6 +108,9 @@ source_joined AS (
           COALESCE(a.Message_Type,  f.Message_Type),
           COALESCE(a.Agency,        f.Agency)
         ORDER BY
+          -- Prefer rows where Week_Beginning_Monday is not null (valid date range)
+          -- then prefer actuals over forecast-only rows
+          CASE WHEN COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) IS NOT NULL THEN 0 ELSE 1 END,
           CASE WHEN a.weekly_actual IS NOT NULL THEN 0 ELSE 1 END,
           COALESCE(GREATEST(a.FileLoad_Date, f.FileLoad_Date),
                    a.FileLoad_Date, f.FileLoad_Date) DESC
