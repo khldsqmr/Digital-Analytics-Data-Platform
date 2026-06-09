@@ -6,7 +6,7 @@ PROCEDURE:    sp_sdi_pulseTms_silver_adobeFunnel_weekly
 
 PURPOSE:
   Creates/refreshes physical table sdi_pulseTms_silver_adobeFunnel_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the refresh.
+  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
 
   Split into two steps to avoid BigQuery "query too complex" / resource exceeded errors:
     STEP 1 — Materialize unpivoted long-format rows into a TEMP TABLE (free, no storage cost).
@@ -32,7 +32,7 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      b.channel_group,
+      channels.channel_group,
       IF(cal.is_complete_period, b.upvPostpaid,              NULL) AS upvPostpaid,
       IF(cal.is_complete_period, b.upvHsi,                   NULL) AS upvHsi,
       IF(cal.is_complete_period, b.upvByod,                  NULL) AS upvByod,
@@ -54,8 +54,15 @@ BEGIN
          (b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod)
          + (b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod), NULL) AS ordersTotal
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
+    -- Cross join with known channel groups so future weeks get a row per channel
+    -- even when Bronze has no data yet
+    CROSS JOIN (
+      SELECT DISTINCT channel_group
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly`
+    ) channels
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly` b
       ON b.week_sun_sat = cal.qgp_date
+      AND b.channel_group = channels.channel_group
     WHERE
       -- All historical quarters (fully complete)
       cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)

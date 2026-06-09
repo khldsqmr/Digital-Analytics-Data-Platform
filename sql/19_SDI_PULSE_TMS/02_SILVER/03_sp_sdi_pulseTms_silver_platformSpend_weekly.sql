@@ -6,7 +6,7 @@ PROCEDURE:    sp_sdi_pulseTms_silver_platformSpend_weekly
 
 PURPOSE:
   Creates/refreshes physical table sdi_pulseTms_silver_platformSpend_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the refresh.
+  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -29,11 +29,18 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      b.lob, b.channel_group,
+      channels.lob, channels.channel_group,
       IF(cal.is_complete_period, b.spend, NULL) AS spend
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
+    CROSS JOIN (
+      SELECT DISTINCT lob, channel_group
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_platformSpend_weekly`
+      WHERE lob = 'POSTPAID'
+    ) channels
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_platformSpend_weekly` b
-      ON b.week_sun_sat = cal.qgp_date AND b.lob = 'POSTPAID'
+      ON b.week_sun_sat = cal.qgp_date
+      AND b.lob = channels.lob
+      AND b.channel_group = channels.channel_group
     WHERE
       -- All historical quarters (fully complete)
       cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)

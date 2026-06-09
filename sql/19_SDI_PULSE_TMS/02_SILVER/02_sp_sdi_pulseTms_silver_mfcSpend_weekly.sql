@@ -6,7 +6,7 @@ PROCEDURE:    sp_sdi_pulseTms_silver_mfcSpend_weekly
 
 PURPOSE:
   Creates/refreshes physical table sdi_pulseTms_silver_mfcSpend_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the refresh.
+  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -29,13 +29,19 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      b.lob, b.channel_group, b.channel, b.tactic, b.message_type, b.agency,
+      channels.lob, channels.channel_group, b.channel, b.tactic, b.message_type, b.agency,
       IF(cal.is_complete_period, b.spend_actual,   NULL) AS spend_actual,
       IF(cal.is_complete_period, b.spend_forecast, NULL) AS spend_forecast,
       b.file_load_date
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
+    CROSS JOIN (
+      SELECT DISTINCT lob, channel_group
+      FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly`
+    ) channels
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly` b
       ON b.qgp_week = cal.qgp_date
+      AND b.lob = channels.lob
+      AND b.channel_group = channels.channel_group
     WHERE
       -- All historical quarters (fully complete)
       cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
