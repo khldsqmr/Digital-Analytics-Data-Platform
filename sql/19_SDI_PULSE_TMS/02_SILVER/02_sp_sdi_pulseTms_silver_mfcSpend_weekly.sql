@@ -103,19 +103,69 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_gr.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + COALESCE(wow_prior_stub_gr.metric_value, 0) ELSE wow_prior_lookup.metric_value END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
-    LEFT JOIN MetricLookupGranular wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.channel = u.channel AND wow_prior_lookup.tactic = u.tactic AND wow_prior_lookup.message_type = u.message_type AND wow_prior_lookup.agency = u.agency AND wow_prior_lookup.metric_name = u.metric_name
-    LEFT JOIN MetricLookupGranular ly_lookup ON ly_lookup.qgp_date = u.prior_year_qgp_date AND ly_lookup.lob = u.lob AND ly_lookup.channel_group = u.channel_group AND ly_lookup.channel = u.channel AND ly_lookup.tactic = u.tactic AND ly_lookup.message_type = u.message_type AND ly_lookup.agency = u.agency AND ly_lookup.metric_name = u.metric_name
-    LEFT JOIN MetricLookupGranular stub_lookup ON stub_lookup.qgp_date = u.boundary_stub_date AND stub_lookup.lob = u.lob AND stub_lookup.channel_group = u.channel_group AND stub_lookup.channel = u.channel AND stub_lookup.tactic = u.tactic AND stub_lookup.message_type = u.message_type AND stub_lookup.agency = u.agency AND stub_lookup.metric_name = u.metric_name
-    LEFT JOIN MetricLookupGranular yoy_bf_lookup ON yoy_bf_lookup.qgp_date = u.prior_year_qgp_date AND yoy_bf_lookup.lob = u.lob AND yoy_bf_lookup.channel_group = u.channel_group AND yoy_bf_lookup.channel = u.channel AND yoy_bf_lookup.tactic = u.tactic AND yoy_bf_lookup.message_type = u.message_type AND yoy_bf_lookup.agency = u.agency AND yoy_bf_lookup.metric_name = u.metric_name
-    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal ON ly_cal.qgp_date = u.prior_year_qgp_date
-    LEFT JOIN MetricLookupGranular yoy_stub_lookup ON yoy_stub_lookup.qgp_date = ly_cal.boundary_stub_date AND yoy_stub_lookup.lob = u.lob AND yoy_stub_lookup.channel_group = u.channel_group AND yoy_stub_lookup.channel = u.channel AND yoy_stub_lookup.tactic = u.tactic AND yoy_stub_lookup.message_type = u.message_type AND yoy_stub_lookup.agency = u.agency AND yoy_stub_lookup.metric_name = u.metric_name
-    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal_gr ON prior_cal_gr.qgp_date = u.wow_prior_qgp_date
-    LEFT JOIN MetricLookupGranular wow_prior_stub_gr ON wow_prior_stub_gr.qgp_date = prior_cal_gr.boundary_stub_date AND wow_prior_stub_gr.lob = u.lob AND wow_prior_stub_gr.channel_group = u.channel_group AND wow_prior_stub_gr.channel = u.channel AND wow_prior_stub_gr.tactic = u.tactic AND wow_prior_stub_gr.message_type = u.message_type AND wow_prior_stub_gr.agency = u.agency AND wow_prior_stub_gr.metric_name = u.metric_name
+    LEFT JOIN MetricLookupGranular wow_prior_lookup
+      ON  wow_prior_lookup.qgp_date     = u.wow_prior_qgp_date
+      AND wow_prior_lookup.lob          = u.lob
+      AND wow_prior_lookup.channel_group = u.channel_group
+      AND wow_prior_lookup.channel      = u.channel
+      AND wow_prior_lookup.tactic       = u.tactic
+      AND wow_prior_lookup.message_type = u.message_type
+      AND wow_prior_lookup.agency       = u.agency
+      AND wow_prior_lookup.metric_name  = u.metric_name
+    LEFT JOIN MetricLookupGranular ly_lookup
+      ON  ly_lookup.qgp_date     = u.prior_year_qgp_date
+      AND ly_lookup.lob          = u.lob
+      AND ly_lookup.channel_group = u.channel_group
+      AND ly_lookup.channel      = u.channel
+      AND ly_lookup.tactic       = u.tactic
+      AND ly_lookup.message_type = u.message_type
+      AND ly_lookup.agency       = u.agency
+      AND ly_lookup.metric_name  = u.metric_name
+    LEFT JOIN MetricLookupGranular stub_lookup
+      ON  stub_lookup.qgp_date     = u.boundary_stub_date
+      AND stub_lookup.lob          = u.lob
+      AND stub_lookup.channel_group = u.channel_group
+      AND stub_lookup.channel      = u.channel
+      AND stub_lookup.tactic       = u.tactic
+      AND stub_lookup.message_type = u.message_type
+      AND stub_lookup.agency       = u.agency
+      AND stub_lookup.metric_name  = u.metric_name
+    LEFT JOIN MetricLookupGranular yoy_bf_lookup
+      ON  yoy_bf_lookup.qgp_date     = u.prior_year_qgp_date
+      AND yoy_bf_lookup.lob          = u.lob
+      AND yoy_bf_lookup.channel_group = u.channel_group
+      AND yoy_bf_lookup.channel      = u.channel
+      AND yoy_bf_lookup.tactic       = u.tactic
+      AND yoy_bf_lookup.message_type = u.message_type
+      AND yoy_bf_lookup.agency       = u.agency
+      AND yoy_bf_lookup.metric_name  = u.metric_name
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal
+      ON  ly_cal.qgp_date = u.prior_year_qgp_date
+    LEFT JOIN MetricLookupGranular yoy_stub_lookup
+      ON  yoy_stub_lookup.qgp_date     = ly_cal.boundary_stub_date
+      AND yoy_stub_lookup.lob          = u.lob
+      AND yoy_stub_lookup.channel_group = u.channel_group
+      AND yoy_stub_lookup.channel      = u.channel
+      AND yoy_stub_lookup.tactic       = u.tactic
+      AND yoy_stub_lookup.message_type = u.message_type
+      AND yoy_stub_lookup.agency       = u.agency
+      AND yoy_stub_lookup.metric_name  = u.metric_name
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal_gr
+      ON  prior_cal_gr.qgp_date = u.wow_prior_qgp_date
+    LEFT JOIN MetricLookupGranular wow_prior_stub_gr
+      ON  wow_prior_stub_gr.qgp_date     = prior_cal_gr.boundary_stub_date
+      AND wow_prior_stub_gr.lob          = u.lob
+      AND wow_prior_stub_gr.channel_group = u.channel_group
+      AND wow_prior_stub_gr.channel      = u.channel
+      AND wow_prior_stub_gr.tactic       = u.tactic
+      AND wow_prior_stub_gr.message_type = u.message_type
+      AND wow_prior_stub_gr.agency       = u.agency
+      AND wow_prior_stub_gr.metric_name  = u.metric_name
   ),
   Combined AS (
     SELECT 'MFC_SPEND_CHANNEL'  AS data_source, * FROM ChannelWithWowYoy
