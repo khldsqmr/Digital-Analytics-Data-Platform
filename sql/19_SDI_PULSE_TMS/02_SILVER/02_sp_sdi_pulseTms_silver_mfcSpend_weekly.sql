@@ -103,9 +103,9 @@ BEGIN
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub_gr.metric_value, 0) ELSE COALESCE(wow_prior_lookup.metric_value, 0) END AS wow_denominator,
+      CASE WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN COALESCE(wow_prior_lookup.metric_value, 0) + COALESCE(wow_prior_stub_gr.metric_value, 0) ELSE COALESCE(wow_prior_lookup.metric_value, 0) END AS wow_denominator,
       CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN COALESCE(yoy_bf_lookup.metric_value, 0) + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE COALESCE(ly_lookup.metric_value, 0) END AS yoy_denominator,
+      CASE WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN COALESCE(yoy_bf_lookup.metric_value, 0) + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE COALESCE(ly_lookup.metric_value, 0) END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
     LEFT JOIN MetricLookupGranular wow_prior_lookup
