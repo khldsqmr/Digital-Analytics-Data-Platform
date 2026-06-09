@@ -3,9 +3,16 @@
 -- Databricks / Spark SQL
 -- Converted from BigQuery logic
 -- ============================================================
-CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendActuals_weekly
-AS
+CREATE OR REPLACE PROCEDURE
+  prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly()
+COMMENT 'Creates/refreshes sdi_mfc_bronze_spendActuals_weekly. Refreshed weekly.'
+BEGIN
+
+  CREATE OR REPLACE TABLE
+    prdrzranalytics.lab42.sdi_mfc_bronze_spendActuals_weekly
+  USING DELTA
+  COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
+  AS
 
 WITH raw AS (
   SELECT
@@ -80,3 +87,5 @@ JOIN week_type w ON b.QGP_Week = w.QGP_Week
 WHERE b.weekly_actual IS NOT NULL
   AND b.weekly_actual != 0
 ;
+
+END;
