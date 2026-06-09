@@ -12,8 +12,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_mfc_bronze_spendActuals_weekly
   USING DELTA
-  SQL SECURITY DEFINER
-COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
+  COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
   AS
 
 WITH raw AS (
