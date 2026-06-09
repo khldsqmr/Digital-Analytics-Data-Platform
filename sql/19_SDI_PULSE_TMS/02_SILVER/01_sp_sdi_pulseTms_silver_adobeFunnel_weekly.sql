@@ -166,8 +166,11 @@ BEGIN
       ELSE                       u.metric_value
     END                                                                           AS wow_numerator,
     CASE
-      WHEN u.metric_value IS NULL   THEN NULL
+      WHEN u.metric_value IS NULL        THEN NULL
       WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
+      -- If prior week was BOUNDARY_FIRST, denominator = BOUNDARY_FIRST value + its stub value
+      WHEN wow_prior_stub_lookup.metric_value IS NOT NULL
+        THEN wow_prior_lookup.metric_value + wow_prior_stub_lookup.metric_value
       ELSE wow_prior_lookup.metric_value
     END                                                                           AS wow_denominator,
     CASE u.week_type
@@ -178,9 +181,15 @@ BEGIN
              ELSE (u.metric_value + stub_lookup.metric_value) / wow_prior_lookup.metric_value - 1
         END
       ELSE
-        CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
-             THEN NULL
-             ELSE u.metric_value / wow_prior_lookup.metric_value - 1
+        -- If prior week was BOUNDARY_FIRST, use combined (BOUNDARY_FIRST + stub) as denominator
+        CASE
+          WHEN wow_prior_stub_lookup.metric_value IS NOT NULL
+            THEN
+              CASE WHEN (wow_prior_lookup.metric_value + wow_prior_stub_lookup.metric_value) = 0 THEN NULL
+                   ELSE u.metric_value / (wow_prior_lookup.metric_value + wow_prior_stub_lookup.metric_value) - 1
+              END
+          WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0 THEN NULL
+          ELSE u.metric_value / wow_prior_lookup.metric_value - 1
         END
     END                                                                           AS wow_pct,
     CASE u.week_type
@@ -216,6 +225,13 @@ BEGIN
     ON  wow_prior_lookup.qgp_date     = u.wow_prior_qgp_date
     AND wow_prior_lookup.channel_group = u.channel_group
     AND wow_prior_lookup.metric_name   = u.metric_name
+  -- For weeks where prior week is BOUNDARY_FIRST, also look up the stub value
+  LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal
+    ON  prior_cal.qgp_date = u.wow_prior_qgp_date
+  LEFT JOIN MetricLookup wow_prior_stub_lookup
+    ON  wow_prior_stub_lookup.qgp_date     = prior_cal.boundary_stub_date
+    AND wow_prior_stub_lookup.channel_group = u.channel_group
+    AND wow_prior_stub_lookup.metric_name   = u.metric_name
   LEFT JOIN MetricLookup ly_lookup
     ON  ly_lookup.qgp_date     = u.prior_year_qgp_date
     AND ly_lookup.channel_group = u.channel_group
