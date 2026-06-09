@@ -124,7 +124,7 @@ BEGIN
 
   daily_spend AS (
     SELECT
-      FileLoad_Date, LOB_Supported, Source_QGP_Week,
+      FileLoad_Date, LOB_Supported,
       weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
       weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_forecast,
       weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_display,
@@ -136,15 +136,12 @@ BEGIN
     SELECT
       FileLoad_Date, LOB_Supported, calendar_date,
       daily_actual, daily_forecast, daily_display,
-      LEAST(
-        CASE
-          WHEN DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
-               > LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
-          THEN LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
-          ELSE DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
-        END,
-        Source_QGP_Week
-      ) AS QGP_Week
+      CASE
+        WHEN DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+             > LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+        THEN LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+        ELSE DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+      END AS QGP_Week
     FROM daily_spend
   ),
 
