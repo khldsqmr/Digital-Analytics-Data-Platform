@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         06_sp_sdi_pulseTms_silver_mfcSpend_weekly.sql
+FILE:         02_sp_sdi_pulseTms_silver_mfcSpend_weekly.sql
 LAYER:        Stored Procedure
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROCEDURE:    sp_sdi_pulseTms_silver_mfcSpend_weekly
@@ -29,19 +29,26 @@ BEGIN
       cal.is_complete_period, cal.is_current_quarter,
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
-      channels.lob, channels.channel_group, b.channel, b.tactic, b.message_type, b.agency,
+      channels.lob, channels.channel_group, channels.channel, channels.tactic, channels.message_type, channels.agency,
       IF(cal.is_complete_period, b.spend_actual,   NULL) AS spend_actual,
       b.spend_forecast                                    AS spend_forecast,
       b.file_load_date
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
+    -- Cross join on full granular combination so every date gets a row for every
+    -- lob x channel_group x channel x tactic x message_type x agency combination
+    -- that has ever existed — NULL metric_value where no data for that week
     CROSS JOIN (
-      SELECT DISTINCT lob, channel_group
+      SELECT DISTINCT lob, channel_group, channel, tactic, message_type, agency
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly`
     ) channels
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly` b
       ON b.qgp_week = cal.qgp_date
       AND b.lob = channels.lob
       AND b.channel_group = channels.channel_group
+      AND b.channel = channels.channel
+      AND b.tactic = channels.tactic
+      AND b.message_type = channels.message_type
+      AND b.agency = channels.agency
     WHERE
       -- All historical quarters (fully complete)
       cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
@@ -76,10 +83,10 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_ch.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_ch.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator,
       u.lob AS lob_mfc, CAST(NULL AS STRING) AS channel, CAST(NULL AS STRING) AS tactic, CAST(NULL AS STRING) AS message_type, CAST(NULL AS STRING) AS agency
     FROM UnpivotedChannel u
     LEFT JOIN MetricLookupChannel wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
@@ -95,10 +102,10 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.is_complete_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS wow_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_gr.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0) ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + COALESCE(yoy_stub_lookup.metric_value, 0) ELSE ly_lookup.metric_value END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
     LEFT JOIN MetricLookupGranular wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.channel = u.channel AND wow_prior_lookup.tactic = u.tactic AND wow_prior_lookup.message_type = u.message_type AND wow_prior_lookup.agency = u.agency AND wow_prior_lookup.metric_name = u.metric_name
