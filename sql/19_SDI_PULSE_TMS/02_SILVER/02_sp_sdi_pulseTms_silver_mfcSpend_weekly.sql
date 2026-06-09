@@ -31,7 +31,7 @@ BEGIN
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
       channels.lob, channels.channel_group, b.channel, b.tactic, b.message_type, b.agency,
       IF(cal.is_complete_period, b.spend_actual,   NULL) AS spend_actual,
-      IF(cal.is_complete_period, b.spend_forecast, NULL) AS spend_forecast,
+      b.spend_forecast                                    AS spend_forecast,
       b.file_load_date
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
     CROSS JOIN (
@@ -58,6 +58,7 @@ BEGIN
     SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendActual' AS metric_name, spend_actual AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
     UNION ALL SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendForecast', spend_forecast FROM BronzeWithCalendar WHERE lob IS NOT NULL
   ),
+
   UnpivotedChannelBase AS (
     SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group, 'mfcSpendActual' AS metric_name, SUM(spend_actual) AS metric_value FROM BronzeWithCalendar WHERE lob = 'CONSUMER POSTPAID' GROUP BY qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group
     UNION ALL SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group, 'mfcSpendForecast', SUM(spend_forecast) FROM BronzeWithCalendar WHERE lob = 'CONSUMER POSTPAID' GROUP BY qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group
@@ -75,10 +76,10 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_ch.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_ch.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
       'CONSUMER POSTPAID' AS lob_mfc, CAST(NULL AS STRING) AS channel, CAST(NULL AS STRING) AS tactic, CAST(NULL AS STRING) AS message_type, CAST(NULL AS STRING) AS agency
     FROM UnpivotedChannel u
     LEFT JOIN MetricLookupChannel wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
@@ -87,15 +88,17 @@ BEGIN
     LEFT JOIN MetricLookupChannel yoy_bf_lookup ON yoy_bf_lookup.qgp_date = u.prior_year_qgp_date AND yoy_bf_lookup.channel_group = u.channel_group AND yoy_bf_lookup.metric_name = u.metric_name
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal ON ly_cal.qgp_date = u.prior_year_qgp_date
     LEFT JOIN MetricLookupChannel yoy_stub_lookup ON yoy_stub_lookup.qgp_date = ly_cal.boundary_stub_date AND yoy_stub_lookup.channel_group = u.channel_group AND yoy_stub_lookup.metric_name = u.metric_name
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal_ch ON prior_cal_ch.qgp_date = u.wow_prior_qgp_date
+    LEFT JOIN MetricLookupChannel wow_prior_stub_ch ON wow_prior_stub_ch.qgp_date = prior_cal_ch.boundary_stub_date AND wow_prior_stub_ch.channel_group = u.channel_group AND wow_prior_stub_ch.metric_name = u.metric_name
   ),
   GranularWithWowYoy AS (
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS wow_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN wow_prior_stub_gr.metric_value IS NOT NULL THEN wow_prior_lookup.metric_value + wow_prior_stub_gr.metric_value ELSE wow_prior_lookup.metric_value END AS wow_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
     LEFT JOIN MetricLookupGranular wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.channel = u.channel AND wow_prior_lookup.tactic = u.tactic AND wow_prior_lookup.message_type = u.message_type AND wow_prior_lookup.agency = u.agency AND wow_prior_lookup.metric_name = u.metric_name
@@ -104,6 +107,8 @@ BEGIN
     LEFT JOIN MetricLookupGranular yoy_bf_lookup ON yoy_bf_lookup.qgp_date = u.prior_year_qgp_date AND yoy_bf_lookup.lob = u.lob AND yoy_bf_lookup.channel_group = u.channel_group AND yoy_bf_lookup.channel = u.channel AND yoy_bf_lookup.tactic = u.tactic AND yoy_bf_lookup.message_type = u.message_type AND yoy_bf_lookup.agency = u.agency AND yoy_bf_lookup.metric_name = u.metric_name
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal ON ly_cal.qgp_date = u.prior_year_qgp_date
     LEFT JOIN MetricLookupGranular yoy_stub_lookup ON yoy_stub_lookup.qgp_date = ly_cal.boundary_stub_date AND yoy_stub_lookup.lob = u.lob AND yoy_stub_lookup.channel_group = u.channel_group AND yoy_stub_lookup.channel = u.channel AND yoy_stub_lookup.tactic = u.tactic AND yoy_stub_lookup.message_type = u.message_type AND yoy_stub_lookup.agency = u.agency AND yoy_stub_lookup.metric_name = u.metric_name
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal_gr ON prior_cal_gr.qgp_date = u.wow_prior_qgp_date
+    LEFT JOIN MetricLookupGranular wow_prior_stub_gr ON wow_prior_stub_gr.qgp_date = prior_cal_gr.boundary_stub_date AND wow_prior_stub_gr.lob = u.lob AND wow_prior_stub_gr.channel_group = u.channel_group AND wow_prior_stub_gr.channel = u.channel AND wow_prior_stub_gr.tactic = u.tactic AND wow_prior_stub_gr.message_type = u.message_type AND wow_prior_stub_gr.agency = u.agency AND wow_prior_stub_gr.metric_name = u.metric_name
   ),
   Combined AS (
     SELECT 'MFC_SPEND_CHANNEL'  AS data_source, * FROM ChannelWithWowYoy

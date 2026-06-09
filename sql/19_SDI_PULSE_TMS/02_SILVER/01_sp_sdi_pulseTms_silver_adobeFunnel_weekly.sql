@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         01_sp_sdi_pulseTms_silver_adobeFunnel_weekly.sql
+FILE:         05_sp_sdi_pulseTms_silver_adobeFunnel_weekly.sql
 LAYER:        Stored Procedure
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 PROCEDURE:    sp_sdi_pulseTms_silver_adobeFunnel_weekly
