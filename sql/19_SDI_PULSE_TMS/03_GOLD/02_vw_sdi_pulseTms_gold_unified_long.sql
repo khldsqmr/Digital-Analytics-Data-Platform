@@ -35,6 +35,7 @@ COLUMN SCHEMA:
   week_type         — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
   quarter           — e.g. '2026 Q1'
   days_in_period    — 7 for NORMAL; <7 for stubs
+  is_complete_period — TRUE when qgp_date <= CURRENT_DATE() — week has ended
   channel_group     — 'All Channels' | 'Paid Search' | 'Paid Social' |
                       'Programmatic' | 'Other' | 'Direct' | 'Organic Search'
   metric_name       — camelCase metric identifier (see per-source metric lists below)
@@ -97,6 +98,7 @@ SELECT
   s.week_type,
   s.quarter,
   s.days_in_period,
+  s.is_complete_period,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -129,6 +131,7 @@ SELECT
   s.week_type,
   s.quarter,
   s.days_in_period,
+  s.is_complete_period,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -162,6 +165,7 @@ SELECT
   s.week_type,
   s.quarter,
   s.days_in_period,
+  s.is_complete_period,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -195,6 +199,7 @@ SELECT
   s.week_type,
   s.quarter,
   s.days_in_period,
+  s.is_complete_period,
   s.channel_group,
   s.metric_name,
   s.metric_value,
