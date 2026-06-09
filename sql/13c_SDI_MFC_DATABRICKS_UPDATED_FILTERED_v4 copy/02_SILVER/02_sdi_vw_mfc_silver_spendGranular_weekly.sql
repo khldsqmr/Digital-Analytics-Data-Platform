@@ -29,6 +29,8 @@ BEGIN
       weekly_actual,
       UPPER(TRIM(week_type))     AS source_week_type
     FROM prdrzranalytics.lab42.sdi_mfc_bronze_spendActualsGranular_weekly
+    WHERE Week_Beginning_Monday IS NOT NULL
+      AND Week_Ending_Sunday IS NOT NULL
   ),
 
   forecast_clean AS (
@@ -42,68 +44,35 @@ BEGIN
       weekly_forecast,
       UPPER(TRIM(week_type))     AS source_week_type
     FROM prdrzranalytics.lab42.sdi_mfc_bronze_spendForecastsGranular_weekly
-  ),
-
-  -- ── Aggregate actuals across all quarters per QGP_Week x combination ─────────
-  -- Boundary weeks have both Q1 and Q2 actuals tagged to same QGP_Week in raw.
-  -- Summing them gives the full 7-day total for that calendar week.
-  -- The daily disaggregation below then splits them correctly by quarter-end date.
-  actual_aggregated AS (
-    SELECT
-      QGP_Week,
-      -- Use the Week_Beginning_Monday and Week_Ending_Sunday from the row
-      -- that spans the full 7 days (prefer the one where wbm < quarter end)
-      MIN(Week_Beginning_Monday) AS Week_Beginning_Monday,
-      MAX(Week_Ending_Sunday)    AS Week_Ending_Sunday,
-      LOB_Supported, Channel, Tactic, Message_Type, Agency,
-      MAX(FileLoad_Date)         AS FileLoad_Date,
-      SUM(weekly_actual)         AS weekly_actual,
-      MAX(source_week_type)      AS source_week_type
-    FROM actual_clean
-    WHERE QGP_Week IS NOT NULL
-      AND Week_Beginning_Monday IS NOT NULL
+    WHERE Week_Beginning_Monday IS NOT NULL
       AND Week_Ending_Sunday IS NOT NULL
-    GROUP BY QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
 
-  -- Forecasts: one row per QGP_Week x combination (latest FileLoad_Date)
-  forecast_deduped AS (
-    SELECT * FROM (
-      SELECT
-        Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date,
-        LOB_Supported, Channel, Tactic, Message_Type, Agency,
-        weekly_forecast, source_week_type,
-        ROW_NUMBER() OVER (
-          PARTITION BY QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
-          ORDER BY FileLoad_Date DESC
-        ) AS rn
-      FROM forecast_clean
-      WHERE QGP_Week IS NOT NULL
-    )
-    WHERE rn = 1
-  ),
-
-  -- ── Join actuals + forecasts ──────────────────────────────────────────────────
+  -- ── Join actuals + forecasts keeping separate Quarter rows ───────────────────
+  -- Each Quarter row (Q1, Q2) for a boundary week is kept separate so the
+  -- daily disaggregation correctly splits them to the right QGP_Week
   source_joined AS (
     SELECT
-      COALESCE(a.QGP_Week,             f.QGP_Week)             AS Source_QGP_Week,
+      COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
-      COALESCE(a.LOB_Supported,        f.LOB_Supported)         AS LOB_Supported,
-      COALESCE(a.Channel,              f.Channel)               AS Channel,
-      COALESCE(a.Tactic,               f.Tactic)                AS Tactic,
-      COALESCE(a.Message_Type,         f.Message_Type)          AS Message_Type,
-      COALESCE(a.Agency,               f.Agency)                AS Agency,
+      COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
       COALESCE(GREATEST(a.FileLoad_Date, f.FileLoad_Date),
-               a.FileLoad_Date, f.FileLoad_Date)                AS FileLoad_Date,
+               a.FileLoad_Date, f.FileLoad_Date)                 AS FileLoad_Date,
+      COALESCE(a.LOB_Supported, f.LOB_Supported)                 AS LOB_Supported,
+      COALESCE(a.Channel,       f.Channel)                       AS Channel,
+      COALESCE(a.Tactic,        f.Tactic)                        AS Tactic,
+      COALESCE(a.Message_Type,  f.Message_Type)                  AS Message_Type,
+      COALESCE(a.Agency,        f.Agency)                        AS Agency,
       a.weekly_actual,
       f.weekly_forecast,
       COALESCE(NULLIF(a.weekly_actual, 0),
-               NULLIF(f.weekly_forecast, 0))                    AS weekly_display,
-      COALESCE(a.source_week_type, f.source_week_type)          AS source_week_type
-    FROM actual_aggregated a
-    FULL OUTER JOIN forecast_deduped f
-      ON  a.QGP_Week      = f.QGP_Week
+               NULLIF(f.weekly_forecast, 0))                     AS weekly_display,
+      COALESCE(a.source_week_type, f.source_week_type)           AS source_week_type
+    FROM actual_clean a
+    FULL OUTER JOIN forecast_clean f
+      ON  a.Quarter       = f.Quarter
+      AND a.QGP_Week      = f.QGP_Week
       AND a.LOB_Supported <=> f.LOB_Supported
       AND a.Channel       <=> f.Channel
       AND a.Tactic        <=> f.Tactic
@@ -111,20 +80,15 @@ BEGIN
       AND a.Agency        <=> f.Agency
   ),
 
-  -- ── Quarter bounds ────────────────────────────────────────────────────────────
-  with_quarter_numbers AS (
-    SELECT *,
-      CAST(SUBSTR(Source_QGP_Week, 1, 4) AS INT)        AS qgp_year,
-      QUARTER(TO_DATE(Source_QGP_Week))                  AS qgp_quarter_num
-    FROM source_joined
-  ),
-
+  -- ── Quarter bounds per source row ────────────────────────────────────────────
   with_source_quarter_bounds AS (
     SELECT *,
-      TO_DATE(DATE_TRUNC('quarter', TO_DATE(Source_QGP_Week))) AS Source_Quarter_Start_Date,
-      LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', TO_DATE(Source_QGP_Week))), 2))
-                                                               AS Source_Quarter_End_Date
-    FROM with_quarter_numbers
+      TO_DATE(DATE_TRUNC('quarter', Week_Beginning_Monday)) AS Source_Quarter_Start_Date,
+      LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', Week_Beginning_Monday)), 2))
+                                                            AS Source_Quarter_End_Date
+    FROM source_joined
+    WHERE Week_Beginning_Monday IS NOT NULL
+      AND Week_Ending_Sunday IS NOT NULL
   ),
 
   source_periods AS (
@@ -133,11 +97,9 @@ BEGIN
       LEAST(Week_Ending_Sunday,       Source_Quarter_End_Date)   AS Period_End,
       DATEDIFF(Week_Ending_Sunday, Week_Beginning_Monday) + 1    AS source_total_week_days
     FROM with_source_quarter_bounds
-    WHERE Week_Beginning_Monday IS NOT NULL
-      AND Week_Ending_Sunday IS NOT NULL
   ),
 
-  -- ── Prorate actuals/forecasts to the portion within each quarter ──────────────
+  -- ── Prorate to portion within each quarter ────────────────────────────────────
   normalized_weekly AS (
     SELECT
       FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
@@ -155,10 +117,11 @@ BEGIN
     WHERE Period_End >= Period_Start
   ),
 
-  -- ── Explode to daily, then map to QGP_Week ────────────────────────────────────
+  -- ── Explode to daily ──────────────────────────────────────────────────────────
   daily_spend AS (
     SELECT
       FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
+      Source_QGP_Week,
       weekly_actual   / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_actual,
       weekly_forecast / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_forecast,
       weekly_display  / (DATEDIFF(Period_End, Period_Start) + 1) AS daily_display,
@@ -166,16 +129,20 @@ BEGIN
     FROM normalized_weekly
   ),
 
+  -- ── Map each day to its QGP_Week ──────────────────────────────────────────────
   daily_with_qgp AS (
     SELECT
       FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
       calendar_date, daily_actual, daily_forecast, daily_display,
-      CASE
-        WHEN DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
-             > LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
-        THEN LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
-        ELSE DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
-      END AS QGP_Week
+      LEAST(
+        CASE
+          WHEN DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+               > LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+          THEN LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', calendar_date)), 2))
+          ELSE DATE_ADD(calendar_date, CASE WHEN DAYOFWEEK(calendar_date) = 7 THEN 0 ELSE 7 - DAYOFWEEK(calendar_date) END)
+        END,
+        Source_QGP_Week
+      ) AS QGP_Week
     FROM daily_spend
   ),
 
@@ -191,13 +158,12 @@ BEGIN
     GROUP BY QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
 
-  -- ── All combinations that ever appeared ──────────────────────────────────────
+  -- ── Full spine: every QGP date x every combination ───────────────────────────
   valid_combinations AS (
     SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
     FROM aggregated
   ),
 
-  -- ── Full spine: every QGP date x every combination ───────────────────────────
   spine AS (
     SELECT
       cal.qgp_date, cal.week_type, cal.quarter, cal.days_in_period,
