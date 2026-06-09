@@ -6,7 +6,7 @@ PROCEDURE:    sp_sdi_pulseTms_silver_adobeFunnel_weekly
 
 PURPOSE:
   Creates/refreshes physical table sdi_pulseTms_silver_adobeFunnel_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
+  Called by 00_call_all_sp_pulseTms.sql as part of the refresh.
 
   Split into two steps to avoid BigQuery "query too complex" / resource exceeded errors:
     STEP 1 — Materialize unpivoted long-format rows into a TEMP TABLE (free, no storage cost).
@@ -56,7 +56,17 @@ BEGIN
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly` b
       ON b.week_sun_sat = cal.qgp_date
-    WHERE cal.is_current_quarter = TRUE OR cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
+    WHERE
+      -- All historical quarters (fully complete)
+      cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
+      -- Full current quarter spine including future weeks — so Tableau shows the complete quarter
+      OR (
+        cal.qgp_date >= DATE_TRUNC(CURRENT_DATE(), QUARTER)
+        AND cal.qgp_date <= DATE_SUB(
+              DATE_ADD(DATE_TRUNC(CURRENT_DATE(), QUARTER), INTERVAL 3 MONTH),
+              INTERVAL 1 DAY
+            )
+      )
   )
   SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group, 'upvPostpaid' AS metric_name, upvPostpaid AS metric_value FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
   UNION ALL SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group, 'upvHsi', upvHsi FROM BronzeWithCalendar WHERE channel_group IS NOT NULL

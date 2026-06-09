@@ -6,7 +6,7 @@ PROCEDURE:    sp_sdi_pulseTms_silver_mfcSpend_weekly
 
 PURPOSE:
   Creates/refreshes physical table sdi_pulseTms_silver_mfcSpend_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
+  Called by 00_call_all_sp_pulseTms.sql as part of the refresh.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -36,7 +36,17 @@ BEGIN
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly` b
       ON b.qgp_week = cal.qgp_date
-    WHERE cal.is_current_quarter = TRUE OR cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
+    WHERE
+      -- All historical quarters (fully complete)
+      cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
+      -- Full current quarter spine including future weeks — so Tableau shows the complete quarter
+      OR (
+        cal.qgp_date >= DATE_TRUNC(CURRENT_DATE(), QUARTER)
+        AND cal.qgp_date <= DATE_SUB(
+              DATE_ADD(DATE_TRUNC(CURRENT_DATE(), QUARTER), INTERVAL 3 MONTH),
+              INTERVAL 1 DAY
+            )
+      )
   ),
   UnpivotedGranular AS (
     SELECT qgp_date, week_type, quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendActual' AS metric_name, spend_actual AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
