@@ -119,7 +119,6 @@ BEGIN
     ly_lookup.metric_value                                                        AS metric_value_ly,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS wow_numerator,
     CASE
@@ -128,12 +127,7 @@ BEGIN
       ELSE wow_prior_lookup.metric_value
     END                                                                           AS wow_denominator,
     CASE u.week_type
-      WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN
-        CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
-             THEN NULL
-             ELSE (u.metric_value + stub_lookup.metric_value) / wow_prior_lookup.metric_value - 1
-        END
+      WHEN 'BOUNDARY_STUB' THEN NULL
       ELSE
         CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
              THEN NULL
@@ -142,24 +136,15 @@ BEGIN
     END                                                                           AS wow_pct,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS yoy_numerator,
     CASE
-      WHEN u.metric_value IS NULL   THEN NULL
-      WHEN u.week_type = 'BOUNDARY_STUB'  THEN NULL
-      WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value
+      WHEN u.metric_value IS NULL  THEN NULL
+      WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
       ELSE ly_lookup.metric_value
     END                                                                           AS yoy_denominator,
     CASE u.week_type
-      WHEN 'BOUNDARY_STUB'  THEN NULL
-      WHEN 'BOUNDARY_FIRST' THEN
-        CASE WHEN (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) IS NULL
-                  OR (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) = 0
-             THEN NULL
-             ELSE (u.metric_value + stub_lookup.metric_value)
-                  / (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) - 1
-        END
+      WHEN 'BOUNDARY_STUB' THEN NULL
       ELSE
         CASE WHEN ly_lookup.metric_value IS NULL OR ly_lookup.metric_value = 0
              THEN NULL

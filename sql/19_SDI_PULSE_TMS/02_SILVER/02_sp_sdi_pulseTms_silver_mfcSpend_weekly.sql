@@ -75,10 +75,10 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS wow_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator,
       'CONSUMER POSTPAID' AS lob_mfc, CAST(NULL AS STRING) AS channel, CAST(NULL AS STRING) AS tactic, CAST(NULL AS STRING) AS message_type, CAST(NULL AS STRING) AS agency
     FROM UnpivotedChannel u
     LEFT JOIN MetricLookupChannel wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.metric_name = u.metric_name
@@ -92,10 +92,10 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.quarter, u.days_in_period, u.channel_group, u.metric_name, u.metric_value,
       ly_lookup.metric_value AS metric_value_ly,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS wow_numerator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS wow_numerator,
       CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE wow_prior_lookup.metric_value END AS wow_denominator,
-      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value ELSE u.metric_value END AS yoy_numerator,
-      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value ELSE ly_lookup.metric_value END AS yoy_denominator,
+      CASE u.week_type WHEN 'BOUNDARY_STUB' THEN NULL ELSE u.metric_value END AS yoy_numerator,
+      CASE WHEN u.metric_value IS NULL THEN NULL WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL ELSE ly_lookup.metric_value END AS yoy_denominator,
       u.lob AS lob_mfc, u.channel, u.tactic, u.message_type, u.agency
     FROM UnpivotedGranular u
     LEFT JOIN MetricLookupGranular wow_prior_lookup ON wow_prior_lookup.qgp_date = u.wow_prior_qgp_date AND wow_prior_lookup.lob = u.lob AND wow_prior_lookup.channel_group = u.channel_group AND wow_prior_lookup.channel = u.channel AND wow_prior_lookup.tactic = u.tactic AND wow_prior_lookup.message_type = u.message_type AND wow_prior_lookup.agency = u.agency AND wow_prior_lookup.metric_name = u.metric_name
