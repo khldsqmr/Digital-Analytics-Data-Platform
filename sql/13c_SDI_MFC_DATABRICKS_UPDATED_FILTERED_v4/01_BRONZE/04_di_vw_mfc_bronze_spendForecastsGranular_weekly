@@ -302,7 +302,7 @@ WITH raw AS (
     CASE WHEN QGP = 'Actual'   THEN Spend ELSE NULL END AS Spend_Actual
   FROM prdrzranalytics.lab42.raw_media_flowchart
   WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-    AND WM_NWM = 'Working'
+    AND WM_V_NWM = 'Working'
     AND Channel IS NOT NULL
     AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
     AND Week_Beginning_Monday IS NOT NULL AND Week_Beginning_Monday != 'None'
