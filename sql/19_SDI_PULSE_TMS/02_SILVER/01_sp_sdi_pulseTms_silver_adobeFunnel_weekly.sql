@@ -33,26 +33,26 @@ BEGIN
       cal.wow_prior_qgp_date, cal.prior_year_qgp_date,
       cal.boundary_stub_date, cal.iso_week_number, cal.iso_year,
       channels.channel_group,
-      IF(cal.is_complete_period, b.upvPostpaid,              NULL) AS upvPostpaid,
-      IF(cal.is_complete_period, b.upvHsi,                   NULL) AS upvHsi,
-      IF(cal.is_complete_period, b.upvByod,                  NULL) AS upvByod,
-      IF(cal.is_complete_period, b.upvFlowTotal,             NULL) AS upvFlowTotal,
-      IF(cal.is_complete_period, b.upvTotalAdobe,            NULL) AS upvTotalAdobe,
-      IF(cal.is_complete_period, b.cartstartPostpaid,        NULL) AS cartstartPostpaid,
-      IF(cal.is_complete_period, b.cartstartHsi,             NULL) AS cartstartHsi,
-      IF(cal.is_complete_period, b.cartstartByod,            NULL) AS cartstartByod,
-      IF(cal.is_complete_period, b.ordersUnassistedPostpaid, NULL) AS ordersUnassistedPostpaid,
-      IF(cal.is_complete_period, b.ordersUnassistedHsi,      NULL) AS ordersUnassistedHsi,
-      IF(cal.is_complete_period, b.ordersUnassistedByod,     NULL) AS ordersUnassistedByod,
-      IF(cal.is_complete_period, b.ordersAssistedPostpaid,   NULL) AS ordersAssistedPostpaid,
-      IF(cal.is_complete_period, b.ordersAssistedHsi,        NULL) AS ordersAssistedHsi,
-      IF(cal.is_complete_period, b.ordersAssistedByod,       NULL) AS ordersAssistedByod,
-      IF(cal.is_complete_period, b.cartstartPostpaid + b.cartstartHsi + b.cartstartByod, NULL) AS cartstartTotal,
-      IF(cal.is_complete_period, b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod, NULL) AS ordersUnassistedTotal,
-      IF(cal.is_complete_period, b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod, NULL) AS ordersAssistedTotal,
-      IF(cal.is_complete_period,
-         (b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod)
-         + (b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod), NULL) AS ordersTotal
+      -- BOUNDARY_STUB: prorate the BOUNDARY_FIRST Bronze week value by stub days / 7
+      -- NORMAL / BOUNDARY_FIRST: use full Bronze value, NULL if period incomplete
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.upvPostpaid              * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.upvPostpaid              END AS upvPostpaid,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.upvHsi                   * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.upvHsi                   END AS upvHsi,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.upvByod                  * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.upvByod                  END AS upvByod,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.upvFlowTotal             * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.upvFlowTotal             END AS upvFlowTotal,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.upvTotalAdobe            * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.upvTotalAdobe            END AS upvTotalAdobe,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.cartstartPostpaid        * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.cartstartPostpaid        END AS cartstartPostpaid,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.cartstartHsi             * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.cartstartHsi             END AS cartstartHsi,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.cartstartByod            * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.cartstartByod            END AS cartstartByod,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersUnassistedPostpaid * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersUnassistedPostpaid END AS ordersUnassistedPostpaid,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersUnassistedHsi      * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersUnassistedHsi      END AS ordersUnassistedHsi,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersUnassistedByod     * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersUnassistedByod     END AS ordersUnassistedByod,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersAssistedPostpaid   * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersAssistedPostpaid   END AS ordersAssistedPostpaid,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersAssistedHsi        * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersAssistedHsi        END AS ordersAssistedHsi,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN bf.ordersAssistedByod       * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersAssistedByod       END AS ordersAssistedByod,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN (bf.cartstartPostpaid + bf.cartstartHsi + bf.cartstartByod) * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.cartstartPostpaid + b.cartstartHsi + b.cartstartByod END AS cartstartTotal,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN (bf.ordersUnassistedPostpaid + bf.ordersUnassistedHsi + bf.ordersUnassistedByod) * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod END AS ordersUnassistedTotal,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN (bf.ordersAssistedPostpaid + bf.ordersAssistedHsi + bf.ordersAssistedByod) * cal.days_in_period / 7 WHEN cal.is_complete_period THEN b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod END AS ordersAssistedTotal,
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB' AND cal.is_complete_period THEN (bf.ordersUnassistedPostpaid + bf.ordersUnassistedHsi + bf.ordersUnassistedByod + bf.ordersAssistedPostpaid + bf.ordersAssistedHsi + bf.ordersAssistedByod) * cal.days_in_period / 7 WHEN cal.is_complete_period THEN (b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod) + (b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod) END AS ordersTotal
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
     -- Cross join with known channel groups so future weeks get a row per channel
     -- even when Bronze has no data yet
@@ -60,9 +60,15 @@ BEGIN
       SELECT DISTINCT channel_group
       FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly`
     ) channels
+    -- NORMAL and BOUNDARY_FIRST: join directly on the Saturday date
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly` b
       ON b.week_sun_sat = cal.qgp_date
       AND b.channel_group = channels.channel_group
+    -- BOUNDARY_STUB: join on the next Saturday (BOUNDARY_FIRST date) to get the full week for proration
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_adobeFunnel_weekly` bf
+      ON cal.week_type = 'BOUNDARY_STUB'
+      AND bf.week_sun_sat = DATE_ADD(cal.qgp_date, INTERVAL (7 - EXTRACT(DAYOFWEEK FROM cal.qgp_date)) DAY)
+      AND bf.channel_group = channels.channel_group
     WHERE
       -- All historical quarters (fully complete)
       cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
@@ -119,6 +125,7 @@ BEGIN
     ly_lookup.metric_value                                                        AS metric_value_ly,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
+      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS wow_numerator,
     CASE
@@ -128,6 +135,11 @@ BEGIN
     END                                                                           AS wow_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB' THEN NULL
+      WHEN 'BOUNDARY_FIRST' THEN
+        CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
+             THEN NULL
+             ELSE (u.metric_value + stub_lookup.metric_value) / wow_prior_lookup.metric_value - 1
+        END
       ELSE
         CASE WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_lookup.metric_value = 0
              THEN NULL
@@ -136,15 +148,24 @@ BEGIN
     END                                                                           AS wow_pct,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB'  THEN NULL
+      WHEN 'BOUNDARY_FIRST' THEN u.metric_value + stub_lookup.metric_value
       ELSE                       u.metric_value
     END                                                                           AS yoy_numerator,
     CASE
       WHEN u.metric_value IS NULL  THEN NULL
       WHEN u.week_type = 'BOUNDARY_STUB' THEN NULL
+      WHEN u.week_type = 'BOUNDARY_FIRST' THEN yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value
       ELSE ly_lookup.metric_value
     END                                                                           AS yoy_denominator,
     CASE u.week_type
       WHEN 'BOUNDARY_STUB' THEN NULL
+      WHEN 'BOUNDARY_FIRST' THEN
+        CASE WHEN (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) IS NULL
+                  OR (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) = 0
+             THEN NULL
+             ELSE (u.metric_value + stub_lookup.metric_value)
+                  / (yoy_bf_lookup.metric_value + yoy_stub_lookup.metric_value) - 1
+        END
       ELSE
         CASE WHEN ly_lookup.metric_value IS NULL OR ly_lookup.metric_value = 0
              THEN NULL
