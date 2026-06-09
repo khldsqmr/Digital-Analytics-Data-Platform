@@ -83,9 +83,18 @@ BEGIN
   -- ── Quarter bounds per source row ────────────────────────────────────────────
   with_source_quarter_bounds AS (
     SELECT *,
-      TO_DATE(DATE_TRUNC('quarter', Week_Beginning_Monday)) AS Source_Quarter_Start_Date,
-      LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', Week_Beginning_Monday)), 2))
-                                                            AS Source_Quarter_End_Date
+      -- Derive quarter bounds from Source_Quarter string (e.g. "Q1'26")
+      -- NOT from Week_Beginning_Monday, which is always Mar 29 for both Q1 and Q2 boundary rows
+      TO_DATE(CONCAT(
+        CASE WHEN CAST(SUBSTR(Source_Quarter, 4, 2) AS INT) < 50 THEN '20' ELSE '19' END,
+        LPAD(SUBSTR(Source_Quarter, 4, 2), 2, '0'), '-',
+        LPAD(CAST(((CAST(SUBSTR(Source_Quarter, 2, 1) AS INT) - 1) * 3) + 1 AS STRING), 2, '0'), '-01'
+      ), 'yyyy-MM-dd') AS Source_Quarter_Start_Date,
+      LAST_DAY(ADD_MONTHS(TO_DATE(CONCAT(
+        CASE WHEN CAST(SUBSTR(Source_Quarter, 4, 2) AS INT) < 50 THEN '20' ELSE '19' END,
+        LPAD(SUBSTR(Source_Quarter, 4, 2), 2, '0'), '-',
+        LPAD(CAST(CAST(SUBSTR(Source_Quarter, 2, 1) AS INT) * 3 AS STRING), 2, '0'), '-01'
+      ), 'yyyy-MM-dd'), 0)) AS Source_Quarter_End_Date
     FROM source_joined
     WHERE Week_Beginning_Monday IS NOT NULL
       AND Week_Ending_Sunday IS NOT NULL
