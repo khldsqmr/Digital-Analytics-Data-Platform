@@ -17,6 +17,7 @@ CHANGES:
   2026-06-04 — Adobe entry pages and outcomes added:
                aep alias: vw_sdi_pulseByod_silver_adobeByodEntryPages_weekly
                ao  alias: vw_sdi_pulseByod_silver_adobeByodOutcomes_weekly
+  2026-06-XX — Adobe cvrPostpaid_allChannels and cvrHsi_allChannels added
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_wide`
@@ -104,6 +105,9 @@ SELECT
     ab.adobe_pctOrdersByodOfOrdersTotal_allChannels, ab.adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, ab.adobe_pctOrdersByodOfOrdersTotal_allChannels_ly, ab.adobe_pctOrdersByodOfOrdersTotal_allChannels_wow_pct, ab.adobe_pctOrdersByodOfOrdersTotal_allChannels_yoy_pct,
     ab.adobe_cvrByod_allChannels, ab.adobe_cvrByod_allChannels_wow, ab.adobe_cvrByod_allChannels_ly, ab.adobe_cvrByod_allChannels_wow_pct, ab.adobe_cvrByod_allChannels_yoy_pct,
     ab.adobe_cvrSite_allChannels, ab.adobe_cvrSite_allChannels_wow, ab.adobe_cvrSite_allChannels_ly, ab.adobe_cvrSite_allChannels_wow_pct, ab.adobe_cvrSite_allChannels_yoy_pct,
+    -- NEW: Postpaid and HSI CVR (allChannels only)
+    ab.adobe_cvrPostpaid_allChannels, ab.adobe_cvrPostpaid_allChannels_wow, ab.adobe_cvrPostpaid_allChannels_ly, ab.adobe_cvrPostpaid_allChannels_wow_pct, ab.adobe_cvrPostpaid_allChannels_yoy_pct,
+    ab.adobe_cvrHsi_allChannels, ab.adobe_cvrHsi_allChannels_wow, ab.adobe_cvrHsi_allChannels_ly, ab.adobe_cvrHsi_allChannels_wow_pct, ab.adobe_cvrHsi_allChannels_yoy_pct,
     -- PAID SEARCH
     ab.adobe_uvnbByod_paidSearch, ab.adobe_uvnbByod_paidSearch_wow, ab.adobe_uvnbByod_paidSearch_ly, ab.adobe_uvnbByod_paidSearch_wow_pct, ab.adobe_uvnbByod_paidSearch_yoy_pct,
     ab.adobe_pctUvnbByodOfTotal_paidSearch, ab.adobe_pctUvnbByodOfTotal_paidSearch_wow, ab.adobe_pctUvnbByodOfTotal_paidSearch_ly, ab.adobe_pctUvnbByodOfTotal_paidSearch_wow_pct, ab.adobe_pctUvnbByodOfTotal_paidSearch_yoy_pct,

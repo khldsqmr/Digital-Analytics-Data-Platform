@@ -19,6 +19,7 @@ CHANGES:
                New outcomes_long CTE  — reads Silver 08 (42 metrics × 7 channels)
                Both added to combined UNION ALL
                channel derived from metric_name suffix (same pattern as adobe_long)
+  2026-06-XX — Adobe cvrPostpaid_allChannels and cvrHsi_allChannels added to adobe_long UNPIVOT
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_gold_unified_long`
@@ -152,7 +153,8 @@ trends_keywords_long AS (
 ),
 
 -- -----------------------------------------------------------------------
--- ADOBE (Silver 06): existing conversion metrics — UNCHANGED
+-- ADOBE (Silver 06): conversion metrics
+-- cvrPostpaid_allChannels and cvrHsi_allChannels added 2026-06-XX
 -- -----------------------------------------------------------------------
 adobe_long AS (
     SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
@@ -172,6 +174,9 @@ adobe_long AS (
             (adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, adobe_pctOrdersByodOfOrdersTotal_allChannels_ly, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow_pct, adobe_pctOrdersByodOfOrdersTotal_allChannels_yoy_pct) AS 'adobe_pctOrdersByodOfOrdersTotal_allChannels',
             (adobe_cvrByod_allChannels,                    adobe_cvrByod_allChannels_wow,                    adobe_cvrByod_allChannels_ly,                    adobe_cvrByod_allChannels_wow_pct,                    adobe_cvrByod_allChannels_yoy_pct)                    AS 'adobe_cvrByod_allChannels',
             (adobe_cvrSite_allChannels,                    adobe_cvrSite_allChannels_wow,                    adobe_cvrSite_allChannels_ly,                    adobe_cvrSite_allChannels_wow_pct,                    adobe_cvrSite_allChannels_yoy_pct)                    AS 'adobe_cvrSite_allChannels',
+            -- NEW: Postpaid and HSI CVR
+            (adobe_cvrPostpaid_allChannels,                adobe_cvrPostpaid_allChannels_wow,                adobe_cvrPostpaid_allChannels_ly,                adobe_cvrPostpaid_allChannels_wow_pct,                adobe_cvrPostpaid_allChannels_yoy_pct)                AS 'adobe_cvrPostpaid_allChannels',
+            (adobe_cvrHsi_allChannels,                     adobe_cvrHsi_allChannels_wow,                     adobe_cvrHsi_allChannels_ly,                     adobe_cvrHsi_allChannels_wow_pct,                     adobe_cvrHsi_allChannels_yoy_pct)                     AS 'adobe_cvrHsi_allChannels',
             (adobe_uvnbByod_paidSearch,                    adobe_uvnbByod_paidSearch_wow,                    adobe_uvnbByod_paidSearch_ly,                    adobe_uvnbByod_paidSearch_wow_pct,                    adobe_uvnbByod_paidSearch_yoy_pct)                    AS 'adobe_uvnbByod_paidSearch',
             (adobe_pctUvnbByodOfTotal_paidSearch,          adobe_pctUvnbByodOfTotal_paidSearch_wow,          adobe_pctUvnbByodOfTotal_paidSearch_ly,          adobe_pctUvnbByodOfTotal_paidSearch_wow_pct,          adobe_pctUvnbByodOfTotal_paidSearch_yoy_pct)          AS 'adobe_pctUvnbByodOfTotal_paidSearch',
             (adobe_cartStartByod_paidSearch,               adobe_cartStartByod_paidSearch_wow,               adobe_cartStartByod_paidSearch_ly,               adobe_cartStartByod_paidSearch_wow_pct,               adobe_cartStartByod_paidSearch_yoy_pct)               AS 'adobe_cartStartByod_paidSearch',
@@ -213,9 +218,7 @@ adobe_long AS (
 ),
 
 -- -----------------------------------------------------------------------
--- ADOBE BYOD ENTRY PAGES (Silver 07): NEW — 42 metrics × 7 channels
--- 294 rows/week
--- channel derived from metric_name suffix (same pattern as adobe_long)
+-- ADOBE BYOD ENTRY PAGES (Silver 07): 42 metrics × 7 channels — 294 rows/week
 -- -----------------------------------------------------------------------
 entryPages_long AS (
     SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
@@ -270,8 +273,7 @@ entryPages_long AS (
 ),
 
 -- -----------------------------------------------------------------------
--- ADOBE BYOD OUTCOMES (Silver 08): NEW — 42 metrics × 7 channels
--- 294 rows/week
+-- ADOBE BYOD OUTCOMES (Silver 08): 42 metrics × 7 channels — 294 rows/week
 -- -----------------------------------------------------------------------
 outcomes_long AS (
     SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
@@ -347,7 +349,7 @@ combined AS (
     -- Trends keywords
     SELECT week_sun_to_sat, data_source, channel, max_data_date, dimension_name, dimension_value, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct FROM trends_keywords_long
     UNION ALL
-    -- Adobe Silver 06 — existing conversion metrics
+    -- Adobe Silver 06 — conversion metrics (inc. cvrPostpaid, cvrHsi)
     SELECT
         week_sun_to_sat, data_source,
         CASE
@@ -363,7 +365,7 @@ combined AS (
         metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
     FROM adobe_long
     UNION ALL
-    -- Adobe Silver 07 — NEW BYOD entry page metrics
+    -- Adobe Silver 07 — BYOD entry page metrics
     SELECT
         week_sun_to_sat, data_source,
         CASE
@@ -379,7 +381,7 @@ combined AS (
         metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
     FROM entryPages_long
     UNION ALL
-    -- Adobe Silver 08 — NEW BYOD outcome metrics
+    -- Adobe Silver 08 — BYOD outcome metrics
     SELECT
         week_sun_to_sat, data_source,
         CASE

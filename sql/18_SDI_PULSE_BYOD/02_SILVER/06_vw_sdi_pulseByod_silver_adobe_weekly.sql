@@ -13,17 +13,6 @@ DESTINATION:
 PURPOSE:
   Silver view for Adobe Analytics BYOD metrics.
   Outputs a WIDE table — one row per week_sun_to_sat.
-  Pivots ChannelGroup rows into columns so each channel
-  becomes its own set of prefixed metric columns.
-  Applies WoW/LY comparisons and max_data_date.
-
-BUSINESS GRAIN:
-  One row per week_sun_to_sat
-
-SOURCE GRAIN:
-  One row per WeekSunSat + ChannelGroup
-  ChannelGroup values: ALL, PAID SEARCH, ORGANIC SEARCH,
-                       DIRECT, SOCIAL, PROGRAMMATIC, OTHER
 
 COLUMN NAMING CONVENTION:
   adobe_{metric}_{channel}
@@ -31,49 +20,40 @@ COLUMN NAMING CONVENTION:
     adobe_pct{subject}Of{denominator}_{channel}
     adobe_cvr{scope}_{channel}
 
-  Channel suffixes:
-    ALL            → allChannels
-    PAID SEARCH    → paidSearch
-    ORGANIC SEARCH → organicSearch
-    DIRECT         → direct
-    SOCIAL         → social
-    PROGRAMMATIC   → programmatic
-    OTHER          → other
-
   Raw metrics:
     uvnbByod               (all channels)
-    uvnbTotal              (allChannels only — site-wide UVNB)
-    uvnbFlowTotal          (allChannels only — postpaid flow UVNB)
+    uvnbTotal              (allChannels only)
+    uvnbFlowTotal          (allChannels only)
     cartStartByod          (all channels)
     ordersUnassistedByod   (all channels)
     ordersAssistedByod     (all channels)
     ordersTotalByod        (all channels)
-    ordersTotal            (allChannels only — all-product orders)
+    ordersTotal            (allChannels only)
 
   Derived metrics (allChannels only):
     pctUvnbByodOfUvnbFlow          — uvnbByod / uvnbFlowTotal
     pctOrdersByodOfOrdersTotal     — ordersTotalByod / ordersTotal
     cvrByod                        — ordersTotalByod / uvnbByod
     cvrSite                        — ordersTotal / uvnbTotal
+    cvrPostpaid                    — (OrdersUnassistedPostpaid + OrdersAssistedPostpaid) / UvnbPostpaid
+    cvrHsi                         — (OrdersUnassistedHsi + OrdersAssistedHsi) / UvnbHsi
 
   Derived metrics (per non-ALL channel):
     pctUvnbByodOfTotal             — channel share of BYOD UVNB
     Denominator = SUM of the 6 individual channel UVNBs (not allChannels).
-    Adobe ALL ≠ sum of channels due to multi-touch attribution deduplication.
-    Using the channel sum guarantees these 6 metrics sum to exactly 1.0 per week.
 
 BUSINESS LOGIC:
   - ordersTotalByod = OrdersUnassistedByod + OrdersAssistedByod
-    NULL if either component is NULL
+  - cvrPostpaid and cvrHsi are allChannels only — computed from internal
+    aggregates in pivoted (_int_ prefix) that do not appear in final output
   - All pct/cvr metrics: NULL if denominator is NULL or 0
   - WoW: self-join on week_sun_to_sat - 7 days (gap-safe)
-  - LY:  self-join on custom_week_num - 52 (gap-safe, Sun-to-Sat anchor)
+  - LY:  self-join on custom_week_num - 52
   - wow_pct / yoy_pct as decimals — NULL when prior NULL or 0
   - max_data_date: latest week_sun_to_sat with any non-null metric
 
 CUSTOM WEEK NUMBER:
   custom_week_num = DATE_DIFF(DATE_SUB(week_sun_to_sat, INTERVAL 6 DAY), DATE '2023-01-01', WEEK)
-  LY match: current.custom_week_num - prior.custom_week_num = 52
 
 DOWNSTREAM:
   Gold Wide : vw_sdi_pulseByod_gold_unified_wide
@@ -85,7 +65,6 @@ AS
 
 -- -----------------------------------------------------------------------
 -- STEP 1: Extract metrics per channel row
--- ordersTotalByod computed here so NULL propagation is correct
 -- -----------------------------------------------------------------------
 WITH base AS (
     SELECT
@@ -98,17 +77,19 @@ WITH base AS (
         OrdersUnassistedByod,
         OrdersAssistedByod,
         OrdersUnassistedByod + OrdersAssistedByod                      AS ordersTotalByod,
-        OrdersTotal
+        OrdersTotal,
+        -- Postpaid and HSI — used to compute cvrPostpaid / cvrHsi (allChannels only)
+        UvnbPostpaid,
+        UvnbHsi,
+        OrdersUnassistedPostpaid + OrdersAssistedPostpaid              AS ordersTotalPostpaid,
+        OrdersUnassistedHsi      + OrdersAssistedHsi                   AS ordersTotalHsi
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_flowPerformanceByChannelGroupsPlusAll_Weekly`
 ),
 
 -- -----------------------------------------------------------------------
 -- STEP 2: Pivot long → wide (one row per week)
--- uvnb_byod_channel_sum computed here — sum of the 6 individual channel
--- UVNBs (not ALL), used as the denominator for pctUvnbByodOfTotal.
--- Adobe ALL ≠ sum of channels due to multi-touch attribution overlap,
--- so using ALL as denominator produces totals > 100%.
--- COALESCE to 0 so a missing channel doesn't make the sum NULL.
+-- _int_ columns are internal-only — used by with_channel_mix to compute
+-- cvrPostpaid and cvrHsi, then excluded from all downstream CTEs.
 -- -----------------------------------------------------------------------
 pivoted AS (
     SELECT
@@ -167,29 +148,33 @@ pivoted AS (
         MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ordersTotalByod      END) AS adobe_ordersTotalByod_other,
 
         -- ---- CHANNEL SUM — denominator for pctUvnbByodOfTotal ----
-        -- COALESCE to 0 so a NULL channel doesn't collapse the sum
         COALESCE(MAX(CASE WHEN ChannelGroup = 'PAID SEARCH'    THEN UvnbByod END), 0)
       + COALESCE(MAX(CASE WHEN ChannelGroup = 'ORGANIC SEARCH' THEN UvnbByod END), 0)
       + COALESCE(MAX(CASE WHEN ChannelGroup = 'DIRECT'         THEN UvnbByod END), 0)
       + COALESCE(MAX(CASE WHEN ChannelGroup = 'SOCIAL'         THEN UvnbByod END), 0)
       + COALESCE(MAX(CASE WHEN ChannelGroup = 'PROGRAMMATIC'   THEN UvnbByod END), 0)
       + COALESCE(MAX(CASE WHEN ChannelGroup = 'OTHER'          THEN UvnbByod END), 0)
-                                                                        AS uvnb_byod_channel_sum
+                                                                        AS uvnb_byod_channel_sum,
+
+        -- ---- INTERNAL: Postpaid + HSI for CVR computation only ----
+        -- These columns do not appear in the final SELECT output.
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbPostpaid       END) AS _int_uvnb_postpaid,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN ordersTotalPostpaid END) AS _int_orders_postpaid,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN UvnbHsi            END) AS _int_uvnb_hsi,
+        MAX(CASE WHEN ChannelGroup = 'ALL' THEN ordersTotalHsi     END) AS _int_orders_hsi
 
     FROM base
     GROUP BY week_sun_to_sat
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 3: Compute post-pivot derived metrics
--- pctUvnbByodOfTotal uses uvnb_byod_channel_sum as denominator (not ALL)
--- so that the 6 channel shares always sum to exactly 1.0 per week.
+-- STEP 3: Post-pivot derived metrics
 -- -----------------------------------------------------------------------
 with_channel_mix AS (
     SELECT
         *,
 
-        -- ---- allChannels derived ----
+        -- ---- allChannels BYOD/site derived ----
         CASE WHEN adobe_uvnbFlowTotal_allChannels IS NULL OR adobe_uvnbFlowTotal_allChannels = 0 THEN NULL
              ELSE ROUND(adobe_uvnbByod_allChannels / adobe_uvnbFlowTotal_allChannels, 6)
         END                                                             AS adobe_pctUvnbByodOfUvnbFlow_allChannels,
@@ -206,7 +191,16 @@ with_channel_mix AS (
              ELSE ROUND(adobe_ordersTotal_allChannels / adobe_uvnbTotal_allChannels, 6)
         END                                                             AS adobe_cvrSite_allChannels,
 
-        -- ---- UVNB BYOD channel mix (denominator = sum of 6 channels) ----
+        -- ---- allChannels Postpaid + HSI CVR ----
+        CASE WHEN _int_uvnb_postpaid IS NULL OR _int_uvnb_postpaid = 0 THEN NULL
+             ELSE ROUND(_int_orders_postpaid / _int_uvnb_postpaid, 6)
+        END                                                             AS adobe_cvrPostpaid_allChannels,
+
+        CASE WHEN _int_uvnb_hsi IS NULL OR _int_uvnb_hsi = 0 THEN NULL
+             ELSE ROUND(_int_orders_hsi / _int_uvnb_hsi, 6)
+        END                                                             AS adobe_cvrHsi_allChannels,
+
+        -- ---- UVNB BYOD channel mix ----
         CASE WHEN uvnb_byod_channel_sum = 0 THEN NULL
              ELSE ROUND(adobe_uvnbByod_paidSearch    / uvnb_byod_channel_sum, 6)
         END                                                             AS adobe_pctUvnbByodOfTotal_paidSearch,
@@ -235,7 +229,7 @@ with_channel_mix AS (
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 4: Custom week number for gap-safe LY matching
+-- STEP 4: Custom week number
 -- -----------------------------------------------------------------------
 with_week_num AS (
     SELECT
@@ -246,7 +240,6 @@ with_week_num AS (
 
 -- -----------------------------------------------------------------------
 -- STEP 5: WoW and LY self-joins
--- Both join on the small pivoted CTE (1 row per week — very cheap)
 -- -----------------------------------------------------------------------
 with_comparisons AS (
     SELECT
@@ -266,6 +259,8 @@ with_comparisons AS (
         c.adobe_pctOrdersByodOfOrdersTotal_allChannels,
         c.adobe_cvrByod_allChannels,
         c.adobe_cvrSite_allChannels,
+        c.adobe_cvrPostpaid_allChannels,
+        c.adobe_cvrHsi_allChannels,
         -- ALL CHANNELS WoW
         w.adobe_uvnbByod_allChannels                   AS adobe_uvnbByod_allChannels_wow,
         w.adobe_uvnbTotal_allChannels                  AS adobe_uvnbTotal_allChannels_wow,
@@ -279,6 +274,8 @@ with_comparisons AS (
         w.adobe_pctOrdersByodOfOrdersTotal_allChannels AS adobe_pctOrdersByodOfOrdersTotal_allChannels_wow,
         w.adobe_cvrByod_allChannels                    AS adobe_cvrByod_allChannels_wow,
         w.adobe_cvrSite_allChannels                    AS adobe_cvrSite_allChannels_wow,
+        w.adobe_cvrPostpaid_allChannels                AS adobe_cvrPostpaid_allChannels_wow,
+        w.adobe_cvrHsi_allChannels                     AS adobe_cvrHsi_allChannels_wow,
         -- ALL CHANNELS LY
         l.adobe_uvnbByod_allChannels                   AS adobe_uvnbByod_allChannels_ly,
         l.adobe_uvnbTotal_allChannels                  AS adobe_uvnbTotal_allChannels_ly,
@@ -292,6 +289,8 @@ with_comparisons AS (
         l.adobe_pctOrdersByodOfOrdersTotal_allChannels AS adobe_pctOrdersByodOfOrdersTotal_allChannels_ly,
         l.adobe_cvrByod_allChannels                    AS adobe_cvrByod_allChannels_ly,
         l.adobe_cvrSite_allChannels                    AS adobe_cvrSite_allChannels_ly,
+        l.adobe_cvrPostpaid_allChannels                AS adobe_cvrPostpaid_allChannels_ly,
+        l.adobe_cvrHsi_allChannels                     AS adobe_cvrHsi_allChannels_ly,
 
         -- ================================================================ PAID SEARCH current
         c.adobe_uvnbByod_paidSearch,
@@ -300,14 +299,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_paidSearch,
         c.adobe_ordersAssistedByod_paidSearch,
         c.adobe_ordersTotalByod_paidSearch,
-        -- PAID SEARCH WoW
         w.adobe_uvnbByod_paidSearch                    AS adobe_uvnbByod_paidSearch_wow,
         w.adobe_pctUvnbByodOfTotal_paidSearch          AS adobe_pctUvnbByodOfTotal_paidSearch_wow,
         w.adobe_cartStartByod_paidSearch               AS adobe_cartStartByod_paidSearch_wow,
         w.adobe_ordersUnassistedByod_paidSearch        AS adobe_ordersUnassistedByod_paidSearch_wow,
         w.adobe_ordersAssistedByod_paidSearch          AS adobe_ordersAssistedByod_paidSearch_wow,
         w.adobe_ordersTotalByod_paidSearch             AS adobe_ordersTotalByod_paidSearch_wow,
-        -- PAID SEARCH LY
         l.adobe_uvnbByod_paidSearch                    AS adobe_uvnbByod_paidSearch_ly,
         l.adobe_pctUvnbByodOfTotal_paidSearch          AS adobe_pctUvnbByodOfTotal_paidSearch_ly,
         l.adobe_cartStartByod_paidSearch               AS adobe_cartStartByod_paidSearch_ly,
@@ -322,14 +319,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_organicSearch,
         c.adobe_ordersAssistedByod_organicSearch,
         c.adobe_ordersTotalByod_organicSearch,
-        -- ORGANIC SEARCH WoW
         w.adobe_uvnbByod_organicSearch                 AS adobe_uvnbByod_organicSearch_wow,
         w.adobe_pctUvnbByodOfTotal_organicSearch       AS adobe_pctUvnbByodOfTotal_organicSearch_wow,
         w.adobe_cartStartByod_organicSearch            AS adobe_cartStartByod_organicSearch_wow,
         w.adobe_ordersUnassistedByod_organicSearch     AS adobe_ordersUnassistedByod_organicSearch_wow,
         w.adobe_ordersAssistedByod_organicSearch       AS adobe_ordersAssistedByod_organicSearch_wow,
         w.adobe_ordersTotalByod_organicSearch          AS adobe_ordersTotalByod_organicSearch_wow,
-        -- ORGANIC SEARCH LY
         l.adobe_uvnbByod_organicSearch                 AS adobe_uvnbByod_organicSearch_ly,
         l.adobe_pctUvnbByodOfTotal_organicSearch       AS adobe_pctUvnbByodOfTotal_organicSearch_ly,
         l.adobe_cartStartByod_organicSearch            AS adobe_cartStartByod_organicSearch_ly,
@@ -344,14 +339,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_direct,
         c.adobe_ordersAssistedByod_direct,
         c.adobe_ordersTotalByod_direct,
-        -- DIRECT WoW
         w.adobe_uvnbByod_direct                        AS adobe_uvnbByod_direct_wow,
         w.adobe_pctUvnbByodOfTotal_direct              AS adobe_pctUvnbByodOfTotal_direct_wow,
         w.adobe_cartStartByod_direct                   AS adobe_cartStartByod_direct_wow,
         w.adobe_ordersUnassistedByod_direct            AS adobe_ordersUnassistedByod_direct_wow,
         w.adobe_ordersAssistedByod_direct              AS adobe_ordersAssistedByod_direct_wow,
         w.adobe_ordersTotalByod_direct                 AS adobe_ordersTotalByod_direct_wow,
-        -- DIRECT LY
         l.adobe_uvnbByod_direct                        AS adobe_uvnbByod_direct_ly,
         l.adobe_pctUvnbByodOfTotal_direct              AS adobe_pctUvnbByodOfTotal_direct_ly,
         l.adobe_cartStartByod_direct                   AS adobe_cartStartByod_direct_ly,
@@ -366,14 +359,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_social,
         c.adobe_ordersAssistedByod_social,
         c.adobe_ordersTotalByod_social,
-        -- SOCIAL WoW
         w.adobe_uvnbByod_social                        AS adobe_uvnbByod_social_wow,
         w.adobe_pctUvnbByodOfTotal_social              AS adobe_pctUvnbByodOfTotal_social_wow,
         w.adobe_cartStartByod_social                   AS adobe_cartStartByod_social_wow,
         w.adobe_ordersUnassistedByod_social            AS adobe_ordersUnassistedByod_social_wow,
         w.adobe_ordersAssistedByod_social              AS adobe_ordersAssistedByod_social_wow,
         w.adobe_ordersTotalByod_social                 AS adobe_ordersTotalByod_social_wow,
-        -- SOCIAL LY
         l.adobe_uvnbByod_social                        AS adobe_uvnbByod_social_ly,
         l.adobe_pctUvnbByodOfTotal_social              AS adobe_pctUvnbByodOfTotal_social_ly,
         l.adobe_cartStartByod_social                   AS adobe_cartStartByod_social_ly,
@@ -388,14 +379,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_programmatic,
         c.adobe_ordersAssistedByod_programmatic,
         c.adobe_ordersTotalByod_programmatic,
-        -- PROGRAMMATIC WoW
         w.adobe_uvnbByod_programmatic                  AS adobe_uvnbByod_programmatic_wow,
         w.adobe_pctUvnbByodOfTotal_programmatic        AS adobe_pctUvnbByodOfTotal_programmatic_wow,
         w.adobe_cartStartByod_programmatic             AS adobe_cartStartByod_programmatic_wow,
         w.adobe_ordersUnassistedByod_programmatic      AS adobe_ordersUnassistedByod_programmatic_wow,
         w.adobe_ordersAssistedByod_programmatic        AS adobe_ordersAssistedByod_programmatic_wow,
         w.adobe_ordersTotalByod_programmatic           AS adobe_ordersTotalByod_programmatic_wow,
-        -- PROGRAMMATIC LY
         l.adobe_uvnbByod_programmatic                  AS adobe_uvnbByod_programmatic_ly,
         l.adobe_pctUvnbByodOfTotal_programmatic        AS adobe_pctUvnbByodOfTotal_programmatic_ly,
         l.adobe_cartStartByod_programmatic             AS adobe_cartStartByod_programmatic_ly,
@@ -410,14 +399,12 @@ with_comparisons AS (
         c.adobe_ordersUnassistedByod_other,
         c.adobe_ordersAssistedByod_other,
         c.adobe_ordersTotalByod_other,
-        -- OTHER WoW
         w.adobe_uvnbByod_other                         AS adobe_uvnbByod_other_wow,
         w.adobe_pctUvnbByodOfTotal_other               AS adobe_pctUvnbByodOfTotal_other_wow,
         w.adobe_cartStartByod_other                    AS adobe_cartStartByod_other_wow,
         w.adobe_ordersUnassistedByod_other             AS adobe_ordersUnassistedByod_other_wow,
         w.adobe_ordersAssistedByod_other               AS adobe_ordersAssistedByod_other_wow,
         w.adobe_ordersTotalByod_other                  AS adobe_ordersTotalByod_other_wow,
-        -- OTHER LY
         l.adobe_uvnbByod_other                         AS adobe_uvnbByod_other_ly,
         l.adobe_pctUvnbByodOfTotal_other               AS adobe_pctUvnbByodOfTotal_other_ly,
         l.adobe_cartStartByod_other                    AS adobe_cartStartByod_other_ly,
@@ -431,8 +418,7 @@ with_comparisons AS (
 ),
 
 -- -----------------------------------------------------------------------
--- STEP 6: wow_pct and yoy_pct for all metrics
--- NULL when prior is NULL or 0 — no fake zeroes
+-- STEP 6: wow_pct and yoy_pct
 -- -----------------------------------------------------------------------
 with_pcts AS (
     SELECT
@@ -487,6 +473,15 @@ with_pcts AS (
         adobe_cvrSite_allChannels, adobe_cvrSite_allChannels_wow, adobe_cvrSite_allChannels_ly,
         CASE WHEN adobe_cvrSite_allChannels_wow IS NULL OR adobe_cvrSite_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cvrSite_allChannels - adobe_cvrSite_allChannels_wow) / adobe_cvrSite_allChannels_wow, 6) END AS adobe_cvrSite_allChannels_wow_pct,
         CASE WHEN adobe_cvrSite_allChannels_ly  IS NULL OR adobe_cvrSite_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cvrSite_allChannels - adobe_cvrSite_allChannels_ly)  / adobe_cvrSite_allChannels_ly,  6) END AS adobe_cvrSite_allChannels_yoy_pct,
+
+        -- NEW: Postpaid + HSI CVR
+        adobe_cvrPostpaid_allChannels, adobe_cvrPostpaid_allChannels_wow, adobe_cvrPostpaid_allChannels_ly,
+        CASE WHEN adobe_cvrPostpaid_allChannels_wow IS NULL OR adobe_cvrPostpaid_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cvrPostpaid_allChannels - adobe_cvrPostpaid_allChannels_wow) / adobe_cvrPostpaid_allChannels_wow, 6) END AS adobe_cvrPostpaid_allChannels_wow_pct,
+        CASE WHEN adobe_cvrPostpaid_allChannels_ly  IS NULL OR adobe_cvrPostpaid_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cvrPostpaid_allChannels - adobe_cvrPostpaid_allChannels_ly)  / adobe_cvrPostpaid_allChannels_ly,  6) END AS adobe_cvrPostpaid_allChannels_yoy_pct,
+
+        adobe_cvrHsi_allChannels, adobe_cvrHsi_allChannels_wow, adobe_cvrHsi_allChannels_ly,
+        CASE WHEN adobe_cvrHsi_allChannels_wow IS NULL OR adobe_cvrHsi_allChannels_wow = 0 THEN NULL ELSE ROUND((adobe_cvrHsi_allChannels - adobe_cvrHsi_allChannels_wow) / adobe_cvrHsi_allChannels_wow, 6) END AS adobe_cvrHsi_allChannels_wow_pct,
+        CASE WHEN adobe_cvrHsi_allChannels_ly  IS NULL OR adobe_cvrHsi_allChannels_ly  = 0 THEN NULL ELSE ROUND((adobe_cvrHsi_allChannels - adobe_cvrHsi_allChannels_ly)  / adobe_cvrHsi_allChannels_ly,  6) END AS adobe_cvrHsi_allChannels_yoy_pct,
 
         -- ================================================================ PAID SEARCH
         adobe_uvnbByod_paidSearch, adobe_uvnbByod_paidSearch_wow, adobe_uvnbByod_paidSearch_ly,
@@ -655,9 +650,6 @@ with_max_date AS (
     FROM with_pcts
 )
 
--- -----------------------------------------------------------------------
--- FINAL OUTPUT — wide table, one row per week
--- -----------------------------------------------------------------------
 SELECT
     week_sun_to_sat,
     'ADOBE'                                                             AS data_source,
@@ -676,6 +668,9 @@ SELECT
     adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow, adobe_pctOrdersByodOfOrdersTotal_allChannels_ly, adobe_pctOrdersByodOfOrdersTotal_allChannels_wow_pct, adobe_pctOrdersByodOfOrdersTotal_allChannels_yoy_pct,
     adobe_cvrByod_allChannels,               adobe_cvrByod_allChannels_wow,               adobe_cvrByod_allChannels_ly,               adobe_cvrByod_allChannels_wow_pct,               adobe_cvrByod_allChannels_yoy_pct,
     adobe_cvrSite_allChannels,               adobe_cvrSite_allChannels_wow,               adobe_cvrSite_allChannels_ly,               adobe_cvrSite_allChannels_wow_pct,               adobe_cvrSite_allChannels_yoy_pct,
+    -- NEW
+    adobe_cvrPostpaid_allChannels,           adobe_cvrPostpaid_allChannels_wow,           adobe_cvrPostpaid_allChannels_ly,           adobe_cvrPostpaid_allChannels_wow_pct,           adobe_cvrPostpaid_allChannels_yoy_pct,
+    adobe_cvrHsi_allChannels,                adobe_cvrHsi_allChannels_wow,                adobe_cvrHsi_allChannels_ly,                adobe_cvrHsi_allChannels_wow_pct,                adobe_cvrHsi_allChannels_yoy_pct,
 
     -- ================================================================ PAID SEARCH
     adobe_uvnbByod_paidSearch,               adobe_uvnbByod_paidSearch_wow,               adobe_uvnbByod_paidSearch_ly,               adobe_uvnbByod_paidSearch_wow_pct,               adobe_uvnbByod_paidSearch_yoy_pct,
