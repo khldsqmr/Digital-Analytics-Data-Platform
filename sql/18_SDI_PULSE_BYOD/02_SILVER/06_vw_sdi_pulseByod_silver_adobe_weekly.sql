@@ -721,4 +721,4 @@ SELECT
     adobe_ordersTotalByod_other,             adobe_ordersTotalByod_other_wow,             adobe_ordersTotalByod_other_ly,             adobe_ordersTotalByod_other_wow_pct,             adobe_ordersTotalByod_other_yoy_pct
 
 FROM with_max_date
-;
+; 

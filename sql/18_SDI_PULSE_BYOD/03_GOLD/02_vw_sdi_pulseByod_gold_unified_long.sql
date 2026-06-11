@@ -419,4 +419,4 @@ ORDER BY
     channel          ASC,
     metric_name      ASC,
     dimension_name   ASC
-;
+; 

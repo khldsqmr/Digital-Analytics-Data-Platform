@@ -251,4 +251,4 @@ FULL OUTER JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_s
 FULL OUTER JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseByod_silver_adobeByodOutcomes_weekly`     ao  ON COALESCE(sa.week_sun_to_sat, gsc.week_sun_to_sat, p.week_sun_to_sat, g.week_sun_to_sat, t.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat) = ao.week_sun_to_sat
 
 ORDER BY week_sun_to_sat ASC
-;
+; 
