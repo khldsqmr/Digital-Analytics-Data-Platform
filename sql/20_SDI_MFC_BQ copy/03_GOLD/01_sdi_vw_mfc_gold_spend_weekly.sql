@@ -4,6 +4,7 @@
 -- ============================================================
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spend_weekly`
+OPTIONS (strict_mode = false)
 AS
 SELECT
   Quarter,

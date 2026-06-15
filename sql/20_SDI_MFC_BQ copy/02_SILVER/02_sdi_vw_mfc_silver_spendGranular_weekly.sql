@@ -11,6 +11,7 @@
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_silver_spendGranular_weekly`()
+OPTIONS (strict_mode = false)
 BEGIN
 
   CREATE OR REPLACE TABLE
