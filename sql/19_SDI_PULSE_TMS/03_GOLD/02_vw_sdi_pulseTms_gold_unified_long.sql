@@ -4,256 +4,112 @@ LAYER:        Gold View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_gold_unified_long
 
-RAW SOURCES (via Silver):
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly
-
 PURPOSE:
   Final unified Gold view for the PulseTMS pipeline.
   Single Tableau data source for all PulseTMS reporting.
-  Pure UNION of all three Silver tables — zero additional logic or aggregation here.
-  All business logic, WoW/YoY, and All Channels rollups live in Silver.
+
+  Pure pass-through view — zero computation here.
+  All heavy processing (proration, WoW/YoY, CVR numerator/denominator) lives in Silver SPs.
+  This view simply assembles Silver outputs via named CTEs and stacks them with UNION ALL.
+
+STRUCTURE:
+  CTE 1 — AdobeVolume   : Adobe funnel volume metrics (metric_type = ADOBE_VOLUME)
+  CTE 2 — AdobeCvr      : Adobe CVR metrics (metric_type = CVR)
+  CTE 3 — MfcChannel    : MFC spend at lob x channel_group grain (MFC_SPEND_CHANNEL)
+  CTE 4 — MfcGranular   : MFC spend at finest grain (MFC_SPEND_GRANULAR)
+  CTE 5 — PlatformSpend : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
+  Final SELECT: UNION ALL of all five CTEs
 
 DATA SOURCE VALUES:
-  'ADOBE'                  — Adobe UPV funnel at channel_group grain; lob = NULL
-  'MFC_SPEND_CHANNEL'      — MFC spend at lob x channel_group; includes 'All Channels' rollup
-  'MFC_SPEND_GRANULAR'     — MFC spend at finest grain; all MFC dim columns populated
-  'PLATFORM_SPEND_CHANNEL' — Platform spend at lob x channel_group; includes 'All Channels' rollup
+  'ADOBE'                  — Adobe volume + CVR rows; lob = NULL
+  'MFC_SPEND_CHANNEL'      — MFC spend at lob x channel_group; includes All Channels rollup
+  'MFC_SPEND_GRANULAR'     — MFC spend at finest grain; mfc_* columns populated
+  'PLATFORM_SPEND_CHANNEL' — Platform spend at lob x channel_group; POSTPAID + BROADBAND
 
   IMPORTANT: MFC contributes two sets of rows (CHANNEL + GRANULAR).
   Always filter on data_source before summing spend to avoid double-counting.
 
-CHANNEL GROUPS (standard vocabulary across all sources):
+CHANNEL GROUPS (standard vocabulary):
   'All Channels' | 'Paid Search' | 'Paid Social' | 'Organic Search' |
   'Direct' | 'Programmatic' | 'Other'
-  Note: Organic Search and Direct exist in ADOBE only (traffic attribution, not paid media).
+  Note: Organic Search and Direct exist in ADOBE only.
 
-LOB CANONICAL VALUES (single lob column — canonical across all sources):
+LOB CANONICAL VALUES:
   'POSTPAID'  — MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID
-  'BROADBAND' — MFC: HSI / BROADBAND; Platform: HSI / BROADBAND
+  'BROADBAND' — MFC: HSI / BROADBAND; Platform: BROADBAND
   'TFB'       — MFC: TFB / TBG (TBG is legacy)
-  NULL        — ADOBE (no LOB dimension; flows are not LOB segments)
+  NULL        — ADOBE (no LOB dimension)
+
+METRIC_TYPE VALUES:
+  'ADOBE_VOLUME'       — raw Adobe funnel metrics (upv*, cartstart*, orders*)
+                         use SUM([metric_value]) in Tableau
+  'CVR'                — Adobe conversion rates
+                         use SUM([adobe_cvr_numerator]) / SUM([adobe_cvr_denominator])
+                         in Tableau — works at weekly, QTD, or quarterly grain
+  'MFC_SPEND_ACTUAL'   — MFC actual spend; use SUM([metric_value])
+  'MFC_SPEND_FORECAST' — MFC forecast spend; use SUM([metric_value])
+  'PLATFORM_SPEND'     — Platform actual spend; use SUM([metric_value])
 
 COLUMN SCHEMA:
-  data_source       — source and grain identifier (see DATA SOURCE VALUES)
-  qgp_date          — QGP period-end date (Saturday or quarter-end non-Saturday)
-  week_type         — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
-  qgp_quarter       — display string e.g. '2026 Q1'
-  days_in_period    — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder for BOUNDARY_FIRST
-  is_complete_period — TRUE when qgp_date <= CURRENT_DATE()
-  lob               — canonical LOB (see LOB CANONICAL VALUES above)
-  channel_group     — standard channel group (see CHANNEL GROUPS above)
-  metric_name       — camelCase metric identifier
-  metric_value      — current period value (NULL for incomplete/future periods)
-  metric_value_ly   — same metric, same ISO week, prior year
-  wow_numerator     — WoW comparison numerator (NULL for BOUNDARY_STUB)
-  wow_denominator   — WoW comparison denominator (NULL for BOUNDARY_STUB)
-  wow_pct           — pre-computed WoW % (NULL for BOUNDARY_STUB or zero denominator)
-  yoy_numerator     — YoY comparison numerator (NULL for BOUNDARY_STUB)
-  yoy_denominator   — YoY comparison denominator (NULL for BOUNDARY_STUB)
-  yoy_pct           — pre-computed YoY % (NULL for BOUNDARY_STUB or zero denominator)
-  max_date          — most recent qgp_date with actual data per data_source x lob x metric_name
-  mfc_channel       — MFC_SPEND_GRANULAR only; NULL for all other sources
-  mfc_tactic        — MFC_SPEND_GRANULAR only; NULL for all other sources
-  mfc_message_type  — MFC_SPEND_GRANULAR only; NULL for all other sources
-  mfc_agency        — MFC_SPEND_GRANULAR only; NULL for all other sources
-
-METRIC NAMES BY SOURCE:
-  ADOBE:
-    upvPostpaid, upvHsi, upvByod, upvFlowTotal, upvTotalAdobe,
-    cartstartPostpaid, cartstartHsi, cartstartByod, cartstartTotal,
-    ordersUnassistedPostpaid, ordersUnassistedHsi, ordersUnassistedByod, ordersUnassistedTotal,
-    ordersAssistedPostpaid, ordersAssistedHsi, ordersAssistedByod, ordersAssistedTotal,
-    ordersTotal
-
-  MFC_SPEND_CHANNEL / MFC_SPEND_GRANULAR:
-    mfcSpendActual, mfcSpendForecast
-
-  PLATFORM_SPEND_CHANNEL:
-    platformSpend
+  data_source            — source and grain identifier
+  qgp_date               — QGP period-end date (Saturday or quarter-end non-Saturday)
+  week_type              — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
+  qgp_quarter            — display string e.g. '2026 Q1'
+  days_in_period         — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder for BOUNDARY_FIRST
+  is_complete_period     — TRUE when qgp_date <= CURRENT_DATE()
+  lob                    — canonical LOB (NULL for ADOBE)
+  channel_group          — standard channel group
+  metric_name            — camelCase metric identifier
+  metric_type            — see METRIC_TYPE VALUES above
+  metric_value           — volume/spend value; NULL for CVR rows
+  metric_value_ly        — prior year value; NULL for CVR rows
+  wow_numerator          — NULL for BOUNDARY_STUB and CVR rows
+  wow_denominator        — NULL for BOUNDARY_STUB and CVR rows
+  wow_pct                — NULL for BOUNDARY_STUB, CVR, zero denominator
+  yoy_numerator          — NULL for BOUNDARY_STUB and CVR rows
+  yoy_denominator        — NULL for BOUNDARY_STUB and CVR rows
+  yoy_pct                — NULL for BOUNDARY_STUB, CVR, zero denominator
+  max_date               — most recent qgp_date with non-NULL metric_value
+  adobe_cvr_numerator    — populated for CVR rows only; NULL for all other metric_types
+  adobe_cvr_denominator  — populated for CVR rows only; NULL for all other metric_types
+  mfc_channel            — MFC_SPEND_GRANULAR only; NULL elsewhere
+  mfc_tactic             — MFC_SPEND_GRANULAR only; NULL elsewhere
+  mfc_message_type       — MFC_SPEND_GRANULAR only; NULL elsewhere
+  mfc_agency             — MFC_SPEND_GRANULAR only; NULL elsewhere
 
 DOWNSTREAM:
   Tableau — direct connection to this view
 
 FUTURE SOURCES:
-  Add new UNION ALL branches following the template at the bottom of this file.
-  No schema changes needed for existing Tableau calculations.
+  Add a new named CTE following the template at the bottom,
+  then add it to the final UNION ALL. No schema changes needed.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_gold_unified_long`
 AS
 
--- =============================================================================
--- LOB CANONICAL MAPPING (applied consistently across all branches)
--- Raw → Canonical:
---   CONSUMER POSTPAID / POSTPAID → POSTPAID
---   HSI / BROADBAND              → BROADBAND
---   TFB / TBG                    → TFB
---   NULL (Adobe)                 → NULL
--- =============================================================================
+WITH
 
 -- =============================================================================
--- BRANCH 1: ADOBE
---           UPV funnel at qgp_date x channel_group x metric_name
---           lob = NULL (Adobe has no LOB dimension; flows are not LOB segments)
+-- CTE 1: ADOBE VOLUME METRICS
+--        upv*, cartstart*, orders* at qgp_date x channel_group x metric_name
+--        lob = NULL — Adobe has no LOB dimension
+--        metric_type = 'ADOBE_VOLUME'
+--        Use SUM([metric_value]) in Tableau
 -- =============================================================================
-SELECT
-  'ADOBE'                                                                 AS data_source,
-  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
-  s.week_type,
-  s.qgp_quarter,
-  s.days_in_period,
-  s.is_complete_period,
-  CAST(NULL AS STRING)                                                    AS lob,
-  s.channel_group,
-  s.metric_name,
-  s.metric_value,
-  s.metric_value_ly,
-  s.wow_numerator,
-  s.wow_denominator,
-  s.wow_pct,
-  s.yoy_numerator,
-  s.yoy_denominator,
-  s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                AS max_date,
-  CAST(NULL AS STRING)                                                    AS mfc_channel,
-  CAST(NULL AS STRING)                                                    AS mfc_tactic,
-  CAST(NULL AS STRING)                                                    AS mfc_message_type,
-  CAST(NULL AS STRING)                                                    AS mfc_agency
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
-
--- =============================================================================
--- BRANCH 2: MFC_SPEND_CHANNEL
---           MFC spend at lob x channel_group; includes 'All Channels' rollup
---           lob canonicalized from source values
--- =============================================================================
-UNION ALL
-SELECT
-  s.data_source,
-  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
-  s.week_type,
-  s.qgp_quarter,
-  s.days_in_period,
-  s.is_complete_period,
-  CASE s.lob_mfc
-    WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
-    WHEN 'POSTPAID'          THEN 'POSTPAID'
-    WHEN 'HSI'               THEN 'BROADBAND'
-    WHEN 'BROADBAND'         THEN 'BROADBAND'
-    WHEN 'TBG'               THEN 'TFB'
-    WHEN 'TFB'               THEN 'TFB'
-    ELSE s.lob_mfc
-  END                                                                     AS lob,
-  s.channel_group,
-  s.metric_name,
-  s.metric_value,
-  s.metric_value_ly,
-  s.wow_numerator,
-  s.wow_denominator,
-  s.wow_pct,
-  s.yoy_numerator,
-  s.yoy_denominator,
-  s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                AS max_date,
-  CAST(NULL AS STRING)                                                    AS mfc_channel,
-  CAST(NULL AS STRING)                                                    AS mfc_tactic,
-  CAST(NULL AS STRING)                                                    AS mfc_message_type,
-  CAST(NULL AS STRING)                                                    AS mfc_agency
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
-WHERE s.data_source = 'MFC_SPEND_CHANNEL'
-
--- =============================================================================
--- BRANCH 3: MFC_SPEND_GRANULAR
---           MFC spend at finest grain; all MFC dim columns populated
---           lob canonicalized from source values
--- =============================================================================
-UNION ALL
-SELECT
-  s.data_source,
-  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
-  s.week_type,
-  s.qgp_quarter,
-  s.days_in_period,
-  s.is_complete_period,
-  CASE s.lob_mfc
-    WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
-    WHEN 'POSTPAID'          THEN 'POSTPAID'
-    WHEN 'HSI'               THEN 'BROADBAND'
-    WHEN 'BROADBAND'         THEN 'BROADBAND'
-    WHEN 'TBG'               THEN 'TFB'
-    WHEN 'TFB'               THEN 'TFB'
-    ELSE s.lob_mfc
-  END                                                                     AS lob,
-  s.channel_group,
-  s.metric_name,
-  s.metric_value,
-  s.metric_value_ly,
-  s.wow_numerator,
-  s.wow_denominator,
-  s.wow_pct,
-  s.yoy_numerator,
-  s.yoy_denominator,
-  s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                AS max_date,
-  s.channel                                                               AS mfc_channel,
-  s.tactic                                                                AS mfc_tactic,
-  s.message_type                                                          AS mfc_message_type,
-  s.agency                                                                AS mfc_agency
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
-WHERE s.data_source = 'MFC_SPEND_GRANULAR'
-
--- =============================================================================
--- BRANCH 4: PLATFORM_SPEND_CHANNEL
---           Platform spend at lob x channel_group; includes 'All Channels' rollup
---           lob already canonicalized in Bronze — passed through directly
---           Actuals only (no forecast available from platform source)
--- =============================================================================
-UNION ALL
-SELECT
-  'PLATFORM_SPEND_CHANNEL'                                                AS data_source,
-  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
-  s.week_type,
-  s.qgp_quarter,
-  s.days_in_period,
-  s.is_complete_period,
-  -- LOB already canonical from Bronze (POSTPAID / BROADBAND) — pass through directly
-  s.lob                                                                   AS lob,
-  s.channel_group,
-  s.metric_name,
-  s.metric_value,
-  s.metric_value_ly,
-  s.wow_numerator,
-  s.wow_denominator,
-  s.wow_pct,
-  s.yoy_numerator,
-  s.yoy_denominator,
-  s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                AS max_date,
-  CAST(NULL AS STRING)                                                    AS mfc_channel,
-  CAST(NULL AS STRING)                                                    AS mfc_tactic,
-  CAST(NULL AS STRING)                                                    AS mfc_message_type,
-  CAST(NULL AS STRING)                                                    AS mfc_agency
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly` s
-
-/*
-  =============================================================================
-  FUTURE SOURCES — add new UNION ALL branches here
-  =============================================================================
-  Template (replace <SOURCE_NAME> and <silver_table_name>):
-
-  UNION ALL
+AdobeVolume AS (
   SELECT
-    '<SOURCE_NAME>'         AS data_source,
-    CAST(s.qgp_date AS DATE)  AS qgp_date,
+    'ADOBE'                                                               AS data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    s.lob,                  -- or canonical CASE mapping if needed
+    CAST(NULL AS STRING)                                                  AS lob,
     s.channel_group,
     s.metric_name,
+    s.metric_type,
     s.metric_value,
     s.metric_value_ly,
     s.wow_numerator,
@@ -262,12 +118,238 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformS
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)  AS max_date,
-    CAST(NULL AS STRING)    AS mfc_channel,
-    CAST(NULL AS STRING)    AS mfc_tactic,
-    CAST(NULL AS STRING)    AS mfc_message_type,
-    CAST(NULL AS STRING)    AS mfc_agency
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.<silver_table_name>` s
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                                                  AS mfc_channel,
+    CAST(NULL AS STRING)                                                  AS mfc_tactic,
+    CAST(NULL AS STRING)                                                  AS mfc_message_type,
+    CAST(NULL AS STRING)                                                  AS mfc_agency
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
+  WHERE s.metric_type = 'ADOBE_VOLUME'
+),
+
+-- =============================================================================
+-- CTE 2: ADOBE CVR METRICS
+--        17 conversion rates at qgp_date x channel_group x metric_name
+--        lob = NULL — Adobe has no LOB dimension
+--        metric_type = 'CVR'
+--        Use SUM([adobe_cvr_numerator]) / SUM([adobe_cvr_denominator]) in Tableau
+--        metric_value = NULL — do not SUM
+-- =============================================================================
+AdobeCvr AS (
+  SELECT
+    'ADOBE'                                                               AS data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    s.week_type,
+    s.qgp_quarter,
+    s.days_in_period,
+    s.is_complete_period,
+    CAST(NULL AS STRING)                                                  AS lob,
+    s.channel_group,
+    s.metric_name,
+    s.metric_type,
+    s.metric_value,
+    s.metric_value_ly,
+    s.wow_numerator,
+    s.wow_denominator,
+    s.wow_pct,
+    s.yoy_numerator,
+    s.yoy_denominator,
+    s.yoy_pct,
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    s.adobe_cvr_numerator,
+    s.adobe_cvr_denominator,
+    CAST(NULL AS STRING)                                                  AS mfc_channel,
+    CAST(NULL AS STRING)                                                  AS mfc_tactic,
+    CAST(NULL AS STRING)                                                  AS mfc_message_type,
+    CAST(NULL AS STRING)                                                  AS mfc_agency
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
+  WHERE s.metric_type = 'CVR'
+),
+
+-- =============================================================================
+-- CTE 3: MFC SPEND — CHANNEL GRAIN
+--        mfcSpendActual + mfcSpendForecast at lob x channel_group
+--        Includes All Channels rollup per lob
+--        lob canonicalized from source values
+--        metric_type = 'MFC_SPEND_ACTUAL' or 'MFC_SPEND_FORECAST'
+-- =============================================================================
+MfcChannel AS (
+  SELECT
+    s.data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    s.week_type,
+    s.qgp_quarter,
+    s.days_in_period,
+    s.is_complete_period,
+    CASE s.lob_mfc
+      WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+      WHEN 'POSTPAID'          THEN 'POSTPAID'
+      WHEN 'HSI'               THEN 'BROADBAND'
+      WHEN 'BROADBAND'         THEN 'BROADBAND'
+      WHEN 'TBG'               THEN 'TFB'
+      WHEN 'TFB'               THEN 'TFB'
+      ELSE s.lob_mfc
+    END                                                                   AS lob,
+    s.channel_group,
+    s.metric_name,
+    CASE s.metric_name
+      WHEN 'mfcSpendActual'   THEN 'MFC_SPEND_ACTUAL'
+      WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
+    END                                                                   AS metric_type,
+    s.metric_value,
+    s.metric_value_ly,
+    s.wow_numerator,
+    s.wow_denominator,
+    s.wow_pct,
+    s.yoy_numerator,
+    s.yoy_denominator,
+    s.yoy_pct,
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                                                  AS mfc_channel,
+    CAST(NULL AS STRING)                                                  AS mfc_tactic,
+    CAST(NULL AS STRING)                                                  AS mfc_message_type,
+    CAST(NULL AS STRING)                                                  AS mfc_agency
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
+  WHERE s.data_source = 'MFC_SPEND_CHANNEL'
+),
+
+-- =============================================================================
+-- CTE 4: MFC SPEND — GRANULAR GRAIN
+--        mfcSpendActual + mfcSpendForecast at finest grain
+--        mfc_* dimension columns populated
+--        lob canonicalized from source values
+--        metric_type = 'MFC_SPEND_ACTUAL' or 'MFC_SPEND_FORECAST'
+--        NOTE: never aggregate MFC_SPEND_CHANNEL + MFC_SPEND_GRANULAR together
+--              — always filter on data_source to avoid double-counting
+-- =============================================================================
+MfcGranular AS (
+  SELECT
+    s.data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    s.week_type,
+    s.qgp_quarter,
+    s.days_in_period,
+    s.is_complete_period,
+    CASE s.lob_mfc
+      WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+      WHEN 'POSTPAID'          THEN 'POSTPAID'
+      WHEN 'HSI'               THEN 'BROADBAND'
+      WHEN 'BROADBAND'         THEN 'BROADBAND'
+      WHEN 'TBG'               THEN 'TFB'
+      WHEN 'TFB'               THEN 'TFB'
+      ELSE s.lob_mfc
+    END                                                                   AS lob,
+    s.channel_group,
+    s.metric_name,
+    CASE s.metric_name
+      WHEN 'mfcSpendActual'   THEN 'MFC_SPEND_ACTUAL'
+      WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
+    END                                                                   AS metric_type,
+    s.metric_value,
+    s.metric_value_ly,
+    s.wow_numerator,
+    s.wow_denominator,
+    s.wow_pct,
+    s.yoy_numerator,
+    s.yoy_denominator,
+    s.yoy_pct,
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
+    s.channel                                                             AS mfc_channel,
+    s.tactic                                                              AS mfc_tactic,
+    s.message_type                                                        AS mfc_message_type,
+    s.agency                                                              AS mfc_agency
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
+  WHERE s.data_source = 'MFC_SPEND_GRANULAR'
+),
+
+-- =============================================================================
+-- CTE 5: PLATFORM SPEND
+--        platformSpend (actuals only) at lob x channel_group
+--        LOBs: POSTPAID and BROADBAND
+--        Includes All Channels rollup per lob
+--        lob already canonical from Bronze — passed through directly
+--        metric_type = 'PLATFORM_SPEND'
+-- =============================================================================
+PlatformSpend AS (
+  SELECT
+    'PLATFORM_SPEND_CHANNEL'                                              AS data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    s.week_type,
+    s.qgp_quarter,
+    s.days_in_period,
+    s.is_complete_period,
+    s.lob,
+    s.channel_group,
+    s.metric_name,
+    'PLATFORM_SPEND'                                                      AS metric_type,
+    s.metric_value,
+    s.metric_value_ly,
+    s.wow_numerator,
+    s.wow_denominator,
+    s.wow_pct,
+    s.yoy_numerator,
+    s.yoy_denominator,
+    s.yoy_pct,
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                                                  AS mfc_channel,
+    CAST(NULL AS STRING)                                                  AS mfc_tactic,
+    CAST(NULL AS STRING)                                                  AS mfc_message_type,
+    CAST(NULL AS STRING)                                                  AS mfc_agency
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly` s
+)
+
+-- =============================================================================
+-- FINAL: Stack all five CTEs
+-- =============================================================================
+SELECT * FROM AdobeVolume
+UNION ALL SELECT * FROM AdobeCvr
+UNION ALL SELECT * FROM MfcChannel
+UNION ALL SELECT * FROM MfcGranular
+UNION ALL SELECT * FROM PlatformSpend
+
+/*
+  =============================================================================
+  FUTURE SOURCES — add a new named CTE above following this template,
+  then add one UNION ALL line in the final SELECT above.
+  No schema changes needed for existing Tableau calculations.
+  =============================================================================
+  NewSource AS (
+    SELECT
+      '<SOURCE_NAME>'           AS data_source,
+      CAST(s.qgp_date AS DATE)  AS qgp_date,
+      s.week_type,
+      s.qgp_quarter,
+      s.days_in_period,
+      s.is_complete_period,
+      s.lob,
+      s.channel_group,
+      s.metric_name,
+      '<METRIC_TYPE>'           AS metric_type,
+      s.metric_value,
+      s.metric_value_ly,
+      s.wow_numerator,
+      s.wow_denominator,
+      s.wow_pct,
+      s.yoy_numerator,
+      s.yoy_denominator,
+      s.yoy_pct,
+      CAST(s.max_date AS DATE)  AS max_date,
+      CAST(NULL AS FLOAT64)     AS adobe_cvr_numerator,
+      CAST(NULL AS FLOAT64)     AS adobe_cvr_denominator,
+      CAST(NULL AS STRING)      AS mfc_channel,
+      CAST(NULL AS STRING)      AS mfc_tactic,
+      CAST(NULL AS STRING)      AS mfc_message_type,
+      CAST(NULL AS STRING)      AS mfc_agency
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.<silver_table>` s
+  )
   =============================================================================
 */
 ;

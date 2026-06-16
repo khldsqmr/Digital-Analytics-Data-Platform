@@ -39,6 +39,8 @@ CHANGE LOG:
   - 'quarter' renamed to 'qgp_quarter' to match Silver output schema.
   - 'is_complete_period' added to allow filtering to complete periods.
   - LOB note added to header (spend columns are POSTPAID only).
+  - Added WHERE metric_type = 'ADOBE_VOLUME' to Adobe CTE to exclude CVR rows
+    introduced in Silver. Wide view is for volumes only.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -77,6 +79,7 @@ Adobe AS (
     MAX(IF(metric_name = 'ordersAssistedTotal',      metric_value, NULL)) AS ordersAssistedTotal,
     MAX(IF(metric_name = 'ordersTotal',              metric_value, NULL)) AS ordersTotal
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly`
+  WHERE metric_type = 'ADOBE_VOLUME'  -- exclude CVR rows; wide view is for volumes only
   GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, channel_group
 ),
 
