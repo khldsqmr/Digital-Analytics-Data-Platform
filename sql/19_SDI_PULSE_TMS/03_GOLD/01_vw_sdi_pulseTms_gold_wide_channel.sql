@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         01_vw_sdi_pulseTms_gold_wide_channel.sql
+FILE:         09_vw_sdi_pulseTms_gold_wide_channel.sql
 LAYER:        Gold View — Wide / Sense Check
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_gold_wide_channel
@@ -9,14 +9,24 @@ PURPOSE:
   One row per qgp_date × channel_group, ordered by qgp_date DESC.
 
   Sources (channel grain only):
-    ADOBE              — all UPV + cartstart + orders metrics
-    MFC_SPEND_CHANNEL  — mfcSpendActual + mfcSpendForecast (CONSUMER POSTPAID only)
-    PLATFORM_SPEND_CHANNEL — platformSpend (POSTPAID only)
+    ADOBE              — all UPV + cartstart + orders metrics (no LOB dimension)
+    MFC_SPEND_CHANNEL  — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
+    PLATFORM_SPEND_CHANNEL — platformSpend (POSTPAID LOB only; actuals only)
 
-  NOT included: MFC_SPEND_GRANULAR (lob/tactic/channel detail — use Gold long view for that)
+  NOT included: MFC_SPEND_GRANULAR (use vw_sdi_pulseTms_gold_unified_long for that)
+
+LOB NOTE:
+  Spend columns (MFC + Platform) reflect POSTPAID only. Both Silver tables are filtered
+  to POSTPAID in their Bronze CROSS JOIN. No LOB column is surfaced here since the grain
+  is channel_group only — use vw_sdi_pulseTms_gold_unified_long for LOB-level analysis.
 
 GRAIN:
   qgp_date × channel_group
+
+KEY COLUMNS:
+  is_complete_period — TRUE when qgp_date <= CURRENT_DATE(); use to filter to actual data
+  week_type          — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
+  qgp_quarter        — display string e.g. '2026 Q1'
 
 ORDERING:
   qgp_date DESC, channel_group ASC
@@ -24,6 +34,11 @@ ORDERING:
 NOTE:
   This view is for sense-checking only — not intended as a Tableau data source.
   Use vw_sdi_pulseTms_gold_unified_long for all production reporting.
+
+CHANGE LOG:
+  - 'quarter' renamed to 'qgp_quarter' to match Silver output schema.
+  - 'is_complete_period' added to allow filtering to complete periods.
+  - LOB note added to header (spend columns are POSTPAID only).
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -39,8 +54,9 @@ Adobe AS (
   SELECT
     qgp_date,
     week_type,
-    quarter,
+    qgp_quarter,
     days_in_period,
+    is_complete_period,
     channel_group,
     MAX(IF(metric_name = 'upvPostpaid',              metric_value, NULL)) AS upvPostpaid,
     MAX(IF(metric_name = 'upvHsi',                   metric_value, NULL)) AS upvHsi,
@@ -61,11 +77,11 @@ Adobe AS (
     MAX(IF(metric_name = 'ordersAssistedTotal',      metric_value, NULL)) AS ordersAssistedTotal,
     MAX(IF(metric_name = 'ordersTotal',              metric_value, NULL)) AS ordersTotal
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly`
-  GROUP BY qgp_date, week_type, quarter, days_in_period, channel_group
+  GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, channel_group
 ),
 
 -- ---------------------------------------------------------------------------
--- MFC spend — CONSUMER POSTPAID channel grain only
+-- MFC spend — POSTPAID channel grain only
 -- ---------------------------------------------------------------------------
 Mfc AS (
   SELECT
@@ -75,6 +91,7 @@ Mfc AS (
     MAX(IF(metric_name = 'mfcSpendForecast', metric_value, NULL)) AS mfcSpendForecast
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly`
   WHERE data_source = 'MFC_SPEND_CHANNEL'
+    AND lob_mfc     = 'POSTPAID'            -- POSTPAID only for channel-level sense check
   GROUP BY qgp_date, channel_group
 ),
 
@@ -87,6 +104,7 @@ Platform AS (
     channel_group,
     MAX(IF(metric_name = 'platformSpend', metric_value, NULL)) AS platformSpend
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly`
+  WHERE lob = 'POSTPAID'                    -- POSTPAID only; matches MFC channel grain
   GROUP BY qgp_date, channel_group
 )
 
@@ -96,8 +114,9 @@ Platform AS (
 SELECT
   a.qgp_date,
   a.week_type,
-  a.quarter,
+  a.qgp_quarter,
   a.days_in_period,
+  a.is_complete_period,
   a.channel_group,
 
   -- Adobe UPV
@@ -124,19 +143,19 @@ SELECT
   a.ordersAssistedTotal,
   a.ordersTotal,
 
-  -- MFC Spend (CONSUMER POSTPAID)
+  -- MFC Spend (POSTPAID)
   m.mfcSpendActual,
   m.mfcSpendForecast,
 
-  -- Platform Spend (POSTPAID)
+  -- Platform Spend (POSTPAID, actuals only)
   p.platformSpend
 
 FROM Adobe a
 LEFT JOIN Mfc m
-  ON  m.qgp_date     = a.qgp_date
+  ON  m.qgp_date      = a.qgp_date
   AND m.channel_group = a.channel_group
 LEFT JOIN Platform p
-  ON  p.qgp_date     = a.qgp_date
+  ON  p.qgp_date      = a.qgp_date
   AND p.channel_group = a.channel_group
 
 ORDER BY a.qgp_date DESC, a.channel_group ASC;

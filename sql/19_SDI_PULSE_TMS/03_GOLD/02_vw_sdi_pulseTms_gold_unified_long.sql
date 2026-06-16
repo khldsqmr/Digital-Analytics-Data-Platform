@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         02_vw_sdi_pulseTms_gold_unified_long.sql
+FILE:         08_vw_sdi_pulseTms_gold_unified_long.sql
 LAYER:        Gold View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_gold_unified_long
@@ -9,52 +9,55 @@ RAW SOURCES (via Silver):
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly
   prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly
 
-DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_gold_unified_long
-
 PURPOSE:
   Final unified Gold view for the PulseTMS pipeline.
-  This is the single Tableau data source for all PulseTMS reporting.
-
-  Pure UNION of all three Silver views — zero logic, zero aggregation here.
-  All business logic, WoW/YoY computation, and All Channels rollups live in Silver.
+  Single Tableau data source for all PulseTMS reporting.
+  Pure UNION of all three Silver tables — zero additional logic or aggregation here.
+  All business logic, WoW/YoY, and All Channels rollups live in Silver.
 
 DATA SOURCE VALUES:
-  'ADOBE'                — Adobe UPV funnel metrics at channel_group grain
-  'MFC_SPEND_CHANNEL'    — MFC spend aggregated to channel_group, CONSUMER POSTPAID only
-  'MFC_SPEND_GRANULAR'   — MFC spend at finest grain, all LOBs
-  'PLATFORM_SPEND_CHANNEL' — Platform spend at channel_group × POSTPAID
+  'ADOBE'                  — Adobe UPV funnel at channel_group grain; lob = NULL
+  'MFC_SPEND_CHANNEL'      — MFC spend at lob x channel_group; includes 'All Channels' rollup
+  'MFC_SPEND_GRANULAR'     — MFC spend at finest grain; all MFC dim columns populated
+  'PLATFORM_SPEND_CHANNEL' — Platform spend at lob x channel_group; includes 'All Channels' rollup
 
-  When new sources are added (e.g. SA360, GSC), add a new UNION branch with
-  an appropriate data_source value (e.g. 'SA360_CHANNEL', 'SA360_GRANULAR').
-  No schema changes needed for existing Tableau calculations.
+  IMPORTANT: MFC contributes two sets of rows (CHANNEL + GRANULAR).
+  Always filter on data_source before summing spend to avoid double-counting.
+
+CHANNEL GROUPS (standard vocabulary across all sources):
+  'All Channels' | 'Paid Search' | 'Paid Social' | 'Organic Search' |
+  'Direct' | 'Programmatic' | 'Other'
+  Note: Organic Search and Direct exist in ADOBE only (traffic attribution, not paid media).
+
+LOB CANONICAL VALUES (single lob column — canonical across all sources):
+  'POSTPAID'  — MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID
+  'BROADBAND' — MFC: HSI / BROADBAND; Platform: HSI / BROADBAND
+  'TFB'       — MFC: TFB / TBG (TBG is legacy)
+  NULL        — ADOBE (no LOB dimension; flows are not LOB segments)
 
 COLUMN SCHEMA:
-  data_source       — identifies source and grain (see DATA SOURCE VALUES above)
-  qgp_date          — QGP period-end date (Sat or quarter-end non-Sat)
+  data_source       — source and grain identifier (see DATA SOURCE VALUES)
+  qgp_date          — QGP period-end date (Saturday or quarter-end non-Saturday)
   week_type         — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
-  quarter           — e.g. '2026 Q1'
-  days_in_period    — 7 for NORMAL; <7 for stubs
-  is_complete_period — TRUE when qgp_date <= CURRENT_DATE() — week has ended
-  channel_group     — 'All Channels' | 'Paid Search' | 'Paid Social' |
-                      'Programmatic' | 'Other' | 'Direct' | 'Organic Search'
-  metric_name       — camelCase metric identifier (see per-source metric lists below)
+  qgp_quarter       — display string e.g. '2026 Q1'
+  days_in_period    — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder for BOUNDARY_FIRST
+  is_complete_period — TRUE when qgp_date <= CURRENT_DATE()
+  lob               — canonical LOB (see LOB CANONICAL VALUES above)
+  channel_group     — standard channel group (see CHANNEL GROUPS above)
+  metric_name       — camelCase metric identifier
   metric_value      — current period value (NULL for incomplete/future periods)
   metric_value_ly   — same metric, same ISO week, prior year
-  wow_numerator     — for correct WoW % calculation (NULL for BOUNDARY_STUB)
-  wow_denominator   — prior period value for WoW (NULL for BOUNDARY_STUB)
-  wow_pct           — wow_numerator / wow_denominator - 1 (NULL for BOUNDARY_STUB / zero denom)
-  yoy_numerator     — for correct YoY % calculation (NULL for BOUNDARY_STUB)
-  yoy_denominator   — prior year period value for YoY (NULL for BOUNDARY_STUB)
-  yoy_pct           — yoy_numerator / yoy_denominator - 1 (NULL for BOUNDARY_STUB / zero denom)
-  max_date          — most recent qgp_date with actual data, per data_source × metric_name
-  lob_mfc           — MFC LOB: 'CONSUMER POSTPAID' for CHANNEL grain; all LOBs for GRANULAR;
-                      NULL for ADOBE and PLATFORM rows
-  lob_platform      — Platform LOB: 'POSTPAID' for PLATFORM rows; NULL for all other sources
-  mfc_channel       — Raw MFC channel (MFC_SPEND_GRANULAR only; NULL elsewhere)
-  mfc_tactic        — MFC tactic (MFC_SPEND_GRANULAR only; NULL elsewhere)
-  mfc_message_type  — MFC message type (MFC_SPEND_GRANULAR only; NULL elsewhere)
-  mfc_agency        — MFC agency (MFC_SPEND_GRANULAR only; NULL elsewhere)
+  wow_numerator     — WoW comparison numerator (NULL for BOUNDARY_STUB)
+  wow_denominator   — WoW comparison denominator (NULL for BOUNDARY_STUB)
+  wow_pct           — pre-computed WoW % (NULL for BOUNDARY_STUB or zero denominator)
+  yoy_numerator     — YoY comparison numerator (NULL for BOUNDARY_STUB)
+  yoy_denominator   — YoY comparison denominator (NULL for BOUNDARY_STUB)
+  yoy_pct           — pre-computed YoY % (NULL for BOUNDARY_STUB or zero denominator)
+  max_date          — most recent qgp_date with actual data per data_source x lob x metric_name
+  mfc_channel       — MFC_SPEND_GRANULAR only; NULL for all other sources
+  mfc_tactic        — MFC_SPEND_GRANULAR only; NULL for all other sources
+  mfc_message_type  — MFC_SPEND_GRANULAR only; NULL for all other sources
+  mfc_agency        — MFC_SPEND_GRANULAR only; NULL for all other sources
 
 METRIC NAMES BY SOURCE:
   ADOBE:
@@ -70,17 +73,12 @@ METRIC NAMES BY SOURCE:
   PLATFORM_SPEND_CHANNEL:
     platformSpend
 
-BUSINESS RULES:
-  - BOUNDARY_STUB rows included with NULL metric values and NULL WoW/YoY fields.
-    Present so Tableau renders the QGP date spine correctly.
-  - WoW % = wow_numerator / wow_denominator - 1 (pre-computed; use wow_pct directly)
-  - YoY % = yoy_numerator / yoy_denominator - 1 (pre-computed; use yoy_pct directly)
-  - MFC contributes TWO sets of rows (CHANNEL + GRANULAR); filter on data_source
-    to avoid double-counting.
-  - All Channels rows are pre-computed in Silver — no further aggregation needed.
-
 DOWNSTREAM:
   Tableau — direct connection to this view
+
+FUTURE SOURCES:
+  Add new UNION ALL branches following the template at the bottom of this file.
+  No schema changes needed for existing Tableau calculations.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -88,17 +86,27 @@ CREATE OR REPLACE VIEW
 AS
 
 -- =============================================================================
+-- LOB CANONICAL MAPPING (applied consistently across all branches)
+-- Raw → Canonical:
+--   CONSUMER POSTPAID / POSTPAID → POSTPAID
+--   HSI / BROADBAND              → BROADBAND
+--   TFB / TBG                    → TFB
+--   NULL (Adobe)                 → NULL
+-- =============================================================================
+
+-- =============================================================================
 -- BRANCH 1: ADOBE
---           UPV funnel metrics at qgp_date × channel_group × metric_name
---           Includes 'All Channels' row from Adobe ALL source tables
+--           UPV funnel at qgp_date x channel_group x metric_name
+--           lob = NULL (Adobe has no LOB dimension; flows are not LOB segments)
 -- =============================================================================
 SELECT
-  'ADOBE'                                                               AS data_source,
-  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
+  'ADOBE'                                                                 AS data_source,
+  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
   s.week_type,
-  s.quarter,
+  s.qgp_quarter,
   s.days_in_period,
   s.is_complete_period,
+  CAST(NULL AS STRING)                                                    AS lob,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -109,29 +117,35 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                     AS max_date,
-  CAST(NULL AS STRING)                                                  AS lob_mfc,
-  CAST(NULL AS STRING)                                                  AS lob_platform,
-  CAST(NULL AS STRING)                                                  AS mfc_channel,
-  CAST(NULL AS STRING)                                                  AS mfc_tactic,
-  CAST(NULL AS STRING)                                                  AS mfc_message_type,
-  CAST(NULL AS STRING)                                                  AS mfc_agency
-
+  CAST(s.max_date AS DATE)                                                AS max_date,
+  CAST(NULL AS STRING)                                                    AS mfc_channel,
+  CAST(NULL AS STRING)                                                    AS mfc_tactic,
+  CAST(NULL AS STRING)                                                    AS mfc_message_type,
+  CAST(NULL AS STRING)                                                    AS mfc_agency
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
 
 -- =============================================================================
 -- BRANCH 2: MFC_SPEND_CHANNEL
---           MFC spend aggregated to channel_group, CONSUMER POSTPAID only
---           Includes 'All Channels' rollup
+--           MFC spend at lob x channel_group; includes 'All Channels' rollup
+--           lob canonicalized from source values
 -- =============================================================================
 UNION ALL
 SELECT
   s.data_source,
-  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
+  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
   s.week_type,
-  s.quarter,
+  s.qgp_quarter,
   s.days_in_period,
   s.is_complete_period,
+  CASE s.lob_mfc
+    WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+    WHEN 'POSTPAID'          THEN 'POSTPAID'
+    WHEN 'HSI'               THEN 'BROADBAND'
+    WHEN 'BROADBAND'         THEN 'BROADBAND'
+    WHEN 'TBG'               THEN 'TFB'
+    WHEN 'TFB'               THEN 'TFB'
+    ELSE s.lob_mfc
+  END                                                                     AS lob,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -142,30 +156,36 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                     AS max_date,
-  s.lob_mfc,
-  CAST(NULL AS STRING)                                                  AS lob_platform,
-  CAST(NULL AS STRING)                                                  AS mfc_channel,
-  CAST(NULL AS STRING)                                                  AS mfc_tactic,
-  CAST(NULL AS STRING)                                                  AS mfc_message_type,
-  CAST(NULL AS STRING)                                                  AS mfc_agency
-
+  CAST(s.max_date AS DATE)                                                AS max_date,
+  CAST(NULL AS STRING)                                                    AS mfc_channel,
+  CAST(NULL AS STRING)                                                    AS mfc_tactic,
+  CAST(NULL AS STRING)                                                    AS mfc_message_type,
+  CAST(NULL AS STRING)                                                    AS mfc_agency
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
 WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 
 -- =============================================================================
 -- BRANCH 3: MFC_SPEND_GRANULAR
---           MFC spend at finest grain, all LOBs, all MFC dims populated
---           No 'All Channels' rollup at granular level
+--           MFC spend at finest grain; all MFC dim columns populated
+--           lob canonicalized from source values
 -- =============================================================================
 UNION ALL
 SELECT
   s.data_source,
-  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
+  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
   s.week_type,
-  s.quarter,
+  s.qgp_quarter,
   s.days_in_period,
   s.is_complete_period,
+  CASE s.lob_mfc
+    WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+    WHEN 'POSTPAID'          THEN 'POSTPAID'
+    WHEN 'HSI'               THEN 'BROADBAND'
+    WHEN 'BROADBAND'         THEN 'BROADBAND'
+    WHEN 'TBG'               THEN 'TFB'
+    WHEN 'TFB'               THEN 'TFB'
+    ELSE s.lob_mfc
+  END                                                                     AS lob,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -176,30 +196,30 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                     AS max_date,
-  s.lob_mfc,
-  CAST(NULL AS STRING)                                                  AS lob_platform,
-  s.channel                                                             AS mfc_channel,
-  s.tactic                                                              AS mfc_tactic,
-  s.message_type                                                        AS mfc_message_type,
-  s.agency                                                              AS mfc_agency
-
+  CAST(s.max_date AS DATE)                                                AS max_date,
+  s.channel                                                               AS mfc_channel,
+  s.tactic                                                                AS mfc_tactic,
+  s.message_type                                                          AS mfc_message_type,
+  s.agency                                                                AS mfc_agency
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly` s
 WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 
 -- =============================================================================
 -- BRANCH 4: PLATFORM_SPEND_CHANNEL
---           Platform spend at channel_group × POSTPAID
---           Includes 'All Channels' per LOB rollup
+--           Platform spend at lob x channel_group; includes 'All Channels' rollup
+--           lob already canonicalized in Bronze — passed through directly
+--           Actuals only (no forecast available from platform source)
 -- =============================================================================
 UNION ALL
 SELECT
-  'PLATFORM_SPEND_CHANNEL'                                              AS data_source,
-  CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
+  'PLATFORM_SPEND_CHANNEL'                                                AS data_source,
+  CAST(s.qgp_date AS DATE)                                                AS qgp_date,
   s.week_type,
-  s.quarter,
+  s.qgp_quarter,
   s.days_in_period,
   s.is_complete_period,
+  -- LOB already canonical from Bronze (POSTPAID / BROADBAND) — pass through directly
+  s.lob                                                                   AS lob,
   s.channel_group,
   s.metric_name,
   s.metric_value,
@@ -210,28 +230,28 @@ SELECT
   s.yoy_numerator,
   s.yoy_denominator,
   s.yoy_pct,
-  CAST(s.max_date AS DATE)                                                     AS max_date,
-  CAST(NULL AS STRING)                                                  AS lob_mfc,
-  s.lob                                                                 AS lob_platform,
-  CAST(NULL AS STRING)                                                  AS mfc_channel,
-  CAST(NULL AS STRING)                                                  AS mfc_tactic,
-  CAST(NULL AS STRING)                                                  AS mfc_message_type,
-  CAST(NULL AS STRING)                                                  AS mfc_agency
-
+  CAST(s.max_date AS DATE)                                                AS max_date,
+  CAST(NULL AS STRING)                                                    AS mfc_channel,
+  CAST(NULL AS STRING)                                                    AS mfc_tactic,
+  CAST(NULL AS STRING)                                                    AS mfc_message_type,
+  CAST(NULL AS STRING)                                                    AS mfc_agency
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformSpend_weekly` s
 
 /*
   =============================================================================
   FUTURE SOURCES — add new UNION ALL branches here
   =============================================================================
-  Template:
+  Template (replace <SOURCE_NAME> and <silver_table_name>):
+
   UNION ALL
   SELECT
-    'SA360_CHANNEL'         AS data_source,   -- or 'SA360_GRANULAR', 'GSC_CHANNEL', etc.
-    CAST(s.qgp_date AS DATE)                                                    AS qgp_date,
+    '<SOURCE_NAME>'         AS data_source,
+    CAST(s.qgp_date AS DATE)  AS qgp_date,
     s.week_type,
-    s.quarter,
+    s.qgp_quarter,
     s.days_in_period,
+    s.is_complete_period,
+    s.lob,                  -- or canonical CASE mapping if needed
     s.channel_group,
     s.metric_name,
     s.metric_value,
@@ -242,14 +262,12 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_platformS
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                                     AS max_date,
-    CAST(NULL AS STRING)    AS lob_mfc,
-    CAST(NULL AS STRING)    AS lob_platform,
+    CAST(s.max_date AS DATE)  AS max_date,
     CAST(NULL AS STRING)    AS mfc_channel,
     CAST(NULL AS STRING)    AS mfc_tactic,
     CAST(NULL AS STRING)    AS mfc_message_type,
     CAST(NULL AS STRING)    AS mfc_agency
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_silver_<source>_weekly` s
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.<silver_table_name>` s
   =============================================================================
 */
 ;

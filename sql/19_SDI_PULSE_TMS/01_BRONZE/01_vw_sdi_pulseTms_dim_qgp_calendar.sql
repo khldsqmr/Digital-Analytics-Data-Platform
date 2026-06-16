@@ -17,7 +17,7 @@ PURPOSE:
     2. Quarter-end dates that fall on a non-Saturday       → week_type = 'BOUNDARY_STUB'
        (e.g. Mar 31 if it falls Mon–Fri)
     3. The first Saturday after a BOUNDARY_STUB            → week_type = 'BOUNDARY_FIRST'
-       (e.g. Apr 4 if Mar 31 was the stub)
+       (e.g. Apr 5 if Mar 31 was the stub)
 
   Quarter boundaries follow standard Gregorian quarters:
     Q1: Jan 1  – Mar 31
@@ -53,18 +53,21 @@ BUSINESS RULES:
     wow_prior_qgp_date and prior_year_qgp_date are NULL for these rows.
   - BOUNDARY_FIRST rows carry combined WoW numerator = current value + preceding stub value.
     wow_denominator = value at wow_prior_qgp_date (the last full NORMAL week).
+  - The second NORMAL Saturday after a quarter boundary uses
+    (BOUNDARY_FIRST value + stub value) as its WoW denominator — handled in Silver via
+    boundary_stub_date lookup on the prior QGP date.
   - is_complete_period uses qgp_date <= CURRENT_DATE() inclusive — if today IS the
     week-ending Saturday or quarter-end date, that period is considered complete.
   - Date spine covers 2020-01-01 through end of the following calendar year (rolling).
   - ISO week matching for YoY: same iso_week_number + same week_type in prior iso_year.
 
 DOWNSTREAM:
-  02_vw_sdi_pulseTms_bronze_adobeFunnel_weekly   (joined in Silver)
-  03_vw_sdi_pulseTms_bronze_mfcSpend_weekly      (joined in Silver)
-  04_vw_sdi_pulseTms_bronze_platformSpend_weekly (joined in Silver)
-  05_vw_sdi_pulseTms_silver_adobeFunnel_weekly
-  06_vw_sdi_pulseTms_silver_mfcSpend_weekly
-  07_vw_sdi_pulseTms_silver_platformSpend_weekly
+  02_sp_sdi_pulseTms_bronze_adobeFunnel_weekly   (joined in Silver)
+  03_sp_sdi_pulseTms_bronze_mfcSpend_weekly      (joined in Silver)
+  04_sp_sdi_pulseTms_bronze_platformSpend_weekly (joined in Silver)
+  05_sp_sdi_pulseTms_silver_adobeFunnel_weekly
+  06_sp_sdi_pulseTms_silver_mfcSpend_weekly
+  07_sp_sdi_pulseTms_silver_platformSpend_weekly
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -152,7 +155,6 @@ BoundaryFirsts AS (
 --         BOUNDARY_FIRST overrides the same Saturday's NORMAL entry
 -- ---------------------------------------------------------------------------
 AllQgpDates AS (
-
   SELECT qgp_date, week_type, boundary_stub_date FROM BoundaryStubs
   UNION ALL
   SELECT qgp_date, week_type, boundary_stub_date FROM BoundaryFirsts
@@ -181,7 +183,6 @@ Enriched AS (
     )                                                                   AS quarter,
 
     -- Quarter end date: last day of the quarter containing qgp_date
-    -- Correct approach: truncate to quarter start, add 3 months, subtract 1 day
     DATE_SUB(
       DATE_ADD(DATE_TRUNC(aq.qgp_date, QUARTER), INTERVAL 3 MONTH),
       INTERVAL 1 DAY
@@ -193,21 +194,16 @@ Enriched AS (
     -- Days in period:
     --   NORMAL         : always 7
     --   BOUNDARY_STUB  : days from Sunday that opened this week through the quarter-end date
-    --                    (Sunday = day - (DAYOFWEEK - 1); DAYOFWEEK: Sun=1 so Sunday - 0 = itself)
-    --                    Use DATE_DIFF + 1 to count inclusively from Sunday through stub date
     --   BOUNDARY_FIRST : complement = 7 - stub_days_in_period
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
-        -- Days from the Sunday that opens this week through the quarter-end (stub) date, inclusive
-        -- week_start_sunday = qgp_date - (DAYOFWEEK - 1), where Sun=1 → offset=0, Mon=2 → offset=1...
         DATE_DIFF(
           aq.qgp_date,
           DATE_SUB(aq.qgp_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.qgp_date) - 1) DAY),
           DAY
         ) + 1
       WHEN 'BOUNDARY_FIRST' THEN
-        -- Complement: 7 minus stub days_in_period
         7 - (
           DATE_DIFF(
             aq.boundary_stub_date,
@@ -226,13 +222,13 @@ Enriched AS (
 -- ---------------------------------------------------------------------------
 -- STEP 6: Compute wow_prior_qgp_date via LAG
 --         BOUNDARY_STUB rows get NULL
+--         BOUNDARY_FIRST skips past the stub (LAG 2) to reach last NORMAL week
 -- ---------------------------------------------------------------------------
 WithWow AS (
   SELECT
     e.*,
     CASE
       WHEN e.week_type = 'BOUNDARY_STUB'  THEN NULL
-      -- BOUNDARY_FIRST: skip past the stub to the last NORMAL week (LAG by 2)
       WHEN e.week_type = 'BOUNDARY_FIRST' THEN LAG(e.qgp_date, 2) OVER (ORDER BY e.qgp_date ASC)
       ELSE                                     LAG(e.qgp_date, 1) OVER (ORDER BY e.qgp_date ASC)
     END AS wow_prior_qgp_date
