@@ -39,8 +39,9 @@ CHANGE LOG:
   - 'quarter' renamed to 'qgp_quarter' to match Silver output schema.
   - 'is_complete_period' added to allow filtering to complete periods.
   - LOB note added to header (spend columns are POSTPAID only).
-  - Added WHERE metric_type = 'ADOBE_VOLUME' to Adobe CTE to exclude CVR rows
-    introduced in Silver. Wide view is for volumes only.
+  - Added WHERE metric_type = 'ADOBE_VOLUME' to Adobe CTE — future-safe filter.
+  - Added 17 CVR columns (adobe_cvr_value pivoted per metric_name) to Adobe CTE
+    and final SELECT for sense-checking conversion rates alongside volumes.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -77,9 +78,27 @@ Adobe AS (
     MAX(IF(metric_name = 'ordersAssistedHsi',        metric_value, NULL)) AS ordersAssistedHsi,
     MAX(IF(metric_name = 'ordersAssistedByod',       metric_value, NULL)) AS ordersAssistedByod,
     MAX(IF(metric_name = 'ordersAssistedTotal',      metric_value, NULL)) AS ordersAssistedTotal,
-    MAX(IF(metric_name = 'ordersTotal',              metric_value, NULL)) AS ordersTotal
+    MAX(IF(metric_name = 'ordersTotal',              metric_value, NULL)) AS ordersTotal,
+    -- CVR values (pre-computed weekly rates — use AVG in Tableau for sense checking)
+    MAX(IF(metric_name = 'upvFlowTotal',             adobe_cvr_value, NULL)) AS cvrUpvFlow,
+    MAX(IF(metric_name = 'upvPostpaid',              adobe_cvr_value, NULL)) AS cvrUpvPostpaid,
+    MAX(IF(metric_name = 'upvHsi',                   adobe_cvr_value, NULL)) AS cvrUpvHsi,
+    MAX(IF(metric_name = 'upvByod',                  adobe_cvr_value, NULL)) AS cvrUpvByod,
+    MAX(IF(metric_name = 'cartstartTotal',           adobe_cvr_value, NULL)) AS cvrCartstartTotal,
+    MAX(IF(metric_name = 'cartstartPostpaid',        adobe_cvr_value, NULL)) AS cvrCartstartPostpaid,
+    MAX(IF(metric_name = 'cartstartHsi',             adobe_cvr_value, NULL)) AS cvrCartstartHsi,
+    MAX(IF(metric_name = 'cartstartByod',            adobe_cvr_value, NULL)) AS cvrCartstartByod,
+    MAX(IF(metric_name = 'ordersTotal',              adobe_cvr_value, NULL)) AS cvrOrdersTotal,
+    MAX(IF(metric_name = 'ordersUnassistedTotal',    adobe_cvr_value, NULL)) AS cvrOrdersUnassistedTotal,
+    MAX(IF(metric_name = 'ordersAssistedTotal',      adobe_cvr_value, NULL)) AS cvrOrdersAssistedTotal,
+    MAX(IF(metric_name = 'ordersUnassistedPostpaid', adobe_cvr_value, NULL)) AS cvrOrdersUnassistedPostpaid,
+    MAX(IF(metric_name = 'ordersAssistedPostpaid',   adobe_cvr_value, NULL)) AS cvrOrdersAssistedPostpaid,
+    MAX(IF(metric_name = 'ordersUnassistedHsi',      adobe_cvr_value, NULL)) AS cvrOrdersUnassistedHsi,
+    MAX(IF(metric_name = 'ordersAssistedHsi',        adobe_cvr_value, NULL)) AS cvrOrdersAssistedHsi,
+    MAX(IF(metric_name = 'ordersUnassistedByod',     adobe_cvr_value, NULL)) AS cvrOrdersUnassistedByod,
+    MAX(IF(metric_name = 'ordersAssistedByod',       adobe_cvr_value, NULL)) AS cvrOrdersAssistedByod
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly`
-  WHERE metric_type = 'ADOBE_VOLUME'  -- exclude CVR rows; wide view is for volumes only
+  WHERE metric_type = 'ADOBE_VOLUME'
   GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, channel_group
 ),
 
@@ -151,7 +170,26 @@ SELECT
   m.mfcSpendForecast,
 
   -- Platform Spend (POSTPAID, actuals only)
-  p.platformSpend
+  p.platformSpend,
+
+  -- Adobe CVR (pre-computed weekly rates)
+  a.cvrUpvFlow,
+  a.cvrUpvPostpaid,
+  a.cvrUpvHsi,
+  a.cvrUpvByod,
+  a.cvrCartstartTotal,
+  a.cvrCartstartPostpaid,
+  a.cvrCartstartHsi,
+  a.cvrCartstartByod,
+  a.cvrOrdersTotal,
+  a.cvrOrdersUnassistedTotal,
+  a.cvrOrdersAssistedTotal,
+  a.cvrOrdersUnassistedPostpaid,
+  a.cvrOrdersAssistedPostpaid,
+  a.cvrOrdersUnassistedHsi,
+  a.cvrOrdersAssistedHsi,
+  a.cvrOrdersUnassistedByod,
+  a.cvrOrdersAssistedByod
 
 FROM Adobe a
 LEFT JOIN Mfc m

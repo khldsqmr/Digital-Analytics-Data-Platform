@@ -13,12 +13,11 @@ PURPOSE:
   This view simply assembles Silver outputs via named CTEs and stacks them with UNION ALL.
 
 STRUCTURE:
-  CTE 1 — AdobeVolume   : Adobe funnel volume metrics (metric_type = ADOBE_VOLUME)
-  CTE 2 — AdobeCvr      : Adobe CVR metrics (metric_type = CVR)
-  CTE 3 — MfcChannel    : MFC spend at lob x channel_group grain (MFC_SPEND_CHANNEL)
-  CTE 4 — MfcGranular   : MFC spend at finest grain (MFC_SPEND_GRANULAR)
-  CTE 5 — PlatformSpend : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
-  Final SELECT: UNION ALL of all five CTEs
+  CTE 1 — AdobeVolume   : Adobe funnel volume metrics + inline CVR columns (ADOBE_VOLUME)
+  CTE 2 — MfcChannel    : MFC spend at lob x channel_group grain (MFC_SPEND_CHANNEL)
+  CTE 3 — MfcGranular   : MFC spend at finest grain (MFC_SPEND_GRANULAR)
+  CTE 4 — PlatformSpend : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
+  Final SELECT: UNION ALL of all four CTEs
 
 DATA SOURCE VALUES:
   'ADOBE'                  — Adobe volume + CVR rows; lob = NULL
@@ -43,9 +42,11 @@ LOB CANONICAL VALUES:
 METRIC_TYPE VALUES:
   'ADOBE_VOLUME'       — raw Adobe funnel metrics (upv*, cartstart*, orders*)
                          use SUM([metric_value]) in Tableau
-  'CVR'                — Adobe conversion rates
-                         use SUM([adobe_cvr_numerator]) / SUM([adobe_cvr_denominator])
-                         in Tableau — works at weekly, QTD, or quarterly grain
+                         each row also carries inline CVR columns:
+                           adobe_cvr_value       = weekly CVR (AVG in Tableau)
+                           adobe_cvr_numerator   = CVR numerator (SUM for QTD)
+                           adobe_cvr_denominator = CVR denominator (SUM for QTD)
+                         upvTotalAdobe has NULL CVR columns (no CVR defined)
   'MFC_SPEND_ACTUAL'   — MFC actual spend; use SUM([metric_value])
   'MFC_SPEND_FORECAST' — MFC forecast spend; use SUM([metric_value])
   'PLATFORM_SPEND'     — Platform actual spend; use SUM([metric_value])
@@ -70,8 +71,12 @@ COLUMN SCHEMA:
   yoy_denominator        — NULL for BOUNDARY_STUB and CVR rows
   yoy_pct                — NULL for BOUNDARY_STUB, CVR, zero denominator
   max_date               — most recent qgp_date with non-NULL metric_value
-  adobe_cvr_numerator    — populated for CVR rows only; NULL for all other metric_types
-  adobe_cvr_denominator  — populated for CVR rows only; NULL for all other metric_types
+  adobe_cvr_value        — pre-computed weekly CVR; use AVG([adobe_cvr_value]) in Tableau
+                           NULL for upvTotalAdobe and all non-ADOBE rows
+  adobe_cvr_numerator    — CVR numerator; use SUM for QTD CVR calculation
+                           NULL for upvTotalAdobe and all non-ADOBE rows
+  adobe_cvr_denominator  — CVR denominator; use SUM for QTD CVR calculation
+                           NULL for upvTotalAdobe and all non-ADOBE rows
   mfc_channel            — MFC_SPEND_GRANULAR only; NULL elsewhere
   mfc_tactic             — MFC_SPEND_GRANULAR only; NULL elsewhere
   mfc_message_type       — MFC_SPEND_GRANULAR only; NULL elsewhere
@@ -119,8 +124,9 @@ AdobeVolume AS (
     s.yoy_denominator,
     s.yoy_pct,
     CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
-    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
+    s.adobe_cvr_value,
+    s.adobe_cvr_numerator,
+    s.adobe_cvr_denominator,
     CAST(NULL AS STRING)                                                  AS mfc_channel,
     CAST(NULL AS STRING)                                                  AS mfc_tactic,
     CAST(NULL AS STRING)                                                  AS mfc_message_type,
@@ -130,46 +136,7 @@ AdobeVolume AS (
 ),
 
 -- =============================================================================
--- CTE 2: ADOBE CVR METRICS
---        17 conversion rates at qgp_date x channel_group x metric_name
---        lob = NULL — Adobe has no LOB dimension
---        metric_type = 'CVR'
---        Use SUM([adobe_cvr_numerator]) / SUM([adobe_cvr_denominator]) in Tableau
---        metric_value = NULL — do not SUM
--- =============================================================================
-AdobeCvr AS (
-  SELECT
-    'ADOBE'                                                               AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
-    s.week_type,
-    s.qgp_quarter,
-    s.days_in_period,
-    s.is_complete_period,
-    CAST(NULL AS STRING)                                                  AS lob,
-    s.channel_group,
-    s.metric_name,
-    s.metric_type,
-    s.metric_value,
-    s.metric_value_ly,
-    s.wow_numerator,
-    s.wow_denominator,
-    s.wow_pct,
-    s.yoy_numerator,
-    s.yoy_denominator,
-    s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    s.adobe_cvr_numerator,
-    s.adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly` s
-  WHERE s.metric_type = 'CVR'
-),
-
--- =============================================================================
--- CTE 3: MFC SPEND — CHANNEL GRAIN
+-- CTE 2: MFC SPEND — CHANNEL GRAIN
 --        mfcSpendActual + mfcSpendForecast at lob x channel_group
 --        Includes All Channels rollup per lob
 --        lob canonicalized from source values
@@ -207,6 +174,7 @@ MfcChannel AS (
     s.yoy_denominator,
     s.yoy_pct,
     CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_value,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
     CAST(NULL AS STRING)                                                  AS mfc_channel,
@@ -218,7 +186,7 @@ MfcChannel AS (
 ),
 
 -- =============================================================================
--- CTE 4: MFC SPEND — GRANULAR GRAIN
+-- CTE 3: MFC SPEND — GRANULAR GRAIN
 --        mfcSpendActual + mfcSpendForecast at finest grain
 --        mfc_* dimension columns populated
 --        lob canonicalized from source values
@@ -258,6 +226,7 @@ MfcGranular AS (
     s.yoy_denominator,
     s.yoy_pct,
     CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_value,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
     s.channel                                                             AS mfc_channel,
@@ -269,7 +238,7 @@ MfcGranular AS (
 ),
 
 -- =============================================================================
--- CTE 5: PLATFORM SPEND
+-- CTE 4: PLATFORM SPEND
 --        platformSpend (actuals only) at lob x channel_group
 --        LOBs: POSTPAID and BROADBAND
 --        Includes All Channels rollup per lob
@@ -297,6 +266,7 @@ PlatformSpend AS (
     s.yoy_denominator,
     s.yoy_pct,
     CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_value,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_numerator,
     CAST(NULL AS FLOAT64)                                                 AS adobe_cvr_denominator,
     CAST(NULL AS STRING)                                                  AS mfc_channel,
@@ -310,7 +280,6 @@ PlatformSpend AS (
 -- FINAL: Stack all five CTEs
 -- =============================================================================
 SELECT * FROM AdobeVolume
-UNION ALL SELECT * FROM AdobeCvr
 UNION ALL SELECT * FROM MfcChannel
 UNION ALL SELECT * FROM MfcGranular
 UNION ALL SELECT * FROM PlatformSpend
