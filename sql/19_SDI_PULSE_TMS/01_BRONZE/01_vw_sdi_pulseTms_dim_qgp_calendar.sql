@@ -44,13 +44,24 @@ KEY COLUMNS:
                             NULL for NORMAL and BOUNDARY_STUB rows
   wow_prior_qgp_date      — The immediately preceding QGP date (for WoW denominator lookup)
                             NULL for BOUNDARY_STUB rows (WoW not shown for stubs)
-  prior_year_qgp_date     — QGP date with same ISO week number in the prior ISO year
-                            NULL for BOUNDARY_STUB rows (YoY not shown for stubs)
+  prior_year_qgp_date          — QGP date with same ISO week number in the prior ISO year
+                                 Populated for NORMAL, BOUNDARY_FIRST, and BOUNDARY_STUB rows.
+                                 NULL only when no matching prior year date exists (e.g. 2020 dates).
+  prior_year_days_in_period    — days_in_period of the matched prior year QGP date.
+                                 Used in Silver to normalize metric_value_ly to current year's
+                                 days_in_period for apples-to-apples YoY comparison.
+                                 For NORMAL weeks always 7 so normalization ratio = 1.
+                                 For BOUNDARY_STUB/BOUNDARY_FIRST weeks may differ year over year
+                                 depending on what day of the week the quarter ends.
 
 BUSINESS RULES:
   - BOUNDARY_STUB rows exist solely to hold partial-period metric values.
     They are never shown as standalone WoW or YoY comparison points.
-    wow_prior_qgp_date and prior_year_qgp_date are NULL for these rows.
+    wow_prior_qgp_date is NULL for these rows.
+  - prior_year_qgp_date is now populated for BOUNDARY_STUB rows so that
+    metric_value_ly flows through Silver correctly for Tableau LY trend lines.
+    Silver WoW/YoY suppression for BOUNDARY_STUB rows is unaffected — controlled
+    independently by CASE week_type WHEN 'BOUNDARY_STUB' THEN NULL logic in Silver.
   - BOUNDARY_FIRST rows carry combined WoW numerator = current value + preceding stub value.
     wow_denominator = value at wow_prior_qgp_date (the last full NORMAL week).
   - The second NORMAL Saturday after a quarter boundary uses
@@ -68,6 +79,15 @@ DOWNSTREAM:
   05_sp_sdi_pulseTms_silver_adobeFunnel_weekly
   06_sp_sdi_pulseTms_silver_mfcSpend_weekly
   07_sp_sdi_pulseTms_silver_platformSpend_weekly
+
+CHANGE LOG:
+  - STEP 7: Added 'BOUNDARY_STUB' to PriorYearLookup so stub dates can match
+    their prior year equivalent. Added days_in_period to PriorYearLookup so
+    Silver can normalize metric_value_ly to current year days_in_period.
+  - STEP 8: Stub rows now resolve prior_year_qgp_date via LEFT JOIN (same as
+    non-stub rows) instead of hardcoding NULL. wow_prior_qgp_date remains NULL
+    for stubs — WoW suppression unaffected.
+    Added prior_year_days_in_period to both SELECT branches.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -221,7 +241,7 @@ Enriched AS (
 
 -- ---------------------------------------------------------------------------
 -- STEP 6: Compute wow_prior_qgp_date via LAG
---         BOUNDARY_STUB rows get NULL
+--         BOUNDARY_STUB rows get NULL — WoW not shown for partial periods
 --         BOUNDARY_FIRST skips past the stub (LAG 2) to reach last NORMAL week
 -- ---------------------------------------------------------------------------
 WithWow AS (
@@ -236,17 +256,26 @@ WithWow AS (
 ),
 
 -- ---------------------------------------------------------------------------
--- STEP 7: Prior year lookup for YoY
---         Match same iso_week_number + same week_type in (iso_year - 1)
+-- STEP 7: Prior year lookup for YoY and LY trend
+--         Includes ALL week_types — NORMAL, BOUNDARY_FIRST, and BOUNDARY_STUB.
+--         days_in_period included so Silver can normalize metric_value_ly to
+--         current year's days_in_period for apples-to-apples YoY comparison.
+--         For NORMAL weeks days_in_period = 7 always so normalization = no-op.
+--         WoW/YoY suppression for stubs is handled in Silver, not here.
 -- ---------------------------------------------------------------------------
 PriorYearLookup AS (
-  SELECT qgp_date, iso_week_number, iso_year, week_type
+  SELECT qgp_date, iso_week_number, iso_year, week_type, days_in_period
   FROM Enriched
-  WHERE week_type IN ('NORMAL', 'BOUNDARY_FIRST')
+  WHERE week_type IN ('NORMAL', 'BOUNDARY_FIRST', 'BOUNDARY_STUB')
 )
 
 -- ---------------------------------------------------------------------------
 -- STEP 8: Final output
+--         All rows (NORMAL, BOUNDARY_FIRST, BOUNDARY_STUB) resolve
+--         prior_year_qgp_date and prior_year_days_in_period via LEFT JOIN
+--         on same iso_week_number + same week_type in prior iso_year.
+--         wow_prior_qgp_date remains NULL for BOUNDARY_STUB rows.
+--         No changes to Silver WoW/YoY suppression logic.
 -- ---------------------------------------------------------------------------
 
 -- Non-stub rows: resolve prior_year_qgp_date via join
@@ -264,7 +293,8 @@ SELECT
   w.is_complete_period,
   w.is_current_quarter,
   w.wow_prior_qgp_date,
-  ly.qgp_date                                                           AS prior_year_qgp_date
+  ly.qgp_date                                                           AS prior_year_qgp_date,
+  ly.days_in_period                                                     AS prior_year_days_in_period
 FROM WithWow w
 LEFT JOIN PriorYearLookup ly
   ON  ly.iso_week_number = w.iso_week_number
@@ -274,7 +304,9 @@ WHERE w.week_type != 'BOUNDARY_STUB'
 
 UNION ALL
 
--- Stub rows: all period lookups are NULL
+-- Stub rows: wow_prior_qgp_date = NULL (WoW suppressed)
+--            prior_year_qgp_date populated via same join as non-stub rows
+--            so metric_value_ly flows through Silver for LY trend lines
 SELECT
   w.qgp_date,
   w.week_type,
@@ -289,7 +321,12 @@ SELECT
   w.is_complete_period,
   w.is_current_quarter,
   NULL                                                                  AS wow_prior_qgp_date,
-  NULL                                                                  AS prior_year_qgp_date
+  ly.qgp_date                                                           AS prior_year_qgp_date,
+  ly.days_in_period                                                     AS prior_year_days_in_period
 FROM WithWow w
+LEFT JOIN PriorYearLookup ly
+  ON  ly.iso_week_number = w.iso_week_number
+  AND ly.iso_year        = w.iso_year - 1
+  AND ly.week_type       = w.week_type
 WHERE w.week_type = 'BOUNDARY_STUB'
 ;

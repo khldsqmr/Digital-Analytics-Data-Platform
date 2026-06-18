@@ -138,7 +138,18 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.qgp_quarter, u.days_in_period, u.is_complete_period,
       u.channel_group, u.metric_name, u.metric_value,
-      ly_lookup.metric_value                                              AS metric_value_ly,
+      -- metric_value_ly normalized to current year days_in_period
+      CASE
+        WHEN ly_lookup.metric_value IS NULL                              THEN NULL
+        WHEN ly_cal.prior_year_days_in_period IS NULL
+          OR ly_cal.prior_year_days_in_period = 0                       THEN ly_lookup.metric_value
+        ELSE ROUND(
+          ly_lookup.metric_value
+          * u.days_in_period
+          / ly_cal.prior_year_days_in_period,
+          2
+        )
+      END                                                                 AS metric_value_ly,
       -- WoW numerator
       CASE u.week_type
         WHEN 'BOUNDARY_STUB'  THEN NULL
@@ -193,6 +204,7 @@ BEGIN
       AND yoy_bf_lookup.lob           = u.lob
       AND yoy_bf_lookup.channel_group = u.channel_group
       AND yoy_bf_lookup.metric_name   = u.metric_name
+    -- Prior year calendar row — for yoy_stub_lookup and prior_year_days_in_period normalization
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal
       ON  ly_cal.qgp_date = u.prior_year_qgp_date
     LEFT JOIN MetricLookupChannel yoy_stub_lookup
@@ -216,7 +228,18 @@ BEGIN
     SELECT
       u.qgp_date, u.week_type, u.qgp_quarter, u.days_in_period, u.is_complete_period,
       u.channel_group, u.metric_name, u.metric_value,
-      ly_lookup.metric_value                                              AS metric_value_ly,
+      -- metric_value_ly normalized to current year days_in_period
+      CASE
+        WHEN ly_lookup.metric_value IS NULL                              THEN NULL
+        WHEN ly_cal.prior_year_days_in_period IS NULL
+          OR ly_cal.prior_year_days_in_period = 0                       THEN ly_lookup.metric_value
+        ELSE ROUND(
+          ly_lookup.metric_value
+          * u.days_in_period
+          / ly_cal.prior_year_days_in_period,
+          2
+        )
+      END                                                                 AS metric_value_ly,
       -- WoW numerator
       CASE
         WHEN NOT u.is_complete_period     THEN NULL
@@ -288,6 +311,7 @@ BEGIN
       AND yoy_bf_lookup.message_type  = u.message_type
       AND yoy_bf_lookup.agency        = u.agency
       AND yoy_bf_lookup.metric_name   = u.metric_name
+    -- Prior year calendar row — for yoy_stub_lookup and prior_year_days_in_period normalization
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal
       ON  ly_cal.qgp_date = u.prior_year_qgp_date
     LEFT JOIN MetricLookupGranular yoy_stub_lookup

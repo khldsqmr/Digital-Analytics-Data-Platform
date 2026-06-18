@@ -63,6 +63,7 @@ BEGIN
       cal.is_current_quarter,
       cal.wow_prior_qgp_date,
       cal.prior_year_qgp_date,
+      cal.prior_year_days_in_period,
       cal.boundary_stub_date,
       cal.iso_week_number,
       cal.iso_year,
@@ -180,7 +181,18 @@ BEGIN
       u.channel_group,
       u.metric_name,
       u.metric_value,
-      ly_lookup.metric_value                                              AS metric_value_ly,
+      -- metric_value_ly normalized to current year days_in_period
+      CASE
+        WHEN ly_lookup.metric_value IS NULL                              THEN NULL
+        WHEN ly_cal.prior_year_days_in_period IS NULL
+          OR ly_cal.prior_year_days_in_period = 0                       THEN ly_lookup.metric_value
+        ELSE ROUND(
+          ly_lookup.metric_value
+          * u.days_in_period
+          / ly_cal.prior_year_days_in_period,
+          2
+        )
+      END                                                                 AS metric_value_ly,
 
       -- WoW numerator:
       --   BOUNDARY_STUB  : NULL (never a WoW comparison point)
@@ -253,7 +265,7 @@ BEGIN
       AND yoy_bf_lookup.channel_group = u.channel_group
       AND yoy_bf_lookup.metric_name   = u.metric_name
 
-    -- Prior year calendar row — needed to find prior year stub date
+    -- Prior year calendar row — for yoy_stub_lookup and prior_year_days_in_period normalization
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` ly_cal
       ON  ly_cal.qgp_date = u.prior_year_qgp_date
 

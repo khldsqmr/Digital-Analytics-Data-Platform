@@ -102,6 +102,7 @@ BEGIN
       cal.is_current_quarter,
       cal.wow_prior_qgp_date,
       cal.prior_year_qgp_date,
+      cal.prior_year_days_in_period,
       cal.boundary_stub_date,
       cal.iso_week_number,
       cal.iso_year,
@@ -199,7 +200,7 @@ BEGIN
   VolumeUnpivoted AS (
 
     -- upvTotalAdobe — top-level metric, no CVR
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'upvTotalAdobe'   AS metric_name,
       upvTotalAdobe     AS metric_value,
       CAST(NULL AS FLOAT64) AS adobe_cvr_numerator,
@@ -208,7 +209,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- upvFlowTotal — CVR = upvFlowTotal / upvTotalAdobe
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'upvFlowTotal', upvFlowTotal,
       upvFlowTotal  AS adobe_cvr_numerator,
       upvTotalAdobe AS adobe_cvr_denominator,
@@ -216,7 +217,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- upvPostpaid — CVR = upvPostpaid / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'upvPostpaid', upvPostpaid,
       upvPostpaid   AS adobe_cvr_numerator,
       upvFlowTotal  AS adobe_cvr_denominator,
@@ -224,7 +225,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- upvHsi — CVR = upvHsi / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'upvHsi', upvHsi,
       upvHsi        AS adobe_cvr_numerator,
       upvFlowTotal  AS adobe_cvr_denominator,
@@ -232,7 +233,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- upvByod — CVR = upvByod / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'upvByod', upvByod,
       upvByod       AS adobe_cvr_numerator,
       upvFlowTotal  AS adobe_cvr_denominator,
@@ -240,7 +241,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- cartstartTotal — CVR = cartstartTotal / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'cartstartTotal', cartstartTotal,
       cartstartTotal AS adobe_cvr_numerator,
       upvFlowTotal   AS adobe_cvr_denominator,
@@ -248,7 +249,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- cartstartPostpaid — CVR = cartstartPostpaid / upvPostpaid
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'cartstartPostpaid', cartstartPostpaid,
       cartstartPostpaid AS adobe_cvr_numerator,
       upvPostpaid       AS adobe_cvr_denominator,
@@ -256,7 +257,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- cartstartHsi — CVR = cartstartHsi / upvHsi
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'cartstartHsi', cartstartHsi,
       cartstartHsi  AS adobe_cvr_numerator,
       upvHsi        AS adobe_cvr_denominator,
@@ -264,7 +265,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- cartstartByod — CVR = cartstartByod / upvByod
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'cartstartByod', cartstartByod,
       cartstartByod AS adobe_cvr_numerator,
       upvByod       AS adobe_cvr_denominator,
@@ -272,7 +273,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersTotal — CVR = ordersTotal / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersTotal', ordersTotal,
       ordersTotal  AS adobe_cvr_numerator,
       upvFlowTotal AS adobe_cvr_denominator,
@@ -280,7 +281,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersUnassistedTotal — CVR = ordersUnassistedTotal / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersUnassistedTotal', ordersUnassistedTotal,
       ordersUnassistedTotal AS adobe_cvr_numerator,
       upvFlowTotal          AS adobe_cvr_denominator,
@@ -288,7 +289,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersAssistedTotal — CVR = ordersAssistedTotal / upvFlowTotal
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersAssistedTotal', ordersAssistedTotal,
       ordersAssistedTotal AS adobe_cvr_numerator,
       upvFlowTotal        AS adobe_cvr_denominator,
@@ -296,7 +297,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersUnassistedPostpaid — CVR = ordersUnassistedPostpaid / upvPostpaid
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersUnassistedPostpaid', ordersUnassistedPostpaid,
       ordersUnassistedPostpaid AS adobe_cvr_numerator,
       upvPostpaid              AS adobe_cvr_denominator,
@@ -304,7 +305,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersAssistedPostpaid — CVR = ordersAssistedPostpaid / upvPostpaid
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersAssistedPostpaid', ordersAssistedPostpaid,
       ordersAssistedPostpaid AS adobe_cvr_numerator,
       upvPostpaid            AS adobe_cvr_denominator,
@@ -312,7 +313,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersUnassistedHsi — CVR = ordersUnassistedHsi / upvHsi
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersUnassistedHsi', ordersUnassistedHsi,
       ordersUnassistedHsi AS adobe_cvr_numerator,
       upvHsi              AS adobe_cvr_denominator,
@@ -320,7 +321,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersAssistedHsi — CVR = ordersAssistedHsi / upvHsi
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersAssistedHsi', ordersAssistedHsi,
       ordersAssistedHsi AS adobe_cvr_numerator,
       upvHsi            AS adobe_cvr_denominator,
@@ -328,7 +329,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersUnassistedByod — CVR = ordersUnassistedByod / upvByod
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersUnassistedByod', ordersUnassistedByod,
       ordersUnassistedByod AS adobe_cvr_numerator,
       upvByod              AS adobe_cvr_denominator,
@@ -336,7 +337,7 @@ BEGIN
     FROM BronzeWithCalendar WHERE channel_group IS NOT NULL
 
     -- ordersAssistedByod — CVR = ordersAssistedByod / upvByod
-    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, channel_group,
+    UNION ALL SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, prior_year_days_in_period, boundary_stub_date, iso_week_number, iso_year, channel_group,
       'ordersAssistedByod', ordersAssistedByod,
       ordersAssistedByod AS adobe_cvr_numerator,
       upvByod            AS adobe_cvr_denominator,
@@ -381,7 +382,21 @@ BEGIN
     u.metric_name,
     'ADOBE_VOLUME'                                                        AS metric_type,
     u.metric_value,
-    ly_lookup.metric_value                                                AS metric_value_ly,
+    -- metric_value_ly normalized to current year days_in_period
+    -- so YoY comparison is apples-to-apples across all week types.
+    -- For NORMAL weeks: prior_year_days_in_period = 7 = days_in_period → ratio = 1, no change.
+    -- For BOUNDARY_STUB/BOUNDARY_FIRST: normalizes LY partial period to TY partial period length.
+    CASE
+      WHEN ly_lookup.metric_value IS NULL                              THEN NULL
+      WHEN ly_cal.prior_year_days_in_period IS NULL
+        OR ly_cal.prior_year_days_in_period = 0                       THEN ly_lookup.metric_value
+      ELSE ROUND(
+        ly_lookup.metric_value
+        * u.days_in_period
+        / ly_cal.prior_year_days_in_period,
+        2
+      )
+    END                                                                   AS metric_value_ly,
 
     -- WoW numerator
     CASE u.week_type
