@@ -90,15 +90,15 @@ pivoted AS (
   SELECT
     week_sun_to_sat,
     -- ALL CHANNELS
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodUvnbVisitors END) AS adobe_byodUvnbVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryByodPageVisitors END) AS adobe_byodEntryByodPageVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryHomePageVisitors END) AS adobe_byodEntryHomePageVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryDevicePageVisitors END) AS adobe_byodEntryDevicePageVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryPlansPageVisitors END) AS adobe_byodEntryPlansPageVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryOtherPageVisitors END) AS adobe_byodEntryOtherPageVisitors_allChannels,
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryStorePageVisitors END) AS adobe_byodEntryStorePageVisitors_allChannels,  -- NEW
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryByodLandingPageVisitors END) AS adobe_byodEntryByodLandingPageVisitors_allChannels,  -- NEW
-    MAX(CASE WHEN ChannelGroup = 'ALL CHANNELS' THEN ByodEntryOffersSwitchVisitors END) AS adobe_byodEntryOffersSwitchVisitors_allChannels,  -- NEW
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodUvnbVisitors END) AS adobe_byodUvnbVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryByodPageVisitors END) AS adobe_byodEntryByodPageVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryHomePageVisitors END) AS adobe_byodEntryHomePageVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryDevicePageVisitors END) AS adobe_byodEntryDevicePageVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryPlansPageVisitors END) AS adobe_byodEntryPlansPageVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryOtherPageVisitors END) AS adobe_byodEntryOtherPageVisitors_allChannels,
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryStorePageVisitors END) AS adobe_byodEntryStorePageVisitors_allChannels,  -- NEW
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryByodLandingPageVisitors END) AS adobe_byodEntryByodLandingPageVisitors_allChannels,  -- NEW
+    MAX(CASE WHEN ChannelGroup = 'ALL' THEN ByodEntryOffersSwitchVisitors END) AS adobe_byodEntryOffersSwitchVisitors_allChannels,  -- NEW
     -- PAID SEARCH
     MAX(CASE WHEN ChannelGroup = 'PAID SEARCH' THEN ByodUvnbVisitors END) AS adobe_byodUvnbVisitors_paidSearch,
     MAX(CASE WHEN ChannelGroup = 'PAID SEARCH' THEN ByodEntryByodPageVisitors END) AS adobe_byodEntryByodPageVisitors_paidSearch,
@@ -158,7 +158,7 @@ pivoted AS (
     MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ByodEntryOtherPageVisitors END) AS adobe_byodEntryOtherPageVisitors_other,
     MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ByodEntryStorePageVisitors END) AS adobe_byodEntryStorePageVisitors_other,  -- NEW
     MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ByodEntryByodLandingPageVisitors END) AS adobe_byodEntryByodLandingPageVisitors_other,  -- NEW
-    MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ByodEntryOffersSwitchVisitors END) AS adobe_byodEntryOffersSwitchVisitors_other,  -- NEW
+    MAX(CASE WHEN ChannelGroup = 'OTHER' THEN ByodEntryOffersSwitchVisitors END) AS adobe_byodEntryOffersSwitchVisitors_other  -- NEW
   FROM base
   GROUP BY week_sun_to_sat
 ),
@@ -242,7 +242,7 @@ with_comparisons AS (
     c.adobe_byodEntryOtherPageVisitors_other, w.adobe_byodEntryOtherPageVisitors_other AS adobe_byodEntryOtherPageVisitors_other_wow, l.adobe_byodEntryOtherPageVisitors_other AS adobe_byodEntryOtherPageVisitors_other_ly,
     c.adobe_byodEntryStorePageVisitors_other, w.adobe_byodEntryStorePageVisitors_other AS adobe_byodEntryStorePageVisitors_other_wow, l.adobe_byodEntryStorePageVisitors_other AS adobe_byodEntryStorePageVisitors_other_ly,
     c.adobe_byodEntryByodLandingPageVisitors_other, w.adobe_byodEntryByodLandingPageVisitors_other AS adobe_byodEntryByodLandingPageVisitors_other_wow, l.adobe_byodEntryByodLandingPageVisitors_other AS adobe_byodEntryByodLandingPageVisitors_other_ly,
-    c.adobe_byodEntryOffersSwitchVisitors_other, w.adobe_byodEntryOffersSwitchVisitors_other AS adobe_byodEntryOffersSwitchVisitors_other_wow, l.adobe_byodEntryOffersSwitchVisitors_other AS adobe_byodEntryOffersSwitchVisitors_other_ly,
+    c.adobe_byodEntryOffersSwitchVisitors_other, w.adobe_byodEntryOffersSwitchVisitors_other AS adobe_byodEntryOffersSwitchVisitors_other_wow, l.adobe_byodEntryOffersSwitchVisitors_other AS adobe_byodEntryOffersSwitchVisitors_other_ly
   FROM with_week_num c
   LEFT JOIN with_week_num w ON c.week_sun_to_sat = DATE_ADD(w.week_sun_to_sat, INTERVAL 7 DAY)
   LEFT JOIN with_week_num l ON (c.custom_week_num - l.custom_week_num) = 52
@@ -320,7 +320,7 @@ with_pcts AS (
     adobe_byodEntryOtherPageVisitors_other, adobe_byodEntryOtherPageVisitors_other_wow, adobe_byodEntryOtherPageVisitors_other_ly, CASE WHEN adobe_byodEntryOtherPageVisitors_other_wow IS NULL OR adobe_byodEntryOtherPageVisitors_other_wow = 0 THEN NULL ELSE ROUND((adobe_byodEntryOtherPageVisitors_other - adobe_byodEntryOtherPageVisitors_other_wow) / adobe_byodEntryOtherPageVisitors_other_wow, 6) END AS adobe_byodEntryOtherPageVisitors_other_wow_pct, CASE WHEN adobe_byodEntryOtherPageVisitors_other_ly  IS NULL OR adobe_byodEntryOtherPageVisitors_other_ly  = 0 THEN NULL ELSE ROUND((adobe_byodEntryOtherPageVisitors_other - adobe_byodEntryOtherPageVisitors_other_ly)  / adobe_byodEntryOtherPageVisitors_other_ly,  6) END AS adobe_byodEntryOtherPageVisitors_other_yoy_pct,
     adobe_byodEntryStorePageVisitors_other, adobe_byodEntryStorePageVisitors_other_wow, adobe_byodEntryStorePageVisitors_other_ly, CASE WHEN adobe_byodEntryStorePageVisitors_other_wow IS NULL OR adobe_byodEntryStorePageVisitors_other_wow = 0 THEN NULL ELSE ROUND((adobe_byodEntryStorePageVisitors_other - adobe_byodEntryStorePageVisitors_other_wow) / adobe_byodEntryStorePageVisitors_other_wow, 6) END AS adobe_byodEntryStorePageVisitors_other_wow_pct, CASE WHEN adobe_byodEntryStorePageVisitors_other_ly  IS NULL OR adobe_byodEntryStorePageVisitors_other_ly  = 0 THEN NULL ELSE ROUND((adobe_byodEntryStorePageVisitors_other - adobe_byodEntryStorePageVisitors_other_ly)  / adobe_byodEntryStorePageVisitors_other_ly,  6) END AS adobe_byodEntryStorePageVisitors_other_yoy_pct,
     adobe_byodEntryByodLandingPageVisitors_other, adobe_byodEntryByodLandingPageVisitors_other_wow, adobe_byodEntryByodLandingPageVisitors_other_ly, CASE WHEN adobe_byodEntryByodLandingPageVisitors_other_wow IS NULL OR adobe_byodEntryByodLandingPageVisitors_other_wow = 0 THEN NULL ELSE ROUND((adobe_byodEntryByodLandingPageVisitors_other - adobe_byodEntryByodLandingPageVisitors_other_wow) / adobe_byodEntryByodLandingPageVisitors_other_wow, 6) END AS adobe_byodEntryByodLandingPageVisitors_other_wow_pct, CASE WHEN adobe_byodEntryByodLandingPageVisitors_other_ly  IS NULL OR adobe_byodEntryByodLandingPageVisitors_other_ly  = 0 THEN NULL ELSE ROUND((adobe_byodEntryByodLandingPageVisitors_other - adobe_byodEntryByodLandingPageVisitors_other_ly)  / adobe_byodEntryByodLandingPageVisitors_other_ly,  6) END AS adobe_byodEntryByodLandingPageVisitors_other_yoy_pct,
-    adobe_byodEntryOffersSwitchVisitors_other, adobe_byodEntryOffersSwitchVisitors_other_wow, adobe_byodEntryOffersSwitchVisitors_other_ly, CASE WHEN adobe_byodEntryOffersSwitchVisitors_other_wow IS NULL OR adobe_byodEntryOffersSwitchVisitors_other_wow = 0 THEN NULL ELSE ROUND((adobe_byodEntryOffersSwitchVisitors_other - adobe_byodEntryOffersSwitchVisitors_other_wow) / adobe_byodEntryOffersSwitchVisitors_other_wow, 6) END AS adobe_byodEntryOffersSwitchVisitors_other_wow_pct, CASE WHEN adobe_byodEntryOffersSwitchVisitors_other_ly  IS NULL OR adobe_byodEntryOffersSwitchVisitors_other_ly  = 0 THEN NULL ELSE ROUND((adobe_byodEntryOffersSwitchVisitors_other - adobe_byodEntryOffersSwitchVisitors_other_ly)  / adobe_byodEntryOffersSwitchVisitors_other_ly,  6) END AS adobe_byodEntryOffersSwitchVisitors_other_yoy_pct,
+    adobe_byodEntryOffersSwitchVisitors_other, adobe_byodEntryOffersSwitchVisitors_other_wow, adobe_byodEntryOffersSwitchVisitors_other_ly, CASE WHEN adobe_byodEntryOffersSwitchVisitors_other_wow IS NULL OR adobe_byodEntryOffersSwitchVisitors_other_wow = 0 THEN NULL ELSE ROUND((adobe_byodEntryOffersSwitchVisitors_other - adobe_byodEntryOffersSwitchVisitors_other_wow) / adobe_byodEntryOffersSwitchVisitors_other_wow, 6) END AS adobe_byodEntryOffersSwitchVisitors_other_wow_pct, CASE WHEN adobe_byodEntryOffersSwitchVisitors_other_ly  IS NULL OR adobe_byodEntryOffersSwitchVisitors_other_ly  = 0 THEN NULL ELSE ROUND((adobe_byodEntryOffersSwitchVisitors_other - adobe_byodEntryOffersSwitchVisitors_other_ly)  / adobe_byodEntryOffersSwitchVisitors_other_ly,  6) END AS adobe_byodEntryOffersSwitchVisitors_other_yoy_pct
   FROM with_comparisons
 ),
 
@@ -404,6 +404,6 @@ SELECT
   adobe_byodEntryOtherPageVisitors_other, adobe_byodEntryOtherPageVisitors_other_wow, adobe_byodEntryOtherPageVisitors_other_ly, adobe_byodEntryOtherPageVisitors_other_wow_pct, adobe_byodEntryOtherPageVisitors_other_yoy_pct,
   adobe_byodEntryStorePageVisitors_other, adobe_byodEntryStorePageVisitors_other_wow, adobe_byodEntryStorePageVisitors_other_ly, adobe_byodEntryStorePageVisitors_other_wow_pct, adobe_byodEntryStorePageVisitors_other_yoy_pct,  -- NEW
   adobe_byodEntryByodLandingPageVisitors_other, adobe_byodEntryByodLandingPageVisitors_other_wow, adobe_byodEntryByodLandingPageVisitors_other_ly, adobe_byodEntryByodLandingPageVisitors_other_wow_pct, adobe_byodEntryByodLandingPageVisitors_other_yoy_pct,  -- NEW
-  adobe_byodEntryOffersSwitchVisitors_other, adobe_byodEntryOffersSwitchVisitors_other_wow, adobe_byodEntryOffersSwitchVisitors_other_ly, adobe_byodEntryOffersSwitchVisitors_other_wow_pct, adobe_byodEntryOffersSwitchVisitors_other_yoy_pct,  -- NEW
+  adobe_byodEntryOffersSwitchVisitors_other, adobe_byodEntryOffersSwitchVisitors_other_wow, adobe_byodEntryOffersSwitchVisitors_other_ly, adobe_byodEntryOffersSwitchVisitors_other_wow_pct, adobe_byodEntryOffersSwitchVisitors_other_yoy_pct  -- NEW
 FROM with_max_date
 ;
