@@ -1,4 +1,474 @@
-File "<ipython-input-5-089243e7efc2>", line 606
-    match = re.search(r"(? str:
-                      ^
-SyntaxError: unterminated string literal (detected at line 606)
+Package check complete.
+Imports complete.
+Configuration loaded.
+PROJECT_ID: prj-dbi-prd-1
+DATASET_ID: ds_dbi_digitalmedia_automation
+BQ_LOCATION: None
+VERTEX_LOCATION: us-central1
+GEMINI_MODEL: gemini-2.5-pro
+USE_GEMINI_VISION: False
+WRITE_TO_BQ: True
+Table names loaded.
+WARNING: google.colab.auth.authenticate_user() is not supported in Colab Enterprise.
+Colab authentication complete.
+BigQuery client project: prj-dbi-prd-1
+Detected BigQuery dataset location: us-west1
+Using BQ_LOCATION: us-west1
+
+==============================================================================================================
+STARTING COMPETITIVE OFFER REPORT PIPELINE V2
+==============================================================================================================
+Dataset exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Table exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
+
+==============================================================================================================
+PDF INPUT RESOLUTION
+==============================================================================================================
+
+==============================================================================================================
+PDF UPLOAD
+==============================================================================================================
+Upload one Competitive Offer Report PDF using the file upload widget.
+After upload, the pipeline will compute pdf_hash and check BigQuery for duplicates.
+Competitive_Offer_Report_050826.pdf
+Competitive_Offer_Report_050826.pdf(application/pdf) - 2308300 bytes, last modified: 6/30/2026 - 100% done
+Saving Competitive_Offer_Report_050826.pdf to Competitive_Offer_Report_050826 (4).pdf
+Uploaded PDF saved to: /content/Competitive_Offer_Report_050826 (4).pdf
+Using uploaded PDF: /content/Competitive_Offer_Report_050826 (4).pdf
+pdf_name: Competitive_Offer_Report_050826 (4).pdf
+pdf_hash: 3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb86e2e3fed9cf87108c6
+deck_week: 2026-05-08
+deck_id: deck_20260508_3d1968e4a6db
+run_id: run_583eca3cd2584d18
+page_count: 29
+
+==============================================================================================================
+BRONZE EXTRACTION - RAW SLIDES AND POSITIONED LINES
+==============================================================================================================
+PDF: Competitive_Offer_Report_050826 (4).pdf
+Pages: 29
+Rendered image directory: /tmp/competitive_offer_pages/run_583eca3cd2584d18
+Bronze slide raw rows: 29
+Bronze slide line rows: 3,254
+
+==============================================================================================================
+BRONZE ENTITY DETECTION
+==============================================================================================================
+Detected entity rows: 226
+
+==============================================================================================================
+SILVER TOC PAGE MAP - QA ONLY
+==============================================================================================================
+TOC map rows: 21
+
+==============================================================================================================
+SILVER SLIDE CLASSIFICATION
+==============================================================================================================
+
+==============================================================================================================
+ACTIVE CLASSIFIER RULES
+==============================================================================================================
+TITLE-FIRST OVERRIDES
+  ci_headlines_postpaid_title_override -> ci_headlines_postpaid
+    \bcompetitive intelligence headlines\b.*\bpostpaid\b
+    \bcompetitive intelligence headlines\b.*\bcable mvno\b
+    \bpostpaid\b.*\bcable mvno\b.*\bkey highlights\b
+    \bpostpaid\b.*\bkey highlights\b
+  ci_headlines_prepaid_title_override -> ci_headlines_prepaid
+    \bcompetitive intelligence headlines\b.*\bprepaid\b
+    \bprepaid\b.*\bmvno\b.*\bkey highlights\b
+    \bprepaid\b.*\bkey highlights\b
+  bts_watches_title_override -> postpaid_bts_watch_offers
+    \bpost paid bts watches\b
+    \bpostpaid bts watches\b
+    \bbts watches\b
+  bts_tablet_title_override -> postpaid_bts_tablet_offers
+    \bpost paid bts tablet\b
+    \bpost paid bts tablets\b
+    \bpostpaid bts tablet\b
+    \bpostpaid bts tablets\b
+    \bbts tablet\b
+    \bbts tablets\b
+  bts_other_title_override -> postpaid_bts_other_offers
+    \bpost paid bts and other offers\b
+    \bpostpaid bts and other offers\b
+    \bbts and other offers\b
+  metro_price_grid_title_override -> prepaid_metro_price_grid
+    \bmetro price grid\b
+    \bmetro by t mobile\b.*\bprice grid\b
+
+HEADER REGISTRY RULES
+  major_offer_changes -> major_offer_changes
+    \bmajor offer changes\b
+    \bmajor competitive offer updates\b
+  postpaid_apple_device_offers -> postpaid_apple_device_offers
+    \bpost paid apple smartphone offers\b
+    \bpostpaid apple smartphone offers\b
+    \bapple smartphone offers\b
+    \bapple device offers\b
+  postpaid_samsung_google_device_offers -> postpaid_samsung_google_device_offers
+    \bpost paid samsung and google smartphone offers\b
+    \bpostpaid samsung and google smartphone offers\b
+    \bsamsung and google smartphone offers\b
+    \bsamsung\b.*\bgoogle\b.*\boffers\b
+  postpaid_motorola_affordable_byod_offers -> postpaid_motorola_affordable_byod_offers
+    \bpost paid motorola affordable phones and byod offers\b
+    \bpostpaid motorola affordable phones and byod offers\b
+    \bmotorola affordable phones and byod offers\b
+  postpaid_service_offers -> postpaid_service_offers
+    \bpost paid service offers\b
+    \bpostpaid service offers\b
+    \bt mobile verizon at and t services\b
+    \bservice pricing and offers\b
+  cable_mvno_handset_offers -> cable_mvno_handset_offers
+    \bpostpaid cable mvno handset offers\b
+    \bcable mvno handset offers\b
+    \bpostpaid cable mvno\b.*\bhandset\b
+  cable_mvno_service_offers -> cable_mvno_service_offers
+    \bcable mvno service pricing and offers\b
+    \bcable mvno service offers\b
+  business_device_offers -> business_device_offers
+    \bbusiness flagship device offers\b
+    \bbusiness device offers\b
+  national_retail_readout -> national_retail_readout
+    \bnational retail\b
+    \bpromotions marketplace\b
+    \bkey highlights week ending\b
+  prepaid_brand_offers -> prepaid_brand_offers
+    \bprepaid brands current offers\b
+    \bmetro by t mobile boost mobile cricket\b
+  prepaid_flagship_offers -> prepaid_flagship_offers
+    \bflagship brands prepaid current offers\b
+    \bt mobile prepaid at and t prepaid verizon prepaid\b
+  walmart_prepaid_offers -> walmart_prepaid_offers
+    \bwalmart current offers\b
+    \bwalmart\b.*\bmetro\b.*\bcricket\b.*\bboost\b
+
+BTS sanity check:
+OK. No broad BTS patterns found.
+Slide section rows: 29
+
+--------------------------------------------------------------------------------------------------------------
+Classifier QA by page
+--------------------------------------------------------------------------------------------------------------
+page_num	section_id	layout_type	classifier_method	classifier_confidence	toc_expected_section	toc_mismatch_flag	title_header_text
+0	1	cover	cover	priority_rule	0.99	None	False	Competitive Offer Report
+1	2	confidentiality_notice	notice	priority_rule	0.99	None	False	NOTICE OF CONFIDENTIALITY\ndesignated T-Mobile...
+2	3	table_of_contents	toc	priority_rule	0.99	None	False	Table of Contents:\n▪ CI Headlines – Postpaid ...
+3	4	section_divider_ci_headlines	divider	priority_rule	0.99	None	False	CI Headlines\nMCI
+4	5	ci_headlines_postpaid	narrative_headlines	title_first_override	0.98	ci_headlines_postpaid	False	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026...
+5	6	ci_headlines_prepaid	narrative_headlines	title_first_override	0.98	ci_headlines_prepaid	False	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026...
+6	7	section_divider_offer_updates	divider	priority_rule	0.99	None	False	Competitive Offer Updates\nMCI
+7	8	major_offer_changes	major_change_grid	header_registry_title_zone_only	0.94	major_offer_changes	False	Major Offer Changes Effective May 8, 2026\n***...
+8	9	unknown	unknown	unknown	0.00	None	False	Competitive Offers &\nPromotional Updates
+9	10	postpaid_apple_device_offers	dense_matrix	header_registry_title_zone_only	0.94	postpaid_apple_device_offers	False	Post-Paid Apple Smartphone Offers Effective Ma...
+10	11	postpaid_samsung_google_device_offers	dense_matrix	header_registry_title_zone_only	0.94	postpaid_samsung_google_device_offers	False	Post-Paid Samsung and Google Smartphone Offers...
+11	12	postpaid_motorola_affordable_byod_offers	dense_matrix	header_registry_title_zone_only	0.94	postpaid_motorola_affordable_byod_offers	False	Post-Paid Motorola, Affordable Phones and BYOD...
+12	13	postpaid_bts_watch_offers	dense_matrix	title_first_override	0.98	postpaid_bts_watch_offers	False	Post-Paid BTS (Watches) Effective May 8, 2026\...
+13	14	postpaid_bts_tablet_offers	dense_matrix	title_first_override	0.98	postpaid_bts_tablet_offers	False	Post-Paid BTS (Tablet) Effective May 8, 2026\n...
+14	15	postpaid_bts_other_offers	dense_matrix	title_first_override	0.98	postpaid_bts_other_offers	False	Post-Paid BTS & Other Offers Effective May 8, ...
+15	16	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	0.94	postpaid_service_offers	False	T-Mobile & AT&T Post-Paid Service Offers Effec...
+16	17	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	0.94	postpaid_service_offers	False	Verizon Post-Paid Service Offers Effective May...
+17	18	cable_mvno_handset_offers	dense_text_table	header_registry_title_zone_only	0.94	cable_mvno_handset_offers	False	Postpaid Cable MVNO Handset Offers Effective M...
+18	19	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	0.94	cable_mvno_service_offers	True	Cable MVNO Service Pricing & Offers Effective ...
+19	20	business_device_offers	dense_matrix	header_registry_title_zone_only	0.94	business_device_offers	False	Business – Flagship Device Offers\nT-Mobile\nA...
+20	21	business_device_offers	dense_matrix	header_registry_title_zone_only	0.94	national_retail_readout	True	Business – Flagship Device Offers\nT-Mobile\nA...
+21	22	national_retail_readout	narrative_readout	header_registry_title_zone_only	0.94	section_divider_prepaid	True	Key Highlights – Week Ending 5/8/26:\nBest Buy...
+22	23	unknown	unknown	unknown	0.00	prepaid_brand_offers	True	Competitive Offers\n& Promotional\nUpdates
+23	24	prepaid_brand_offers	dense_prepaid_table	header_registry_title_zone_only	0.94	prepaid_brand_offers	False	Prepaid Brands – Current Offers\nMetro by T-Mo...
+24	25	prepaid_metro_price_grid	price_grid	title_first_override	0.98	prepaid_brand_offers	True	METRO BY T-MOBILE\nMetro Price Grid 5.7.26\nNe...
+25	26	prepaid_brand_offers	dense_prepaid_table	header_registry_title_zone_only	0.94	prepaid_flagship_offers	True	Prepaid Brands – Current Offers\nCc\nBOOST MOB...
+26	27	prepaid_flagship_offers	dense_prepaid_table	header_registry_title_zone_only	0.94	walmart_prepaid_offers	True	Flagship Brands/Prepaid – Current Offers\nT-Mo...
+27	28	walmart_prepaid_offers	dense_prepaid_table	header_registry_title_zone_only	0.94	None	False	Walmart – Current Offers\nC3\nMetro\nCricket\n...
+28	29	unknown	unknown	unknown	0.00	None	False	
+
+
+
+--------------------------------------------------------------------------------------------------------------
+Classifier counts
+--------------------------------------------------------------------------------------------------------------
+section_id	layout_type	rows
+0	business_device_offers	dense_matrix	2
+1	cable_mvno_handset_offers	dense_text_table	1
+2	ci_headlines_postpaid	narrative_headlines	1
+3	ci_headlines_prepaid	narrative_headlines	1
+4	confidentiality_notice	notice	1
+5	cover	cover	1
+6	major_offer_changes	major_change_grid	1
+7	national_retail_readout	narrative_readout	1
+8	postpaid_apple_device_offers	dense_matrix	1
+9	postpaid_bts_other_offers	dense_matrix	1
+10	postpaid_bts_tablet_offers	dense_matrix	1
+11	postpaid_bts_watch_offers	dense_matrix	1
+12	postpaid_motorola_affordable_byod_offers	dense_matrix	1
+13	postpaid_samsung_google_device_offers	dense_matrix	1
+14	postpaid_service_offers	dense_text_table	3
+15	prepaid_brand_offers	dense_prepaid_table	2
+16	prepaid_flagship_offers	dense_prepaid_table	1
+17	prepaid_metro_price_grid	price_grid	1
+18	section_divider_ci_headlines	divider	1
+19	section_divider_offer_updates	divider	1
+20	table_of_contents	toc	1
+21	unknown	unknown	3
+22	walmart_prepaid_offers	dense_prepaid_table	1
+
+
+==============================================================================================================
+SILVER CONTENT BLOCK CREATION
+==============================================================================================================
+Content block rows: 85
+
+==============================================================================================================
+SILVER OFFER CANDIDATES - DETERMINISTIC BLOCK PARSER
+==============================================================================================================
+Deterministic offer candidate rows: 52
+
+==============================================================================================================
+GEMINI VISION EXTRACTION
+==============================================================================================================
+USE_GEMINI_VISION is False. Skipping Gemini Vision extraction.
+
+==============================================================================================================
+COMBINED OFFER CANDIDATES
+==============================================================================================================
+Combined offer candidate rows: 52
+
+==============================================================================================================
+SILVER NORMALIZED OFFERS
+==============================================================================================================
+Normalized offer rows: 52
+Auto-approve rows: 0
+
+==============================================================================================================
+SILVER OFFER DEVICE BRIDGE
+==============================================================================================================
+Offer-device bridge rows: 52
+
+==============================================================================================================
+REVIEW QUEUE AND AUTO-APPROVED DECISIONS
+==============================================================================================================
+Review queue rows: 52
+Auto-approved decision rows: 0
+
+==============================================================================================================
+BIGQUERY LOAD
+==============================================================================================================
+Loading 1 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Loaded 1 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Loading 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Loaded 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Loading 3,254 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Loaded 3,254 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Loading 226 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Loaded 226 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Skipping empty dataframe for bronze_slideTables
+Loading 21 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Loaded 21 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Loading 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Loaded 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Loading 85 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Loaded 85 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Skipping empty dataframe for silver_priceGridRows
+Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Skipping empty dataframe for review_reviewDecisions
+
+==============================================================================================================
+FINAL RUN SUMMARY
+==============================================================================================================
+pdf_name                           : Competitive_Offer_Report_050826 (4).pdf
+deck_week                          : 2026-05-08
+deck_id                            : deck_20260508_3d1968e4a6db
+run_id                             : run_583eca3cd2584d18
+pdf_hash                           : 3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb86e2e3fed9cf87108c6
+duplicate_action                   : new
+page_count                         : 29
+bronze_slide_raw_rows              : 29
+bronze_slide_line_rows             : 3254
+detected_entity_rows               : 226
+toc_map_rows                       : 21
+slide_section_rows                 : 29
+content_block_rows                 : 85
+slide_table_rows                   : 0
+offer_candidate_rows               : 52
+normalized_offer_rows              : 52
+offer_device_bridge_rows           : 52
+price_grid_rows                    : 0
+review_queue_rows                  : 52
+auto_approved_decision_rows        : 0
+
+==============================================================================================================
+SAMPLE OUTPUTS
+==============================================================================================================
+
+--------------------------------------------------------------------------------------------------------------
+Slide sections
+--------------------------------------------------------------------------------------------------------------
+page_num	section_id	layout_type	classifier_method	toc_expected_section	toc_mismatch_flag	title_header_text
+0	1	cover	cover	priority_rule	None	False	Competitive Offer Report
+1	2	confidentiality_notice	notice	priority_rule	None	False	NOTICE OF CONFIDENTIALITY\ndesignated T-Mobile...
+2	3	table_of_contents	toc	priority_rule	None	False	Table of Contents:\n▪ CI Headlines – Postpaid ...
+3	4	section_divider_ci_headlines	divider	priority_rule	None	False	CI Headlines\nMCI
+4	5	ci_headlines_postpaid	narrative_headlines	title_first_override	ci_headlines_postpaid	False	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026...
+5	6	ci_headlines_prepaid	narrative_headlines	title_first_override	ci_headlines_prepaid	False	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026...
+6	7	section_divider_offer_updates	divider	priority_rule	None	False	Competitive Offer Updates\nMCI
+7	8	major_offer_changes	major_change_grid	header_registry_title_zone_only	major_offer_changes	False	Major Offer Changes Effective May 8, 2026\n***...
+8	9	unknown	unknown	unknown	None	False	Competitive Offers &\nPromotional Updates
+9	10	postpaid_apple_device_offers	dense_matrix	header_registry_title_zone_only	postpaid_apple_device_offers	False	Post-Paid Apple Smartphone Offers Effective Ma...
+10	11	postpaid_samsung_google_device_offers	dense_matrix	header_registry_title_zone_only	postpaid_samsung_google_device_offers	False	Post-Paid Samsung and Google Smartphone Offers...
+11	12	postpaid_motorola_affordable_byod_offers	dense_matrix	header_registry_title_zone_only	postpaid_motorola_affordable_byod_offers	False	Post-Paid Motorola, Affordable Phones and BYOD...
+12	13	postpaid_bts_watch_offers	dense_matrix	title_first_override	postpaid_bts_watch_offers	False	Post-Paid BTS (Watches) Effective May 8, 2026\...
+13	14	postpaid_bts_tablet_offers	dense_matrix	title_first_override	postpaid_bts_tablet_offers	False	Post-Paid BTS (Tablet) Effective May 8, 2026\n...
+14	15	postpaid_bts_other_offers	dense_matrix	title_first_override	postpaid_bts_other_offers	False	Post-Paid BTS & Other Offers Effective May 8, ...
+15	16	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	postpaid_service_offers	False	T-Mobile & AT&T Post-Paid Service Offers Effec...
+16	17	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	postpaid_service_offers	False	Verizon Post-Paid Service Offers Effective May...
+17	18	cable_mvno_handset_offers	dense_text_table	header_registry_title_zone_only	cable_mvno_handset_offers	False	Postpaid Cable MVNO Handset Offers Effective M...
+18	19	postpaid_service_offers	dense_text_table	header_registry_title_zone_only	cable_mvno_service_offers	True	Cable MVNO Service Pricing & Offers Effective ...
+19	20	business_device_offers	dense_matrix	header_registry_title_zone_only	business_device_offers	False	Business – Flagship Device Offers\nT-Mobile\nA...
+20	21	business_device_offers	dense_matrix	header_registry_title_zone_only	national_retail_readout	True	Business – Flagship Device Offers\nT-Mobile\nA...
+21	22	national_retail_readout	narrative_readout	header_registry_title_zone_only	section_divider_prepaid	True	Key Highlights – Week Ending 5/8/26:\nBest Buy...
+22	23	unknown	unknown	unknown	prepaid_brand_offers	True	Competitive Offers\n& Promotional\nUpdates
+23	24	prepaid_brand_offers	dense_prepaid_table	header_registry_title_zone_only	prepaid_brand_offers	False	Prepaid Brands – Current Offers\nMetro by T-Mo...
+24	25	prepaid_metro_price_grid	price_grid	title_first_override	prepaid_brand_offers	True	METRO BY T-MOBILE\nMetro Price Grid 5.7.26\nNe...
+25	26	prepaid_brand_offers	dense_prepaid_table	header_registry_title_zone_only	prepaid_flagship_offers	True	Prepaid Brands – Current Offers\nCc\nBOOST MOB...
+26	27	prepaid_flagship_offers	dense_prepaid_table	header_registry_title_zone_only	walmart_prepaid_offers	True	Flagship Brands/Prepaid – Current Offers\nT-Mo...
+27	28	walmart_prepaid_offers	dense_prepaid_table	header_registry_title_zone_only	None	False	Walmart – Current Offers\nC3\nMetro\nCricket\n...
+28	29	unknown	unknown	unknown	None	False	
+
+
+--------------------------------------------------------------------------------------------------------------
+Offer candidates sample
+--------------------------------------------------------------------------------------------------------------
+page_num	section_id	carrier	product_name	offer_type	offer_amount_text	confidence	needs_review	raw_evidence
+0	8	major_offer_changes	T-Mobile	OFFERS REMOVED	expired_or_removed	OFFERS REMOVED	0.72	True	OFFERS REMOVED
+1	8	major_offer_changes	T-Mobile	iPhone 16	discount	$315 off iPhone 16 w/ AAL & most plans (5/7 - )	0.72	True	$315 off iPhone 16 w/ AAL & most plans (5/7 - )
+2	8	major_offer_changes	T-Mobile	No offers expired	no_offer	No offers expired	0.72	True	No offers expired
+3	8	major_offer_changes	AT&T	New Line Only Offers (5/8 - )	other	None	0.72	True	New Line Only Offers (5/8 - )
+4	8	major_offer_changes	AT&T	S25 FE	discount	S25 FE: $146 off w/ AAL & Any UNL plan	0.72	True	S25 FE: $146 off w/ AAL & Any UNL plan
+5	8	major_offer_changes	AT&T	Flip7	discount	Flip7: $524 off w/ AAL & Any UNL plan	0.72	True	Flip7: $524 off w/ AAL & Any UNL plan
+6	8	major_offer_changes	AT&T	A37 5G	discount	A37 5G: $342 off w/ AAL & Any UNL plan	0.72	True	A37 5G: $342 off w/ AAL & Any UNL plan
+7	8	major_offer_changes	AT&T	^Some of the phones above have Upgrade offers	other	None	0.72	True	^Some of the phones above have Upgrade offers
+8	8	major_offer_changes	AT&T	No offers expired	no_offer	No offers expired	0.72	True	No offers expired
+9	8	major_offer_changes	Verizon	Unlimited Ultimate 2.0 – Verizon quietly repla...	other	None	0.72	True	Unlimited Ultimate 2.0 – Verizon quietly repla...
+10	8	major_offer_changes	Verizon	riginal Unlimited Ultimate plan (1.0) with a n...	other	None	0.72	True	riginal Unlimited Ultimate plan (1.0) with a n...
+11	8	major_offer_changes	Verizon	(2.0) which includes a +$5/line price increase...	discount	(2.0) which includes a +$5/line price increase...	0.72	True	(2.0) which includes a +$5/line price increase...
+12	8	major_offer_changes	Verizon	Existing customers will not see a price increase	other	None	0.72	True	Existing customers will not see a price increase
+13	8	major_offer_changes	Verizon	Unlimited Ultimate 1.0 plan	other	None	0.72	True	Unlimited Ultimate 1.0 plan
+14	8	major_offer_changes	Spectrum	No new offers	no_offer	No new offers	0.72	True	No new offers
+15	8	major_offer_changes	Xfinity	No new offers	no_offer	No new offers	0.72	True	No new offers
+16	8	major_offer_changes	Spectrum	No expired offers	no_offer	No expired offers	0.72	True	No expired offers
+17	8	major_offer_changes	Xfinity	No expired offers	no_offer	No expired offers	0.72	True	No expired offers
+18	8	major_offer_changes	Xfinity	OFFERS REMOVED	expired_or_removed	OFFERS REMOVED	0.72	True	OFFERS REMOVED
+19	8	major_offer_changes	Metro	Annual Upgrade Level 1 w/$50 plan – now includ...	free_or_on_us	Annual Upgrade Level 1 w/$50 plan – now includ...	0.72	True	Annual Upgrade Level 1 w/$50 plan – now includ...
+20	8	major_offer_changes	Metro	Galaxy A15	other	None	0.72	True	ption for Galaxy A15 and moto razr 2024 (5/7 - )
+21	8	major_offer_changes	Metro	...was $79/$99	discount	...was $79/$99	0.72	True	...was $79/$99
+22	8	major_offer_changes	Metro	HINT – $9.99 gateway for existing/AAL (5/7 - )...	free_or_on_us	HINT – $9.99 gateway for existing/AAL (5/7 - )...	0.72	True	HINT – $9.99 gateway for existing/AAL (5/7 - )...
+23	8	major_offer_changes	Metro	Moto g 5G 2025	expired_or_removed	Moto g 5G 2025 removed from	0.72	True	Moto g 5G 2025 removed from
+24	8	major_offer_changes	Metro	free-with-4lines/$100 non-port	port_in_discount	free-with-4lines/$100 non-port	0.72	True	free-with-4lines/$100 non-port
+25	8	major_offer_changes	Boost	No changes	no_offer	No changes	0.72	True	No changes
+26	8	major_offer_changes	Cricket	No changes	no_offer	No changes	0.72	True	No changes
+27	8	major_offer_changes	Cricket	Last weekend’s free phones	free_or_on_us	Last weekend’s free phones	0.72	True	Last weekend’s free phones
+28	8	major_offer_changes	Cricket	...return to $79, $99, $39, $29	discount	...return to $79, $99, $39, $29	0.72	True	...return to $79, $99, $39, $29
+29	8	major_offer_changes	T-Mobile	T-Mobile Prepaid US Pass eSIM – short-term pas...	other	None	0.72	True	T-Mobile Prepaid US Pass eSIM – short-term pas...
+30	8	major_offer_changes	T-Mobile	US/Can/Mex	discount	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/20GB	0.72	True	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/20GB
+31	8	major_offer_changes	T-Mobile	hotspot, $35/14day/28GB hotspot, $50/30day/50GB	discount	hotspot, $35/14day/28GB hotspot, $50/30day/50GB	0.72	True	hotspot, $35/14day/28GB hotspot, $50/30day/50GB
+32	8	major_offer_changes	T-Mobile	No changes	no_offer	No changes	0.72	True	No changes
+33	8	major_offer_changes	AT&T	No changes	no_offer	No changes	0.72	True	No changes
+34	8	major_offer_changes	Verizon	No changes	no_offer	No changes	0.72	True	No changes
+35	8	major_offer_changes	Verizon	Platinum Plan update – now includes roaming for	other	None	0.72	True	Platinum Plan update – now includes roaming for
+36	8	major_offer_changes	Verizon	Platinum Plan update –	other	None	0.72	True	Platinum Plan update –
+37	8	major_offer_changes	Verizon	removed free Mobile Protect	free_or_on_us	removed free Mobile Protect	0.72	True	removed free Mobile Protect
+38	8	major_offer_changes	Verizon	Plan Refresh – includes new BYO plan ($25 Tota...	discount	Plan Refresh – includes new BYO plan ($25 Tota...	0.72	True	Plan Refresh – includes new BYO plan ($25 Tota...
+39	8	major_offer_changes	Verizon	BYO) & updated existing plans ($35 Total Start...	discount	BYO) & updated existing plans ($35 Total Start...	0.72	True	BYO) & updated existing plans ($35 Total Start...
+40	8	major_offer_changes	Verizon	Max 5G, $60 Total All Access) featuring enhanc...	discount	Max 5G, $60 Total All Access) featuring enhanc...	0.72	True	Max 5G, $60 Total All Access) featuring enhanc...
+41	8	major_offer_changes	Verizon	Flagship phones - $130 - $300 off select Apple...	discount	Flagship phones - $130 - $300 off select Apple...	0.72	True	Flagship phones - $130 - $300 off select Apple...
+42	8	major_offer_changes	Verizon	w/port & 3x $65 plan (5/8 – TBD)	port_in_discount	w/port & 3x $65 plan (5/8 – TBD)	0.72	True	w/port & 3x $65 plan (5/8 – TBD)
+43	8	major_offer_changes	Verizon	UFC Promo – up to $100 off FRP for any phone p...	discount	UFC Promo – up to $100 off FRP for any phone p...	0.72	True	UFC Promo – up to $100 off FRP for any phone p...
+44	8	major_offer_changes	Verizon	ffers (5/4 – 5/11)	other	None	0.72	True	ffers (5/4 – 5/11)
+45	22	national_retail_readout	None	Galaxy Z Fold7	discount	Best Buy unlocked promotions feature up to $35...	0.55	True	Best Buy unlocked promotions feature up to $35...
+46	22	national_retail_readout	None	Pixel 10 Pro XL	discount	ff the Google Pixel 10 Pro XL or 10 Pro Fold. ...	0.55	True	ff the Google Pixel 10 Pro XL or 10 Pro Fold. ...
+47	22	national_retail_readout	None	None	discount	10 and 10 Pro. Other unlocked promotions less ...	0.55	True	10 and 10 Pro. Other unlocked promotions less ...
+48	22	national_retail_readout	None	None	discount	Best Buy’s new Tracfone promotion offers $10 o...	0.55	True	Best Buy’s new Tracfone promotion offers $10 o...
+49	22	national_retail_readout	None	None	discount	Walmart has two Verizon Prepaid promotions, fo...	0.55	True	Walmart has two Verizon Prepaid promotions, fo...
+
+
+--------------------------------------------------------------------------------------------------------------
+Review queue sample
+--------------------------------------------------------------------------------------------------------------
+page_num	section_id	review_reason	source_table
+0	8	major_offer_changes	[]	silver_offerCandidates
+1	8	major_offer_changes	[]	silver_offerCandidates
+2	8	major_offer_changes	[]	silver_offerCandidates
+3	8	major_offer_changes	[]	silver_offerCandidates
+4	8	major_offer_changes	[]	silver_offerCandidates
+5	8	major_offer_changes	[]	silver_offerCandidates
+6	8	major_offer_changes	[]	silver_offerCandidates
+7	8	major_offer_changes	[]	silver_offerCandidates
+8	8	major_offer_changes	[]	silver_offerCandidates
+9	8	major_offer_changes	[]	silver_offerCandidates
+10	8	major_offer_changes	[]	silver_offerCandidates
+11	8	major_offer_changes	[]	silver_offerCandidates
+12	8	major_offer_changes	[]	silver_offerCandidates
+13	8	major_offer_changes	[]	silver_offerCandidates
+14	8	major_offer_changes	[]	silver_offerCandidates
+15	8	major_offer_changes	[]	silver_offerCandidates
+16	8	major_offer_changes	[]	silver_offerCandidates
+17	8	major_offer_changes	[]	silver_offerCandidates
+18	8	major_offer_changes	[]	silver_offerCandidates
+19	8	major_offer_changes	[]	silver_offerCandidates
+20	8	major_offer_changes	[]	silver_offerCandidates
+21	8	major_offer_changes	[]	silver_offerCandidates
+22	8	major_offer_changes	[]	silver_offerCandidates
+23	8	major_offer_changes	[]	silver_offerCandidates
+24	8	major_offer_changes	[]	silver_offerCandidates
+25	8	major_offer_changes	[]	silver_offerCandidates
+26	8	major_offer_changes	[]	silver_offerCandidates
+27	8	major_offer_changes	[]	silver_offerCandidates
+28	8	major_offer_changes	[]	silver_offerCandidates
+29	8	major_offer_changes	[]	silver_offerCandidates
+30	8	major_offer_changes	[]	silver_offerCandidates
+31	8	major_offer_changes	[]	silver_offerCandidates
+32	8	major_offer_changes	[]	silver_offerCandidates
+33	8	major_offer_changes	[]	silver_offerCandidates
+34	8	major_offer_changes	[]	silver_offerCandidates
+35	8	major_offer_changes	[]	silver_offerCandidates
+36	8	major_offer_changes	[]	silver_offerCandidates
+37	8	major_offer_changes	[]	silver_offerCandidates
+38	8	major_offer_changes	[]	silver_offerCandidates
+39	8	major_offer_changes	[]	silver_offerCandidates
+40	8	major_offer_changes	[]	silver_offerCandidates
+41	8	major_offer_changes	[]	silver_offerCandidates
+42	8	major_offer_changes	[]	silver_offerCandidates
+43	8	major_offer_changes	[]	silver_offerCandidates
+44	8	major_offer_changes	[]	silver_offerCandidates
+45	22	national_retail_readout	["missing_carrier"]	silver_offerCandidates
+46	22	national_retail_readout	["missing_carrier"]	silver_offerCandidates
+47	22	national_retail_readout	["missing_carrier"]	silver_offerCandidates
+48	22	national_retail_readout	["missing_carrier"]	silver_offerCandidates
+49	22	national_retail_readout	["missing_carrier"]	silver_offerCandidates
+
+
+==============================================================================================================
+PIPELINE COMPLETE
+==============================================================================================================
