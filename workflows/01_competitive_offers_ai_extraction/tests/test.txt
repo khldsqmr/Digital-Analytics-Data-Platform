@@ -1,297 +1,2590 @@
-# ============================================================
-# FIX CELL: BIGQUERY TYPE CONVERSION + CORRECTED CELL 12
-# Paste this right before CELL 12, then run this cell.
-# After this, continue running from CELL 13 onward.
-# ============================================================
-
-print("\nFIX CELL: Replacing append_df_to_bq with schema-aware BigQuery loader")
-
-
-def prepare_df_for_bq(df: pd.DataFrame, table_short_name: str) -> pd.DataFrame:
-    """
-    Converts DataFrame columns to BigQuery-compatible types before loading.
-
-    This fixes common issues like:
-      - DATE columns being passed as strings
-      - TIMESTAMP columns being object dtype
-      - INTEGER columns being floats/objects
-      - BOOLEAN columns containing nulls
-      - STRING columns containing mixed types
-    """
-
-    if df is None or df.empty:
-        return df
-
-    df = df.copy()
-    table_id = full_table_id(table_short_name)
-
-    print(f"Reading destination schema for: {table_id}")
-
-    try:
-        table = bq_client.get_table(table_id)
-        schema_lookup = {field.name: field.field_type for field in table.schema}
-    except Exception as e:
-        print(f"Could not read schema for {table_id}. Proceeding without schema-based conversion.")
-        print(e)
-        schema_lookup = {}
-
-    for col in df.columns:
-        bq_type = schema_lookup.get(col)
-
-        if bq_type == "DATE":
-            print(f"  Converting DATE column: {col}")
-            df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
-
-        elif bq_type == "TIMESTAMP":
-            print(f"  Converting TIMESTAMP column: {col}")
-            df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
-
-        elif bq_type == "INTEGER":
-            print(f"  Converting INTEGER column: {col}")
-            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
-
-        elif bq_type == "FLOAT":
-            print(f"  Converting FLOAT column: {col}")
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        elif bq_type == "BOOLEAN":
-            print(f"  Converting BOOLEAN column: {col}")
-            df[col] = df[col].astype("boolean")
-
-        elif bq_type == "STRING":
-            print(f"  Converting STRING column: {col}")
-            df[col] = df[col].where(df[col].isna(), df[col].astype(str))
-
-    return df
-
-
-def append_df_to_bq(df: pd.DataFrame, table_short_name: str):
-    """
-    Appends a DataFrame to BigQuery after converting column types
-    based on the destination table schema.
-    """
-
-    if df is None or df.empty:
-        print(f"No rows to append to {table_short_name}. Skipping.")
-        return
-
-    table_id = full_table_id(table_short_name)
-
-    print("\n" + "=" * 100)
-    print(f"Preparing DataFrame for BigQuery append")
-    print(f"Destination table: {table_id}")
-    print(f"Input row count: {len(df)}")
-    print("=" * 100)
-
-    print("Original DataFrame dtypes:")
-    print(df.dtypes)
-
-    df_prepared = prepare_df_for_bq(df, table_short_name)
-
-    print("\nPrepared DataFrame dtypes:")
-    print(df_prepared.dtypes)
-
-    print(f"\nAppending {len(df_prepared)} rows to {table_id}...")
-
-    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
-    job = bq_client.load_table_from_dataframe(
-        df_prepared,
-        table_id,
-        job_config=job_config
-    )
-    job.result()
-
-    print(f"Append completed: {len(df_prepared)} rows loaded into {table_id}.")
-    print("=" * 100)
-
-
-# ============================================================
-# CORRECTED CELL 12: REGISTER PDF AND HANDLE DUPLICATES
-# ============================================================
-
-print("\nCELL 12: Registering PDF and handling duplicate uploads")
-
-pdf_name = os.path.basename(PDF_LOCAL_PATH)
-pdf_hash = get_file_hash(PDF_LOCAL_PATH)
-
-date_match = re.search(r"(\d{2})(\d{2})(\d{2})", pdf_name)
-
-if date_match:
-    month = int(date_match.group(1))
-    day = int(date_match.group(2))
-    year = int("20" + date_match.group(3))
-
-    # IMPORTANT:
-    # deck_week must be a Python date object for BigQuery DATE column.
-    deck_week = date(year, month, day)
-
-else:
-    year = date.today().year
-    deck_week = date.today()
-
-deck_id = make_hash(f"{pdf_hash}|{deck_week.isoformat()}")
-run_id = make_hash(f"{deck_id}|{datetime.utcnow().isoformat()}")
-
-doc = fitz.open(PDF_LOCAL_PATH)
-total_pages = len(doc)
-doc.close()
-
-print("PDF metadata:")
-print(f"  pdf_name: {pdf_name}")
-print(f"  pdf_hash: {pdf_hash}")
-print(f"  deck_week: {deck_week} | type: {type(deck_week)}")
-print(f"  deck_year: {year}")
-print(f"  deck_id: {deck_id}")
-print(f"  run_id: {run_id}")
-print(f"  total_pages: {total_pages}")
-
-
-def check_existing_pdf(pdf_hash_value: str) -> pd.DataFrame:
-    """
-    Checks whether this exact PDF hash already exists in bronze_pdfDecks.
-    """
-
-    table_id = full_table_id(TABLES["bronze_pdfDecks"])
-
-    query = f"""
-    SELECT
-      deck_id,
-      run_id,
-      pdf_hash,
-      pdf_name,
-      deck_week,
-      processing_status,
-      created_at
-    FROM `{table_id}`
-    WHERE pdf_hash = '{pdf_hash_value}'
-    ORDER BY created_at DESC
-    """
-
-    try:
-        return bq_client.query(query).to_dataframe()
-    except Exception as e:
-        print("Could not check existing PDF.")
-        print(e)
-        return pd.DataFrame()
-
-
-existing_pdf_df = check_existing_pdf(pdf_hash)
-
-if existing_pdf_df.empty:
-    print("This PDF is new. Processing mode = new_append.")
-    PDF_PROCESSING_MODE = "new_append"
-else:
-    print("This exact PDF already exists in BigQuery.")
-    preview_df(existing_pdf_df, "existing_pdf_df")
-
-    print("""
-Choose processing mode:
-
-cancel
-  Stop notebook and do nothing.
-
-replace
-  Delete existing rows for this deck_id/pdf_hash and reprocess.
-
-append_anyway
-  Append this as another run_id even though PDF exists.
-  Use only for testing/debugging.
-""")
-
-    PDF_PROCESSING_MODE = input(
-        "Enter processing mode [cancel / replace / append_anyway]: "
-    ).strip().lower()
-
-    if PDF_PROCESSING_MODE not in ["cancel", "replace", "append_anyway"]:
-        raise ValueError("Invalid processing mode. Choose cancel, replace, or append_anyway.")
-
-print(f"Selected PDF_PROCESSING_MODE: {PDF_PROCESSING_MODE}")
-
-if PDF_PROCESSING_MODE == "cancel":
-    print("Processing cancelled. No data changed.")
-    raise SystemExit("Notebook stopped because user selected cancel.")
-
-
-def delete_existing_rows_for_pdf(deck_id_value: str, pdf_hash_value: str):
-    """
-    Deletes existing rows for this deck_id/pdf_hash from all bronze, silver,
-    and review tables created by this notebook.
-    """
-
-    print("\nDeleting existing rows for this deck_id/pdf_hash...")
-
-    tables_to_delete_by_deck_id = [
-        TABLES["bronze_slideRaw"],
-        TABLES["bronze_slideLines"],
-        TABLES["bronze_detectedEntities"],
-        TABLES["bronze_slideTables"],
-
-        TABLES["silver_tocPageMap"],
-        TABLES["silver_slideSections"],
-        TABLES["silver_slideContentBlocks"],
-        TABLES["silver_offerCandidates"],
-        TABLES["silver_normalizedOffers"],
-        TABLES["silver_offerDeviceBridge"],
-        TABLES["silver_priceGridRows"],
-
-        TABLES["review_extractionReview"],
-        TABLES["review_reviewDecisions"],
-        TABLES["review_taxonomy"],
-        TABLES["review_approvedExamples"],
-    ]
-
-    for short_name in tables_to_delete_by_deck_id:
-        table_id = full_table_id(short_name)
-
-        query = f"""
-        DELETE FROM `{table_id}`
-        WHERE deck_id = '{deck_id_value}'
-        """
-
-        try:
-            print(f"Deleting from {table_id}...")
-            bq_client.query(query).result()
-            print("  Deleted matching rows.")
-        except Exception as e:
-            print(f"  Could not delete from {table_id}.")
-            print(f"  Reason: {e}")
-
-    pdf_decks_table = full_table_id(TABLES["bronze_pdfDecks"])
-
-    query = f"""
-    DELETE FROM `{pdf_decks_table}`
-    WHERE pdf_hash = '{pdf_hash_value}'
-    """
-
-    try:
-        print(f"Deleting PDF deck record from {pdf_decks_table}...")
-        bq_client.query(query).result()
-        print("  PDF deck record deleted.")
-    except Exception as e:
-        print("  Could not delete PDF deck record.")
-        print(f"  Reason: {e}")
-
-
-if PDF_PROCESSING_MODE == "replace":
-    delete_existing_rows_for_pdf(deck_id, pdf_hash)
-    print("Replacement cleanup complete.")
-
-
-bronze_pdf_decks_df = pd.DataFrame([{
-    "deck_id": deck_id,
-    "run_id": run_id,
-    "pdf_hash": pdf_hash,
-    "pdf_name": pdf_name,
-    "deck_week": deck_week,
-    "local_pdf_path": PDF_LOCAL_PATH,
-    "total_pages": total_pages,
-    "processing_mode": PDF_PROCESSING_MODE,
-    "processing_status": "registered",
-    "created_at": datetime.utcnow()
-}])
-
-preview_df(bronze_pdf_decks_df, "bronze_pdf_decks_df")
-
-append_df_to_bq(bronze_pdf_decks_df, TABLES["bronze_pdfDecks"])
-
-print("\nCELL 12 completed successfully. Continue running from CELL 13.")
+========================================================================================================================
+SDI COMPETITIVE OFFERS PDF EXTRACTION NOTEBOOK
+========================================================================================================================
+
+Purpose:
+  1. Upload one weekly Competitive Offer Report PDF.
+  2. Check if the PDF already exists in BigQuery.
+  3. Let user choose cancel / replace / append_anyway.
+  4. Extract raw slide text and lines into bronze.
+  5. Extract TOC expectations.
+  6. Classify each slide using:
+       a. priority page rules
+       b. slide header registry
+       c. TOC expected map
+       d. Gemini fallback
+  7. Create slide content blocks.
+  8. Create offer candidates from content blocks.
+  9. Normalize offers into silver.
+  10. Create device bridge for grouped-device offers.
+  11. Create review queue and auto-approved review decisions.
+  12. Print detailed QA outputs so you can share results for improvement.
+
+Important:
+  - This notebook does NOT create one table per slide.
+  - It stores all slides in generic bronze tables.
+  - It stores slide interpretation in silver.
+  - It stores uncertain rows in review tables.
+  - Gold loading should happen after human review in a second notebook.
+
+========================================================================================================================
+
+CELL 2: Package installation check
+Package installation cell completed.
+
+CELL 3: Importing libraries
+Libraries imported successfully.
+GENAI_AVAILABLE: True
+
+CELL 4: Loading user configuration
+Configuration loaded:
+  PROJECT_ID: prj-dbi-prd-1
+  BQ_DATASET: ds_dbi_digitalmedia_automation
+  LOCATION: us-central1
+  TEAM_NAME: sdi
+  PROJECT_NAME: competitiveOffers
+  CADENCE: weekly
+  GEMINI_MODEL: gemini-2.5-pro
+  USE_GEMINI_FOR_CLASSIFICATION: True
+  USE_GEMINI_FOR_CONTENT_BLOCKS: False
+  FORCE_ALL_ROWS_TO_REVIEW: False
+  AUTO_APPROVE_HIGH_CONFIDENCE: True
+
+CELL 5: PDF upload / local path setup
+Colab upload widget available.
+Please upload one Competitive Offer Report PDF.
+Competitive_Offer_Report_052926.pdf
+Competitive_Offer_Report_052926.pdf(application/pdf) - 1583366 bytes, last modified: 6/30/2026 - 100% done
+Saving Competitive_Offer_Report_052926.pdf to Competitive_Offer_Report_052926 (6).pdf
+Uploaded PDF: Competitive_Offer_Report_052926 (6).pdf
+PDF_LOCAL_PATH: Competitive_Offer_Report_052926 (6).pdf
+PDF found successfully.
+
+CELL 6: Creating BigQuery table names
+Table names:
+  bronze_pdfDecks: sdi_competitiveOffers_bronze_pdfDecks_weekly
+  bronze_slideRaw: sdi_competitiveOffers_bronze_slideRaw_weekly
+  bronze_slideLines: sdi_competitiveOffers_bronze_slideLines_weekly
+  bronze_detectedEntities: sdi_competitiveOffers_bronze_detectedEntities_weekly
+  bronze_slideTables: sdi_competitiveOffers_bronze_slideTables_weekly
+  silver_tocPageMap: sdi_competitiveOffers_silver_tocPageMap_weekly
+  silver_slideSections: sdi_competitiveOffers_silver_slideSections_weekly
+  silver_slideContentBlocks: sdi_competitiveOffers_silver_slideContentBlocks_weekly
+  silver_offerCandidates: sdi_competitiveOffers_silver_offerCandidates_weekly
+  silver_normalizedOffers: sdi_competitiveOffers_silver_normalizedOffers_weekly
+  silver_offerDeviceBridge: sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+  silver_priceGridRows: sdi_competitiveOffers_silver_priceGridRows_weekly
+  review_extractionReview: sdi_competitiveOffers_review_extractionReview_weekly
+  review_reviewDecisions: sdi_competitiveOffers_review_reviewDecisions_weekly
+  review_taxonomy: sdi_competitiveOffers_review_taxonomy_weekly
+  review_approvedExamples: sdi_competitiveOffers_review_approvedExamples_weekly
+  gold_ciHeadlines: sdi_competitiveOffers_gold_ciHeadlines_weekly
+  gold_majorOfferChanges: sdi_competitiveOffers_gold_majorOfferChanges_weekly
+  gold_postpaidOffers: sdi_competitiveOffers_gold_postpaidOffers_weekly
+  gold_businessOffers: sdi_competitiveOffers_gold_businessOffers_weekly
+  gold_prepaidOffers: sdi_competitiveOffers_gold_prepaidOffers_weekly
+  gold_offerDeviceBridge: sdi_competitiveOffers_gold_offerDeviceBridge_weekly
+  gold_prepaidDevicePriceGrid: sdi_competitiveOffers_gold_prepaidDevicePriceGrid_weekly
+
+CELL 7: Initializing clients and helper functions
+GEMINI_CLIENT_READY: True
+Clients and helpers are ready.
+
+CELL 8: Defining taxonomy, header registry, and extraction rules
+Taxonomy and header registry loaded.
+Number of slide header rules: 24
+
+CELL 9: Defining entity extraction helpers
+Entity extraction helpers defined.
+
+CELL 10: Defining BigQuery schemas
+Schemas defined.
+
+CELL 11: Creating BigQuery tables if missing
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
+All required tables are ready.
+
+FIX CELL: Replacing append_df_to_bq with schema-aware BigQuery loader
+
+CELL 12: Registering PDF and handling duplicate uploads
+PDF metadata:
+  pdf_name: Competitive_Offer_Report_052926 (6).pdf
+  pdf_hash: 840707084ae92ebf72f40731d5e57f34
+  deck_week: 2026-05-29 | type: <class 'datetime.date'>
+  deck_year: 2026
+  deck_id: b63b100ecc12eb302762291a98695ef7
+  run_id: df7ba55bc5acfc27f2d2cf955b0147d7
+  total_pages: 29
+This PDF is new. Processing mode = new_append.
+Selected PDF_PROCESSING_MODE: new_append
+
+========================================================================================================================
+DATAFRAME PREVIEW: bronze_pdf_decks_df
+========================================================================================================================
+Rows: 1
+deck_id	run_id	pdf_hash	pdf_name	deck_week	local_pdf_path	total_pages	processing_mode	processing_status	created_at
+0	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	Competitive_Offer_Report_052926 (6).pdf	29	new_append	registered	2026-07-08 06:25:53.670534
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Input row count: 1
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                      object
+run_id                       object
+pdf_hash                     object
+pdf_name                     object
+deck_week                    object
+local_pdf_path               object
+total_pages                   int64
+processing_mode              object
+processing_status            object
+created_at           datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: local_pdf_path
+  Converting INTEGER column: total_pages
+  Converting STRING column: processing_mode
+  Converting STRING column: processing_status
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                           object
+run_id                            object
+pdf_hash                          object
+pdf_name                          object
+deck_week                         object
+local_pdf_path                    object
+total_pages                        Int64
+processing_mode                   object
+processing_status                 object
+created_at           datetime64[ns, UTC]
+dtype: object
+
+Appending 1 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly...
+Append completed: 1 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly.
+====================================================================================================
+
+CELL 12 completed successfully. Continue running from CELL 13.
+
+CELL 13: Extracting bronze slide raw text and slide lines
+Extracting page 1/29...
+Extracting page 2/29...
+Extracting page 3/29...
+Extracting page 4/29...
+Extracting page 5/29...
+Extracting page 6/29...
+Extracting page 7/29...
+Extracting page 8/29...
+Extracting page 9/29...
+Extracting page 10/29...
+Extracting page 11/29...
+Extracting page 12/29...
+Extracting page 13/29...
+Extracting page 14/29...
+Extracting page 15/29...
+Extracting page 16/29...
+Extracting page 17/29...
+Extracting page 18/29...
+Extracting page 19/29...
+Extracting page 20/29...
+Extracting page 21/29...
+Extracting page 22/29...
+Extracting page 23/29...
+Extracting page 24/29...
+Extracting page 25/29...
+Extracting page 26/29...
+Extracting page 27/29...
+Extracting page 28/29...
+Extracting page 29/29...
+
+========================================================================================================================
+DATAFRAME PREVIEW: bronze_slide_raw_df
+========================================================================================================================
+Rows: 29
+deck_id	run_id	pdf_hash	pdf_name	deck_week	slide_id	page_number	raw_slide_text	cleaned_slide_text	slide_text_hash	extraction_method	created_at
+0	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	1	T-Mobile Confidential\nT-Mobile Confidential\n...	T-Mobile Confidential T-Mobile Confidential 1 ...	a26b09be4ea2f56461f019c16fd2f190	pymupdf_text	2026-07-08 06:25:56.371183
+1	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	2	T-Mobile Confidential\nNOTICE OF CONFIDENTIALI...	T-Mobile Confidential NOTICE OF CONFIDENTIALIT...	d5a9dd6e6e895beac06348fd7237da25	pymupdf_text	2026-07-08 06:25:56.373489
+2	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	0f9ca42be7187281115266571406eaf7	3	T-Mobile Confidential\nTable of Contents:\n▪CI...	T-Mobile Confidential Table of Contents: ▪CI H...	46488078630e0c4301b0fc572eb9ff26	pymupdf_text	2026-07-08 06:25:56.377668
+3	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	ae09e30c90be9a755e75b61764f4edff	4	T-Mobile Confidential\n44\nMARKET &\nCHANNEL\n...	T-Mobile Confidential 44 MARKET & CHANNEL INSI...	4008bd1b42b1ac119a436e555ad2afdd	pymupdf_text	2026-07-08 06:25:56.380698
+4	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	a0d2bfc370f2830993ed3f03f61cf71f	5	T-Mobile Confidential\nCOMPETITIVE INTELLIGENC...	T-Mobile Confidential COMPETITIVE INTELLIGENCE...	83559618b705a2dd07cd4b76596e6292	pymupdf_text	2026-07-08 06:25:56.383610
+5	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	b94c5b6637d3d5102933599ee685cf5d	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2...	COMPETITIVE INTELLIGENCE HEADLINES May 29, 202...	4a5deb5580be79e7e412a03ac22f6a2d	pymupdf_text	2026-07-08 06:25:56.387930
+6	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	7c4aaf42e4c70fed7a6b6f3db8126f9e	7	T-Mobile Confidential\n7\nCompetitive Offer Up...	T-Mobile Confidential 7 Competitive Offer Upda...	2408cc6d75559983eacbaebe1d890053	pymupdf_text	2026-07-08 06:25:56.390179
+7	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	26ac57ca047085a5f045fdcc532b97ae	8	T-Mobile Confidential\nMajor Offer Changes Eff...	T-Mobile Confidential Major Offer Changes Effe...	0ccf3575a615d33a7250c96059df04a8	pymupdf_text	2026-07-08 06:25:56.396984
+8	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	22cd12fca187afd6c335812ab4801828	9	T-Mobile Confidential\n9\nCompetitive Offers &...	T-Mobile Confidential 9 Competitive Offers & P...	accf31705cffe05ce821b1854202fbc4	pymupdf_text	2026-07-08 06:25:56.401520
+9	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	8802e01a865d3869f03178aedba6c119	10	T-Mobile Confidential\nPost-Paid Apple Smartph...	T-Mobile Confidential Post-Paid Apple Smartpho...	d7b77f9ade9e279b2b2bc6cc133ec2eb	pymupdf_text	2026-07-08 06:25:56.406302
+
+
+========================================================================================================================
+DATAFRAME PREVIEW: bronze_slide_lines_df
+========================================================================================================================
+Rows: 3321
+page_number	line_number_on_page	line_role	cleaned_line_text
+0	1	1	header_or_footer	T-Mobile Confidential
+1	1	2	header_or_footer	T-Mobile Confidential
+2	1	3	header_or_footer	1
+3	1	4	unknown	May 29, 2026
+4	1	5	header_or_footer	MARKET &
+5	1	6	unknown	CHANNEL
+6	1	7	unknown	INSIGHTS
+7	1	8	unknown	MCI
+8	1	9	header_or_footer	Competitive Offer Report
+9	1	10	header_or_footer	Competitive Offer Report
+10	2	1	header_or_footer	T-Mobile Confidential
+11	2	2	unknown	NOTICE OF CONFIDENTIALITY
+12	2	3	unknown	The information contained within this document...
+13	2	4	unknown	designated T-Mobile Confidential. Disclosure o...
+14	2	5	unknown	without a direct need-to-know may result in te...
+15	2	6	unknown	employment with T-Mobile. T-Mobile reserves th...
+16	2	7	unknown	and/or criminal remedies against persons who d...
+17	2	8	unknown	information to any third-party without proper ...
+18	2	9	header_or_footer	2
+19	3	1	header_or_footer	T-Mobile Confidential
+20	3	2	unknown	Table of Contents:
+21	3	3	unknown	▪CI Headlines - Postpaid & Prepaid...............
+22	3	4	unknown	▪Major Competitive Offer Updates ................
+23	3	5	unknown	▪Competitive Offers & Promo Updates
+24	3	6	unknown	❖Postpaid Wireless Carriers:
+25	3	7	unknown	▪
+26	3	8	carrier_header	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...
+27	3	9	unknown	▪
+28	3	10	unknown	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...
+29	3	11	unknown	▪
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Input row count: 29
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                       object
+run_id                        object
+pdf_hash                      object
+pdf_name                      object
+deck_week                     object
+slide_id                      object
+page_number                    int64
+raw_slide_text                object
+cleaned_slide_text            object
+slide_text_hash               object
+extraction_method             object
+created_at            datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: slide_id
+  Converting INTEGER column: page_number
+  Converting STRING column: raw_slide_text
+  Converting STRING column: cleaned_slide_text
+  Converting STRING column: slide_text_hash
+  Converting STRING column: extraction_method
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                            object
+run_id                             object
+pdf_hash                           object
+pdf_name                           object
+deck_week                          object
+slide_id                           object
+page_number                         Int64
+raw_slide_text                     object
+cleaned_slide_text                 object
+slide_text_hash                    object
+extraction_method                  object
+created_at            datetime64[ns, UTC]
+dtype: object
+
+Appending 29 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly...
+Append completed: 29 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly.
+====================================================================================================
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Input row count: 3321
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                        object
+run_id                         object
+pdf_hash                       object
+pdf_name                       object
+deck_week                      object
+slide_id                       object
+line_id                        object
+page_number                     int64
+line_number_on_page             int64
+raw_line_text                  object
+cleaned_line_text              object
+line_text_hash                 object
+line_role                      object
+source_method                  object
+created_at             datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: slide_id
+  Converting STRING column: line_id
+  Converting INTEGER column: page_number
+  Converting INTEGER column: line_number_on_page
+  Converting STRING column: raw_line_text
+  Converting STRING column: cleaned_line_text
+  Converting STRING column: line_text_hash
+  Converting STRING column: line_role
+  Converting STRING column: source_method
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                             object
+run_id                              object
+pdf_hash                            object
+pdf_name                            object
+deck_week                           object
+slide_id                            object
+line_id                             object
+page_number                          Int64
+line_number_on_page                  Int64
+raw_line_text                       object
+cleaned_line_text                   object
+line_text_hash                      object
+line_role                           object
+source_method                       object
+created_at             datetime64[ns, UTC]
+dtype: object
+
+Appending 3321 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly...
+Append completed: 3321 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly.
+====================================================================================================
+
+CELL 14: Extracting detected entities
+
+========================================================================================================================
+DATAFRAME PREVIEW: bronze_detected_entities_df
+========================================================================================================================
+Rows: 1863
+deck_id	run_id	pdf_hash	pdf_name	deck_week	entity_id	slide_id	line_id	page_number	entity_type	entity_text	normalized_entity_value	detection_method	created_at
+0	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	48a482447a84b59f0c7b0d80f36e6b37	bbab12f19f2e993d10465caf6800e9dc	83e0ba057f44232a2b130835cdfb0e94	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.015128
+1	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	3394e10840e42b3ac09e89f9d5d43940	bbab12f19f2e993d10465caf6800e9dc	74dfd2675ef45f6b91214b2c92eb5f24	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.015355
+2	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	695fbc3677471bf1ee0753d0f2146531	e11cceaa3435d7f2f3c5f56bf79513d4	2ee2a5e1b6ad175e8c2913357bbec54f	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.016243
+3	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	8f6539d251c5a8a9327acacaafbbf42e	e11cceaa3435d7f2f3c5f56bf79513d4	4e5707c3d71d51c7d073c253764d0467	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.016599
+4	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	4dae983262660f5ba298ebcb16206704	e11cceaa3435d7f2f3c5f56bf79513d4	3e1c50310ce7574d3c40aa55da91fce1	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.016834
+5	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	a6e2c6efdbdc3d61c4805a0b84be7bf1	e11cceaa3435d7f2f3c5f56bf79513d4	04066f453dc376ca3e6e93abf17cc23a	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.016951
+6	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	baf7489fb594fb8135a0a8fb01914952	0f9ca42be7187281115266571406eaf7	1317922abfb10ca4b4c28e99535f29bb	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.017254
+7	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	351295e2848b6f0e45b6d9616d456414	0f9ca42be7187281115266571406eaf7	4c2562ff91f1ff38d723cb28b7fb18d0	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:26:02.017357
+8	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	87c544414e51236b762fab11865fc402	0f9ca42be7187281115266571406eaf7	00b1358e7050fe7485283a31a396abb4	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.018023
+9	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	c1f2161c22c4c211bbf2219ed0c823db	0f9ca42be7187281115266571406eaf7	c2cb20ba301401a1ce0890b75ecb8ee5	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.018253
+10	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	c157098d9258b370bc435cf234c2fc6f	0f9ca42be7187281115266571406eaf7	c2cb20ba301401a1ce0890b75ecb8ee5	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:26:02.018263
+11	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	c21ef644c8c1f38273485f8cdc69e0ff	0f9ca42be7187281115266571406eaf7	d9cd4911b4bc8ef1bb7b07e2089ef2e1	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.018508
+12	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	436f0e3091ee653d29eaea46a6a46222	0f9ca42be7187281115266571406eaf7	1060550b208caf84ec94e81ab99ab327	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.018740
+13	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	48f471ed8c0b365d902d49d2fdcc728a	0f9ca42be7187281115266571406eaf7	9ced223d7a1cb75fcf3382ba10723759	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.018940
+14	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	2423ac76aa4723ca69ec59869bf98589	0f9ca42be7187281115266571406eaf7	043337c7ba8b94e364a5f4444b67b562	3	carrier	Walmart	Walmart	regex_dictionary	2026-07-08 06:26:02.020016
+15	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	387be21865ba5a943cb4d465c44ff1c5	ae09e30c90be9a755e75b61764f4edff	6675d21e62ca61a53123d92416a18cc0	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.020548
+16	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	3e48ff696803342964b2c3382d1ec37b	ae09e30c90be9a755e75b61764f4edff	2be379e7013687c3c3d55fccbe711531	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.021057
+17	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	87f8c39d753e40336d70714c32be7248	a0d2bfc370f2830993ed3f03f61cf71f	faf1703c7589ee857fe5649519940ac7	5	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:26:02.021244
+18	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	4c90ca602081f49a85904541f98b87a9	a0d2bfc370f2830993ed3f03f61cf71f	2ea2cf06ff2b10f7bc7cd661260a6971	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.021558
+19	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	348841d23c117d77b4c56e5b4cd4c3ad	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	date_range	5/27	5/27	regex_dictionary	2026-07-08 06:26:02.021782
+20	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	fc7f83be75d2b69b1643d79f866b9fab	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.021792
+21	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	882132290c0d1d2a4340c64ff7a13bbf	a0d2bfc370f2830993ed3f03f61cf71f	faed8faa0fe9b5c133006fdfd8ffff62	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.021933
+22	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	89dcc8c0068da2a21634f0b48006ebe2	a0d2bfc370f2830993ed3f03f61cf71f	8b1f471618294c203e7f235a76d1efcf	5	date_range	5/27 -	5/27 -	regex_dictionary	2026-07-08 06:26:02.022063
+23	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	976ed5753de16285dd60fb90eac5662c	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	device_model	Galaxy S26	Galaxy S26	regex_dictionary	2026-07-08 06:26:02.022321
+24	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	d6c478870b9742ad29d73e4b64157a9a	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	device_model	S26	S26	regex_dictionary	2026-07-08 06:26:02.022331
+25	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	a7eec60ff6dfba9784cfd25db7e29bb3	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.022340
+26	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	15b599fce982ffc5302dededae7ff4bd	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:26:02.022347
+27	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	dd4d5970477aa4df2d79ffb5979260f8	a0d2bfc370f2830993ed3f03f61cf71f	1d28d641a046a3db132392ac02baccb5	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:26:02.022525
+28	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	f6cf29f7bbd1a6304d8e99cd3829aab4	a0d2bfc370f2830993ed3f03f61cf71f	8433d6c303ff8f77ed961fc82c70b1d6	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:26:02.022654
+29	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	3b19749cb5eb515de92f5665874c9963	a0d2bfc370f2830993ed3f03f61cf71f	9773109c7e75c7671d6e9818489bd231	5	carrier	Verizon	Verizon	regex_dictionary	2026-07-08 06:26:02.022750
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Input row count: 1863
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                            object
+run_id                             object
+pdf_hash                           object
+pdf_name                           object
+deck_week                          object
+entity_id                          object
+slide_id                           object
+line_id                            object
+page_number                         int64
+entity_type                        object
+entity_text                        object
+normalized_entity_value            object
+detection_method                   object
+created_at                 datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: entity_id
+  Converting STRING column: slide_id
+  Converting STRING column: line_id
+  Converting INTEGER column: page_number
+  Converting STRING column: entity_type
+  Converting STRING column: entity_text
+  Converting STRING column: normalized_entity_value
+  Converting STRING column: detection_method
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                                 object
+run_id                                  object
+pdf_hash                                object
+pdf_name                                object
+deck_week                               object
+entity_id                               object
+slide_id                                object
+line_id                                 object
+page_number                              Int64
+entity_type                             object
+entity_text                             object
+normalized_entity_value                 object
+detection_method                        object
+created_at                 datetime64[ns, UTC]
+dtype: object
+
+Appending 1863 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly...
+Append completed: 1863 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly.
+====================================================================================================
+
+CELL 15: Extracting TOC expected page map
+TOC pages detected: 1
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_toc_page_map_df
+========================================================================================================================
+Rows: 21
+deck_id	run_id	pdf_hash	pdf_name	deck_week	toc_map_id	toc_source_page_number	expected_page_number	expected_section_name	toc_line_text	created_at
+0	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	66609b3fbf6a16c9a99dab6854867a32	3	5	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 06:26:07.398497
+1	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	9824fe22b7f8ca14e07f68fef9a0f0c5	3	6	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 06:26:07.398503
+2	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	2513bde3c9e99d9589d6f335fe095a6e	3	8	major_offer_changes	▪Major Competitive Offer Updates ................	2026-07-08 06:26:07.398515
+3	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	2d60015d969d6c65845e0577fb60ca61	3	10	postpaid_apple_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...	2026-07-08 06:26:07.398535
+4	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	968bca905f01d595fc7bb5954fcce9a1	3	11	postpaid_samsung_google_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...	2026-07-08 06:26:07.398546
+5	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	034041a67495252e39a1caea0f2b7a5e	3	12	postpaid_motorola_affordable_byod_offers	TM/VZ/ATT/Xfinity/Spectrum 2nd Tier, Affordabl...	2026-07-08 06:26:07.398556
+6	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	3ef238b8b65a2d9d8dd5702dd2529e6a	3	13	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:26:07.398565
+7	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	ea1f288044b4c3c93d78c33c97baeb72	3	14	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:26:07.398567
+8	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	bfd6aab8356d2c04921e6da0740f1b4a	3	15	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:26:07.398569
+9	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	27d95c00790be3a1dd5018fa9992f664	3	16	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 06:26:07.398580
+10	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	dd9862be30a57076eaa0290f24add290	3	17	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 06:26:07.398582
+11	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	ca2a394e140093e06090eb921effd33f	3	18	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 06:26:07.398593
+12	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	52407243cd299a2714e8ca5a52993d54	3	19	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 06:26:07.398595
+13	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	78a198db62c0531b1ed31aef3fa5f907	3	20	business_device_offers	❖Postpaid Business - Device Offers...............	2026-07-08 06:26:07.398606
+14	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	045b05b0b559bede10e52813a081e9ad	3	21	national_retail_readout	❖National Retail - Weekly Readout by NPD ........	2026-07-08 06:26:07.398617
+15	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	8f350bc30ac60ed9b73d7f66d96b518e	3	22	section_divider_prepaid	❖Prepaid ........................................	2026-07-08 06:26:07.398630
+16	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	fd32bd2e7400b9c3b6b9f2b16c02814f	3	23	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:26:07.398642
+17	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	f3cf5164fb1866b5f0244599a1248b67	3	24	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:26:07.398644
+18	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	5a414efb18a6e2ee9d057d756ea45b4d	3	25	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:26:07.398646
+19	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	f13d7a01dbaae21c2893005901f5b8c1	3	26	prepaid_flagship_offers	Prepaid Flagship Brands - Current Offers ........	2026-07-08 06:26:07.398657
+20	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	02dd3529404655af3fa60f689a03c255	3	27	walmart_prepaid_offers	Prepaid Brands at Walmart - Current Offers ......	2026-07-08 06:26:07.398668
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Input row count: 21
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                           object
+run_id                            object
+pdf_hash                          object
+pdf_name                          object
+deck_week                         object
+toc_map_id                        object
+toc_source_page_number             int64
+expected_page_number               int64
+expected_section_name             object
+toc_line_text                     object
+created_at                datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: toc_map_id
+  Converting INTEGER column: toc_source_page_number
+  Converting INTEGER column: expected_page_number
+  Converting STRING column: expected_section_name
+  Converting STRING column: toc_line_text
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                                object
+run_id                                 object
+pdf_hash                               object
+pdf_name                               object
+deck_week                              object
+toc_map_id                             object
+toc_source_page_number                  Int64
+expected_page_number                    Int64
+expected_section_name                  object
+toc_line_text                          object
+created_at                datetime64[ns, UTC]
+dtype: object
+
+Appending 21 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly...
+Append completed: 21 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly.
+====================================================================================================
+
+CELL 16: Classifying slides
+
+----------------------------------------------------------------------------------------------------
+Classifying page 1
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+T-Mobile Confidential
+1
+May 29, 2026
+MARKET &
+CHANNEL
+INSIGHTS
+MCI
+Expected from TOC: None
+Final section: cover
+Page type: cover
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.98
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: cover page
+
+----------------------------------------------------------------------------------------------------
+Classifying page 2
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+NOTICE OF CONFIDENTIALITY
+The information contained within this document (or meeting) is
+designated T-Mobile Confidential. Disclosure of the information to anyone
+without a direct need-to-know may result in termination of your
+employment with T-Mobile. T-Mobile reserves the right to pursue civil
+and/or criminal remedies against persons who disclose T-Mobile
+information to any third-party without proper authorization.
+Expected from TOC: None
+Final section: confidentiality_notice
+Page type: legal_notice
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 1.0
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: Notice of Confidentiality
+
+----------------------------------------------------------------------------------------------------
+Classifying page 3
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Table of Contents:
+▪CI Headlines - Postpaid & Prepaid...................................................... 5 & 6
+▪Major Competitive Offer Updates ................................................................ 8
+▪Competitive Offers & Promo Updates
+❖Postpaid Wireless Carriers:
+▪
+TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Device Offers......................................10
+Expected from TOC: None
+Final section: table_of_contents
+Page type: toc
+Extraction strategy: extract_toc_only
+Business segment: unknown
+Confidence: 1.0
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: Table of Contents
+
+----------------------------------------------------------------------------------------------------
+Classifying page 4
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+44
+MARKET &
+CHANNEL
+INSIGHTS
+MCI
+T-Mobile Confidential
+CI Headlines
+Expected from TOC: None
+Final section: section_divider_ci_headlines
+Page type: section_divider
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.9
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: CI Headlines divider
+
+----------------------------------------------------------------------------------------------------
+Classifying page 5
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+COMPETITIVE INTELLIGENCE HEADLINES   May 29, 2026
+Postpaid & Cable MVNO Key Highlights
+1. AT&T
+•
+Build-A-Plan to Launch 5/27: AT&T’s Build-A-Plan launched on May 27 but as of publication there are no links to the offer on AT&T’s website; an interested
+party must know the URL for the service to sign up. One customer who attempted to sign up when the service became available seemed to be in a doom loop
+and unable to receive support to get the service up and running. (5/27 - )
+Expected from TOC: ci_headlines
+Final section: ci_headlines_postpaid
+Page type: narrative_headline
+Extraction strategy: headline_parser
+Business segment: mixed
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: ci_headlines
+
+----------------------------------------------------------------------------------------------------
+Classifying page 6
+----------------------------------------------------------------------------------------------------
+First lines:
+COMPETITIVE INTELLIGENCE HEADLINES   May 29, 2026
+Prepaid & MVNO Key Highlights
+1.
+Cricket Wireless
+•
+“Deal Drop” Sale features Free iPhone 16e: Repeating the month-end flash sale in April, Cricket launched a “deal drop” sale offering the same 4 free phones with port & $60 plan - with
+the latest offering valid through Sunday, June 7: iPhone 16 (online req. 3x plan), Galaxy A36, Galaxy A37 & moto edge 2025 (5/29 - 6/7)
+•
+Expected from TOC: ci_headlines
+Final section: ci_headlines_postpaid
+Page type: narrative_headline
+Extraction strategy: headline_parser
+Business segment: mixed
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: ci_headlines
+
+----------------------------------------------------------------------------------------------------
+Classifying page 7
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+7
+Competitive Offer Updates
+7
+MARKET &
+CHANNEL
+INSIGHTS
+MCI
+Expected from TOC: None
+Final section: section_divider_offer_updates
+Page type: section_divider
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.9
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: offer updates divider
+
+----------------------------------------------------------------------------------------------------
+Classifying page 8
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Major Offer Changes Effective May 29, 2026
+***TFB Offer Changes:
+Reference Slide #20***
+POSTPAID
+OFFERS INTRODUCED
+OFFERS REMOVED
+T-MOBILE
+Expected from TOC: major_offer_changes
+Final section: major_offer_changes
+Page type: major_changes
+Extraction strategy: major_changes_parser
+Business segment: mixed
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: major_offer_changes
+
+----------------------------------------------------------------------------------------------------
+Classifying page 9
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+9
+Competitive Offers &
+Promotional Updates
+Postpaid
+MARKET &
+CHANNEL
+INSIGHTS
+Expected from TOC: None
+Final section: section_divider_offer_updates
+Page type: section_divider
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.9
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: offer_updates_divider
+
+----------------------------------------------------------------------------------------------------
+Classifying page 10
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Post-Paid Apple Smartphone Offers Effective May 29, 2026
+SMARTPHONES
+T-Mobile
+Verizon
+AT&T
+Xfinity
+Spectrum
+Expected from TOC: postpaid_apple_device_offers
+Final section: postpaid_apple_device_offers
+Page type: dense_matrix
+Extraction strategy: matrix_text_block_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: apple_postpaid
+
+----------------------------------------------------------------------------------------------------
+Classifying page 11
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Post-Paid Samsung and Google Smartphone Offers Effective May 29, 2026
+11
+SMARTPHONES
+T-Mobile
+Verizon
+AT&T
+Xfinity
+Expected from TOC: postpaid_samsung_google_device_offers
+Final section: postpaid_samsung_google_device_offers
+Page type: dense_matrix
+Extraction strategy: matrix_text_block_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: samsung_google_postpaid
+
+----------------------------------------------------------------------------------------------------
+Classifying page 12
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+12
+Post-Paid Motorola, Affordable Phones and BYOD Offers Effective May 29, 2026
+SMARTPHONES
+T-Mobile
+Verizon
+AT&T
+Xfinity
+Expected from TOC: postpaid_motorola_affordable_byod_offers
+Final section: postpaid_motorola_affordable_byod_offers
+Page type: dense_matrix
+Extraction strategy: matrix_text_block_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: motorola_affordable_byod
+
+----------------------------------------------------------------------------------------------------
+Classifying page 13
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Post-Paid BTS (Watches) Effective May 29, 2026
+T-Mobile
+AT&T
+$10.99 plan
+Verizon
+$10 Gizmo/Care
+$15 Unlimited
+Expected from TOC: postpaid_bts_offers
+Final section: postpaid_bts_watch_offers
+Page type: matrix_or_table
+Extraction strategy: bts_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: bts_watches
+
+----------------------------------------------------------------------------------------------------
+Classifying page 14
+----------------------------------------------------------------------------------------------------
+First lines:
+Post-Paid BTS (Tablet) Effective May 29, 2026
+T-Mobile
+AT&T
+$20.99 plan
+Verizon
+$20 Welcome
+$40 Unlimited
+$50 Unlimited Plus
+Expected from TOC: postpaid_bts_offers
+Final section: postpaid_bts_watch_offers
+Page type: matrix_or_table
+Extraction strategy: bts_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: bts_watches
+
+----------------------------------------------------------------------------------------------------
+Classifying page 15
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Post-Paid BTS & Other Offers Effective May 29, 2026
+T-Mobile
+AT&T
+Verizon
+Connected Devices
+CONNECTED CAR DEVICES:
+▪SYNCUP DRIVE: On Us - w/ AAL & $2 plan
+Expected from TOC: postpaid_bts_offers
+Final section: postpaid_bts_watch_offers
+Page type: matrix_or_table
+Extraction strategy: bts_parser
+Business segment: postpaid
+Confidence: 1.0
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: bts_watches
+
+----------------------------------------------------------------------------------------------------
+Classifying page 16
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+T-Mobile & AT&T Post-Paid Service Offers Effective May 29, 2026
+Brands
+BYOD
+Wireless Service
+Target Segment Offers
+Value- Added Services
+5G News
+Expected from TOC: postpaid_service_offers
+Final section: postpaid_service_offers
+Page type: service_reference
+Extraction strategy: service_parser
+Business segment: postpaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: postpaid_service
+
+----------------------------------------------------------------------------------------------------
+Classifying page 17
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Verizon Post-Paid Service Offers Effective May 29, 2026
+Brand
+BYOD
+Wireless Service
+Target Segment
+Offers
+Value-Added
+Expected from TOC: postpaid_service_offers
+Final section: postpaid_service_offers
+Page type: service_reference
+Extraction strategy: service_parser
+Business segment: postpaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: postpaid_service
+
+----------------------------------------------------------------------------------------------------
+Classifying page 18
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Postpaid Cable MVNO Handset Offers Effective May 29, 2026
+Optimum Mobile (36 mos. EIP)
+Spectrum Mobile (36 mos. EIP since 2/21/23)
+Xfinity Mobile (24 mos. EIP)
+SMARTPHONES
+Some savings applied instantly (if noted) otherwise
+awarded as credits over 36 months
+Expected from TOC: cable_mvno_offers
+Final section: cable_mvno_handset_offers
+Page type: dense_text_table
+Extraction strategy: mvno_parser
+Business segment: cable_mvno
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: cable_mvno_handset
+
+----------------------------------------------------------------------------------------------------
+Classifying page 19
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Cable MVNO Service Pricing & Offers Effective May 29, 2026
+Optimum Mobile
+Spectrum Mobile
+Xfinity Mobile
+SERVICE PLANS
+Unlimited Data plans ($5/mo. autopay discount pricing
+shown)
+Expected from TOC: cable_mvno_offers
+Final section: cable_mvno_service_offers
+Page type: service_reference
+Extraction strategy: service_parser
+Business segment: cable_mvno
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: cable_mvno_service
+
+----------------------------------------------------------------------------------------------------
+Classifying page 20
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Business - Flagship Device Offers
+Business
+T-Mobile
+AT&T
+Verizon
+Comcast
+Spectrum
+Expected from TOC: business_device_offers
+Final section: business_device_offers
+Page type: business_matrix
+Extraction strategy: matrix_text_block_parser
+Business segment: business
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: business_device
+
+----------------------------------------------------------------------------------------------------
+Classifying page 21
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Business - Flagship Device Offers
+Business
+T-Mobile
+AT&T
+Verizon
+Comcast
+Spectrum
+Expected from TOC: national_retail_readout
+Final section: business_device_offers
+Page type: business_matrix
+Extraction strategy: matrix_text_block_parser
+Business segment: business
+Confidence: 0.95
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: business_device
+
+----------------------------------------------------------------------------------------------------
+Classifying page 22
+----------------------------------------------------------------------------------------------------
+First lines:
+22
+Click HERE to Open This Week’s Update
+Key Highlights - Week Ending 5/29/26:
+•
+Best Buy slightly pulled backed on the unlocked phone subsidies this round as the top
+promotional offer was the $350 discount on the Samsung Galaxy Z Fold 7 phone, which is
+advertised for $1649 (versus the $400 discount on the predecessor Galaxy Z Fold 6 model
+last week). Other notable mentions are the $300 discounts on the Google Pixel 10 Pro Fold
+Expected from TOC: section_divider_prepaid
+Final section: national_retail_readout
+Page type: retail_summary
+Extraction strategy: headline_parser
+Business segment: national_retail
+Confidence: 0.85
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: national_retail
+
+----------------------------------------------------------------------------------------------------
+Classifying page 23
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+23
+Competitive Offers
+& Promotional
+Updates
+Prepaid
+MARKET &
+CHANNEL
+Expected from TOC: prepaid_brand_offers
+Final section: section_divider_prepaid
+Page type: section_divider
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.8
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: prepaid_divider
+
+----------------------------------------------------------------------------------------------------
+Classifying page 24
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Prepaid Brands - Current Offers
+C
+Metro by T-Mobile
+Boost Mobile
+Cricket
+SERVICE
+New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL  (4/24/25 -
+Expected from TOC: prepaid_brand_offers
+Final section: prepaid_brand_offers
+Page type: prepaid_reference
+Extraction strategy: prepaid_parser
+Business segment: prepaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: prepaid_brand_offers
+
+----------------------------------------------------------------------------------------------------
+Classifying page 25
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+25
+METRO BY T-MOBILE
+New Flex Rate Plans (4/24/25)
+pricing includes $5 autopay discount
+5-Year Guarantee (also on BTS & HINT)
+Flex UNL Plus $60, Flex UNL $50, Starter $40
+/10GB, *Starter Plus $40/UNL w/port & no
+Expected from TOC: prepaid_brand_offers
+Final section: prepaid_metro_price_grid
+Page type: price_grid
+Extraction strategy: price_grid_parser
+Business segment: prepaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: metro_price_grid
+
+----------------------------------------------------------------------------------------------------
+Classifying page 26
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Prepaid Brands - Current Offers
+Cc
+BOOST MOBILE
+CRICKET WIRELESS
+DEVICES
+In-Store PHONE OFFERS
+ONLINE PHONE PRICING
+Expected from TOC: prepaid_flagship_offers
+Final section: prepaid_brand_offers
+Page type: prepaid_reference
+Extraction strategy: prepaid_parser
+Business segment: prepaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: prepaid_brand_offers
+
+----------------------------------------------------------------------------------------------------
+Classifying page 27
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Flagship Brands/Prepaid - Current Offers
+T-Mobile Prepaid
+AT&T Prepaid
+Verizon Prepaid
+Ongoing Offers
+New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus -
+autopay added & 5-Year Guarantee
+Expected from TOC: walmart_prepaid_offers
+Final section: prepaid_flagship_offers
+Page type: prepaid_reference
+Extraction strategy: prepaid_parser
+Business segment: prepaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: True
+Reason: Header registry matched rule: prepaid_flagship
+
+----------------------------------------------------------------------------------------------------
+Classifying page 28
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+Walmart - Current Offers
+C3
+Metro
+Cricket
+Boost Mobile
+AT&T PREPAID
+Verizon Prepaid
+Expected from TOC: None
+Final section: walmart_prepaid_offers
+Page type: retail_prepaid
+Extraction strategy: prepaid_retail_parser
+Business segment: prepaid
+Confidence: 0.95
+Classification source: header_registry
+Review required: False
+Reason: Header registry matched rule: walmart_prepaid
+
+----------------------------------------------------------------------------------------------------
+Classifying page 29
+----------------------------------------------------------------------------------------------------
+First lines:
+T-Mobile Confidential
+29
+Expected from TOC: None
+Final section: end_slide
+Page type: end_slide
+Extraction strategy: skip
+Business segment: unknown
+Confidence: 0.9
+Classification source: priority_rule
+Review required: False
+Reason: Priority rule: sparse final/confidential slide
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_slide_sections_df
+========================================================================================================================
+Rows: 29
+page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	review_required_flag	section_reason
+0	1	May 29, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	False	Priority rule: cover page
+1	2	The information contained within this document...	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	False	Priority rule: Notice of Confidentiality
+2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	False	Priority rule: Table of Contents
+3	4	MARKET &	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: CI Headlines divider
+4	5	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
+5	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
+6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: offer updates divider
+7	8	Major Offer Changes Effective May 29, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	False	Header registry matched rule: major_offer_changes
+8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	False	Header registry matched rule: offer_updates_di...
+9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: apple_postpaid
+10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: samsung_google_p...
+11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: motorola_afforda...
+12	13	Post-Paid BTS (Watches) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+13	14	Post-Paid BTS (Tablet) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+14	15	Post-Paid BTS & Other Offers Effective May 29,...	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
+16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
+17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_handset
+18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_service
+19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	False	Header registry matched rule: business_device
+20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	True	Header registry matched rule: business_device
+21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	True	Header registry matched rule: national_retail
+22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	True	Header registry matched rule: prepaid_divider
+23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	False	Header registry matched rule: prepaid_brand_of...
+24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: metro_price_grid
+25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_brand_of...
+26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_flagship
+27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	False	Header registry matched rule: walmart_prepaid
+28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	False	Priority rule: sparse final/confidential slide
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Input row count: 29
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                                  object
+run_id                                   object
+pdf_hash                                 object
+pdf_name                                 object
+deck_week                                object
+slide_id                                 object
+page_number                               int64
+slide_title                              object
+page_type                                object
+matched_header_rule                      object
+expected_section_from_toc                object
+predicted_section_from_header            object
+predicted_section_from_gemini            object
+final_section_name                       object
+business_segment                         object
+extraction_strategy                      object
+section_confidence                      float64
+section_reason                           object
+classification_source                    object
+review_required_flag                       bool
+created_at                       datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: slide_id
+  Converting INTEGER column: page_number
+  Converting STRING column: slide_title
+  Converting STRING column: page_type
+  Converting STRING column: matched_header_rule
+  Converting STRING column: expected_section_from_toc
+  Converting STRING column: predicted_section_from_header
+  Converting STRING column: predicted_section_from_gemini
+  Converting STRING column: final_section_name
+  Converting STRING column: business_segment
+  Converting STRING column: extraction_strategy
+  Converting FLOAT column: section_confidence
+  Converting STRING column: section_reason
+  Converting STRING column: classification_source
+  Converting BOOLEAN column: review_required_flag
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                                       object
+run_id                                        object
+pdf_hash                                      object
+pdf_name                                      object
+deck_week                                     object
+slide_id                                      object
+page_number                                    Int64
+slide_title                                   object
+page_type                                     object
+matched_header_rule                           object
+expected_section_from_toc                     object
+predicted_section_from_header                 object
+predicted_section_from_gemini                 object
+final_section_name                            object
+business_segment                              object
+extraction_strategy                           object
+section_confidence                           float64
+section_reason                                object
+classification_source                         object
+review_required_flag                         boolean
+created_at                       datetime64[ns, UTC]
+dtype: object
+
+Appending 29 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly...
+Append completed: 29 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly.
+====================================================================================================
+
+CELL 17: Creating slide content blocks
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 1
+  section: cover
+  page_type: cover
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 2
+  section: confidentiality_notice
+  page_type: legal_notice
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 3
+  section: table_of_contents
+  page_type: toc
+  strategy: extract_toc_only
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 4
+  section: section_divider_ci_headlines
+  page_type: section_divider
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 5
+  section: ci_headlines_postpaid
+  page_type: narrative_headline
+  strategy: headline_parser
+  Content blocks created: 5
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 6
+  section: ci_headlines_postpaid
+  page_type: narrative_headline
+  strategy: headline_parser
+  Content blocks created: 4
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 7
+  section: section_divider_offer_updates
+  page_type: section_divider
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 8
+  section: major_offer_changes
+  page_type: major_changes
+  strategy: major_changes_parser
+  Content blocks created: 47
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 9
+  section: section_divider_offer_updates
+  page_type: section_divider
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 10
+  section: postpaid_apple_device_offers
+  page_type: dense_matrix
+  strategy: matrix_text_block_parser
+  Content blocks created: 143
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 11
+  section: postpaid_samsung_google_device_offers
+  page_type: dense_matrix
+  strategy: matrix_text_block_parser
+  Content blocks created: 189
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 12
+  section: postpaid_motorola_affordable_byod_offers
+  page_type: dense_matrix
+  strategy: matrix_text_block_parser
+  Content blocks created: 115
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 13
+  section: postpaid_bts_watch_offers
+  page_type: matrix_or_table
+  strategy: bts_parser
+  Content blocks created: 31
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 14
+  section: postpaid_bts_watch_offers
+  page_type: matrix_or_table
+  strategy: bts_parser
+  Content blocks created: 29
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 15
+  section: postpaid_bts_watch_offers
+  page_type: matrix_or_table
+  strategy: bts_parser
+  Content blocks created: 26
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 16
+  section: postpaid_service_offers
+  page_type: service_reference
+  strategy: service_parser
+  Content blocks created: 35
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 17
+  section: postpaid_service_offers
+  page_type: service_reference
+  strategy: service_parser
+  Content blocks created: 77
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 18
+  section: cable_mvno_handset_offers
+  page_type: dense_text_table
+  strategy: mvno_parser
+  Content blocks created: 77
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 19
+  section: cable_mvno_service_offers
+  page_type: service_reference
+  strategy: service_parser
+  Content blocks created: 50
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 20
+  section: business_device_offers
+  page_type: business_matrix
+  strategy: matrix_text_block_parser
+  Content blocks created: 118
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 21
+  section: business_device_offers
+  page_type: business_matrix
+  strategy: matrix_text_block_parser
+  Content blocks created: 38
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 22
+  section: national_retail_readout
+  page_type: retail_summary
+  strategy: headline_parser
+  Content blocks created: 0
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 23
+  section: section_divider_prepaid
+  page_type: section_divider
+  strategy: skip
+  Skipping non-offer slide.
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 24
+  section: prepaid_brand_offers
+  page_type: prepaid_reference
+  strategy: prepaid_parser
+  Content blocks created: 84
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 25
+  section: prepaid_metro_price_grid
+  page_type: price_grid
+  strategy: price_grid_parser
+  Price grid row candidates created: 0
+  Content blocks created: 622
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 26
+  section: prepaid_brand_offers
+  page_type: prepaid_reference
+  strategy: prepaid_parser
+  Content blocks created: 143
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 27
+  section: prepaid_flagship_offers
+  page_type: prepaid_reference
+  strategy: prepaid_parser
+  Content blocks created: 77
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 28
+  section: walmart_prepaid_offers
+  page_type: retail_prepaid
+  strategy: prepaid_retail_parser
+  Content blocks created: 165
+
+----------------------------------------------------------------------------------------------------
+Creating content blocks for page 29
+  section: end_slide
+  page_type: end_slide
+  strategy: skip
+  Skipping non-offer slide.
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_content_blocks_df
+========================================================================================================================
+Rows: 2075
+page_number	final_section_name	page_type	block_type	carrier	business_segment	change_bucket	device_family_text	raw_block_text	block_confidence	review_required_flag
+0	5	ci_headlines_postpaid	narrative_headline	headline_block	T-Mobile	mixed	None	None	COMPETITIVE INTELLIGENCE HEADLINES May 29, 202...	0.85	False
+1	5	ci_headlines_postpaid	narrative_headline	headline_block	AT&T	mixed	None	None	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...	0.85	False
+2	5	ci_headlines_postpaid	narrative_headline	headline_block	Verizon	mixed	None	None	• iPhone 17 Offers Change - Verizon brought ba...	0.85	False
+3	5	ci_headlines_postpaid	narrative_headline	headline_block	Spectrum	mixed	None	None	• No changes	0.85	False
+4	5	ci_headlines_postpaid	narrative_headline	headline_block	Xfinity	mixed	None	None	• No changes	0.85	False
+5	6	ci_headlines_postpaid	narrative_headline	headline_block	Cricket Wireless	mixed	None	None	• “Deal Drop” Sale features Free iPhone 16e: R...	0.85	False
+6	6	ci_headlines_postpaid	narrative_headline	headline_block	Boost Mobile	mixed	None	None	• No changes 3.	0.85	False
+7	6	ci_headlines_postpaid	narrative_headline	headline_block	Straight Talk	mixed	None	None	• Up to $50 off Phones: 25% off any full-price...	0.85	False
+8	6	ci_headlines_postpaid	narrative_headline	headline_block	Total Wireless	mixed	None	None	• iPhone 16e $79 In-Store: Total Wireless has ...	0.85	False
+9	8	major_offer_changes	major_changes	offer_block	None	mixed	None	None	Major Offer Changes Effective May 29, 2026	0.88	False
+10	8	major_offer_changes	major_changes	offer_block	None	mixed	None	None	***TFB Offer Changes: Reference Slide #20***	0.88	False
+11	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$1000 off iPhone 17 series w/ Port and Better...	0.88	False
+12	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$830 off iPhone 17 series w/ Port and More (5...	0.88	False
+13	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was	0.88	False
+14	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	$1,200) (5/28 - )	0.88	False
+15	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪No offers expired	0.88	False
+16	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	▪GS26 Series Trade-in Offer Updates: (5/29)	0.88	False
+17	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...	0.88	False
+18	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	S26: >$900 off w/ min. $95 trade & Extra/Premi...	0.88	False
+19	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	All models: $500 off w/min. $35 trade & Value ...	0.88	False
+20	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	▪GS26 Series - removed	0.88	False
+21	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	$1300/$230 trade level; $900/$35	0.88	False
+22	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	trade level (2/25 - 5/28) &	0.88	False
+23	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	removed select/any condition trade (3/12 - 5/28)	0.88	False
+24	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪iPhone 17 offers:	0.88	False
+25	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$1,000 off w/ AAL & UNL Ultimate	0.88	False
+26	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$830 off w/ AAL & UNL Plus	0.88	False
+27	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...	0.88	False
+28	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪Up to $500 off Apple Watch w/ iPhone purchase	0.88	False
+29	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	(was up to $250 off)	0.88	False
+30	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$500 off iPad w/ iPhone purchase (was $320)	0.88	False
+31	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪^^Similar offers for Samsung and Google	0.88	False
+32	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪No expired offers CABLE MVNOs	0.88	False
+33	8	major_offer_changes	major_changes	offer_block	Spectrum	mixed	None	None	▪No new offers	0.88	False
+34	8	major_offer_changes	major_changes	offer_block	Xfinity	mixed	None	None	▪No new offers	0.88	False
+35	8	major_offer_changes	major_changes	offer_block	Spectrum	mixed	None	None	▪No expired offers	0.88	False
+36	8	major_offer_changes	major_changes	offer_block	Xfinity	mixed	None	None	▪No expired offers	0.88	False
+37	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪Galaxy Watch7 $29/existing customer (5/28 - )...	0.88	False
+38	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪HINT $0 Gateway - existing/AAL only (5/28 - )	0.88	False
+39	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )	0.88	False
+40	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	...was $45 or $40 w/autopay ▪No changes	0.88	False
+41	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪“Deal Drop” Sale - FREE with port & $60 plan ...	0.88	False
+42	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o iPhone 16e ...$99/new line (3x $60 plan onli...	0.88	False
+43	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Galaxy A36 ...$79/new line	0.88	False
+44	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Galaxy A37 ...$99/new line	0.88	False
+45	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Moto edge 2025 ...$99/new line	0.88	False
+46	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪moto razr 2025 - $149 port or new line w/$60 ...	0.88	False
+47	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	TBD) ...was $99 ▪Unlock Policy: Will change on...	0.88	False
+48	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪In-Store: $240 12-month/BYO	0.88	False
+49	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	UNL plan (reg. $300) (4/30 - 5/25)	0.88	False
+
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_price_grid_rows_df
+========================================================================================================================
+Rows: 0
+No rows found.
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Input row count: 2075
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                          object
+run_id                           object
+pdf_hash                         object
+pdf_name                         object
+deck_week                        object
+content_block_id                 object
+slide_id                         object
+page_number                       int64
+final_section_name               object
+page_type                        object
+extraction_strategy              object
+block_sequence_number             int64
+block_type                       object
+block_title                      object
+carrier                          object
+business_segment                 object
+product_family                   object
+device_family_text               object
+customer_segment                 object
+change_bucket                    object
+raw_block_text                   object
+source_line_start                 int64
+source_line_end                   int64
+block_confidence                float64
+review_required_flag               bool
+created_at               datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: content_block_id
+  Converting STRING column: slide_id
+  Converting INTEGER column: page_number
+  Converting STRING column: final_section_name
+  Converting STRING column: page_type
+  Converting STRING column: extraction_strategy
+  Converting INTEGER column: block_sequence_number
+  Converting STRING column: block_type
+  Converting STRING column: block_title
+  Converting STRING column: carrier
+  Converting STRING column: business_segment
+  Converting STRING column: product_family
+  Converting STRING column: device_family_text
+  Converting STRING column: customer_segment
+  Converting STRING column: change_bucket
+  Converting STRING column: raw_block_text
+  Converting INTEGER column: source_line_start
+  Converting INTEGER column: source_line_end
+  Converting FLOAT column: block_confidence
+  Converting BOOLEAN column: review_required_flag
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                               object
+run_id                                object
+pdf_hash                              object
+pdf_name                              object
+deck_week                             object
+content_block_id                      object
+slide_id                              object
+page_number                            Int64
+final_section_name                    object
+page_type                             object
+extraction_strategy                   object
+block_sequence_number                  Int64
+block_type                            object
+block_title                           object
+carrier                               object
+business_segment                      object
+product_family                        object
+device_family_text                    object
+customer_segment                      object
+change_bucket                         object
+raw_block_text                        object
+source_line_start                      Int64
+source_line_end                        Int64
+block_confidence                     float64
+review_required_flag                 boolean
+created_at               datetime64[ns, UTC]
+dtype: object
+
+Appending 2075 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly...
+Append completed: 2075 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly.
+====================================================================================================
+No rows to append to sdi_competitiveOffers_silver_priceGridRows_weekly. Skipping.
+
+CELL 18: Creating offer candidates from content blocks
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_offer_candidates_df
+========================================================================================================================
+Rows: 2071
+page_number	section_name	page_type	business_segment	carrier	suggested_offer_category	suggested_offer_subcategory	detected_money_values_json	detected_device_models_json	candidate_confidence	raw_offer_text
+0	5	ci_headlines_postpaid	narrative_headline	mixed	AT&T	device_promotion	trade_in_offer	[]	["Galaxy S26", "S26"]	1.00	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+1	5	ci_headlines_postpaid	narrative_headline	mixed	Verizon	device_promotion	device_discount	[]	["iPhone 17"]	0.85	• iPhone 17 Offers Change - Verizon brought ba...
+2	6	ci_headlines_postpaid	narrative_headline	mixed	Cricket Wireless	market_update	marketing_campaign	[]	["iPhone 16e", "iPhone 16", "Galaxy A37 5G", "...	1.00	• “Deal Drop” Sale features Free iPhone 16e: R...
+3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	device_promotion	device_discount	[]	[]	0.85	• Up to $50 off Phones: 25% off any full-price...
+4	6	ci_headlines_postpaid	narrative_headline	mixed	Total Wireless	device_promotion	retail_price_change	[]	["iPhone 16e"]	1.00	• iPhone 16e $79 In-Store: Total Wireless has ...
+5	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	[]	[]	0.88	Major Offer Changes Effective May 29, 2026
+6	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	[]	[]	0.88	***TFB Offer Changes: Reference Slide #20***
+7	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪$1000 off iPhone 17 series w/ Port and Better...
+8	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪$830 off iPhone 17 series w/ Port and More (5...
+9	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["Pixel 10 Pro XL"]	0.88	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
+10	8	major_offer_changes	major_changes	mixed	T-Mobile	unknown	unknown	[]	[]	0.88	$1,200) (5/28 - )
+11	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	[]	0.88	▪No offers expired
+12	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	["S26"]	0.88	▪GS26 Series Trade-in Offer Updates: (5/29)
+13	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	["S26+", "S26", "S26 Ultra"]	0.88	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+14	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	["S26"]	0.88	S26: >$900 off w/ min. $95 trade & Extra/Premi...
+15	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	[]	0.88	All models: $500 off w/min. $35 trade & Value ...
+16	8	major_offer_changes	major_changes	mixed	AT&T	offer_status	expired_offer	[]	["S26"]	0.88	▪GS26 Series - removed
+17	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	$1300/$230 trade level; $900/$35
+18	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	trade level (2/25 - 5/28) &
+19	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	removed select/any condition trade (3/12 - 5/28)
+20	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪iPhone 17 offers:
+21	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪$1,000 off w/ AAL & UNL Ultimate
+22	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪$830 off w/ AAL & UNL Plus
+23	8	major_offer_changes	major_changes	mixed	Verizon	market_update	accessory_bundle	[]	[]	0.88	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
+24	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["Apple Watch"]	0.88	▪Up to $500 off Apple Watch w/ iPhone purchase
+25	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	(was up to $250 off)
+26	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["iPad"]	0.88	▪$500 off iPad w/ iPhone purchase (was $320)
+27	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪^^Similar offers for Samsung and Google
+28	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪No expired offers CABLE MVNOs
+29	8	major_offer_changes	major_changes	mixed	Spectrum	device_promotion	device_discount	[]	[]	0.88	▪No new offers
+30	8	major_offer_changes	major_changes	mixed	Xfinity	device_promotion	device_discount	[]	[]	0.88	▪No new offers
+31	8	major_offer_changes	major_changes	mixed	Spectrum	device_promotion	device_discount	[]	[]	0.88	▪No expired offers
+32	8	major_offer_changes	major_changes	mixed	Xfinity	device_promotion	device_discount	[]	[]	0.88	▪No expired offers
+33	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	retail_price_change	[]	["Galaxy Watch7"]	0.88	▪Galaxy Watch7 $29/existing customer (5/28 - )...
+34	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	free_device_offer	[]	[]	0.88	▪HINT $0 Gateway - existing/AAL only (5/28 - )
+35	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	service_promotion	service_mrc_promo	[]	[]	1.00	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )
+36	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	offer_status	no_change	[]	[]	0.88	...was $45 or $40 w/autopay ▪No changes
+37	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	free_device_offer	[]	[]	0.88	▪“Deal Drop” Sale - FREE with port & $60 plan ...
+38	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["iPhone 16e"]	0.88	o iPhone 16e ...$99/new line (3x $60 plan onli...
+39	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	[]	0.88	o Galaxy A36 ...$79/new line
+40	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	[]	0.88	o Galaxy A37 ...$99/new line
+41	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["Moto edge 2025"]	0.88	o Moto edge 2025 ...$99/new line
+42	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["moto razr 2025"]	0.88	▪moto razr 2025 - $149 port or new line w/$60 ...
+43	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	retail_price_change	[]	[]	0.88	TBD) ...was $99 ▪Unlock Policy: Will change on...
+44	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_price_point	[]	[]	0.88	▪In-Store: $240 12-month/BYO
+45	8	major_offer_changes	major_changes	mixed	Cricket Wireless	unknown	unknown	[]	[]	0.88	UNL plan (reg. $300) (4/30 - 5/25)
+46	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_discount	[]	[]	0.88	▪Regional Offer: In-store - $10
+47	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_discount	[]	[]	0.88	off new BYO lines $55/$45 plans; stackable wit...
+48	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	[]	0.88	▪AT&T Build-A-Plan - went live 5/27; offers cu...
+49	8	major_offer_changes	major_changes	mixed	AT&T	offer_status	no_change	[]	[]	0.88	plans with $15/1GB base option ▪No changes
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Input row count: 2071
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                                object
+run_id                                 object
+pdf_hash                               object
+pdf_name                               object
+deck_week                              object
+candidate_id                           object
+content_block_id                       object
+offer_group_id                         object
+slide_id                               object
+page_number                             int64
+section_name                           object
+page_type                              object
+business_segment                       object
+carrier                                object
+raw_offer_text                         object
+suggested_offer_category               object
+suggested_offer_subcategory            object
+detected_money_values_json             object
+detected_device_models_json            object
+detected_dates_json                    object
+candidate_confidence                  float64
+candidate_source                       object
+created_at                     datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: candidate_id
+  Converting STRING column: content_block_id
+  Converting STRING column: offer_group_id
+  Converting STRING column: slide_id
+  Converting INTEGER column: page_number
+  Converting STRING column: section_name
+  Converting STRING column: page_type
+  Converting STRING column: business_segment
+  Converting STRING column: carrier
+  Converting STRING column: raw_offer_text
+  Converting STRING column: suggested_offer_category
+  Converting STRING column: suggested_offer_subcategory
+  Converting STRING column: detected_money_values_json
+  Converting STRING column: detected_device_models_json
+  Converting STRING column: detected_dates_json
+  Converting FLOAT column: candidate_confidence
+  Converting STRING column: candidate_source
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                                     object
+run_id                                      object
+pdf_hash                                    object
+pdf_name                                    object
+deck_week                                   object
+candidate_id                                object
+content_block_id                            object
+offer_group_id                              object
+slide_id                                    object
+page_number                                  Int64
+section_name                                object
+page_type                                   object
+business_segment                            object
+carrier                                     object
+raw_offer_text                              object
+suggested_offer_category                    object
+suggested_offer_subcategory                 object
+detected_money_values_json                  object
+detected_device_models_json                 object
+detected_dates_json                         object
+candidate_confidence                       float64
+candidate_source                            object
+created_at                     datetime64[ns, UTC]
+dtype: object
+
+Appending 2071 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly...
+Append completed: 2071 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly.
+====================================================================================================
+
+CELL 19: Normalizing offer candidates
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_normalized_offers_df
+========================================================================================================================
+Rows: 2071
+page_number	section_name	page_type	business_segment	carrier	product_family	primary_device_model	offer_category	offer_subcategory	offer_type	offer_value	validation_status	review_status	status	normalization_confidence	source_raw_text
+0	5	ci_headlines_postpaid	narrative_headline	mixed	AT&T	service_plan	Galaxy S26	device_promotion	trade_in_offer	trade_in_discount	None	passed	auto_approved	ready_for_gold	0.85	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+1	5	ci_headlines_postpaid	narrative_headline	mixed	Verizon	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	• iPhone 17 Offers Change - Verizon brought ba...
+2	6	ci_headlines_postpaid	narrative_headline	mixed	Cricket Wireless	smartphone	iPhone 16e	market_update	marketing_campaign	unknown	None	passed	auto_approved	ready_for_gold	0.85	• “Deal Drop” Sale features Free iPhone 16e: R...
+3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	smartphone	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	• Up to $50 off Phones: 25% off any full-price...
+4	6	ci_headlines_postpaid	narrative_headline	mixed	Total Wireless	smartphone	iPhone 16e	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	• iPhone 16e $79 In-Store: Total Wireless has ...
+5	8	major_offer_changes	major_changes	mixed	None	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.50	Major Offer Changes Effective May 29, 2026
+6	8	major_offer_changes	major_changes	mixed	None	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.50	***TFB Offer Changes: Reference Slide #20***
+7	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$1000 off iPhone 17 series w/ Port and Better...
+8	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$830 off iPhone 17 series w/ Port and More (5...
+9	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	Pixel 10 Pro XL	device_promotion	device_discount	aal_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
+10	8	major_offer_changes	major_changes	mixed	T-Mobile	None	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.25	$1,200) (5/28 - )
+11	8	major_offer_changes	major_changes	mixed	T-Mobile	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No offers expired
+12	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.75	▪GS26 Series Trade-in Offer Updates: (5/29)
+13	8	major_offer_changes	major_changes	mixed	AT&T	None	S26+	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+14	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	S26: >$900 off w/ min. $95 trade & Extra/Premi...
+15	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	All models: $500 off w/min. $35 trade & Value ...
+16	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	offer_status	expired_offer	expired_offer	None	low_confidence	pending_review	needs_review	0.75	▪GS26 Series - removed
+17	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	$1300/$230 trade level; $900/$35
+18	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	trade level (2/25 - 5/28) &
+19	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	removed select/any condition trade (3/12 - 5/28)
+20	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	iPhone 17	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪iPhone 17 offers:
+21	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	aal_device_discount	None	low_confidence	pending_review	needs_review	0.65	▪$1,000 off w/ AAL & UNL Ultimate
+22	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	aal_device_discount	None	low_confidence	pending_review	needs_review	0.65	▪$830 off w/ AAL & UNL Plus
+23	8	major_offer_changes	major_changes	mixed	Verizon	tablet	None	market_update	accessory_bundle	unknown	None	low_confidence	pending_review	needs_review	0.75	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
+24	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	Apple Watch	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪Up to $500 off Apple Watch w/ iPhone purchase
+25	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	(was up to $250 off)
+26	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	iPad	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$500 off iPad w/ iPhone purchase (was $320)
+27	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪^^Similar offers for Samsung and Google
+28	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers CABLE MVNOs
+29	8	major_offer_changes	major_changes	mixed	Spectrum	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No new offers
+30	8	major_offer_changes	major_changes	mixed	Xfinity	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No new offers
+31	8	major_offer_changes	major_changes	mixed	Spectrum	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers
+32	8	major_offer_changes	major_changes	mixed	Xfinity	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers
+33	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	watch	Galaxy Watch7	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	▪Galaxy Watch7 $29/existing customer (5/28 - )...
+34	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	home_internet	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪HINT $0 Gateway - existing/AAL only (5/28 - )
+35	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	home_internet	None	service_promotion	service_mrc_promo	service_mrc_promo	None	passed	auto_approved	ready_for_gold	0.85	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )
+36	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	...was $45 or $40 w/autopay ▪No changes
+37	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪“Deal Drop” Sale - FREE with port & $60 plan ...
+38	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	iPhone 16e	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	o iPhone 16e ...$99/new line (3x $60 plan onli...
+39	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.75	o Galaxy A36 ...$79/new line
+40	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.75	o Galaxy A37 ...$99/new line
+41	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	Moto edge 2025	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	o Moto edge 2025 ...$99/new line
+42	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	moto razr 2025	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪moto razr 2025 - $149 port or new line w/$60 ...
+43	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	TBD) ...was $99 ▪Unlock Policy: Will change on...
+44	8	major_offer_changes	major_changes	mixed	Cricket Wireless	None	None	device_promotion	device_price_point	device_price_point	None	low_confidence	pending_review	needs_review	0.65	▪In-Store: $240 12-month/BYO
+45	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.45	UNL plan (reg. $300) (4/30 - 5/25)
+46	8	major_offer_changes	major_changes	mixed	Cricket Wireless	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪Regional Offer: In-store - $10
+47	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	off new BYO lines $55/$45 plans; stackable wit...
+48	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪AT&T Build-A-Plan - went live 5/27; offers cu...
+49	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	1.00	plans with $15/1GB base option ▪No changes
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Input row count: 2071
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                             object
+run_id                              object
+pdf_hash                            object
+pdf_name                            object
+deck_week                           object
+offer_id                            object
+offer_group_id                      object
+candidate_id                        object
+content_block_id                    object
+slide_id                            object
+page_number                          int64
+section_name                        object
+page_type                           object
+business_segment                    object
+carrier                             object
+customer_segment                    object
+change_bucket                       object
+product_family                      object
+manufacturer                        object
+device_family_text                  object
+primary_device_model                object
+device_models_json                  object
+plan_name                           object
+offer_category                      object
+offer_subcategory                   object
+offer_type                          object
+offer_value                         object
+offer_value_unit                    object
+monthly_price                       object
+data_allowance                      object
+term_length_months                 float64
+customer_action                     object
+condition_text                      object
+port_required_flag                    bool
+aal_required_flag                     bool
+trade_required_flag                   bool
+upgrade_required_flag                 bool
+new_line_required_flag                bool
+online_only_flag                      bool
+in_store_only_flag                    bool
+is_free_flag                          bool
+is_new_flag                           bool
+is_expired_flag                       bool
+effective_start_date                object
+effective_end_date                  object
+source_raw_text                     object
+offer_business_key                  object
+offer_value_hash                    object
+category_confidence                float64
+normalization_confidence           float64
+validation_status                   object
+review_required_flag                  bool
+review_status                       object
+status                              object
+created_at                  datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: offer_id
+  Converting STRING column: offer_group_id
+  Converting STRING column: candidate_id
+  Converting STRING column: content_block_id
+  Converting STRING column: slide_id
+  Converting INTEGER column: page_number
+  Converting STRING column: section_name
+  Converting STRING column: page_type
+  Converting STRING column: business_segment
+  Converting STRING column: carrier
+  Converting STRING column: customer_segment
+  Converting STRING column: change_bucket
+  Converting STRING column: product_family
+  Converting STRING column: manufacturer
+  Converting STRING column: device_family_text
+  Converting STRING column: primary_device_model
+  Converting STRING column: device_models_json
+  Converting STRING column: plan_name
+  Converting STRING column: offer_category
+  Converting STRING column: offer_subcategory
+  Converting STRING column: offer_type
+  Converting FLOAT column: offer_value
+  Converting STRING column: offer_value_unit
+  Converting FLOAT column: monthly_price
+  Converting STRING column: data_allowance
+  Converting INTEGER column: term_length_months
+  Converting STRING column: customer_action
+  Converting STRING column: condition_text
+  Converting BOOLEAN column: port_required_flag
+  Converting BOOLEAN column: aal_required_flag
+  Converting BOOLEAN column: trade_required_flag
+  Converting BOOLEAN column: upgrade_required_flag
+  Converting BOOLEAN column: new_line_required_flag
+  Converting BOOLEAN column: online_only_flag
+  Converting BOOLEAN column: in_store_only_flag
+  Converting BOOLEAN column: is_free_flag
+  Converting BOOLEAN column: is_new_flag
+  Converting BOOLEAN column: is_expired_flag
+  Converting DATE column: effective_start_date
+  Converting DATE column: effective_end_date
+  Converting STRING column: source_raw_text
+  Converting STRING column: offer_business_key
+  Converting STRING column: offer_value_hash
+  Converting FLOAT column: category_confidence
+  Converting FLOAT column: normalization_confidence
+  Converting STRING column: validation_status
+  Converting BOOLEAN column: review_required_flag
+  Converting STRING column: review_status
+  Converting STRING column: status
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                                  object
+run_id                                   object
+pdf_hash                                 object
+pdf_name                                 object
+deck_week                                object
+offer_id                                 object
+offer_group_id                           object
+candidate_id                             object
+content_block_id                         object
+slide_id                                 object
+page_number                               Int64
+section_name                             object
+page_type                                object
+business_segment                         object
+carrier                                  object
+customer_segment                         object
+change_bucket                            object
+product_family                           object
+manufacturer                             object
+device_family_text                       object
+primary_device_model                     object
+device_models_json                       object
+plan_name                                object
+offer_category                           object
+offer_subcategory                        object
+offer_type                               object
+offer_value                             float64
+offer_value_unit                         object
+monthly_price                           float64
+data_allowance                           object
+term_length_months                        Int64
+customer_action                          object
+condition_text                           object
+port_required_flag                      boolean
+aal_required_flag                       boolean
+trade_required_flag                     boolean
+upgrade_required_flag                   boolean
+new_line_required_flag                  boolean
+online_only_flag                        boolean
+in_store_only_flag                      boolean
+is_free_flag                            boolean
+is_new_flag                             boolean
+is_expired_flag                         boolean
+effective_start_date                     object
+effective_end_date                       object
+source_raw_text                          object
+offer_business_key                       object
+offer_value_hash                         object
+category_confidence                     float64
+normalization_confidence                float64
+validation_status                        object
+review_required_flag                    boolean
+review_status                            object
+status                                   object
+created_at                  datetime64[ns, UTC]
+dtype: object
+
+Appending 2071 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly...
+Append completed: 2071 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly.
+====================================================================================================
+
+CELL 20: Creating offer-device bridge
+
+========================================================================================================================
+DATAFRAME PREVIEW: silver_offer_device_bridge_df
+========================================================================================================================
+Rows: 1796
+page_number	manufacturer	device_model	source_raw_text
+0	5	Samsung	Galaxy S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+1	5	Samsung	S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+2	5	Apple	iPhone 17	• iPhone 17 Offers Change - Verizon brought ba...
+3	6	Apple	iPhone 16e	• “Deal Drop” Sale features Free iPhone 16e: R...
+4	6	Apple	iPhone 16	• “Deal Drop” Sale features Free iPhone 16e: R...
+5	6	Samsung	Galaxy A37 5G	• “Deal Drop” Sale features Free iPhone 16e: R...
+6	6	Samsung	A37 5G	• “Deal Drop” Sale features Free iPhone 16e: R...
+7	6	Motorola	moto edge 2025	• “Deal Drop” Sale features Free iPhone 16e: R...
+8	6	Apple	iPhone 16e	• iPhone 16e $79 In-Store: Total Wireless has ...
+9	8	Apple	iPhone 17	▪$1000 off iPhone 17 series w/ Port and Better...
+10	8	Apple	iPhone 17	▪$830 off iPhone 17 series w/ Port and More (5...
+11	8	Google	Pixel 10 Pro XL	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
+12	8	None	S26	▪GS26 Series Trade-in Offer Updates: (5/29)
+13	8	None	S26+	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+14	8	None	S26	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+15	8	None	S26 Ultra	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+16	8	None	S26	S26: >$900 off w/ min. $95 trade & Extra/Premi...
+17	8	None	S26	▪GS26 Series - removed
+18	8	Apple	iPhone 17	▪iPhone 17 offers:
+19	8	Apple	Apple Watch	▪Up to $500 off Apple Watch w/ iPhone purchase
+20	8	Apple	iPad	▪$500 off iPad w/ iPhone purchase (was $320)
+21	8	Samsung	Galaxy Watch7	▪Galaxy Watch7 $29/existing customer (5/28 - )...
+22	8	Apple	iPhone 16e	o iPhone 16e ...$99/new line (3x $60 plan onli...
+23	8	Motorola	Moto edge 2025	o Moto edge 2025 ...$99/new line
+24	8	Motorola	moto razr 2025	▪moto razr 2025 - $149 port or new line w/$60 ...
+25	8	Apple	iPhone 16e	▪In-Store: iPhone 16e - $79 with port & 2x $60...
+26	10	Apple	iPad	- Up to $500 $320 off select iPads w/ iPhone p...
+27	10	Apple	iPhone 17	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
+28	10	Apple	iPad A16	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
+29	10	Apple	iPhone 17	iPhone 17 ($830)
+30	10	Apple	iPhone Air	iPhone Air ($1,000)
+31	10	Apple	iPhone 17 Pro	iPhone 17 Pro ($1,100)
+32	10	Apple	iPhone 17 Pro Max	($1,200)
+33	10	Apple	iPhone 17 Pro Max	Discounts (No Trade-in Needed):
+34	10	Apple	iPhone 17 Pro Max	- $1,000 off w/ Port & Better Value or Beyond
+35	10	Apple	iPhone 17 Pro Max	- $830 off w/ Port & Exp. More
+36	10	Apple	iPhone 17 Pro Max	^^ NEW 5/28 ^^
+37	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL or Upgrade):
+38	10	Apple	iPhone 17 Pro Max	- $1100 off w/ Tier 1 Trd (Any Cond.) & Beyond
+39	10	Apple	iPhone 17 Pro Max	- $830 off w/ Tier 1 Trd (Good Cond.) & More/B...
+40	10	Apple	iPhone 17 Pro Max	- $400 off w/ Tier 2 Trd (Good Cond.) & More/B...
+41	10	Apple	iPhone 17 Pro Max	- $300 off w/ Tier 1 Trade (Good Cond.) & most...
+42	10	Apple	iPhone 17 Pro Max	- $150 off w/ Tier 2 Trade (Good Cond.) & most...
+43	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL Only):
+44	10	Apple	iPhone 17 Pro Max	- $730 off w/ Tier 1 Trade (Good Cond.) & most...
+45	10	Apple	iPhone 17 Pro Max	Discounts (AAL & No Trade-in Needed):
+46	10	Apple	iPhone 17 Pro Max	- $1,000 off w/ AAL & UNL Ultimate
+47	10	Apple	iPhone 17 Pro Max	- $830 off w/ AAL & UNL Plus
+48	10	Apple	iPhone 17 Pro Max	^^ NEW 5/29 ^^
+49	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL or Upgrade):
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Input row count: 1796
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                    object
+run_id                     object
+pdf_hash                   object
+pdf_name                   object
+deck_week                  object
+offer_device_id            object
+offer_id                   object
+offer_group_id             object
+page_number                 int64
+manufacturer               object
+device_model               object
+device_rank                 int64
+source_raw_text            object
+created_at         datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: offer_device_id
+  Converting STRING column: offer_id
+  Converting STRING column: offer_group_id
+  Converting INTEGER column: page_number
+  Converting STRING column: manufacturer
+  Converting STRING column: device_model
+  Converting INTEGER column: device_rank
+  Converting STRING column: source_raw_text
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                         object
+run_id                          object
+pdf_hash                        object
+pdf_name                        object
+deck_week                       object
+offer_device_id                 object
+offer_id                        object
+offer_group_id                  object
+page_number                      Int64
+manufacturer                    object
+device_model                    object
+device_rank                      Int64
+source_raw_text                 object
+created_at         datetime64[ns, UTC]
+dtype: object
+
+Appending 1796 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly...
+Append completed: 1796 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly.
+====================================================================================================
+
+CELL 21: Creating review queue and auto approvals
+Rows requiring review: 1842
+Rows auto-approved: 229
+
+========================================================================================================================
+DATAFRAME PREVIEW: review_extraction_review_df
+========================================================================================================================
+Rows: 1842
+page_number	section_name	business_segment	carrier	validation_status	confidence_score	source_raw_text
+0	6	ci_headlines_postpaid	mixed	Straight Talk	low_confidence	0.75	• Up to $50 off Phones: 25% off any full-price...
+1	8	major_offer_changes	mixed	None	low_confidence	0.50	Major Offer Changes Effective May 29, 2026
+2	8	major_offer_changes	mixed	None	low_confidence	0.50	***TFB Offer Changes: Reference Slide #20***
+3	8	major_offer_changes	mixed	T-Mobile	low_confidence	0.25	$1,200) (5/28 - )
+4	8	major_offer_changes	mixed	T-Mobile	low_confidence	0.65	▪No offers expired
+5	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	▪GS26 Series Trade-in Offer Updates: (5/29)
+6	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
+7	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	S26: >$900 off w/ min. $95 trade & Extra/Premi...
+8	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	▪GS26 Series - removed
+9	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	$1300/$230 trade level; $900/$35
+10	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	trade level (2/25 - 5/28) &
+11	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	removed select/any condition trade (3/12 - 5/28)
+12	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪$1,000 off w/ AAL & UNL Ultimate
+13	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪$830 off w/ AAL & UNL Plus
+14	8	major_offer_changes	mixed	Verizon	low_confidence	0.75	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
+15	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	(was up to $250 off)
+16	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪^^Similar offers for Samsung and Google
+17	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪No expired offers CABLE MVNOs
+18	8	major_offer_changes	mixed	Spectrum	low_confidence	0.65	▪No new offers
+19	8	major_offer_changes	mixed	Xfinity	low_confidence	0.65	▪No new offers
+20	8	major_offer_changes	mixed	Spectrum	low_confidence	0.65	▪No expired offers
+21	8	major_offer_changes	mixed	Xfinity	low_confidence	0.65	▪No expired offers
+22	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.75	o Galaxy A36 ...$79/new line
+23	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.75	o Galaxy A37 ...$99/new line
+24	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.65	▪In-Store: $240 12-month/BYO
+25	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.45	UNL plan (reg. $300) (4/30 - 5/25)
+26	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.65	▪Regional Offer: In-store - $10
+27	8	major_offer_changes	mixed	Verizon	low_confidence	0.75	▪25% off FRP Phones - max. $50 savings w/any p...
+28	10	postpaid_apple_device_offers	postpaid	None	low_confidence	0.60	Post-Paid Apple Smartphone Offers Effective Ma...
+29	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- Family Freedom: Up to $800/line EIP payoff
+30	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	(requires phone trade-in, stacks w/ promos, ma...
+31	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- Keep & Switch: <$800/line EIP payoff (max 4 ...
+32	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- Up to $500 $250 off AW w/ iPhone purch. & BT...
+33	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Up to $500 $320 off select iPads w/ iPhone p...
+34	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.25	^^ UPDATED 5/28; Can be combined for 'Dads & G...
+35	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...
+36	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $100 VZ GC w/ New Account & Any Plan (Online...
+37	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- $800 EIP Buyout w/ new phone purchase (Below...
+38	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	*All trades Select Phone, Any Condition*
+39	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
+40	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $800 EIP Buyout w/ Port (combinable w/ devic...
+41	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $200 New Line Credit *Online Only* - Unlimit...
+42	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	Any credits require a 36-month EIP agreement R...
+43	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	Upgrade every year w/ Mobile Plus
+44	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	Standard Trade-in Offer:
+45	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	+$100 added to FMV of trade
+46	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	(Larger "added to trade-in" amounts
+47	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	below supercede this offer)
+48	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.45	iPhone 17 ($830)
+49	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.45	iPhone Air ($1,000)
+
+
+========================================================================================================================
+DATAFRAME PREVIEW: review_auto_decisions_df
+========================================================================================================================
+Rows: 229
+decision_type	review_status	reviewer_name	offer_id
+0	auto_approved	approved	system	0c7de112cb62fd0268072d85cfebfced
+1	auto_approved	approved	system	724b443674f0871d9631928d50c16b0e
+2	auto_approved	approved	system	0b5a227861f13e69aaa2df70f57e5f7c
+3	auto_approved	approved	system	f9a28dc3389619d247a037d4d9bf38ed
+4	auto_approved	approved	system	3e361e52b0d3b39cf85c2fa4ff6056ce
+5	auto_approved	approved	system	45361de3782244b4d0c6924a7eaa60d6
+6	auto_approved	approved	system	8b79b4e9df0c4cfc71da6c302cc9eb85
+7	auto_approved	approved	system	c6b81430d5a2fc68e9c8ffe8d6ee7c9f
+8	auto_approved	approved	system	aa0bbb988115944f27f686c94fba48d1
+9	auto_approved	approved	system	e1bff522729777fa071491baa171af68
+10	auto_approved	approved	system	ac779a2beb23b6430eb3c26ac57bcd94
+11	auto_approved	approved	system	77cb0f427081be87fb658d99df7cbeef
+12	auto_approved	approved	system	c0eb97990c35c2c55d8616bc512baffb
+13	auto_approved	approved	system	aa6b170a042c12486a08e885ebb7a1bb
+14	auto_approved	approved	system	8c7247a161329312421238f780347a13
+15	auto_approved	approved	system	dc1a2e1395556e64f9aca2bed9f295db
+16	auto_approved	approved	system	6228ba1977812891c33e72ab7379e90a
+17	auto_approved	approved	system	f692c91cb507e2fd90d2191e8a115a25
+18	auto_approved	approved	system	622e8c9856e286989ce83cc0c576aa15
+19	auto_approved	approved	system	a428ba0af4c20e264253222c38dfc3ba
+
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Input row count: 1842
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                          object
+run_id                           object
+pdf_hash                         object
+pdf_name                         object
+deck_week                        object
+review_id                        object
+offer_id                         object
+offer_group_id                   object
+candidate_id                     object
+content_block_id                 object
+page_number                       int64
+section_name                     object
+business_segment                 object
+carrier                          object
+source_raw_text                  object
+suggested_output_json            object
+confidence_score                float64
+validation_status                object
+review_reason                    object
+review_status                    object
+created_at               datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: review_id
+  Converting STRING column: offer_id
+  Converting STRING column: offer_group_id
+  Converting STRING column: candidate_id
+  Converting STRING column: content_block_id
+  Converting INTEGER column: page_number
+  Converting STRING column: section_name
+  Converting STRING column: business_segment
+  Converting STRING column: carrier
+  Converting STRING column: source_raw_text
+  Converting STRING column: suggested_output_json
+  Converting FLOAT column: confidence_score
+  Converting STRING column: validation_status
+  Converting STRING column: review_reason
+  Converting STRING column: review_status
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                               object
+run_id                                object
+pdf_hash                              object
+pdf_name                              object
+deck_week                             object
+review_id                             object
+offer_id                              object
+offer_group_id                        object
+candidate_id                          object
+content_block_id                      object
+page_number                            Int64
+section_name                          object
+business_segment                      object
+carrier                               object
+source_raw_text                       object
+suggested_output_json                 object
+confidence_score                     float64
+validation_status                     object
+review_reason                         object
+review_status                         object
+created_at               datetime64[ns, UTC]
+dtype: object
+
+Appending 1842 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly...
+Append completed: 1842 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly.
+====================================================================================================
+
+====================================================================================================
+Preparing DataFrame for BigQuery append
+Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Input row count: 229
+====================================================================================================
+Original DataFrame dtypes:
+deck_id                      object
+run_id                       object
+pdf_hash                     object
+pdf_name                     object
+deck_week                    object
+decision_id                  object
+review_id                    object
+offer_id                     object
+offer_group_id               object
+decision_type                object
+review_status                object
+reviewer_name                object
+review_notes                 object
+final_output_json            object
+created_at           datetime64[ns]
+dtype: object
+Reading destination schema for: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+  Converting STRING column: deck_id
+  Converting STRING column: run_id
+  Converting STRING column: pdf_hash
+  Converting STRING column: pdf_name
+  Converting DATE column: deck_week
+  Converting STRING column: decision_id
+  Converting STRING column: review_id
+  Converting STRING column: offer_id
+  Converting STRING column: offer_group_id
+  Converting STRING column: decision_type
+  Converting STRING column: review_status
+  Converting STRING column: reviewer_name
+  Converting STRING column: review_notes
+  Converting STRING column: final_output_json
+  Converting TIMESTAMP column: created_at
+
+Prepared DataFrame dtypes:
+deck_id                           object
+run_id                            object
+pdf_hash                          object
+pdf_name                          object
+deck_week                         object
+decision_id                       object
+review_id                         object
+offer_id                          object
+offer_group_id                    object
+decision_type                     object
+review_status                     object
+reviewer_name                     object
+review_notes                      object
+final_output_json                 object
+created_at           datetime64[ns, UTC]
+dtype: object
+
+Appending 229 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly...
+Append completed: 229 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly.
+====================================================================================================
+
+CELL 22: Final QA summary
+
+1. Slide classification summary
+final_section_name	page_type	extraction_strategy	classification_source	row_count
+10	postpaid_bts_watch_offers	matrix_or_table	bts_parser	header_registry	3
+0	business_device_offers	business_matrix	matrix_text_block_parser	header_registry	2
+13	postpaid_service_offers	service_reference	service_parser	header_registry	2
+3	ci_headlines_postpaid	narrative_headline	headline_parser	header_registry	2
+14	prepaid_brand_offers	prepaid_reference	prepaid_parser	header_registry	2
+21	table_of_contents	toc	extract_toc_only	priority_rule	1
+20	section_divider_prepaid	section_divider	skip	header_registry	1
+19	section_divider_offer_updates	section_divider	skip	priority_rule	1
+18	section_divider_offer_updates	section_divider	skip	header_registry	1
+17	section_divider_ci_headlines	section_divider	skip	priority_rule	1
+16	prepaid_metro_price_grid	price_grid	price_grid_parser	header_registry	1
+15	prepaid_flagship_offers	prepaid_reference	prepaid_parser	header_registry	1
+11	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+12	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+1	cable_mvno_handset_offers	dense_text_table	mvno_parser	header_registry	1
+9	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+8	national_retail_readout	retail_summary	headline_parser	header_registry	1
+7	major_offer_changes	major_changes	major_changes_parser	header_registry	1
+6	end_slide	end_slide	skip	priority_rule	1
+5	cover	cover	skip	priority_rule	1
+4	confidentiality_notice	legal_notice	skip	priority_rule	1
+2	cable_mvno_service_offers	service_reference	service_parser	header_registry	1
+22	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	header_registry	1
+
+
+2. Slide classification detail
+page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	review_required_flag	section_reason
+0	1	May 29, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	False	Priority rule: cover page
+1	2	The information contained within this document...	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	False	Priority rule: Notice of Confidentiality
+2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	False	Priority rule: Table of Contents
+3	4	MARKET &	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: CI Headlines divider
+4	5	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
+5	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
+6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: offer updates divider
+7	8	Major Offer Changes Effective May 29, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	False	Header registry matched rule: major_offer_changes
+8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	False	Header registry matched rule: offer_updates_di...
+9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: apple_postpaid
+10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: samsung_google_p...
+11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: motorola_afforda...
+12	13	Post-Paid BTS (Watches) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+13	14	Post-Paid BTS (Tablet) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+14	15	Post-Paid BTS & Other Offers Effective May 29,...	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
+15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
+16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
+17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_handset
+18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_service
+19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	False	Header registry matched rule: business_device
+20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	True	Header registry matched rule: business_device
+21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	True	Header registry matched rule: national_retail
+22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	True	Header registry matched rule: prepaid_divider
+23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	False	Header registry matched rule: prepaid_brand_of...
+24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: metro_price_grid
+25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_brand_of...
+26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_flagship
+27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	False	Header registry matched rule: walmart_prepaid
+28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	False	Priority rule: sparse final/confidential slide
+
+
+3. Content block summary
+final_section_name	page_type	block_type	block_count
+12	prepaid_metro_price_grid	price_grid	offer_block	622
+10	prepaid_brand_offers	prepaid_reference	offer_block	227
+8	postpaid_samsung_google_device_offers	dense_matrix	offer_block	189
+13	walmart_prepaid_offers	retail_prepaid	offer_block	165
+0	business_device_offers	business_matrix	offer_block	156
+5	postpaid_apple_device_offers	dense_matrix	offer_block	143
+7	postpaid_motorola_affordable_byod_offers	dense_matrix	offer_block	115
+9	postpaid_service_offers	service_reference	offer_block	112
+6	postpaid_bts_watch_offers	matrix_or_table	offer_block	86
+1	cable_mvno_handset_offers	dense_text_table	offer_block	77
+11	prepaid_flagship_offers	prepaid_reference	offer_block	77
+2	cable_mvno_service_offers	service_reference	offer_block	50
+4	major_offer_changes	major_changes	offer_block	47
+3	ci_headlines_postpaid	narrative_headline	headline_block	9
+
+
+4. Offer candidate summary
+section_name	business_segment	suggested_offer_category	suggested_offer_subcategory	candidate_count
+131	prepaid_metro_price_grid	prepaid	unknown	unknown	420
+125	prepaid_metro_price_grid	prepaid	device_promotion	free_device_offer	172
+141	walmart_prepaid_offers	prepaid	unknown	unknown	121
+110	prepaid_brand_offers	prepaid	unknown	unknown	101
+75	postpaid_samsung_google_device_offers	postpaid	device_promotion	device_discount	93
+...	...	...	...	...	...
+36	major_offer_changes	mixed	device_promotion	device_price_point	1
+34	ci_headlines_postpaid	mixed	market_update	marketing_campaign	1
+115	prepaid_flagship_offers	prepaid	device_promotion	retail_price_change	1
+116	prepaid_flagship_offers	prepaid	fee_promotion	activation_fee_waiver	1
+71	postpaid_motorola_affordable_byod_offers	postpaid	service_promotion	byod_credit	1
+142 rows × 5 columns
+
+
+
+5. Normalized offer summary
+section_name	business_segment	offer_category	offer_subcategory	validation_status	status	offer_count
+183	prepaid_metro_price_grid	prepaid	unknown	unknown	low_confidence	needs_review	420
+176	prepaid_metro_price_grid	prepaid	device_promotion	free_device_offer	low_confidence	needs_review	168
+198	walmart_prepaid_offers	prepaid	unknown	unknown	low_confidence	needs_review	121
+156	prepaid_brand_offers	prepaid	unknown	unknown	low_confidence	needs_review	101
+1	business_device_offers	business	device_promotion	device_discount	low_confidence	needs_review	71
+...	...	...	...	...	...	...	...
+29	cable_mvno_service_offers	cable_mvno	device_promotion	device_discount	passed	ready_for_gold	1
+85	postpaid_motorola_affordable_byod_offers	postpaid	device_promotion	device_price_point	dense_layout_review	needs_review	1
+141	prepaid_brand_offers	prepaid	device_promotion	retail_price_change	low_confidence	needs_review	1
+92	postpaid_motorola_affordable_byod_offers	postpaid	service_promotion	aal_offer	dense_layout_review	needs_review	1
+37	cable_mvno_service_offers	cable_mvno	service_promotion	service_mrc_promo	low_confidence	needs_review	1
+199 rows × 7 columns
+
+
+
+6. Rows needing review
+page_number	section_name	page_type	business_segment	carrier	offer_category	offer_subcategory	validation_status	normalization_confidence	source_raw_text
+3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	device_promotion	device_discount	low_confidence	0.75	• Up to $50 off Phones: 25% off any full-price...
+5	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	low_confidence	0.50	Major Offer Changes Effective May 29, 2026
+6	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	low_confidence	0.50	***TFB Offer Changes: Reference Slide #20***
+10	8	major_offer_changes	major_changes	mixed	T-Mobile	unknown	unknown	low_confidence	0.25	$1,200) (5/28 - )
+11	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	low_confidence	0.65	▪No offers expired
+...	...	...	...	...	...	...	...	...	...	...
+119	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	- $200 added to Trade-in value w/ Upgrade and ...
+120	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	Discount (No Trade-in Needed): - 17 series:
+121	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_discount	low_confidence	0.75	Trade Offers (AAL or Upgrade):
+122	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_discount	low_confidence	0.75	- 17 series: Addtl $200 off added to
+123	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	trade-in (supercedes $100 standard
+100 rows × 10 columns
+
+
+
+
+7. Multi-device offer bridge sample
+page_number	manufacturer	device_model	source_raw_text
+0	5	Samsung	Galaxy S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+1	5	Samsung	S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
+2	5	Apple	iPhone 17	• iPhone 17 Offers Change - Verizon brought ba...
+3	6	Apple	iPhone 16e	• “Deal Drop” Sale features Free iPhone 16e: R...
+4	6	Apple	iPhone 16	• “Deal Drop” Sale features Free iPhone 16e: R...
+...	...	...	...	...
+95	10	Apple	iPhone 16 Pro Max	Discounts (No Trade-in Needed):
+96	10	Apple	iPhone 16 Pro Max	16: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate
+97	10	Apple	iPhone 16 Pro Max	16 Plus: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ulti...
+98	10	Apple	iPhone 16 Pro Max	16 Pro: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate
+99	10	Apple	iPhone 16 Pro Max	16 Pro Max: $0 (online) w/ Welcome, $0 w/ Plus...
+100 rows × 4 columns
+
+
+
+8. Final counts
+PDF pages processed: 29
+Bronze slide raw rows: 29
+Bronze slide line rows: 3321
+Detected entity rows: 1863
+TOC map rows: 21
+Slide section rows: 29
+Content block rows: 2075
+Price grid rows: 0
+Offer candidate rows: 2071
+Normalized offer rows: 2071
+Device bridge rows: 1796
+Review queue rows: 1842
+Auto-approved rows: 229
+
+========================================================================================================================
+NOTEBOOK COMPLETED SUCCESSFULLY
+========================================================================================================================
+
+Next:
+  1. Share the QA outputs with me.
+  2. We will inspect:
+       - slide classification detail
+       - content block summary
+       - rows needing review
+       - unknown categories
+       - dense layout review rows
+  3. Then we will tune:
+       - slide header rules
+       - content block grouping
+       - offer taxonomy
+       - device extraction
+       - review thresholds
