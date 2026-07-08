@@ -1,0 +1,817 @@
+====================================================================================================
+Notebook started: Competitive Offers PDF to Bronze, Silver, and Review
+====================================================================================================
+
+
+STEP 1: Installing required packages if needed...
+Requirement already satisfied: google-cloud-bigquery in /usr/local/lib/python3.10/dist-packages (3.40.0)
+Requirement already satisfied: google-genai in /usr/local/lib/python3.10/dist-packages (1.55.0)
+Requirement already satisfied: pandas in /usr/local/lib/python3.10/dist-packages (2.2.2)
+Requirement already satisfied: pyarrow in /usr/local/lib/python3.10/dist-packages (22.0.0)
+Requirement already satisfied: pymupdf in /usr/local/lib/python3.10/dist-packages (1.27.2.3)
+Requirement already satisfied: python-dateutil in /usr/local/lib/python3.10/dist-packages (2.8.2)
+Requirement already satisfied: google-api-core<3.0.0,>=2.11.1 in /usr/local/lib/python3.10/dist-packages (from google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (2.29.0)
+Requirement already satisfied: google-auth<3.0.0,>=2.14.1 in /usr/local/lib/python3.10/dist-packages (from google-cloud-bigquery) (2.27.0)
+Requirement already satisfied: google-cloud-core<3.0.0,>=2.4.1 in /usr/local/lib/python3.10/dist-packages (from google-cloud-bigquery) (2.4.1)
+Requirement already satisfied: google-resumable-media<3.0.0,>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from google-cloud-bigquery) (2.7.2)
+Requirement already satisfied: packaging>=24.2.0 in /usr/local/lib/python3.10/dist-packages (from google-cloud-bigquery) (24.2)
+Requirement already satisfied: requests<3.0.0,>=2.21.0 in /usr/local/lib/python3.10/dist-packages (from google-cloud-bigquery) (2.32.3)
+Collecting anyio<5.0.0,>=4.8.0 (from google-genai)
+  Downloading anyio-4.14.1-py3-none-any.whl.metadata (4.6 kB)
+Requirement already satisfied: httpx<1.0.0,>=0.28.1 in /usr/local/lib/python3.10/dist-packages (from google-genai) (0.28.1)
+Requirement already satisfied: pydantic<3.0.0,>=2.9.0 in /usr/local/lib/python3.10/dist-packages (from google-genai) (2.10.4)
+Requirement already satisfied: tenacity<9.2.0,>=8.2.3 in /usr/local/lib/python3.10/dist-packages (from google-genai) (9.0.0)
+Requirement already satisfied: websockets<15.1.0,>=13.0.0 in /usr/local/lib/python3.10/dist-packages (from google-genai) (14.1)
+Requirement already satisfied: typing-extensions<5.0.0,>=4.11.0 in /usr/local/lib/python3.10/dist-packages (from google-genai) (4.15.0)
+Requirement already satisfied: distro<2,>=1.7.0 in /usr/local/lib/python3.10/dist-packages (from google-genai) (1.9.0)
+Requirement already satisfied: sniffio in /usr/local/lib/python3.10/dist-packages (from google-genai) (1.3.1)
+Requirement already satisfied: numpy>=1.22.4 in /usr/local/lib/python3.10/dist-packages (from pandas) (1.26.4)
+Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.10/dist-packages (from pandas) (2024.2)
+Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.10/dist-packages (from pandas) (2024.2)
+Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.10/dist-packages (from python-dateutil) (1.17.0)
+Requirement already satisfied: exceptiongroup>=1.0.2 in /usr/local/lib/python3.10/dist-packages (from anyio<5.0.0,>=4.8.0->google-genai) (1.2.2)
+Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.10/dist-packages (from anyio<5.0.0,>=4.8.0->google-genai) (3.10)
+Requirement already satisfied: googleapis-common-protos<2.0.0,>=1.56.2 in /usr/local/lib/python3.10/dist-packages (from google-api-core<3.0.0,>=2.11.1->google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (1.72.0)
+Requirement already satisfied: protobuf!=3.20.0,!=3.20.1,!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.19.5 in /usr/local/lib/python3.10/dist-packages (from google-api-core<3.0.0,>=2.11.1->google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (5.29.6)
+Requirement already satisfied: proto-plus<2.0.0,>=1.22.3 in /usr/local/lib/python3.10/dist-packages (from google-api-core<3.0.0,>=2.11.1->google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (1.27.0)
+Requirement already satisfied: grpcio<2.0.0,>=1.33.2 in /usr/local/lib/python3.10/dist-packages (from google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (1.69.0)
+Requirement already satisfied: grpcio-status<2.0.0,>=1.33.2 in /usr/local/lib/python3.10/dist-packages (from google-api-core[grpc]<3.0.0,>=2.11.1->google-cloud-bigquery) (1.62.3)
+Requirement already satisfied: cachetools<6.0,>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from google-auth<3.0.0,>=2.14.1->google-cloud-bigquery) (5.5.0)
+Requirement already satisfied: pyasn1-modules>=0.2.1 in /usr/local/lib/python3.10/dist-packages (from google-auth<3.0.0,>=2.14.1->google-cloud-bigquery) (0.4.1)
+Requirement already satisfied: rsa<5,>=3.1.4 in /usr/local/lib/python3.10/dist-packages (from google-auth<3.0.0,>=2.14.1->google-cloud-bigquery) (4.9)
+Requirement already satisfied: google-crc32c<2.0dev,>=1.0 in /usr/local/lib/python3.10/dist-packages (from google-resumable-media<3.0.0,>=2.0.0->google-cloud-bigquery) (1.6.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.10/dist-packages (from httpx<1.0.0,>=0.28.1->google-genai) (2024.12.14)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.10/dist-packages (from httpx<1.0.0,>=0.28.1->google-genai) (1.0.7)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.10/dist-packages (from httpcore==1.*->httpx<1.0.0,>=0.28.1->google-genai) (0.14.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/dist-packages (from pydantic<3.0.0,>=2.9.0->google-genai) (0.7.0)
+Requirement already satisfied: pydantic-core==2.27.2 in /usr/local/lib/python3.10/dist-packages (from pydantic<3.0.0,>=2.9.0->google-genai) (2.27.2)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.21.0->google-cloud-bigquery) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests<3.0.0,>=2.21.0->google-cloud-bigquery) (2.3.0)
+Requirement already satisfied: pyasn1<0.7.0,>=0.4.6 in /usr/local/lib/python3.10/dist-packages (from pyasn1-modules>=0.2.1->google-auth<3.0.0,>=2.14.1->google-cloud-bigquery) (0.6.1)
+Downloading anyio-4.14.1-py3-none-any.whl (124 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 124.9/124.9 kB 6.8 MB/s eta 0:00:00
+Installing collected packages: anyio
+  Attempting uninstall: anyio
+    Found existing installation: anyio 3.7.1
+    Uninstalling anyio-3.7.1:
+      Successfully uninstalled anyio-3.7.1
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+jupyter-server 1.24.0 requires anyio<4,>=3.1.0, but you have anyio 4.14.1 which is incompatible.
+Successfully installed anyio-4.14.1
+STEP 1 completed: Package installation step is ready.
+
+
+STEP 2: Importing libraries...
+/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.bigquery_storage_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.bigquery_storage_v1 past that date.
+  warnings.warn(message, FutureWarning)
+STEP 2 completed: Libraries imported successfully.
+
+
+STEP 3: Loading configuration...
+PROJECT_ID: prj-dbi-prd-1
+BQ_DATASET: ds_dbi_digitalmedia_automation
+LOCATION: us-central1
+GEMINI_MODEL: gemini-2.5-pro
+FORCE_ALL_ROWS_TO_REVIEW: False
+AUTO_APPROVE_HIGH_CONFIDENCE: True
+STEP 3 completed: Configuration loaded.
+
+
+STEP 4: Uploading PDF...
+Colab-style upload detected.
+Please upload one Competitive Offer Report PDF.
+Competitive_Offer_Report_052926.pdf
+Competitive_Offer_Report_052926.pdf(application/pdf) - 1583366 bytes, last modified: 6/30/2026 - 100% done
+Saving Competitive_Offer_Report_052926.pdf to Competitive_Offer_Report_052926 (3).pdf
+Uploaded file: Competitive_Offer_Report_052926 (3).pdf
+PDF_LOCAL_PATH is set to: Competitive_Offer_Report_052926 (3).pdf
+STEP 4 completed: PDF path confirmed.
+
+
+
+STEP 5: Creating table names...
+Tables that will be used:
+  bronze_pdfDecks: sdi_competitiveOffers_bronze_pdfDecks_weekly
+  bronze_slideRaw: sdi_competitiveOffers_bronze_slideRaw_weekly
+  bronze_slideLines: sdi_competitiveOffers_bronze_slideLines_weekly
+  bronze_detectedEntities: sdi_competitiveOffers_bronze_detectedEntities_weekly
+  bronze_slideTables: sdi_competitiveOffers_bronze_slideTables_weekly
+  silver_slideSections: sdi_competitiveOffers_silver_slideSections_weekly
+  silver_offerCandidates: sdi_competitiveOffers_silver_offerCandidates_weekly
+  silver_normalizedOffers: sdi_competitiveOffers_silver_normalizedOffers_weekly
+  silver_offerDeviceBridge: sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+  review_extractionReview: sdi_competitiveOffers_review_extractionReview_weekly
+  review_reviewDecisions: sdi_competitiveOffers_review_reviewDecisions_weekly
+  review_taxonomy: sdi_competitiveOffers_review_taxonomy_weekly
+  review_approvedExamples: sdi_competitiveOffers_review_approvedExamples_weekly
+  gold_ciHeadlines: sdi_competitiveOffers_gold_ciHeadlines_weekly
+  gold_majorOfferChanges: sdi_competitiveOffers_gold_majorOfferChanges_weekly
+  gold_postpaidOffers: sdi_competitiveOffers_gold_postpaidOffers_weekly
+  gold_businessOffers: sdi_competitiveOffers_gold_businessOffers_weekly
+  gold_prepaidOffers: sdi_competitiveOffers_gold_prepaidOffers_weekly
+STEP 5 completed: Table names created.
+
+
+
+STEP 6: Initializing BigQuery and Gemini clients...
+Clients initialized.
+STEP 6 completed: Clients and helpers ready.
+
+
+
+STEP 7: Defining taxonomy and dictionaries...
+STEP 7 completed: Taxonomy and dictionaries ready.
+
+
+
+STEP 8: Defining extraction helper functions...
+STEP 8 completed: Extraction helper functions ready.
+
+
+STEP 9: Defining schemas and creating BigQuery tables...
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Creating table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
+Created table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
+STEP 9 completed: All required tables exist.
+
+
+
+STEP 10: Reading PDF metadata and checking duplicates...
+PDF name: Competitive_Offer_Report_052926 (3).pdf
+PDF hash: 840707084ae92ebf72f40731d5e57f34
+Deck week: 2026-05-29
+Deck year: 2026
+Deck ID: b63b100ecc12eb302762291a98695ef7
+Run ID: 0ea3ff4fcc87c4587bdd234a9a81538a
+Total pages: 29
+This PDF does not exist in BigQuery yet. Processing mode = new_append.
+Selected PDF_PROCESSING_MODE: new_append
+STEP 10 completed: Duplicate handling done.
+
+
+STEP 11: Inserting PDF deck record...
+
+====================================================================================================
+DATAFRAME PREVIEW: bronze_pdf_decks_df
+====================================================================================================
+Row count: 1
+deck_id	run_id	pdf_hash	pdf_name	deck_week	local_pdf_path	total_pages	processing_mode	processing_status	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	Competitive_Offer_Report_052926 (3).pdf	29	new_append	registered	2026-07-08 04:54:34.874888
+
+Appending 1 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly...
+Append completed: 1 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly.
+STEP 11 completed: PDF deck record inserted.
+
+
+STEP 12: Extracting raw slide text and slide lines...
+Extracting page 1/29...
+Extracting page 2/29...
+Extracting page 3/29...
+Extracting page 4/29...
+Extracting page 5/29...
+Extracting page 6/29...
+Extracting page 7/29...
+Extracting page 8/29...
+Extracting page 9/29...
+Extracting page 10/29...
+Extracting page 11/29...
+Extracting page 12/29...
+Extracting page 13/29...
+Extracting page 14/29...
+Extracting page 15/29...
+Extracting page 16/29...
+Extracting page 17/29...
+Extracting page 18/29...
+Extracting page 19/29...
+Extracting page 20/29...
+Extracting page 21/29...
+Extracting page 22/29...
+Extracting page 23/29...
+Extracting page 24/29...
+Extracting page 25/29...
+Extracting page 26/29...
+Extracting page 27/29...
+Extracting page 28/29...
+Extracting page 29/29...
+
+====================================================================================================
+DATAFRAME PREVIEW: bronze_slide_raw_df
+====================================================================================================
+Row count: 29
+deck_id	run_id	pdf_hash	pdf_name	deck_week	slide_id	page_number	raw_slide_text	cleaned_slide_text	slide_text_hash	extraction_method	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	1	T-Mobile Confidential\nT-Mobile Confidential\n...	T-Mobile Confidential T-Mobile Confidential 1 ...	a26b09be4ea2f56461f019c16fd2f190	pymupdf_text	2026-07-08 04:55:29.444048
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	2	T-Mobile Confidential\nNOTICE OF CONFIDENTIALI...	T-Mobile Confidential NOTICE OF CONFIDENTIALIT...	d5a9dd6e6e895beac06348fd7237da25	pymupdf_text	2026-07-08 04:55:29.444745
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0f9ca42be7187281115266571406eaf7	3	T-Mobile Confidential\nTable of Contents:\n▪CI...	T-Mobile Confidential Table of Contents: ▪CI H...	310d7c3d66f80119e3e282d69e5a6872	pymupdf_text	2026-07-08 04:55:29.448314
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ae09e30c90be9a755e75b61764f4edff	4	T-Mobile Confidential\n44\nMARKET &\nCHANNEL\n...	T-Mobile Confidential 44 MARKET & CHANNEL INSI...	4008bd1b42b1ac119a436e555ad2afdd	pymupdf_text	2026-07-08 04:55:29.449053
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a0d2bfc370f2830993ed3f03f61cf71f	5	T-Mobile Confidential\nCOMPETITIVE INTELLIGENC...	T-Mobile Confidential COMPETITIVE INTELLIGENCE...	83559618b705a2dd07cd4b76596e6292	pymupdf_text	2026-07-08 04:55:29.451493
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b94c5b6637d3d5102933599ee685cf5d	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2...	COMPETITIVE INTELLIGENCE HEADLINES May 29, 202...	4a5deb5580be79e7e412a03ac22f6a2d	pymupdf_text	2026-07-08 04:55:29.454690
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	7c4aaf42e4c70fed7a6b6f3db8126f9e	7	T-Mobile Confidential\n7\nCompetitive Offer Up...	T-Mobile Confidential 7 Competitive Offer Upda...	2408cc6d75559983eacbaebe1d890053	pymupdf_text	2026-07-08 04:55:29.455608
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	26ac57ca047085a5f045fdcc532b97ae	8	T-Mobile Confidential\nMajor Offer Changes Eff...	T-Mobile Confidential Major Offer Changes Effe...	98e8e668647d985e0994db76bc2334a0	pymupdf_text	2026-07-08 04:55:29.461820
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	22cd12fca187afd6c335812ab4801828	9	T-Mobile Confidential\n9\nCompetitive Offers &...	T-Mobile Confidential 9 Competitive Offers & P...	accf31705cffe05ce821b1854202fbc4	pymupdf_text	2026-07-08 04:55:29.462729
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8802e01a865d3869f03178aedba6c119	10	T-Mobile Confidential\nPost-Paid Apple Smartph...	T-Mobile Confidential Post-Paid Apple Smartpho...	d7b77f9ade9e279b2b2bc6cc133ec2eb	pymupdf_text	2026-07-08 04:55:29.467231
+
+
+
+====================================================================================================
+DATAFRAME PREVIEW: bronze_slide_lines_df
+====================================================================================================
+Row count: 3321
+deck_id	run_id	pdf_hash	pdf_name	deck_week	slide_id	line_id	page_number	line_number_on_page	raw_line_text	cleaned_line_text	line_text_hash	line_type	source_method	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	83e0ba057f44232a2b130835cdfb0e94	1	1	T-Mobile Confidential	T-Mobile Confidential	59815da4a98d1319f70b7edf20e16e2d	unknown	pymupdf_text	2026-07-08 04:55:29.444058
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	74dfd2675ef45f6b91214b2c92eb5f24	1	2	T-Mobile Confidential	T-Mobile Confidential	59815da4a98d1319f70b7edf20e16e2d	unknown	pymupdf_text	2026-07-08 04:55:29.444062
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	668e8458957dce84ef5764a02b868d62	1	3	1	1	c4ca4238a0b923820dcc509a6f75849b	unknown	pymupdf_text	2026-07-08 04:55:29.444065
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	9bb8e7d2e1418df855aa8bf25e3ba3d0	1	4	May 29, 2026	May 29, 2026	4aa1b2a75bd75e746fec6978b38e416a	unknown	pymupdf_text	2026-07-08 04:55:29.444068
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	35cf335b9d68bb7d40c1fb799e411a7f	1	5	MARKET &	MARKET &	8d38a83175d907278792ae9c11321863	unknown	pymupdf_text	2026-07-08 04:55:29.444070
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	088765b1679dd66f4d1afa986e4a8d42	1	6	CHANNEL	CHANNEL	f52e9c50a060add65a035429b2a22229	unknown	pymupdf_text	2026-07-08 04:55:29.444073
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	d7fc268e88ac8576252f12a9ea094105	1	7	INSIGHTS	INSIGHTS	7ffff711b947347660b39314f4d1c207	unknown	pymupdf_text	2026-07-08 04:55:29.444075
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	825710f94f37cac63b62d0e3db81af98	1	8	MCI	MCI	f046b60ddd9950a7fb55d24968b9a53c	unknown	pymupdf_text	2026-07-08 04:55:29.444078
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	c913bf2c98aa6c6a82c02a2c615a2826	1	9	Competitive Offer Report	Competitive Offer Report	7126802473db6b2d27805f4b9c505b7c	unknown	pymupdf_text	2026-07-08 04:55:29.444081
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	f5f08f9301a53d119f8da747fa5efc52	1	10	Competitive Offer Report	Competitive Offer Report	7126802473db6b2d27805f4b9c505b7c	unknown	pymupdf_text	2026-07-08 04:55:29.444084
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	2ee2a5e1b6ad175e8c2913357bbec54f	2	1	T-Mobile Confidential	T-Mobile Confidential	59815da4a98d1319f70b7edf20e16e2d	unknown	pymupdf_text	2026-07-08 04:55:29.444753
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	1ad9819d52d67a0c4e50a04a431f2156	2	2	NOTICE OF CONFIDENTIALITY	NOTICE OF CONFIDENTIALITY	b4da19d133c085b3b8aaa9b244760e8d	unknown	pymupdf_text	2026-07-08 04:55:29.444757
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	7d4d0a4cb06f4da1d6358e6b0c58f1ae	2	3	The information contained within this document...	The information contained within this document...	9f6612f1d93faa1027a150ef69f6b0cb	unknown	pymupdf_text	2026-07-08 04:55:29.444760
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	4e5707c3d71d51c7d073c253764d0467	2	4	designated T-Mobile Confidential. Disclosure o...	designated T-Mobile Confidential. Disclosure o...	fdb79a09f5aa02585d0fe34d3bd744cb	unknown	pymupdf_text	2026-07-08 04:55:29.444763
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	1adeef92575e1ad318866d9c2047d4d9	2	5	without a direct need-to-know may result in te...	without a direct need-to-know may result in te...	e915047fdc006f1ec962a729d8216633	unknown	pymupdf_text	2026-07-08 04:55:29.444765
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	3e1c50310ce7574d3c40aa55da91fce1	2	6	employment with T-Mobile. T-Mobile reserves th...	employment with T-Mobile. T-Mobile reserves th...	48724dde60a42aff5dbdf789224e6dce	unknown	pymupdf_text	2026-07-08 04:55:29.444768
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	04066f453dc376ca3e6e93abf17cc23a	2	7	and/or criminal remedies against persons who d...	and/or criminal remedies against persons who d...	e3d582095c4eec0a8232ccbdd1ae9388	unknown	pymupdf_text	2026-07-08 04:55:29.444771
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	c8ce06f4f66b0432610a730bc7965352	2	8	information to any third-party without proper ...	information to any third-party without proper ...	b40aea04e988cdaa0c18bf4f531972ae	unknown	pymupdf_text	2026-07-08 04:55:29.444774
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	69e3f402bfaad8e8097f8b91c89e87cc	2	9	2	2	c81e728d9d4c2f636f067f89cc14862c	unknown	pymupdf_text	2026-07-08 04:55:29.444776
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0f9ca42be7187281115266571406eaf7	1317922abfb10ca4b4c28e99535f29bb	3	1	T-Mobile Confidential	T-Mobile Confidential	59815da4a98d1319f70b7edf20e16e2d	unknown	pymupdf_text	2026-07-08 04:55:29.448325
+
+Appending 29 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly...
+Append completed: 29 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly.
+Appending 3321 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly...
+Append completed: 3321 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly.
+STEP 12 completed: Bronze slide raw and slide lines loaded.
+
+
+
+STEP 13: Extracting detected entities...
+
+====================================================================================================
+DATAFRAME PREVIEW: bronze_detected_entities_df
+====================================================================================================
+Row count: 3252
+deck_id	run_id	pdf_hash	pdf_name	deck_week	entity_id	slide_id	line_id	page_number	entity_type	entity_text	normalized_entity_value	detection_method	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	48a482447a84b59f0c7b0d80f36e6b37	bbab12f19f2e993d10465caf6800e9dc	83e0ba057f44232a2b130835cdfb0e94	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.325159
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3394e10840e42b3ac09e89f9d5d43940	bbab12f19f2e993d10465caf6800e9dc	74dfd2675ef45f6b91214b2c92eb5f24	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.325374
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	695fbc3677471bf1ee0753d0f2146531	e11cceaa3435d7f2f3c5f56bf79513d4	2ee2a5e1b6ad175e8c2913357bbec54f	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.326329
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8f6539d251c5a8a9327acacaafbbf42e	e11cceaa3435d7f2f3c5f56bf79513d4	4e5707c3d71d51c7d073c253764d0467	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.326794
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4dae983262660f5ba298ebcb16206704	e11cceaa3435d7f2f3c5f56bf79513d4	3e1c50310ce7574d3c40aa55da91fce1	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.327085
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a6e2c6efdbdc3d61c4805a0b84be7bf1	e11cceaa3435d7f2f3c5f56bf79513d4	04066f453dc376ca3e6e93abf17cc23a	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.327196
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	baf7489fb594fb8135a0a8fb01914952	0f9ca42be7187281115266571406eaf7	1317922abfb10ca4b4c28e99535f29bb	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.327462
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	38a14915e29aa03edd22ba99227270b6	0f9ca42be7187281115266571406eaf7	598ffbe9f87ec48fc03faf59cbaae1ec	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.327999
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6c0ce137354f6bce87a40ca3a0dad210	0f9ca42be7187281115266571406eaf7	28499ca8e9fafd9e9f634e7d1ff63a56	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.328157
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	27c4ce8acddccee32c31718d9ccdb9e5	0f9ca42be7187281115266571406eaf7	11160f9dd06bc3dcf44ced8da120f0c8	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.328311
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	436f0e3091ee653d29eaea46a6a46222	0f9ca42be7187281115266571406eaf7	1060550b208caf84ec94e81ab99ab327	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.328523
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	48f471ed8c0b365d902d49d2fdcc728a	0f9ca42be7187281115266571406eaf7	9ced223d7a1cb75fcf3382ba10723759	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.328739
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	387be21865ba5a943cb4d465c44ff1c5	ae09e30c90be9a755e75b61764f4edff	6675d21e62ca61a53123d92416a18cc0	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.330073
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3e48ff696803342964b2c3382d1ec37b	ae09e30c90be9a755e75b61764f4edff	2be379e7013687c3c3d55fccbe711531	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.330487
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	87f8c39d753e40336d70714c32be7248	a0d2bfc370f2830993ed3f03f61cf71f	faf1703c7589ee857fe5649519940ac7	5	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 04:56:18.330633
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4c90ca602081f49a85904541f98b87a9	a0d2bfc370f2830993ed3f03f61cf71f	2ea2cf06ff2b10f7bc7cd661260a6971	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.330862
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	348841d23c117d77b4c56e5b4cd4c3ad	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	date_range	5/27	5/27	regex_dictionary	2026-07-08 04:56:18.331030
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	fc7f83be75d2b69b1643d79f866b9fab	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.331039
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	882132290c0d1d2a4340c64ff7a13bbf	a0d2bfc370f2830993ed3f03f61cf71f	faed8faa0fe9b5c133006fdfd8ffff62	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 04:56:18.331151
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	89dcc8c0068da2a21634f0b48006ebe2	a0d2bfc370f2830993ed3f03f61cf71f	8b1f471618294c203e7f235a76d1efcf	5	date_range	5/27 -	5/27 -	regex_dictionary	2026-07-08 04:56:18.331246
+
+
+Appending 3252 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly...
+Append completed: 3252 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly.
+STEP 13 completed: Detected entities loaded.
+
+
+
+STEP 14: Classifying slides into sections...
+Classifying page 1...
+Page 1: dictionary low confidence. Calling Gemini...
+Page 1: Gemini classified as cover
+Classifying page 2...
+Page 2: dictionary low confidence. Calling Gemini...
+Page 2: Gemini classified as confidentiality_notice
+Classifying page 3...
+Page 3: dictionary accepted as national_retail
+Classifying page 4...
+Page 4: dictionary low confidence. Calling Gemini...
+Page 4: Gemini classified as ci_headlines
+Classifying page 5...
+Page 5: dictionary accepted as cable_mvno_offers
+Classifying page 6...
+Page 6: dictionary accepted as prepaid_offers
+Classifying page 7...
+Page 7: dictionary low confidence. Calling Gemini...
+Page 7: Gemini classified as ci_headlines
+Classifying page 8...
+Page 8: dictionary accepted as prepaid_offers
+Classifying page 9...
+Page 9: dictionary low confidence. Calling Gemini...
+Page 9: Gemini classified as ci_headlines
+Classifying page 10...
+Page 10: dictionary low confidence. Calling Gemini...
+Page 10: Gemini classified as postpaid_device_offers
+Classifying page 11...
+Page 11: dictionary low confidence. Calling Gemini...
+Page 11: Gemini classified as postpaid_device_offers
+Classifying page 12...
+Page 12: dictionary low confidence. Calling Gemini...
+Page 12: Gemini classified as postpaid_device_offers
+Classifying page 13...
+Page 13: dictionary low confidence. Calling Gemini...
+Page 13: Gemini classified as postpaid_bts_offers
+Classifying page 14...
+Page 14: dictionary low confidence. Calling Gemini...
+Page 14: Gemini classified as postpaid_bts_offers
+Classifying page 15...
+Page 15: dictionary low confidence. Calling Gemini...
+Page 15: Gemini classified as postpaid_bts_offers
+Classifying page 16...
+Page 16: dictionary low confidence. Calling Gemini...
+Page 16: Gemini classified as postpaid_service_offers
+Classifying page 17...
+Page 17: dictionary accepted as postpaid_service_offers
+Classifying page 18...
+Page 18: dictionary accepted as cable_mvno_offers
+Classifying page 19...
+Page 19: dictionary accepted as cable_mvno_offers
+Classifying page 20...
+Page 20: dictionary accepted as business_offers
+Classifying page 21...
+Page 21: dictionary accepted as business_offers
+Classifying page 22...
+Page 22: dictionary low confidence. Calling Gemini...
+Page 22: Gemini classified as national_retail
+Classifying page 23...
+Page 23: dictionary low confidence. Calling Gemini...
+Page 23: Gemini classified as section_divider
+Classifying page 24...
+Page 24: dictionary accepted as prepaid_offers
+Classifying page 25...
+Page 25: dictionary low confidence. Calling Gemini...
+Page 25: Gemini classified as prepaid_offers
+Classifying page 26...
+Page 26: dictionary accepted as prepaid_offers
+Classifying page 27...
+Page 27: dictionary low confidence. Calling Gemini...
+Page 27: Gemini classified as prepaid_offers
+Classifying page 28...
+Page 28: dictionary accepted as prepaid_offers
+Classifying page 29...
+Page 29: dictionary low confidence. Calling Gemini...
+Page 29: Gemini classified as confidentiality_notice
+
+====================================================================================================
+DATAFRAME PREVIEW: silver_slide_sections_df
+====================================================================================================
+Row count: 29
+deck_id	run_id	pdf_hash	pdf_name	deck_week	slide_id	page_number	slide_title	page_type	predicted_section_name	business_segment	section_confidence	section_reason	classification_source	review_required_flag	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	1	T-Mobile Confidential T-Mobile Confidential 1 ...	cover	cover	unknown	1.00	The slide contains the report title 'Competiti...	gemini	False	2026-07-08 05:01:37.554941
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	2	T-Mobile Confidential NOTICE OF CONFIDENTIALIT...	confidentiality_notice	confidentiality_notice	unknown	1.00	The slide contains the explicit header 'NOTICE...	gemini	False	2026-07-08 05:01:48.230086
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0f9ca42be7187281115266571406eaf7	3	Postpaid Cable MVNO	content_slide	national_retail	business	1.00	Matched keywords: ['walmart', 'weekly readout'...	dictionary	False	2026-07-08 05:01:48.230450
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ae09e30c90be9a755e75b61764f4edff	4	T-Mobile Confidential 44 MARKET & CHANNEL INSI...	section_divider	ci_headlines	mixed	1.00	The slide text contains the phrase 'CI Headlin...	gemini	False	2026-07-08 05:02:01.233306
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a0d2bfc370f2830993ed3f03f61cf71f	5	Competitive Intelligence Headlines	content_slide	cable_mvno_offers	cable_mvno	1.00	Matched keywords: ['cable mvno', 'spectrum mob...	dictionary	False	2026-07-08 05:02:01.233682
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b94c5b6637d3d5102933599ee685cf5d	6	Competitive Intelligence Headlines	content_slide	prepaid_offers	prepaid	1.00	Matched keywords: ['prepaid', 'boost mobile', ...	dictionary	False	2026-07-08 05:02:01.233906
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	7c4aaf42e4c70fed7a6b6f3db8126f9e	7	T-Mobile Confidential 7 Competitive Offer Upda...	section_divider	ci_headlines	unknown	0.95	The slide contains the explicit section title ...	gemini	True	2026-07-08 05:02:16.908024
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	26ac57ca047085a5f045fdcc532b97ae	8	Major Offer Changes	content_slide	prepaid_offers	prepaid	1.00	Matched keywords: ['prepaid', 'metro', 'cricke...	dictionary	False	2026-07-08 05:02:16.908415
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	22cd12fca187afd6c335812ab4801828	9	T-Mobile Confidential 9 Competitive Offers & P...	section_divider	ci_headlines	postpaid	0.80	The slide is a section divider for 'MARKET & C...	gemini	True	2026-07-08 05:02:24.598434
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8802e01a865d3869f03178aedba6c119	10	Post-Paid Apple Smartphone Offers	content_slide	postpaid_device_offers	postpaid	1.00	The slide title is 'Post-Paid Apple Smartphone...	gemini	True	2026-07-08 05:02:36.340703
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f06f18bbcdf359ba6bff8f892a2578ea	11	Post-Paid Samsung and Google Smartphone Offers	content_slide	postpaid_device_offers	postpaid	1.00	The slide title is 'Post-Paid Samsung and Goog...	gemini	False	2026-07-08 05:02:46.872256
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4abebfb515912a8ed2cab02bcaa3ba59	12	Post-Paid Motorola	content_slide	postpaid_device_offers	postpaid	1.00	The slide title is 'Post-Paid Motorola, Afford...	gemini	False	2026-07-08 05:02:58.275575
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a11e2b3253746ef600b249eb2ccb01f6	13	Post-Paid BTS	content_slide	postpaid_bts_offers	postpaid	1.00	The slide title explicitly states 'Post-Paid B...	gemini	False	2026-07-08 05:03:11.244962
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	aa182f951f4ab066b1d40b9f7cb8ceec	14	Post-Paid BTS	content_slide	postpaid_bts_offers	postpaid	1.00	The slide title is 'Post-Paid BTS (Tablet)' an...	gemini	False	2026-07-08 05:03:22.009174
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	409f8c20fb7b92299be43b31be95d099	15	Post-Paid BTS	content_slide	postpaid_bts_offers	postpaid	0.90	The slide title is 'Post-Paid BTS & Other Offe...	gemini	True	2026-07-08 05:03:34.497497
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	2ac18b202aa6ed4203ce068ced92db54	16	T-Mobile & AT&T Post-Paid Service Offers	content_slide	postpaid_service_offers	postpaid	1.00	The slide title is 'T-Mobile & AT&T Post-Paid ...	gemini	True	2026-07-08 05:03:46.554457
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8762da8248974b05b820ef3c7be9ec5a	17	Verizon Post-Paid Service Offers	content_slide	postpaid_service_offers	business	1.00	Matched keywords: ['post-paid service offers',...	dictionary	False	2026-07-08 05:03:46.554957
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ae970e76146660a1ad9a09e3b95292f3	18	Postpaid Cable MVNO	content_slide	cable_mvno_offers	cable_mvno	1.00	Matched keywords: ['cable mvno', 'optimum mobi...	dictionary	False	2026-07-08 05:03:46.555353
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	37a423eee4495b68835a12713b974d18	19	Cable MVNO Service	content_slide	cable_mvno_offers	business	1.00	Matched keywords: ['cable mvno', 'optimum mobi...	dictionary	False	2026-07-08 05:03:46.555690
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d5554fd5a49c11907441a7fa32080479	20	Business	content_slide	business_offers	business	1.00	Matched keywords: ['business', 'flagship devic...	dictionary	False	2026-07-08 05:03:46.556024
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	686a5131a15cc8d647d50032ac271cf6	21	Business	content_slide	business_offers	business	1.00	Matched keywords: ['business', 'flagship devic...	dictionary	False	2026-07-08 05:03:46.556289
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8954bd514a8fa65bdbf602547b192a45	22	Walmart	content_slide	national_retail	mixed	0.90	The slide's content is exclusively focused on ...	gemini	True	2026-07-08 05:04:05.085837
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	dfc9d28e16f97cdfbdd3726617678b87	23	T-Mobile Confidential 23 Competitive Offers & ...	section_divider	section_divider	prepaid	1.00	The slide contains large, centered text: 'Prep...	gemini	False	2026-07-08 05:04:26.186335
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ff7e0b783cbec3ae6aaad81e83ebdff0	24	Prepaid Brands	content_slide	prepaid_offers	prepaid	1.00	Matched keywords: ['prepaid', 'metro', 'boost ...	dictionary	False	2026-07-08 05:04:26.186924
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ea90b53250a5c6598b26e1c73768f1fd	25	T-Mobile Confidential 25 METRO BY T-MOBILE New...	content_slide	prepaid_offers	prepaid	1.00	The slide is explicitly about 'Metro by T-Mobi...	gemini	False	2026-07-08 05:04:37.295943
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f09b23d052c93e062219eac8f6b4308e	26	Prepaid Brands	content_slide	prepaid_offers	prepaid	1.00	Matched keywords: ['prepaid', 'boost mobile', ...	dictionary	False	2026-07-08 05:04:37.296463
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a670d61b8eb9cb41b27f82a07ab13db5	27	Flagship Brands	content_slide	prepaid_offers	prepaid	1.00	The slide title is 'Flagship Brands/Prepaid - ...	gemini	True	2026-07-08 05:04:46.940551
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d852336afef379bd244f6ef0fae65b1e	28	Walmart	content_slide	prepaid_offers	prepaid	1.00	Matched keywords: ['prepaid', 'metro', 'boost ...	dictionary	False	2026-07-08 05:04:46.941112
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	64a5b16f40b829af706e3dcef89d6f42	29	T-Mobile Confidential 29	content_slide	confidentiality_notice	unknown	0.30	The slide contains the keyword 'Confidential'....	gemini	True	2026-07-08 05:05:04.247927
+
+
+Appending 29 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly...
+Append completed: 29 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly.
+STEP 14 completed: Slide classification loaded.
+
+
+
+STEP 15: Creating offer candidates...
+
+====================================================================================================
+DATAFRAME PREVIEW: silver_offer_candidates_df
+====================================================================================================
+Row count: 2163
+deck_id	run_id	pdf_hash	pdf_name	deck_week	candidate_id	offer_group_id	slide_id	line_id	page_number	...	context_before_text	context_after_text	suggested_offer_category	suggested_offer_subcategory	detected_money_values_json	detected_device_models_json	detected_dates_json	candidate_confidence	candidate_source	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8500b5a8b622767832bd9cb8a351c4bc	537f9e5462c0a80f60ae7b9c0b8a3b4e	bbab12f19f2e993d10465caf6800e9dc	c913bf2c98aa6c6a82c02a2c615a2826	1	...	MCI	Competitive Offer Report	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.790525
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e318b78ee0c54fb4b6c4d2eb8761588e	876f4426b50d1846fc6d1445cf03a55b	bbab12f19f2e993d10465caf6800e9dc	f5f08f9301a53d119f8da747fa5efc52	1	...	Competitive Offer Report	T-Mobile Confidential	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.790738
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	33d82ce32f59e497461798118ff86214	e6fb83c06e28b0f270c3ba3cd08c1399	0f9ca42be7187281115266571406eaf7	6cf099a04a96fa5b01ce1df6268fa3fa	3	...	▪CI Headlines - Postpaid & Prepaid...............	▪Competitive Offers & Promo Updates	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.791446
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	2982912210c3fc1a025c5a94c929ccb8	a61dcacc815df2cdf86f42cf6d1febcd	0f9ca42be7187281115266571406eaf7	0886a1762a42b87069910ea1b88a9476	3	...	▪Major Competitive Offer Updates …………………………………...	❖Postpaid Wireless Carriers:	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.791639
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	29399efe6b6533a04cefce7b0b1aaf0f	1b6645d6d2552756a16ea74907f0b4ff	0f9ca42be7187281115266571406eaf7	598ffbe9f87ec48fc03faf59cbaae1ec	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.791883
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	755a2496bc2fb9eb3fd1afbab7002e7b	6b29e3933f0b9c48254dff99da4cabd3	0f9ca42be7187281115266571406eaf7	28499ca8e9fafd9e9f634e7d1ff63a56	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.792078
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0ee99ebd5836219488c50f391ba037b7	08c88d2e83ec4db4aba9b5c023d7ca16	0f9ca42be7187281115266571406eaf7	11160f9dd06bc3dcf44ced8da120f0c8	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.792270
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	daeb4cbdbc0cbb98cb04fabf8deafe79	45fe8337260a760f24830eba553da341	0f9ca42be7187281115266571406eaf7	1060550b208caf84ec94e81ab99ab327	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.792481
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	5c45a99f463e334a15d66d1c205fb1eb	0a910ec3e7e545a595d46fc3a5e080dc	0f9ca42be7187281115266571406eaf7	eeeedab8bfa9f9483c6a7ceefa2027db	3	...	❖Postpaid Cable MVNOs…………………………………………………….…………...	❖National Retail - Weekly Readout by NPD ……………...	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.792805
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a0b9965270f6c7ded0883f66c476e355	a86d303c977c0c4e4716751371d0f184	0f9ca42be7187281115266571406eaf7	78e43ae49aa895e4c43853beb13dbbfe	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.793254
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	28610ff5b368271531ee1f28a9b536d2	01ad8354ec48c28de81eccd08e0988f7	0f9ca42be7187281115266571406eaf7	a29533a6b61f52ec7574afe25cbc3190	3	...	▪	▪	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.793566
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0692012049032c07c9162ff16dd8d974	331b1dc839aea5421e7bc0174c845f58	0f9ca42be7187281115266571406eaf7	ed8084432127b8ad1bc4b332f178e419	3	...	▪	3	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.793832
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f2d33c4ce68b8bf5085f1be6b4d38e3b	9209cfde83880e040f39edde954a28d1	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	...	•	party must know the URL for the service to sig...	device_promotion	device_discount	[]	[]	["5/27"]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.794712
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c93f3e247237d1a28ce5069d625a7804	cc3774528ecb2fd4cf07e3ecb97dec49	a0d2bfc370f2830993ed3f03f61cf71f	8b1f471618294c203e7f235a76d1efcf	5	...	party must know the URL for the service to sig...	•	unknown	unknown	[]	[]	["5/27 - "]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.794925
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e141b189b460e47de628c1f200833a33	2774bb8ad4d5748a1c09eea9815e5320	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	...	•	base model) with $95 min. trade - and reduced ...	device_promotion	device_discount	["$130", "$230", "$110", "$900"]	["Galaxy S26"]	[]	0.666667	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.795152
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a7141198de70118a910aca956857f6af	62c4d0dd763e2d6bccfb3be5258a35a7	a0d2bfc370f2830993ed3f03f61cf71f	1d28d641a046a3db132392ac02baccb5	5	...	Pullback on GS26 Series Offers: AT&T removed i...	removed the Any, Galaxy, Any Condition constru...	device_promotion	device_discount	["$95", "$35", "$500", "$900", "$500"]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.795327
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f49f7c02bdf0d54a0bb24c7be2d65e33	19f7e6b5262636259865eb88bbbbca89	a0d2bfc370f2830993ed3f03f61cf71f	8433d6c303ff8f77ed961fc82c70b1d6	5	...	base model) with $95 min. trade - and reduced ...	2. Verizon	device_promotion	trade_in_offer	[]	[]	[]	1.000000	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.795506
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	96c1df0544513b650c359f54c8cf2cb6	353fc500903b6634b34641901433a289	a0d2bfc370f2830993ed3f03f61cf71f	672e825fe8b80f152d0586957e490e3c	5	...	•	offer, $1,000 off, is limited to the Unlimited...	device_promotion	trade_in_offer	[]	["iPhone 17"]	[]	0.666667	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.795778
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	aeb9fff1cd31260968b7f9fe54a8cdc8	c65d813a6ccdbd318829b44268637386	a0d2bfc370f2830993ed3f03f61cf71f	433f60b138ddd082f9f7aba43ab90d2d	5	...	iPhone 17 Offers Change - Verizon brought back...	a new trade-in offer for Unlimited Welcome whi...	device_promotion	device_discount	["$1,000", "$830"]	[]	[]	0.666667	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.795957
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	5b713ce295de48cda75198d128b709cd	d5f30097d0199346b5f7a7361175e61e	a0d2bfc370f2830993ed3f03f61cf71f	62749c8d7b2f1f92aaa05abe6a9ac33d	5	...	offer, $1,000 off, is limited to the Unlimited...	•	device_promotion	trade_in_offer	["$830"]	[]	[]	0.666667	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.796128
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8801a5c750422c5adda5af4449dd5ad9	4d7de45081ee11c3da24643090d1ab17	a0d2bfc370f2830993ed3f03f61cf71f	49c68e41cfe9679501b5fee336235343	5	...	•	end date listed for these offers like there wa...	device_promotion	free_device_offer	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.796336
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b0c4d8cc514483aeacbb2516439e5485	9d3905203fe8e82312478674ff7a0b2d	a0d2bfc370f2830993ed3f03f61cf71f	212b2890e13da79f0334dfc8b016b9c3	5	...	Watch + Tablet On Us Bundles Return - Verizon ...	3. Spectrum Mobile	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.796513
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	781ca9be49b76c9c690a456e0019d121	8ca1b6ae5700c831d56453d3d9843f7c	a0d2bfc370f2830993ed3f03f61cf71f	5af73a4fa57afa414a009739a57fc36d	5	...	•	4. Xfinity Mobile	offer_status	no_change	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.796754
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f6793e1809a3fb7693a4fc82486d0360	9c6669ac512baf63026f60ec598f84b2	a0d2bfc370f2830993ed3f03f61cf71f	a5b7075e20a68fee58053f26f20632b4	5	...	•	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	offer_status	no_change	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.796973
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	167580f60cfdfbf32546c2d05823deda	a098811d520280e5f0b594d8c11efb06	b94c5b6637d3d5102933599ee685cf5d	623d9d74381cd114504d91eecbfbb080	6	...	•	the latest offering valid through Sunday, June...	device_promotion	device_discount	["$60"]	["iPhone 16e"]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.797351
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	70609195df1892ebbecacf05d057821a	13f7f9c7b63634a6e7f9617663bcf312	b94c5b6637d3d5102933599ee685cf5d	dd1aeff22e39346c012055715a0295b1	6	...	“Deal Drop” Sale features Free iPhone 16e: Rep...	•	device_promotion	device_discount	[]	["iPhone 16", "moto edge 2025"]	["5/29 - 6/7"]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.797586
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	91a582677627a5450aa165da5a5a6146	f11c1df8fd5497c5aaf499f86d05e9a5	b94c5b6637d3d5102933599ee685cf5d	d51a7ed209aa4e0bd4899758a6faa386	6	...	•	•	device_promotion	free_device_offer	[]	["Galaxy A37 5G"]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.797823
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	35b9760b1b641f212354448ac546709f	8da1ae95796372a90af231ccb518a2a6	b94c5b6637d3d5102933599ee685cf5d	527d531f0ef986ed188471567c69edd5	6	...	•	•	device_promotion	device_discount	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=current_line:[...	2026-07-08 05:06:18.798094
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6b61ac32922222e554839416b36691a5	f2c7c2a535be9b4a4fb747bf08bc04c6	b94c5b6637d3d5102933599ee685cf5d	fd61ed6d2d0b6e0c69af66bafc82d913	6	...	•	stackable w/multi-line savings (4/24 - 5/25)	device_promotion	device_discount	["$240", "$10", "$45", "$55"]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.798380
+29	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3041955a27b2c2db4fc0aa0acafb5d4c	7167221691f0c3a803228b83f47eb3c9	b94c5b6637d3d5102933599ee685cf5d	63a9d2abd6ef114a9d53fa5cf8061a02	6	...	•	3.	offer_status	no_change	[]	[]	[]	0.333333	dictionary_regex|carrier_reason=context_line:[...	2026-07-08 05:06:18.798720
+30 rows × 24 columns
+
+
+
+Appending 2163 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly...
+Append completed: 2163 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly.
+STEP 15 completed: Offer candidates loaded.
+
+
+
+STEP 16: Normalizing offer candidates...
+
+====================================================================================================
+DATAFRAME PREVIEW: silver_normalized_offers_df
+====================================================================================================
+Row count: 2163
+deck_id	run_id	pdf_hash	pdf_name	deck_week	offer_id	offer_group_id	candidate_id	slide_id	line_id	...	effective_start_date	effective_end_date	source_raw_text	category_confidence	normalization_confidence	validation_status	review_required_flag	review_status	status	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a330afd900eb3ba53ce0f922062ff115	537f9e5462c0a80f60ae7b9c0b8a3b4e	8500b5a8b622767832bd9cb8a351c4bc	bbab12f19f2e993d10465caf6800e9dc	c913bf2c98aa6c6a82c02a2c615a2826	...	NaT	NaT	Competitive Offer Report	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.043639
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	67b83a76689486330058f57b78f2239d	876f4426b50d1846fc6d1445cf03a55b	e318b78ee0c54fb4b6c4d2eb8761588e	bbab12f19f2e993d10465caf6800e9dc	f5f08f9301a53d119f8da747fa5efc52	...	NaT	NaT	Competitive Offer Report	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.043853
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d28857df360cf69b4a9fd2a4d467fb80	e6fb83c06e28b0f270c3ba3cd08c1399	33d82ce32f59e497461798118ff86214	0f9ca42be7187281115266571406eaf7	6cf099a04a96fa5b01ce1df6268fa3fa	...	NaT	NaT	▪Major Competitive Offer Updates …………………………………...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.044028
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ed78088521dffd5d636d8f77630a46c1	a61dcacc815df2cdf86f42cf6d1febcd	2982912210c3fc1a025c5a94c929ccb8	0f9ca42be7187281115266571406eaf7	0886a1762a42b87069910ea1b88a9476	...	NaT	NaT	▪Competitive Offers & Promo Updates	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.044188
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	09de124b1d9444319810bf54601936cf	1b6645d6d2552756a16ea74907f0b4ff	29399efe6b6533a04cefce7b0b1aaf0f	0f9ca42be7187281115266571406eaf7	598ffbe9f87ec48fc03faf59cbaae1ec	...	NaT	NaT	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.044345
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	230cbf14ce490f7fc9420301309f3ad3	6b29e3933f0b9c48254dff99da4cabd3	755a2496bc2fb9eb3fd1afbab7002e7b	0f9ca42be7187281115266571406eaf7	28499ca8e9fafd9e9f634e7d1ff63a56	...	NaT	NaT	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.044549
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	1d8824fb5000d6e447315690f74e46f1	08c88d2e83ec4db4aba9b5c023d7ca16	0ee99ebd5836219488c50f391ba037b7	0f9ca42be7187281115266571406eaf7	11160f9dd06bc3dcf44ced8da120f0c8	...	NaT	NaT	TM/VZ/ATT/Xfinity/Spectrum 2nd Tier, Affordabl...	0.333333	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.044730
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	19302dacdb24dd630a5b119c781bd5a8	45fe8337260a760f24830eba553da341	daeb4cbdbc0cbb98cb04fabf8deafe79	0f9ca42be7187281115266571406eaf7	1060550b208caf84ec94e81ab99ab327	...	NaT	NaT	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.044897
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e940806419c3cf298d4c2a3c8e77a1fd	0a910ec3e7e545a595d46fc3a5e080dc	5c45a99f463e334a15d66d1c205fb1eb	0f9ca42be7187281115266571406eaf7	eeeedab8bfa9f9483c6a7ceefa2027db	...	NaT	NaT	❖Postpaid Business - Device Offers…………………….......	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.045051
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	550ad5a4b55d787c7a29d0bb7df5b020	a86d303c977c0c4e4716751371d0f184	a0b9965270f6c7ded0883f66c476e355	0f9ca42be7187281115266571406eaf7	78e43ae49aa895e4c43853beb13dbbfe	...	NaT	NaT	Prepaid Brands - Current Offers ……………….……….….…...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.045213
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	46fa1adbf8f7935a7bb1c393a25b2bd7	01ad8354ec48c28de81eccd08e0988f7	28610ff5b368271531ee1f28a9b536d2	0f9ca42be7187281115266571406eaf7	a29533a6b61f52ec7574afe25cbc3190	...	NaT	NaT	Prepaid Flagship Brands - Current Offers …………....	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.045363
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e8f01a728b0994becd9a1527adaf8823	331b1dc839aea5421e7bc0174c845f58	0692012049032c07c9162ff16dd8d974	0f9ca42be7187281115266571406eaf7	ed8084432127b8ad1bc4b332f178e419	...	NaT	NaT	Prepaid Brands at Walmart - Current Offers ………...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.045556
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	9cca4654e360cdee443b201ed148949b	9209cfde83880e040f39edde954a28d1	f2d33c4ce68b8bf5085f1be6b4d38e3b	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	...	2026-05-27	NaT	Build-A-Plan to Launch 5/27: AT&T’s Build-A-Pl...	0.333333	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.045887
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	90805fbf61ffd3386b84f280c96d55c9	cc3774528ecb2fd4cf07e3ecb97dec49	c93f3e247237d1a28ce5069d625a7804	a0d2bfc370f2830993ed3f03f61cf71f	8b1f471618294c203e7f235a76d1efcf	...	2026-05-27	NaT	and unable to receive support to get the servi...	0.333333	0.45	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.046138
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	eba78d9e14804209ce606558dd7a2019	2774bb8ad4d5748a1c09eea9815e5320	e141b189b460e47de628c1f200833a33	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	...	NaT	NaT	Pullback on GS26 Series Offers: AT&T removed i...	0.666667	1.00	multiple_money_values_review	True	pending_review	needs_review	2026-07-08 05:08:10.046336
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c8d27b6b83822a6654d87008d17289a4	62c4d0dd763e2d6bccfb3be5258a35a7	a7141198de70118a910aca956857f6af	a0d2bfc370f2830993ed3f03f61cf71f	1d28d641a046a3db132392ac02baccb5	...	NaT	NaT	base model) with $95 min. trade - and reduced ...	0.333333	1.00	multiple_money_values_review	True	pending_review	needs_review	2026-07-08 05:08:10.046565
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	aba3f8d9d1906447a53f3daadf382b71	19f7e6b5262636259865eb88bbbbca89	f49f7c02bdf0d54a0bb24c7be2d65e33	a0d2bfc370f2830993ed3f03f61cf71f	8433d6c303ff8f77ed961fc82c70b1d6	...	NaT	NaT	removed the Any, Galaxy, Any Condition constru...	1.000000	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.046888
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	9b028b839e57b6a429f57cef08346111	353fc500903b6634b34641901433a289	96c1df0544513b650c359f54c8cf2cb6	a0d2bfc370f2830993ed3f03f61cf71f	672e825fe8b80f152d0586957e490e3c	...	NaT	NaT	iPhone 17 Offers Change - Verizon brought back...	0.666667	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.047131
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	11faf8a9a5974b934c78f8fddc1877cc	c65d813a6ccdbd318829b44268637386	aeb9fff1cd31260968b7f9fe54a8cdc8	a0d2bfc370f2830993ed3f03f61cf71f	433f60b138ddd082f9f7aba43ab90d2d	...	NaT	NaT	offer, $1,000 off, is limited to the Unlimited...	0.666667	1.00	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.047307
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6b54cbe892af045756015eff1367d745	d5f30097d0199346b5f7a7361175e61e	5b713ce295de48cda75198d128b709cd	a0d2bfc370f2830993ed3f03f61cf71f	62749c8d7b2f1f92aaa05abe6a9ac33d	...	NaT	NaT	a new trade-in offer for Unlimited Welcome whi...	0.666667	1.00	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.047493
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b99af44c9437fee266b8cb5ae9c5d44e	4d7de45081ee11c3da24643090d1ab17	8801a5c750422c5adda5af4449dd5ad9	a0d2bfc370f2830993ed3f03f61cf71f	49c68e41cfe9679501b5fee336235343	...	NaT	NaT	Watch + Tablet On Us Bundles Return - Verizon ...	0.333333	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.047708
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	643b95ad0a703366373ba778f02bc527	9d3905203fe8e82312478674ff7a0b2d	b0c4d8cc514483aeacbb2516439e5485	a0d2bfc370f2830993ed3f03f61cf71f	212b2890e13da79f0334dfc8b016b9c3	...	NaT	NaT	end date listed for these offers like there wa...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.048411
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c7d60fd3ab7cd811f2b822401c6cb56c	8ca1b6ae5700c831d56453d3d9843f7c	781ca9be49b76c9c690a456e0019d121	a0d2bfc370f2830993ed3f03f61cf71f	5af73a4fa57afa414a009739a57fc36d	...	NaT	NaT	No changes	0.333333	0.75	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.048595
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	edf6d6bc9ad96f51fadcbae9337b79e9	9c6669ac512baf63026f60ec598f84b2	f6793e1809a3fb7693a4fc82486d0360	a0d2bfc370f2830993ed3f03f61cf71f	a5b7075e20a68fee58053f26f20632b4	...	NaT	NaT	No changes	0.333333	0.75	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.048744
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	60bdb62e70d34ebf4e768a6769a0ee6a	a098811d520280e5f0b594d8c11efb06	167580f60cfdfbf32546c2d05823deda	b94c5b6637d3d5102933599ee685cf5d	623d9d74381cd114504d91eecbfbb080	...	NaT	NaT	“Deal Drop” Sale features Free iPhone 16e: Rep...	0.333333	1.00	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.048948
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d464164b36376b226af4d06576eb7c5e	13f7f9c7b63634a6e7f9617663bcf312	70609195df1892ebbecacf05d057821a	b94c5b6637d3d5102933599ee685cf5d	dd1aeff22e39346c012055715a0295b1	...	2026-05-29	2026-06-07	the latest offering valid through Sunday, June...	0.333333	0.85	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.049308
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d58be5ce9cccdf5468987435c2db75f6	f11c1df8fd5497c5aaf499f86d05e9a5	91a582677627a5450aa165da5a5a6146	b94c5b6637d3d5102933599ee685cf5d	d51a7ed209aa4e0bd4899758a6faa386	...	NaT	NaT	New TV Spot for “Deal Drop” Sale: Cricket rele...	0.333333	1.00	passed	False	auto_approved	ready_for_gold	2026-07-08 05:08:10.049539
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	18feb2adcb679be530589c509a1b4463	8da1ae95796372a90af231ccb518a2a6	35b9760b1b641f212354448ac546709f	b94c5b6637d3d5102933599ee685cf5d	527d531f0ef986ed188471567c69edd5	...	NaT	NaT	Unlock Policy will change to 365 Days: Cricket...	0.333333	0.70	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.049731
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c7fc9260731802ac5a156f173eb2276b	f2c7c2a535be9b4a4fb747bf08bc04c6	6b61ac32922222e554839416b36691a5	b94c5b6637d3d5102933599ee685cf5d	fd61ed6d2d0b6e0c69af66bafc82d913	...	NaT	NaT	EXPIRED: In select stores: $240 BYO/12month p...	0.333333	1.00	multiple_money_values_review	True	pending_review	needs_review	2026-07-08 05:08:10.049921
+29	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4ce33f0481464154e4b0f7a0a5e14d49	7167221691f0c3a803228b83f47eb3c9	3041955a27b2c2db4fc0aa0acafb5d4c	b94c5b6637d3d5102933599ee685cf5d	63a9d2abd6ef114a9d53fa5cf8061a02	...	NaT	NaT	No changes	0.333333	0.75	low_confidence	True	pending_review	needs_review	2026-07-08 05:08:10.050068
+30 rows × 51 columns
+
+
+
+Appending 2163 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly...
+Append completed: 2163 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly.
+STEP 16 completed: Normalized offers loaded.
+
+
+
+STEP 17: Creating offer-device bridge...
+
+====================================================================================================
+DATAFRAME PREVIEW: silver_offer_device_bridge_df
+====================================================================================================
+Row count: 176
+deck_id	run_id	pdf_hash	pdf_name	deck_week	offer_device_id	offer_id	offer_group_id	page_number	manufacturer	device_model	device_rank	source_raw_text	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0ea2254b4290e91e46c50a4046e1a92e	eba78d9e14804209ce606558dd7a2019	2774bb8ad4d5748a1c09eea9815e5320	5	Samsung	Galaxy S26	1	Pullback on GS26 Series Offers: AT&T removed i...	2026-07-08 05:09:03.451472
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d18025e2ff367e42cfd739c435bf39f7	9b028b839e57b6a429f57cef08346111	353fc500903b6634b34641901433a289	5	Apple	iPhone 17	1	iPhone 17 Offers Change - Verizon brought back...	2026-07-08 05:09:03.451727
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b317c7bde8fa7477318c0964b21faba8	60bdb62e70d34ebf4e768a6769a0ee6a	a098811d520280e5f0b594d8c11efb06	6	Apple	iPhone 16e	1	“Deal Drop” Sale features Free iPhone 16e: Rep...	2026-07-08 05:09:03.452044
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a39b61395dbe4db909695c1c25fd66e8	d464164b36376b226af4d06576eb7c5e	13f7f9c7b63634a6e7f9617663bcf312	6	Apple	iPhone 16	1	the latest offering valid through Sunday, June...	2026-07-08 05:09:03.452136
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8da1673a0a08bb28216082ae056bbaa3	d464164b36376b226af4d06576eb7c5e	13f7f9c7b63634a6e7f9617663bcf312	6	Motorola	moto edge 2025	2	the latest offering valid through Sunday, June...	2026-07-08 05:09:03.452153
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ea29deb206190a58c9c3883082d23ece	d58be5ce9cccdf5468987435c2db75f6	f11c1df8fd5497c5aaf499f86d05e9a5	6	Samsung	Galaxy A37 5G	1	New TV Spot for “Deal Drop” Sale: Cricket rele...	2026-07-08 05:09:03.452225
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e63a0adf7f405525f7bfd18b63edaacd	a1166255289e22a3ee1e5fc7dd6d7a88	58764215e24b521c01b04c3892b82e67	6	Apple	iPhone 16e	1	iPhone 16e $79 In-Store: Total Wireless has re...	2026-07-08 05:09:03.452495
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	0abc7319e9165dcf41ecc0b7ef117bd0	7c7b7473b9009f8fd08a050544871e06	660db6fe0a6f1f42997e03f602385fd8	8	Apple	iPhone 17	1	▪$1000 off iPhone 17 series w/ Port and Better...	2026-07-08 05:09:03.452883
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	2bb16a873ade35003edf5792e561bbdd	cc7a36284c161c9791544b57550017bc	9c1525d111c6e4af0e6bf0f0a7f2a5bf	8	Apple	iPhone 17	1	▪$830 off iPhone 17 series w/ Port and More (5...	2026-07-08 05:09:03.452947
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	5dc3757efa18893172f453078a768cf6	eb712f5b008d2bf907971eed9ce7616a	b281748dd18caa04c4b3ee8be87b230d	8	Google	Pixel 10 Pro XL	1	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was	2026-07-08 05:09:03.453010
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	2fd1a51c7442fcbe47acd6e59c2edfd2	96cdb547e5ae429271ac21d7878d1112	d7a2f1e75f9c159991da8b945dac1600	8	Apple	iPhone 17	1	▪iPhone 17 offers:	2026-07-08 05:09:03.453562
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	41b9cd90fab4deb8bd21dac883b8fb6f	fdd262166af3c5e1f44a53ea837c384a	7384e55ea0bbbb99b380ab1bace3da59	8	Apple	Apple Watch w	1	▪Up to $500 off Apple Watch w/ iPhone purchase	2026-07-08 05:09:03.453750
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	31417c6da1acc5358f5308a5336a75b3	51b65233ac4e19036315e04f1b4d2c99	7f18bed2fc82f0f62f487eb38c0c9e9d	8	Apple	iPad w	1	▪$500 off iPad w/ iPhone purchase (was $320)	2026-07-08 05:09:03.453856
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3686356e0b59c59316f8aa0537d1dbee	cc53172df908437ff8ef33cd1fae32ca	a46c3bfb95606203f08fc2c4bc8ce2b7	8	Samsung	Galaxy Watch7	1	▪Galaxy Watch7 $29/existing customer (5/28 - )...	2026-07-08 05:09:03.454341
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	dc4bb67163e4ef1417d3db50e3ea30d4	e29a32499a13431c0f547d3a70ac66ec	500b17b6f91f594ff882c77e7c7f4506	8	Apple	iPhone 16e	1	o iPhone 16e …$99/new line (3x $60 plan online...	2026-07-08 05:09:03.454728
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	fdbdd11b4e0790d0d9550ca283ac18ab	2e7d7bb45741fefa3c7e909496528737	cd4e036aaa68c50f9c22931f78f48ae8	8	Motorola	Moto edge 2025	1	o Moto edge 2025 …$99/new line	2026-07-08 05:09:03.454871
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d41e06320f4b1588a7542a7ce2f11841	8920b5b5290071c98d105fb14fe6a846	2a05d118e225093d3433fe79dd3d292a	8	Motorola	moto razr 2025	1	▪moto razr 2025 - $149 port or new line w/$60 ...	2026-07-08 05:09:03.454933
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	cb54f277230c44eedb6ab4a05d039478	8920b5b5290071c98d105fb14fe6a846	2a05d118e225093d3433fe79dd3d292a	8	Motorola	razr	2	▪moto razr 2025 - $149 port or new line w/$60 ...	2026-07-08 05:09:03.454950
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e14b61dc717e567cbcbf33b04bbe7f5e	b96c7536faeb5a15b5488b8395057799	9d4d77a11af30bb9b5b31f3c92c16844	8	Apple	iPhone 16e	1	▪In-Store: iPhone 16e - $79 with port & 2x $60...	2026-07-08 05:09:03.455715
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	fac4cb9b566d4a434521fc3628dfd9ce	2693aa44a7b142e06eaed34d63577a88	3196fd1840d0d3391081650b8393113f	10	Apple	iPads w	1	- Up to $500 $320 off select iPads w/ iPhone p...	2026-07-08 05:09:03.456199
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8976fd08247b5a176ed4c7a313cff09e	ecc1f76d1fb7c11d06f2060da0e624de	2d5b1be5031a4db0cb672d4f030dd713	10	Apple	iPhone 17	1	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...	2026-07-08 05:09:03.456433
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	bf85b4b7fadb866c45baeaf0df025ab2	ecc1f76d1fb7c11d06f2060da0e624de	2d5b1be5031a4db0cb672d4f030dd713	10	Apple	iPad A16 w	2	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...	2026-07-08 05:09:03.456450
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4707fc37875c7d1287e0e7a131bdb726	6778fe412100f3fcf9e685fc19f64a45	cf0d491f54e9612700ecd5143df69f9a	10	Apple	iPhone 17	1	iPhone 17 ($830)	2026-07-08 05:09:03.456849
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b42ef9202b053f57eee76a9905537e00	f595dd5d788c90acba9770d0d308c5c4	577aab089827cbd89d84c6bcec1da30c	10	Apple	iPhone Air	1	iPhone Air ($1,000)	2026-07-08 05:09:03.456912
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	7a7332ca779b029acbf9fbee24068872	68e261cf599704f8a956435fc1b83007	f9f612705915a3e0a164a999eb695b15	10	Apple	iPhone 17 Pro	1	iPhone 17 Pro ($1,100)	2026-07-08 05:09:03.456974
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	de24dcc61647a9a1aa754a20fdc6b6e8	aadcdb35098a80680f93ecf70dd770a7	76ffb465e7368b2d53d2b54cbae8014a	10	Apple	iPhone 15 Plus	1	Pros only: $1,100 off w/ iPhone 15 Plus or new...	2026-07-08 05:09:03.458205
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ff3593a8b34060b0c29b574a230ca495	5f801b89445229b122b8c3bff6584e04	ebf39cf5872f6a30e4e738837a0afe01	10	Apple	iPhone 13 Pro	1	All models except Air: $830 off w/ iPhone 13 P...	2026-07-08 05:09:03.458309
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	7226e910a6c6d4a9b488c740fb5b5c10	7fb4702f579bf4b2be4ed35e7cb132d0	b317007182c01d7d1dbd3c66a1dd6953	10	Apple	iPhone 13 Pro	1	All models except Air: $500 off w/ iPhone 13 P...	2026-07-08 05:09:03.458422
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	45a13fef7d062ce9776aadd9f8c149a8	a2987ace7db24a24ce3ffbde6813ff34	8070839d8a1896b1830922beeacb6c13	10	Apple	iPhone 15 Plus	1	Plus (Top Tier cutoff iPhone 15 Plus)	2026-07-08 05:09:03.458745
+29	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	9f4d6ea59a3a8ac91de1d6d0d33f592c	24900ca275191b401c9f1c47201d661a	6500be8666ca3e7ef4924a50e28ae84a	10	Apple	iPhone 16	1	iPhone 16 ($730)	2026-07-08 05:09:03.459019
+
+
+Appending 176 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly...
+Append completed: 176 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly.
+STEP 17 completed: Offer-device bridge loaded.
+
+
+
+STEP 18: Creating review queue and auto approvals...
+Rows requiring human review: 1985
+Rows auto-approved by system: 178
+
+====================================================================================================
+DATAFRAME PREVIEW: review_extraction_review_df
+====================================================================================================
+Row count: 1985
+deck_id	run_id	pdf_hash	pdf_name	deck_week	review_id	offer_id	offer_group_id	candidate_id	page_number	section_name	business_segment	carrier	source_raw_text	suggested_output_json	confidence_score	validation_status	review_reason	review_status	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	5df6317a9ddd01088b69cbecfed9155c	a330afd900eb3ba53ce0f922062ff115	537f9e5462c0a80f60ae7b9c0b8a3b4e	8500b5a8b622767832bd9cb8a351c4bc	1	cover	unknown	T-Mobile	Competitive Offer Report	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.097231
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	9b36f6d62c78ebdece22918d237e2de0	67b83a76689486330058f57b78f2239d	876f4426b50d1846fc6d1445cf03a55b	e318b78ee0c54fb4b6c4d2eb8761588e	1	cover	unknown	T-Mobile	Competitive Offer Report	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.097490
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	800974ad68281b41bc43971eda1a4d7a	d28857df360cf69b4a9fd2a4d467fb80	e6fb83c06e28b0f270c3ba3cd08c1399	33d82ce32f59e497461798118ff86214	3	national_retail	business	T-Mobile	▪Major Competitive Offer Updates …………………………………...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.097679
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ce018291d38f9baa030fbdd3b18e4237	ed78088521dffd5d636d8f77630a46c1	a61dcacc815df2cdf86f42cf6d1febcd	2982912210c3fc1a025c5a94c929ccb8	3	national_retail	business	T-Mobile	▪Competitive Offers & Promo Updates	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.097833
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6d53aeaac68ebd82932280084153923a	09de124b1d9444319810bf54601936cf	1b6645d6d2552756a16ea74907f0b4ff	29399efe6b6533a04cefce7b0b1aaf0f	3	national_retail	business	AT&T	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.097977
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ae96a45343c09edafb84ce32eb25ff64	230cbf14ce490f7fc9420301309f3ad3	6b29e3933f0b9c48254dff99da4cabd3	755a2496bc2fb9eb3fd1afbab7002e7b	3	national_retail	business	AT&T	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098123
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	1a023e388ae50313c66fd49d7b4617b1	19302dacdb24dd630a5b119c781bd5a8	45fe8337260a760f24830eba553da341	daeb4cbdbc0cbb98cb04fabf8deafe79	3	national_retail	business	T-Mobile	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098275
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f072f59fc035631f5f9dcc414b342eb2	e940806419c3cf298d4c2a3c8e77a1fd	0a910ec3e7e545a595d46fc3a5e080dc	5c45a99f463e334a15d66d1c205fb1eb	3	national_retail	business	T-Mobile	❖Postpaid Business - Device Offers…………………….......	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098536
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	507a7b1ceab1050caf7ad9984e1aaaf5	550ad5a4b55d787c7a29d0bb7df5b020	a86d303c977c0c4e4716751371d0f184	a0b9965270f6c7ded0883f66c476e355	3	national_retail	business	T-Mobile	Prepaid Brands - Current Offers ……………….……….….…...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098694
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	59440a728066773b683992a787dc6bcb	46fa1adbf8f7935a7bb1c393a25b2bd7	01ad8354ec48c28de81eccd08e0988f7	28610ff5b368271531ee1f28a9b536d2	3	national_retail	business	T-Mobile	Prepaid Flagship Brands - Current Offers …………....	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098833
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	28be9aed15e4fe344cb6779c5879eebc	e8f01a728b0994becd9a1527adaf8823	331b1dc839aea5421e7bc0174c845f58	0692012049032c07c9162ff16dd8d974	3	national_retail	business	T-Mobile	Prepaid Brands at Walmart - Current Offers ………...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.098971
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	291ab9e8fc8dab9721ea52eda569a8d7	90805fbf61ffd3386b84f280c96d55c9	cc3774528ecb2fd4cf07e3ecb97dec49	c93f3e247237d1a28ce5069d625a7804	5	cable_mvno_offers	cable_mvno	AT&T	and unable to receive support to get the servi...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.45	low_confidence	low_confidence	pending	2026-07-08 05:10:08.099117
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4a50ae9ac9570c6f1f9175316d3ddf91	eba78d9e14804209ce606558dd7a2019	2774bb8ad4d5748a1c09eea9815e5320	e141b189b460e47de628c1f200833a33	5	cable_mvno_offers	cable_mvno	AT&T	Pullback on GS26 Series Offers: AT&T removed i...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	1.00	multiple_money_values_review	multiple_money_values_review	pending	2026-07-08 05:10:08.099277
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3354863e02a37d5ea9e540c0bfb482ec	c8d27b6b83822a6654d87008d17289a4	62c4d0dd763e2d6bccfb3be5258a35a7	a7141198de70118a910aca956857f6af	5	cable_mvno_offers	cable_mvno	AT&T	base model) with $95 min. trade - and reduced ...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	1.00	multiple_money_values_review	multiple_money_values_review	pending	2026-07-08 05:10:08.099469
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ca069309f847086a9f04a7af6fd52853	643b95ad0a703366373ba778f02bc527	9d3905203fe8e82312478674ff7a0b2d	b0c4d8cc514483aeacbb2516439e5485	5	cable_mvno_offers	cable_mvno	Verizon	end date listed for these offers like there wa...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.099632
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ee75c3c9dbd78970dd2ef8fdcdaa4ecc	c7d60fd3ab7cd811f2b822401c6cb56c	8ca1b6ae5700c831d56453d3d9843f7c	781ca9be49b76c9c690a456e0019d121	5	cable_mvno_offers	cable_mvno	Spectrum	No changes	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.75	low_confidence	low_confidence	pending	2026-07-08 05:10:08.099797
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	fde7cc54eda103b2afe90a7ce416e8cb	edf6d6bc9ad96f51fadcbae9337b79e9	9c6669ac512baf63026f60ec598f84b2	f6793e1809a3fb7693a4fc82486d0360	5	cable_mvno_offers	cable_mvno	Xfinity	No changes	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.75	low_confidence	low_confidence	pending	2026-07-08 05:10:08.099951
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	9e6066e86146b00bf2bcfa3869075970	18feb2adcb679be530589c509a1b4463	8da1ae95796372a90af231ccb518a2a6	35b9760b1b641f212354448ac546709f	6	prepaid_offers	prepaid	Cricket Wireless	Unlock Policy will change to 365 Days: Cricket...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.100115
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	90415b0b6703f7e978596e1803ef1a42	c7fc9260731802ac5a156f173eb2276b	f2c7c2a535be9b4a4fb747bf08bc04c6	6b61ac32922222e554839416b36691a5	6	prepaid_offers	prepaid	Cricket Wireless	EXPIRED: In select stores: $240 BYO/12month p...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	1.00	multiple_money_values_review	multiple_money_values_review	pending	2026-07-08 05:10:08.100258
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b3905bb71583bf40c2bbd59096d77f06	4ce33f0481464154e4b0f7a0a5e14d49	7167221691f0c3a803228b83f47eb3c9	3041955a27b2c2db4fc0aa0acafb5d4c	6	prepaid_offers	prepaid	Boost Mobile	No changes	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.75	low_confidence	low_confidence	pending	2026-07-08 05:10:08.100434
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	69741cb103d98e0022aaed79712ed686	a1166255289e22a3ee1e5fc7dd6d7a88	58764215e24b521c01b04c3892b82e67	36eda758b68141af2ef4080ed510d004	6	prepaid_offers	prepaid	Total Wireless	iPhone 16e $79 In-Store: Total Wireless has re...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.60	low_confidence	low_confidence	pending	2026-07-08 05:10:08.100624
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a9615d38dcd415bdf3ee0c981fda5ea0	6e62f51dc626bfa6b582cc82e4c256de	e623ea32aba697c3afb7aaf9998486d7	7725c1844dc46527f8c9f6b9420cae49	6	prepaid_offers	prepaid	Total Wireless	Previously, the phone had been priced at $99 w...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.60	low_confidence	low_confidence	pending	2026-07-08 05:10:08.100792
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c07cda9d7c285b3896190cc65656e210	01a421dc034e0a51913e60e7aba300f3	dab05031409dfab01601f31a4b0a249a	ef19339bc4e928976cbedb076cc57037	6	prepaid_offers	prepaid	Total Wireless	Total Spark Expansion: Announced expansion of ...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.30	low_confidence	low_confidence	pending	2026-07-08 05:10:08.100952
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	25f857fe7193ea5278222ba9c4968f14	f19a288ef3f3130688d62bb183da6fc7	6fabc568d578d333990db17dd842fcbb	472fcdedb9854e6e1806d6763c8e76cf	6	prepaid_offers	prepaid	Total Wireless	Newark, NJ - joining Dallas & Chicago. Selecte...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.60	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101098
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d011d8216b1cd478222cc8f0273c869b	2adf241000df84acfb2bcfb0e5ce2dd4	e0ca0fb5feefac3c53836efb9035802d	824d1ff5850ac63e11f282823a1a0be2	7	ci_headlines	unknown	T-Mobile	Competitive Offer Updates	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101240
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	d1b6dd82a4778255befdb12aed923310	63beab00fa477baaad8391c3833053bf	bb8730e12477b8651b1b923c6c7341d3	072128f126c4afdebba88b151e30ddaa	8	prepaid_offers	prepaid	T-Mobile	Major Offer Changes Effective May 29, 2026	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101374
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f8f1b660103efc0342dc1facb2b78968	42dd05c4f1885540269a22e09f14ab0d	e64b1a49316104d5a6b5c8eea2c51f87	5eb2b6b34a8e6e881b559b174dc32d1d	8	prepaid_offers	prepaid	T-Mobile	***TFB Offer Changes:	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101574
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f7e63d22141f7d7373fbdc1fd7df61f4	866f6163ffce8b7ce4c8642fbcb6fe4d	b3eba15d232376639192141bda15638a	cf17cd96b1889eab3176c0516bc0cfc1	8	prepaid_offers	prepaid	T-Mobile	OFFERS INTRODUCED	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101719
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c84aed9094d84d333a5fd3111f50477f	2fee7a8ed30f537d51a5ddf99904ff43	353e42d674b57b6ee9db395f9e53bf56	438920c7a6056a23745eb935e3760082	8	prepaid_offers	prepaid	T-Mobile	OFFERS REMOVED	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.70	low_confidence	low_confidence	pending	2026-07-08 05:10:08.101852
+29	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8ebc6794bd324e200a6e9457bcfdb533	fd5be658911945630e9686b15ea36aa5	c4914b26197a7cc716cef4a6d1c5c86a	5c11b79cd44c0df67bf0a7125bef82cd	8	prepaid_offers	prepaid	T-Mobile	$1,200) (5/28 - )	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	0.45	low_confidence	low_confidence	pending	2026-07-08 05:10:08.102000
+
+
+
+====================================================================================================
+DATAFRAME PREVIEW: review_auto_decisions_df
+====================================================================================================
+Row count: 178
+deck_id	run_id	pdf_hash	pdf_name	deck_week	decision_id	review_id	offer_id	offer_group_id	decision_type	review_status	reviewer_name	review_notes	final_output_json	created_at
+0	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	1684345aa9b09f1f5daf66bd1a699828	f843a758addbd970c8bc7ade93e3a756	1d8824fb5000d6e447315690f74e46f1	08c88d2e83ec4db4aba9b5c023d7ca16	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.392889
+1	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	840c0821d2b82a28bebcecf66d20fd49	4608444a9a3b6b65eb835938b111daec	9cca4654e360cdee443b201ed148949b	9209cfde83880e040f39edde954a28d1	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393057
+2	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	7f5aa0bac40e7a3b48bb1b55e0988d35	a545ed201d27570501cb3b70ab8393a7	aba3f8d9d1906447a53f3daadf382b71	19f7e6b5262636259865eb88bbbbca89	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393193
+3	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6633f8e2e5600ae8e8bd487c4bb00a6b	76f4e26330e4b4f2acc4867fead80e60	9b028b839e57b6a429f57cef08346111	353fc500903b6634b34641901433a289	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393320
+4	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	e670b6b0a61f7d5e57a37679027c5a50	2171a75b0f7c497f0abc4de2e127d89e	11faf8a9a5974b934c78f8fddc1877cc	c65d813a6ccdbd318829b44268637386	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393493
+5	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	c713e6e57d21ae94ba31c421ddc45835	2daaaa1ca1a69e69fc3a6252ec57d2ff	6b54cbe892af045756015eff1367d745	d5f30097d0199346b5f7a7361175e61e	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393632
+6	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b44a6e636b339f17e14b260548c41ff8	feddcfaaf8488f6edc646fd5d3080962	b99af44c9437fee266b8cb5ae9c5d44e	4d7de45081ee11c3da24643090d1ab17	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393760
+7	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	81adce8f876e618286ff2fe4498e7661	44bc1ebe74723de5d73b625c9dd81ca4	60bdb62e70d34ebf4e768a6769a0ee6a	a098811d520280e5f0b594d8c11efb06	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.393885
+8	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ba5d07b20d2ce466e71fbec30df69536	4a96be97ecf5c9d593bf28a03be47469	d464164b36376b226af4d06576eb7c5e	13f7f9c7b63634a6e7f9617663bcf312	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394027
+9	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	71754c1a49fd478056904ce9f506c95b	050c0c3337af1571c8e20d7e77c251fe	d58be5ce9cccdf5468987435c2db75f6	f11c1df8fd5497c5aaf499f86d05e9a5	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394158
+10	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	f0048af9b45896e7c9218a12d4c30d08	bc0a4abe2e271a4dfaaa36fb23ccb00d	d80d9df3ba8944e368667e65a56e9660	677b0fbeed92463079efe305d0e64025	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394281
+11	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ced123503303252a216c67f4936e3248	987dc55dab73b8c6cc115e8d23f515ef	7c7b7473b9009f8fd08a050544871e06	660db6fe0a6f1f42997e03f602385fd8	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394419
+12	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	ff42a2ccf7a70d107dfe2891c02f9a6e	62fb1137b5bd557854a230a3cef34ba5	cc7a36284c161c9791544b57550017bc	9c1525d111c6e4af0e6bf0f0a7f2a5bf	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394550
+13	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	29ac2bef5e25fa05e1928aba1a3716b4	db69ff640d8b8561fd673facdbaee9e7	eb712f5b008d2bf907971eed9ce7616a	b281748dd18caa04c4b3ee8be87b230d	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394675
+14	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	b9f9e9b135cb425c71a2e0c085702fca	f5f2289ab06137c87692631c4b12d06b	f21210ce0f5260787e9d1f324fb837d2	4ad9489604266656cfec8595f474bca5	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394795
+15	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	1ba5fe59aea4f1814a155c7c86594d7c	4a9712b76836b7447c5a685fd0d6be74	971b692452ccc0c622475c021d844cd1	c4189adb54b8d1d8a244c27c9670edb6	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.394913
+16	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	26bb1fff2760ecf9e232f3ecd58e1946	238acfb3c0c9b220a9abe04653a4c00b	3978e30a85df72c8dc64689b97489c55	2fa0ed156d5bc486aacccd7c8d9d7c61	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395048
+17	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	4f2d3472dae46fce4e6c7fcc080a7b58	3746d3e7bf8e3b52bbe8c31d482ae88a	96cdb547e5ae429271ac21d7878d1112	d7a2f1e75f9c159991da8b945dac1600	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395171
+18	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	a52c3d59e966f43b801b1855279e9618	66f95dbbb57a27c7df86b624f09a39f1	5b4c25121f5922a16c1875c3790e3f78	dcb73ac5b051c836f6c4bb91146b16c6	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395289
+19	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	244e37234b87893da35452838d57fe49	eb6444e2aad9bf07df98b2b9a68ff042	0b0879c040a377625e1dda81cfbf7fdd	1ce09474047475524ca774a92c2afdac	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395426
+20	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8028d73e12b95eed44e34e2982bdedc9	e77786c211a033bd66ca092644d7de9b	57f8110bfb178378be427d14c065cef4	c450263efde404506885199ce341612f	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395555
+21	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	8dc5445a161929c982496bc73ed0ce38	a2d3a85df85b1ac1e9c8de9b592aeb13	fdd262166af3c5e1f44a53ea837c384a	7384e55ea0bbbb99b380ab1bace3da59	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395677
+22	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	460a597db4b00711480a7c6c64cd33d1	2c8d76e38c2ba45c3ce553fd544511a2	7c2a6c79bb602a0c9a7c1cc8e489d6f2	bc2d6f9d42ed95e2e5e219658fc28a84	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395795
+23	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	3d79473cfb64dfddb68c64bd2bea21d1	e0294d90d6a834fa4a6e5a2f613cb476	51b65233ac4e19036315e04f1b4d2c99	7f18bed2fc82f0f62f487eb38c0c9e9d	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.395915
+24	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	522158b89e95cefc2e0b7dcab8206d2e	4f7e9759e8a8bc723cc7d0895e968434	43b1ce55605e78cb8d1a4acee5eb1db9	e6322a248bf30030059efe2328df1bf9	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396049
+25	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	925a06247183f20c066c4921cce31203	84cd8d51e2ae538384c0f0fab9effc40	802c6ccbc4569cfea0015669aba70ba4	45a2fd15ed9ad66850beb7688c83ae75	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396176
+26	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	771978b824af17b6027430c21fa7f383	0d39608d359a7f10b5da8e3bf5b5c736	5be5fd4bd1f71586f7b1a8ed2cd1219f	233b97e03b686a91bd5a21ffd29f616b	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396296
+27	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	6daec004f39dfd3dd62436c0546253d2	7db05b1d9483824bb31a1c4abe51c245	ff2d3d2cba1d51df46c0d5201be392c8	37bb74b3ea2583bfcb59128969a20cc3	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396437
+28	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	858de6eb5ccf9293cfd6e5644f162e23	1373cc7cc267593b9f2efbd4b0cac849	c5e2cabef21cdf0e34a5517b4b27eda7	86d0ec5af033d30d3913199ad9f239c7	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396565
+29	b63b100ecc12eb302762291a98695ef7	0ea3ff4fcc87c4587bdd234a9a81538a	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (3).pdf	2026-05-29	48087edf92da89305ce7b52fd929ae7a	83eb60f489d0d8e5c66a929bbfa78ff5	e29a32499a13431c0f547d3a70ac66ec	500b17b6f91f594ff882c77e7c7f4506	auto_approved	approved	system	Auto-approved because validation passed and co...	{"deck_id": "b63b100ecc12eb302762291a98695ef7"...	2026-07-08 05:10:08.396687
+
+Appending 1985 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly...
+Append completed: 1985 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly.
+Appending 178 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly...
+Append completed: 178 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly.
+STEP 18 completed: Review queue and auto approvals loaded.
+
+
+
+STEP 19: Running QA summary...
+
+Slide sections:
+predicted_section_name	business_segment	classification_source	row_count
+14	prepaid_offers	prepaid	dictionary	5
+10	postpaid_bts_offers	postpaid	gemini	3
+11	postpaid_device_offers	postpaid	gemini	3
+0	business_offers	business	dictionary	2
+2	cable_mvno_offers	cable_mvno	dictionary	2
+15	prepaid_offers	prepaid	gemini	2
+6	confidentiality_notice	unknown	gemini	2
+13	postpaid_service_offers	postpaid	gemini	1
+12	postpaid_service_offers	business	dictionary	1
+8	national_retail	business	dictionary	1
+9	national_retail	mixed	gemini	1
+1	cable_mvno_offers	business	dictionary	1
+7	cover	unknown	gemini	1
+5	ci_headlines	unknown	gemini	1
+4	ci_headlines	postpaid	gemini	1
+3	ci_headlines	mixed	gemini	1
+16	section_divider	prepaid	gemini	1
+
+
+
+Normalized offers by section/status:
+section_name	business_segment	validation_status	review_status	status	row_count
+24	prepaid_offers	prepaid	low_confidence	pending_review	needs_review	1103
+17	postpaid_device_offers	postpaid	low_confidence	pending_review	needs_review	409
+0	business_offers	business	low_confidence	pending_review	needs_review	135
+20	postpaid_service_offers	business	low_confidence	pending_review	needs_review	77
+15	postpaid_bts_offers	postpaid	low_confidence	pending_review	needs_review	69
+5	cable_mvno_offers	cable_mvno	low_confidence	pending_review	needs_review	68
+26	prepaid_offers	prepaid	passed	auto_approved	ready_for_gold	67
+2	cable_mvno_offers	business	low_confidence	pending_review	needs_review	42
+19	postpaid_device_offers	postpaid	passed	auto_approved	ready_for_gold	35
+22	postpaid_service_offers	postpaid	low_confidence	pending_review	needs_review	30
+1	business_offers	business	passed	auto_approved	ready_for_gold	22
+25	prepaid_offers	prepaid	multiple_money_values_review	pending_review	needs_review	19
+7	cable_mvno_offers	cable_mvno	passed	auto_approved	ready_for_gold	17
+16	postpaid_bts_offers	postpaid	passed	auto_approved	ready_for_gold	12
+23	postpaid_service_offers	postpaid	passed	auto_approved	ready_for_gold	11
+11	national_retail	business	low_confidence	pending_review	needs_review	9
+13	national_retail	mixed	low_confidence	pending_review	needs_review	7
+4	cable_mvno_offers	business	passed	auto_approved	ready_for_gold	7
+18	postpaid_device_offers	postpaid	multiple_money_values_review	pending_review	needs_review	6
+6	cable_mvno_offers	cable_mvno	multiple_money_values_review	pending_review	needs_review	5
+21	postpaid_service_offers	business	passed	auto_approved	ready_for_gold	5
+10	cover	unknown	low_confidence	pending_review	needs_review	2
+14	national_retail	mixed	passed	auto_approved	ready_for_gold	1
+12	national_retail	business	passed	auto_approved	ready_for_gold	1
+9	ci_headlines	unknown	low_confidence	pending_review	needs_review	1
+8	ci_headlines	postpaid	low_confidence	pending_review	needs_review	1
+3	cable_mvno_offers	business	multiple_money_values_review	pending_review	needs_review	1
+27	section_divider	prepaid	low_confidence	pending_review	needs_review	1
+
+
+Offer categories:
+offer_category	offer_subcategory	offer_type	row_count
+15	unknown	unknown	unknown	1007
+1	device_promotion	device_discount	device_discount	427
+3	device_promotion	free_device_offer	free_device	276
+4	device_promotion	trade_in_offer	trade_in_discount	176
+0	device_promotion	device_discount	aal_device_discount	97
+10	service_promotion	aal_offer	unknown	37
+8	plan_pricing	plan_refresh	new_or_updated_plan	35
+2	device_promotion	device_discount	port_device_discount	34
+11	service_promotion	byod_credit	byod_credit	18
+13	service_promotion	monthly_bill_credit	monthly_bill_credit	14
+7	offer_status	no_change	no_change	13
+6	offer_status	expired_offer	expired_offer	12
+12	service_promotion	eip_buyout	device_payoff_credit	10
+9	plan_pricing	price_increase	monthly_plan_price_increase	3
+5	fee_promotion	activation_fee_waiver	activation_fee_waiver	2
+14	service_promotion	port_in_credit	unknown	2
+
+
+Rows needing review:
+page_number	section_name	business_segment	carrier	offer_category	offer_subcategory	validation_status	normalization_confidence	source_raw_text
+0	1	cover	unknown	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Competitive Offer Report
+1	1	cover	unknown	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Competitive Offer Report
+2	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	▪Major Competitive Offer Updates …………………………………...
+3	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	▪Competitive Offers & Promo Updates
+4	3	national_retail	business	AT&T	device_promotion	device_discount	low_confidence	0.70	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...
+5	3	national_retail	business	AT&T	device_promotion	device_discount	low_confidence	0.70	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...
+7	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	T-Mobile/Verizon/AT&T Consumer BTS Offers .......
+8	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	❖Postpaid Business - Device Offers…………………….......
+9	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Prepaid Brands - Current Offers ……………….……….….…...
+10	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Prepaid Flagship Brands - Current Offers …………....
+11	3	national_retail	business	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Prepaid Brands at Walmart - Current Offers ………...
+13	5	cable_mvno_offers	cable_mvno	AT&T	unknown	unknown	low_confidence	0.45	and unable to receive support to get the servi...
+14	5	cable_mvno_offers	cable_mvno	AT&T	device_promotion	device_discount	multiple_money_values_review	1.00	Pullback on GS26 Series Offers: AT&T removed i...
+15	5	cable_mvno_offers	cable_mvno	AT&T	device_promotion	device_discount	multiple_money_values_review	1.00	base model) with $95 min. trade - and reduced ...
+21	5	cable_mvno_offers	cable_mvno	Verizon	device_promotion	device_discount	low_confidence	0.70	end date listed for these offers like there wa...
+22	5	cable_mvno_offers	cable_mvno	Spectrum	offer_status	no_change	low_confidence	0.75	No changes
+23	5	cable_mvno_offers	cable_mvno	Xfinity	offer_status	no_change	low_confidence	0.75	No changes
+27	6	prepaid_offers	prepaid	Cricket Wireless	device_promotion	device_discount	low_confidence	0.70	Unlock Policy will change to 365 Days: Cricket...
+28	6	prepaid_offers	prepaid	Cricket Wireless	device_promotion	device_discount	multiple_money_values_review	1.00	EXPIRED: In select stores: $240 BYO/12month p...
+29	6	prepaid_offers	prepaid	Boost Mobile	offer_status	no_change	low_confidence	0.75	No changes
+31	6	prepaid_offers	prepaid	Total Wireless	unknown	unknown	low_confidence	0.60	iPhone 16e $79 In-Store: Total Wireless has re...
+32	6	prepaid_offers	prepaid	Total Wireless	unknown	unknown	low_confidence	0.60	Previously, the phone had been priced at $99 w...
+33	6	prepaid_offers	prepaid	Total Wireless	unknown	unknown	low_confidence	0.30	Total Spark Expansion: Announced expansion of ...
+34	6	prepaid_offers	prepaid	Total Wireless	unknown	unknown	low_confidence	0.60	Newark, NJ - joining Dallas & Chicago. Selecte...
+35	7	ci_headlines	unknown	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Competitive Offer Updates
+36	8	prepaid_offers	prepaid	T-Mobile	device_promotion	device_discount	low_confidence	0.70	Major Offer Changes Effective May 29, 2026
+37	8	prepaid_offers	prepaid	T-Mobile	device_promotion	device_discount	low_confidence	0.70	***TFB Offer Changes:
+38	8	prepaid_offers	prepaid	T-Mobile	device_promotion	device_discount	low_confidence	0.70	OFFERS INTRODUCED
+39	8	prepaid_offers	prepaid	T-Mobile	device_promotion	device_discount	low_confidence	0.70	OFFERS REMOVED
+43	8	prepaid_offers	prepaid	T-Mobile	unknown	unknown	low_confidence	0.45	$1,200) (5/28 - )
+44	8	prepaid_offers	prepaid	T-Mobile	device_promotion	device_discount	low_confidence	0.70	▪No offers expired
+45	8	prepaid_offers	prepaid	AT&T	device_promotion	trade_in_offer	low_confidence	0.70	▪GS26 Series Trade-in Offer Updates: (5/29)
+49	8	prepaid_offers	prepaid	AT&T	unknown	unknown	low_confidence	0.35	plan
+50	8	prepaid_offers	prepaid	AT&T	offer_status	expired_offer	low_confidence	0.70	▪GS26 Series - removed
+51	8	prepaid_offers	prepaid	None	device_promotion	trade_in_offer	low_confidence	0.65	$1300/$230 trade level; $900/$35
+52	8	prepaid_offers	prepaid	None	device_promotion	trade_in_offer	low_confidence	0.50	trade level (2/25 - 5/28) &
+53	8	prepaid_offers	prepaid	None	device_promotion	trade_in_offer	low_confidence	0.50	removed select/any condition trade
+61	8	prepaid_offers	prepaid	None	device_promotion	device_discount	low_confidence	0.50	▪^^Similar offers for Samsung and Google
+62	8	prepaid_offers	prepaid	None	device_promotion	device_discount	low_confidence	0.50	▪No expired offers
+63	8	prepaid_offers	prepaid	Spectrum	device_promotion	device_discount	low_confidence	0.70	▪No new offers
+64	8	prepaid_offers	prepaid	Xfinity	device_promotion	device_discount	low_confidence	0.70	▪No new offers
+65	8	prepaid_offers	prepaid	Spectrum	device_promotion	device_discount	low_confidence	0.70	▪No expired offers
+66	8	prepaid_offers	prepaid	Xfinity	device_promotion	device_discount	low_confidence	0.70	▪No expired offers
+67	8	prepaid_offers	prepaid	Xfinity	device_promotion	device_discount	low_confidence	0.70	OFFERS INTRODUCED
+68	8	prepaid_offers	prepaid	Xfinity	device_promotion	device_discount	low_confidence	0.70	OFFERS REMOVED
+69	8	prepaid_offers	prepaid	Metro by T-Mobile	unknown	unknown	low_confidence	0.60	▪Galaxy Watch7 $29/existing customer (5/28 - )...
+71	8	prepaid_offers	prepaid	Metro by T-Mobile	unknown	unknown	low_confidence	0.60	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )
+72	8	prepaid_offers	prepaid	Metro by T-Mobile	unknown	unknown	low_confidence	0.45	…was $45 or $40 w/autopay
+82	8	prepaid_offers	prepaid	Cricket Wireless	unknown	unknown	low_confidence	0.45	TBD) …was $99
+83	8	prepaid_offers	prepaid	Cricket Wireless	unknown	unknown	low_confidence	0.45	▪In-Store: $240 12-month/BYO
+
+
+Multi-device grouped offers:
+page_number	carrier	device_family_text	device_models_json	offer_type	offer_value	source_raw_text
+25	6	Cricket Wireless	iPhone 16, moto edge 2025	["iPhone 16", "moto edge 2025"]	device_discount	NaN	the latest offering valid through Sunday, June...
+81	8	Cricket Wireless	moto razr 2025, razr	["moto razr 2025", "razr"]	unknown	149.0	▪moto razr 2025 - $149 port or new line w/$60 ...
+112	10	None	iPhone 17, iPad A16 w	["iPhone 17", "iPad A16 w"]	unknown	NaN	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
+521	12	None	Moto G, Moto G Power, Moto G5G	["Moto G", "Moto G Power", "Moto G5G"]	free_device	NaN	- Free Moto G, Moto G Power, Moto Edge, Moto G5G
+773	18	None	Moto razr 2025, razr	["Moto razr 2025", "razr"]	device_discount	200.0	▪Moto razr 2025 $200 off with UNL/Max & EIP (3...
+785	18	None	Pixel 10 Pro, Pixel 10 Pro XL	["Pixel 10 Pro", "Pixel 10 Pro XL"]	device_discount	500.0	Pixel 10 Pro, $500 $400 off Pixel 10 Pro XL; s...
+791	18	None	moto razr 2026, razr	["moto razr 2026", "razr"]	device_discount	100.0	▪moto razr 2026 - $100 off FRP (5/22 - 7/2)
+792	18	None	moto razr 2025, razr	["moto razr 2025", "razr"]	device_discount	150.0	▪moto razr 2025 - $150 off FRP (3/2 - 9/30)
+1121	24	None	Apple Watches, iPads	["Apple Watches", "iPads"]	device_discount	300.0	Apple Watches & iPads (4/22/25) - up to $300 o...
+1767	26	Boost Mobile	moto g 5G 2026, moto g stylus	["moto g 5G 2026", "moto g stylus"]	unknown	60.0	• Req. $60 RP: Galaxy A16, Galaxy A17, Galaxy ...
+1768	26	Cricket Wireless	moto g power 5G 2025, moto g play 2026	["moto g power 5G 2025", "moto g play 2026"]	unknown	50.0	• Req. $50 RP: moto g power 5G 2025, moto g pl...
+1779	26	None	moto razr 2025, razr	["moto razr 2025", "razr"]	unknown	99.0	• moto razr 2025 - ($99 online/2x $60 plan) $9...
+1968	27	None	moto g play 2026, moto g play	["moto g play 2026", "moto g play"]	free_device	30.0	• Min. $30 $35/mo. plan: moto g play 2026 $9....
+
+
+Final counts:
+PDF pages processed: 29
+Bronze slide raw rows: 29
+Bronze slide line rows: 3321
+Detected entity rows: 3252
+Silver slide section rows: 29
+Silver offer candidate rows: 2163
+Silver normalized offer rows: 2163
+Device bridge rows: 176
+Review queue rows: 1985
+Auto-approved decision rows: 178
+
+STEP 19 completed: QA summary generated.
+====================================================================================================
+Notebook 1 completed successfully.
+====================================================================================================
+
+
