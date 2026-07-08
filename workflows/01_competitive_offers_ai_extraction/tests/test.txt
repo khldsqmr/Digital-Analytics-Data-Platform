@@ -1,5 +1,5 @@
 ========================================================================================================================
-SDI COMPETITIVE OFFERS PDF EXTRACTION NOTEBOOK
+SDI COMPETITIVE OFFERS PDF EXTRACTION NOTEBOOK - UPDATED CORRECTED END TO END
 ========================================================================================================================
 
 Purpose:
@@ -11,14 +11,15 @@ Purpose:
   6. Classify each slide using:
        a. priority page rules
        b. slide header registry
-       c. TOC expected map
+       c. TOC expected map as QA only
        d. Gemini fallback
   7. Create slide content blocks.
-  8. Create offer candidates from content blocks.
-  9. Normalize offers into silver.
-  10. Create device bridge for grouped-device offers.
-  11. Create review queue and auto-approved review decisions.
-  12. Print detailed QA outputs so you can share results for improvement.
+  8. Skip generic offer extraction for price-grid slides.
+  9. Create offer candidates from content blocks.
+  10. Normalize offers into silver.
+  11. Create device bridge for grouped-device offers.
+  12. Create review queue and auto-approved review decisions.
+  13. Print detailed QA outputs so you can share results for improvement.
 
 Important:
   - This notebook does NOT create one table per slide.
@@ -49,15 +50,16 @@ Configuration loaded:
   USE_GEMINI_FOR_CONTENT_BLOCKS: False
   FORCE_ALL_ROWS_TO_REVIEW: False
   AUTO_APPROVE_HIGH_CONFIDENCE: True
+  FORCE_DENSE_LAYOUT_TO_REVIEW: True
 
 CELL 5: PDF upload / local path setup
 Colab upload widget available.
 Please upload one Competitive Offer Report PDF.
-Competitive_Offer_Report_052926.pdf
-Competitive_Offer_Report_052926.pdf(application/pdf) - 1583366 bytes, last modified: 6/30/2026 - 100% done
-Saving Competitive_Offer_Report_052926.pdf to Competitive_Offer_Report_052926 (7).pdf
-Uploaded PDF: Competitive_Offer_Report_052926 (7).pdf
-PDF_LOCAL_PATH: Competitive_Offer_Report_052926 (7).pdf
+Competitive_Offer_Report_050826.pdf
+Competitive_Offer_Report_050826.pdf(application/pdf) - 2308300 bytes, last modified: 6/30/2026 - 100% done
+Saving Competitive_Offer_Report_050826.pdf to Competitive_Offer_Report_050826 (1).pdf
+Uploaded PDF: Competitive_Offer_Report_050826 (1).pdf
+PDF_LOCAL_PATH: Competitive_Offer_Report_050826 (1).pdf
 PDF found successfully.
 
 CELL 6: Creating BigQuery table names
@@ -91,6 +93,35 @@ GEMINI_CLIENT_READY: True
 Clients and helpers are ready.
 
 CELL 8: Defining taxonomy, header registry, and extraction rules
+Validating slide header regex rules...
+  OK: confidentiality -> notice of confidentiality
+  OK: toc -> table of contents
+  OK: major_offer_changes -> major offer changes effective
+  OK: apple_postpaid -> post-paid apple smartphone offers effective
+  OK: samsung_google_postpaid -> post-paid samsung and google smartphone offers effective
+  OK: motorola_affordable_byod -> post-paid motorola, affordable phones and byod offers effective
+  OK: bts_tablet -> post-paid bts\s*
+  OK: bts_other -> post-paid bts\s*&\s*other offers|post-paid bts.*other offers
+  OK: bts_watches -> post-paid bts\s*
+  OK: postpaid_service -> post-paid service offers|t-mobile\s*&\s*at&t post-paid service offers|verizon post-paid service offers
+  OK: cable_mvno_handset -> postpaid cable mvno.*handset|cable mvno.*handset
+  OK: cable_mvno_service -> cable mvno service.*pricing|cable mvno service
+  OK: business_device -> business.*flagship device offers|postpaid business.*device offers
+  OK: business_newline_byod -> business.*new line|business.*byod
+  OK: national_retail -> national retail|weekly readout by npd|key highlights
+  OK: prepaid_brand_offers -> prepaid brands.*current offers
+  OK: metro_price_grid -> metro by t-mobile|metro price grid
+  OK: prepaid_flagship -> flagship brands/prepaid.*current offers|prepaid flagship brands
+  OK: walmart_prepaid -> walmart.*current offers|prepaid brands at walmart
+  OK: ci_headlines -> competitive intelligence headlines
+  OK: ci_divider -> ^.{0,100}ci headlines.{0,100}$
+  OK: offer_updates_divider -> competitive offer updates|competitive offers\s*&\s*promotional updates\s+postpaid
+  OK: prepaid_divider -> competitive offers.*promotional updates.*prepaid|^prepaid$
+  OK: cover -> competitive offer report
+BTS rules after validation:
+  bts_tablet => post-paid bts\s*
+  bts_other => post-paid bts\s*&\s*other offers|post-paid bts.*other offers
+  bts_watches => post-paid bts\s*
 Taxonomy and header registry loaded.
 Number of slide header rules: 24
 
@@ -119,16 +150,14 @@ Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competiti
 Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
 All required tables are ready.
 
-FIX CELL: Replacing append_df_to_bq with schema-aware BigQuery loader
-
 CELL 12: Registering PDF and handling duplicate uploads
 PDF metadata:
-  pdf_name: Competitive_Offer_Report_052926 (7).pdf
-  pdf_hash: 840707084ae92ebf72f40731d5e57f34
-  deck_week: 2026-05-29 | type: <class 'datetime.date'>
+  pdf_name: Competitive_Offer_Report_050826 (1).pdf
+  pdf_hash: 8df28604c9506a4cf10699adce7e0c99
+  deck_week: 2026-05-08 | type: <class 'datetime.date'>
   deck_year: 2026
-  deck_id: b63b100ecc12eb302762291a98695ef7
-  run_id: 589e198f8580bc9551111ad8d89dd7e3
+  deck_id: 1dec9cf8c4c0cfc1f538fe9666e699a3
+  run_id: 2ec9f52b5d1d575ac61981f756ba0a2e
   total_pages: 29
 This exact PDF already exists in BigQuery.
 
@@ -137,7 +166,7 @@ DATAFRAME PREVIEW: existing_pdf_df
 ========================================================================================================================
 Rows: 1
 deck_id	run_id	pdf_hash	pdf_name	deck_week	processing_status	created_at
-0	b63b100ecc12eb302762291a98695ef7	df7ba55bc5acfc27f2d2cf955b0147d7	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (6).pdf	2026-05-29	registered	2026-07-08 06:25:53.670534+00:00
+0	1dec9cf8c4c0cfc1f538fe9666e699a3	edbe6830b79268b65262b59b62d76e50	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826.pdf	2026-05-08	registered	2026-07-08 06:43:12.993604+00:00
 
 
 Choose processing mode:
@@ -195,7 +224,7 @@ DATAFRAME PREVIEW: bronze_pdf_decks_df
 ========================================================================================================================
 Rows: 1
 deck_id	run_id	pdf_hash	pdf_name	deck_week	local_pdf_path	total_pages	processing_mode	processing_status	created_at
-0	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	Competitive_Offer_Report_052926 (7).pdf	29	replace	registered	2026-07-08 06:51:53.420777
+0	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	Competitive_Offer_Report_050826 (1).pdf	29	replace	registered	2026-07-08 07:12:02.209313
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
@@ -243,8 +272,6 @@ Appending 1 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitive
 Append completed: 1 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly.
 ====================================================================================================
 
-CELL 12 completed successfully. Continue running from CELL 13.
-
 CELL 13: Extracting bronze slide raw text and slide lines
 Extracting page 1/29...
 Extracting page 2/29...
@@ -281,31 +308,31 @@ DATAFRAME PREVIEW: bronze_slide_raw_df
 ========================================================================================================================
 Rows: 29
 deck_id	run_id	pdf_hash	pdf_name	deck_week	slide_id	page_number	raw_slide_text	cleaned_slide_text	slide_text_hash	extraction_method	created_at
-0	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	bbab12f19f2e993d10465caf6800e9dc	1	T-Mobile Confidential\nT-Mobile Confidential\n...	T-Mobile Confidential T-Mobile Confidential 1 ...	a26b09be4ea2f56461f019c16fd2f190	pymupdf_text	2026-07-08 06:51:55.136914
-1	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	e11cceaa3435d7f2f3c5f56bf79513d4	2	T-Mobile Confidential\nNOTICE OF CONFIDENTIALI...	T-Mobile Confidential NOTICE OF CONFIDENTIALIT...	d5a9dd6e6e895beac06348fd7237da25	pymupdf_text	2026-07-08 06:51:55.137824
-2	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	0f9ca42be7187281115266571406eaf7	3	T-Mobile Confidential\nTable of Contents:\n▪CI...	T-Mobile Confidential Table of Contents: ▪CI H...	46488078630e0c4301b0fc572eb9ff26	pymupdf_text	2026-07-08 06:51:55.142024
-3	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	ae09e30c90be9a755e75b61764f4edff	4	T-Mobile Confidential\n44\nMARKET &\nCHANNEL\n...	T-Mobile Confidential 44 MARKET & CHANNEL INSI...	4008bd1b42b1ac119a436e555ad2afdd	pymupdf_text	2026-07-08 06:51:55.144137
-4	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	a0d2bfc370f2830993ed3f03f61cf71f	5	T-Mobile Confidential\nCOMPETITIVE INTELLIGENC...	T-Mobile Confidential COMPETITIVE INTELLIGENCE...	83559618b705a2dd07cd4b76596e6292	pymupdf_text	2026-07-08 06:51:55.146813
-5	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	b94c5b6637d3d5102933599ee685cf5d	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2...	COMPETITIVE INTELLIGENCE HEADLINES May 29, 202...	4a5deb5580be79e7e412a03ac22f6a2d	pymupdf_text	2026-07-08 06:51:55.150790
-6	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	7c4aaf42e4c70fed7a6b6f3db8126f9e	7	T-Mobile Confidential\n7\nCompetitive Offer Up...	T-Mobile Confidential 7 Competitive Offer Upda...	2408cc6d75559983eacbaebe1d890053	pymupdf_text	2026-07-08 06:51:55.152853
-7	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	26ac57ca047085a5f045fdcc532b97ae	8	T-Mobile Confidential\nMajor Offer Changes Eff...	T-Mobile Confidential Major Offer Changes Effe...	0ccf3575a615d33a7250c96059df04a8	pymupdf_text	2026-07-08 06:51:55.160428
-8	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	22cd12fca187afd6c335812ab4801828	9	T-Mobile Confidential\n9\nCompetitive Offers &...	T-Mobile Confidential 9 Competitive Offers & P...	accf31705cffe05ce821b1854202fbc4	pymupdf_text	2026-07-08 06:51:55.164929
-9	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	8802e01a865d3869f03178aedba6c119	10	T-Mobile Confidential\nPost-Paid Apple Smartph...	T-Mobile Confidential Post-Paid Apple Smartpho...	d7b77f9ade9e279b2b2bc6cc133ec2eb	pymupdf_text	2026-07-08 06:51:55.169908
+0	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	98bb31ea7d7c675dc145c8b3d04e1ed7	1	T-Mobile Confidential\nT-Mobile Confidential\n...	T-Mobile Confidential T-Mobile Confidential 1 ...	92aef59b1069cc0fded100192f75b7a2	pymupdf_text	2026-07-08 07:12:03.684070
+1	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	a5bb66019bdf3ac970cc8279dfbff728	2	T-Mobile Confidential\nNOTICE OF CONFIDENTIALI...	T-Mobile Confidential NOTICE OF CONFIDENTIALIT...	d5a9dd6e6e895beac06348fd7237da25	pymupdf_text	2026-07-08 07:12:03.685307
+2	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	0eb64b982d992c9b04baaca143176aaf	3	T-Mobile Confidential\nTable of Contents:\n▪CI...	T-Mobile Confidential Table of Contents: ▪CI H...	46488078630e0c4301b0fc572eb9ff26	pymupdf_text	2026-07-08 07:12:03.689528
+3	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	5156583c42034a3231c313e6e4312a90	4	T-Mobile Confidential\n44\nMARKET &\nCHANNEL\n...	T-Mobile Confidential 44 MARKET & CHANNEL INSI...	4008bd1b42b1ac119a436e555ad2afdd	pymupdf_text	2026-07-08 07:12:03.692130
+4	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	13cd332ac317ecc751d1d4ae1c28145d	5	T-Mobile Confidential\nCOMPETITIVE INTELLIGENC...	T-Mobile Confidential COMPETITIVE INTELLIGENCE...	40776a6f37136e76fb522854c840eda9	pymupdf_text	2026-07-08 07:12:03.694229
+5	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	06fc0c98a2000c1422b4b59772246ab5	6	COMPETITIVE INTELLIGENCE HEADLINES May 8, 20...	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026...	30144ba37bd66f2828765096a9d0c34e	pymupdf_text	2026-07-08 07:12:03.698117
+6	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	287dd536c8879fbaebebb6c3497a3d17	7	T-Mobile Confidential\n7\nCompetitive Offer Up...	T-Mobile Confidential 7 Competitive Offer Upda...	2408cc6d75559983eacbaebe1d890053	pymupdf_text	2026-07-08 07:12:03.701256
+7	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	3848939351c926faf7b8a7a69e4ce67f	8	T-Mobile Confidential\nMajor Offer Changes Eff...	T-Mobile Confidential Major Offer Changes Effe...	7182b12b6730ddce50218ab61b7fe79a	pymupdf_text	2026-07-08 07:12:03.705213
+8	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	5c94e5c6b5e2ee35924fc6cc820e5cad	9	T-Mobile Confidential\n9\nCompetitive Offers &...	T-Mobile Confidential 9 Competitive Offers & P...	accf31705cffe05ce821b1854202fbc4	pymupdf_text	2026-07-08 07:12:03.709442
+9	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	0f462ba48ead8a71831de5afdf461b26	10	T-Mobile Confidential\nPost-Paid Apple Smartph...	T-Mobile Confidential Post-Paid Apple Smartpho...	d8440b76aec47c978d06d6d70d008b86	pymupdf_text	2026-07-08 07:12:03.714491
 
 
 ========================================================================================================================
 DATAFRAME PREVIEW: bronze_slide_lines_df
 ========================================================================================================================
-Rows: 3321
+Rows: 3253
 page_number	line_number_on_page	line_role	cleaned_line_text
 0	1	1	header_or_footer	T-Mobile Confidential
 1	1	2	header_or_footer	T-Mobile Confidential
 2	1	3	header_or_footer	1
-3	1	4	unknown	May 29, 2026
+3	1	4	unknown	May 8, 2026
 4	1	5	header_or_footer	MARKET &
-5	1	6	unknown	CHANNEL
-6	1	7	unknown	INSIGHTS
-7	1	8	unknown	MCI
+5	1	6	header_or_footer	CHANNEL
+6	1	7	header_or_footer	INSIGHTS
+7	1	8	header_or_footer	MCI
 8	1	9	header_or_footer	Competitive Offer Report
 9	1	10	header_or_footer	Competitive Offer Report
 10	2	1	header_or_footer	T-Mobile Confidential
@@ -385,7 +412,7 @@ Append completed: 29 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automati
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
-Input row count: 3321
+Input row count: 3253
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                        object
@@ -439,8 +466,8 @@ source_method                       object
 created_at             datetime64[ns, UTC]
 dtype: object
 
-Appending 3321 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly...
-Append completed: 3321 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly.
+Appending 3253 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly...
+Append completed: 3253 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly.
 ====================================================================================================
 
 CELL 14: Extracting detected entities
@@ -448,44 +475,44 @@ CELL 14: Extracting detected entities
 ========================================================================================================================
 DATAFRAME PREVIEW: bronze_detected_entities_df
 ========================================================================================================================
-Rows: 1863
+Rows: 1827
 deck_id	run_id	pdf_hash	pdf_name	deck_week	entity_id	slide_id	line_id	page_number	entity_type	entity_text	normalized_entity_value	detection_method	created_at
-0	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	48a482447a84b59f0c7b0d80f36e6b37	bbab12f19f2e993d10465caf6800e9dc	83e0ba057f44232a2b130835cdfb0e94	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.904803
-1	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	3394e10840e42b3ac09e89f9d5d43940	bbab12f19f2e993d10465caf6800e9dc	74dfd2675ef45f6b91214b2c92eb5f24	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.904943
-2	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	695fbc3677471bf1ee0753d0f2146531	e11cceaa3435d7f2f3c5f56bf79513d4	2ee2a5e1b6ad175e8c2913357bbec54f	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.905759
-3	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	8f6539d251c5a8a9327acacaafbbf42e	e11cceaa3435d7f2f3c5f56bf79513d4	4e5707c3d71d51c7d073c253764d0467	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.906062
-4	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	4dae983262660f5ba298ebcb16206704	e11cceaa3435d7f2f3c5f56bf79513d4	3e1c50310ce7574d3c40aa55da91fce1	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.906282
-5	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	a6e2c6efdbdc3d61c4805a0b84be7bf1	e11cceaa3435d7f2f3c5f56bf79513d4	04066f453dc376ca3e6e93abf17cc23a	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.906426
-6	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	baf7489fb594fb8135a0a8fb01914952	0f9ca42be7187281115266571406eaf7	1317922abfb10ca4b4c28e99535f29bb	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.906755
-7	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	351295e2848b6f0e45b6d9616d456414	0f9ca42be7187281115266571406eaf7	4c2562ff91f1ff38d723cb28b7fb18d0	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:52:01.906858
-8	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	87c544414e51236b762fab11865fc402	0f9ca42be7187281115266571406eaf7	00b1358e7050fe7485283a31a396abb4	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.907472
-9	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	c1f2161c22c4c211bbf2219ed0c823db	0f9ca42be7187281115266571406eaf7	c2cb20ba301401a1ce0890b75ecb8ee5	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.907719
-10	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	c157098d9258b370bc435cf234c2fc6f	0f9ca42be7187281115266571406eaf7	c2cb20ba301401a1ce0890b75ecb8ee5	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:52:01.907728
-11	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	c21ef644c8c1f38273485f8cdc69e0ff	0f9ca42be7187281115266571406eaf7	d9cd4911b4bc8ef1bb7b07e2089ef2e1	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.907931
-12	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	436f0e3091ee653d29eaea46a6a46222	0f9ca42be7187281115266571406eaf7	1060550b208caf84ec94e81ab99ab327	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.908133
-13	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	48f471ed8c0b365d902d49d2fdcc728a	0f9ca42be7187281115266571406eaf7	9ced223d7a1cb75fcf3382ba10723759	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.908340
-14	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	2423ac76aa4723ca69ec59869bf98589	0f9ca42be7187281115266571406eaf7	043337c7ba8b94e364a5f4444b67b562	3	carrier	Walmart	Walmart	regex_dictionary	2026-07-08 06:52:01.909426
-15	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	387be21865ba5a943cb4d465c44ff1c5	ae09e30c90be9a755e75b61764f4edff	6675d21e62ca61a53123d92416a18cc0	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.909921
-16	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	3e48ff696803342964b2c3382d1ec37b	ae09e30c90be9a755e75b61764f4edff	2be379e7013687c3c3d55fccbe711531	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.910417
-17	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	87f8c39d753e40336d70714c32be7248	a0d2bfc370f2830993ed3f03f61cf71f	faf1703c7589ee857fe5649519940ac7	5	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 06:52:01.910604
-18	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	4c90ca602081f49a85904541f98b87a9	a0d2bfc370f2830993ed3f03f61cf71f	2ea2cf06ff2b10f7bc7cd661260a6971	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.910891
-19	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	348841d23c117d77b4c56e5b4cd4c3ad	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	date_range	5/27	5/27	regex_dictionary	2026-07-08 06:52:01.911115
-20	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	fc7f83be75d2b69b1643d79f866b9fab	a0d2bfc370f2830993ed3f03f61cf71f	57fcaecc9b26225f152172659acf9730	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.911126
-21	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	882132290c0d1d2a4340c64ff7a13bbf	a0d2bfc370f2830993ed3f03f61cf71f	faed8faa0fe9b5c133006fdfd8ffff62	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.911275
-22	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	89dcc8c0068da2a21634f0b48006ebe2	a0d2bfc370f2830993ed3f03f61cf71f	8b1f471618294c203e7f235a76d1efcf	5	date_range	5/27 -	5/27 -	regex_dictionary	2026-07-08 06:52:01.911412
-23	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	976ed5753de16285dd60fb90eac5662c	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	device_model	Galaxy S26	Galaxy S26	regex_dictionary	2026-07-08 06:52:01.911683
-24	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	d6c478870b9742ad29d73e4b64157a9a	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	device_model	S26	S26	regex_dictionary	2026-07-08 06:52:01.911693
-25	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	a7eec60ff6dfba9784cfd25db7e29bb3	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.911701
-26	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	15b599fce982ffc5302dededae7ff4bd	a0d2bfc370f2830993ed3f03f61cf71f	2383ef1bbcad76b6b1b4567e56c9f04f	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:52:01.911709
-27	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	dd4d5970477aa4df2d79ffb5979260f8	a0d2bfc370f2830993ed3f03f61cf71f	1d28d641a046a3db132392ac02baccb5	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 06:52:01.911862
-28	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	f6cf29f7bbd1a6304d8e99cd3829aab4	a0d2bfc370f2830993ed3f03f61cf71f	8433d6c303ff8f77ed961fc82c70b1d6	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 06:52:01.911985
-29	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	3b19749cb5eb515de92f5665874c9963	a0d2bfc370f2830993ed3f03f61cf71f	9773109c7e75c7671d6e9818489bd231	5	carrier	Verizon	Verizon	regex_dictionary	2026-07-08 06:52:01.912081
+0	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	dc9a9282732f33abc5d391bf0d678a89	98bb31ea7d7c675dc145c8b3d04e1ed7	c5daa80e92245d79521b6a37913ee781	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.768505
+1	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	fd887342bd9a48cad4d1ee76a66c5f61	98bb31ea7d7c675dc145c8b3d04e1ed7	797f7c0f5bbead36c20214006b146076	1	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.768759
+2	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	30d73957972cc0085213b1cefca85ce5	a5bb66019bdf3ac970cc8279dfbff728	d3739ebd02492f8745a6e626e8bb962c	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.769707
+3	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	1b2dffe82541826b9de481ddd4ffd908	a5bb66019bdf3ac970cc8279dfbff728	4e712541ecc8d1e272c9ab4d7c007e42	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.770055
+4	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	35a243ff89600faab7562c3969c8677e	a5bb66019bdf3ac970cc8279dfbff728	3924b209465a8e95c8306f816178be44	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.770300
+5	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	4ab81bffff7d0e9cd93b5c144b9cc0b8	a5bb66019bdf3ac970cc8279dfbff728	839ee5b36b630bb68992d5f91abe45e8	2	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.770454
+6	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	7e3114c346025c122a1c0533171bbe76	0eb64b982d992c9b04baaca143176aaf	a8c4790a8799a1181d2784a7ae681cbc	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.770800
+7	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	ec09f91ca3d1988197865719db8e49a8	0eb64b982d992c9b04baaca143176aaf	23fb411f3c2267000a1fe179b332944c	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 07:12:21.770918
+8	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	730d580e67e467b4f552649e92f4f74d	0eb64b982d992c9b04baaca143176aaf	86be0ef21801f6a51a37ec72f994c9ad	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.771634
+9	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	764f08b6463f8d0abaa26c329f32b6f6	0eb64b982d992c9b04baaca143176aaf	5ee3ac25a944a8cc548fca6db039a872	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.771844
+10	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	2403eeec5cbfdd2d9687cd05ef0bea2a	0eb64b982d992c9b04baaca143176aaf	5ee3ac25a944a8cc548fca6db039a872	3	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 07:12:21.771854
+11	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	4fd08f9f61a15a15ebb75482cd2b4e8f	0eb64b982d992c9b04baaca143176aaf	8a927c576627b6a58340521ff3df79c5	3	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.772051
+12	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	16abe98739dff267abf43339b623d113	0eb64b982d992c9b04baaca143176aaf	4c6aadaf9d259cbea45e93ea74a2fda6	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.772262
+13	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	7c8e9282e3112b877ed7555192365121	0eb64b982d992c9b04baaca143176aaf	467f5df94bac941beb986e8fbfc781e1	3	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.772492
+14	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	541e49efe53c0313d6832b60e08093c7	0eb64b982d992c9b04baaca143176aaf	973ea7a64324fd34921699cb5e7b48ec	3	carrier	Walmart	Walmart	regex_dictionary	2026-07-08 07:12:21.773567
+15	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	ab048a51d17aa1a93859bc89a058b46e	5156583c42034a3231c313e6e4312a90	57c1c75c3eed620daff459c68bf25959	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.774091
+16	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	4251e87fdac5b13b072e393009967fb0	5156583c42034a3231c313e6e4312a90	2f130358c1266ab3d6730d7c7e9682f7	4	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.774624
+17	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	66341133f09f40ab8a8209cdc35de86e	13cd332ac317ecc751d1d4ae1c28145d	b93ac889859d178e671c614c77f497db	5	carrier	T-Mobile	T-Mobile	regex_dictionary	2026-07-08 07:12:21.774834
+18	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	417c813da27b4334abf911027ecac10e	13cd332ac317ecc751d1d4ae1c28145d	893262bef486623f37d9d00af40798e9	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.775116
+19	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	0021ec71293cdf6e16addb12a895cd20	13cd332ac317ecc751d1d4ae1c28145d	8d130a5efe9c55996c64b1f0c6e6bee1	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.775265
+20	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	1e63894d1de641f2362f4ac07aed5a7d	13cd332ac317ecc751d1d4ae1c28145d	ff4a759d53225ef9b6e9fa321f4b9d96	5	device_model	S25	S25	regex_dictionary	2026-07-08 07:12:21.775489
+21	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	616a529cbc3b17df6cee53ba0de79adf	13cd332ac317ecc751d1d4ae1c28145d	ff4a759d53225ef9b6e9fa321f4b9d96	5	device_model	A17 5G	A17 5G	regex_dictionary	2026-07-08 07:12:21.775498
+22	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	04672dc73c57dfbd7b0e865d8907dcbe	13cd332ac317ecc751d1d4ae1c28145d	ff4a759d53225ef9b6e9fa321f4b9d96	5	device_model	A37 5G	A37 5G	regex_dictionary	2026-07-08 07:12:21.775507
+23	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	c837e8663b84b024ec76719ee324c856	13cd332ac317ecc751d1d4ae1c28145d	ff4a759d53225ef9b6e9fa321f4b9d96	5	device_model	Flip7	Flip7	regex_dictionary	2026-07-08 07:12:21.775515
+24	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	4d90420c72f1dcd86e38387a11274aef	13cd332ac317ecc751d1d4ae1c28145d	ff4a759d53225ef9b6e9fa321f4b9d96	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 07:12:21.775523
+25	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	280f9d1b9e9f99845b1d982e6c1aac03	13cd332ac317ecc751d1d4ae1c28145d	28f577e9b2f381071d75902308a3f834	5	carrier	AT&T	AT&T	regex_dictionary	2026-07-08 07:12:21.775690
+26	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	0cf7ecdf6c9b54c07f1c2cacd4818d2e	13cd332ac317ecc751d1d4ae1c28145d	ff6bba71c0970739a0ef3d016e0dbd2d	5	device_model	iPhone 16	iPhone 16	regex_dictionary	2026-07-08 07:12:21.775858
+27	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	cab7b1e9d5a7fee68a393e645e26f31c	13cd332ac317ecc751d1d4ae1c28145d	ff6bba71c0970739a0ef3d016e0dbd2d	5	device_model	Galaxy S25 FE	Galaxy S25 FE	regex_dictionary	2026-07-08 07:12:21.775867
+28	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	ad43324e7ed7ac04e09c31f4ed57c743	13cd332ac317ecc751d1d4ae1c28145d	ff6bba71c0970739a0ef3d016e0dbd2d	5	manufacturer	Samsung	Samsung	regex_dictionary	2026-07-08 07:12:21.775876
+29	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	9e2f93bfd93edcbf85fd77e95639a826	13cd332ac317ecc751d1d4ae1c28145d	d202d59074b773dd9ad8463641e8c964	5	carrier	Verizon	Verizon	regex_dictionary	2026-07-08 07:12:21.775979
 
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
-Input row count: 1863
+Input row count: 1827
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                            object
@@ -536,8 +563,8 @@ detection_method                        object
 created_at                 datetime64[ns, UTC]
 dtype: object
 
-Appending 1863 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly...
-Append completed: 1863 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly.
+Appending 1827 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly...
+Append completed: 1827 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly.
 ====================================================================================================
 
 CELL 15: Extracting TOC expected page map
@@ -548,27 +575,27 @@ DATAFRAME PREVIEW: silver_toc_page_map_df
 ========================================================================================================================
 Rows: 21
 deck_id	run_id	pdf_hash	pdf_name	deck_week	toc_map_id	toc_source_page_number	expected_page_number	expected_section_name	toc_line_text	created_at
-0	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	66609b3fbf6a16c9a99dab6854867a32	3	5	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 06:52:03.918321
-1	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	9824fe22b7f8ca14e07f68fef9a0f0c5	3	6	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 06:52:03.918327
-2	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	2513bde3c9e99d9589d6f335fe095a6e	3	8	major_offer_changes	▪Major Competitive Offer Updates ................	2026-07-08 06:52:03.918340
-3	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	2d60015d969d6c65845e0577fb60ca61	3	10	postpaid_apple_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...	2026-07-08 06:52:03.918363
-4	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	968bca905f01d595fc7bb5954fcce9a1	3	11	postpaid_samsung_google_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...	2026-07-08 06:52:03.918373
-5	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	034041a67495252e39a1caea0f2b7a5e	3	12	postpaid_motorola_affordable_byod_offers	TM/VZ/ATT/Xfinity/Spectrum 2nd Tier, Affordabl...	2026-07-08 06:52:03.918408
-6	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	3ef238b8b65a2d9d8dd5702dd2529e6a	3	13	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:52:03.918432
-7	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	ea1f288044b4c3c93d78c33c97baeb72	3	14	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:52:03.918435
-8	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	bfd6aab8356d2c04921e6da0740f1b4a	3	15	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 06:52:03.918439
-9	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	27d95c00790be3a1dd5018fa9992f664	3	16	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 06:52:03.918456
-10	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	dd9862be30a57076eaa0290f24add290	3	17	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 06:52:03.918459
-11	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	ca2a394e140093e06090eb921effd33f	3	18	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 06:52:03.918472
-12	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	52407243cd299a2714e8ca5a52993d54	3	19	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 06:52:03.918475
-13	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	78a198db62c0531b1ed31aef3fa5f907	3	20	business_device_offers	❖Postpaid Business - Device Offers...............	2026-07-08 06:52:03.918486
-14	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	045b05b0b559bede10e52813a081e9ad	3	21	national_retail_readout	❖National Retail - Weekly Readout by NPD ........	2026-07-08 06:52:03.918496
-15	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	8f350bc30ac60ed9b73d7f66d96b518e	3	22	section_divider_prepaid	❖Prepaid ........................................	2026-07-08 06:52:03.918510
-16	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	fd32bd2e7400b9c3b6b9f2b16c02814f	3	23	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:52:03.918523
-17	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	f3cf5164fb1866b5f0244599a1248b67	3	24	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:52:03.918525
-18	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	5a414efb18a6e2ee9d057d756ea45b4d	3	25	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 06:52:03.918527
-19	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	f13d7a01dbaae21c2893005901f5b8c1	3	26	prepaid_flagship_offers	Prepaid Flagship Brands - Current Offers ........	2026-07-08 06:52:03.918538
-20	b63b100ecc12eb302762291a98695ef7	589e198f8580bc9551111ad8d89dd7e3	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (7).pdf	2026-05-29	02dd3529404655af3fa60f689a03c255	3	27	walmart_prepaid_offers	Prepaid Brands at Walmart - Current Offers ......	2026-07-08 06:52:03.918549
+0	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	9198510dc9e92cbd1526becbf592097e	3	5	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 07:12:24.501757
+1	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	7716a3f560a5ab0b7c774dacb67ecb6d	3	6	ci_headlines	▪CI Headlines - Postpaid & Prepaid...............	2026-07-08 07:12:24.501765
+2	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	9753fdcb37c164ae702f3fc6a7feb0ca	3	8	major_offer_changes	▪Major Competitive Offer Updates ................	2026-07-08 07:12:24.501780
+3	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	1ea8af2d8817e655223a34d2fcbceb9d	3	10	postpaid_apple_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Apple Devi...	2026-07-08 07:12:24.501804
+4	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	4f08faea74b61d2a65f9b90b906a02d1	3	11	postpaid_samsung_google_device_offers	TM/VZ/ATT/Xfinity/Spectrum Postpaid Samsung & ...	2026-07-08 07:12:24.501816
+5	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	7000863fa0d85e52be2a4c3b4ab7c341	3	12	postpaid_motorola_affordable_byod_offers	TM/VZ/ATT/Xfinity/Spectrum 2nd Tier, Affordabl...	2026-07-08 07:12:24.501828
+6	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	d4bfcca67ac5e4c9ce8920cfe7cfb603	3	13	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 07:12:24.501840
+7	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	055f4283c083d7b65263cb8a0959077f	3	14	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 07:12:24.501842
+8	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	913b5078bfcc659699cd5829a91057ea	3	15	postpaid_bts_offers	T-Mobile/Verizon/AT&T Consumer BTS Offers .......	2026-07-08 07:12:24.501845
+9	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	9cc4c889d9106715daeb2c9ba7696f6b	3	16	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 07:12:24.501857
+10	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	8c1f5f5bd62c867e8b7e809e3111d555	3	17	postpaid_service_offers	T-Mobile/Verizon/AT&T Service(s) ................	2026-07-08 07:12:24.501860
+11	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	199651baea1517de7ae88c9198eaf915	3	18	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 07:12:24.501876
+12	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	c66a3951ded9f9c692b7b31234018239	3	19	cable_mvno_offers	❖Postpaid Cable MVNOs............................	2026-07-08 07:12:24.501878
+13	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	2b8923743cee840186c5e1f465d391ab	3	20	business_device_offers	❖Postpaid Business - Device Offers...............	2026-07-08 07:12:24.501893
+14	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	a77f0f9b996b6da8ee2f1d5e5ef21c5c	3	21	national_retail_readout	❖National Retail - Weekly Readout by NPD ........	2026-07-08 07:12:24.501905
+15	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	09704e58ad29f99c8547237818bb5b54	3	22	section_divider_prepaid	❖Prepaid ........................................	2026-07-08 07:12:24.501921
+16	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	061bbdedefb30342f0080d398351bb4b	3	23	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 07:12:24.501935
+17	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	22d127d3df04608fb41128015f42ba7e	3	24	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 07:12:24.501937
+18	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	2af674fb791491315ea4b0e5291884b0	3	25	prepaid_brand_offers	Prepaid Brands - Current Offers .................	2026-07-08 07:12:24.501939
+19	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	d117387f1c228fce09dfd02a0a5d7d69	3	26	prepaid_flagship_offers	Prepaid Flagship Brands - Current Offers ........	2026-07-08 07:12:24.501952
+20	1dec9cf8c4c0cfc1f538fe9666e699a3	2ec9f52b5d1d575ac61981f756ba0a2e	8df28604c9506a4cf10699adce7e0c99	Competitive_Offer_Report_050826 (1).pdf	2026-05-08	5d3eb425f895aaaf11825d182024df92	3	27	walmart_prepaid_offers	Prepaid Brands at Walmart - Current Offers ......	2026-07-08 07:12:24.501965
 
 
 ====================================================================================================
@@ -629,7 +656,7 @@ First lines:
 T-Mobile Confidential
 T-Mobile Confidential
 1
-May 29, 2026
+May 8, 2026
 MARKET &
 CHANNEL
 INSIGHTS
@@ -641,6 +668,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.98
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: cover page
 
@@ -663,6 +691,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 1.0
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: Notice of Confidentiality
 
@@ -685,6 +714,7 @@ Extraction strategy: extract_toc_only
 Business segment: unknown
 Confidence: 1.0
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: Table of Contents
 
@@ -707,6 +737,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.9
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: CI Headlines divider
 
@@ -715,44 +746,46 @@ Classifying page 5
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-COMPETITIVE INTELLIGENCE HEADLINES   May 29, 2026
+COMPETITIVE INTELLIGENCE HEADLINES   May 8, 2026
 Postpaid & Cable MVNO Key Highlights
 1. AT&T
-•
-Build-A-Plan to Launch 5/27: AT&T’s Build-A-Plan launched on May 27 but as of publication there are no links to the offer on AT&T’s website; an interested
-party must know the URL for the service to sign up. One customer who attempted to sign up when the service became available seemed to be in a doom loop
-and unable to receive support to get the service up and running. (5/27 - )
+• Offer Changes to Less-Popular Handsets - AT&T once again made some offers available to new lines only. The handsets in question are the
+Samsung Galaxy Flip7, S25 FE, A17 5G and A37 5G handsets. The handsets all offer discounts which vary based on the customer being a
+new line to AT&T or an existing account upgrading; new lines receive a better offer than upgrades. AT&T did something similar earlier this
+year for the iPhone 16 and 16e along with the Samsung Galaxy S25 FE.
 Expected from TOC: ci_headlines
-Final section: ci_headlines_postpaid
-Page type: narrative_headline
-Extraction strategy: headline_parser
-Business segment: mixed
+Final section: cable_mvno_handset_offers
+Page type: dense_text_table
+Extraction strategy: mvno_parser
+Business segment: cable_mvno
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: cable_mvno_handset
 Review required: False
-Reason: Header registry matched rule: ci_headlines
+Reason: Header registry matched rule: cable_mvno_handset
 
 ----------------------------------------------------------------------------------------------------
 Classifying page 6
 ----------------------------------------------------------------------------------------------------
 First lines:
-COMPETITIVE INTELLIGENCE HEADLINES   May 29, 2026
+COMPETITIVE INTELLIGENCE HEADLINES   May 8, 2026
 Prepaid & MVNO Key Highlights
 1.
 Cricket Wireless
 •
-“Deal Drop” Sale features Free iPhone 16e: Repeating the month-end flash sale in April, Cricket launched a “deal drop” sale offering the same 4 free phones with port & $60 plan - with
-the latest offering valid through Sunday, June 7: iPhone 16 (online req. 3x plan), Galaxy A36, Galaxy A37 & moto edge 2025 (5/29 - 6/7)
-•
+EXPIRED: Weekend offers for free phones ended...iPhone 16e, Galaxy A37, Galaxy A36 and moto edge 2025 (4/30 - 5/3); all return to previous pricing with A37 at $99 for port or NL (5/4 -)
+2.
+Boost Mobile
 Expected from TOC: ci_headlines
-Final section: ci_headlines_postpaid
-Page type: narrative_headline
+Final section: national_retail_readout
+Page type: retail_summary
 Extraction strategy: headline_parser
-Business segment: mixed
-Confidence: 0.95
+Business segment: national_retail
+Confidence: 0.85
 Classification source: header_registry
-Review required: False
-Reason: Header registry matched rule: ci_headlines
+Matched header rule: national_retail
+Review required: True
+Reason: Header registry matched rule: national_retail
 
 ----------------------------------------------------------------------------------------------------
 Classifying page 7
@@ -773,6 +806,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.9
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: offer updates divider
 
@@ -781,7 +815,7 @@ Classifying page 8
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Major Offer Changes Effective May 29, 2026
+Major Offer Changes Effective May 8, 2026
 ***TFB Offer Changes:
 Reference Slide #20***
 POSTPAID
@@ -795,6 +829,7 @@ Extraction strategy: major_changes_parser
 Business segment: mixed
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: major_offer_changes
 Review required: False
 Reason: Header registry matched rule: major_offer_changes
 
@@ -817,6 +852,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.9
 Classification source: header_registry
+Matched header rule: offer_updates_divider
 Review required: False
 Reason: Header registry matched rule: offer_updates_divider
 
@@ -825,7 +861,7 @@ Classifying page 10
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Post-Paid Apple Smartphone Offers Effective May 29, 2026
+Post-Paid Apple Smartphone Offers Effective May 8, 2026
 SMARTPHONES
 T-Mobile
 Verizon
@@ -839,6 +875,7 @@ Extraction strategy: matrix_text_block_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: apple_postpaid
 Review required: False
 Reason: Header registry matched rule: apple_postpaid
 
@@ -847,7 +884,7 @@ Classifying page 11
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Post-Paid Samsung and Google Smartphone Offers Effective May 29, 2026
+Post-Paid Samsung and Google Smartphone Offers Effective May 8, 2026
 11
 SMARTPHONES
 T-Mobile
@@ -861,6 +898,7 @@ Extraction strategy: matrix_text_block_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: samsung_google_postpaid
 Review required: False
 Reason: Header registry matched rule: samsung_google_postpaid
 
@@ -870,7 +908,7 @@ Classifying page 12
 First lines:
 T-Mobile Confidential
 12
-Post-Paid Motorola, Affordable Phones and BYOD Offers Effective May 29, 2026
+Post-Paid Motorola, Affordable Phones and BYOD Offers Effective May 8, 2026
 SMARTPHONES
 T-Mobile
 Verizon
@@ -883,6 +921,7 @@ Extraction strategy: matrix_text_block_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: motorola_affordable_byod
 Review required: False
 Reason: Header registry matched rule: motorola_affordable_byod
 
@@ -891,7 +930,7 @@ Classifying page 13
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Post-Paid BTS (Watches) Effective May 29, 2026
+Post-Paid BTS (Watches) Effective May 8, 2026
 T-Mobile
 AT&T
 $10.99 plan
@@ -899,20 +938,21 @@ Verizon
 $10 Gizmo/Care
 $15 Unlimited
 Expected from TOC: postpaid_bts_offers
-Final section: postpaid_bts_watch_offers
+Final section: postpaid_bts_tablet_offers
 Page type: matrix_or_table
 Extraction strategy: bts_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: bts_tablet
 Review required: False
-Reason: Header registry matched rule: bts_watches
+Reason: Header registry matched rule: bts_tablet
 
 ----------------------------------------------------------------------------------------------------
 Classifying page 14
 ----------------------------------------------------------------------------------------------------
 First lines:
-Post-Paid BTS (Tablet) Effective May 29, 2026
+Post-Paid BTS (Tablet) Effective May 8, 2026
 T-Mobile
 AT&T
 $20.99 plan
@@ -921,21 +961,22 @@ $20 Welcome
 $40 Unlimited
 $50 Unlimited Plus
 Expected from TOC: postpaid_bts_offers
-Final section: postpaid_bts_watch_offers
+Final section: postpaid_bts_tablet_offers
 Page type: matrix_or_table
 Extraction strategy: bts_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: bts_tablet
 Review required: False
-Reason: Header registry matched rule: bts_watches
+Reason: Header registry matched rule: bts_tablet
 
 ----------------------------------------------------------------------------------------------------
 Classifying page 15
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Post-Paid BTS & Other Offers Effective May 29, 2026
+Post-Paid BTS & Other Offers Effective May 8, 2026
 T-Mobile
 AT&T
 Verizon
@@ -943,21 +984,22 @@ Connected Devices
 CONNECTED CAR DEVICES:
 ▪SYNCUP DRIVE: On Us - w/ AAL & $2 plan
 Expected from TOC: postpaid_bts_offers
-Final section: postpaid_bts_watch_offers
+Final section: postpaid_bts_tablet_offers
 Page type: matrix_or_table
 Extraction strategy: bts_parser
 Business segment: postpaid
 Confidence: 1.0
 Classification source: header_registry
+Matched header rule: bts_tablet
 Review required: False
-Reason: Header registry matched rule: bts_watches
+Reason: Header registry matched rule: bts_tablet
 
 ----------------------------------------------------------------------------------------------------
 Classifying page 16
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-T-Mobile & AT&T Post-Paid Service Offers Effective May 29, 2026
+T-Mobile & AT&T Post-Paid Service Offers Effective May 8, 2026
 Brands
 BYOD
 Wireless Service
@@ -971,6 +1013,7 @@ Extraction strategy: service_parser
 Business segment: postpaid
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: postpaid_service
 Review required: False
 Reason: Header registry matched rule: postpaid_service
 
@@ -979,7 +1022,7 @@ Classifying page 17
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Verizon Post-Paid Service Offers Effective May 29, 2026
+Verizon Post-Paid Service Offers Effective May 8, 2026
 Brand
 BYOD
 Wireless Service
@@ -993,6 +1036,7 @@ Extraction strategy: service_parser
 Business segment: postpaid
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: postpaid_service
 Review required: False
 Reason: Header registry matched rule: postpaid_service
 
@@ -1001,7 +1045,7 @@ Classifying page 18
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Postpaid Cable MVNO Handset Offers Effective May 29, 2026
+Postpaid Cable MVNO Handset Offers Effective May 8, 2026
 Optimum Mobile (36 mos. EIP)
 Spectrum Mobile (36 mos. EIP since 2/21/23)
 Xfinity Mobile (24 mos. EIP)
@@ -1015,6 +1059,7 @@ Extraction strategy: mvno_parser
 Business segment: cable_mvno
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: cable_mvno_handset
 Review required: False
 Reason: Header registry matched rule: cable_mvno_handset
 
@@ -1023,7 +1068,7 @@ Classifying page 19
 ----------------------------------------------------------------------------------------------------
 First lines:
 T-Mobile Confidential
-Cable MVNO Service Pricing & Offers Effective May 29, 2026
+Cable MVNO Service Pricing & Offers Effective May 8, 2026
 Optimum Mobile
 Spectrum Mobile
 Xfinity Mobile
@@ -1037,6 +1082,7 @@ Extraction strategy: service_parser
 Business segment: cable_mvno
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: cable_mvno_service
 Review required: False
 Reason: Header registry matched rule: cable_mvno_service
 
@@ -1050,7 +1096,7 @@ Business
 T-Mobile
 AT&T
 Verizon
-Comcast
+Xfinity
 Spectrum
 Expected from TOC: business_device_offers
 Final section: business_device_offers
@@ -1059,6 +1105,7 @@ Extraction strategy: matrix_text_block_parser
 Business segment: business
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: business_device
 Review required: False
 Reason: Header registry matched rule: business_device
 
@@ -1072,7 +1119,7 @@ Business
 T-Mobile
 AT&T
 Verizon
-Comcast
+Xfinity
 Spectrum
 Expected from TOC: national_retail_readout
 Final section: business_device_offers
@@ -1081,7 +1128,8 @@ Extraction strategy: matrix_text_block_parser
 Business segment: business
 Confidence: 0.95
 Classification source: header_registry
-Review required: True
+Matched header rule: business_device
+Review required: False
 Reason: Header registry matched rule: business_device
 
 ----------------------------------------------------------------------------------------------------
@@ -1090,12 +1138,12 @@ Classifying page 22
 First lines:
 22
 Click HERE to Open This Week’s Update
-Key Highlights - Week Ending 5/29/26:
+Key Highlights - Week Ending 5/8/26:
 •
-Best Buy slightly pulled backed on the unlocked phone subsidies this round as the top
-promotional offer was the $350 discount on the Samsung Galaxy Z Fold 7 phone, which is
-advertised for $1649 (versus the $400 discount on the predecessor Galaxy Z Fold 6 model
-last week). Other notable mentions are the $300 discounts on the Google Pixel 10 Pro Fold
+Best Buy unlocked promotions feature up to $350 off the Samsung Galaxy Z Fold7, and $300
+off the Google Pixel 10 Pro XL or 10 Pro Fold. Promotions between $200 and $300 are
+available on the Samsung Galaxy Z Flip7, Galaxy S22 Ultra and Galaxy S25 Edge, Google Pixel
+10 and 10 Pro. Other unlocked promotions less than $200 off are running on smartphones
 Expected from TOC: section_divider_prepaid
 Final section: national_retail_readout
 Page type: retail_summary
@@ -1103,6 +1151,7 @@ Extraction strategy: headline_parser
 Business segment: national_retail
 Confidence: 0.85
 Classification source: header_registry
+Matched header rule: national_retail
 Review required: True
 Reason: Header registry matched rule: national_retail
 
@@ -1125,6 +1174,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.8
 Classification source: header_registry
+Matched header rule: prepaid_divider
 Review required: True
 Reason: Header registry matched rule: prepaid_divider
 
@@ -1139,7 +1189,7 @@ Metro by T-Mobile
 Boost Mobile
 Cricket
 SERVICE
-New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL  (4/24/25 -
+New Flex Plans: $40/10GB Starter, $40/UNL Starter Plus, $50 Flex UNL, $60 Flex
 Expected from TOC: prepaid_brand_offers
 Final section: prepaid_brand_offers
 Page type: prepaid_reference
@@ -1147,6 +1197,7 @@ Extraction strategy: prepaid_parser
 Business segment: prepaid
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: prepaid_brand_offers
 Review required: False
 Reason: Header registry matched rule: prepaid_brand_offers
 
@@ -1169,7 +1220,8 @@ Extraction strategy: price_grid_parser
 Business segment: prepaid
 Confidence: 0.95
 Classification source: header_registry
-Review required: True
+Matched header rule: metro_price_grid
+Review required: False
 Reason: Header registry matched rule: metro_price_grid
 
 ----------------------------------------------------------------------------------------------------
@@ -1191,7 +1243,8 @@ Extraction strategy: prepaid_parser
 Business segment: prepaid
 Confidence: 0.95
 Classification source: header_registry
-Review required: True
+Matched header rule: prepaid_brand_offers
+Review required: False
 Reason: Header registry matched rule: prepaid_brand_offers
 
 ----------------------------------------------------------------------------------------------------
@@ -1213,7 +1266,8 @@ Extraction strategy: prepaid_parser
 Business segment: prepaid
 Confidence: 0.95
 Classification source: header_registry
-Review required: True
+Matched header rule: prepaid_flagship
+Review required: False
 Reason: Header registry matched rule: prepaid_flagship
 
 ----------------------------------------------------------------------------------------------------
@@ -1235,6 +1289,7 @@ Extraction strategy: prepaid_retail_parser
 Business segment: prepaid
 Confidence: 0.95
 Classification source: header_registry
+Matched header rule: walmart_prepaid
 Review required: False
 Reason: Header registry matched rule: walmart_prepaid
 
@@ -1251,6 +1306,7 @@ Extraction strategy: skip
 Business segment: unknown
 Confidence: 0.9
 Classification source: priority_rule
+Matched header rule: None
 Review required: False
 Reason: Priority rule: sparse final/confidential slide
 
@@ -1258,36 +1314,36 @@ Reason: Priority rule: sparse final/confidential slide
 DATAFRAME PREVIEW: silver_slide_sections_df
 ========================================================================================================================
 Rows: 29
-page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	review_required_flag	section_reason
-0	1	May 29, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	False	Priority rule: cover page
-1	2	The information contained within this document...	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	False	Priority rule: Notice of Confidentiality
-2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	False	Priority rule: Table of Contents
-3	4	MARKET &	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: CI Headlines divider
-4	5	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
-5	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
-6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: offer updates divider
-7	8	Major Offer Changes Effective May 29, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	False	Header registry matched rule: major_offer_changes
-8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	False	Header registry matched rule: offer_updates_di...
-9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: apple_postpaid
-10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: samsung_google_p...
-11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: motorola_afforda...
-12	13	Post-Paid BTS (Watches) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-13	14	Post-Paid BTS (Tablet) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-14	15	Post-Paid BTS & Other Offers Effective May 29,...	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
-16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
-17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_handset
-18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_service
-19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	False	Header registry matched rule: business_device
-20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	True	Header registry matched rule: business_device
-21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	True	Header registry matched rule: national_retail
-22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	True	Header registry matched rule: prepaid_divider
-23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	False	Header registry matched rule: prepaid_brand_of...
-24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: metro_price_grid
-25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_brand_of...
-26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_flagship
-27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	False	Header registry matched rule: walmart_prepaid
-28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	False	Priority rule: sparse final/confidential slide
+page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	matched_header_rule	review_required_flag	section_reason
+0	1	May 8, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	None	False	Priority rule: cover page
+1	2	NOTICE OF CONFIDENTIALITY	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	None	False	Priority rule: Notice of Confidentiality
+2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	None	False	Priority rule: Table of Contents
+3	4	CI Headlines	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	None	False	Priority rule: CI Headlines divider
+4	5	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026	ci_headlines	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	cable_mvno_handset	False	Header registry matched rule: cable_mvno_handset
+5	6	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026	ci_headlines	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	national_retail	True	Header registry matched rule: national_retail
+6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	None	False	Priority rule: offer updates divider
+7	8	Major Offer Changes Effective May 8, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	major_offer_changes	False	Header registry matched rule: major_offer_changes
+8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	offer_updates_divider	False	Header registry matched rule: offer_updates_di...
+9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	apple_postpaid	False	Header registry matched rule: apple_postpaid
+10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	samsung_google_postpaid	False	Header registry matched rule: samsung_google_p...
+11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	motorola_affordable_byod	False	Header registry matched rule: motorola_afforda...
+12	13	Post-Paid BTS (Watches) Effective May 8, 2026	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+13	14	Post-Paid BTS (Tablet) Effective May 8, 2026	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+14	15	Post-Paid BTS & Other Offers Effective May 8, ...	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	postpaid_service	False	Header registry matched rule: postpaid_service
+16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	postpaid_service	False	Header registry matched rule: postpaid_service
+17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	cable_mvno_handset	False	Header registry matched rule: cable_mvno_handset
+18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	cable_mvno_service	False	Header registry matched rule: cable_mvno_service
+19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	business_device	False	Header registry matched rule: business_device
+20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	business_device	False	Header registry matched rule: business_device
+21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	national_retail	True	Header registry matched rule: national_retail
+22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	prepaid_divider	True	Header registry matched rule: prepaid_divider
+23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_brand_offers	False	Header registry matched rule: prepaid_brand_of...
+24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	metro_price_grid	False	Header registry matched rule: metro_price_grid
+25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_brand_offers	False	Header registry matched rule: prepaid_brand_of...
+26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_flagship	False	Header registry matched rule: prepaid_flagship
+27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	walmart_prepaid	False	Header registry matched rule: walmart_prepaid
+28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	None	False	Priority rule: sparse final/confidential slide
 
 
 ====================================================================================================
@@ -1401,15 +1457,15 @@ Creating content blocks for page 4
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 5
-  section: ci_headlines_postpaid
-  page_type: narrative_headline
-  strategy: headline_parser
-  Content blocks created: 5
+  section: cable_mvno_handset_offers
+  page_type: dense_text_table
+  strategy: mvno_parser
+  Content blocks created: 4
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 6
-  section: ci_headlines_postpaid
-  page_type: narrative_headline
+  section: national_retail_readout
+  page_type: retail_summary
   strategy: headline_parser
   Content blocks created: 4
 
@@ -1425,7 +1481,7 @@ Creating content blocks for page 8
   section: major_offer_changes
   page_type: major_changes
   strategy: major_changes_parser
-  Content blocks created: 47
+  Content blocks created: 34
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 9
@@ -1439,84 +1495,84 @@ Creating content blocks for page 10
   section: postpaid_apple_device_offers
   page_type: dense_matrix
   strategy: matrix_text_block_parser
-  Content blocks created: 143
+  Content blocks created: 66
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 11
   section: postpaid_samsung_google_device_offers
   page_type: dense_matrix
   strategy: matrix_text_block_parser
-  Content blocks created: 189
+  Content blocks created: 80
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 12
   section: postpaid_motorola_affordable_byod_offers
   page_type: dense_matrix
   strategy: matrix_text_block_parser
-  Content blocks created: 115
+  Content blocks created: 45
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 13
-  section: postpaid_bts_watch_offers
+  section: postpaid_bts_tablet_offers
   page_type: matrix_or_table
   strategy: bts_parser
-  Content blocks created: 31
+  Content blocks created: 20
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 14
-  section: postpaid_bts_watch_offers
+  section: postpaid_bts_tablet_offers
   page_type: matrix_or_table
   strategy: bts_parser
-  Content blocks created: 29
+  Content blocks created: 23
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 15
-  section: postpaid_bts_watch_offers
+  section: postpaid_bts_tablet_offers
   page_type: matrix_or_table
   strategy: bts_parser
-  Content blocks created: 26
+  Content blocks created: 21
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 16
   section: postpaid_service_offers
   page_type: service_reference
   strategy: service_parser
-  Content blocks created: 35
+  Content blocks created: 22
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 17
   section: postpaid_service_offers
   page_type: service_reference
   strategy: service_parser
-  Content blocks created: 77
+  Content blocks created: 21
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 18
   section: cable_mvno_handset_offers
   page_type: dense_text_table
   strategy: mvno_parser
-  Content blocks created: 77
+  Content blocks created: 41
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 19
   section: cable_mvno_service_offers
   page_type: service_reference
   strategy: service_parser
-  Content blocks created: 50
+  Content blocks created: 36
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 20
   section: business_device_offers
   page_type: business_matrix
   strategy: matrix_text_block_parser
-  Content blocks created: 118
+  Content blocks created: 11
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 21
   section: business_device_offers
   page_type: business_matrix
   strategy: matrix_text_block_parser
-  Content blocks created: 38
+  Content blocks created: 15
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 22
@@ -1537,36 +1593,38 @@ Creating content blocks for page 24
   section: prepaid_brand_offers
   page_type: prepaid_reference
   strategy: prepaid_parser
-  Content blocks created: 84
+  Content blocks created: 20
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 25
   section: prepaid_metro_price_grid
   page_type: price_grid
   strategy: price_grid_parser
+  Price grid detected. Skipping generic parser.
+  This page should be handled later with Gemini Vision/table extraction.
   Price grid row candidates created: 0
-  Content blocks created: 622
+  Generic content blocks skipped for this price grid page.
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 26
   section: prepaid_brand_offers
   page_type: prepaid_reference
   strategy: prepaid_parser
-  Content blocks created: 143
+  Content blocks created: 40
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 27
   section: prepaid_flagship_offers
   page_type: prepaid_reference
   strategy: prepaid_parser
-  Content blocks created: 77
+  Content blocks created: 12
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 28
   section: walmart_prepaid_offers
   page_type: retail_prepaid
   strategy: prepaid_retail_parser
-  Content blocks created: 165
+  Content blocks created: 23
 
 ----------------------------------------------------------------------------------------------------
 Creating content blocks for page 29
@@ -1578,58 +1636,58 @@ Creating content blocks for page 29
 ========================================================================================================================
 DATAFRAME PREVIEW: silver_content_blocks_df
 ========================================================================================================================
-Rows: 2075
+Rows: 538
 page_number	final_section_name	page_type	block_type	carrier	business_segment	change_bucket	device_family_text	raw_block_text	block_confidence	review_required_flag
-0	5	ci_headlines_postpaid	narrative_headline	headline_block	T-Mobile	mixed	None	None	COMPETITIVE INTELLIGENCE HEADLINES May 29, 202...	0.85	False
-1	5	ci_headlines_postpaid	narrative_headline	headline_block	AT&T	mixed	None	None	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...	0.85	False
-2	5	ci_headlines_postpaid	narrative_headline	headline_block	Verizon	mixed	None	None	• iPhone 17 Offers Change - Verizon brought ba...	0.85	False
-3	5	ci_headlines_postpaid	narrative_headline	headline_block	Spectrum	mixed	None	None	• No changes	0.85	False
-4	5	ci_headlines_postpaid	narrative_headline	headline_block	Xfinity	mixed	None	None	• No changes	0.85	False
-5	6	ci_headlines_postpaid	narrative_headline	headline_block	Cricket Wireless	mixed	None	None	• “Deal Drop” Sale features Free iPhone 16e: R...	0.85	False
-6	6	ci_headlines_postpaid	narrative_headline	headline_block	Boost Mobile	mixed	None	None	• No changes 3.	0.85	False
-7	6	ci_headlines_postpaid	narrative_headline	headline_block	Straight Talk	mixed	None	None	• Up to $50 off Phones: 25% off any full-price...	0.85	False
-8	6	ci_headlines_postpaid	narrative_headline	headline_block	Total Wireless	mixed	None	None	• iPhone 16e $79 In-Store: Total Wireless has ...	0.85	False
-9	8	major_offer_changes	major_changes	offer_block	None	mixed	None	None	Major Offer Changes Effective May 29, 2026	0.88	False
-10	8	major_offer_changes	major_changes	offer_block	None	mixed	None	None	***TFB Offer Changes: Reference Slide #20***	0.88	False
-11	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$1000 off iPhone 17 series w/ Port and Better...	0.88	False
-12	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$830 off iPhone 17 series w/ Port and More (5...	0.88	False
-13	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was	0.88	False
-14	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	$1,200) (5/28 - )	0.88	False
-15	8	major_offer_changes	major_changes	offer_block	T-Mobile	mixed	None	None	▪No offers expired	0.88	False
-16	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	▪GS26 Series Trade-in Offer Updates: (5/29)	0.88	False
-17	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...	0.88	False
-18	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	S26: >$900 off w/ min. $95 trade & Extra/Premi...	0.88	False
-19	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	All models: $500 off w/min. $35 trade & Value ...	0.88	False
-20	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	▪GS26 Series - removed	0.88	False
-21	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	$1300/$230 trade level; $900/$35	0.88	False
-22	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	trade level (2/25 - 5/28) &	0.88	False
-23	8	major_offer_changes	major_changes	offer_block	AT&T	mixed	None	None	removed select/any condition trade (3/12 - 5/28)	0.88	False
-24	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪iPhone 17 offers:	0.88	False
-25	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$1,000 off w/ AAL & UNL Ultimate	0.88	False
-26	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$830 off w/ AAL & UNL Plus	0.88	False
-27	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...	0.88	False
-28	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪Up to $500 off Apple Watch w/ iPhone purchase	0.88	False
-29	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	(was up to $250 off)	0.88	False
-30	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪$500 off iPad w/ iPhone purchase (was $320)	0.88	False
-31	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪^^Similar offers for Samsung and Google	0.88	False
-32	8	major_offer_changes	major_changes	offer_block	Verizon	mixed	None	None	▪No expired offers CABLE MVNOs	0.88	False
-33	8	major_offer_changes	major_changes	offer_block	Spectrum	mixed	None	None	▪No new offers	0.88	False
-34	8	major_offer_changes	major_changes	offer_block	Xfinity	mixed	None	None	▪No new offers	0.88	False
-35	8	major_offer_changes	major_changes	offer_block	Spectrum	mixed	None	None	▪No expired offers	0.88	False
-36	8	major_offer_changes	major_changes	offer_block	Xfinity	mixed	None	None	▪No expired offers	0.88	False
-37	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪Galaxy Watch7 $29/existing customer (5/28 - )...	0.88	False
-38	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪HINT $0 Gateway - existing/AAL only (5/28 - )	0.88	False
-39	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )	0.88	False
-40	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	...was $45 or $40 w/autopay ▪No changes	0.88	False
-41	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪“Deal Drop” Sale - FREE with port & $60 plan ...	0.88	False
-42	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o iPhone 16e ...$99/new line (3x $60 plan onli...	0.88	False
-43	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Galaxy A36 ...$79/new line	0.88	False
-44	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Galaxy A37 ...$99/new line	0.88	False
-45	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	o Moto edge 2025 ...$99/new line	0.88	False
-46	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪moto razr 2025 - $149 port or new line w/$60 ...	0.88	False
-47	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	TBD) ...was $99 ▪Unlock Policy: Will change on...	0.88	False
-48	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪In-Store: $240 12-month/BYO	0.88	False
-49	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	UNL plan (reg. $300) (4/30 - 5/25)	0.88	False
+0	5	cable_mvno_handset_offers	dense_text_table	offer_block	AT&T	cable_mvno	None	None	• Offer Changes to Less-Popular Handsets - AT&...	0.75	True
+1	5	cable_mvno_handset_offers	dense_text_table	offer_block	Verizon	cable_mvno	None	iPhone 16, Galaxy S25 FE	• Unlimited Ultimate Price Increase - On Thurs...	0.75	True
+2	5	cable_mvno_handset_offers	dense_text_table	offer_block	Spectrum	cable_mvno	None	iPhone 16, Galaxy S25 FE	• No changes	0.75	True
+3	5	cable_mvno_handset_offers	dense_text_table	offer_block	Xfinity	cable_mvno	None	iPhone 16, Galaxy S25 FE	• No changes	0.75	True
+4	6	national_retail_readout	retail_summary	headline_block	Cricket Wireless	national_retail	None	None	• EXPIRED: Weekend offers for free phones ende...	0.85	True
+5	6	national_retail_readout	retail_summary	headline_block	Boost Mobile	national_retail	None	None	• No updates. 3.	0.85	True
+6	6	national_retail_readout	retail_summary	headline_block	Total Wireless	national_retail	None	None	• Refreshed Plan Portfolio: Announced “a newly...	0.85	True
+7	6	national_retail_readout	retail_summary	headline_block	Straight Talk	national_retail	None	None	• Platinum Plan Updates: Added Mexico/Canada r...	0.85	True
+8	8	major_offer_changes	major_changes	offer_block	None	mixed	None	None	Major Offer Changes Effective May 8, 2026 ***T...	0.88	False
+9	8	major_offer_changes	major_changes	offer_block	T-Mobile	postpaid	None	None	▪$315 off iPhone 16 w/ AAL & most plans (5/7 - )	0.88	False
+10	8	major_offer_changes	major_changes	offer_block	T-Mobile	postpaid	None	None	▪No offers expired	0.88	False
+11	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	New Line Only Offers (5/8 - )	0.88	False
+12	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪S25 FE: $146 off w/ AAL & Any UNL plan	0.88	False
+13	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪Flip7: $524 off w/ AAL & Any UNL plan	0.88	False
+14	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪A37 5G: $342 off w/ AAL & Any UNL plan	0.88	False
+15	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪^Some of the phones above have Upgrade offers	0.88	False
+16	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪No offers expired	0.88	False
+17	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪Unlimited Ultimate 2.0 - Verizon quietly repl...	0.88	False
+18	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪Existing customers will not see a price incre...	0.88	False
+19	8	major_offer_changes	major_changes	offer_block	Spectrum	postpaid	None	None	▪No new offers	0.88	False
+20	8	major_offer_changes	major_changes	offer_block	Xfinity	postpaid	None	None	▪No new offers	0.88	False
+21	8	major_offer_changes	major_changes	offer_block	Spectrum	postpaid	None	None	▪No expired offers	0.88	False
+22	8	major_offer_changes	major_changes	offer_block	Xfinity	postpaid	None	None	▪No expired offers	0.88	False
+23	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪Annual Upgrade Level 1 w/$50 plan - now inclu...	0.88	False
+24	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪HINT - $9.99 gateway for existing/AAL (5/7 - ...	0.88	False
+25	8	major_offer_changes	major_changes	offer_block	Metro by T-Mobile	mixed	None	None	▪Moto g 5G 2025 removed from free-with-4lines/...	0.88	False
+26	8	major_offer_changes	major_changes	offer_block	Boost Mobile	mixed	None	None	▪No changes	0.88	False
+27	8	major_offer_changes	major_changes	offer_block	Boost Mobile	mixed	None	None	▪No changes	0.88	False
+28	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪No changes	0.88	False
+29	8	major_offer_changes	major_changes	offer_block	Cricket Wireless	mixed	None	None	▪Last weekend’s free phones with port - iPhone...	0.88	False
+30	8	major_offer_changes	major_changes	offer_block	T-Mobile	postpaid	None	None	▪T-Mobile Prepaid US Pass eSIM - short-term pa...	0.88	False
+31	8	major_offer_changes	major_changes	offer_block	T-Mobile	postpaid	None	None	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/2...	0.88	False
+32	8	major_offer_changes	major_changes	offer_block	T-Mobile	postpaid	None	None	▪No changes	0.88	False
+33	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪No changes	0.88	False
+34	8	major_offer_changes	major_changes	offer_block	AT&T	postpaid	None	None	▪No changes	0.88	False
+35	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪No changes	0.88	False
+36	8	major_offer_changes	major_changes	offer_block	Verizon	prepaid	None	None	▪No changes STRAIGHT TALK	0.88	False
+37	8	major_offer_changes	major_changes	offer_block	Verizon	prepaid	None	None	▪Platinum Plan update - removed free Mobile Pr...	0.88	False
+38	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪Plan Refresh - includes new BYO plan ($25 Tot...	0.88	False
+39	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪Flagship phones - $130 - $300 off select Appl...	0.88	False
+40	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪UFC Promo - up to $100 off FRP for any phone ...	0.88	False
+41	8	major_offer_changes	major_changes	offer_block	Verizon	postpaid	None	None	▪No changes	0.88	False
+42	10	postpaid_apple_device_offers	dense_matrix	offer_block	None	postpaid	None	None	Post-Paid Apple Smartphone Offers Effective Ma...	0.75	True
+43	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- Family Freedom: Up to $800/line EIP payoff (...	0.75	True
+44	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- Keep & Switch: <$800/line EIP payoff (max 4 ...	0.75	True
+45	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- Up to $500 off AW w/ iPhone purch. & BTS AAL	0.75	True
+46	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- Up to $500 off select iPads w/ iPhone purcha...	0.75	True
+47	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...	0.75	True
+48	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- $800 EIP Buyout w/ new phone purchase (Below...	0.75	True
+49	10	postpaid_apple_device_offers	dense_matrix	offer_block	Spectrum	postpaid	None	None	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...	0.75	True
 
 
 ========================================================================================================================
@@ -1641,7 +1699,7 @@ No rows found.
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
-Input row count: 2075
+Input row count: 538
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                          object
@@ -1728,8 +1786,8 @@ review_required_flag                 boolean
 created_at               datetime64[ns, UTC]
 dtype: object
 
-Appending 2075 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly...
-Append completed: 2075 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly.
+Appending 538 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly...
+Append completed: 538 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly.
 ====================================================================================================
 No rows to append to sdi_competitiveOffers_silver_priceGridRows_weekly. Skipping.
 
@@ -1738,64 +1796,64 @@ CELL 18: Creating offer candidates from content blocks
 ========================================================================================================================
 DATAFRAME PREVIEW: silver_offer_candidates_df
 ========================================================================================================================
-Rows: 2071
+Rows: 538
 page_number	section_name	page_type	business_segment	carrier	suggested_offer_category	suggested_offer_subcategory	detected_money_values_json	detected_device_models_json	candidate_confidence	raw_offer_text
-0	5	ci_headlines_postpaid	narrative_headline	mixed	AT&T	device_promotion	trade_in_offer	[]	["Galaxy S26", "S26"]	1.00	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-1	5	ci_headlines_postpaid	narrative_headline	mixed	Verizon	device_promotion	device_discount	[]	["iPhone 17"]	0.85	• iPhone 17 Offers Change - Verizon brought ba...
-2	6	ci_headlines_postpaid	narrative_headline	mixed	Cricket Wireless	market_update	marketing_campaign	[]	["iPhone 16e", "iPhone 16", "Galaxy A37 5G", "...	1.00	• “Deal Drop” Sale features Free iPhone 16e: R...
-3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	device_promotion	device_discount	[]	[]	0.85	• Up to $50 off Phones: 25% off any full-price...
-4	6	ci_headlines_postpaid	narrative_headline	mixed	Total Wireless	device_promotion	retail_price_change	[]	["iPhone 16e"]	1.00	• iPhone 16e $79 In-Store: Total Wireless has ...
-5	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	[]	[]	0.88	Major Offer Changes Effective May 29, 2026
-6	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	[]	[]	0.88	***TFB Offer Changes: Reference Slide #20***
-7	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪$1000 off iPhone 17 series w/ Port and Better...
-8	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪$830 off iPhone 17 series w/ Port and More (5...
-9	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	["Pixel 10 Pro XL"]	0.88	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
-10	8	major_offer_changes	major_changes	mixed	T-Mobile	unknown	unknown	[]	[]	0.88	$1,200) (5/28 - )
-11	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	[]	[]	0.88	▪No offers expired
-12	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	["S26"]	0.88	▪GS26 Series Trade-in Offer Updates: (5/29)
-13	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	["S26+", "S26", "S26 Ultra"]	0.88	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-14	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	["S26"]	0.88	S26: >$900 off w/ min. $95 trade & Extra/Premi...
-15	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	[]	0.88	All models: $500 off w/min. $35 trade & Value ...
-16	8	major_offer_changes	major_changes	mixed	AT&T	offer_status	expired_offer	[]	["S26"]	0.88	▪GS26 Series - removed
-17	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	$1300/$230 trade level; $900/$35
-18	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	trade level (2/25 - 5/28) &
-19	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	trade_in_offer	[]	[]	0.88	removed select/any condition trade (3/12 - 5/28)
-20	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["iPhone 17"]	0.88	▪iPhone 17 offers:
-21	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪$1,000 off w/ AAL & UNL Ultimate
-22	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪$830 off w/ AAL & UNL Plus
-23	8	major_offer_changes	major_changes	mixed	Verizon	market_update	accessory_bundle	[]	[]	0.88	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
-24	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["Apple Watch"]	0.88	▪Up to $500 off Apple Watch w/ iPhone purchase
-25	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	(was up to $250 off)
-26	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	["iPad"]	0.88	▪$500 off iPad w/ iPhone purchase (was $320)
-27	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪^^Similar offers for Samsung and Google
-28	8	major_offer_changes	major_changes	mixed	Verizon	device_promotion	device_discount	[]	[]	0.88	▪No expired offers CABLE MVNOs
-29	8	major_offer_changes	major_changes	mixed	Spectrum	device_promotion	device_discount	[]	[]	0.88	▪No new offers
-30	8	major_offer_changes	major_changes	mixed	Xfinity	device_promotion	device_discount	[]	[]	0.88	▪No new offers
-31	8	major_offer_changes	major_changes	mixed	Spectrum	device_promotion	device_discount	[]	[]	0.88	▪No expired offers
-32	8	major_offer_changes	major_changes	mixed	Xfinity	device_promotion	device_discount	[]	[]	0.88	▪No expired offers
-33	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	retail_price_change	[]	["Galaxy Watch7"]	0.88	▪Galaxy Watch7 $29/existing customer (5/28 - )...
-34	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	free_device_offer	[]	[]	0.88	▪HINT $0 Gateway - existing/AAL only (5/28 - )
-35	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	service_promotion	service_mrc_promo	[]	[]	1.00	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )
-36	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	offer_status	no_change	[]	[]	0.88	...was $45 or $40 w/autopay ▪No changes
-37	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	free_device_offer	[]	[]	0.88	▪“Deal Drop” Sale - FREE with port & $60 plan ...
-38	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["iPhone 16e"]	0.88	o iPhone 16e ...$99/new line (3x $60 plan onli...
-39	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	[]	0.88	o Galaxy A36 ...$79/new line
-40	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	[]	0.88	o Galaxy A37 ...$99/new line
-41	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["Moto edge 2025"]	0.88	o Moto edge 2025 ...$99/new line
-42	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_promotion	aal_offer	[]	["moto razr 2025"]	0.88	▪moto razr 2025 - $149 port or new line w/$60 ...
-43	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	retail_price_change	[]	[]	0.88	TBD) ...was $99 ▪Unlock Policy: Will change on...
-44	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_price_point	[]	[]	0.88	▪In-Store: $240 12-month/BYO
-45	8	major_offer_changes	major_changes	mixed	Cricket Wireless	unknown	unknown	[]	[]	0.88	UNL plan (reg. $300) (4/30 - 5/25)
-46	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_discount	[]	[]	0.88	▪Regional Offer: In-store - $10
-47	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	device_discount	[]	[]	0.88	off new BYO lines $55/$45 plans; stackable wit...
-48	8	major_offer_changes	major_changes	mixed	AT&T	device_promotion	device_discount	[]	[]	0.88	▪AT&T Build-A-Plan - went live 5/27; offers cu...
-49	8	major_offer_changes	major_changes	mixed	AT&T	offer_status	no_change	[]	[]	0.88	plans with $15/1GB base option ▪No changes
+0	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	AT&T	device_promotion	device_discount	[]	["S25", "A17 5G", "A37 5G", "Flip7"]	0.75	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Verizon	plan_pricing	price_increase	[]	["iPhone 16", "Galaxy S25 FE"]	0.75	• Unlimited Ultimate Price Increase - On Thurs...
+2	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Spectrum	offer_status	no_change	[]	["iPhone 16", "Galaxy S25 FE"]	1.00	• No changes
+3	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Xfinity	offer_status	no_change	[]	["iPhone 16", "Galaxy S25 FE"]	1.00	• No changes
+4	6	national_retail_readout	retail_summary	national_retail	Cricket Wireless	offer_status	expired_offer	[]	["iPhone 16e", "moto edge 2025"]	0.85	• EXPIRED: Weekend offers for free phones ende...
+5	6	national_retail_readout	retail_summary	national_retail	Boost Mobile	offer_status	no_change	[]	[]	1.00	• No updates. 3.
+6	6	national_retail_readout	retail_summary	national_retail	Total Wireless	plan_pricing	plan_refresh	[]	["iPhone 17e", "iPhone Air"]	0.85	• Refreshed Plan Portfolio: Announced “a newly...
+7	6	national_retail_readout	retail_summary	national_retail	Straight Talk	service_promotion	monthly_bill_credit	[]	["iPhone 16e", "Galaxy S26", "Galaxy A16 5G", ...	0.85	• Platinum Plan Updates: Added Mexico/Canada r...
+8	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	[]	[]	0.88	Major Offer Changes Effective May 8, 2026 ***T...
+9	8	major_offer_changes	major_changes	postpaid	T-Mobile	service_promotion	aal_offer	[]	["iPhone 16"]	0.88	▪$315 off iPhone 16 w/ AAL & most plans (5/7 - )
+10	8	major_offer_changes	major_changes	postpaid	T-Mobile	offer_status	no_change	[]	[]	1.00	▪No offers expired
+11	8	major_offer_changes	major_changes	postpaid	AT&T	service_promotion	aal_offer	[]	[]	0.88	New Line Only Offers (5/8 - )
+12	8	major_offer_changes	major_changes	postpaid	AT&T	service_promotion	aal_offer	[]	["S25"]	0.88	▪S25 FE: $146 off w/ AAL & Any UNL plan
+13	8	major_offer_changes	major_changes	postpaid	AT&T	service_promotion	aal_offer	[]	["Flip7"]	0.88	▪Flip7: $524 off w/ AAL & Any UNL plan
+14	8	major_offer_changes	major_changes	postpaid	AT&T	service_promotion	aal_offer	[]	["A37 5G"]	0.88	▪A37 5G: $342 off w/ AAL & Any UNL plan
+15	8	major_offer_changes	major_changes	postpaid	AT&T	device_promotion	device_discount	[]	[]	0.88	▪^Some of the phones above have Upgrade offers
+16	8	major_offer_changes	major_changes	postpaid	AT&T	offer_status	no_change	[]	[]	1.00	▪No offers expired
+17	8	major_offer_changes	major_changes	postpaid	Verizon	plan_pricing	price_increase	[]	[]	0.88	▪Unlimited Ultimate 2.0 - Verizon quietly repl...
+18	8	major_offer_changes	major_changes	postpaid	Verizon	plan_pricing	price_increase	[]	[]	0.88	▪Existing customers will not see a price incre...
+19	8	major_offer_changes	major_changes	postpaid	Spectrum	offer_status	no_change	[]	[]	1.00	▪No new offers
+20	8	major_offer_changes	major_changes	postpaid	Xfinity	offer_status	no_change	[]	[]	1.00	▪No new offers
+21	8	major_offer_changes	major_changes	postpaid	Spectrum	offer_status	no_change	[]	[]	1.00	▪No expired offers
+22	8	major_offer_changes	major_changes	postpaid	Xfinity	offer_status	no_change	[]	[]	1.00	▪No expired offers
+23	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	free_device_offer	[]	["moto razr 2024"]	0.88	▪Annual Upgrade Level 1 w/$50 plan - now inclu...
+24	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	free_device_offer	[]	[]	0.88	▪HINT - $9.99 gateway for existing/AAL (5/7 - ...
+25	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	device_promotion	free_device_offer	[]	["Moto g 5G 2025"]	0.88	▪Moto g 5G 2025 removed from free-with-4lines/...
+26	8	major_offer_changes	major_changes	mixed	Boost Mobile	offer_status	no_change	[]	[]	1.00	▪No changes
+27	8	major_offer_changes	major_changes	mixed	Boost Mobile	offer_status	no_change	[]	[]	1.00	▪No changes
+28	8	major_offer_changes	major_changes	mixed	Cricket Wireless	offer_status	no_change	[]	[]	1.00	▪No changes
+29	8	major_offer_changes	major_changes	mixed	Cricket Wireless	device_promotion	free_device_offer	[]	["iPhone 16e"]	0.88	▪Last weekend’s free phones with port - iPhone...
+30	8	major_offer_changes	major_changes	postpaid	T-Mobile	unknown	unknown	[]	[]	0.88	▪T-Mobile Prepaid US Pass eSIM - short-term pa...
+31	8	major_offer_changes	major_changes	postpaid	T-Mobile	unknown	unknown	[]	[]	0.88	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/2...
+32	8	major_offer_changes	major_changes	postpaid	T-Mobile	offer_status	no_change	[]	[]	1.00	▪No changes
+33	8	major_offer_changes	major_changes	postpaid	AT&T	offer_status	no_change	[]	[]	1.00	▪No changes
+34	8	major_offer_changes	major_changes	postpaid	AT&T	offer_status	no_change	[]	[]	1.00	▪No changes
+35	8	major_offer_changes	major_changes	postpaid	Verizon	offer_status	no_change	[]	[]	1.00	▪No changes
+36	8	major_offer_changes	major_changes	prepaid	Verizon	offer_status	no_change	[]	[]	1.00	▪No changes STRAIGHT TALK
+37	8	major_offer_changes	major_changes	prepaid	Verizon	device_promotion	free_device_offer	[]	[]	0.88	▪Platinum Plan update - removed free Mobile Pr...
+38	8	major_offer_changes	major_changes	postpaid	Verizon	plan_pricing	plan_refresh	[]	[]	0.88	▪Plan Refresh - includes new BYO plan ($25 Tot...
+39	8	major_offer_changes	major_changes	postpaid	Verizon	device_promotion	device_discount	[]	[]	0.88	▪Flagship phones - $130 - $300 off select Appl...
+40	8	major_offer_changes	major_changes	postpaid	Verizon	device_promotion	device_discount	[]	[]	0.88	▪UFC Promo - up to $100 off FRP for any phone ...
+41	8	major_offer_changes	major_changes	postpaid	Verizon	offer_status	no_change	[]	[]	1.00	▪No changes
+42	10	postpaid_apple_device_offers	dense_matrix	postpaid	None	device_promotion	device_discount	[]	[]	0.75	Post-Paid Apple Smartphone Offers Effective Ma...
+43	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	[]	[]	0.75	- Family Freedom: Up to $800/line EIP payoff (...
+44	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	service_promotion	eip_buyout	[]	[]	0.75	- Keep & Switch: <$800/line EIP payoff (max 4 ...
+45	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	service_promotion	aal_offer	[]	[]	0.75	- Up to $500 off AW w/ iPhone purch. & BTS AAL
+46	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	market_update	accessory_bundle	[]	["iPad"]	0.75	- Up to $500 off select iPads w/ iPhone purcha...
+47	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_family_offer	[]	[]	0.75	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...
+48	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	[]	[]	0.75	- $800 EIP Buyout w/ new phone purchase (Below...
+49	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_family_offer	[]	["iPhone 17", "Apple Watch SE3", "iPad A16"]	0.75	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
 
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
-Input row count: 2071
+Input row count: 538
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                                object
@@ -1873,8 +1931,8 @@ candidate_source                            object
 created_at                     datetime64[ns, UTC]
 dtype: object
 
-Appending 2071 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly...
-Append completed: 2071 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly.
+Appending 538 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly...
+Append completed: 538 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly.
 ====================================================================================================
 
 CELL 19: Normalizing offer candidates
@@ -1882,64 +1940,64 @@ CELL 19: Normalizing offer candidates
 ========================================================================================================================
 DATAFRAME PREVIEW: silver_normalized_offers_df
 ========================================================================================================================
-Rows: 2071
+Rows: 538
 page_number	section_name	page_type	business_segment	carrier	product_family	primary_device_model	offer_category	offer_subcategory	offer_type	offer_value	validation_status	review_status	status	normalization_confidence	source_raw_text
-0	5	ci_headlines_postpaid	narrative_headline	mixed	AT&T	service_plan	Galaxy S26	device_promotion	trade_in_offer	trade_in_discount	None	passed	auto_approved	ready_for_gold	0.85	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-1	5	ci_headlines_postpaid	narrative_headline	mixed	Verizon	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	• iPhone 17 Offers Change - Verizon brought ba...
-2	6	ci_headlines_postpaid	narrative_headline	mixed	Cricket Wireless	smartphone	iPhone 16e	market_update	marketing_campaign	unknown	None	passed	auto_approved	ready_for_gold	0.85	• “Deal Drop” Sale features Free iPhone 16e: R...
-3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	smartphone	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	• Up to $50 off Phones: 25% off any full-price...
-4	6	ci_headlines_postpaid	narrative_headline	mixed	Total Wireless	smartphone	iPhone 16e	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	• iPhone 16e $79 In-Store: Total Wireless has ...
-5	8	major_offer_changes	major_changes	mixed	None	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.50	Major Offer Changes Effective May 29, 2026
-6	8	major_offer_changes	major_changes	mixed	None	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.50	***TFB Offer Changes: Reference Slide #20***
-7	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$1000 off iPhone 17 series w/ Port and Better...
-8	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	iPhone 17	device_promotion	device_discount	port_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$830 off iPhone 17 series w/ Port and More (5...
-9	8	major_offer_changes	major_changes	mixed	T-Mobile	smartphone	Pixel 10 Pro XL	device_promotion	device_discount	aal_device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
-10	8	major_offer_changes	major_changes	mixed	T-Mobile	None	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.25	$1,200) (5/28 - )
-11	8	major_offer_changes	major_changes	mixed	T-Mobile	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No offers expired
-12	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.75	▪GS26 Series Trade-in Offer Updates: (5/29)
-13	8	major_offer_changes	major_changes	mixed	AT&T	None	S26+	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-14	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	S26: >$900 off w/ min. $95 trade & Extra/Premi...
-15	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	All models: $500 off w/min. $35 trade & Value ...
-16	8	major_offer_changes	major_changes	mixed	AT&T	None	S26	offer_status	expired_offer	expired_offer	None	low_confidence	pending_review	needs_review	0.75	▪GS26 Series - removed
-17	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	$1300/$230 trade level; $900/$35
-18	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	trade level (2/25 - 5/28) &
-19	8	major_offer_changes	major_changes	mixed	AT&T	None	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.65	removed select/any condition trade (3/12 - 5/28)
-20	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	iPhone 17	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪iPhone 17 offers:
-21	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	aal_device_discount	None	low_confidence	pending_review	needs_review	0.65	▪$1,000 off w/ AAL & UNL Ultimate
-22	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	aal_device_discount	None	low_confidence	pending_review	needs_review	0.65	▪$830 off w/ AAL & UNL Plus
-23	8	major_offer_changes	major_changes	mixed	Verizon	tablet	None	market_update	accessory_bundle	unknown	None	low_confidence	pending_review	needs_review	0.75	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
-24	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	Apple Watch	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪Up to $500 off Apple Watch w/ iPhone purchase
-25	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	(was up to $250 off)
-26	8	major_offer_changes	major_changes	mixed	Verizon	smartphone	iPad	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪$500 off iPad w/ iPhone purchase (was $320)
-27	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪^^Similar offers for Samsung and Google
-28	8	major_offer_changes	major_changes	mixed	Verizon	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers CABLE MVNOs
-29	8	major_offer_changes	major_changes	mixed	Spectrum	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No new offers
-30	8	major_offer_changes	major_changes	mixed	Xfinity	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No new offers
-31	8	major_offer_changes	major_changes	mixed	Spectrum	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers
-32	8	major_offer_changes	major_changes	mixed	Xfinity	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪No expired offers
-33	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	watch	Galaxy Watch7	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	▪Galaxy Watch7 $29/existing customer (5/28 - )...
-34	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	home_internet	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪HINT $0 Gateway - existing/AAL only (5/28 - )
-35	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	home_internet	None	service_promotion	service_mrc_promo	service_mrc_promo	None	passed	auto_approved	ready_for_gold	0.85	▪HINT - promo MRC $50 or $45 w/autopay (5/28 - )
-36	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	...was $45 or $40 w/autopay ▪No changes
-37	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪“Deal Drop” Sale - FREE with port & $60 plan ...
-38	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	iPhone 16e	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	o iPhone 16e ...$99/new line (3x $60 plan onli...
-39	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.75	o Galaxy A36 ...$79/new line
-40	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.75	o Galaxy A37 ...$99/new line
-41	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	Moto edge 2025	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	o Moto edge 2025 ...$99/new line
-42	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	moto razr 2025	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪moto razr 2025 - $149 port or new line w/$60 ...
-43	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	retail_price_change	retail_price_change	None	passed	auto_approved	ready_for_gold	0.85	TBD) ...was $99 ▪Unlock Policy: Will change on...
-44	8	major_offer_changes	major_changes	mixed	Cricket Wireless	None	None	device_promotion	device_price_point	device_price_point	None	low_confidence	pending_review	needs_review	0.65	▪In-Store: $240 12-month/BYO
-45	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.45	UNL plan (reg. $300) (4/30 - 5/25)
-46	8	major_offer_changes	major_changes	mixed	Cricket Wireless	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.65	▪Regional Offer: In-store - $10
-47	8	major_offer_changes	major_changes	mixed	Cricket Wireless	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	off new BYO lines $55/$45 plans; stackable wit...
-48	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	device_promotion	device_discount	device_discount	None	passed	auto_approved	ready_for_gold	0.85	▪AT&T Build-A-Plan - went live 5/27; offers cu...
-49	8	major_offer_changes	major_changes	mixed	AT&T	service_plan	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	1.00	plans with $15/1GB base option ▪No changes
+0	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	AT&T	smartphone	S25	device_promotion	device_discount	device_discount	None	dense_layout_review	pending_review	needs_review	0.85	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Verizon	service_plan	iPhone 16	plan_pricing	price_increase	monthly_plan_price_increase	None	dense_layout_review	pending_review	needs_review	0.85	• Unlimited Ultimate Price Increase - On Thurs...
+2	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Spectrum	smartphone	iPhone 16	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	1.00	• No changes
+3	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Xfinity	smartphone	iPhone 16	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	1.00	• No changes
+4	6	national_retail_readout	retail_summary	national_retail	Cricket Wireless	smartphone	iPhone 16e	offer_status	expired_offer	expired_offer	None	passed	auto_approved	ready_for_gold	0.85	• EXPIRED: Weekend offers for free phones ende...
+5	6	national_retail_readout	retail_summary	national_retail	Boost Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	• No updates. 3.
+6	6	national_retail_readout	retail_summary	national_retail	Total Wireless	service_plan	iPhone 17e	plan_pricing	plan_refresh	new_or_updated_plan	None	passed	auto_approved	ready_for_gold	0.85	• Refreshed Plan Portfolio: Announced “a newly...
+7	6	national_retail_readout	retail_summary	national_retail	Straight Talk	smartphone	iPhone 16e	service_promotion	monthly_bill_credit	monthly_bill_credit	None	passed	auto_approved	ready_for_gold	0.85	• Platinum Plan Updates: Added Mexico/Canada r...
+8	8	major_offer_changes	major_changes	mixed	None	None	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.50	Major Offer Changes Effective May 8, 2026 ***T...
+9	8	major_offer_changes	major_changes	postpaid	T-Mobile	smartphone	iPhone 16	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪$315 off iPhone 16 w/ AAL & most plans (5/7 - )
+10	8	major_offer_changes	major_changes	postpaid	T-Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No offers expired
+11	8	major_offer_changes	major_changes	postpaid	AT&T	None	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.65	New Line Only Offers (5/8 - )
+12	8	major_offer_changes	major_changes	postpaid	AT&T	service_plan	S25	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪S25 FE: $146 off w/ AAL & Any UNL plan
+13	8	major_offer_changes	major_changes	postpaid	AT&T	service_plan	Flip7	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪Flip7: $524 off w/ AAL & Any UNL plan
+14	8	major_offer_changes	major_changes	postpaid	AT&T	service_plan	A37 5G	service_promotion	aal_offer	unknown	None	passed	auto_approved	ready_for_gold	0.85	▪A37 5G: $342 off w/ AAL & Any UNL plan
+15	8	major_offer_changes	major_changes	postpaid	AT&T	smartphone	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	▪^Some of the phones above have Upgrade offers
+16	8	major_offer_changes	major_changes	postpaid	AT&T	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No offers expired
+17	8	major_offer_changes	major_changes	postpaid	Verizon	service_plan	None	plan_pricing	price_increase	monthly_plan_price_increase	None	passed	auto_approved	ready_for_gold	0.85	▪Unlimited Ultimate 2.0 - Verizon quietly repl...
+18	8	major_offer_changes	major_changes	postpaid	Verizon	None	None	plan_pricing	price_increase	monthly_plan_price_increase	None	low_confidence	pending_review	needs_review	0.65	▪Existing customers will not see a price incre...
+19	8	major_offer_changes	major_changes	postpaid	Spectrum	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No new offers
+20	8	major_offer_changes	major_changes	postpaid	Xfinity	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No new offers
+21	8	major_offer_changes	major_changes	postpaid	Spectrum	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No expired offers
+22	8	major_offer_changes	major_changes	postpaid	Xfinity	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No expired offers
+23	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	smartphone	moto razr 2024	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪Annual Upgrade Level 1 w/$50 plan - now inclu...
+24	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	home_internet	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪HINT - $9.99 gateway for existing/AAL (5/7 - ...
+25	8	major_offer_changes	major_changes	mixed	Metro by T-Mobile	smartphone	Moto g 5G 2025	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪Moto g 5G 2025 removed from free-with-4lines/...
+26	8	major_offer_changes	major_changes	mixed	Boost Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+27	8	major_offer_changes	major_changes	mixed	Boost Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+28	8	major_offer_changes	major_changes	mixed	Cricket Wireless	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+29	8	major_offer_changes	major_changes	mixed	Cricket Wireless	smartphone	iPhone 16e	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪Last weekend’s free phones with port - iPhone...
+30	8	major_offer_changes	major_changes	postpaid	T-Mobile	None	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.25	▪T-Mobile Prepaid US Pass eSIM - short-term pa...
+31	8	major_offer_changes	major_changes	postpaid	T-Mobile	hotspot	None	unknown	unknown	unknown	None	low_confidence	pending_review	needs_review	0.35	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/2...
+32	8	major_offer_changes	major_changes	postpaid	T-Mobile	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+33	8	major_offer_changes	major_changes	postpaid	AT&T	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+34	8	major_offer_changes	major_changes	postpaid	AT&T	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+35	8	major_offer_changes	major_changes	postpaid	Verizon	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+36	8	major_offer_changes	major_changes	prepaid	Verizon	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes STRAIGHT TALK
+37	8	major_offer_changes	major_changes	prepaid	Verizon	service_plan	None	device_promotion	free_device_offer	free_device	None	passed	auto_approved	ready_for_gold	0.85	▪Platinum Plan update - removed free Mobile Pr...
+38	8	major_offer_changes	major_changes	postpaid	Verizon	service_plan	None	plan_pricing	plan_refresh	new_or_updated_plan	None	passed	auto_approved	ready_for_gold	0.85	▪Plan Refresh - includes new BYO plan ($25 Tot...
+39	8	major_offer_changes	major_changes	postpaid	Verizon	smartphone	None	device_promotion	device_discount	port_device_discount	None	low_confidence	pending_review	needs_review	0.75	▪Flagship phones - $130 - $300 off select Appl...
+40	8	major_offer_changes	major_changes	postpaid	Verizon	smartphone	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.75	▪UFC Promo - up to $100 off FRP for any phone ...
+41	8	major_offer_changes	major_changes	postpaid	Verizon	None	None	offer_status	no_change	no_change	None	passed	auto_approved	ready_for_gold	0.80	▪No changes
+42	10	postpaid_apple_device_offers	dense_matrix	postpaid	None	smartphone	None	device_promotion	device_discount	device_discount	None	low_confidence	pending_review	needs_review	0.60	Post-Paid Apple Smartphone Offers Effective Ma...
+43	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	smartphone	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.75	- Family Freedom: Up to $800/line EIP payoff (...
+44	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	byod	None	service_promotion	eip_buyout	device_payoff_credit	None	dense_layout_review	pending_review	needs_review	0.85	- Keep & Switch: <$800/line EIP payoff (max 4 ...
+45	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	smartphone	None	service_promotion	aal_offer	unknown	None	low_confidence	pending_review	needs_review	0.75	- Up to $500 off AW w/ iPhone purch. & BTS AAL
+46	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	smartphone	iPad	market_update	accessory_bundle	unknown	None	dense_layout_review	pending_review	needs_review	0.85	- Up to $500 off select iPads w/ iPhone purcha...
+47	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	None	None	device_promotion	device_family_offer	unknown	None	low_confidence	pending_review	needs_review	0.65	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...
+48	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	smartphone	None	device_promotion	trade_in_offer	trade_in_discount	None	low_confidence	pending_review	needs_review	0.75	- $800 EIP Buyout w/ new phone purchase (Below...
+49	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	smartphone	iPhone 17	device_promotion	device_family_offer	unknown	None	dense_layout_review	pending_review	needs_review	0.85	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
 
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
-Input row count: 2071
+Input row count: 538
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                             object
@@ -2113,8 +2171,8 @@ status                                   object
 created_at                  datetime64[ns, UTC]
 dtype: object
 
-Appending 2071 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly...
-Append completed: 2071 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly.
+Appending 538 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly...
+Append completed: 538 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly.
 ====================================================================================================
 
 CELL 20: Creating offer-device bridge
@@ -2122,64 +2180,64 @@ CELL 20: Creating offer-device bridge
 ========================================================================================================================
 DATAFRAME PREVIEW: silver_offer_device_bridge_df
 ========================================================================================================================
-Rows: 1796
+Rows: 425
 page_number	manufacturer	device_model	source_raw_text
-0	5	Samsung	Galaxy S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-1	5	Samsung	S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-2	5	Apple	iPhone 17	• iPhone 17 Offers Change - Verizon brought ba...
-3	6	Apple	iPhone 16e	• “Deal Drop” Sale features Free iPhone 16e: R...
-4	6	Apple	iPhone 16	• “Deal Drop” Sale features Free iPhone 16e: R...
-5	6	Samsung	Galaxy A37 5G	• “Deal Drop” Sale features Free iPhone 16e: R...
-6	6	Samsung	A37 5G	• “Deal Drop” Sale features Free iPhone 16e: R...
-7	6	Motorola	moto edge 2025	• “Deal Drop” Sale features Free iPhone 16e: R...
-8	6	Apple	iPhone 16e	• iPhone 16e $79 In-Store: Total Wireless has ...
-9	8	Apple	iPhone 17	▪$1000 off iPhone 17 series w/ Port and Better...
-10	8	Apple	iPhone 17	▪$830 off iPhone 17 series w/ Port and More (5...
-11	8	Google	Pixel 10 Pro XL	▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
-12	8	None	S26	▪GS26 Series Trade-in Offer Updates: (5/29)
-13	8	None	S26+	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-14	8	None	S26	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-15	8	None	S26 Ultra	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-16	8	None	S26	S26: >$900 off w/ min. $95 trade & Extra/Premi...
-17	8	None	S26	▪GS26 Series - removed
-18	8	Apple	iPhone 17	▪iPhone 17 offers:
-19	8	Apple	Apple Watch	▪Up to $500 off Apple Watch w/ iPhone purchase
-20	8	Apple	iPad	▪$500 off iPad w/ iPhone purchase (was $320)
-21	8	Samsung	Galaxy Watch7	▪Galaxy Watch7 $29/existing customer (5/28 - )...
-22	8	Apple	iPhone 16e	o iPhone 16e ...$99/new line (3x $60 plan onli...
-23	8	Motorola	Moto edge 2025	o Moto edge 2025 ...$99/new line
-24	8	Motorola	moto razr 2025	▪moto razr 2025 - $149 port or new line w/$60 ...
-25	8	Apple	iPhone 16e	▪In-Store: iPhone 16e - $79 with port & 2x $60...
-26	10	Apple	iPad	- Up to $500 $320 off select iPads w/ iPhone p...
-27	10	Apple	iPhone 17	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
-28	10	Apple	iPad A16	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
-29	10	Apple	iPhone 17	iPhone 17 ($830)
-30	10	Apple	iPhone Air	iPhone Air ($1,000)
-31	10	Apple	iPhone 17 Pro	iPhone 17 Pro ($1,100)
-32	10	Apple	iPhone 17 Pro Max	($1,200)
-33	10	Apple	iPhone 17 Pro Max	Discounts (No Trade-in Needed):
-34	10	Apple	iPhone 17 Pro Max	- $1,000 off w/ Port & Better Value or Beyond
-35	10	Apple	iPhone 17 Pro Max	- $830 off w/ Port & Exp. More
-36	10	Apple	iPhone 17 Pro Max	^^ NEW 5/28 ^^
-37	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL or Upgrade):
-38	10	Apple	iPhone 17 Pro Max	- $1100 off w/ Tier 1 Trd (Any Cond.) & Beyond
-39	10	Apple	iPhone 17 Pro Max	- $830 off w/ Tier 1 Trd (Good Cond.) & More/B...
-40	10	Apple	iPhone 17 Pro Max	- $400 off w/ Tier 2 Trd (Good Cond.) & More/B...
-41	10	Apple	iPhone 17 Pro Max	- $300 off w/ Tier 1 Trade (Good Cond.) & most...
-42	10	Apple	iPhone 17 Pro Max	- $150 off w/ Tier 2 Trade (Good Cond.) & most...
-43	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL Only):
-44	10	Apple	iPhone 17 Pro Max	- $730 off w/ Tier 1 Trade (Good Cond.) & most...
-45	10	Apple	iPhone 17 Pro Max	Discounts (AAL & No Trade-in Needed):
-46	10	Apple	iPhone 17 Pro Max	- $1,000 off w/ AAL & UNL Ultimate
-47	10	Apple	iPhone 17 Pro Max	- $830 off w/ AAL & UNL Plus
-48	10	Apple	iPhone 17 Pro Max	^^ NEW 5/29 ^^
-49	10	Apple	iPhone 17 Pro Max	Trade Offers (AAL or Upgrade):
+0	5	Samsung	S25	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	Samsung	A17 5G	• Offer Changes to Less-Popular Handsets - AT&...
+2	5	Samsung	A37 5G	• Offer Changes to Less-Popular Handsets - AT&...
+3	5	Samsung	Flip7	• Offer Changes to Less-Popular Handsets - AT&...
+4	5	Apple	iPhone 16	• Unlimited Ultimate Price Increase - On Thurs...
+5	5	Samsung	Galaxy S25 FE	• Unlimited Ultimate Price Increase - On Thurs...
+6	5	Apple	iPhone 16	• No changes
+7	5	Samsung	Galaxy S25 FE	• No changes
+8	5	Apple	iPhone 16	• No changes
+9	5	Samsung	Galaxy S25 FE	• No changes
+10	6	Apple	iPhone 16e	• EXPIRED: Weekend offers for free phones ende...
+11	6	Motorola	moto edge 2025	• EXPIRED: Weekend offers for free phones ende...
+12	6	Apple	iPhone 17e	• Refreshed Plan Portfolio: Announced “a newly...
+13	6	Apple	iPhone Air	• Refreshed Plan Portfolio: Announced “a newly...
+14	6	Apple	iPhone 16e	• Platinum Plan Updates: Added Mexico/Canada r...
+15	6	Samsung	Galaxy S26	• Platinum Plan Updates: Added Mexico/Canada r...
+16	6	Samsung	Galaxy A16 5G	• Platinum Plan Updates: Added Mexico/Canada r...
+17	6	Google	Pixel 10	• Platinum Plan Updates: Added Mexico/Canada r...
+18	6	TCL	TCL 50XL NXTPAPER	• Platinum Plan Updates: Added Mexico/Canada r...
+19	8	Apple	iPhone 16	▪$315 off iPhone 16 w/ AAL & most plans (5/7 - )
+20	8	Samsung	S25	▪S25 FE: $146 off w/ AAL & Any UNL plan
+21	8	None	Flip7	▪Flip7: $524 off w/ AAL & Any UNL plan
+22	8	Samsung	A37 5G	▪A37 5G: $342 off w/ AAL & Any UNL plan
+23	8	Motorola	moto razr 2024	▪Annual Upgrade Level 1 w/$50 plan - now inclu...
+24	8	Motorola	Moto g 5G 2025	▪Moto g 5G 2025 removed from free-with-4lines/...
+25	8	Apple	iPhone 16e	▪Last weekend’s free phones with port - iPhone...
+26	10	Apple	iPad	- Up to $500 off select iPads w/ iPhone purcha...
+27	10	Apple	iPhone 17	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
+28	10	Apple	Apple Watch SE3	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
+29	10	Apple	iPad A16	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
+30	10	Apple	iPhone 17 Pro	- $200 New Line Credit *Online Only* - Unlimit...
+31	10	Apple	iPhone Air	- $200 New Line Credit *Online Only* - Unlimit...
+32	10	Apple	iPhone 17 Pro Max	($1,200) Discounts (No Trade-in Needed):
+33	10	Apple	iPhone 17 Pro Max	- $830 off w/ Port & Better Value or Experienc...
+34	10	Apple	iPhone 17 Pro Max	- $1100 off w/ Tier 1 Trd (Any Cond.) & Beyond
+35	10	Apple	iPhone 17 Pro Max	- $830 off w/ Tier 1 Trd (Good Cond.) & More/B...
+36	10	Apple	iPhone 17 Pro Max	- $400 off w/ Tier 2 Trd (Good Cond.) & More/B...
+37	10	Apple	iPhone 17 Pro Max	- $300 off w/ Tier 1 Trade (Good Cond.) & most...
+38	10	Apple	iPhone 17 Pro Max	- $150 off w/ Tier 2 Trade (Good Cond.) & most...
+39	10	Apple	iPhone 17 Pro Max	- $730 off w/ Tier 1 Trade (Good Cond.) & most...
+40	10	Apple	iPhone 17 Pro Max	- $830 off w/ 13 or newer Trade & UNL Ultimate
+41	10	Apple	iPhone 17 Pro Max	- $415 off w/ 12 series or older Trade & UNL U...
+42	10	Apple	iPhone 17 Pro Max	- $830 off w/ 13 or newer Trade & UNL Plus
+43	10	Apple	iPhone 17 Pro Max	- $415 off w/ 12 series or older Trade & UNL Plus
+44	10	Apple	iPhone 17 Pro Max	- $360 off w/ 13 Trade & UNL Welcome
+45	10	Apple	iPhone 17 Pro Max	- $180 off w/ 12 or older Trade & UNL Welcome ...
+46	10	Apple	iPhone 15 Plus	- Air: $9.99/mo. ($640 off) w/ AAL/UPG & Any U...
+47	10	Apple	iPhone 13 Pro	- Air: $9.99/mo. ($640 off) w/ AAL/UPG & Any U...
+48	10	Apple	iPhone 17 Pro Max	- $400 off w/ Mobile Plus & Port (New Lines) o...
+49	10	Apple	iPhone 17 Pro Max	- $300 off w/ Mobile Select and Upgrade Trade ...
 
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
-Input row count: 1796
+Input row count: 425
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                    object
@@ -2230,102 +2288,102 @@ source_raw_text                 object
 created_at         datetime64[ns, UTC]
 dtype: object
 
-Appending 1796 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly...
-Append completed: 1796 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly.
+Appending 425 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly...
+Append completed: 425 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly.
 ====================================================================================================
 
 CELL 21: Creating review queue and auto approvals
-Rows requiring review: 1842
-Rows auto-approved: 229
+Rows requiring review: 388
+Rows auto-approved: 150
 
 ========================================================================================================================
 DATAFRAME PREVIEW: review_extraction_review_df
 ========================================================================================================================
-Rows: 1842
+Rows: 388
 page_number	section_name	business_segment	carrier	validation_status	confidence_score	source_raw_text
-0	6	ci_headlines_postpaid	mixed	Straight Talk	low_confidence	0.75	• Up to $50 off Phones: 25% off any full-price...
-1	8	major_offer_changes	mixed	None	low_confidence	0.50	Major Offer Changes Effective May 29, 2026
-2	8	major_offer_changes	mixed	None	low_confidence	0.50	***TFB Offer Changes: Reference Slide #20***
-3	8	major_offer_changes	mixed	T-Mobile	low_confidence	0.25	$1,200) (5/28 - )
-4	8	major_offer_changes	mixed	T-Mobile	low_confidence	0.65	▪No offers expired
-5	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	▪GS26 Series Trade-in Offer Updates: (5/29)
-6	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	S26+/S26 Ultra: >$1100 off w/min. $95 trade & ...
-7	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	S26: >$900 off w/ min. $95 trade & Extra/Premi...
-8	8	major_offer_changes	mixed	AT&T	low_confidence	0.75	▪GS26 Series - removed
-9	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	$1300/$230 trade level; $900/$35
-10	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	trade level (2/25 - 5/28) &
-11	8	major_offer_changes	mixed	AT&T	low_confidence	0.65	removed select/any condition trade (3/12 - 5/28)
-12	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪$1,000 off w/ AAL & UNL Ultimate
-13	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪$830 off w/ AAL & UNL Plus
-14	8	major_offer_changes	mixed	Verizon	low_confidence	0.75	▪Up to $830 off w/ Port, Trade & UNL Welcome ▪...
-15	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	(was up to $250 off)
-16	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪^^Similar offers for Samsung and Google
-17	8	major_offer_changes	mixed	Verizon	low_confidence	0.65	▪No expired offers CABLE MVNOs
-18	8	major_offer_changes	mixed	Spectrum	low_confidence	0.65	▪No new offers
-19	8	major_offer_changes	mixed	Xfinity	low_confidence	0.65	▪No new offers
-20	8	major_offer_changes	mixed	Spectrum	low_confidence	0.65	▪No expired offers
-21	8	major_offer_changes	mixed	Xfinity	low_confidence	0.65	▪No expired offers
-22	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.75	o Galaxy A36 ...$79/new line
-23	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.75	o Galaxy A37 ...$99/new line
-24	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.65	▪In-Store: $240 12-month/BYO
-25	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.45	UNL plan (reg. $300) (4/30 - 5/25)
-26	8	major_offer_changes	mixed	Cricket Wireless	low_confidence	0.65	▪Regional Offer: In-store - $10
-27	8	major_offer_changes	mixed	Verizon	low_confidence	0.75	▪25% off FRP Phones - max. $50 savings w/any p...
-28	10	postpaid_apple_device_offers	postpaid	None	low_confidence	0.60	Post-Paid Apple Smartphone Offers Effective Ma...
-29	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- Family Freedom: Up to $800/line EIP payoff
-30	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	(requires phone trade-in, stacks w/ promos, ma...
-31	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- Keep & Switch: <$800/line EIP payoff (max 4 ...
-32	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- Up to $500 $250 off AW w/ iPhone purch. & BT...
-33	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Up to $500 $320 off select iPads w/ iPhone p...
-34	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.25	^^ UPDATED 5/28; Can be combined for 'Dads & G...
-35	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...
-36	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $100 VZ GC w/ New Account & Any Plan (Online...
-37	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- $800 EIP Buyout w/ new phone purchase (Below...
-38	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	*All trades Select Phone, Any Condition*
-39	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 ...
-40	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $800 EIP Buyout w/ Port (combinable w/ devic...
-41	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $200 New Line Credit *Online Only* - Unlimit...
-42	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	Any credits require a 36-month EIP agreement R...
-43	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	Upgrade every year w/ Mobile Plus
-44	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	Standard Trade-in Offer:
-45	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	+$100 added to FMV of trade
-46	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	(Larger "added to trade-in" amounts
-47	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	below supercede this offer)
-48	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.45	iPhone 17 ($830)
-49	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.45	iPhone Air ($1,000)
+0	5	cable_mvno_handset_offers	cable_mvno	AT&T	dense_layout_review	0.85	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	cable_mvno_handset_offers	cable_mvno	Verizon	dense_layout_review	0.85	• Unlimited Ultimate Price Increase - On Thurs...
+2	8	major_offer_changes	mixed	None	low_confidence	0.50	Major Offer Changes Effective May 8, 2026 ***T...
+3	8	major_offer_changes	postpaid	AT&T	low_confidence	0.65	New Line Only Offers (5/8 - )
+4	8	major_offer_changes	postpaid	AT&T	low_confidence	0.75	▪^Some of the phones above have Upgrade offers
+5	8	major_offer_changes	postpaid	Verizon	low_confidence	0.65	▪Existing customers will not see a price incre...
+6	8	major_offer_changes	postpaid	T-Mobile	low_confidence	0.25	▪T-Mobile Prepaid US Pass eSIM - short-term pa...
+7	8	major_offer_changes	postpaid	T-Mobile	low_confidence	0.35	US/Can/Mex: $25/7day/14GB hotspot, $30/10day/2...
+8	8	major_offer_changes	postpaid	Verizon	low_confidence	0.75	▪Flagship phones - $130 - $300 off select Appl...
+9	8	major_offer_changes	postpaid	Verizon	low_confidence	0.75	▪UFC Promo - up to $100 off FRP for any phone ...
+10	10	postpaid_apple_device_offers	postpaid	None	low_confidence	0.60	Post-Paid Apple Smartphone Offers Effective Ma...
+11	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- Family Freedom: Up to $800/line EIP payoff (...
+12	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Keep & Switch: <$800/line EIP payoff (max 4 ...
+13	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- Up to $500 off AW w/ iPhone purch. & BTS AAL
+14	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Up to $500 off select iPads w/ iPhone purcha...
+15	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.65	- $270 VZW GC w/ Port, 17 Pro series & Ultimat...
+16	10	postpaid_apple_device_offers	postpaid	Spectrum	low_confidence	0.75	- $800 EIP Buyout w/ new phone purchase (Below...
+17	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $.99/mo. Apple Watch SE3 40mm & iPad A16 128...
+18	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $800 EIP Buyout w/ Port (combinable w/ devic...
+19	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $200 New Line Credit *Online Only* - Unlimit...
+20	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	($1,200) Discounts (No Trade-in Needed):
+21	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ Port & Better Value or Experienc...
+22	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $1100 off w/ Tier 1 Trd (Any Cond.) & Beyond
+23	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ Tier 1 Trd (Good Cond.) & More/B...
+24	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $400 off w/ Tier 2 Trd (Good Cond.) & More/B...
+25	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $300 off w/ Tier 1 Trade (Good Cond.) & most...
+26	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $150 off w/ Tier 2 Trade (Good Cond.) & most...
+27	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $730 off w/ Tier 1 Trade (Good Cond.) & most...
+28	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ 13 or newer Trade & UNL Ultimate
+29	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $415 off w/ 12 series or older Trade & UNL U...
+30	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ 13 or newer Trade & UNL Plus
+31	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $415 off w/ 12 series or older Trade & UNL Plus
+32	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $360 off w/ 13 Trade & UNL Welcome
+33	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $180 off w/ 12 or older Trade & UNL Welcome ...
+34	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Air: $9.99/mo. ($640 off) w/ AAL/UPG & Any U...
+35	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $400 off w/ Mobile Plus & Port (New Lines) o...
+36	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $300 off w/ Mobile Select and Upgrade Trade ...
+37	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Up to $830 off w/ Trade & Mobile Plus (Top T...
+38	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- 17 series: Addtl $200 off added to trade-in ...
+39	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	($1,100) Discounts (No Trade-in Needed):
+40	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ Port & Beyond
+41	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $630 off w/ Port & most plans
+42	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $315 off w/ AAL & most plans NEW 5/7 Trade O...
+43	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $1100 off w/ Tier 1 Trade (Any Cond.) & Beyond
+44	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $830 off w/ Tier 1 Trade (Good Cond.) & More
+45	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $300 off w/ Tier 1 Trade (Good Cond.) & most...
+46	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $400 off w/ Mobile Plus & Port (New Lines) o...
+47	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $300 off w/ Mobile Select and Upgrade Trade ...
+48	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- Up to $830 off w/ Trade & Mobile Plus (Top T...
+49	10	postpaid_apple_device_offers	postpaid	Spectrum	dense_layout_review	0.85	- $100 added to Trade w/ Base UNL -- iPhone 17...
 
 
 ========================================================================================================================
 DATAFRAME PREVIEW: review_auto_decisions_df
 ========================================================================================================================
-Rows: 229
+Rows: 150
 decision_type	review_status	reviewer_name	offer_id
-0	auto_approved	approved	system	0c7de112cb62fd0268072d85cfebfced
-1	auto_approved	approved	system	724b443674f0871d9631928d50c16b0e
-2	auto_approved	approved	system	0b5a227861f13e69aaa2df70f57e5f7c
-3	auto_approved	approved	system	f9a28dc3389619d247a037d4d9bf38ed
-4	auto_approved	approved	system	3e361e52b0d3b39cf85c2fa4ff6056ce
-5	auto_approved	approved	system	45361de3782244b4d0c6924a7eaa60d6
-6	auto_approved	approved	system	8b79b4e9df0c4cfc71da6c302cc9eb85
-7	auto_approved	approved	system	c6b81430d5a2fc68e9c8ffe8d6ee7c9f
-8	auto_approved	approved	system	aa0bbb988115944f27f686c94fba48d1
-9	auto_approved	approved	system	e1bff522729777fa071491baa171af68
-10	auto_approved	approved	system	ac779a2beb23b6430eb3c26ac57bcd94
-11	auto_approved	approved	system	77cb0f427081be87fb658d99df7cbeef
-12	auto_approved	approved	system	c0eb97990c35c2c55d8616bc512baffb
-13	auto_approved	approved	system	aa6b170a042c12486a08e885ebb7a1bb
-14	auto_approved	approved	system	8c7247a161329312421238f780347a13
-15	auto_approved	approved	system	dc1a2e1395556e64f9aca2bed9f295db
-16	auto_approved	approved	system	6228ba1977812891c33e72ab7379e90a
-17	auto_approved	approved	system	f692c91cb507e2fd90d2191e8a115a25
-18	auto_approved	approved	system	622e8c9856e286989ce83cc0c576aa15
-19	auto_approved	approved	system	a428ba0af4c20e264253222c38dfc3ba
+0	auto_approved	approved	system	e209a1caad5925381165f013fb656333
+1	auto_approved	approved	system	9e7cf2653d37712789c9d5d6be0b09f7
+2	auto_approved	approved	system	749d79f3f04ea735dff023c8e8cdf5dd
+3	auto_approved	approved	system	d54e81fbe51d148bccd1e94f50cab904
+4	auto_approved	approved	system	4336811e38e94debeb97dd64c0b5e9fc
+5	auto_approved	approved	system	1f084fa7a09e0c02983f4fb646060dce
+6	auto_approved	approved	system	d492e6d640f66e398999e70627c9b8e6
+7	auto_approved	approved	system	814279af72a6f513ec6bf4cc7e1303e4
+8	auto_approved	approved	system	f1a0f0557c1a3e5abdc6f7bd82ca7dc3
+9	auto_approved	approved	system	c5816ac0b6e1e2c67c2dff045b8f93c0
+10	auto_approved	approved	system	50da30fc7e50bc21e66f232e02a4a0e7
+11	auto_approved	approved	system	213ac6b4aad89dc5c869c4f7ba7d9914
+12	auto_approved	approved	system	31b4d65290d4e60cdda4a31ff34305cb
+13	auto_approved	approved	system	53e2c3aa1a336296b07cd9fcd082c75d
+14	auto_approved	approved	system	2ed0138c16835e2eaa9230e65f4fefb9
+15	auto_approved	approved	system	d04e211ac6490fde4e7e3f81559c9247
+16	auto_approved	approved	system	43bc0ccafa68de18a0670ea90529a497
+17	auto_approved	approved	system	59973328d7fa837983a2b7df4fcab816
+18	auto_approved	approved	system	17aa5481e16c8dffe4c7a31e0ee5cd39
+19	auto_approved	approved	system	97689e6792a239f1958b179c29eabe1e
 
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
-Input row count: 1842
+Input row count: 388
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                          object
@@ -2397,14 +2455,14 @@ review_status                         object
 created_at               datetime64[ns, UTC]
 dtype: object
 
-Appending 1842 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly...
-Append completed: 1842 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly.
+Appending 388 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly...
+Append completed: 388 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly.
 ====================================================================================================
 
 ====================================================================================================
 Preparing DataFrame for BigQuery append
 Destination table: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
-Input row count: 229
+Input row count: 150
 ====================================================================================================
 Original DataFrame dtypes:
 deck_id                      object
@@ -2458,137 +2516,135 @@ final_output_json                 object
 created_at           datetime64[ns, UTC]
 dtype: object
 
-Appending 229 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly...
-Append completed: 229 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly.
+Appending 150 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly...
+Append completed: 150 rows loaded into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly.
 ====================================================================================================
 
 CELL 22: Final QA summary
 
 1. Slide classification summary
 final_section_name	page_type	extraction_strategy	classification_source	row_count
-10	postpaid_bts_watch_offers	matrix_or_table	bts_parser	header_registry	3
+9	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	header_registry	3
 0	business_device_offers	business_matrix	matrix_text_block_parser	header_registry	2
-13	postpaid_service_offers	service_reference	service_parser	header_registry	2
-3	ci_headlines_postpaid	narrative_headline	headline_parser	header_registry	2
-14	prepaid_brand_offers	prepaid_reference	prepaid_parser	header_registry	2
-21	table_of_contents	toc	extract_toc_only	priority_rule	1
-20	section_divider_prepaid	section_divider	skip	header_registry	1
-19	section_divider_offer_updates	section_divider	skip	priority_rule	1
-18	section_divider_offer_updates	section_divider	skip	header_registry	1
-17	section_divider_ci_headlines	section_divider	skip	priority_rule	1
-16	prepaid_metro_price_grid	price_grid	price_grid_parser	header_registry	1
-15	prepaid_flagship_offers	prepaid_reference	prepaid_parser	header_registry	1
-11	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	header_registry	1
-12	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
-1	cable_mvno_handset_offers	dense_text_table	mvno_parser	header_registry	1
-9	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
-8	national_retail_readout	retail_summary	headline_parser	header_registry	1
-7	major_offer_changes	major_changes	major_changes_parser	header_registry	1
-6	end_slide	end_slide	skip	priority_rule	1
-5	cover	cover	skip	priority_rule	1
-4	confidentiality_notice	legal_notice	skip	priority_rule	1
+13	prepaid_brand_offers	prepaid_reference	prepaid_parser	header_registry	2
+7	national_retail_readout	retail_summary	headline_parser	header_registry	2
+1	cable_mvno_handset_offers	dense_text_table	mvno_parser	header_registry	2
+12	postpaid_service_offers	service_reference	service_parser	header_registry	2
+20	table_of_contents	toc	extract_toc_only	priority_rule	1
+19	section_divider_prepaid	section_divider	skip	header_registry	1
+18	section_divider_offer_updates	section_divider	skip	priority_rule	1
+17	section_divider_offer_updates	section_divider	skip	header_registry	1
+16	section_divider_ci_headlines	section_divider	skip	priority_rule	1
+15	prepaid_metro_price_grid	price_grid	price_grid_parser	header_registry	1
+14	prepaid_flagship_offers	prepaid_reference	prepaid_parser	header_registry	1
+11	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+10	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+8	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	header_registry	1
+6	major_offer_changes	major_changes	major_changes_parser	header_registry	1
+5	end_slide	end_slide	skip	priority_rule	1
+4	cover	cover	skip	priority_rule	1
+3	confidentiality_notice	legal_notice	skip	priority_rule	1
 2	cable_mvno_service_offers	service_reference	service_parser	header_registry	1
-22	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	header_registry	1
+21	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	header_registry	1
 
 
 2. Slide classification detail
-page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	review_required_flag	section_reason
-0	1	May 29, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	False	Priority rule: cover page
-1	2	The information contained within this document...	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	False	Priority rule: Notice of Confidentiality
-2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	False	Priority rule: Table of Contents
-3	4	MARKET &	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: CI Headlines divider
-4	5	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
-5	6	COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026	ci_headlines	ci_headlines_postpaid	narrative_headline	headline_parser	mixed	0.95	header_registry	False	Header registry matched rule: ci_headlines
-6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	False	Priority rule: offer updates divider
-7	8	Major Offer Changes Effective May 29, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	False	Header registry matched rule: major_offer_changes
-8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	False	Header registry matched rule: offer_updates_di...
-9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: apple_postpaid
-10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: samsung_google_p...
-11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	False	Header registry matched rule: motorola_afforda...
-12	13	Post-Paid BTS (Watches) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-13	14	Post-Paid BTS (Tablet) Effective May 29, 2026	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-14	15	Post-Paid BTS & Other Offers Effective May 29,...	postpaid_bts_offers	postpaid_bts_watch_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	False	Header registry matched rule: bts_watches
-15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
-16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	False	Header registry matched rule: postpaid_service
-17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_handset
-18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	False	Header registry matched rule: cable_mvno_service
-19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	False	Header registry matched rule: business_device
-20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	True	Header registry matched rule: business_device
-21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	True	Header registry matched rule: national_retail
-22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	True	Header registry matched rule: prepaid_divider
-23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	False	Header registry matched rule: prepaid_brand_of...
-24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: metro_price_grid
-25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_brand_of...
-26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	True	Header registry matched rule: prepaid_flagship
-27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	False	Header registry matched rule: walmart_prepaid
-28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	False	Priority rule: sparse final/confidential slide
+page_number	slide_title	expected_section_from_toc	final_section_name	page_type	extraction_strategy	business_segment	section_confidence	classification_source	matched_header_rule	review_required_flag	section_reason
+0	1	May 8, 2026	None	cover	cover	skip	unknown	0.98	priority_rule	None	False	Priority rule: cover page
+1	2	NOTICE OF CONFIDENTIALITY	None	confidentiality_notice	legal_notice	skip	unknown	1.00	priority_rule	None	False	Priority rule: Notice of Confidentiality
+2	3	Table of Contents:	None	table_of_contents	toc	extract_toc_only	unknown	1.00	priority_rule	None	False	Priority rule: Table of Contents
+3	4	CI Headlines	None	section_divider_ci_headlines	section_divider	skip	unknown	0.90	priority_rule	None	False	Priority rule: CI Headlines divider
+4	5	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026	ci_headlines	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	cable_mvno_handset	False	Header registry matched rule: cable_mvno_handset
+5	6	COMPETITIVE INTELLIGENCE HEADLINES May 8, 2026	ci_headlines	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	national_retail	True	Header registry matched rule: national_retail
+6	7	Competitive Offer Updates	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	priority_rule	None	False	Priority rule: offer updates divider
+7	8	Major Offer Changes Effective May 8, 2026	major_offer_changes	major_offer_changes	major_changes	major_changes_parser	mixed	1.00	header_registry	major_offer_changes	False	Header registry matched rule: major_offer_changes
+8	9	Competitive Offers &	None	section_divider_offer_updates	section_divider	skip	unknown	0.90	header_registry	offer_updates_divider	False	Header registry matched rule: offer_updates_di...
+9	10	Post-Paid Apple Smartphone Offers Effective Ma...	postpaid_apple_device_offers	postpaid_apple_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	apple_postpaid	False	Header registry matched rule: apple_postpaid
+10	11	Post-Paid Samsung and Google Smartphone Offers...	postpaid_samsung_google_device_offers	postpaid_samsung_google_device_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	samsung_google_postpaid	False	Header registry matched rule: samsung_google_p...
+11	12	Post-Paid Motorola, Affordable Phones and BYOD...	postpaid_motorola_affordable_byod_offers	postpaid_motorola_affordable_byod_offers	dense_matrix	matrix_text_block_parser	postpaid	1.00	header_registry	motorola_affordable_byod	False	Header registry matched rule: motorola_afforda...
+12	13	Post-Paid BTS (Watches) Effective May 8, 2026	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+13	14	Post-Paid BTS (Tablet) Effective May 8, 2026	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+14	15	Post-Paid BTS & Other Offers Effective May 8, ...	postpaid_bts_offers	postpaid_bts_tablet_offers	matrix_or_table	bts_parser	postpaid	1.00	header_registry	bts_tablet	False	Header registry matched rule: bts_tablet
+15	16	T-Mobile & AT&T Post-Paid Service Offers Effec...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	postpaid_service	False	Header registry matched rule: postpaid_service
+16	17	Verizon Post-Paid Service Offers Effective May...	postpaid_service_offers	postpaid_service_offers	service_reference	service_parser	postpaid	0.95	header_registry	postpaid_service	False	Header registry matched rule: postpaid_service
+17	18	Postpaid Cable MVNO Handset Offers Effective M...	cable_mvno_offers	cable_mvno_handset_offers	dense_text_table	mvno_parser	cable_mvno	0.95	header_registry	cable_mvno_handset	False	Header registry matched rule: cable_mvno_handset
+18	19	Cable MVNO Service Pricing & Offers Effective ...	cable_mvno_offers	cable_mvno_service_offers	service_reference	service_parser	cable_mvno	0.95	header_registry	cable_mvno_service	False	Header registry matched rule: cable_mvno_service
+19	20	Business - Flagship Device Offers	business_device_offers	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	business_device	False	Header registry matched rule: business_device
+20	21	Business - Flagship Device Offers	national_retail_readout	business_device_offers	business_matrix	matrix_text_block_parser	business	0.95	header_registry	business_device	False	Header registry matched rule: business_device
+21	22	Click HERE to Open This Week’s Update	section_divider_prepaid	national_retail_readout	retail_summary	headline_parser	national_retail	0.85	header_registry	national_retail	True	Header registry matched rule: national_retail
+22	23	Competitive Offers	prepaid_brand_offers	section_divider_prepaid	section_divider	skip	unknown	0.80	header_registry	prepaid_divider	True	Header registry matched rule: prepaid_divider
+23	24	Prepaid Brands - Current Offers	prepaid_brand_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_brand_offers	False	Header registry matched rule: prepaid_brand_of...
+24	25	METRO BY T-MOBILE	prepaid_brand_offers	prepaid_metro_price_grid	price_grid	price_grid_parser	prepaid	0.95	header_registry	metro_price_grid	False	Header registry matched rule: metro_price_grid
+25	26	Prepaid Brands - Current Offers	prepaid_flagship_offers	prepaid_brand_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_brand_offers	False	Header registry matched rule: prepaid_brand_of...
+26	27	Flagship Brands/Prepaid - Current Offers	walmart_prepaid_offers	prepaid_flagship_offers	prepaid_reference	prepaid_parser	prepaid	0.95	header_registry	prepaid_flagship	False	Header registry matched rule: prepaid_flagship
+27	28	Walmart - Current Offers	None	walmart_prepaid_offers	retail_prepaid	prepaid_retail_parser	prepaid	0.95	header_registry	walmart_prepaid	False	Header registry matched rule: walmart_prepaid
+28	29	None	None	end_slide	end_slide	skip	unknown	0.90	priority_rule	None	False	Priority rule: sparse final/confidential slide
 
 
 3. Content block summary
 final_section_name	page_type	block_type	block_count
-12	prepaid_metro_price_grid	price_grid	offer_block	622
-10	prepaid_brand_offers	prepaid_reference	offer_block	227
-8	postpaid_samsung_google_device_offers	dense_matrix	offer_block	189
-13	walmart_prepaid_offers	retail_prepaid	offer_block	165
-0	business_device_offers	business_matrix	offer_block	156
-5	postpaid_apple_device_offers	dense_matrix	offer_block	143
-7	postpaid_motorola_affordable_byod_offers	dense_matrix	offer_block	115
-9	postpaid_service_offers	service_reference	offer_block	112
-6	postpaid_bts_watch_offers	matrix_or_table	offer_block	86
-1	cable_mvno_handset_offers	dense_text_table	offer_block	77
-11	prepaid_flagship_offers	prepaid_reference	offer_block	77
-2	cable_mvno_service_offers	service_reference	offer_block	50
-4	major_offer_changes	major_changes	offer_block	47
-3	ci_headlines_postpaid	narrative_headline	headline_block	9
+8	postpaid_samsung_google_device_offers	dense_matrix	offer_block	80
+5	postpaid_apple_device_offers	dense_matrix	offer_block	66
+6	postpaid_bts_tablet_offers	matrix_or_table	offer_block	64
+10	prepaid_brand_offers	prepaid_reference	offer_block	60
+1	cable_mvno_handset_offers	dense_text_table	offer_block	45
+7	postpaid_motorola_affordable_byod_offers	dense_matrix	offer_block	45
+9	postpaid_service_offers	service_reference	offer_block	43
+2	cable_mvno_service_offers	service_reference	offer_block	36
+3	major_offer_changes	major_changes	offer_block	34
+0	business_device_offers	business_matrix	offer_block	26
+12	walmart_prepaid_offers	retail_prepaid	offer_block	23
+11	prepaid_flagship_offers	prepaid_reference	offer_block	12
+4	national_retail_readout	retail_summary	headline_block	4
 
 
 4. Offer candidate summary
 section_name	business_segment	suggested_offer_category	suggested_offer_subcategory	candidate_count
-131	prepaid_metro_price_grid	prepaid	unknown	unknown	420
-125	prepaid_metro_price_grid	prepaid	device_promotion	free_device_offer	172
-141	walmart_prepaid_offers	prepaid	unknown	unknown	121
-110	prepaid_brand_offers	prepaid	unknown	unknown	101
-75	postpaid_samsung_google_device_offers	postpaid	device_promotion	device_discount	93
+45	postpaid_apple_device_offers	postpaid	device_promotion	trade_in_offer	50
+68	postpaid_samsung_google_device_offers	postpaid	device_promotion	trade_in_offer	41
+60	postpaid_motorola_affordable_byod_offers	postpaid	device_promotion	trade_in_offer	23
+54	postpaid_bts_tablet_offers	postpaid	offer_status	no_change	21
+10	cable_mvno_handset_offers	cable_mvno	device_promotion	trade_in_offer	19
 ...	...	...	...	...	...
-36	major_offer_changes	mixed	device_promotion	device_price_point	1
-34	ci_headlines_postpaid	mixed	market_update	marketing_campaign	1
-115	prepaid_flagship_offers	prepaid	device_promotion	retail_price_change	1
-116	prepaid_flagship_offers	prepaid	fee_promotion	activation_fee_waiver	1
-71	postpaid_motorola_affordable_byod_offers	postpaid	service_promotion	byod_credit	1
-142 rows × 5 columns
+77	postpaid_service_offers	postpaid	offer_status	expired_offer	1
+78	postpaid_service_offers	postpaid	plan_pricing	price_increase	1
+47	postpaid_apple_device_offers	postpaid	offer_status	no_change	1
+46	postpaid_apple_device_offers	postpaid	market_update	accessory_bundle	1
+16	cable_mvno_handset_offers	cable_mvno	service_promotion	eip_buyout	1
+105 rows × 5 columns
 
 
 
 5. Normalized offer summary
 section_name	business_segment	offer_category	offer_subcategory	validation_status	status	offer_count
-183	prepaid_metro_price_grid	prepaid	unknown	unknown	low_confidence	needs_review	420
-176	prepaid_metro_price_grid	prepaid	device_promotion	free_device_offer	low_confidence	needs_review	168
-198	walmart_prepaid_offers	prepaid	unknown	unknown	low_confidence	needs_review	121
-156	prepaid_brand_offers	prepaid	unknown	unknown	low_confidence	needs_review	101
-1	business_device_offers	business	device_promotion	device_discount	low_confidence	needs_review	71
+54	postpaid_apple_device_offers	postpaid	device_promotion	trade_in_offer	dense_layout_review	needs_review	48
+85	postpaid_samsung_google_device_offers	postpaid	device_promotion	trade_in_offer	low_confidence	needs_review	25
+73	postpaid_motorola_affordable_byod_offers	postpaid	device_promotion	trade_in_offer	dense_layout_review	needs_review	21
+67	postpaid_bts_tablet_offers	postpaid	offer_status	no_change	passed	ready_for_gold	21
+32	cable_mvno_service_offers	cable_mvno	unknown	unknown	low_confidence	needs_review	19
 ...	...	...	...	...	...	...	...
-29	cable_mvno_service_offers	cable_mvno	device_promotion	device_discount	passed	ready_for_gold	1
-85	postpaid_motorola_affordable_byod_offers	postpaid	device_promotion	device_price_point	dense_layout_review	needs_review	1
-141	prepaid_brand_offers	prepaid	device_promotion	retail_price_change	low_confidence	needs_review	1
-92	postpaid_motorola_affordable_byod_offers	postpaid	service_promotion	aal_offer	dense_layout_review	needs_review	1
-37	cable_mvno_service_offers	cable_mvno	service_promotion	service_mrc_promo	low_confidence	needs_review	1
-199 rows × 7 columns
+57	postpaid_apple_device_offers	postpaid	offer_status	no_change	passed	ready_for_gold	1
+56	postpaid_apple_device_offers	postpaid	market_update	accessory_bundle	dense_layout_review	needs_review	1
+20	cable_mvno_handset_offers	cable_mvno	service_promotion	eip_buyout	low_confidence	needs_review	1
+53	postpaid_apple_device_offers	postpaid	device_promotion	device_family_offer	low_confidence	needs_review	1
+77	postpaid_motorola_affordable_byod_offers	postpaid	service_promotion	byod_credit	dense_layout_review	needs_review	1
+131 rows × 7 columns
 
 
 
 6. Rows needing review
 page_number	section_name	page_type	business_segment	carrier	offer_category	offer_subcategory	validation_status	normalization_confidence	source_raw_text
-3	6	ci_headlines_postpaid	narrative_headline	mixed	Straight Talk	device_promotion	device_discount	low_confidence	0.75	• Up to $50 off Phones: 25% off any full-price...
-5	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	low_confidence	0.50	Major Offer Changes Effective May 29, 2026
-6	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	low_confidence	0.50	***TFB Offer Changes: Reference Slide #20***
-10	8	major_offer_changes	major_changes	mixed	T-Mobile	unknown	unknown	low_confidence	0.25	$1,200) (5/28 - )
-11	8	major_offer_changes	major_changes	mixed	T-Mobile	device_promotion	device_discount	low_confidence	0.65	▪No offers expired
+0	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	AT&T	device_promotion	device_discount	dense_layout_review	0.85	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	cable_mvno_handset_offers	dense_text_table	cable_mvno	Verizon	plan_pricing	price_increase	dense_layout_review	0.85	• Unlimited Ultimate Price Increase - On Thurs...
+8	8	major_offer_changes	major_changes	mixed	None	device_promotion	device_discount	low_confidence	0.50	Major Offer Changes Effective May 8, 2026 ***T...
+11	8	major_offer_changes	major_changes	postpaid	AT&T	service_promotion	aal_offer	low_confidence	0.65	New Line Only Offers (5/8 - )
+15	8	major_offer_changes	major_changes	postpaid	AT&T	device_promotion	device_discount	low_confidence	0.75	▪^Some of the phones above have Upgrade offers
 ...	...	...	...	...	...	...	...	...	...	...
-119	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	- $200 added to Trade-in value w/ Upgrade and ...
-120	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	Discount (No Trade-in Needed): - 17 series:
-121	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_discount	low_confidence	0.75	Trade Offers (AAL or Upgrade):
-122	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	device_discount	low_confidence	0.75	- 17 series: Addtl $200 off added to
-123	10	postpaid_apple_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	trade-in (supercedes $100 standard
+129	11	postpaid_samsung_google_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	- Up to $500 off w/ Trade & Mobile Select (Top...
+130	11	postpaid_samsung_google_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	low_confidence	0.75	S26+/S26 Ultra: $300 off FRP All S26: Trade Of...
+131	11	postpaid_samsung_google_device_offers	dense_matrix	postpaid	Spectrum	device_promotion	trade_in_offer	dense_layout_review	0.85	- Addtl $200 added to $1+ FMV Trade-in (combin...
+132	11	postpaid_samsung_google_device_offers	dense_matrix	postpaid	Spectrum	service_promotion	aal_offer	low_confidence	0.75	- $900 off w/ AAL & More/Beyond (2/BAN)
+133	11	postpaid_samsung_google_device_offers	dense_matrix	postpaid	Spectrum	service_promotion	aal_offer	dense_layout_review	0.85	- $600 off w/ AAL & most plans
 100 rows × 10 columns
 
 
@@ -2596,17 +2652,17 @@ page_number	section_name	page_type	business_segment	carrier	offer_category	offer
 
 7. Multi-device offer bridge sample
 page_number	manufacturer	device_model	source_raw_text
-0	5	Samsung	Galaxy S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-1	5	Samsung	S26	• Build-A-Plan to Launch 5/27: AT&T’s Build-A-...
-2	5	Apple	iPhone 17	• iPhone 17 Offers Change - Verizon brought ba...
-3	6	Apple	iPhone 16e	• “Deal Drop” Sale features Free iPhone 16e: R...
-4	6	Apple	iPhone 16	• “Deal Drop” Sale features Free iPhone 16e: R...
+0	5	Samsung	S25	• Offer Changes to Less-Popular Handsets - AT&...
+1	5	Samsung	A17 5G	• Offer Changes to Less-Popular Handsets - AT&...
+2	5	Samsung	A37 5G	• Offer Changes to Less-Popular Handsets - AT&...
+3	5	Samsung	Flip7	• Offer Changes to Less-Popular Handsets - AT&...
+4	5	Apple	iPhone 16	• Unlimited Ultimate Price Increase - On Thurs...
 ...	...	...	...	...
-95	10	Apple	iPhone 16 Pro Max	Discounts (No Trade-in Needed):
-96	10	Apple	iPhone 16 Pro Max	16: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate
-97	10	Apple	iPhone 16 Pro Max	16 Plus: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ulti...
-98	10	Apple	iPhone 16 Pro Max	16 Pro: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate
-99	10	Apple	iPhone 16 Pro Max	16 Pro Max: $0 (online) w/ Welcome, $0 w/ Plus...
+95	11	Samsung	S26 Ultra	- <$300 off w/ Trade & most plans Discount (AA...
+96	11	None	S21	- $1,100 off w/ Trade & UNL Ultimate (S21 or n...
+97	11	None	S20	- $550 off w/ Trade & UNL Ultimate (GS20 or ol...
+98	11	None	S21	- $900 off w/ Trade & UNL Plus (GS21 or newer)
+99	11	None	S20	- $450 off w/ Trade & UNL Plus (GS20 or older)
 100 rows × 4 columns
 
 
@@ -2614,33 +2670,45 @@ page_number	manufacturer	device_model	source_raw_text
 8. Final counts
 PDF pages processed: 29
 Bronze slide raw rows: 29
-Bronze slide line rows: 3321
-Detected entity rows: 1863
+Bronze slide line rows: 3253
+Detected entity rows: 1827
 TOC map rows: 21
 Slide section rows: 29
-Content block rows: 2075
+Content block rows: 538
 Price grid rows: 0
-Offer candidate rows: 2071
-Normalized offer rows: 2071
-Device bridge rows: 1796
-Review queue rows: 1842
-Auto-approved rows: 229
+Offer candidate rows: 538
+Normalized offer rows: 538
+Device bridge rows: 425
+Review queue rows: 388
+Auto-approved rows: 150
 
 ========================================================================================================================
 NOTEBOOK COMPLETED SUCCESSFULLY
 ========================================================================================================================
 
+What changed in this corrected version:
+  1. Fixed BigQuery DATE/TIMESTAMP/BOOLEAN/INTEGER loading.
+  2. Fixed BTS regexes exactly:
+       - watches only matches Post-Paid BTS (Watches)
+       - tablet only matches Post-Paid BTS (Tablet)
+       - other only matches Post-Paid BTS & Other Offers
+  3. Added BTS rule printout after validation so you can verify the active patterns.
+  4. Treats TOC as QA only. Strong header match wins.
+  5. Skips generic extraction for price-grid pages to avoid 600+ noisy rows.
+  6. Improves no-change detection.
+  7. Improves major-offer continuation-line grouping.
+  8. Dedupe device fragments like Galaxy S26 vs S26.
+  9. Prevents narrative headlines from being auto-approved as generic offers.
+  10. Keeps dense layouts in review until Gemini Vision/table extraction is added.
+
+Expected after rerun:
+  - No prepaid_metro_price_grid offer_block 622 row in content block summary.
+  - BTS page 13 should be watch, page 14 tablet, page 15 other.
+  - 'No offers expired' should become offer_status / no_change.
+  - Content blocks and review queue should drop compared with the noisy run.
+
 Next:
-  1. Share the QA outputs with me.
-  2. We will inspect:
-       - slide classification detail
-       - content block summary
-       - rows needing review
-       - unknown categories
-       - dense layout review rows
-  3. Then we will tune:
-       - slide header rules
-       - content block grouping
-       - offer taxonomy
-       - device extraction
-       - review thresholds
+  Share the final QA outputs again. Then we will add:
+    - Gemini Vision extraction for dense matrix slides
+    - Gemini Vision extraction for Metro price-grid slides
+    - Notebook 2 for human review and gold load
