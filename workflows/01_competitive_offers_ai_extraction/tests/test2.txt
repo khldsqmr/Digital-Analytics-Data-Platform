@@ -1,0 +1,3301 @@
+
+
+# ============================================================
+# CELL 1: NOTEBOOK HEADER
+# ============================================================
+
+print("=" * 120)
+print("SDI COMPETITIVE OFFERS PDF EXTRACTION NOTEBOOK")
+print("=" * 120)
+print("""
+Purpose:
+  1. Upload one weekly Competitive Offer Report PDF.
+  2. Check if the PDF already exists in BigQuery.
+  3. Let user choose cancel / replace / append_anyway.
+  4. Extract raw slide text and lines into bronze.
+  5. Extract TOC expectations.
+  6. Classify each slide using:
+       a. priority page rules
+       b. slide header registry
+       c. TOC expected map
+       d. Gemini fallback
+  7. Create slide content blocks.
+  8. Create offer candidates from content blocks.
+  9. Normalize offers into silver.
+  10. Create device bridge for grouped-device offers.
+  11. Create review queue and auto-approved review decisions.
+  12. Print detailed QA outputs so you can share results for improvement.
+
+Important:
+  - This notebook does NOT create one table per slide.
+  - It stores all slides in generic bronze tables.
+  - It stores slide interpretation in silver.
+  - It stores uncertain rows in review tables.
+  - Gold loading should happen after human review in a second notebook.
+""")
+print("=" * 120)
+
+
+# ============================================================
+# CELL 2: INSTALL PACKAGES
+# ============================================================
+
+print("\nCELL 2: Package installation check")
+
+# Uncomment these if your Colab Enterprise / Vertex runtime is missing packages.
+# !pip install google-cloud-bigquery google-genai pandas pyarrow pymupdf python-dateutil
+
+print("Package installation cell completed.")
+
+
+# ============================================================
+# CELL 3: IMPORT LIBRARIES
+# ============================================================
+
+print("\nCELL 3: Importing libraries")
+
+import os
+import re
+import json
+import hashlib
+import traceback
+from datetime import datetime, date
+from dateutil import parser as date_parser
+
+import pandas as pd
+import fitz  # PyMuPDF
+
+from google.cloud import bigquery
+
+try:
+    from google import genai
+    from google.genai import types
+    GENAI_AVAILABLE = True
+except Exception as e:
+    GENAI_AVAILABLE = False
+    print("Gemini SDK import failed. Gemini fallback will be disabled.")
+    print(e)
+
+try:
+    from IPython.display import display
+except Exception:
+    def display(x):
+        print(x)
+
+print("Libraries imported successfully.")
+print(f"GENAI_AVAILABLE: {GENAI_AVAILABLE}")
+
+
+# ============================================================
+# CELL 4: USER CONFIGURATION
+# ============================================================
+
+print("\nCELL 4: Loading user configuration")
+
+# ------------------------------------------------------------
+# Update these values before running
+# ------------------------------------------------------------
+PROJECT_ID = "prj-dbi-prd-1"
+BQ_DATASET = "ds_dbi_digitalmedia_automation"
+LOCATION = "us-central1"
+
+TEAM_NAME = "sdi"
+PROJECT_NAME = "competitiveOffers"
+CADENCE = "weekly"
+
+# Gemini model. Update if your company uses a different approved model.
+GEMINI_MODEL = "gemini-2.5-pro"
+
+# Use Gemini for slide classification fallback?
+USE_GEMINI_FOR_CLASSIFICATION = True
+
+# Use Gemini for content extraction fallback?
+# Keep False initially to control cost. Turn on after base parser is clean.
+USE_GEMINI_FOR_CONTENT_BLOCKS = False
+
+# Force every normalized row into review?
+# Use True during early QA, False once rules are stable.
+FORCE_ALL_ROWS_TO_REVIEW = False
+
+# Auto approve clean rows?
+AUTO_APPROVE_HIGH_CONFIDENCE = True
+
+# Confidence thresholds
+SECTION_CONFIDENCE_THRESHOLD = 0.85
+NORMALIZATION_CONFIDENCE_THRESHOLD = 0.85
+
+# If you want the notebook to stop after a certain step while debugging, set this.
+DEBUG_STOP_AFTER_STEP = None
+# Examples:
+# DEBUG_STOP_AFTER_STEP = "slide_classification"
+# DEBUG_STOP_AFTER_STEP = "content_blocks"
+
+print("Configuration loaded:")
+print(f"  PROJECT_ID: {PROJECT_ID}")
+print(f"  BQ_DATASET: {BQ_DATASET}")
+print(f"  LOCATION: {LOCATION}")
+print(f"  TEAM_NAME: {TEAM_NAME}")
+print(f"  PROJECT_NAME: {PROJECT_NAME}")
+print(f"  CADENCE: {CADENCE}")
+print(f"  GEMINI_MODEL: {GEMINI_MODEL}")
+print(f"  USE_GEMINI_FOR_CLASSIFICATION: {USE_GEMINI_FOR_CLASSIFICATION}")
+print(f"  USE_GEMINI_FOR_CONTENT_BLOCKS: {USE_GEMINI_FOR_CONTENT_BLOCKS}")
+print(f"  FORCE_ALL_ROWS_TO_REVIEW: {FORCE_ALL_ROWS_TO_REVIEW}")
+print(f"  AUTO_APPROVE_HIGH_CONFIDENCE: {AUTO_APPROVE_HIGH_CONFIDENCE}")
+
+
+# ============================================================
+# CELL 5: PDF UPLOAD
+# ============================================================
+
+print("\nCELL 5: PDF upload / local path setup")
+
+# For MVP, we are NOT using GCS.
+# Later production version can use:
+# GCS_BUCKET = "your-bucket"
+# GCS_PREFIX = "competitive_offers/raw_pdfs"
+# gcs_pdf_path = f"gs://{GCS_BUCKET}/{GCS_PREFIX}/{pdf_name}"
+
+PDF_LOCAL_PATH = None
+
+try:
+    from google.colab import files
+
+    print("Colab upload widget available.")
+    print("Please upload one Competitive Offer Report PDF.")
+    uploaded = files.upload()
+
+    if uploaded:
+        PDF_LOCAL_PATH = list(uploaded.keys())[0]
+        print(f"Uploaded PDF: {PDF_LOCAL_PATH}")
+    else:
+        print("No file uploaded through widget.")
+
+except Exception as e:
+    print("Colab upload widget not available or not used.")
+    print("If using Colab Enterprise / Vertex AI Workbench, upload the PDF into the notebook file browser.")
+    print(f"Upload widget message: {e}")
+
+if PDF_LOCAL_PATH is None:
+    # Manual fallback.
+    # Update this to match the uploaded file name in your notebook folder.
+    PDF_LOCAL_PATH = "Competitive_Offer_Report_041026.pdf"
+
+print(f"PDF_LOCAL_PATH: {PDF_LOCAL_PATH}")
+
+if not os.path.exists(PDF_LOCAL_PATH):
+    raise FileNotFoundError(
+        f"PDF file was not found at: {PDF_LOCAL_PATH}. "
+        "Upload the file or update PDF_LOCAL_PATH."
+    )
+
+print("PDF found successfully.")
+
+
+# ============================================================
+# CELL 6: TABLE NAMES
+# ============================================================
+
+print("\nCELL 6: Creating BigQuery table names")
+
+def build_table_name(layer: str, purpose: str, cadence: str = CADENCE) -> str:
+    """
+    Naming convention:
+      sdi_competitiveOffers_{layer}_{purpose}_{weekly}
+    """
+    return f"{TEAM_NAME}_{PROJECT_NAME}_{layer}_{purpose}_{cadence}"
+
+
+TABLES = {
+    # Bronze
+    "bronze_pdfDecks": build_table_name("bronze", "pdfDecks"),
+    "bronze_slideRaw": build_table_name("bronze", "slideRaw"),
+    "bronze_slideLines": build_table_name("bronze", "slideLines"),
+    "bronze_detectedEntities": build_table_name("bronze", "detectedEntities"),
+    "bronze_slideTables": build_table_name("bronze", "slideTables"),
+
+    # Silver
+    "silver_tocPageMap": build_table_name("silver", "tocPageMap"),
+    "silver_slideSections": build_table_name("silver", "slideSections"),
+    "silver_slideContentBlocks": build_table_name("silver", "slideContentBlocks"),
+    "silver_offerCandidates": build_table_name("silver", "offerCandidates"),
+    "silver_normalizedOffers": build_table_name("silver", "normalizedOffers"),
+    "silver_offerDeviceBridge": build_table_name("silver", "offerDeviceBridge"),
+    "silver_priceGridRows": build_table_name("silver", "priceGridRows"),
+
+    # Review
+    "review_extractionReview": build_table_name("review", "extractionReview"),
+    "review_reviewDecisions": build_table_name("review", "reviewDecisions"),
+    "review_taxonomy": build_table_name("review", "taxonomy"),
+    "review_approvedExamples": build_table_name("review", "approvedExamples"),
+
+    # Gold, created/loaded in second notebook after human review
+    "gold_ciHeadlines": build_table_name("gold", "ciHeadlines"),
+    "gold_majorOfferChanges": build_table_name("gold", "majorOfferChanges"),
+    "gold_postpaidOffers": build_table_name("gold", "postpaidOffers"),
+    "gold_businessOffers": build_table_name("gold", "businessOffers"),
+    "gold_prepaidOffers": build_table_name("gold", "prepaidOffers"),
+    "gold_offerDeviceBridge": build_table_name("gold", "offerDeviceBridge"),
+    "gold_prepaidDevicePriceGrid": build_table_name("gold", "prepaidDevicePriceGrid"),
+}
+
+print("Table names:")
+for k, v in TABLES.items():
+    print(f"  {k}: {v}")
+
+
+# ============================================================
+# CELL 7: CLIENTS AND GENERIC HELPERS
+# ============================================================
+
+print("\nCELL 7: Initializing clients and helper functions")
+
+bq_client = bigquery.Client(project=PROJECT_ID)
+
+if GENAI_AVAILABLE:
+    try:
+        genai_client = genai.Client(
+            vertexai=True,
+            project=PROJECT_ID,
+            location=LOCATION
+        )
+        GEMINI_CLIENT_READY = True
+    except Exception as e:
+        GEMINI_CLIENT_READY = False
+        print("Could not initialize Gemini client.")
+        print(e)
+else:
+    GEMINI_CLIENT_READY = False
+
+print(f"GEMINI_CLIENT_READY: {GEMINI_CLIENT_READY}")
+
+def full_table_id(table_short_name: str) -> str:
+    return f"{PROJECT_ID}.{BQ_DATASET}.{table_short_name}"
+
+
+def make_hash(value: str) -> str:
+    value = value or ""
+    return hashlib.md5(value.encode("utf-8")).hexdigest()
+
+
+def get_file_hash(file_path: str) -> str:
+    with open(file_path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+
+def clean_text(text: str) -> str:
+    if text is None:
+        return ""
+    text = text.replace("\u00a0", " ")
+    text = text.replace("–", "-")
+    text = text.replace("—", "-")
+    text = text.replace("…", "...")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def clean_line(text: str) -> str:
+    if text is None:
+        return ""
+    text = text.replace("\u00a0", " ")
+    text = text.replace("–", "-")
+    text = text.replace("—", "-")
+    text = text.replace("…", "...")
+    return text.strip()
+
+
+def safe_json(value):
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def parse_json_safe(value, default=None):
+    if default is None:
+        default = []
+    try:
+        if pd.isna(value):
+            return default
+    except Exception:
+        pass
+    try:
+        return json.loads(value)
+    except Exception:
+        return default
+
+
+def preview_df(df: pd.DataFrame, name: str, rows: int = 10, columns=None):
+    print("\n" + "=" * 120)
+    print(f"DATAFRAME PREVIEW: {name}")
+    print("=" * 120)
+    print(f"Rows: {len(df)}")
+    if len(df) == 0:
+        print("No rows found.")
+        return
+
+    if columns:
+        existing_cols = [c for c in columns if c in df.columns]
+        display(df[existing_cols].head(rows))
+    else:
+        display(df.head(rows))
+
+
+def read_bq(query: str) -> pd.DataFrame:
+    print("Running BigQuery query:")
+    print(query)
+    return bq_client.query(query).to_dataframe()
+
+
+def append_df_to_bq(df: pd.DataFrame, table_short_name: str):
+    if df is None or df.empty:
+        print(f"No rows to append to {table_short_name}. Skipping.")
+        return
+
+    table_id = full_table_id(table_short_name)
+    print(f"Appending {len(df)} rows to {table_id}...")
+
+    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
+    job = bq_client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    job.result()
+
+    print(f"Append completed: {len(df)} rows loaded into {table_id}.")
+
+
+def create_table_if_not_exists(table_short_name: str, schema: list):
+    table_id = full_table_id(table_short_name)
+
+    try:
+        bq_client.get_table(table_id)
+        print(f"Table already exists: {table_id}")
+        return
+    except Exception:
+        print(f"Creating table: {table_id}")
+
+    table = bigquery.Table(table_id, schema=schema)
+    bq_client.create_table(table)
+    print(f"Created table: {table_id}")
+
+
+def debug_stop(step_name: str):
+    if DEBUG_STOP_AFTER_STEP == step_name:
+        print(f"DEBUG_STOP_AFTER_STEP reached: {step_name}")
+        raise SystemExit(f"Stopped after {step_name}")
+
+
+print("Clients and helpers are ready.")
+
+
+# ============================================================
+# CELL 8: TAXONOMY, HEADER REGISTRY, AND RULES
+# ============================================================
+
+print("\nCELL 8: Defining taxonomy, header registry, and extraction rules")
+
+ALLOWED_SECTION_NAMES = [
+    "cover",
+    "confidentiality_notice",
+    "table_of_contents",
+    "section_divider_ci_headlines",
+    "section_divider_offer_updates",
+    "section_divider_postpaid",
+    "section_divider_prepaid",
+    "ci_headlines_postpaid",
+    "ci_headlines_prepaid",
+    "major_offer_changes",
+    "postpaid_apple_device_offers",
+    "postpaid_samsung_google_device_offers",
+    "postpaid_motorola_affordable_byod_offers",
+    "postpaid_bts_watch_offers",
+    "postpaid_bts_tablet_offers",
+    "postpaid_bts_other_offers",
+    "postpaid_service_offers",
+    "cable_mvno_handset_offers",
+    "cable_mvno_service_offers",
+    "business_device_offers",
+    "business_newline_byod_offers",
+    "national_retail_readout",
+    "prepaid_brand_offers",
+    "prepaid_metro_price_grid",
+    "prepaid_flagship_offers",
+    "walmart_prepaid_offers",
+    "end_slide",
+    "unknown"
+]
+
+NON_OFFER_SECTIONS = [
+    "cover",
+    "confidentiality_notice",
+    "table_of_contents",
+    "section_divider_ci_headlines",
+    "section_divider_offer_updates",
+    "section_divider_postpaid",
+    "section_divider_prepaid",
+    "end_slide",
+    "unknown"
+]
+
+CARRIER_KEYWORDS = {
+    "T-Mobile": ["t-mobile", "tmobile"],
+    "Metro by T-Mobile": ["metro by t-mobile", "metro"],
+    "Verizon": ["verizon"],
+    "AT&T": ["at&t", "att"],
+    "Spectrum": ["spectrum"],
+    "Xfinity": ["xfinity", "comcast"],
+    "Optimum Mobile": ["optimum"],
+    "Boost Mobile": ["boost"],
+    "Cricket Wireless": ["cricket"],
+    "Straight Talk": ["straight talk"],
+    "Total Wireless": ["total wireless"],
+    "Visible": ["visible"],
+    "Tello": ["tello"],
+    "Google Fi": ["google fi"],
+    "Simple Mobile": ["simple mobile"],
+    "US Mobile": ["us mobile"],
+    "Walmart": ["walmart"],
+    "Best Buy": ["best buy"]
+}
+
+MANUFACTURER_KEYWORDS = {
+    "Apple": ["iphone", "ipad", "apple watch"],
+    "Samsung": ["samsung", "galaxy", "z flip", "z fold", "tab"],
+    "Google": ["pixel"],
+    "Motorola": ["moto", "motorola", "razr"],
+    "TCL": ["tcl"],
+    "Revvl": ["revvl"]
+}
+
+PRODUCT_FAMILY_RULES = {
+    "smartphone": ["iphone", "galaxy", "pixel", "moto", "razr", "phone", "handset", "smartphone"],
+    "watch": ["watch", "apple watch", "galaxy watch", "pixel watch", "gizmo", "syncup"],
+    "tablet": ["tablet", "ipad", "tab"],
+    "byod": ["byod", "bring your own"],
+    "service_plan": ["plan", "unlimited", "rate plan", "service"],
+    "home_internet": ["home internet", "starlink", "fios", "fiber", "hint", "gateway"],
+    "hotspot": ["hotspot", "mifi", "jetpack"],
+    "accessory": ["accessory", "tracker"]
+}
+
+OFFER_SUBCATEGORY_RULES = {
+    "device_discount": ["off", "discount", "save", "savings"],
+    "trade_in_offer": ["trade", "trade-in", "trd", "fmv", "any condition", "working trade"],
+    "free_device_offer": ["free", "on us", "$0/mo", "$0", "no cost"],
+    "monthly_bill_credit": ["bill credit", "monthly credit", "credits over", "x 36", "x 24", "credit"],
+    "byod_credit": ["byod", "bring your own"],
+    "eip_buyout": ["eip buyout", "pay off", "payoff", "switcher"],
+    "port_in_credit": ["port-in credit", "port credit"],
+    "aal_offer": ["aal", "add a line", "new line"],
+    "plan_refresh": ["plan refresh", "new plan", "updated existing plans", "rate plan", "lineup"],
+    "price_increase": ["price increase", "+$", "higher than prior"],
+    "activation_fee_waiver": ["waived activation", "activation fee waived", "waived fee"],
+    "expired_offer": ["expired", "removed", "retired", "ended", "no longer"],
+    "no_change": ["no changes", "no updates", "no offers ended", "no new offers", "no offers expired"],
+    "device_price_point": ["price point", "in-store", "online", "port/", "new number"],
+    "retail_price_change": ["was $", "now $", "previously", "reduced", "increased"],
+    "unlock_policy_change": ["unlock policy", "unlock period"],
+    "marketing_campaign": ["tv spot", "campaign", "deal drop", "sale features", "anniversary"],
+    "coverage_expansion": ["expansion", "launched in", "joining"],
+    "rate_plan_requirement": ["req.", "rp", "rate plan", "$60 rp", "$50 rp"],
+    "service_mrc_promo": ["mrc", "autopay", "promo mrc", "first month free"],
+    "accessory_bundle": ["watch + tablet", "bundle", "with iphone purchase", "phone purchase"],
+    "device_family_offer": ["series", "family", "all models", "pros only"],
+    "grid_price_row": ["new number", "port", "id", "no id", "upgrade"]
+}
+
+# Stable slide header registry.
+# This is the main improvement over the earlier notebook.
+SLIDE_HEADER_RULES = [
+    {
+        "rule_name": "cover",
+        "pattern": r"competitive offer report",
+        "section_name": "cover",
+        "page_type": "cover",
+        "business_segment": "unknown",
+        "extraction_strategy": "skip",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "confidentiality",
+        "pattern": r"notice of confidentiality",
+        "section_name": "confidentiality_notice",
+        "page_type": "legal_notice",
+        "business_segment": "unknown",
+        "extraction_strategy": "skip",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "toc",
+        "pattern": r"table of contents",
+        "section_name": "table_of_contents",
+        "page_type": "toc",
+        "business_segment": "unknown",
+        "extraction_strategy": "extract_toc_only",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "ci_divider",
+        "pattern": r"^.{0,100}ci headlines.{0,100}$",
+        "section_name": "section_divider_ci_headlines",
+        "page_type": "section_divider",
+        "business_segment": "unknown",
+        "extraction_strategy": "skip",
+        "confidence": 0.90
+    },
+    {
+        "rule_name": "ci_headlines",
+        "pattern": r"competitive intelligence headlines",
+        "section_name": "ci_headlines_postpaid",
+        "page_type": "narrative_headline",
+        "business_segment": "mixed",
+        "extraction_strategy": "headline_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "major_offer_changes",
+        "pattern": r"major offer changes effective",
+        "section_name": "major_offer_changes",
+        "page_type": "major_changes",
+        "business_segment": "mixed",
+        "extraction_strategy": "major_changes_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "offer_updates_divider",
+        "pattern": r"competitive offer updates|competitive offers\s*&\s*promotional updates\s+postpaid",
+        "section_name": "section_divider_offer_updates",
+        "page_type": "section_divider",
+        "business_segment": "unknown",
+        "extraction_strategy": "skip",
+        "confidence": 0.90
+    },
+    {
+        "rule_name": "apple_postpaid",
+        "pattern": r"post-paid apple smartphone offers effective",
+        "section_name": "postpaid_apple_device_offers",
+        "page_type": "dense_matrix",
+        "business_segment": "postpaid",
+        "extraction_strategy": "matrix_text_block_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "samsung_google_postpaid",
+        "pattern": r"post-paid samsung and google smartphone offers effective",
+        "section_name": "postpaid_samsung_google_device_offers",
+        "page_type": "dense_matrix",
+        "business_segment": "postpaid",
+        "extraction_strategy": "matrix_text_block_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "motorola_affordable_byod",
+        "pattern": r"post-paid motorola, affordable phones and byod offers effective",
+        "section_name": "postpaid_motorola_affordable_byod_offers",
+        "page_type": "dense_matrix",
+        "business_segment": "postpaid",
+        "extraction_strategy": "matrix_text_block_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "bts_watches",
+        "pattern": r"post-paid bts\s*",
+        "section_name": "postpaid_bts_watch_offers",
+        "page_type": "matrix_or_table",
+        "business_segment": "postpaid",
+        "extraction_strategy": "bts_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "bts_tablet",
+        "pattern": r"post-paid bts\s*",
+        "section_name": "postpaid_bts_tablet_offers",
+        "page_type": "matrix_or_table",
+        "business_segment": "postpaid",
+        "extraction_strategy": "bts_parser",
+        "confidence": 1.00
+    },
+    {
+        "rule_name": "bts_other",
+        "pattern": r"post-paid bts.*other",
+        "section_name": "postpaid_bts_other_offers",
+        "page_type": "matrix_or_table",
+        "business_segment": "postpaid",
+        "extraction_strategy": "bts_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "postpaid_service",
+        "pattern": r"post-paid service offers|t-mobile\s*&\s*at&t post-paid service offers|verizon post-paid service offers",
+        "section_name": "postpaid_service_offers",
+        "page_type": "service_reference",
+        "business_segment": "postpaid",
+        "extraction_strategy": "service_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "cable_mvno_handset",
+        "pattern": r"postpaid cable mvno.*handset|cable mvno.*handset",
+        "section_name": "cable_mvno_handset_offers",
+        "page_type": "dense_text_table",
+        "business_segment": "cable_mvno",
+        "extraction_strategy": "mvno_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "cable_mvno_service",
+        "pattern": r"cable mvno service.*pricing|cable mvno service",
+        "section_name": "cable_mvno_service_offers",
+        "page_type": "service_reference",
+        "business_segment": "cable_mvno",
+        "extraction_strategy": "service_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "business_device",
+        "pattern": r"business.*flagship device offers|postpaid business.*device offers",
+        "section_name": "business_device_offers",
+        "page_type": "business_matrix",
+        "business_segment": "business",
+        "extraction_strategy": "matrix_text_block_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "business_newline_byod",
+        "pattern": r"business.*new line|business.*byod",
+        "section_name": "business_newline_byod_offers",
+        "page_type": "business_matrix",
+        "business_segment": "business",
+        "extraction_strategy": "business_parser",
+        "confidence": 0.90
+    },
+    {
+        "rule_name": "national_retail",
+        "pattern": r"national retail|weekly readout by npd|key highlights",
+        "section_name": "national_retail_readout",
+        "page_type": "retail_summary",
+        "business_segment": "national_retail",
+        "extraction_strategy": "headline_parser",
+        "confidence": 0.85
+    },
+    {
+        "rule_name": "prepaid_divider",
+        "pattern": r"competitive offers.*promotional updates.*prepaid|prepaid$",
+        "section_name": "section_divider_prepaid",
+        "page_type": "section_divider",
+        "business_segment": "unknown",
+        "extraction_strategy": "skip",
+        "confidence": 0.80
+    },
+    {
+        "rule_name": "prepaid_brand_offers",
+        "pattern": r"prepaid brands.*current offers",
+        "section_name": "prepaid_brand_offers",
+        "page_type": "prepaid_reference",
+        "business_segment": "prepaid",
+        "extraction_strategy": "prepaid_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "metro_price_grid",
+        "pattern": r"metro by t-mobile|metro price grid",
+        "section_name": "prepaid_metro_price_grid",
+        "page_type": "price_grid",
+        "business_segment": "prepaid",
+        "extraction_strategy": "price_grid_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "prepaid_flagship",
+        "pattern": r"flagship brands/prepaid.*current offers|prepaid flagship brands",
+        "section_name": "prepaid_flagship_offers",
+        "page_type": "prepaid_reference",
+        "business_segment": "prepaid",
+        "extraction_strategy": "prepaid_parser",
+        "confidence": 0.95
+    },
+    {
+        "rule_name": "walmart_prepaid",
+        "pattern": r"walmart.*current offers|prepaid brands at walmart",
+        "section_name": "walmart_prepaid_offers",
+        "page_type": "retail_prepaid",
+        "business_segment": "prepaid",
+        "extraction_strategy": "prepaid_retail_parser",
+        "confidence": 0.95
+    },
+]
+
+def dictionary_match(text: str, dictionary: dict):
+    text_lower = (text or "").lower()
+    scores = {}
+
+    for label, keywords in dictionary.items():
+        matched = [kw for kw in keywords if kw.lower() in text_lower]
+        if matched:
+            scores[label] = {
+                "score": len(matched),
+                "matched_keywords": matched
+            }
+
+    if not scores:
+        return None, 0.0, []
+
+    best_label = max(scores, key=lambda x: scores[x]["score"])
+    best_score = scores[best_label]["score"]
+    confidence = min(best_score / 3, 1.0)
+
+    return best_label, confidence, scores[best_label]["matched_keywords"]
+
+
+def infer_offer_category(offer_subcategory: str):
+    if offer_subcategory in [
+        "device_discount",
+        "trade_in_offer",
+        "free_device_offer",
+        "device_price_point",
+        "retail_price_change",
+        "device_family_offer",
+        "grid_price_row"
+    ]:
+        return "device_promotion"
+
+    if offer_subcategory in [
+        "monthly_bill_credit",
+        "byod_credit",
+        "eip_buyout",
+        "port_in_credit",
+        "aal_offer",
+        "service_mrc_promo"
+    ]:
+        return "service_promotion"
+
+    if offer_subcategory in [
+        "plan_refresh",
+        "price_increase",
+        "rate_plan_requirement"
+    ]:
+        return "plan_pricing"
+
+    if offer_subcategory in [
+        "activation_fee_waiver"
+    ]:
+        return "fee_promotion"
+
+    if offer_subcategory in [
+        "expired_offer",
+        "no_change"
+    ]:
+        return "offer_status"
+
+    if offer_subcategory in [
+        "marketing_campaign",
+        "coverage_expansion",
+        "unlock_policy_change",
+        "accessory_bundle"
+    ]:
+        return "market_update"
+
+    return "unknown"
+
+
+def is_no_change_text(text: str):
+    lower = (text or "").strip().lower()
+    return lower in [
+        "no changes",
+        "no updates",
+        "no offers ended",
+        "no new offers",
+        "no offers expired",
+        "no expired offers",
+        "no offer",
+        "- no offers"
+    ]
+
+
+print("Taxonomy and header registry loaded.")
+print(f"Number of slide header rules: {len(SLIDE_HEADER_RULES)}")
+
+
+# ============================================================
+# CELL 9: ENTITY EXTRACTION HELPERS
+# ============================================================
+
+print("\nCELL 9: Defining entity extraction helpers")
+
+def detect_money_values(text: str):
+    pattern = r"(?:<|>|~)?$\s?\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?"
+    return re.findall(pattern, text or "")
+
+
+def normalize_money_value(money_text: str):
+    if not money_text:
+        return None
+    value = (
+        money_text
+        .replace("$", "")
+        .replace(",", "")
+        .replace("<", "")
+        .replace(">", "")
+        .replace("~", "")
+        .strip()
+    )
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def detect_dates(text: str):
+    pattern = r"\d{1,2}/\d{1,2}(?:/\d{2,4})?(?:\s?-\s?(?:\d{1,2}/\d{1,2}(?:/\d{2,4})?|TBD)?)?"
+    return re.findall(pattern, text or "", flags=re.IGNORECASE)
+
+
+def parse_date_range(date_text: str, deck_year: int):
+    if not date_text:
+        return None, None
+
+    cleaned = date_text.replace("–", "-").replace("—", "-")
+    match = re.search(
+        r"(\d{1,2}/\d{1,2}(?:/\d{2,4})?)(?:\s?-\s?(TBD|\d{1,2}/\d{1,2}(?:/\d{2,4})?)?)?",
+        cleaned,
+        flags=re.IGNORECASE
+    )
+
+    if not match:
+        return None, None
+
+    start_raw = match.group(1)
+    end_raw = match.group(2)
+
+    def parse_one(raw):
+        if not raw:
+            return None
+        try:
+            if raw.count("/") == 1:
+                return date_parser.parse(f"{raw}/{deck_year}").date().isoformat()
+            return date_parser.parse(raw).date().isoformat()
+        except Exception:
+            return None
+
+    start_date = parse_one(start_raw)
+    end_date = None if not end_raw or end_raw.upper() == "TBD" else parse_one(end_raw)
+
+    return start_date, end_date
+
+
+def detect_data_allowance(text: str):
+    return re.findall(r"\b\d+\s?GB\b", text or "", flags=re.IGNORECASE)
+
+
+def detect_term_months(text: str):
+    matches = re.findall(r"\b\d{1,2}\s?(?:months|mos|mo)\b", text or "", flags=re.IGNORECASE)
+    if not matches:
+        return None
+    num_match = re.search(r"\d{1,2}", matches[0])
+    return int(num_match.group(0)) if num_match else None
+
+
+def detect_carrier(text: str):
+    return dictionary_match(text, CARRIER_KEYWORDS)
+
+
+def detect_manufacturer(text: str):
+    return dictionary_match(text, MANUFACTURER_KEYWORDS)
+
+
+def detect_product_family(text: str):
+    return dictionary_match(text, PRODUCT_FAMILY_RULES)
+
+
+def detect_offer_subcategory(text: str):
+    if is_no_change_text(text):
+        return "no_change", 1.0, ["no_change_exact"]
+
+    return dictionary_match(text, OFFER_SUBCATEGORY_RULES)
+
+
+def clean_device_model(device: str):
+    if not device:
+        return None
+
+    d = clean_text(device)
+
+    # Remove trailing artifacts from extraction.
+    d = re.sub(r"\s+w$", "", d, flags=re.IGNORECASE)
+    d = re.sub(r"\s+w/$", "", d, flags=re.IGNORECASE)
+    d = re.sub(r"\s+with$", "", d, flags=re.IGNORECASE)
+
+    # Avoid generic duplicates when full name exists.
+    if d.lower() in ["razr", "phone", "smartphones"]:
+        return None
+
+    # Normalize simple plurals.
+    d = d.replace("iPads", "iPad")
+    d = d.replace("Apple Watches", "Apple Watch")
+
+    return d.strip() if d.strip() else None
+
+
+def extract_device_models(text: str):
+    if not text:
+        return []
+
+    patterns = [
+        r"iPhone\s?\d{1,2}[a-zA-Z]?(?:\s?Pro Max|\s?Pro|\s?Plus|\s?Air|\s?e)?",
+        r"iPhone\s?Air",
+        r"Galaxy\s?S\d{2}(?:\s?FE|\s?Ultra|\s?Edge|\+)?",
+        r"S\d{2}\+?",
+        r"S\d{2}\s?Ultra",
+        r"Galaxy\s?A\d{2}\s?5G",
+        r"A\d{2}\s?5G",
+        r"Galaxy\s?Z\s?(?:Flip|Fold)\d+",
+        r"Z\s?(?:Flip|Fold)\d+",
+        r"Flip\d+",
+        r"Fold\d+",
+        r"Pixel\s?\d{1,2}[a-zA-Z]?(?:\s?Pro XL|\s?Pro|\s?Fold)?",
+        r"Pixel\s?\d{1,2}a",
+        r"Pixel\s?\d{1,2}\s?Pro\s?XL",
+        r"moto\s?g\s?\w*(?:\s?5G)?(?:\s?2025|\s?2026)?",
+        r"moto\s?edge\s?\d{4}",
+        r"moto\s?razr\s?\d{4}",
+        r"Razr\+?\s?(?:Ultra)?",
+        r"Apple Watch\s?[A-Za-z0-9 ]*",
+        r"Galaxy Watch\d*",
+        r"Pixel Watch\s?\d*",
+        r"iPad\s?[A-Za-z0-9 ]*",
+        r"Galaxy Tab\s?[A-Za-z0-9+ ]*",
+        r"TCL\s?[A-Za-z0-9 ]*",
+        r"NXTPAPER\s?[A-Za-z0-9 ]*",
+    ]
+
+    found = []
+
+    for pattern in patterns:
+        matches = re.findall(pattern, text, flags=re.IGNORECASE)
+        for match in matches:
+            cleaned = clean_device_model(match)
+            if cleaned and cleaned.lower() not in [x.lower() for x in found]:
+                found.append(cleaned)
+
+    return found
+
+
+def looks_like_header_or_footer(text: str):
+    lower = (text or "").strip().lower()
+
+    exact_bad = [
+        "t-mobile confidential",
+        "market &",
+        "channel mciinsights",
+        "offers introduced",
+        "offers removed",
+        "smartphones",
+        "postpaid",
+        "prepaid",
+        "consumer:",
+        "consumer",
+        "apple",
+        "android flagships",
+        "android affordables",
+        "byod",
+        "current offers",
+        "competitive offer report",
+        "competitive offer updates",
+        "competitive offers & promotional updates"
+    ]
+
+    if lower in exact_bad:
+        return True
+
+    if re.fullmatch(r"\d{1,2}", lower):
+        return True
+
+    if lower.startswith("t-mobile confidential"):
+        return True
+
+    return False
+
+
+print("Entity extraction helpers defined.")
+
+
+# ============================================================
+# CELL 10: BIGQUERY SCHEMAS
+# ============================================================
+
+print("\nCELL 10: Defining BigQuery schemas")
+
+COMMON_KEYS = [
+    bigquery.SchemaField("deck_id", "STRING"),
+    bigquery.SchemaField("run_id", "STRING"),
+    bigquery.SchemaField("pdf_hash", "STRING"),
+    bigquery.SchemaField("pdf_name", "STRING"),
+    bigquery.SchemaField("deck_week", "DATE"),
+]
+
+SCHEMA_BRONZE_PDF_DECKS = [
+    bigquery.SchemaField("deck_id", "STRING"),
+    bigquery.SchemaField("run_id", "STRING"),
+    bigquery.SchemaField("pdf_hash", "STRING"),
+    bigquery.SchemaField("pdf_name", "STRING"),
+    bigquery.SchemaField("deck_week", "DATE"),
+    bigquery.SchemaField("local_pdf_path", "STRING"),
+    bigquery.SchemaField("total_pages", "INTEGER"),
+    bigquery.SchemaField("processing_mode", "STRING"),
+    bigquery.SchemaField("processing_status", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_BRONZE_SLIDE_RAW = COMMON_KEYS + [
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("raw_slide_text", "STRING"),
+    bigquery.SchemaField("cleaned_slide_text", "STRING"),
+    bigquery.SchemaField("slide_text_hash", "STRING"),
+    bigquery.SchemaField("extraction_method", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_BRONZE_SLIDE_LINES = COMMON_KEYS + [
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("line_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("line_number_on_page", "INTEGER"),
+    bigquery.SchemaField("raw_line_text", "STRING"),
+    bigquery.SchemaField("cleaned_line_text", "STRING"),
+    bigquery.SchemaField("line_text_hash", "STRING"),
+    bigquery.SchemaField("line_role", "STRING"),
+    bigquery.SchemaField("source_method", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_BRONZE_DETECTED_ENTITIES = COMMON_KEYS + [
+    bigquery.SchemaField("entity_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("line_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("entity_type", "STRING"),
+    bigquery.SchemaField("entity_text", "STRING"),
+    bigquery.SchemaField("normalized_entity_value", "STRING"),
+    bigquery.SchemaField("detection_method", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_BRONZE_SLIDE_TABLES = COMMON_KEYS + [
+    bigquery.SchemaField("slide_table_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("table_json", "STRING"),
+    bigquery.SchemaField("extraction_method", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_TOC_PAGE_MAP = COMMON_KEYS + [
+    bigquery.SchemaField("toc_map_id", "STRING"),
+    bigquery.SchemaField("toc_source_page_number", "INTEGER"),
+    bigquery.SchemaField("expected_page_number", "INTEGER"),
+    bigquery.SchemaField("expected_section_name", "STRING"),
+    bigquery.SchemaField("toc_line_text", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_SLIDE_SECTIONS = COMMON_KEYS + [
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("slide_title", "STRING"),
+    bigquery.SchemaField("page_type", "STRING"),
+    bigquery.SchemaField("matched_header_rule", "STRING"),
+    bigquery.SchemaField("expected_section_from_toc", "STRING"),
+    bigquery.SchemaField("predicted_section_from_header", "STRING"),
+    bigquery.SchemaField("predicted_section_from_gemini", "STRING"),
+    bigquery.SchemaField("final_section_name", "STRING"),
+    bigquery.SchemaField("business_segment", "STRING"),
+    bigquery.SchemaField("extraction_strategy", "STRING"),
+    bigquery.SchemaField("section_confidence", "FLOAT"),
+    bigquery.SchemaField("section_reason", "STRING"),
+    bigquery.SchemaField("classification_source", "STRING"),
+    bigquery.SchemaField("review_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_CONTENT_BLOCKS = COMMON_KEYS + [
+    bigquery.SchemaField("content_block_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("final_section_name", "STRING"),
+    bigquery.SchemaField("page_type", "STRING"),
+    bigquery.SchemaField("extraction_strategy", "STRING"),
+    bigquery.SchemaField("block_sequence_number", "INTEGER"),
+    bigquery.SchemaField("block_type", "STRING"),
+    bigquery.SchemaField("block_title", "STRING"),
+    bigquery.SchemaField("carrier", "STRING"),
+    bigquery.SchemaField("business_segment", "STRING"),
+    bigquery.SchemaField("product_family", "STRING"),
+    bigquery.SchemaField("device_family_text", "STRING"),
+    bigquery.SchemaField("customer_segment", "STRING"),
+    bigquery.SchemaField("change_bucket", "STRING"),
+    bigquery.SchemaField("raw_block_text", "STRING"),
+    bigquery.SchemaField("source_line_start", "INTEGER"),
+    bigquery.SchemaField("source_line_end", "INTEGER"),
+    bigquery.SchemaField("block_confidence", "FLOAT"),
+    bigquery.SchemaField("review_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_OFFER_CANDIDATES = COMMON_KEYS + [
+    bigquery.SchemaField("candidate_id", "STRING"),
+    bigquery.SchemaField("content_block_id", "STRING"),
+    bigquery.SchemaField("offer_group_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("section_name", "STRING"),
+    bigquery.SchemaField("page_type", "STRING"),
+    bigquery.SchemaField("business_segment", "STRING"),
+    bigquery.SchemaField("carrier", "STRING"),
+    bigquery.SchemaField("raw_offer_text", "STRING"),
+    bigquery.SchemaField("suggested_offer_category", "STRING"),
+    bigquery.SchemaField("suggested_offer_subcategory", "STRING"),
+    bigquery.SchemaField("detected_money_values_json", "STRING"),
+    bigquery.SchemaField("detected_device_models_json", "STRING"),
+    bigquery.SchemaField("detected_dates_json", "STRING"),
+    bigquery.SchemaField("candidate_confidence", "FLOAT"),
+    bigquery.SchemaField("candidate_source", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_NORMALIZED_OFFERS = COMMON_KEYS + [
+    bigquery.SchemaField("offer_id", "STRING"),
+    bigquery.SchemaField("offer_group_id", "STRING"),
+    bigquery.SchemaField("candidate_id", "STRING"),
+    bigquery.SchemaField("content_block_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("section_name", "STRING"),
+    bigquery.SchemaField("page_type", "STRING"),
+    bigquery.SchemaField("business_segment", "STRING"),
+    bigquery.SchemaField("carrier", "STRING"),
+    bigquery.SchemaField("customer_segment", "STRING"),
+    bigquery.SchemaField("change_bucket", "STRING"),
+    bigquery.SchemaField("product_family", "STRING"),
+    bigquery.SchemaField("manufacturer", "STRING"),
+    bigquery.SchemaField("device_family_text", "STRING"),
+    bigquery.SchemaField("primary_device_model", "STRING"),
+    bigquery.SchemaField("device_models_json", "STRING"),
+    bigquery.SchemaField("plan_name", "STRING"),
+    bigquery.SchemaField("offer_category", "STRING"),
+    bigquery.SchemaField("offer_subcategory", "STRING"),
+    bigquery.SchemaField("offer_type", "STRING"),
+    bigquery.SchemaField("offer_value", "FLOAT"),
+    bigquery.SchemaField("offer_value_unit", "STRING"),
+    bigquery.SchemaField("monthly_price", "FLOAT"),
+    bigquery.SchemaField("data_allowance", "STRING"),
+    bigquery.SchemaField("term_length_months", "INTEGER"),
+    bigquery.SchemaField("customer_action", "STRING"),
+    bigquery.SchemaField("condition_text", "STRING"),
+    bigquery.SchemaField("port_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("aal_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("trade_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("upgrade_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("new_line_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("online_only_flag", "BOOLEAN"),
+    bigquery.SchemaField("in_store_only_flag", "BOOLEAN"),
+    bigquery.SchemaField("is_free_flag", "BOOLEAN"),
+    bigquery.SchemaField("is_new_flag", "BOOLEAN"),
+    bigquery.SchemaField("is_expired_flag", "BOOLEAN"),
+    bigquery.SchemaField("effective_start_date", "DATE"),
+    bigquery.SchemaField("effective_end_date", "DATE"),
+    bigquery.SchemaField("source_raw_text", "STRING"),
+    bigquery.SchemaField("offer_business_key", "STRING"),
+    bigquery.SchemaField("offer_value_hash", "STRING"),
+    bigquery.SchemaField("category_confidence", "FLOAT"),
+    bigquery.SchemaField("normalization_confidence", "FLOAT"),
+    bigquery.SchemaField("validation_status", "STRING"),
+    bigquery.SchemaField("review_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("review_status", "STRING"),
+    bigquery.SchemaField("status", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_DEVICE_BRIDGE = COMMON_KEYS + [
+    bigquery.SchemaField("offer_device_id", "STRING"),
+    bigquery.SchemaField("offer_id", "STRING"),
+    bigquery.SchemaField("offer_group_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("manufacturer", "STRING"),
+    bigquery.SchemaField("device_model", "STRING"),
+    bigquery.SchemaField("device_rank", "INTEGER"),
+    bigquery.SchemaField("source_raw_text", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_SILVER_PRICE_GRID_ROWS = COMMON_KEYS + [
+    bigquery.SchemaField("price_grid_row_id", "STRING"),
+    bigquery.SchemaField("slide_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("carrier", "STRING"),
+    bigquery.SchemaField("device_model", "STRING"),
+    bigquery.SchemaField("retail_price", "FLOAT"),
+    bigquery.SchemaField("offer_program", "STRING"),
+    bigquery.SchemaField("customer_type", "STRING"),
+    bigquery.SchemaField("id_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("port_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("rate_plan_requirement", "STRING"),
+    bigquery.SchemaField("final_price", "FLOAT"),
+    bigquery.SchemaField("is_free_flag", "BOOLEAN"),
+    bigquery.SchemaField("source_column_header", "STRING"),
+    bigquery.SchemaField("source_row_text", "STRING"),
+    bigquery.SchemaField("confidence_score", "FLOAT"),
+    bigquery.SchemaField("review_required_flag", "BOOLEAN"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_REVIEW_EXTRACTION_REVIEW = COMMON_KEYS + [
+    bigquery.SchemaField("review_id", "STRING"),
+    bigquery.SchemaField("offer_id", "STRING"),
+    bigquery.SchemaField("offer_group_id", "STRING"),
+    bigquery.SchemaField("candidate_id", "STRING"),
+    bigquery.SchemaField("content_block_id", "STRING"),
+    bigquery.SchemaField("page_number", "INTEGER"),
+    bigquery.SchemaField("section_name", "STRING"),
+    bigquery.SchemaField("business_segment", "STRING"),
+    bigquery.SchemaField("carrier", "STRING"),
+    bigquery.SchemaField("source_raw_text", "STRING"),
+    bigquery.SchemaField("suggested_output_json", "STRING"),
+    bigquery.SchemaField("confidence_score", "FLOAT"),
+    bigquery.SchemaField("validation_status", "STRING"),
+    bigquery.SchemaField("review_reason", "STRING"),
+    bigquery.SchemaField("review_status", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_REVIEW_DECISIONS = COMMON_KEYS + [
+    bigquery.SchemaField("decision_id", "STRING"),
+    bigquery.SchemaField("review_id", "STRING"),
+    bigquery.SchemaField("offer_id", "STRING"),
+    bigquery.SchemaField("offer_group_id", "STRING"),
+    bigquery.SchemaField("decision_type", "STRING"),
+    bigquery.SchemaField("review_status", "STRING"),
+    bigquery.SchemaField("reviewer_name", "STRING"),
+    bigquery.SchemaField("review_notes", "STRING"),
+    bigquery.SchemaField("final_output_json", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_REVIEW_TAXONOMY = COMMON_KEYS + [
+    bigquery.SchemaField("taxonomy_id", "STRING"),
+    bigquery.SchemaField("taxonomy_type", "STRING"),
+    bigquery.SchemaField("taxonomy_value", "STRING"),
+    bigquery.SchemaField("taxonomy_description", "STRING"),
+    bigquery.SchemaField("example_text", "STRING"),
+    bigquery.SchemaField("active_flag", "BOOLEAN"),
+    bigquery.SchemaField("created_by", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+SCHEMA_REVIEW_APPROVED_EXAMPLES = COMMON_KEYS + [
+    bigquery.SchemaField("example_id", "STRING"),
+    bigquery.SchemaField("source_raw_text", "STRING"),
+    bigquery.SchemaField("approved_output_json", "STRING"),
+    bigquery.SchemaField("approved_by", "STRING"),
+    bigquery.SchemaField("created_at", "TIMESTAMP"),
+]
+
+print("Schemas defined.")
+
+
+# ============================================================
+# CELL 11: CREATE TABLES
+# ============================================================
+
+print("\nCELL 11: Creating BigQuery tables if missing")
+
+create_table_if_not_exists(TABLES["bronze_pdfDecks"], SCHEMA_BRONZE_PDF_DECKS)
+create_table_if_not_exists(TABLES["bronze_slideRaw"], SCHEMA_BRONZE_SLIDE_RAW)
+create_table_if_not_exists(TABLES["bronze_slideLines"], SCHEMA_BRONZE_SLIDE_LINES)
+create_table_if_not_exists(TABLES["bronze_detectedEntities"], SCHEMA_BRONZE_DETECTED_ENTITIES)
+create_table_if_not_exists(TABLES["bronze_slideTables"], SCHEMA_BRONZE_SLIDE_TABLES)
+
+create_table_if_not_exists(TABLES["silver_tocPageMap"], SCHEMA_SILVER_TOC_PAGE_MAP)
+create_table_if_not_exists(TABLES["silver_slideSections"], SCHEMA_SILVER_SLIDE_SECTIONS)
+create_table_if_not_exists(TABLES["silver_slideContentBlocks"], SCHEMA_SILVER_CONTENT_BLOCKS)
+create_table_if_not_exists(TABLES["silver_offerCandidates"], SCHEMA_SILVER_OFFER_CANDIDATES)
+create_table_if_not_exists(TABLES["silver_normalizedOffers"], SCHEMA_SILVER_NORMALIZED_OFFERS)
+create_table_if_not_exists(TABLES["silver_offerDeviceBridge"], SCHEMA_SILVER_DEVICE_BRIDGE)
+create_table_if_not_exists(TABLES["silver_priceGridRows"], SCHEMA_SILVER_PRICE_GRID_ROWS)
+
+create_table_if_not_exists(TABLES["review_extractionReview"], SCHEMA_REVIEW_EXTRACTION_REVIEW)
+create_table_if_not_exists(TABLES["review_reviewDecisions"], SCHEMA_REVIEW_DECISIONS)
+create_table_if_not_exists(TABLES["review_taxonomy"], SCHEMA_REVIEW_TAXONOMY)
+create_table_if_not_exists(TABLES["review_approvedExamples"], SCHEMA_REVIEW_APPROVED_EXAMPLES)
+
+print("All required tables are ready.")
+
+
+# ============================================================
+# FIX CELL: BIGQUERY TYPE CONVERSION + CORRECTED CELL 12
+# Paste this right before CELL 12, then run this cell.
+# After this, continue running from CELL 13 onward.
+# ============================================================
+
+print("\nFIX CELL: Replacing append_df_to_bq with schema-aware BigQuery loader")
+
+
+def prepare_df_for_bq(df: pd.DataFrame, table_short_name: str) -> pd.DataFrame:
+    """
+    Converts DataFrame columns to BigQuery-compatible types before loading.
+
+    This fixes common issues like:
+      - DATE columns being passed as strings
+      - TIMESTAMP columns being object dtype
+      - INTEGER columns being floats/objects
+      - BOOLEAN columns containing nulls
+      - STRING columns containing mixed types
+    """
+
+    if df is None or df.empty:
+        return df
+
+    df = df.copy()
+    table_id = full_table_id(table_short_name)
+
+    print(f"Reading destination schema for: {table_id}")
+
+    try:
+        table = bq_client.get_table(table_id)
+        schema_lookup = {field.name: field.field_type for field in table.schema}
+    except Exception as e:
+        print(f"Could not read schema for {table_id}. Proceeding without schema-based conversion.")
+        print(e)
+        schema_lookup = {}
+
+    for col in df.columns:
+        bq_type = schema_lookup.get(col)
+
+        if bq_type == "DATE":
+            print(f"  Converting DATE column: {col}")
+            df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+
+        elif bq_type == "TIMESTAMP":
+            print(f"  Converting TIMESTAMP column: {col}")
+            df[col] = pd.to_datetime(df[col], errors="coerce", utc=True)
+
+        elif bq_type == "INTEGER":
+            print(f"  Converting INTEGER column: {col}")
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+
+        elif bq_type == "FLOAT":
+            print(f"  Converting FLOAT column: {col}")
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+        elif bq_type == "BOOLEAN":
+            print(f"  Converting BOOLEAN column: {col}")
+            df[col] = df[col].astype("boolean")
+
+        elif bq_type == "STRING":
+            print(f"  Converting STRING column: {col}")
+            df[col] = df[col].where(df[col].isna(), df[col].astype(str))
+
+    return df
+
+
+def append_df_to_bq(df: pd.DataFrame, table_short_name: str):
+    """
+    Appends a DataFrame to BigQuery after converting column types
+    based on the destination table schema.
+    """
+
+    if df is None or df.empty:
+        print(f"No rows to append to {table_short_name}. Skipping.")
+        return
+
+    table_id = full_table_id(table_short_name)
+
+    print("\n" + "=" * 100)
+    print(f"Preparing DataFrame for BigQuery append")
+    print(f"Destination table: {table_id}")
+    print(f"Input row count: {len(df)}")
+    print("=" * 100)
+
+    print("Original DataFrame dtypes:")
+    print(df.dtypes)
+
+    df_prepared = prepare_df_for_bq(df, table_short_name)
+
+    print("\nPrepared DataFrame dtypes:")
+    print(df_prepared.dtypes)
+
+    print(f"\nAppending {len(df_prepared)} rows to {table_id}...")
+
+    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
+    job = bq_client.load_table_from_dataframe(
+        df_prepared,
+        table_id,
+        job_config=job_config
+    )
+    job.result()
+
+    print(f"Append completed: {len(df_prepared)} rows loaded into {table_id}.")
+    print("=" * 100)
+
+
+# ============================================================
+# CORRECTED CELL 12: REGISTER PDF AND HANDLE DUPLICATES
+# ============================================================
+
+print("\nCELL 12: Registering PDF and handling duplicate uploads")
+
+pdf_name = os.path.basename(PDF_LOCAL_PATH)
+pdf_hash = get_file_hash(PDF_LOCAL_PATH)
+
+date_match = re.search(r"(\d{2})(\d{2})(\d{2})", pdf_name)
+
+if date_match:
+    month = int(date_match.group(1))
+    day = int(date_match.group(2))
+    year = int("20" + date_match.group(3))
+
+    # IMPORTANT:
+    # deck_week must be a Python date object for BigQuery DATE column.
+    deck_week = date(year, month, day)
+
+else:
+    year = date.today().year
+    deck_week = date.today()
+
+deck_id = make_hash(f"{pdf_hash}|{deck_week.isoformat()}")
+run_id = make_hash(f"{deck_id}|{datetime.utcnow().isoformat()}")
+
+doc = fitz.open(PDF_LOCAL_PATH)
+total_pages = len(doc)
+doc.close()
+
+print("PDF metadata:")
+print(f"  pdf_name: {pdf_name}")
+print(f"  pdf_hash: {pdf_hash}")
+print(f"  deck_week: {deck_week} | type: {type(deck_week)}")
+print(f"  deck_year: {year}")
+print(f"  deck_id: {deck_id}")
+print(f"  run_id: {run_id}")
+print(f"  total_pages: {total_pages}")
+
+
+def check_existing_pdf(pdf_hash_value: str) -> pd.DataFrame:
+    """
+    Checks whether this exact PDF hash already exists in bronze_pdfDecks.
+    """
+
+    table_id = full_table_id(TABLES["bronze_pdfDecks"])
+
+    query = f"""
+    SELECT
+      deck_id,
+      run_id,
+      pdf_hash,
+      pdf_name,
+      deck_week,
+      processing_status,
+      created_at
+    FROM `{table_id}`
+    WHERE pdf_hash = '{pdf_hash_value}'
+    ORDER BY created_at DESC
+    """
+
+    try:
+        return bq_client.query(query).to_dataframe()
+    except Exception as e:
+        print("Could not check existing PDF.")
+        print(e)
+        return pd.DataFrame()
+
+
+existing_pdf_df = check_existing_pdf(pdf_hash)
+
+if existing_pdf_df.empty:
+    print("This PDF is new. Processing mode = new_append.")
+    PDF_PROCESSING_MODE = "new_append"
+else:
+    print("This exact PDF already exists in BigQuery.")
+    preview_df(existing_pdf_df, "existing_pdf_df")
+
+    print("""
+Choose processing mode:
+
+cancel
+  Stop notebook and do nothing.
+
+replace
+  Delete existing rows for this deck_id/pdf_hash and reprocess.
+
+append_anyway
+  Append this as another run_id even though PDF exists.
+  Use only for testing/debugging.
+""")
+
+    PDF_PROCESSING_MODE = input(
+        "Enter processing mode [cancel / replace / append_anyway]: "
+    ).strip().lower()
+
+    if PDF_PROCESSING_MODE not in ["cancel", "replace", "append_anyway"]:
+        raise ValueError("Invalid processing mode. Choose cancel, replace, or append_anyway.")
+
+print(f"Selected PDF_PROCESSING_MODE: {PDF_PROCESSING_MODE}")
+
+if PDF_PROCESSING_MODE == "cancel":
+    print("Processing cancelled. No data changed.")
+    raise SystemExit("Notebook stopped because user selected cancel.")
+
+
+def delete_existing_rows_for_pdf(deck_id_value: str, pdf_hash_value: str):
+    """
+    Deletes existing rows for this deck_id/pdf_hash from all bronze, silver,
+    and review tables created by this notebook.
+    """
+
+    print("\nDeleting existing rows for this deck_id/pdf_hash...")
+
+    tables_to_delete_by_deck_id = [
+        TABLES["bronze_slideRaw"],
+        TABLES["bronze_slideLines"],
+        TABLES["bronze_detectedEntities"],
+        TABLES["bronze_slideTables"],
+
+        TABLES["silver_tocPageMap"],
+        TABLES["silver_slideSections"],
+        TABLES["silver_slideContentBlocks"],
+        TABLES["silver_offerCandidates"],
+        TABLES["silver_normalizedOffers"],
+        TABLES["silver_offerDeviceBridge"],
+        TABLES["silver_priceGridRows"],
+
+        TABLES["review_extractionReview"],
+        TABLES["review_reviewDecisions"],
+        TABLES["review_taxonomy"],
+        TABLES["review_approvedExamples"],
+    ]
+
+    for short_name in tables_to_delete_by_deck_id:
+        table_id = full_table_id(short_name)
+
+        query = f"""
+        DELETE FROM `{table_id}`
+        WHERE deck_id = '{deck_id_value}'
+        """
+
+        try:
+            print(f"Deleting from {table_id}...")
+            bq_client.query(query).result()
+            print("  Deleted matching rows.")
+        except Exception as e:
+            print(f"  Could not delete from {table_id}.")
+            print(f"  Reason: {e}")
+
+    pdf_decks_table = full_table_id(TABLES["bronze_pdfDecks"])
+
+    query = f"""
+    DELETE FROM `{pdf_decks_table}`
+    WHERE pdf_hash = '{pdf_hash_value}'
+    """
+
+    try:
+        print(f"Deleting PDF deck record from {pdf_decks_table}...")
+        bq_client.query(query).result()
+        print("  PDF deck record deleted.")
+    except Exception as e:
+        print("  Could not delete PDF deck record.")
+        print(f"  Reason: {e}")
+
+
+if PDF_PROCESSING_MODE == "replace":
+    delete_existing_rows_for_pdf(deck_id, pdf_hash)
+    print("Replacement cleanup complete.")
+
+
+bronze_pdf_decks_df = pd.DataFrame([{
+    "deck_id": deck_id,
+    "run_id": run_id,
+    "pdf_hash": pdf_hash,
+    "pdf_name": pdf_name,
+    "deck_week": deck_week,
+    "local_pdf_path": PDF_LOCAL_PATH,
+    "total_pages": total_pages,
+    "processing_mode": PDF_PROCESSING_MODE,
+    "processing_status": "registered",
+    "created_at": datetime.utcnow()
+}])
+
+preview_df(bronze_pdf_decks_df, "bronze_pdf_decks_df")
+
+append_df_to_bq(bronze_pdf_decks_df, TABLES["bronze_pdfDecks"])
+
+print("\nCELL 12 completed successfully. Continue running from CELL 13.")
+
+
+# ============================================================
+# CELL 13: EXTRACT BRONZE SLIDE RAW AND LINES
+# ============================================================
+
+print("\nCELL 13: Extracting bronze slide raw text and slide lines")
+
+def classify_line_role(text: str):
+    lower = (text or "").strip().lower()
+
+    if looks_like_header_or_footer(text):
+        return "header_or_footer"
+
+    if re.fullmatch(r"\d{1,2}", lower):
+        return "page_number"
+
+    if lower in ["postpaid", "prepaid", "byod", "android flagships", "android affordables"]:
+        return "section_header"
+
+    if lower in ["offers introduced", "offers removed"]:
+        return "change_bucket"
+
+    carrier, _, _ = detect_carrier(text)
+    if carrier and len(text.split()) <= 5:
+        return "carrier_header"
+
+    if detect_money_values(text) or is_no_change_text(text):
+        return "offer_text"
+
+    if extract_device_models(text):
+        return "device_or_family_header"
+
+    if any(x in lower for x in ["discount", "trade offer", "trade offers", "no trade-in", "aal", "upgrade"]):
+        return "offer_header"
+
+    return "unknown"
+
+def extract_pdf_to_bronze(pdf_path: str):
+    doc = fitz.open(pdf_path)
+    slide_raw_records = []
+    slide_line_records = []
+
+    for page_index in range(len(doc)):
+        page_number = page_index + 1
+        page = doc[page_index]
+
+        print(f"Extracting page {page_number}/{len(doc)}...")
+
+        raw_text = page.get_text("text") or ""
+        cleaned_slide_text = clean_text(raw_text)
+        slide_id = make_hash(f"{deck_id}|page|{page_number}")
+
+        slide_raw_records.append({
+            "deck_id": deck_id,
+            "run_id": run_id,
+            "pdf_hash": pdf_hash,
+            "pdf_name": pdf_name,
+            "deck_week": deck_week,
+            "slide_id": slide_id,
+            "page_number": page_number,
+            "raw_slide_text": raw_text,
+            "cleaned_slide_text": cleaned_slide_text,
+            "slide_text_hash": make_hash(cleaned_slide_text),
+            "extraction_method": "pymupdf_text",
+            "created_at": datetime.utcnow()
+        })
+
+        for line_number, raw_line in enumerate(raw_text.splitlines(), start=1):
+            cleaned = clean_line(raw_line)
+
+            if not cleaned:
+                continue
+
+            line_id = make_hash(f"{slide_id}|line|{line_number}|{cleaned}")
+
+            slide_line_records.append({
+                "deck_id": deck_id,
+                "run_id": run_id,
+                "pdf_hash": pdf_hash,
+                "pdf_name": pdf_name,
+                "deck_week": deck_week,
+                "slide_id": slide_id,
+                "line_id": line_id,
+                "page_number": page_number,
+                "line_number_on_page": line_number,
+                "raw_line_text": raw_line,
+                "cleaned_line_text": cleaned,
+                "line_text_hash": make_hash(cleaned),
+                "line_role": classify_line_role(cleaned),
+                "source_method": "pymupdf_text",
+                "created_at": datetime.utcnow()
+            })
+
+    doc.close()
+    return pd.DataFrame(slide_raw_records), pd.DataFrame(slide_line_records)
+
+bronze_slide_raw_df, bronze_slide_lines_df = extract_pdf_to_bronze(PDF_LOCAL_PATH)
+
+preview_df(bronze_slide_raw_df, "bronze_slide_raw_df")
+preview_df(
+    bronze_slide_lines_df,
+    "bronze_slide_lines_df",
+    rows=30,
+    columns=["page_number", "line_number_on_page", "line_role", "cleaned_line_text"]
+)
+
+append_df_to_bq(bronze_slide_raw_df, TABLES["bronze_slideRaw"])
+append_df_to_bq(bronze_slide_lines_df, TABLES["bronze_slideLines"])
+
+
+# ============================================================
+# CELL 14: DETECT ENTITIES
+# ============================================================
+
+print("\nCELL 14: Extracting detected entities")
+
+def create_detected_entities(slide_lines_df: pd.DataFrame):
+    records = []
+
+    for _, row in slide_lines_df.iterrows():
+        text = row["cleaned_line_text"]
+        detected_items = []
+
+        for money in detect_money_values(text):
+            detected_items.append(("money", money, str(normalize_money_value(money))))
+
+        for dt in detect_dates(text):
+            detected_items.append(("date_range", dt, dt))
+
+        for data in detect_data_allowance(text):
+            detected_items.append(("data_allowance", data, data.upper().replace(" ", "")))
+
+        for device in extract_device_models(text):
+            detected_items.append(("device_model", device, device))
+
+        carrier, _, _ = detect_carrier(text)
+        if carrier:
+            detected_items.append(("carrier", carrier, carrier))
+
+        manufacturer, _, _ = detect_manufacturer(text)
+        if manufacturer:
+            detected_items.append(("manufacturer", manufacturer, manufacturer))
+
+        for entity_type, entity_text, normalized_value in detected_items:
+            records.append({
+                "deck_id": deck_id,
+                "run_id": run_id,
+                "pdf_hash": pdf_hash,
+                "pdf_name": pdf_name,
+                "deck_week": deck_week,
+                "entity_id": make_hash(f"{row['line_id']}|{entity_type}|{entity_text}"),
+                "slide_id": row["slide_id"],
+                "line_id": row["line_id"],
+                "page_number": row["page_number"],
+                "entity_type": entity_type,
+                "entity_text": entity_text,
+                "normalized_entity_value": normalized_value,
+                "detection_method": "regex_dictionary",
+                "created_at": datetime.utcnow()
+            })
+
+    return pd.DataFrame(records)
+
+bronze_detected_entities_df = create_detected_entities(bronze_slide_lines_df)
+
+preview_df(bronze_detected_entities_df, "bronze_detected_entities_df", rows=30)
+append_df_to_bq(bronze_detected_entities_df, TABLES["bronze_detectedEntities"])
+
+
+# ============================================================
+# CELL 15: EXTRACT TOC PAGE MAP
+# ============================================================
+
+print("\nCELL 15: Extracting TOC expected page map")
+
+def map_toc_line_to_section(line_text: str):
+    lower = (line_text or "").lower()
+
+    mappings = [
+        ("ci headlines", "ci_headlines"),
+        ("major competitive offer updates", "major_offer_changes"),
+        ("postpaid apple", "postpaid_apple_device_offers"),
+        ("postpaid samsung", "postpaid_samsung_google_device_offers"),
+        ("2nd tier", "postpaid_motorola_affordable_byod_offers"),
+        ("consumer bts", "postpaid_bts_offers"),
+        ("service", "postpaid_service_offers"),
+        ("postpaid cable mvnos", "cable_mvno_offers"),
+        ("postpaid business", "business_device_offers"),
+        ("national retail", "national_retail_readout"),
+        ("prepaid brands - current offers", "prepaid_brand_offers"),
+        ("prepaid flagship brands", "prepaid_flagship_offers"),
+        ("prepaid brands at walmart", "walmart_prepaid_offers"),
+        ("prepaid", "section_divider_prepaid"),
+    ]
+
+    for key, value in mappings:
+        if key in lower:
+            return value
+
+    return None
+
+def extract_page_numbers_from_toc_line(line_text: str):
+    # Capture page numbers from the end or anywhere in the TOC line.
+    nums = re.findall(r"\b\d{1,2}\b", line_text or "")
+    # Remove numbers that are likely part of "2nd Tier" etc? Keep simple for MVP.
+    return [int(n) for n in nums if 1 <= int(n) <= 60]
+
+def extract_toc_page_map(slide_raw_df: pd.DataFrame):
+    records = []
+    toc_pages = slide_raw_df[
+        slide_raw_df["cleaned_slide_text"].str.lower().str.contains("table of contents", na=False)
+    ]
+
+    print(f"TOC pages detected: {len(toc_pages)}")
+
+    for _, slide in toc_pages.iterrows():
+        page_number = slide["page_number"]
+        raw_lines = slide["raw_slide_text"].splitlines()
+
+        for raw_line in raw_lines:
+            line = clean_line(raw_line)
+            expected_section = map_toc_line_to_section(line)
+            pages = extract_page_numbers_from_toc_line(line)
+
+            if expected_section and pages:
+                for expected_page in pages:
+                    records.append({
+                        "deck_id": deck_id,
+                        "run_id": run_id,
+                        "pdf_hash": pdf_hash,
+                        "pdf_name": pdf_name,
+                        "deck_week": deck_week,
+                        "toc_map_id": make_hash(f"{deck_id}|toc|{expected_page}|{expected_section}|{line}"),
+                        "toc_source_page_number": page_number,
+                        "expected_page_number": expected_page,
+                        "expected_section_name": expected_section,
+                        "toc_line_text": line,
+                        "created_at": datetime.utcnow()
+                    })
+
+    return pd.DataFrame(records)
+
+silver_toc_page_map_df = extract_toc_page_map(bronze_slide_raw_df)
+
+preview_df(silver_toc_page_map_df, "silver_toc_page_map_df", rows=50)
+append_df_to_bq(silver_toc_page_map_df, TABLES["silver_tocPageMap"])
+
+
+# ============================================================
+# CELL 16: CLASSIFY SLIDES
+# ============================================================
+
+print("\nCELL 16: Classifying slides")
+
+def get_first_lines(slide_text: str, max_lines: int = 20):
+    lines = [clean_line(x) for x in (slide_text or "").splitlines() if clean_line(x)]
+    return "\n".join(lines[:max_lines])
+
+def classify_with_priority_rules(slide_text: str, page_number: int):
+    text = (slide_text or "").lower().strip()
+    first_lines = get_first_lines(slide_text, 20).lower()
+
+    # Strong rules first.
+    if "table of contents" in text:
+        return {
+            "section_name": "table_of_contents",
+            "page_type": "toc",
+            "business_segment": "unknown",
+            "extraction_strategy": "extract_toc_only",
+            "confidence": 1.0,
+            "reason": "Priority rule: Table of Contents"
+        }
+
+    if "notice of confidentiality" in text:
+        return {
+            "section_name": "confidentiality_notice",
+            "page_type": "legal_notice",
+            "business_segment": "unknown",
+            "extraction_strategy": "skip",
+            "confidence": 1.0,
+            "reason": "Priority rule: Notice of Confidentiality"
+        }
+
+    if page_number == 1 and "competitive offer report" in text:
+        return {
+            "section_name": "cover",
+            "page_type": "cover",
+            "business_segment": "unknown",
+            "extraction_strategy": "skip",
+            "confidence": 0.98,
+            "reason": "Priority rule: cover page"
+        }
+
+    if len(text.split()) < 12 and "confidential" in text and page_number > 20:
+        return {
+            "section_name": "end_slide",
+            "page_type": "end_slide",
+            "business_segment": "unknown",
+            "extraction_strategy": "skip",
+            "confidence": 0.90,
+            "reason": "Priority rule: sparse final/confidential slide"
+        }
+
+    # Divider pages.
+    if "ci headlines" in first_lines and "competitive intelligence headlines" not in text:
+        return {
+            "section_name": "section_divider_ci_headlines",
+            "page_type": "section_divider",
+            "business_segment": "unknown",
+            "extraction_strategy": "skip",
+            "confidence": 0.90,
+            "reason": "Priority rule: CI Headlines divider"
+        }
+
+    if "competitive offer updates" in first_lines and "major offer changes" not in text:
+        return {
+            "section_name": "section_divider_offer_updates",
+            "page_type": "section_divider",
+            "business_segment": "unknown",
+            "extraction_strategy": "skip",
+            "confidence": 0.90,
+            "reason": "Priority rule: offer updates divider"
+        }
+
+    return None
+
+def classify_with_header_registry(slide_text: str):
+    text = clean_text(slide_text).lower()
+    first_lines = get_first_lines(slide_text, 25).lower()
+
+    search_text = first_lines + "\n" + text[:2000]
+
+    best_match = None
+
+    for rule in SLIDE_HEADER_RULES:
+        if re.search(rule["pattern"], search_text, flags=re.IGNORECASE | re.DOTALL):
+            best_match = rule
+            break
+
+    if not best_match:
+        return None
+
+    return {
+        "rule_name": best_match["rule_name"],
+        "section_name": best_match["section_name"],
+        "page_type": best_match["page_type"],
+        "business_segment": best_match["business_segment"],
+        "extraction_strategy": best_match["extraction_strategy"],
+        "confidence": best_match["confidence"],
+        "reason": f"Header registry matched rule: {best_match['rule_name']}"
+    }
+
+def classify_with_gemini(slide_text: str):
+    if not (GEMINI_CLIENT_READY and USE_GEMINI_FOR_CLASSIFICATION):
+        return None
+
+    prompt = f"""
+You are classifying a slide from a telecom competitive offer report.
+
+Use slide content only:
+- title
+- section headers
+- table headers
+- carrier names
+- device names
+- plan names
+- offer language
+
+Do NOT rely on page number.
+
+Allowed final_section_name values:
+{ALLOWED_SECTION_NAMES}
+
+Return JSON only:
+{{
+  "final_section_name": "",
+  "page_type": "",
+  "business_segment": "",
+  "extraction_strategy": "",
+  "confidence": 0.0,
+  "reason": ""
+}}
+
+Slide text:
+\"\"\"
+{slide_text[:12000]}
+\"\"\"
+"""
+    try:
+        response = genai_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                response_mime_type="application/json"
+            )
+        )
+        return json.loads(response.text)
+    except Exception as e:
+        print("Gemini classification failed.")
+        print(e)
+        return None
+
+def extract_slide_title(slide_text: str):
+    lines = [clean_line(x) for x in (slide_text or "").splitlines() if clean_line(x)]
+    for line in lines[:12]:
+        lower = line.lower()
+        if "confidential" in lower:
+            continue
+        if re.fullmatch(r"\d{1,2}", line):
+            continue
+        if len(line) >= 5:
+            return line
+    return None
+
+def classify_slides(slide_raw_df: pd.DataFrame, toc_df: pd.DataFrame):
+    toc_lookup = {}
+    if not toc_df.empty:
+        for _, row in toc_df.iterrows():
+            page = int(row["expected_page_number"])
+            toc_lookup.setdefault(page, []).append(row["expected_section_name"])
+
+    records = []
+
+    for _, row in slide_raw_df.iterrows():
+        page_number = int(row["page_number"])
+        slide_text = row["raw_slide_text"]
+        cleaned_text = row["cleaned_slide_text"]
+
+        print("\n" + "-" * 100)
+        print(f"Classifying page {page_number}")
+        print("-" * 100)
+        print("First lines:")
+        print(get_first_lines(slide_text, 8))
+
+        expected_from_toc = ",".join(toc_lookup.get(page_number, [])) if page_number in toc_lookup else None
+
+        priority = classify_with_priority_rules(slide_text, page_number)
+        header = None
+        gemini_result = None
+
+        if priority:
+            final = priority
+            classification_source = "priority_rule"
+            matched_header_rule = None
+            predicted_from_header = None
+            predicted_from_gemini = None
+        else:
+            header = classify_with_header_registry(slide_text)
+
+            if header:
+                final = header
+                classification_source = "header_registry"
+                matched_header_rule = header["rule_name"]
+                predicted_from_header = header["section_name"]
+                predicted_from_gemini = None
+            else:
+                gemini_result = classify_with_gemini(cleaned_text)
+
+                if gemini_result:
+                    final = {
+                        "section_name": gemini_result.get("final_section_name", "unknown"),
+                        "page_type": gemini_result.get("page_type", "unknown"),
+                        "business_segment": gemini_result.get("business_segment", "unknown"),
+                        "extraction_strategy": gemini_result.get("extraction_strategy", "generic_block_parser"),
+                        "confidence": float(gemini_result.get("confidence", 0.0)),
+                        "reason": gemini_result.get("reason", "Gemini fallback")
+                    }
+                    classification_source = "gemini"
+                    matched_header_rule = None
+                    predicted_from_header = None
+                    predicted_from_gemini = final["section_name"]
+                else:
+                    final = {
+                        "section_name": "unknown",
+                        "page_type": "unknown",
+                        "business_segment": "unknown",
+                        "extraction_strategy": "skip",
+                        "confidence": 0.0,
+                        "reason": "No priority/header/Gemini classification"
+                    }
+                    classification_source = "unknown"
+                    matched_header_rule = None
+                    predicted_from_header = None
+                    predicted_from_gemini = None
+
+        review_required = False
+
+        if final["confidence"] < SECTION_CONFIDENCE_THRESHOLD:
+            review_required = True
+
+        # TOC mismatch is a QA flag, not automatic override.
+        if expected_from_toc:
+            expected_list = expected_from_toc.split(",")
+            if final["section_name"] not in expected_list:
+                # Allow broader expected groups.
+                if not any(final["section_name"].startswith(x.replace("_offers", "")) for x in expected_list):
+                    review_required = True
+
+        print(f"Expected from TOC: {expected_from_toc}")
+        print(f"Final section: {final['section_name']}")
+        print(f"Page type: {final['page_type']}")
+        print(f"Extraction strategy: {final['extraction_strategy']}")
+        print(f"Business segment: {final['business_segment']}")
+        print(f"Confidence: {final['confidence']}")
+        print(f"Classification source: {classification_source}")
+        print(f"Review required: {review_required}")
+        print(f"Reason: {final['reason']}")
+
+        records.append({
+            "deck_id": deck_id,
+            "run_id": run_id,
+            "pdf_hash": pdf_hash,
+            "pdf_name": pdf_name,
+            "deck_week": deck_week,
+            "slide_id": row["slide_id"],
+            "page_number": page_number,
+            "slide_title": extract_slide_title(slide_text),
+            "page_type": final["page_type"],
+            "matched_header_rule": matched_header_rule,
+            "expected_section_from_toc": expected_from_toc,
+            "predicted_section_from_header": predicted_from_header,
+            "predicted_section_from_gemini": predicted_from_gemini,
+            "final_section_name": final["section_name"],
+            "business_segment": final["business_segment"],
+            "extraction_strategy": final["extraction_strategy"],
+            "section_confidence": final["confidence"],
+            "section_reason": final["reason"],
+            "classification_source": classification_source,
+            "review_required_flag": review_required,
+            "created_at": datetime.utcnow()
+        })
+
+    return pd.DataFrame(records)
+
+silver_slide_sections_df = classify_slides(bronze_slide_raw_df, silver_toc_page_map_df)
+
+preview_df(
+    silver_slide_sections_df,
+    "silver_slide_sections_df",
+    rows=50,
+    columns=[
+        "page_number", "slide_title", "expected_section_from_toc",
+        "final_section_name", "page_type", "extraction_strategy",
+        "business_segment", "section_confidence", "classification_source",
+        "review_required_flag", "section_reason"
+    ]
+)
+
+append_df_to_bq(silver_slide_sections_df, TABLES["silver_slideSections"])
+debug_stop("slide_classification")
+
+
+# ============================================================
+# CELL 17: CREATE CONTENT BLOCKS
+# ============================================================
+
+print("\nCELL 17: Creating slide content blocks")
+
+def is_offer_line(text: str):
+    if not text:
+        return False
+
+    if looks_like_header_or_footer(text):
+        return False
+
+    lower = text.lower().strip()
+
+    if len(lower) < 3:
+        return False
+
+    if is_no_change_text(lower):
+        return True
+
+    strong_signals = [
+        "$", "off", "free", "on us", "credit", "trade", "port", "aal",
+        "byod", "expired", "removed", "ended", "price increase", "discount",
+        "bogo", "waived", "buyout", "payoff", "new", "updated", "was free",
+        "now $", "w/"
+    ]
+
+    return any(x in lower for x in strong_signals)
+
+def infer_customer_segment_from_text(text: str):
+    lower = (text or "").lower()
+    if "business" in lower:
+        return "business"
+    if "consumer" in lower:
+        return "consumer"
+    return None
+
+def get_slide_lines(page_number: int):
+    return bronze_slide_lines_df[
+        bronze_slide_lines_df["page_number"] == page_number
+    ].sort_values("line_number_on_page").copy()
+
+def create_headline_blocks(slide_section_row):
+    page_number = int(slide_section_row["page_number"])
+    lines_df = get_slide_lines(page_number)
+
+    records = []
+    current_carrier = None
+    current_text = []
+    start_line = None
+    seq = 1
+
+    for _, line in lines_df.iterrows():
+        text = line["cleaned_line_text"]
+        role = line["line_role"]
+
+        # Carrier headings are often like "1. AT&T"
+        carrier_text = re.sub(r"^\d+\.\s*", "", text).strip()
+        carrier, _, _ = detect_carrier(carrier_text)
+
+        if carrier and len(text.split()) <= 6:
+            if current_carrier and current_text:
+                raw_block = " ".join(current_text)
+                records.append(make_content_block_record(
+                    slide_section_row, seq, "headline_block", current_carrier,
+                    raw_block, start_line, int(line["line_number_on_page"]) - 1,
+                    block_title=f"Headline for {current_carrier}"
+                ))
+                seq += 1
+
+            current_carrier = carrier
+            current_text = []
+            start_line = int(line["line_number_on_page"])
+            continue
+
+        if current_carrier:
+            if not looks_like_header_or_footer(text):
+                current_text.append(text)
+
+    if current_carrier and current_text:
+        raw_block = " ".join(current_text)
+        records.append(make_content_block_record(
+            slide_section_row, seq, "headline_block", current_carrier,
+            raw_block, start_line, int(lines_df["line_number_on_page"].max()),
+            block_title=f"Headline for {current_carrier}"
+        ))
+
+    return records
+
+def make_content_block_record(slide_section_row, seq, block_type, carrier, raw_block_text,
+                              source_line_start, source_line_end, block_title=None,
+                              change_bucket=None, customer_segment=None,
+                              product_family=None, device_family_text=None,
+                              confidence=0.85, review_required=False):
+    block_id = make_hash(
+        f"{slide_section_row['slide_id']}|{seq}|{block_type}|{carrier}|{raw_block_text}"
+    )
+
+    return {
+        "deck_id": deck_id,
+        "run_id": run_id,
+        "pdf_hash": pdf_hash,
+        "pdf_name": pdf_name,
+        "deck_week": deck_week,
+        "content_block_id": block_id,
+        "slide_id": slide_section_row["slide_id"],
+        "page_number": int(slide_section_row["page_number"]),
+        "final_section_name": slide_section_row["final_section_name"],
+        "page_type": slide_section_row["page_type"],
+        "extraction_strategy": slide_section_row["extraction_strategy"],
+        "block_sequence_number": seq,
+        "block_type": block_type,
+        "block_title": block_title,
+        "carrier": carrier,
+        "business_segment": slide_section_row["business_segment"],
+        "product_family": product_family,
+        "device_family_text": device_family_text,
+        "customer_segment": customer_segment,
+        "change_bucket": change_bucket,
+        "raw_block_text": clean_text(raw_block_text),
+        "source_line_start": source_line_start,
+        "source_line_end": source_line_end,
+        "block_confidence": confidence,
+        "review_required_flag": review_required,
+        "created_at": datetime.utcnow()
+    }
+
+def create_major_change_blocks(slide_section_row):
+    page_number = int(slide_section_row["page_number"])
+    lines_df = get_slide_lines(page_number)
+
+    records = []
+    seq = 1
+
+    current_business_segment = None
+    current_change_bucket = None
+    current_carrier = None
+    current_customer_segment = None
+
+    buffer = []
+    start_line = None
+
+    def flush(end_line):
+        nonlocal seq, buffer, start_line, current_carrier, current_change_bucket, current_customer_segment
+        if buffer:
+            raw_block = " ".join(buffer)
+            if is_offer_line(raw_block):
+                records.append(make_content_block_record(
+                    slide_section_row=slide_section_row,
+                    seq=seq,
+                    block_type="offer_block",
+                    carrier=current_carrier,
+                    raw_block_text=raw_block,
+                    source_line_start=start_line,
+                    source_line_end=end_line,
+                    block_title="Major offer change",
+                    change_bucket=current_change_bucket,
+                    customer_segment=current_customer_segment,
+                    confidence=0.88,
+                    review_required=False
+                ))
+                seq += 1
+        buffer = []
+        start_line = None
+
+    for _, line in lines_df.iterrows():
+        text = line["cleaned_line_text"]
+        lower = text.lower().strip()
+        line_no = int(line["line_number_on_page"])
+
+        if looks_like_header_or_footer(text):
+            continue
+
+        if lower == "postpaid":
+            flush(line_no - 1)
+            current_business_segment = "postpaid"
+            continue
+
+        if lower == "prepaid":
+            flush(line_no - 1)
+            current_business_segment = "prepaid"
+            continue
+
+        if lower == "offers introduced":
+            flush(line_no - 1)
+            current_change_bucket = "offers_introduced"
+            continue
+
+        if lower == "offers removed":
+            flush(line_no - 1)
+            current_change_bucket = "offers_removed"
+            continue
+
+        carrier_text = re.sub(r"^\d+\.\s*", "", text).strip()
+        carrier, _, _ = detect_carrier(carrier_text)
+
+        if carrier and len(text.split()) <= 6:
+            flush(line_no - 1)
+            current_carrier = carrier
+            continue
+
+        if "consumer" in lower and len(lower.split()) <= 3:
+            flush(line_no - 1)
+            current_customer_segment = "consumer"
+            continue
+
+        # New offer bullet or no-change line starts a new block.
+        if is_offer_line(text):
+            flush(line_no - 1)
+            buffer = [text]
+            start_line = line_no
+            continue
+
+        # Continuation line
+        if buffer:
+            buffer.append(text)
+
+    flush(int(lines_df["line_number_on_page"].max()) if len(lines_df) else 0)
+
+    # Apply page's business segment when block's own segment was mixed.
+    for r in records:
+        if current_business_segment and r["business_segment"] == "mixed":
+            # raw table contains both; we do not want to set all to last segment.
+            # Instead infer from line position is complex; keep mixed for now unless text hints.
+            text = r["raw_block_text"].lower()
+            if any(x in text for x in ["metro", "boost", "cricket", "total wireless"]):
+                r["business_segment"] = "prepaid"
+            elif r["carrier"] in ["T-Mobile", "AT&T", "Verizon", "Spectrum", "Xfinity"]:
+                r["business_segment"] = "postpaid"
+
+    return records
+
+def create_generic_offer_blocks(slide_section_row):
+    page_number = int(slide_section_row["page_number"])
+    lines_df = get_slide_lines(page_number)
+
+    records = []
+    seq = 1
+    current_carrier = None
+    current_device_family = None
+    current_product_family = None
+    current_customer_segment = None
+
+    buffer = []
+    start_line = None
+
+    def flush(end_line):
+        nonlocal seq, buffer, start_line
+        if buffer:
+            raw_block = " ".join(buffer)
+            if is_offer_line(raw_block):
+                records.append(make_content_block_record(
+                    slide_section_row=slide_section_row,
+                    seq=seq,
+                    block_type="offer_block",
+                    carrier=current_carrier,
+                    raw_block_text=raw_block,
+                    source_line_start=start_line,
+                    source_line_end=end_line,
+                    block_title="Offer block",
+                    customer_segment=current_customer_segment,
+                    product_family=current_product_family,
+                    device_family_text=current_device_family,
+                    confidence=0.75 if slide_section_row["page_type"] in ["dense_matrix", "price_grid"] else 0.85,
+                    review_required=slide_section_row["page_type"] in ["dense_matrix", "price_grid"]
+                ))
+                seq += 1
+        buffer = []
+        start_line = None
+
+    for _, line in lines_df.iterrows():
+        text = line["cleaned_line_text"]
+        lower = text.lower().strip()
+        line_no = int(line["line_number_on_page"])
+
+        if looks_like_header_or_footer(text):
+            continue
+
+        carrier, _, _ = detect_carrier(text)
+        if carrier and len(text.split()) <= 5:
+            flush(line_no - 1)
+            current_carrier = carrier
+            continue
+
+        product_family, _, _ = detect_product_family(text)
+        devices = extract_device_models(text)
+
+        if devices and not is_offer_line(text):
+            flush(line_no - 1)
+            current_device_family = ", ".join(devices)
+            current_product_family = product_family
+            continue
+
+        if "consumer" in lower and len(lower.split()) <= 3:
+            current_customer_segment = "consumer"
+            continue
+
+        if is_offer_line(text):
+            flush(line_no - 1)
+            buffer = [text]
+            start_line = line_no
+            continue
+
+        if buffer:
+            buffer.append(text)
+
+    flush(int(lines_df["line_number_on_page"].max()) if len(lines_df) else 0)
+
+    return records
+
+def create_price_grid_rows_from_lines(slide_section_row):
+    # MVP text-based placeholder for grid rows.
+    # Dense grids should later use Gemini Vision/table extraction.
+    page_number = int(slide_section_row["page_number"])
+    lines_df = get_slide_lines(page_number)
+
+    records = []
+    seq = 1
+
+    for _, line in lines_df.iterrows():
+        text = line["cleaned_line_text"]
+
+        if not detect_money_values(text):
+            continue
+
+        devices = extract_device_models(text)
+        if not devices:
+            continue
+
+        money_values = detect_money_values(text)
+        retail_price = normalize_money_value(money_values[0]) if money_values else None
+        final_price = normalize_money_value(money_values[-1]) if len(money_values) > 1 else retail_price
+
+        for device in devices:
+            row_id = make_hash(f"{slide_section_row['slide_id']}|price_grid|{seq}|{device}|{text}")
+            records.append({
+                "deck_id": deck_id,
+                "run_id": run_id,
+                "pdf_hash": pdf_hash,
+                "pdf_name": pdf_name,
+                "deck_week": deck_week,
+                "price_grid_row_id": row_id,
+                "slide_id": slide_section_row["slide_id"],
+                "page_number": page_number,
+                "carrier": "Metro by T-Mobile" if "metro" in slide_section_row["final_section_name"] else None,
+                "device_model": device,
+                "retail_price": retail_price,
+                "offer_program": None,
+                "customer_type": None,
+                "id_required_flag": "id" in text.lower() and "no id" not in text.lower(),
+                "port_required_flag": "port" in text.lower(),
+                "rate_plan_requirement": None,
+                "final_price": final_price,
+                "is_free_flag": "free" in text.lower() or final_price == 0,
+                "source_column_header": None,
+                "source_row_text": text,
+                "confidence_score": 0.60,
+                "review_required_flag": True,
+                "created_at": datetime.utcnow()
+            })
+            seq += 1
+
+    return records
+
+def create_content_blocks(slide_sections_df: pd.DataFrame):
+    all_records = []
+    price_grid_records = []
+
+    for _, slide in slide_sections_df.sort_values("page_number").iterrows():
+        section = slide["final_section_name"]
+        strategy = slide["extraction_strategy"]
+        page_number = int(slide["page_number"])
+
+        print("\n" + "-" * 100)
+        print(f"Creating content blocks for page {page_number}")
+        print(f"  section: {section}")
+        print(f"  page_type: {slide['page_type']}")
+        print(f"  strategy: {strategy}")
+
+        if section in NON_OFFER_SECTIONS or strategy == "skip":
+            print("  Skipping non-offer slide.")
+            continue
+
+        if strategy == "extract_toc_only":
+            print("  TOC already extracted. No offer blocks.")
+            continue
+
+        if strategy == "headline_parser":
+            records = create_headline_blocks(slide)
+        elif strategy == "major_changes_parser":
+            records = create_major_change_blocks(slide)
+        else:
+            records = create_generic_offer_blocks(slide)
+
+        if strategy == "price_grid_parser":
+            price_records = create_price_grid_rows_from_lines(slide)
+            price_grid_records.extend(price_records)
+            print(f"  Price grid row candidates created: {len(price_records)}")
+
+        print(f"  Content blocks created: {len(records)}")
+        all_records.extend(records)
+
+    return pd.DataFrame(all_records), pd.DataFrame(price_grid_records)
+
+silver_content_blocks_df, silver_price_grid_rows_df = create_content_blocks(silver_slide_sections_df)
+
+preview_df(
+    silver_content_blocks_df,
+    "silver_content_blocks_df",
+    rows=50,
+    columns=[
+        "page_number", "final_section_name", "page_type", "block_type",
+        "carrier", "business_segment", "change_bucket", "device_family_text",
+        "raw_block_text", "block_confidence", "review_required_flag"
+    ]
+)
+
+preview_df(
+    silver_price_grid_rows_df,
+    "silver_price_grid_rows_df",
+    rows=30,
+    columns=[
+        "page_number", "carrier", "device_model", "retail_price",
+        "final_price", "port_required_flag", "source_row_text",
+        "confidence_score", "review_required_flag"
+    ]
+)
+
+append_df_to_bq(silver_content_blocks_df, TABLES["silver_slideContentBlocks"])
+append_df_to_bq(silver_price_grid_rows_df, TABLES["silver_priceGridRows"])
+
+debug_stop("content_blocks")
+
+
+# ============================================================
+# CELL 18: CREATE OFFER CANDIDATES FROM CONTENT BLOCKS
+# ============================================================
+
+print("\nCELL 18: Creating offer candidates from content blocks")
+
+def create_offer_candidates_from_blocks(blocks_df: pd.DataFrame):
+    records = []
+
+    for _, block in blocks_df.iterrows():
+        text = block["raw_block_text"]
+
+        if not is_offer_line(text):
+            continue
+
+        carrier = block["carrier"]
+        if not carrier:
+            carrier, _, _ = detect_carrier(text)
+
+        offer_subcategory, offer_conf, matched_kw = detect_offer_subcategory(text)
+        offer_subcategory = offer_subcategory or "unknown"
+        offer_category = infer_offer_category(offer_subcategory)
+
+        money_values = detect_money_values(text)
+        device_models = extract_device_models(text)
+
+        # Inherit device family from block if raw text does not repeat device.
+        if not device_models and block.get("device_family_text"):
+            device_models = [x.strip() for x in str(block["device_family_text"]).split(",") if x.strip()]
+
+        dates = detect_dates(text)
+
+        offer_group_id = make_hash(
+            f"{block['content_block_id']}|{carrier}|{block['final_section_name']}|{text}"
+        )
+        candidate_id = make_hash(f"{offer_group_id}|candidate")
+
+        candidate_confidence = max(float(block["block_confidence"] or 0), float(offer_conf or 0))
+
+        records.append({
+            "deck_id": deck_id,
+            "run_id": run_id,
+            "pdf_hash": pdf_hash,
+            "pdf_name": pdf_name,
+            "deck_week": deck_week,
+            "candidate_id": candidate_id,
+            "content_block_id": block["content_block_id"],
+            "offer_group_id": offer_group_id,
+            "slide_id": block["slide_id"],
+            "page_number": int(block["page_number"]),
+            "section_name": block["final_section_name"],
+            "page_type": block["page_type"],
+            "business_segment": block["business_segment"],
+            "carrier": carrier,
+            "raw_offer_text": text,
+            "suggested_offer_category": offer_category,
+            "suggested_offer_subcategory": offer_subcategory,
+            "detected_money_values_json": safe_json(money_values),
+            "detected_device_models_json": safe_json(device_models),
+            "detected_dates_json": safe_json(dates),
+            "candidate_confidence": candidate_confidence,
+            "candidate_source": f"content_block_parser|matched_kw={matched_kw}",
+            "created_at": datetime.utcnow()
+        })
+
+    return pd.DataFrame(records)
+
+silver_offer_candidates_df = create_offer_candidates_from_blocks(silver_content_blocks_df)
+
+preview_df(
+    silver_offer_candidates_df,
+    "silver_offer_candidates_df",
+    rows=50,
+    columns=[
+        "page_number", "section_name", "page_type", "business_segment",
+        "carrier", "suggested_offer_category", "suggested_offer_subcategory",
+        "detected_money_values_json", "detected_device_models_json",
+        "candidate_confidence", "raw_offer_text"
+    ]
+)
+
+append_df_to_bq(silver_offer_candidates_df, TABLES["silver_offerCandidates"])
+
+
+# ============================================================
+# CELL 19: NORMALIZE OFFERS
+# ============================================================
+
+print("\nCELL 19: Normalizing offer candidates")
+
+def infer_offer_type(offer_subcategory: str, text: str, flags: dict):
+    if offer_subcategory == "no_change":
+        return "no_change"
+    if offer_subcategory == "device_discount" and flags["aal_required_flag"]:
+        return "aal_device_discount"
+    if offer_subcategory == "device_discount" and flags["port_required_flag"]:
+        return "port_device_discount"
+    if offer_subcategory == "device_discount":
+        return "device_discount"
+    if offer_subcategory == "trade_in_offer":
+        return "trade_in_discount"
+    if offer_subcategory == "free_device_offer":
+        return "free_device"
+    if offer_subcategory == "monthly_bill_credit":
+        return "monthly_bill_credit"
+    if offer_subcategory == "byod_credit":
+        return "byod_credit"
+    if offer_subcategory == "eip_buyout":
+        return "device_payoff_credit"
+    if offer_subcategory == "plan_refresh":
+        return "new_or_updated_plan"
+    if offer_subcategory == "price_increase":
+        return "monthly_plan_price_increase"
+    if offer_subcategory == "activation_fee_waiver":
+        return "activation_fee_waiver"
+    if offer_subcategory == "expired_offer":
+        return "expired_offer"
+    if offer_subcategory == "device_price_point":
+        return "device_price_point"
+    if offer_subcategory == "retail_price_change":
+        return "retail_price_change"
+    if offer_subcategory == "service_mrc_promo":
+        return "service_mrc_promo"
+    return "unknown"
+
+def infer_customer_action(flags):
+    actions = []
+    if flags["port_required_flag"]:
+        actions.append("port")
+    if flags["aal_required_flag"]:
+        actions.append("add_a_line")
+    if flags["trade_required_flag"]:
+        actions.append("trade_in")
+    if flags["upgrade_required_flag"]:
+        actions.append("upgrade")
+    if flags["new_line_required_flag"]:
+        actions.append("new_line")
+    return ",".join(actions) if actions else None
+
+def extract_plan_name(text: str):
+    patterns = [
+        r"Unlimited Ultimate",
+        r"Unlimited Plus",
+        r"Unlimited Welcome",
+        r"Extra 2\.0",
+        r"Premium 2\.0",
+        r"Value 2\.0",
+        r"Any UNL",
+        r"Any Unlimited",
+        r"most plans",
+        r"Essentials",
+        r"More/Beyond",
+        r"Welcome",
+        r"Plus",
+        r"Ultimate",
+        r"SuperMobile",
+        r"ProMobile",
+        r"CoreMobile",
+        r"Total 5G\+?",
+        r"$\d+\+?\s?plan",
+        r"$\d+\s?RP",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text or "", flags=re.IGNORECASE)
+        if match:
+            return match.group(0)
+    return None
+
+def extract_condition_text(text: str):
+    if not text:
+        return None
+    if " w/ " in text:
+        return "Requires " + text.split(" w/ ", 1)[1]
+    if " with " in text.lower():
+        return text
+    return None
+
+def calculate_normalization_confidence(row_dict: dict):
+    text = row_dict["source_raw_text"]
+    score = 0.0
+
+    if row_dict["carrier"]:
+        score += 0.15
+    if row_dict["offer_category"] != "unknown":
+        score += 0.20
+    if row_dict["offer_subcategory"] != "unknown":
+        score += 0.20
+    if row_dict["product_family"]:
+        score += 0.10
+    if row_dict["offer_value"] is not None or row_dict["offer_subcategory"] == "no_change":
+        score += 0.15
+    if row_dict["primary_device_model"] or row_dict["product_family"] in ["service_plan", "byod", "home_internet"]:
+        score += 0.10
+    if len(text) > 10:
+        score += 0.10
+
+    return round(min(score, 1.0), 2)
+
+def validate_normalized_offer(row_dict: dict):
+    if FORCE_ALL_ROWS_TO_REVIEW:
+        return "forced_review", True
+
+    text = row_dict["source_raw_text"]
+
+    if looks_like_header_or_footer(text):
+        return "header_or_footer_not_offer", True
+
+    if row_dict["offer_subcategory"] == "no_change":
+        return "passed", False
+
+    if row_dict["normalization_confidence"] < NORMALIZATION_CONFIDENCE_THRESHOLD:
+        return "low_confidence", True
+
+    if not row_dict["carrier"]:
+        return "missing_carrier", True
+
+    if row_dict["offer_category"] == "unknown":
+        return "unknown_category", True
+
+    if len(detect_money_values(text)) > 3:
+        return "multiple_money_values_review", True
+
+    if row_dict["page_type"] in ["dense_matrix", "price_grid", "business_matrix"]:
+        return "dense_layout_review", True
+
+    return "passed", False
+
+def normalize_candidate(row: pd.Series):
+    text = row["raw_offer_text"]
+    lower = text.lower()
+
+    manufacturer, _, _ = detect_manufacturer(text)
+    product_family, _, _ = detect_product_family(text)
+
+    device_models = parse_json_safe(row["detected_device_models_json"], [])
+    cleaned_devices = []
+    for d in device_models:
+        cd = clean_device_model(d)
+        if cd and cd.lower() not in [x.lower() for x in cleaned_devices]:
+            cleaned_devices.append(cd)
+
+    device_models = cleaned_devices
+    primary_device_model = device_models[0] if device_models else None
+    device_family_text = ", ".join(device_models) if device_models else None
+
+    money_values = parse_json_safe(row["detected_money_values_json"], [])
+    offer_value = normalize_money_value(money_values[0]) if money_values else None
+
+    offer_value_unit = "usd" if offer_value is not None else None
+    monthly_price = None
+
+    if "/mo" in lower or "/month" in lower:
+        monthly_price = offer_value
+        offer_value_unit = "usd_per_month"
+
+    dates = parse_json_safe(row["detected_dates_json"], [])
+    effective_start_date, effective_end_date = parse_date_range(dates[0], year) if dates else (None, None)
+
+    term_length_months = detect_term_months(text)
+
+    flags = {
+        "port_required_flag": any(x in lower for x in ["port", "port-in"]),
+        "aal_required_flag": any(x in lower for x in ["aal", "add a line"]),
+        "trade_required_flag": any(x in lower for x in ["trade", "trade-in", "trd", "fmv"]),
+        "upgrade_required_flag": any(x in lower for x in ["upgrade", "upg"]),
+        "new_line_required_flag": any(x in lower for x in ["new line", "new customer", "nl"]),
+        "online_only_flag": "online only" in lower,
+        "in_store_only_flag": "in-store" in lower or "in store" in lower,
+        "is_free_flag": any(x in lower for x in ["free", "on us", "$0"]),
+        "is_new_flag": any(x in lower for x in ["new", "launched", "introduced", "updated"]),
+        "is_expired_flag": any(x in lower for x in ["expired", "removed", "retired", "ended", "no longer"]),
+    }
+
+    offer_subcategory = row["suggested_offer_subcategory"] or "unknown"
+    if is_no_change_text(text):
+        offer_subcategory = "no_change"
+
+    offer_category = infer_offer_category(offer_subcategory)
+    offer_type = infer_offer_type(offer_subcategory, text, flags)
+
+    base = {
+        "deck_id": deck_id,
+        "run_id": run_id,
+        "pdf_hash": pdf_hash,
+        "pdf_name": pdf_name,
+        "deck_week": deck_week,
+        "offer_id": make_hash(f"{row['candidate_id']}|{offer_category}|{offer_subcategory}|{offer_value}|{text}"),
+        "offer_group_id": row["offer_group_id"],
+        "candidate_id": row["candidate_id"],
+        "content_block_id": row["content_block_id"],
+        "slide_id": row["slide_id"],
+        "page_number": int(row["page_number"]),
+        "section_name": row["section_name"],
+        "page_type": row["page_type"],
+        "business_segment": row["business_segment"],
+        "carrier": row["carrier"],
+        "customer_segment": None,
+        "change_bucket": None,
+        "product_family": product_family,
+        "manufacturer": manufacturer,
+        "device_family_text": device_family_text,
+        "primary_device_model": primary_device_model,
+        "device_models_json": safe_json(device_models),
+        "plan_name": extract_plan_name(text),
+        "offer_category": offer_category,
+        "offer_subcategory": offer_subcategory,
+        "offer_type": offer_type,
+        "offer_value": offer_value,
+        "offer_value_unit": offer_value_unit,
+        "monthly_price": monthly_price,
+        "data_allowance": (detect_data_allowance(text)[0].upper().replace(" ", "") if detect_data_allowance(text) else None),
+        "term_length_months": term_length_months,
+        "customer_action": infer_customer_action(flags),
+        "condition_text": extract_condition_text(text),
+        "port_required_flag": flags["port_required_flag"],
+        "aal_required_flag": flags["aal_required_flag"],
+        "trade_required_flag": flags["trade_required_flag"],
+        "upgrade_required_flag": flags["upgrade_required_flag"],
+        "new_line_required_flag": flags["new_line_required_flag"],
+        "online_only_flag": flags["online_only_flag"],
+        "in_store_only_flag": flags["in_store_only_flag"],
+        "is_free_flag": flags["is_free_flag"],
+        "is_new_flag": flags["is_new_flag"],
+        "is_expired_flag": flags["is_expired_flag"],
+        "effective_start_date": effective_start_date,
+        "effective_end_date": effective_end_date,
+        "source_raw_text": text,
+        "offer_business_key": None,
+        "offer_value_hash": None,
+        "category_confidence": float(row["candidate_confidence"] or 0),
+        "normalization_confidence": None,
+        "validation_status": None,
+        "review_required_flag": None,
+        "review_status": None,
+        "status": None,
+        "created_at": datetime.utcnow()
+    }
+
+    # Pull block metadata if available.
+    block_row = silver_content_blocks_df[
+        silver_content_blocks_df["content_block_id"] == row["content_block_id"]
+    ]
+    if len(block_row) > 0:
+        b = block_row.iloc[0]
+        base["customer_segment"] = b.get("customer_segment")
+        base["change_bucket"] = b.get("change_bucket")
+
+    if base["customer_segment"] is None:
+        base["customer_segment"] = "business" if base["business_segment"] == "business" else "consumer"
+
+    if base["product_family"] is None:
+        if base["offer_subcategory"] in ["byod_credit", "eip_buyout"]:
+            base["product_family"] = "byod"
+        elif "plan" in lower:
+            base["product_family"] = "service_plan"
+
+    base["normalization_confidence"] = calculate_normalization_confidence(base)
+
+    business_key_raw = "|".join([
+        str(base["carrier"]),
+        str(base["business_segment"]),
+        str(base["product_family"]),
+        str(base["primary_device_model"]),
+        str(base["plan_name"]),
+        str(base["offer_type"]),
+        str(base["customer_action"])
+    ])
+
+    value_hash_raw = "|".join([
+        str(base["offer_value"]),
+        str(base["offer_value_unit"]),
+        str(base["condition_text"]),
+        str(base["effective_start_date"]),
+        str(base["effective_end_date"]),
+        str(base["source_raw_text"])
+    ])
+
+    base["offer_business_key"] = make_hash(business_key_raw)
+    base["offer_value_hash"] = make_hash(value_hash_raw)
+
+    validation_status, review_required = validate_normalized_offer(base)
+
+    base["validation_status"] = validation_status
+    base["review_required_flag"] = review_required
+
+    if review_required:
+        base["review_status"] = "pending_review"
+        base["status"] = "needs_review"
+    else:
+        base["review_status"] = "auto_approved" if AUTO_APPROVE_HIGH_CONFIDENCE else "pending_review"
+        base["status"] = "ready_for_gold" if AUTO_APPROVE_HIGH_CONFIDENCE else "needs_review"
+
+    return base
+
+normalized_records = []
+
+for _, candidate in silver_offer_candidates_df.iterrows():
+    normalized_records.append(normalize_candidate(candidate))
+
+silver_normalized_offers_df = pd.DataFrame(normalized_records)
+
+preview_df(
+    silver_normalized_offers_df,
+    "silver_normalized_offers_df",
+    rows=50,
+    columns=[
+        "page_number", "section_name", "page_type", "business_segment",
+        "carrier", "product_family", "primary_device_model",
+        "offer_category", "offer_subcategory", "offer_type", "offer_value",
+        "validation_status", "review_status", "status",
+        "normalization_confidence", "source_raw_text"
+    ]
+)
+
+append_df_to_bq(silver_normalized_offers_df, TABLES["silver_normalizedOffers"])
+
+
+# ============================================================
+# CELL 20: CREATE DEVICE BRIDGE
+# ============================================================
+
+print("\nCELL 20: Creating offer-device bridge")
+
+def create_offer_device_bridge(normalized_df: pd.DataFrame):
+    records = []
+
+    for _, row in normalized_df.iterrows():
+        devices = parse_json_safe(row["device_models_json"], [])
+
+        for idx, device in enumerate(devices, start=1):
+            manufacturer, _, _ = detect_manufacturer(device)
+
+            records.append({
+                "deck_id": deck_id,
+                "run_id": run_id,
+                "pdf_hash": pdf_hash,
+                "pdf_name": pdf_name,
+                "deck_week": deck_week,
+                "offer_device_id": make_hash(f"{row['offer_id']}|{device}|{idx}"),
+                "offer_id": row["offer_id"],
+                "offer_group_id": row["offer_group_id"],
+                "page_number": int(row["page_number"]),
+                "manufacturer": manufacturer or row["manufacturer"],
+                "device_model": device,
+                "device_rank": idx,
+                "source_raw_text": row["source_raw_text"],
+                "created_at": datetime.utcnow()
+            })
+
+    return pd.DataFrame(records)
+
+silver_offer_device_bridge_df = create_offer_device_bridge(silver_normalized_offers_df)
+
+preview_df(
+    silver_offer_device_bridge_df,
+    "silver_offer_device_bridge_df",
+    rows=50,
+    columns=["page_number", "manufacturer", "device_model", "source_raw_text"]
+)
+
+append_df_to_bq(silver_offer_device_bridge_df, TABLES["silver_offerDeviceBridge"])
+
+
+# ============================================================
+# CELL 21: CREATE REVIEW QUEUE AND AUTO DECISIONS
+# ============================================================
+
+print("\nCELL 21: Creating review queue and auto approvals")
+
+def create_review_queue(normalized_df: pd.DataFrame):
+    records = []
+
+    review_df = normalized_df[
+        (normalized_df["review_required_flag"] == True) |
+        (normalized_df["review_status"] == "pending_review")
+    ].copy()
+
+    print(f"Rows requiring review: {len(review_df)}")
+
+    for _, row in review_df.iterrows():
+        review_id = make_hash(f"{row['offer_id']}|review")
+        records.append({
+            "deck_id": deck_id,
+            "run_id": run_id,
+            "pdf_hash": pdf_hash,
+            "pdf_name": pdf_name,
+            "deck_week": deck_week,
+            "review_id": review_id,
+            "offer_id": row["offer_id"],
+            "offer_group_id": row["offer_group_id"],
+            "candidate_id": row["candidate_id"],
+            "content_block_id": row["content_block_id"],
+            "page_number": int(row["page_number"]),
+            "section_name": row["section_name"],
+            "business_segment": row["business_segment"],
+            "carrier": row["carrier"],
+            "source_raw_text": row["source_raw_text"],
+            "suggested_output_json": safe_json(row.to_dict()),
+            "confidence_score": row["normalization_confidence"],
+            "validation_status": row["validation_status"],
+            "review_reason": row["validation_status"],
+            "review_status": "pending",
+            "created_at": datetime.utcnow()
+        })
+
+    return pd.DataFrame(records)
+
+def create_auto_approval_decisions(normalized_df: pd.DataFrame):
+    records = []
+
+    auto_df = normalized_df[
+        (normalized_df["review_status"] == "auto_approved") &
+        (normalized_df["status"] == "ready_for_gold")
+    ].copy()
+
+    print(f"Rows auto-approved: {len(auto_df)}")
+
+    for _, row in auto_df.iterrows():
+        review_id = make_hash(f"{row['offer_id']}|auto_review")
+        decision_id = make_hash(f"{review_id}|auto_approved")
+
+        records.append({
+            "deck_id": deck_id,
+            "run_id": run_id,
+            "pdf_hash": pdf_hash,
+            "pdf_name": pdf_name,
+            "deck_week": deck_week,
+            "decision_id": decision_id,
+            "review_id": review_id,
+            "offer_id": row["offer_id"],
+            "offer_group_id": row["offer_group_id"],
+            "decision_type": "auto_approved",
+            "review_status": "approved",
+            "reviewer_name": "system",
+            "review_notes": "Auto-approved because validation passed and confidence threshold was met.",
+            "final_output_json": safe_json(row.to_dict()),
+            "created_at": datetime.utcnow()
+        })
+
+    return pd.DataFrame(records)
+
+review_extraction_review_df = create_review_queue(silver_normalized_offers_df)
+review_auto_decisions_df = create_auto_approval_decisions(silver_normalized_offers_df)
+
+preview_df(
+    review_extraction_review_df,
+    "review_extraction_review_df",
+    rows=50,
+    columns=[
+        "page_number", "section_name", "business_segment", "carrier",
+        "validation_status", "confidence_score", "source_raw_text"
+    ]
+)
+
+preview_df(
+    review_auto_decisions_df,
+    "review_auto_decisions_df",
+    rows=20,
+    columns=[
+        "decision_type", "review_status", "reviewer_name", "offer_id"
+    ]
+)
+
+append_df_to_bq(review_extraction_review_df, TABLES["review_extractionReview"])
+append_df_to_bq(review_auto_decisions_df, TABLES["review_reviewDecisions"])
+
+
+# ============================================================
+# CELL 22: FINAL QA SUMMARY
+# ============================================================
+
+print("\nCELL 22: Final QA summary")
+
+print("\n1. Slide classification summary")
+display(
+    silver_slide_sections_df
+    .groupby(["final_section_name", "page_type", "extraction_strategy", "classification_source"])
+    .size()
+    .reset_index(name="row_count")
+    .sort_values("row_count", ascending=False)
+)
+
+print("\n2. Slide classification detail")
+display(
+    silver_slide_sections_df[[
+        "page_number", "slide_title", "expected_section_from_toc",
+        "final_section_name", "page_type", "extraction_strategy",
+        "business_segment", "section_confidence", "classification_source",
+        "review_required_flag", "section_reason"
+    ]].sort_values("page_number")
+)
+
+print("\n3. Content block summary")
+if not silver_content_blocks_df.empty:
+    display(
+        silver_content_blocks_df
+        .groupby(["final_section_name", "page_type", "block_type"])
+        .size()
+        .reset_index(name="block_count")
+        .sort_values("block_count", ascending=False)
+    )
+else:
+    print("No content blocks.")
+
+print("\n4. Offer candidate summary")
+if not silver_offer_candidates_df.empty:
+    display(
+        silver_offer_candidates_df
+        .groupby(["section_name", "business_segment", "suggested_offer_category", "suggested_offer_subcategory"])
+        .size()
+        .reset_index(name="candidate_count")
+        .sort_values("candidate_count", ascending=False)
+    )
+else:
+    print("No offer candidates.")
+
+print("\n5. Normalized offer summary")
+if not silver_normalized_offers_df.empty:
+    display(
+        silver_normalized_offers_df
+        .groupby(["section_name", "business_segment", "offer_category", "offer_subcategory", "validation_status", "status"])
+        .size()
+        .reset_index(name="offer_count")
+        .sort_values("offer_count", ascending=False)
+    )
+else:
+    print("No normalized offers.")
+
+print("\n6. Rows needing review")
+if not silver_normalized_offers_df.empty:
+    review_sample = silver_normalized_offers_df[
+        silver_normalized_offers_df["status"] == "needs_review"
+    ][[
+        "page_number", "section_name", "page_type", "business_segment",
+        "carrier", "offer_category", "offer_subcategory",
+        "validation_status", "normalization_confidence", "source_raw_text"
+    ]].head(100)
+
+    display(review_sample)
+else:
+    print("No normalized offers to review.")
+
+print("\n7. Multi-device offer bridge sample")
+if not silver_offer_device_bridge_df.empty:
+    display(
+        silver_offer_device_bridge_df[[
+            "page_number", "manufacturer", "device_model", "source_raw_text"
+        ]].head(100)
+    )
+else:
+    print("No device bridge rows.")
+
+print("\n8. Final counts")
+print(f"PDF pages processed: {total_pages}")
+print(f"Bronze slide raw rows: {len(bronze_slide_raw_df)}")
+print(f"Bronze slide line rows: {len(bronze_slide_lines_df)}")
+print(f"Detected entity rows: {len(bronze_detected_entities_df)}")
+print(f"TOC map rows: {len(silver_toc_page_map_df)}")
+print(f"Slide section rows: {len(silver_slide_sections_df)}")
+print(f"Content block rows: {len(silver_content_blocks_df)}")
+print(f"Price grid rows: {len(silver_price_grid_rows_df)}")
+print(f"Offer candidate rows: {len(silver_offer_candidates_df)}")
+print(f"Normalized offer rows: {len(silver_normalized_offers_df)}")
+print(f"Device bridge rows: {len(silver_offer_device_bridge_df)}")
+print(f"Review queue rows: {len(review_extraction_review_df)}")
+print(f"Auto-approved rows: {len(review_auto_decisions_df)}")
+
+print("\n" + "=" * 120)
+print("NOTEBOOK COMPLETED SUCCESSFULLY")
+print("=" * 120)
+print("""
+Next:
+  1. Share the QA outputs with me.
+  2. We will inspect:
+       - slide classification detail
+       - content block summary
+       - rows needing review
+       - unknown categories
+       - dense layout review rows
+  3. Then we will tune:
+       - slide header rules
+       - content block grouping
+       - offer taxonomy
+       - device extraction
+       - review thresholds
+""")
+     
