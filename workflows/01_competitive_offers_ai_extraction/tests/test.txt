@@ -6,7 +6,7 @@ DATASET_ID: ds_dbi_digitalmedia_automation
 BQ_LOCATION: None
 VERTEX_LOCATION: us-central1
 GEMINI_MODEL: gemini-2.5-pro
-USE_GEMINI_VISION: False
+USE_GEMINI_VISION: True
 WRITE_TO_BQ: True
 Table names loaded.
 WARNING: google.colab.auth.authenticate_user() is not supported in Colab Enterprise.
@@ -47,22 +47,51 @@ Upload one Competitive Offer Report PDF using the file upload widget.
 After upload, the pipeline will compute pdf_hash and check BigQuery for duplicates.
 Competitive_Offer_Report_050826.pdf
 Competitive_Offer_Report_050826.pdf(application/pdf) - 2308300 bytes, last modified: 6/30/2026 - 100% done
-Saving Competitive_Offer_Report_050826.pdf to Competitive_Offer_Report_050826 (4).pdf
-Uploaded PDF saved to: /content/Competitive_Offer_Report_050826 (4).pdf
-Using uploaded PDF: /content/Competitive_Offer_Report_050826 (4).pdf
-pdf_name: Competitive_Offer_Report_050826 (4).pdf
+Saving Competitive_Offer_Report_050826.pdf to Competitive_Offer_Report_050826 (5).pdf
+Uploaded PDF saved to: /content/Competitive_Offer_Report_050826 (5).pdf
+Using uploaded PDF: /content/Competitive_Offer_Report_050826 (5).pdf
+pdf_name: Competitive_Offer_Report_050826 (5).pdf
 pdf_hash: 3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb86e2e3fed9cf87108c6
 deck_week: 2026-05-08
 deck_id: deck_20260508_3d1968e4a6db
-run_id: run_583eca3cd2584d18
+run_id: run_df5141507a154ca3
 page_count: 29
+
+==============================================================================================================
+DUPLICATE PDF HASH FOUND
+==============================================================================================================
+deck_id	run_id	pdf_name	deck_week	ingestion_ts	duplicate_action
+0	deck_20260508_3d1968e4a6db	run_583eca3cd2584d18	Competitive_Offer_Report_050826 (4).pdf	2026-05-08	2026-07-08 21:18:35.781242+00:00	new
+
+Choose action: cancel / replace / append_anyway: replace
+Duplicate action selected: replace
+
+==============================================================================================================
+REPLACE MODE - DELETING EXISTING ROWS FOR PDF HASH
+==============================================================================================================
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Deleted rows from prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
 
 ==============================================================================================================
 BRONZE EXTRACTION - RAW SLIDES AND POSITIONED LINES
 ==============================================================================================================
-PDF: Competitive_Offer_Report_050826 (4).pdf
+PDF: Competitive_Offer_Report_050826 (5).pdf
 Pages: 29
-Rendered image directory: /tmp/competitive_offer_pages/run_583eca3cd2584d18
+Rendered image directory: /tmp/competitive_offer_pages/run_df5141507a154ca3
 Bronze slide raw rows: 29
 Bronze slide line rows: 3,254
 
@@ -198,7 +227,6 @@ page_num	section_id	layout_type	classifier_method	classifier_confidence	toc_expe
 28	29	unknown	unknown	unknown	0.00	None	False	
 
 
-
 --------------------------------------------------------------------------------------------------------------
 Classifier counts
 --------------------------------------------------------------------------------------------------------------
@@ -241,29 +269,161 @@ Deterministic offer candidate rows: 52
 ==============================================================================================================
 GEMINI VISION EXTRACTION
 ==============================================================================================================
-USE_GEMINI_VISION is False. Skipping Gemini Vision extraction.
+Gemini pages queued: 17
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 10: postpaid_apple_device_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 94
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 11: postpaid_samsung_google_device_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 104
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 12: postpaid_motorola_affordable_byod_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 84
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 13: postpaid_bts_watch_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 22
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 14: postpaid_bts_tablet_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 22
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 15: postpaid_bts_other_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 20
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 16: postpaid_service_offers | dense_text_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 36
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 17: postpaid_service_offers | dense_text_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 27
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 18: cable_mvno_handset_offers | dense_text_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 62
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 19: postpaid_service_offers | dense_text_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 36
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 20: business_device_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 69
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 21: business_device_offers | dense_matrix
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 30
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 24: prepaid_brand_offers | dense_prepaid_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 66
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 25: prepaid_metro_price_grid | price_grid
+--------------------------------------------------------------------------------------------------------------
+Gemini failed on page 25.
+Traceback (most recent call last):
+  File "<ipython-input-24-6ab89e37d6a6>", line 2648, in parse_gemini_json_response
+    return json.loads(text)
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Unterminated string starting at: line 4116 column 23 (char 154282)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<ipython-input-24-6ab89e37d6a6>", line 2758, in run_gemini_vision_extraction
+    result = call_gemini_for_page(page_row, section_row)
+  File "<ipython-input-24-6ab89e37d6a6>", line 2701, in call_gemini_for_page
+    parsed_json = parse_gemini_json_response(response_text)
+  File "<ipython-input-24-6ab89e37d6a6>", line 2653, in parse_gemini_json_response
+    return json.loads(text[start:end + 1])
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 4104 column 6 (char 153898)
+
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 26: prepaid_brand_offers | dense_prepaid_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 58
+Gemini price grid rows returned: 32
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 27: prepaid_flagship_offers | dense_prepaid_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 36
+Gemini price grid rows returned: 0
+
+--------------------------------------------------------------------------------------------------------------
+Gemini Vision page 28: walmart_prepaid_offers | dense_prepaid_table
+--------------------------------------------------------------------------------------------------------------
+Gemini offer rows returned: 121
+Gemini price grid rows returned: 0
+Gemini slide table rows: 17
+Gemini offer candidate rows: 887
+Gemini price grid rows: 32
 
 ==============================================================================================================
 COMBINED OFFER CANDIDATES
 ==============================================================================================================
-Combined offer candidate rows: 52
+Combined offer candidate rows: 939
 
 ==============================================================================================================
 SILVER NORMALIZED OFFERS
 ==============================================================================================================
-Normalized offer rows: 52
-Auto-approve rows: 0
+Normalized offer rows: 939
+Auto-approve rows: 777
 
 ==============================================================================================================
 SILVER OFFER DEVICE BRIDGE
 ==============================================================================================================
-Offer-device bridge rows: 52
+Offer-device bridge rows: 1,070
 
 ==============================================================================================================
 REVIEW QUEUE AND AUTO-APPROVED DECISIONS
 ==============================================================================================================
-Review queue rows: 52
-Auto-approved decision rows: 0
+Review queue rows: 108
+Auto-approved decision rows: 777
 
 ==============================================================================================================
 BIGQUERY LOAD
@@ -276,33 +436,36 @@ Loading 3,254 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competi
 Loaded 3,254 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
 Loading 226 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
 Loaded 226 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
-Skipping empty dataframe for bronze_slideTables
+Loading 17 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Loaded 17 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
 Loading 21 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
 Loaded 21 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
 Loading 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
 Loaded 29 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
 Loading 85 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
 Loaded 85 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
-Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
-Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
-Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
-Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
-Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
-Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
-Skipping empty dataframe for silver_priceGridRows
-Loading 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
-Loaded 52 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
-Skipping empty dataframe for review_reviewDecisions
+Loading 939 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Loaded 939 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Loading 939 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Loaded 939 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Loading 1,070 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Loaded 1,070 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Loading 32 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Loaded 32 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Loading 108 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Loaded 108 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Loading 777 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Loaded 777 rows into prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
 
 ==============================================================================================================
 FINAL RUN SUMMARY
 ==============================================================================================================
-pdf_name                           : Competitive_Offer_Report_050826 (4).pdf
+pdf_name                           : Competitive_Offer_Report_050826 (5).pdf
 deck_week                          : 2026-05-08
 deck_id                            : deck_20260508_3d1968e4a6db
-run_id                             : run_583eca3cd2584d18
+run_id                             : run_df5141507a154ca3
 pdf_hash                           : 3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb86e2e3fed9cf87108c6
-duplicate_action                   : new
+duplicate_action                   : replace
 page_count                         : 29
 bronze_slide_raw_rows              : 29
 bronze_slide_line_rows             : 3254
@@ -310,13 +473,13 @@ detected_entity_rows               : 226
 toc_map_rows                       : 21
 slide_section_rows                 : 29
 content_block_rows                 : 85
-slide_table_rows                   : 0
-offer_candidate_rows               : 52
-normalized_offer_rows              : 52
-offer_device_bridge_rows           : 52
-price_grid_rows                    : 0
-review_queue_rows                  : 52
-auto_approved_decision_rows        : 0
+slide_table_rows                   : 17
+offer_candidate_rows               : 939
+normalized_offer_rows              : 939
+offer_device_bridge_rows           : 1070
+price_grid_rows                    : 32
+review_queue_rows                  : 108
+auto_approved_decision_rows        : 777
 
 ==============================================================================================================
 SAMPLE OUTPUTS
@@ -411,6 +574,46 @@ page_num	section_id	carrier	product_name	offer_type	offer_amount_text	confidence
 47	22	national_retail_readout	None	None	discount	10 and 10 Pro. Other unlocked promotions less ...	0.55	True	10 and 10 Pro. Other unlocked promotions less ...
 48	22	national_retail_readout	None	None	discount	Best Buy’s new Tracfone promotion offers $10 o...	0.55	True	Best Buy’s new Tracfone promotion offers $10 o...
 49	22	national_retail_readout	None	None	discount	Walmart has two Verizon Prepaid promotions, fo...	0.55	True	Walmart has two Verizon Prepaid promotions, fo...
+
+
+--------------------------------------------------------------------------------------------------------------
+Price grid sample
+--------------------------------------------------------------------------------------------------------------
+deck_id	run_id	pdf_hash	pdf_name	deck_week	grid_row_id	page_num	section_id	brand	device_name	...	id_requirement	rate_plan_requirement	price_text	price_value	raw_evidence	extraction_method	confidence	needs_review	validation_errors_json	created_ts
+0	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_8200d37722e552da7a06a3b4	26	prepaid_brand_offers	Boost Mobile	iPhone 15	...	None	None	$259/$349	259.00	iPhone 15 | $629.99 | $259/$349 | $209.99	gemini_vision_price_grid	0.90	True	[]	2026-07-08 22:04:58.862547+00:00
+1	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_665f4646d9a5ee6be4d02767	26	prepaid_brand_offers	Boost Mobile	iPhone 15	...	None	UNL (select offers limited to $60 RP)	$209.99	209.99	iPhone 15 | $629.99 | $259/$349 | $209.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862564+00:00
+2	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_d639fb0bd788eb340f200f26	26	prepaid_brand_offers	Boost Mobile	iPhone 16e	...	None	None	$99/$199	99.00	iPhone 16e ("free w/trade ") | $599.99 | $99/$...	gemini_vision_price_grid	0.90	True	[]	2026-07-08 22:04:58.862578+00:00
+3	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_a2d4513688b8552b013763ee	26	prepaid_brand_offers	Boost Mobile	iPhone 16e	...	None	2x $60 plan, UNL (select offers limited to $60...	$49 + 2x $60 plan	49.00	iPhone 16e ("free w/trade ") | $599.99 | $99/$...	gemini_vision_price_grid	0.95	False	[]	2026-07-08 22:04:58.862593+00:00
+4	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_e239f403b763d5ee876ef071	26	prepaid_brand_offers	Boost Mobile	iPhone 16	...	None	None	$499.99	499.99	iPhone 16 | $729.99 | $499.99 | $499.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862607+00:00
+5	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_d1f1790fba14bc03767cab23	26	prepaid_brand_offers	Boost Mobile	iPhone 16	...	None	UNL (select offers limited to $60 RP)	$499.99	499.99	iPhone 16 | $729.99 | $499.99 | $499.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862623+00:00
+6	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_9cb504fb9f22528f57ffb25e	26	prepaid_brand_offers	Boost Mobile	iPhone 17e	...	None	None	$399.99	399.99	iPhone 17e ("$99 w/trade ") | $599.99 | $399.9...	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862638+00:00
+7	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_7606dc5e0aea6c24e51f2e39	26	prepaid_brand_offers	Boost Mobile	iPhone 17e	...	None	UNL (select offers limited to $60 RP)	$399.99	399.99	iPhone 17e ("$99 w/trade ") | $599.99 | $399.9...	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862653+00:00
+8	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_55171f9c8b0fffad8c3870b4	26	prepaid_brand_offers	Boost Mobile	Galaxy A16 5G	...	None	None	$0.99	0.99	Galaxy A16 5G | $199.99 | $0.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862668+00:00
+9	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_34ca21119038f6031b33af6d	26	prepaid_brand_offers	Boost Mobile	Galaxy A16 5G	...	None	UNL (select offers limited to $60 RP)	Free	0.00	Galaxy A16 5G | $199.99 | $0.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862682+00:00
+10	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_9423f60b9f9374a4634c8c9d	26	prepaid_brand_offers	Boost Mobile	Galaxy A17 5G	...	None	None	$69/$99	69.00	Galaxy A17 5G | $199.99 | $69/$99 | Free	gemini_vision_price_grid	0.90	True	[]	2026-07-08 22:04:58.862697+00:00
+11	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_5ce800c7f4915c6ace9147cc	26	prepaid_brand_offers	Boost Mobile	Galaxy A17 5G	...	None	UNL (select offers limited to $60 RP)	Free	0.00	Galaxy A17 5G | $199.99 | $69/$99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862711+00:00
+12	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_013557a6728e7ba8dc5098b0	26	prepaid_brand_offers	Boost Mobile	Galaxy A36	...	None	None	$49.99	49.99	Galaxy A36 | $399.99 | $49.99 | $19.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862726+00:00
+13	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_508b5a2a3a745e31a7c6c65e	26	prepaid_brand_offers	Boost Mobile	Galaxy A36	...	None	UNL (select offers limited to $60 RP)	$19.99	19.99	Galaxy A36 | $399.99 | $49.99 | $19.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862741+00:00
+14	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_5d6d2f399aa9849ce310374c	26	prepaid_brand_offers	Boost Mobile	GS25 FE 5G	...	None	None	$199.99	199.99	GS25 FE 5G | $649.99 | $199.99 | $99.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862755+00:00
+15	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_518353c577d168e02086bc1b	26	prepaid_brand_offers	Boost Mobile	GS25 FE 5G	...	None	UNL (select offers limited to $60 RP)	$99.99	99.99	GS25 FE 5G | $649.99 | $199.99 | $99.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862770+00:00
+16	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_ace3001b4d0eba3070bc3764	26	prepaid_brand_offers	Boost Mobile	GS26 5G	...	None	None	$599.99	599.99	GS26 5G | $899.99 | $599.99 | $399.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862784+00:00
+17	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_f7a73764121a93601c6b74ab	26	prepaid_brand_offers	Boost Mobile	GS26 5G	...	None	UNL (select offers limited to $60 RP)	$399.99	399.99	GS26 5G | $899.99 | $599.99 | $399.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862798+00:00
+18	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_677124d4c72b39fbff88ad35	26	prepaid_brand_offers	Boost Mobile	Moto Razr 2025	...	None	None	$79/$199	79.00	Moto Razr 2025 | $599.99 | $79/$199 | $79.99	gemini_vision_price_grid	0.90	True	[]	2026-07-08 22:04:58.862811+00:00
+19	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_df9e408ca7d360cbbc324d32	26	prepaid_brand_offers	Boost Mobile	Moto Razr 2025	...	None	UNL (select offers limited to $60 RP)	$79.99	79.99	Moto Razr 2025 | $599.99 | $79/$199 | $79.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862825+00:00
+20	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_5af7a975f6b6f633ebf8585e	26	prepaid_brand_offers	Boost Mobile	Moto G Stylus 5G (2025)	...	None	None	$49.99	49.99	Moto G Stylus 5G (2025) | $279.99 | $49.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862839+00:00
+21	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_2b26268b7f744bd89a814a05	26	prepaid_brand_offers	Boost Mobile	Moto G Stylus 5G (2025)	...	None	UNL (select offers limited to $60 RP)	Free	0.00	Moto G Stylus 5G (2025) | $279.99 | $49.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862853+00:00
+22	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_aa73f91d385dbe94cfed062c	26	prepaid_brand_offers	Boost Mobile	moto g 5G 2025	...	None	None	$0/$.99	0.00	moto g 5G 2025 | $159.99 | $0/$.99 | Free	gemini_vision_price_grid	0.90	True	[]	2026-07-08 22:04:58.862867+00:00
+23	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_583556b978610405822f4222	26	prepaid_brand_offers	Boost Mobile	moto g 5G 2025	...	None	UNL (select offers limited to $60 RP)	Free	0.00	moto g 5G 2025 | $159.99 | $0/$.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862881+00:00
+24	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_92825693ac9b84540ca1427f	26	prepaid_brand_offers	Boost Mobile	moto g 5G 2026	...	None	None	$79.99	79.99	moto g 5G 2026 | $199.99 | $79.99 | $59.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862895+00:00
+25	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_14bbd8e32d8dda76c85a2ea7	26	prepaid_brand_offers	Boost Mobile	moto g 5G 2026	...	None	UNL (select offers limited to $60 RP)	$59.99	59.99	moto g 5G 2026 | $199.99 | $79.99 | $59.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862910+00:00
+26	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_d1d97a801d44116fdda8112a	26	prepaid_brand_offers	Boost Mobile	TCL 50 XL NXTPAPER 5G	...	None	None	$4.99	4.99	TCL 50 XL NXTPAPER 5G | $149.99 | $4.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862924+00:00
+27	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_82b06f4b3b64842cf8decf0f	26	prepaid_brand_offers	Boost Mobile	TCL 50 XL NXTPAPER 5G	...	None	UNL (select offers limited to $60 RP)	Free	0.00	TCL 50 XL NXTPAPER 5G | $149.99 | $4.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862937+00:00
+28	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_834a9bc695244605c08bbd5a	26	prepaid_brand_offers	Boost Mobile	Celero 3 5G (2024)	...	None	None	$24.99	24.99	Celero 3 5G (2024) | $159.99 | $24.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862957+00:00
+29	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_8dc552080190c57b30e3bfe9	26	prepaid_brand_offers	Boost Mobile	Celero 3 5G (2024)	...	None	UNL (select offers limited to $60 RP)	Free	0.00	Celero 3 5G (2024) | $159.99 | $24.99 | Free	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862971+00:00
+30	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_a118dfb6d372784e29f6bb54	26	prepaid_brand_offers	Boost Mobile	Celero 5G+ (2024)	...	None	None	$99.99	99.99	Celero 5G+ (2024) | $239.99 | $99.99 | $49.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862985+00:00
+31	deck_20260508_3d1968e4a6db	run_df5141507a154ca3	3d1968e4a6dbc79fd7d74ebb737664e0cfdd3443900bb8...	Competitive_Offer_Report_050826 (5).pdf	2026-05-08	grid_ad5087ae7c91ecd98a3990bb	26	prepaid_brand_offers	Boost Mobile	Celero 5G+ (2024)	...	None	UNL (select offers limited to $60 RP)	$49.99	49.99	Celero 5G+ (2024) | $239.99 | $99.99 | $49.99	gemini_vision_price_grid	0.99	False	[]	2026-07-08 22:04:58.862999+00:00
+32 rows × 24 columns
+
 
 
 --------------------------------------------------------------------------------------------------------------
