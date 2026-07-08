@@ -1,4 +1,177 @@
-  File "<ipython-input-40-d16331167114>", line 595
-    "pattern": r"post-paid bts\s*
-               ^
-SyntaxError: unterminated string literal (detected at line 595)
+========================================================================================================================
+SDI COMPETITIVE OFFERS PDF EXTRACTION NOTEBOOK
+========================================================================================================================
+
+Purpose:
+  1. Upload one weekly Competitive Offer Report PDF.
+  2. Check if the PDF already exists in BigQuery.
+  3. Let user choose cancel / replace / append_anyway.
+  4. Extract raw slide text and lines into bronze.
+  5. Extract TOC expectations.
+  6. Classify each slide using:
+       a. priority page rules
+       b. slide header registry
+       c. TOC expected map
+       d. Gemini fallback
+  7. Create slide content blocks.
+  8. Create offer candidates from content blocks.
+  9. Normalize offers into silver.
+  10. Create device bridge for grouped-device offers.
+  11. Create review queue and auto-approved review decisions.
+  12. Print detailed QA outputs so you can share results for improvement.
+
+Important:
+  - This notebook does NOT create one table per slide.
+  - It stores all slides in generic bronze tables.
+  - It stores slide interpretation in silver.
+  - It stores uncertain rows in review tables.
+  - Gold loading should happen after human review in a second notebook.
+
+========================================================================================================================
+
+CELL 2: Package installation check
+Package installation cell completed.
+
+CELL 3: Importing libraries
+Libraries imported successfully.
+GENAI_AVAILABLE: True
+
+CELL 4: Loading user configuration
+Configuration loaded:
+  PROJECT_ID: prj-dbi-prd-1
+  BQ_DATASET: ds_dbi_digitalmedia_automation
+  LOCATION: us-central1
+  TEAM_NAME: sdi
+  PROJECT_NAME: competitiveOffers
+  CADENCE: weekly
+  GEMINI_MODEL: gemini-2.5-pro
+  USE_GEMINI_FOR_CLASSIFICATION: True
+  USE_GEMINI_FOR_CONTENT_BLOCKS: False
+  FORCE_ALL_ROWS_TO_REVIEW: False
+  AUTO_APPROVE_HIGH_CONFIDENCE: True
+
+CELL 5: PDF upload / local path setup
+Colab upload widget available.
+Please upload one Competitive Offer Report PDF.
+Competitive_Offer_Report_052926.pdf
+Competitive_Offer_Report_052926.pdf(application/pdf) - 1583366 bytes, last modified: 6/30/2026 - 100% done
+Saving Competitive_Offer_Report_052926.pdf to Competitive_Offer_Report_052926 (5).pdf
+Uploaded PDF: Competitive_Offer_Report_052926 (5).pdf
+PDF_LOCAL_PATH: Competitive_Offer_Report_052926 (5).pdf
+PDF found successfully.
+
+CELL 6: Creating BigQuery table names
+Table names:
+  bronze_pdfDecks: sdi_competitiveOffers_bronze_pdfDecks_weekly
+  bronze_slideRaw: sdi_competitiveOffers_bronze_slideRaw_weekly
+  bronze_slideLines: sdi_competitiveOffers_bronze_slideLines_weekly
+  bronze_detectedEntities: sdi_competitiveOffers_bronze_detectedEntities_weekly
+  bronze_slideTables: sdi_competitiveOffers_bronze_slideTables_weekly
+  silver_tocPageMap: sdi_competitiveOffers_silver_tocPageMap_weekly
+  silver_slideSections: sdi_competitiveOffers_silver_slideSections_weekly
+  silver_slideContentBlocks: sdi_competitiveOffers_silver_slideContentBlocks_weekly
+  silver_offerCandidates: sdi_competitiveOffers_silver_offerCandidates_weekly
+  silver_normalizedOffers: sdi_competitiveOffers_silver_normalizedOffers_weekly
+  silver_offerDeviceBridge: sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+  silver_priceGridRows: sdi_competitiveOffers_silver_priceGridRows_weekly
+  review_extractionReview: sdi_competitiveOffers_review_extractionReview_weekly
+  review_reviewDecisions: sdi_competitiveOffers_review_reviewDecisions_weekly
+  review_taxonomy: sdi_competitiveOffers_review_taxonomy_weekly
+  review_approvedExamples: sdi_competitiveOffers_review_approvedExamples_weekly
+  gold_ciHeadlines: sdi_competitiveOffers_gold_ciHeadlines_weekly
+  gold_majorOfferChanges: sdi_competitiveOffers_gold_majorOfferChanges_weekly
+  gold_postpaidOffers: sdi_competitiveOffers_gold_postpaidOffers_weekly
+  gold_businessOffers: sdi_competitiveOffers_gold_businessOffers_weekly
+  gold_prepaidOffers: sdi_competitiveOffers_gold_prepaidOffers_weekly
+  gold_offerDeviceBridge: sdi_competitiveOffers_gold_offerDeviceBridge_weekly
+  gold_prepaidDevicePriceGrid: sdi_competitiveOffers_gold_prepaidDevicePriceGrid_weekly
+
+CELL 7: Initializing clients and helper functions
+GEMINI_CLIENT_READY: True
+Clients and helpers are ready.
+
+CELL 8: Defining taxonomy, header registry, and extraction rules
+Taxonomy and header registry loaded.
+Number of slide header rules: 24
+
+CELL 9: Defining entity extraction helpers
+Entity extraction helpers defined.
+
+CELL 10: Defining BigQuery schemas
+Schemas defined.
+
+CELL 11: Creating BigQuery tables if missing
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideRaw_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideLines_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_detectedEntities_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_slideTables_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_tocPageMap_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideSections_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_slideContentBlocks_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerCandidates_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_normalizedOffers_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_offerDeviceBridge_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_priceGridRows_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_extractionReview_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_reviewDecisions_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_taxonomy_weekly
+Table already exists: prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_approvedExamples_weekly
+All required tables are ready.
+
+CELL 12: Registering PDF and handling duplicate uploads
+PDF metadata:
+  pdf_name: Competitive_Offer_Report_052926 (5).pdf
+  pdf_hash: 840707084ae92ebf72f40731d5e57f34
+  deck_week: 2026-05-29
+  deck_year: 2026
+  deck_id: b63b100ecc12eb302762291a98695ef7
+  run_id: d4d39cf3d6c20176184c09586143ce75
+  total_pages: 29
+This PDF is new. Processing mode = new_append.
+Selected PDF_PROCESSING_MODE: new_append
+
+========================================================================================================================
+DATAFRAME PREVIEW: bronze_pdf_decks_df
+========================================================================================================================
+Rows: 1
+deck_id	run_id	pdf_hash	pdf_name	deck_week	local_pdf_path	total_pages	processing_mode	processing_status	created_at
+0	b63b100ecc12eb302762291a98695ef7	d4d39cf3d6c20176184c09586143ce75	840707084ae92ebf72f40731d5e57f34	Competitive_Offer_Report_052926 (5).pdf	2026-05-29	Competitive_Offer_Report_052926 (5).pdf	29	new_append	registered	2026-07-08 06:15:05.353692
+
+Error converting Pandas column with name: "deck_week" and datatype: "object" to an appropriate pyarrow datatype: Array, ListArray, or StructArray
+Appending 1 rows to prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfDecks_weekly...
+---------------------------------------------------------------------------
+ArrowTypeError                            Traceback (most recent call last)
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/_pandas_helpers.py in bq_to_arrow_array(series, bq_field)
+    374             return pyarrow.StructArray.from_pandas(series, type=arrow_type)
+--> 375         return pyarrow.Array.from_pandas(series, type=arrow_type)
+    376     except pyarrow.ArrowTypeError:
+
+7 frames
+ArrowTypeError: object of type <class 'str'> cannot be converted to int
+
+During handling of the above exception, another exception occurred:
+
+ArrowTypeError                            Traceback (most recent call last)
+<ipython-input-43-0067bf898ac8> in <cell line: 1468>()
+   1466 
+   1467 preview_df(bronze_pdf_decks_df, "bronze_pdf_decks_df")
+-> 1468 append_df_to_bq(bronze_pdf_decks_df, TABLES["bronze_pdfDecks"])
+   1469 
+   1470 
+
+<ipython-input-43-0067bf898ac8> in append_df_to_bq(df, table_short_name)
+    352 
+    353     job_config = bigquery.LoadJobConfig(write_disposition="WRITE_APPEND")
+--> 354     job = bq_client.load_table_from_dataframe(df, table_id, job_config=job_config)
+    355     job.result()
+    356 
+
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/_pandas_helpers.py in bq_to_arrow_array(series, bq_field)
+    377         msg = f"""Error converting Pandas column with name: "{series.name}" and datatype: "{series.dtype}" to an appropriate pyarrow datatype: Array, ListArray, or StructArray"""
+    378         _LOGGER.error(msg)
+--> 379         raise pyarrow.ArrowTypeError(msg)
+    380 
+    381 
+
+ArrowTypeError: Error converting Pandas column with name: "deck_week" and datatype: "object" to an appropriate pyarrow datatype: Array, ListArray, or StructArray
