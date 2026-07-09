@@ -1,9 +1,9 @@
 Manifest and bronze tables ready.
-Data for 2026-05-29 already exists (run 4d09ac21-f469-402a-a75c-cd29c7705b1e, file 'Competitive_Offer_Report_052926.pdf').
+Data for 2026-05-29 already exists (run 05363a71-88a0-4a03-bc32-664baad229d9, file 'Competitive_Offer_Report_052926.pdf').
 Choose how to proceed:
 Deleting existing data for 2026-05-29 ...
-[05363a71-88a0-4a03-bc32-664baad229d9] Opening Competitive_Offer_Report_052926.pdf ...
-[05363a71-88a0-4a03-bc32-664baad229d9] 29 pages found.
+[96142814-a280-4be7-b65f-e12797d0da68] Opening Competitive_Offer_Report_052926.pdf ...
+[96142814-a280-4be7-b65f-e12797d0da68] 29 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
@@ -150,4 +150,87 @@ Deleting existing data for 2026-05-29 ...
   page_type       : closing_slide
   text preview    : 'T-Mobile Confidential 29'
 
-[05363a71-88a0-4a03-bc32-664baad229d9] Wrote 29 rows to bronze.
+[96142814-a280-4be7-b65f-e12797d0da68] Wrote 29 rows to bronze.
+
+
+
+
+
+Post-Paid Apple Smartphone Offers Effective May 29, 2026
+SMARTPHONES T-Mobile Verizon AT&T Xfinity Spectrum
+APPLE
+- Up to $500 $250 off AW w/ iPhone purch. & BTS AAL
+- $.99/mo. AW SE3 40mm & iPad A16 w/iPhone 17 series purch. Any credits require a 36-month EIP
+- Up to $500 $320 off select iPads w/ iPhone purchase & BTS AAL
+- Family Freedom: Up to $800/line EIP payoff Standard Trade-in Offer:
+- $800 EIP Buyout w/ Port (combinable w/ device promos) agreement
+^^ UPDATED 5/28; Can be combined for 'Dads & Grads' ^^
+(requires phone trade-in, stacks w/ promos, max 4 - $200 New Line Credit *Online Only* +$100 added to FMV of trade
+All Apple Flagships - $270 VZW GC w/ Port, 17 Pro series & Ultimate (Limit 12) Rate Plans: Mobile Select (Good),
+lines) - Unlimited Your Way 2.0 Plans: (Larger "added to trade-in" amounts
+- $100 VZ GC w/ New Account & Any Plan (Online Only - Limit 1) Mobile Plus (Better/Best)
+Value 2.0 (Good), Extra 2.0 (Better), Premium 2.0 (Best),
+- Keep & Switch: <$800/line EIP payoff (max 4 lines) below supercede this offer)
+- $800 EIP Buyout w/ new phone purchase (Below the Line) Upgrade every year w/ Mobile Plus
+Elite 2.0 (Ultra Premium)
+*All trades Select Phone, Any Condition*
+Discounts (No Trade-in Needed): Discounts (AAL & No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in Needed): Discount (No Trade-in Needed):
+- $1,000 off w/ Port & Better Value or Beyond - $1,000 off w/ AAL & UNL Ultimate - Air: $9.99/mo. ($640 off) w/ AAL/UPG & Any UNL - $400 off w/ Mobile Plus & Port - 17 series:
+- $830 off w/ Port & Exp. More - $830 off w/ AAL & UNL Plus
+^^ NEW 5/28 ^^ ^^ NEW 5/29 ^^ Trade Offers (AAL or UPG): Trade Offers:
+iPhone Trade-in in Any Condition - Up to $830 off w/ AAL, Trade & Mobile Trade Offers (AAL or Upgrade):
+iPhone 17 ($830) Trade Offers (AAL or Upgrade): Trade Offers (AAL or Upgrade): Plus (Top Tier cutoff iPhone 15 Plus) - 17 series: Addtl $200 off added to
+Pros only: $1,100 off w/ iPhone 15 Plus or newer Any
+- $1100 off w/ Tier 1 Trd (Any Cond.) & Beyond Trade-ins can be in Any Condition trade-in (supercedes $100 standard
+iPhone Air ($1,000) Condition Trade & Extra 2.0, Premium 2.0 or Elite 2.0
+- $830 off w/ Tier 1 Trd (Good Cond.) & More/Beyond - $830 off w/ 13 or newer Trade & UNL Ultimate - $200 added to Trade-in value w/ Upgrade offer; combinable w/ discount
+iPhone 17 Pro ($1,100) All models except Air: $830 off w/ iPhone 13 Pro or
+- $400 off w/ Tier 2 Trd (Good Cond.) & More/Beyond - $415 off w/ 12 series or older Trade & UNL Ultimate and Mobile Select above)
+iPhone 17 Pro Max newer Any Condition Trade & Extra 2.0, Premium 2.0 or
+- $300 off w/ Tier 1 Trade (Good Cond.) & most plans - $830 off w/ 13 or newer Trade & UNL Plus
+($1,200) Elite 2.0
+- $150 off w/ Tier 2 Trade (Good Cond.) & most plans - $415 off w/ 12 series or older Trade & UNL Plus
+- $830 off w/ 13 or newer Trade, Port & UNL Welcome
+All models except Air: $500 off w/ iPhone 13 Pro or
+Trade Offers (AAL Only): ^^ NEW 5/29 ^^
+newer Any Condition Trade & Value 2.0
+- $730 off w/ Tier 1 Trade (Good Cond.) & most plans - $360 off w/ 13 Trade & UNL Welcome
+All models except Air: $350 off w/ iPhone Gen 1 or
+- $180 off w/ 12 or older Trade & UNL Welcome
+newer Any Condition Trade & Value 2.0
+Discounts (No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in Needed):
+- $630 off w/ Port & most plans 16: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate 16: $2.99/mo. ($622 off) w/ AAL & Any UNL - $400 off w/ Mobile Plus & Port
+- $315 off w/ AAL & most plans 16 Plus: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate 16: $7.99/mo. ($442 off) w/ UPG & Any UNL Trade Offers:
+iPhone 16 ($730)
+Trade Offers (AAL or Upgrade): 16 Pro: $0 w/ Welcome, $0 w/ Plus, $0 w/ Ultimate 16 Plus: No offer - Up to $830 off w/ AAL, Trade & Mobile
+iPhone 16 Plus ($830)
+- $1100 off w/ Tier 1 Trade (Any Cond.) & Beyond 16 Pro Max: $0 (online) w/ Welcome, $0 w/ Plus, $0 w/ 16 Pro: N/A Plus (Top Tier cutoff iPhone 15 Plus)
+iPhone 16 Pro ($900) --
+- $830 off w/ Tier 1 Trade (Good Cond.) & More Ultimate 16 Pro Max: N/A - $200 added to Trade-in value w/ Upgrade
+iPhone 16 Pro Max
+- $300 off w/ Tier 1 Trade (Good Cond.) & most plans and Mobile Select
+($1,100)
+Trade Offers (AAL Only):
+- $730 off w/ Tier 1 Trade (Good Cond.) & most plans
+Discounts (No Trade-in Needed): Discounts (AAL & No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in Needed): Discount (No Trade-in Needed):
+- $630 off w/ Port & most plans - $0 w/ Any Plan - $0.99/mo. ($564 off) w/ AAL & Any UNL - $400 off w/ Mobile Plus & Port
+Trade Offers (AAL or Upgrade): - $5.99/mo. ($384 off) w/ UPG & Any UNL Trade Offers (AAL or Upgrade):
+- On Us w/ Tier 1 Trd (Any Cond.) & Beyond Trade Offers (AAL or Upgrades): Trade Offers: - Additional $200 added to
+- On Us w/ Tier 1 Trd (Good Cond.) & More/Beyond Trade-ins can be in Any Condition - Up to $600 off w/ AAL, Trade & Mobile customer's trade-in (combinable
+iPhone 17e ($600)
+- $300 off w/ Tier 1 Trade (Good Cond.) & most plans - $600 off w/ Trade & UNL Ultimate (1 tier) Plus (Top Tier cutoff iPhone 15 Plus) with Discount offer above)
+Trade Offers (AAL Only): - Up to $600 off w/ Trade & UNL Plus (2 tiers) - $200 added to Trade-in value w/ Upgrade
+- On Us w/ Tier 1 Trade (Good Cond.) & most plans - Up to $360 off w/ Trade & UNL Welcome (2 tiers) and Mobile Select
+Discount Offers (No Trade-in Needed): Discounts (w/ AAL & No Trade-in Needed): **Online Only**
+- $630 off w/ Port & most plans 15: $0 w/ Any UNL
+iPhone 15 - $315 off w/ AAL & most plans 15 Plus: $0 w/ Any UNL
+Trade Offers (AAL or Upgrade):
+iPhone 15 Plus
+- On Us w/ Tier 1 Trade (Any Cond.) & Beyond
+iPhone 15 Pro
+-- -- --
+- On Us w/ Tier 1 Trade (Good Cond.) & More
+iPhone 15 Pro Max
+- $300 off w/ Tier 1 Trade (Good Cond.) & most plans
+iPhone 14 Trade Offers (AAL Only):
+- On Us w/ Tier 1 Trade (Good Cond.) & most plans T-Mobile Confidential
