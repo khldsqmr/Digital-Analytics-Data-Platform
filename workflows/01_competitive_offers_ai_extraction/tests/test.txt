@@ -1,176 +1,205 @@
 Manifest and bronze tables ready.
-Data for 2026-05-29 already exists (run c0a72b41-0a48-43ad-9f45-05778f6c5d23, file 'Competitive_Offer_Report_052926.pdf').
+Data for 2026-05-29 already exists (run 01be4b7e-5842-4b09-a73b-346295c1c7d4, file 'Competitive_Offer_Report_052926.pdf').
 Choose how to proceed:
 Deleting existing data for 2026-05-29 ...
-[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] Opening Competitive_Offer_Report_052926.pdf ...
-[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] 29 pages found.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Opening Competitive_Offer_Report_052926.pdf ...
+[c49a9473-efe6-4666-b42a-b3332e1048fb] 29 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
   page_type       : title_slide
+  image rendered  : False
   text preview    : 'Competitive Competitive Offer Offer Report Report\nMay 29, 2026\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confident'
 
 --- Page 2 ---
   matched pattern : 'NOTICE OF CONFIDENTIALITY'
   page_type       : confidentiality_notice
+  image rendered  : False
   text preview    : 'NOTICE OF CONFIDENTIALITY\nThe information contained within this document (or meeting) is\ndesignated T-Mobile Confidentia'
 
 --- Page 3 ---
   matched pattern : 'Table of Contents'
   page_type       : toc
+  image rendered  : False
   text preview    : 'Table of Contents:\n▪CI Headlines – Postpaid & Prepaid.........................……………….....……\n5 & 6\n▪Major Competitive Off'
 
 --- Page 4 ---
   matched pattern : 'CI Headlines'
   page_type       : section_divider
+  image rendered  : False
   text preview    : 'CI Headlines\nMCI\nMARKET &\nCHANNEL\n44\nINSIGHTS T-Mobile T-Mobile Confidential Confidential'
 
 --- Page 5 ---
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
   page_type       : ci_headlines
+  image rendered  : False
   text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026\nPostpaid & Cable MVNO Key Highlights\n1. AT&T\n• Build-A-Plan to Launch 5/'
 
 --- Page 6 ---
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
   page_type       : ci_headlines
+  image rendered  : False
   text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026\nPrepaid & MVNO Key Highlights\n1. Cricket Wireless\n• “Deal Drop” Sale fea'
 
 --- Page 7 ---
   matched pattern : 'Competitive Offer Updates'
   page_type       : section_divider
+  image rendered  : False
   text preview    : 'Competitive Offer Updates\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confidential Confidential 7 7'
 
 --- Page 8 ---
   matched pattern : 'Major Offer Changes Effective'
   page_type       : major_offer_changes
+  image rendered  : True
   text preview    : 'Major Offer Changes Effective May 29, 2026\n***TFB Offer Changes:\nReference Slide #20***\nPOSTPAID PREPAID\nOFFERS INTRODUC'
 
 --- Page 9 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
   page_type       : section_divider
+  image rendered  : False
   text preview    : 'Competitive Offers &\nPromotional Updates\nPostpaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential INSIGHTS 9'
 
 --- Page 10 ---
   matched pattern : 'Post-Paid Apple Smartphone Offers'
   page_type       : postpaid_device_offers_apple
+  image rendered  : True
   text preview    : 'Post-Paid Apple Smartphone Offers Effective May 29, 2026\nSMARTPHONES T-Mobile Verizon AT&T Xfinity Spectrum\nAPPLE\n- Up t'
 
 --- Page 11 ---
   matched pattern : 'Post-Paid Samsung and Google Smartphone Offers'
   page_type       : postpaid_device_offers_samsung_google
+  image rendered  : True
   text preview    : 'Post-Paid Samsung and Google Smartphone Offers Effective May 29, 2026\nSMARTPHONES T-Mobile Verizon AT&T Xfinity Spectrum'
 
 --- Page 12 ---
   matched pattern : 'Post-Paid Motorola, Affordable Phones and BYOD'
   page_type       : postpaid_device_offers_motorola_affordable
+  image rendered  : True
   text preview    : 'Post-Paid Motorola, Affordable Phones and BYOD Offers Effective May 29, 2026\nVerizon AT&T Xfinity Spectrum\nSMARTPHONES T'
 
 --- Page 13 ---
   matched pattern : 'Post-Paid BTS'
   page_type       : postpaid_bts_offers
+  image rendered  : True
   text preview    : 'Post-Paid BTS (Watches) Effective May 29, 2026\n$10 Gizmo/Care\nT-Mobile AT&T Verizon\n$10.99 plan\n$15 Unlimited\n$25 Unlimi'
 
 --- Page 14 ---
   matched pattern : 'Post-Paid BTS'
   page_type       : postpaid_bts_offers
+  image rendered  : True
   text preview    : 'Post-Paid BTS (Tablet) Effective May 29, 2026\n$20 Welcome\nT-Mobile AT&T Verizon\n$20.99 plan $40 Unlimited\n$50 Unlimited '
 
 --- Page 15 ---
   matched pattern : 'Post-Paid BTS'
   page_type       : postpaid_bts_offers
+  image rendered  : True
   text preview    : 'Post-Paid BTS & Other Offers Effective May 29, 2026\nT-Mobile AT&T Verizon\nCONNECTED CAR DEVICES: CONNECTED CAR DEVICES: '
 
 --- Page 16 ---
   matched pattern : 'Post-Paid Service Offers'
   page_type       : postpaid_service_offers
+  image rendered  : True
   text preview    : 'T-Mobile & AT&T Post-Paid Service Offers Effective May 29, 2026\nBrands BYOD Wireless Service Target Segment Offers Value'
 
 --- Page 17 ---
   matched pattern : 'Post-Paid Service Offers'
   page_type       : postpaid_service_offers
+  image rendered  : True
   text preview    : 'Verizon Post-Paid Service Offers Effective May 29, 2026\nTarget Segment Value-Added\nBrand BYOD Wireless Service Home Inte'
 
 --- Page 18 ---
   matched pattern : 'Postpaid Cable MVNO Handset Offers'
   page_type       : cable_mvno_offers
+  image rendered  : True
   text preview    : 'Postpaid Cable MVNO Handset Offers Effective May 29, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\n(36 mos. EIP) (3'
 
 --- Page 19 ---
   matched pattern : 'Cable MVNO Service Pricing'
   page_type       : cable_mvno_offers
+  image rendered  : True
   text preview    : 'Cable MVNO Service Pricing & Offers Effective May 29, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\nUnlimited Data '
 
 --- Page 20 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
   page_type       : business_device_offers
+  image rendered  : True
   text preview    : 'Business – Flagship Device Offers\nT-Mobile AT&T Verizon Comcast Spectrum\nBusiness\nNew Line/Upgrade w/Trade\n17 Series and'
 
 --- Page 21 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
   page_type       : business_device_offers
+  image rendered  : True
   text preview    : 'Business – Flagship Device Offers\nT-Mobile AT&T Verizon Comcast Spectrum\nBusiness\n• Get a 5G phone on us – new line or u'
 
 --- Page 22 ---
   matched pattern : 'Key Highlights\\s*[-–]\\s*Week Ending'
   page_type       : national_retail_readout
+  image rendered  : False
   text preview    : 'Key Highlights – Week Ending 5/29/26:\n•\nBest Buy slightly pulled backed on the unlocked phone subsidies this round as th'
 
 --- Page 23 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
   page_type       : section_divider
+  image rendered  : False
   text preview    : 'Competitive Offers\n& Promotional\nUpdates\nPrepaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential 23\nINSIGHTS'
 
 --- Page 24 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers
+  image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nC Metro by T-Mobile Boost Mobile Cricket\nNew Flex Plans: $40/10GB UNL, $40/UNL Period, $'
 
 --- Page 25 ---
   matched pattern : 'METRO BY T-MOBILE'
   page_type       : prepaid_price_grid_detail
+  image rendered  : True
   text preview    : 'METRO BY T-MOBILE\nMetro Price Grid 5.28.26\nNew Number Port New Number Port\nNo ID No ID w/ ID w/ ID\nAlways Level 1 Level '
 
 --- Page 26 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers
+  image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nCc\nBOOST MOBILE CRICKET WIRELESS\nIn-Store PHONE OFFERS PORT or NEW LINE:\n• Selection of '
 
 --- Page 27 ---
   matched pattern : 'Flagship Brands/Prepaid\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers
+  image rendered  : True
   text preview    : 'Flagship Brands/Prepaid – Current Offers\nT-Mobile Prepaid AT&T Prepaid Verizon Prepaid\nNew Plans (6/24/25) - $40/15GB, $'
 
 --- Page 28 ---
   matched pattern : 'Walmart\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers
+  image rendered  : True
   text preview    : 'Walmart – Current Offers\nC3 Metro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk\nRATE PL'
 
 --- Page 29 ---
   matched pattern : '(fallback: last page of deck)'
   page_type       : closing_slide
+  image rendered  : False
   text preview    : 'T-Mobile Confidential 29'
 
-[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] Wrote 29 rows to bronze.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Wrote 29 rows to bronze.
 Text-only silver tables ready.
-[queried at 2026-07-09T10:04:51.259356 UTC]
+[queried at 2026-07-09T10:35:44.782799 UTC]
 
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  business_device_offers               |  2 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  cable_mvno_offers                    |  2 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  ci_headlines                         |  2 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  closing_slide                        |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  confidentiality_notice               |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  major_offer_changes                  |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  national_retail_readout              |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_bts_offers                  |  3 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_apple         |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_service_offers              |  2 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  prepaid_brand_offers                 |  4 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  prepaid_price_grid_detail            |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  section_divider                      |  4 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  title_slide                          |  1 page(s)
-2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  toc                                  |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  business_device_offers               |  2 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  cable_mvno_offers                    |  2 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  ci_headlines                         |  2 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  closing_slide                        |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  confidentiality_notice               |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  major_offer_changes                  |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  national_retail_readout              |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  postpaid_bts_offers                  |  3 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  postpaid_device_offers_apple         |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  postpaid_device_offers_samsung_google  |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  postpaid_service_offers              |  2 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  prepaid_brand_offers                 |  4 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  prepaid_price_grid_detail            |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  section_divider                      |  4 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  title_slide                          |  1 page(s)
+2026-05-29  |  run_id 01be4b7e-5842-4b09-a73b-346295c1c7d4  |  toc                                  |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  business_device_offers               |  2 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  cable_mvno_offers                    |  2 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  ci_headlines                         |  2 page(s)
@@ -187,9 +216,11 @@ Text-only silver tables ready.
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  title_slide                          |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  toc                                  |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  unclassified                         |  5 page(s)
+Silver postpaidDeviceOffers table ready.
+Review table ready.
 
 
-[01be4b7e-5842-4b09-a73b-346295c1c7d4] Text-only extraction stage starting...
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Text-only extraction stage starting...
 
 --- Page 5 (ci_headlines) ---
   extracted 6 headline records
@@ -205,7 +236,7 @@ Text-only silver tables ready.
     [OK   ] Cricket Wireless: “Deal Drop” Sale features Free iPhone 16e
     [OK   ] Cricket Wireless: New TV Spot for “Deal Drop” Sale
     [OK   ] Cricket Wireless: Unlock Policy will change to 365 Days
-    [OK   ] Cricket Wireless: EXPIRED: In select stores: $240 BYO/12month plan – & regional offer
+    [OK   ] Cricket Wireless: EXPIRED
     [OK   ] Boost Mobile: No changes
     [OK   ] Straight Talk: Up to $50 off Phones
     [OK   ] Total Wireless: iPhone 16e $79 In-Store
@@ -219,67 +250,167 @@ Text-only silver tables ready.
     [OK   ] Best Buy: Apple iPhone 16e ($60)
     [OK   ] Walmart: Apple iPhone 16e ($150)
 
-[01be4b7e-5842-4b09-a73b-346295c1c7d4] Wrote 14 rows to silver ci_headlines.
-[01be4b7e-5842-4b09-a73b-346295c1c7d4] Wrote 5 rows to silver national_retail_readout.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Wrote 14 rows to silver ci_headlines.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Wrote 5 rows to silver national_retail_readout.
 
-
-
-[01be4b7e-5842-4b09-a73b-346295c1c7d4] Device offers (text+image) extraction starting...
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Device offers (text+image) extraction starting...
+  Grounding with 15 known carrier(s): ['T-Mobile', 'Verizon', 'AT&T', 'Xfinity', 'Spectrum', 'Comcast', 'Optimum', 'Metro by T-Mobile', 'Boost Mobile', 'Cricket Wireless', 'Straight Talk', 'Total Wireless', 'T-Mobile Prepaid', 'AT&T Prepaid', 'Verizon Prepaid']
 
 --- Page 10 (postpaid_device_offers_apple) ---
-  extracted 75 offer records
+  extracted 200 offer records (2 flagged for review)
     [OK   ] T-Mobile: All Apple Flagships — Up to $800/line
     [OK   ] T-Mobile: All Apple Flagships — <$800/line
-    [OK   ] Verizon: All Apple Flagships — Up to $500
-    [OK   ] Verizon: All Apple Flagships — Up to $500
-    [OK   ] Verizon: All Apple Flagships — $270
+    [CHECK] Verizon: All Apple Flagships — Up to $250 off
+    [CHECK] Verizon: All Apple Flagships — Up to $320 off
+    [OK   ] Verizon: iPhone 17 Pro — $270
+    [OK   ] Verizon: iPhone 17 Pro Max — $270
     [OK   ] Verizon: All Apple Flagships — $100
     [OK   ] Verizon: All Apple Flagships — $800
-    [OK   ] AT&T: All Apple Flagships — $.99/mo.
+    [OK   ] AT&T: iPhone 17 — $.99/mo.
+    [OK   ] AT&T: iPhone Air — $.99/mo.
+    [OK   ] AT&T: iPhone 17 Pro — $.99/mo.
+    [OK   ] AT&T: iPhone 17 Pro Max — $.99/mo.
     [OK   ] AT&T: All Apple Flagships — $800
     [OK   ] AT&T: All Apple Flagships — $200
     [OK   ] Spectrum: All Apple Flagships — +$100
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $1,000 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $1100 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $400 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $300 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $150 off
-    [CHECK] T-Mobile: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $730 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $1,000 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $415 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $415 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $360 off
-    [CHECK] Verizon: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $180 off
+    [OK   ] T-Mobile: iPhone 17 — $1,000 off
+    [OK   ] T-Mobile: iPhone Air — $1,000 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $1,000 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $1,000 off
+    [OK   ] T-Mobile: iPhone 17 — $830 off
+    [OK   ] T-Mobile: iPhone Air — $830 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $830 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $830 off
+    [OK   ] T-Mobile: iPhone 17 — $1100 off
+    [OK   ] T-Mobile: iPhone Air — $1100 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $1100 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $1100 off
+    [OK   ] T-Mobile: iPhone 17 — $830 off
+    [OK   ] T-Mobile: iPhone Air — $830 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $830 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $830 off
+    [OK   ] T-Mobile: iPhone 17 — $400 off
+    [OK   ] T-Mobile: iPhone Air — $400 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $400 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $400 off
+    [OK   ] T-Mobile: iPhone 17 — $300 off
+    [OK   ] T-Mobile: iPhone Air — $300 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $300 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $300 off
+    [OK   ] T-Mobile: iPhone 17 — $150 off
+    [OK   ] T-Mobile: iPhone Air — $150 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $150 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $150 off
+    [OK   ] T-Mobile: iPhone 17 — $730 off
+    [OK   ] T-Mobile: iPhone Air — $730 off
+    [OK   ] T-Mobile: iPhone 17 Pro — $730 off
+    [OK   ] T-Mobile: iPhone 17 Pro Max — $730 off
+    [OK   ] Verizon: iPhone 17 — $1,000 off
+    [OK   ] Verizon: iPhone Air — $1,000 off
+    [OK   ] Verizon: iPhone 17 Pro — $1,000 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $1,000 off
+    [OK   ] Verizon: iPhone 17 — $830 off
+    [OK   ] Verizon: iPhone Air — $830 off
+    [OK   ] Verizon: iPhone 17 Pro — $830 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $830 off
+    [OK   ] Verizon: iPhone 17 — $830 off
+    [OK   ] Verizon: iPhone Air — $830 off
+    [OK   ] Verizon: iPhone 17 Pro — $830 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $830 off
+    [OK   ] Verizon: iPhone 17 — $415 off
+    [OK   ] Verizon: iPhone Air — $415 off
+    [OK   ] Verizon: iPhone 17 Pro — $415 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $415 off
+    [OK   ] Verizon: iPhone 17 — $830 off
+    [OK   ] Verizon: iPhone Air — $830 off
+    [OK   ] Verizon: iPhone 17 Pro — $830 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $830 off
+    [OK   ] Verizon: iPhone 17 — $415 off
+    [OK   ] Verizon: iPhone Air — $415 off
+    [OK   ] Verizon: iPhone 17 Pro — $415 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $415 off
+    [OK   ] Verizon: iPhone 17 — $830 off
+    [OK   ] Verizon: iPhone Air — $830 off
+    [OK   ] Verizon: iPhone 17 Pro — $830 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $830 off
+    [OK   ] Verizon: iPhone 17 — $360 off
+    [OK   ] Verizon: iPhone Air — $360 off
+    [OK   ] Verizon: iPhone 17 Pro — $360 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $360 off
+    [OK   ] Verizon: iPhone 17 — $180 off
+    [OK   ] Verizon: iPhone Air — $180 off
+    [OK   ] Verizon: iPhone 17 Pro — $180 off
+    [OK   ] Verizon: iPhone 17 Pro Max — $180 off
     [OK   ] AT&T: iPhone Air — $9.99/mo. ($640 off)
-    [CHECK] AT&T: iPhone 17 Pro, iPhone 17 Pro Max — $1,100 off
-    [CHECK] AT&T: iPhone 17, iPhone 17 Pro, iPhone 17 Pro Max — $830 off
-    [CHECK] AT&T: iPhone 17, iPhone 17 Pro, iPhone 17 Pro Max — $500 off
-    [CHECK] AT&T: iPhone 17, iPhone 17 Pro, iPhone 17 Pro Max — $350 off
-    [CHECK] Xfinity: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $400 off
-    [CHECK] Xfinity: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — Up to $830 off
-    [CHECK] Xfinity: iPhone 17, iPhone Air, iPhone 17 Pro, iPhone 17 Pro Max — $200 added
-    [OK   ] Spectrum: 17 series — Addtl $200 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $630 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $315 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $1100 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $830 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $300 off
-    [CHECK] T-Mobile: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $730 off
+    [OK   ] AT&T: iPhone 17 Pro — $1,100 off
+    [OK   ] AT&T: iPhone 17 Pro Max — $1,100 off
+    [OK   ] AT&T: iPhone 17 — $830 off
+    [OK   ] AT&T: iPhone 17 Pro — $830 off
+    [OK   ] AT&T: iPhone 17 Pro Max — $830 off
+    [OK   ] AT&T: iPhone 17 — $500 off
+    [OK   ] AT&T: iPhone 17 Pro — $500 off
+    [OK   ] AT&T: iPhone 17 Pro Max — $500 off
+    [OK   ] AT&T: iPhone 17 — $350 off
+    [OK   ] AT&T: iPhone 17 Pro — $350 off
+    [OK   ] AT&T: iPhone 17 Pro Max — $350 off
+    [OK   ] Xfinity: iPhone 17 — $400 off
+    [OK   ] Xfinity: iPhone Air — $400 off
+    [OK   ] Xfinity: iPhone 17 Pro — $400 off
+    [OK   ] Xfinity: iPhone 17 Pro Max — $400 off
+    [OK   ] Xfinity: iPhone 17 — Up to $830 off
+    [OK   ] Xfinity: iPhone Air — Up to $830 off
+    [OK   ] Xfinity: iPhone 17 Pro — Up to $830 off
+    [OK   ] Xfinity: iPhone 17 Pro Max — Up to $830 off
+    [OK   ] Xfinity: iPhone 17 — $200 added
+    [OK   ] Xfinity: iPhone Air — $200 added
+    [OK   ] Xfinity: iPhone 17 Pro — $200 added
+    [OK   ] Xfinity: iPhone 17 Pro Max — $200 added
+    [OK   ] Spectrum: iPhone 17 — Addtl $200 off
+    [OK   ] Spectrum: iPhone Air — Addtl $200 off
+    [OK   ] Spectrum: iPhone 17 Pro — Addtl $200 off
+    [OK   ] Spectrum: iPhone 17 Pro Max — Addtl $200 off
+    [OK   ] T-Mobile: iPhone 16 — $630 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $630 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $630 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $630 off
+    [OK   ] T-Mobile: iPhone 16 — $315 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $315 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $315 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $315 off
+    [OK   ] T-Mobile: iPhone 16 — $1100 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $1100 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $1100 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $1100 off
+    [OK   ] T-Mobile: iPhone 16 — $830 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $830 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $830 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $830 off
+    [OK   ] T-Mobile: iPhone 16 — $300 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $300 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $300 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $300 off
+    [OK   ] T-Mobile: iPhone 16 — $730 off
+    [OK   ] T-Mobile: iPhone 16 Plus — $730 off
+    [OK   ] T-Mobile: iPhone 16 Pro — $730 off
+    [OK   ] T-Mobile: iPhone 16 Pro Max — $730 off
     [OK   ] Verizon: iPhone 16 — $0
     [OK   ] Verizon: iPhone 16 Plus — $0
     [OK   ] Verizon: iPhone 16 Pro — $0
-    [OK   ] Verizon: iPhone 16 Pro Max — $0 (online)
+    [OK   ] Verizon: iPhone 16 Pro Max — $0
     [OK   ] AT&T: iPhone 16 — $2.99/mo. ($622 off)
     [OK   ] AT&T: iPhone 16 — $7.99/mo. ($442 off)
-    [CHECK] Xfinity: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $400 off
-    [CHECK] Xfinity: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — Up to $830 off
-    [CHECK] Xfinity: iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max — $200 added
+    [OK   ] Xfinity: iPhone 16 — $400 off
+    [OK   ] Xfinity: iPhone 16 Plus — $400 off
+    [OK   ] Xfinity: iPhone 16 Pro — $400 off
+    [OK   ] Xfinity: iPhone 16 Pro Max — $400 off
+    [OK   ] Xfinity: iPhone 16 — Up to $830 off
+    [OK   ] Xfinity: iPhone 16 Plus — Up to $830 off
+    [OK   ] Xfinity: iPhone 16 Pro — Up to $830 off
+    [OK   ] Xfinity: iPhone 16 Pro Max — Up to $830 off
+    [OK   ] Xfinity: iPhone 16 — $200 added
+    [OK   ] Xfinity: iPhone 16 Plus — $200 added
+    [OK   ] Xfinity: iPhone 16 Pro — $200 added
+    [OK   ] Xfinity: iPhone 16 Pro Max — $200 added
     [OK   ] T-Mobile: iPhone 17e — $630 off
     [OK   ] T-Mobile: iPhone 17e — On Us
     [OK   ] T-Mobile: iPhone 17e — On Us
@@ -295,182 +426,280 @@ Text-only silver tables ready.
     [OK   ] Xfinity: iPhone 17e — Up to $600 off
     [OK   ] Xfinity: iPhone 17e — $200 added
     [OK   ] Spectrum: iPhone 17e — Additional $200
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — $630 off
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — $315 off
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — On Us
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — On Us
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — $300 off
-    [CHECK] T-Mobile: iPhone 15, iPhone 15 Plus, iPhone 15 Pro, iPhone 15 Pro Max, iPhone 14 — On Us
+    [OK   ] T-Mobile: iPhone 15 — $630 off
+    [OK   ] T-Mobile: iPhone 15 Plus — $630 off
+    [OK   ] T-Mobile: iPhone 15 Pro — $630 off
+    [OK   ] T-Mobile: iPhone 15 Pro Max — $630 off
+    [OK   ] T-Mobile: iPhone 14 — $630 off
+    [OK   ] T-Mobile: iPhone 15 — $315 off
+    [OK   ] T-Mobile: iPhone 15 Plus — $315 off
+    [OK   ] T-Mobile: iPhone 15 Pro — $315 off
+    [OK   ] T-Mobile: iPhone 15 Pro Max — $315 off
+    [OK   ] T-Mobile: iPhone 14 — $315 off
+    [OK   ] T-Mobile: iPhone 15 — On Us
+    [OK   ] T-Mobile: iPhone 15 Plus — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro Max — On Us
+    [OK   ] T-Mobile: iPhone 14 — On Us
+    [OK   ] T-Mobile: iPhone 15 — On Us
+    [OK   ] T-Mobile: iPhone 15 Plus — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro Max — On Us
+    [OK   ] T-Mobile: iPhone 14 — On Us
+    [OK   ] T-Mobile: iPhone 15 — $300 off
+    [OK   ] T-Mobile: iPhone 15 Plus — $300 off
+    [OK   ] T-Mobile: iPhone 15 Pro — $300 off
+    [OK   ] T-Mobile: iPhone 15 Pro Max — $300 off
+    [OK   ] T-Mobile: iPhone 14 — $300 off
+    [OK   ] T-Mobile: iPhone 15 — On Us
+    [OK   ] T-Mobile: iPhone 15 Plus — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro — On Us
+    [OK   ] T-Mobile: iPhone 15 Pro Max — On Us
+    [OK   ] T-Mobile: iPhone 14 — On Us
     [OK   ] Verizon: iPhone 15 — $0
     [OK   ] Verizon: iPhone 15 Plus — $0
 
 --- Page 11 (postpaid_device_offers_samsung_google) ---
-  extracted 102 offer records
-    [OK   ] T-Mobile: Android Flagships — Up to $800/line
-    [OK   ] T-Mobile: Android Flagships — Up to $800/line
-    [OK   ] Verizon: Android Flagships — $800
-    [OK   ] Verizon: Android Flagships — $100 VZ GC
-    [OK   ] AT&T: Android Flagships — $800
-    [OK   ] AT&T: Android Flagships — $200
-    [OK   ] Spectrum: Android Flagships — +$100
-    [CHECK] T-Mobile: Samsung Galaxy S26 — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 — $900 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — $900 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — $900 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — $1100 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 — $650 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — $650 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — $650 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 — <$300 off
-    [CHECK] T-Mobile: Samsung Galaxy S26+ — <$300 off
-    [CHECK] T-Mobile: Samsung Galaxy S26 Ultra — <$300 off
-    [CHECK] Verizon: Samsung Galaxy S26 — $0/mo.
-    [CHECK] Verizon: Samsung Galaxy S26+ — $5.55/mo.
-    [CHECK] Verizon: Samsung Galaxy S26 Ultra — $11.11/mo.
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $1,100 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $550 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $1100 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $900 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $450 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $900 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $360 off
-    [CHECK] Verizon: Samsung Galaxy S26 Series — $180 off
-    [CHECK] AT&T: Samsung Galaxy S26 — $900 off
-    [CHECK] AT&T: Samsung Galaxy S26+ — Up to $1,100 off
-    [CHECK] AT&T: Samsung Galaxy S26 Ultra — Up to $1,300 off
-    [CHECK] AT&T: Samsung Galaxy S26 Series — $500 off
-    [CHECK] Xfinity: Samsung Galaxy S26 Series — $500 off
-    [CHECK] Xfinity: Samsung Galaxy S26 Series — Up to $900 off
-    [CHECK] Xfinity: Samsung Galaxy S26 Series — $450 added
-    [CHECK] Spectrum: Samsung Galaxy S26+ — $300 off FRP
-    [CHECK] Spectrum: Samsung Galaxy S26 Ultra — $300 off FRP
-    [CHECK] Spectrum: Samsung Galaxy S26 Series — Addtl $200
-    [CHECK] T-Mobile: Samsung Galaxy S25 Series — $900 off
-    [CHECK] T-Mobile: Samsung Galaxy S25 Series — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S25 Series — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S25 Series — <$900 off
-    [CHECK] T-Mobile: Samsung Galaxy S25 Series — <$300 off
-    [CHECK] AT&T: Samsung Galaxy S25 Edge — $15.99/mo.
-    [CHECK] Xfinity: Samsung Galaxy S25 Series — $500 off
-    [CHECK] Xfinity: Samsung Galaxy S25 Series — Up to $900 off
-    [CHECK] Xfinity: Samsung Galaxy S25 Series — $450 added
-    [CHECK] T-Mobile: Samsung Galaxy Foldables — $900 off
-    [CHECK] T-Mobile: Samsung Galaxy Foldables — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy Foldables — <$900 off
-    [CHECK] T-Mobile: Samsung Galaxy Foldables — <$300 off
-    [CHECK] Verizon: Samsung Galaxy Z Flip7 — $20
-    [CHECK] AT&T: Samsung Galaxy Z Flip7 — $15.99/mo. (~$524 off)
-    [CHECK] AT&T: Samsung Galaxy Z Fold7 — $1,000 off
-    [CHECK] AT&T: Samsung Galaxy Z Fold7 — $800 off
-    [CHECK] AT&T: Samsung Galaxy Z Fold7 — $500 off
-    [CHECK] Xfinity: Samsung Galaxy Foldables — $500 off
-    [CHECK] Xfinity: Samsung Galaxy Foldables — Up to $900 off
-    [CHECK] Xfinity: Samsung Galaxy Foldables — $450 added
-    [CHECK] T-Mobile: Samsung Galaxy S25 FE — $600 off
-    [CHECK] T-Mobile: Samsung Galaxy S25 FE — <$300 off
-    [CHECK] Verizon: Samsung Galaxy S25 FE — $0/mo.
-    [CHECK] AT&T: Samsung Galaxy S25 FE — $13.99/mo. ($146 off)
-    [CHECK] Xfinity: Samsung Galaxy S25 FE — $500 off
-    [CHECK] Xfinity: Samsung Galaxy S25 FE — Up to $650 off
-    [CHECK] Xfinity: Samsung Galaxy S25 FE — $450 added
-    [CHECK] T-Mobile: Google Pixel 10a — On Us
-    [CHECK] T-Mobile: Google Pixel 10 Series — $1.2K off
-    [CHECK] T-Mobile: Google Pixel 10 Series — $1K off
-    [CHECK] T-Mobile: Google Pixel 10 Series — $600 off
-    [CHECK] T-Mobile: Google Pixel Phones — $600 off
-    [CHECK] T-Mobile: Google Pixel 9a — On Us
-    [CHECK] T-Mobile: Google Pixel 10 — $1200 off
-    [CHECK] T-Mobile: Google Pixel 10 — $1K off
-    [CHECK] Verizon: Google Pixel 10a — Free
-    [CHECK] Verizon: Google Pixel 10 — $5/mo.
-    [CHECK] Verizon: Google Pixel 10 Pro — $10/mo.
-    [CHECK] Verizon: Google Pixel 10 Pro XL — $10/mo.
-    [CHECK] Verizon: Google Pixel 10 Pro — $1K off
-    [CHECK] Verizon: Google Pixel 10 Pro XL — $1K off
-    [CHECK] AT&T: Google Pixel 10a — $5.99/mo. ($304 off)
-    [CHECK] AT&T: Google Pixel 10 — $10.99/mo. (~$454 off)
-    [CHECK] AT&T: Google Pixel 10 Pro — $1,050 off
-    [CHECK] AT&T: Google Pixel 10 Pro XL — $1,250 off
-    [CHECK] AT&T: Google Pixel 10 Pro — $500 off
-    [CHECK] AT&T: Google Pixel 10 Pro XL — $500 off
-    [CHECK] Xfinity: Google Pixel Phones — $400 off
-    [CHECK] Xfinity: Google Pixel Phones — Up to $1200 off
-    [CHECK] Xfinity: Google Pixel Phones — $450 added
-    [CHECK] Spectrum: Google Pixel 10a — $104 off FRP
-    [CHECK] Spectrum: Google Pixel 10 Pro — $300 off FRP
-    [CHECK] Spectrum: Google Pixel 10 Pro XL — $400 off FRP
-    [CHECK] Spectrum: Google Pixel 10 Pro Fold — $350 off FRP
-    [CHECK] Spectrum: Google Pixel 10 Pro — $700 off
+  extracted 178 offer records (1 flagged for review)
+    [OK   ] T-Mobile: S26 — $1100 off
+    [OK   ] T-Mobile: S26+ — $1100 off
+    [OK   ] T-Mobile: S26 Ultra — $1100 off
+    [OK   ] T-Mobile: S26 — $900 off
+    [OK   ] T-Mobile: S26+ — $900 off
+    [OK   ] T-Mobile: S26 Ultra — $900 off
+    [OK   ] T-Mobile: S26 — $600 off
+    [OK   ] T-Mobile: S26+ — $600 off
+    [OK   ] T-Mobile: S26 Ultra — $600 off
+    [OK   ] T-Mobile: S26 — $1100 off
+    [OK   ] T-Mobile: S26+ — $1100 off
+    [OK   ] T-Mobile: S26 Ultra — $1100 off
+    [OK   ] T-Mobile: S26 — $650 off
+    [OK   ] T-Mobile: S26+ — $650 off
+    [OK   ] T-Mobile: S26 Ultra — $650 off
+    [OK   ] T-Mobile: S26 — <$300 off
+    [OK   ] T-Mobile: S26+ — <$300 off
+    [OK   ] T-Mobile: S26 Ultra — <$300 off
+    [OK   ] Verizon: S26 — $0/mo.
+    [OK   ] Verizon: S26+ — $5.55/mo.
+    [OK   ] Verizon: S26 Ultra — $11.11/mo.
+    [OK   ] Verizon: S26 — $1,100 off
+    [OK   ] Verizon: S26+ — $1,100 off
+    [OK   ] Verizon: S26 Ultra — $1,100 off
+    [OK   ] Verizon: S26 — $550 off
+    [OK   ] Verizon: S26+ — $550 off
+    [OK   ] Verizon: S26 Ultra — $550 off
+    [OK   ] Verizon: S26 — $1100 off
+    [OK   ] Verizon: S26+ — $1100 off
+    [OK   ] Verizon: S26 Ultra — $1100 off
+    [OK   ] Verizon: S26 — $900 off
+    [OK   ] Verizon: S26+ — $900 off
+    [OK   ] Verizon: S26 Ultra — $900 off
+    [OK   ] Verizon: S26 — $450 off
+    [OK   ] Verizon: S26+ — $450 off
+    [OK   ] Verizon: S26 Ultra — $450 off
+    [OK   ] Verizon: S26 — $900 off
+    [OK   ] Verizon: S26+ — $900 off
+    [OK   ] Verizon: S26 Ultra — $900 off
+    [OK   ] Verizon: S26 — $360 off
+    [OK   ] Verizon: S26+ — $360 off
+    [OK   ] Verizon: S26 Ultra — $360 off
+    [OK   ] Verizon: S26 — $180 off
+    [OK   ] Verizon: S26+ — $180 off
+    [OK   ] Verizon: S26 Ultra — $180 off
+    [OK   ] AT&T: S26 — $900 off
+    [OK   ] AT&T: S26+ — Up to $1,100 off
+    [CHECK] AT&T: S26 Ultra — Up to $1,300 off
+    [OK   ] AT&T: S26 — $500 off
+    [OK   ] AT&T: S26+ — $500 off
+    [OK   ] AT&T: S26 Ultra — $500 off
+    [OK   ] Xfinity: S26 — $500 off
+    [OK   ] Xfinity: S26+ — $500 off
+    [OK   ] Xfinity: S26 Ultra — $500 off
+    [OK   ] Xfinity: S26 — Up to $900 off
+    [OK   ] Xfinity: S26+ — Up to $900 off
+    [OK   ] Xfinity: S26 Ultra — Up to $900 off
+    [OK   ] Xfinity: S26 — $450 added to Trade-in value
+    [OK   ] Xfinity: S26+ — $450 added to Trade-in value
+    [OK   ] Xfinity: S26 Ultra — $450 added to Trade-in value
+    [OK   ] Spectrum: S26+ — $300 off FRP
+    [OK   ] Spectrum: S26 Ultra — $300 off FRP
+    [OK   ] Spectrum: S26 — Addtl $200 added to $1+ FMV
+    [OK   ] Spectrum: S26+ — Addtl $200 added to $1+ FMV
+    [OK   ] Spectrum: S26 Ultra — Addtl $200 added to $1+ FMV
+    [OK   ] T-Mobile: S25 — $900 off
+    [OK   ] T-Mobile: S25+ — $900 off
+    [OK   ] T-Mobile: S25 Ultra — $900 off
+    [OK   ] T-Mobile: S25 Edge — $900 off
+    [OK   ] T-Mobile: S25 — $600 off
+    [OK   ] T-Mobile: S25+ — $600 off
+    [OK   ] T-Mobile: S25 Ultra — $600 off
+    [OK   ] T-Mobile: S25 Edge — $600 off
+    [OK   ] T-Mobile: S25 — $600 off
+    [OK   ] T-Mobile: S25+ — $600 off
+    [OK   ] T-Mobile: S25 Ultra — $600 off
+    [OK   ] T-Mobile: S25 Edge — $600 off
+    [OK   ] T-Mobile: S25 — <$900 off
+    [OK   ] T-Mobile: S25+ — <$900 off
+    [OK   ] T-Mobile: S25 Ultra — <$900 off
+    [OK   ] T-Mobile: S25 Edge — <$900 off
+    [OK   ] T-Mobile: S25 — <$300 off
+    [OK   ] T-Mobile: S25+ — <$300 off
+    [OK   ] T-Mobile: S25 Ultra — <$300 off
+    [OK   ] T-Mobile: S25 Edge — <$300 off
+    [OK   ] AT&T: S25 Edge — $15.99/mo.
+    [OK   ] Xfinity: S25 — $500 off
+    [OK   ] Xfinity: S25+ — $500 off
+    [OK   ] Xfinity: S25 Ultra — $500 off
+    [OK   ] Xfinity: S25 Edge — $500 off
+    [OK   ] Xfinity: S25 — Up to $900 off
+    [OK   ] Xfinity: S25+ — Up to $900 off
+    [OK   ] Xfinity: S25 Ultra — Up to $900 off
+    [OK   ] Xfinity: S25 Edge — Up to $900 off
+    [OK   ] Xfinity: S25 — $450 added to Trade-in value
+    [OK   ] Xfinity: S25+ — $450 added to Trade-in value
+    [OK   ] Xfinity: S25 Ultra — $450 added to Trade-in value
+    [OK   ] Xfinity: S25 Edge — $450 added to Trade-in value
+    [OK   ] T-Mobile: Z Flip7 — $900 off
+    [OK   ] T-Mobile: Z Fold7 — $900 off
+    [OK   ] T-Mobile: Z Flip7 — $600 off
+    [OK   ] T-Mobile: Z Fold7 — $600 off
+    [OK   ] T-Mobile: Z Flip7 — <$900 off
+    [OK   ] T-Mobile: Z Fold7 — <$900 off
+    [OK   ] T-Mobile: Z Flip7 — <$300 off
+    [OK   ] T-Mobile: Z Fold7 — <$300 off
+    [OK   ] Verizon: Z Flip7 — $20 w/ Welcome, $15 w/ Plus, $10 w/ Ultimate
+    [OK   ] AT&T: Z Flip7 — $15.99/mo. (~$524 off)
+    [OK   ] AT&T: Z Fold7 — $1,000 off
+    [OK   ] AT&T: Z Fold7 — $800 off
+    [OK   ] AT&T: Z Fold7 — $500 off
+    [OK   ] Xfinity: Z Flip7 — $500 off
+    [OK   ] Xfinity: Z Fold7 — $500 off
+    [OK   ] Xfinity: Z Flip7 — Up to $900 off
+    [OK   ] Xfinity: Z Fold7 — Up to $900 off
+    [OK   ] Xfinity: Z Flip7 — $450 added to Trade-in value
+    [OK   ] Xfinity: Z Fold7 — $450 added to Trade-in value
+    [OK   ] T-Mobile: S25 FE — $600 off
+    [OK   ] T-Mobile: S25 FE — <$300 off
+    [OK   ] Verizon: S25 FE — $0/mo.
+    [OK   ] AT&T: S25 FE — $13.99/mo. ($146 off)
+    [OK   ] Xfinity: S25 FE — $500 off
+    [OK   ] Xfinity: S25 FE — Up to $650 off
+    [OK   ] Xfinity: S25 FE — $450 added to Trade-in value
+    [OK   ] T-Mobile: Pixel 10a — On Us
+    [OK   ] T-Mobile: Pixel 10 — $1.2K off
+    [OK   ] T-Mobile: Pixel 10 Pro — $1.2K off
+    [OK   ] T-Mobile: 10 Pro XL — $1.2K off
+    [OK   ] T-Mobile: Pixel 10 — $1K off
+    [OK   ] T-Mobile: Pixel 10 Pro — $1K off
+    [OK   ] T-Mobile: 10 Pro XL — $1K off
+    [OK   ] T-Mobile: Pixel 10 — $600 off
+    [OK   ] T-Mobile: Pixel 10 Pro — $600 off
+    [OK   ] T-Mobile: 10 Pro XL — $600 off
+    [OK   ] T-Mobile: Pixel 10a — $600 off
+    [OK   ] T-Mobile: Pixel 9a — $600 off
+    [OK   ] T-Mobile: Pixel 10 — $600 off
+    [OK   ] T-Mobile: Pixel 10 Pro — $600 off
+    [OK   ] T-Mobile: 10 Pro XL — $600 off
+    [OK   ] T-Mobile: Pixel 9a — On Us
+    [OK   ] T-Mobile: Pixel 10 — $1200 off
+    [OK   ] T-Mobile: Pixel 10 — $1K off
+    [OK   ] Verizon: Pixel 10a — Free
+    [OK   ] Verizon: Pixel 10 — $5/mo.
+    [OK   ] Verizon: Pixel 10 Pro — $10/mo.
+    [OK   ] Verizon: 10 Pro XL — $10/mo.
+    [OK   ] Verizon: Pixel 10 Pro — $1K off
+    [OK   ] Verizon: 10 Pro XL — $1K off
+    [OK   ] Verizon: Pixel 10 Pro — $800 off
+    [OK   ] Verizon: 10 Pro XL — $800 off
+    [OK   ] Verizon: Pixel 10 Pro — $360 off
+    [OK   ] Verizon: 10 Pro XL — $360 off
+    [OK   ] AT&T: Pixel 10a — $5.99/mo. ($304 off)
+    [OK   ] AT&T: Pixel 10 — $10.99/mo. (~$454 off)
+    [OK   ] AT&T: Pixel 10 Pro — $1,050 off
+    [OK   ] AT&T: 10 Pro XL — $1,250 off
+    [OK   ] AT&T: Pixel 10 Pro — $500 off
+    [OK   ] AT&T: 10 Pro XL — $500 off
+    [OK   ] Xfinity: Pixel 10a — $400 off
+    [OK   ] Xfinity: Pixel 9a — $400 off
+    [OK   ] Xfinity: Pixel 10 — $400 off
+    [OK   ] Xfinity: Pixel 10 Pro — $400 off
+    [OK   ] Xfinity: 10 Pro XL — $400 off
+    [OK   ] Xfinity: Pixel 10a — Up to $1200 off
+    [OK   ] Xfinity: Pixel 9a — Up to $1200 off
+    [OK   ] Xfinity: Pixel 10 — Up to $1200 off
+    [OK   ] Xfinity: Pixel 10 Pro — Up to $1200 off
+    [OK   ] Xfinity: 10 Pro XL — Up to $1200 off
+    [OK   ] Xfinity: Pixel 10a — $450 added to Trade-in value
+    [OK   ] Xfinity: Pixel 9a — $450 added to Trade-in value
+    [OK   ] Xfinity: Pixel 10 — $450 added to Trade-in value
+    [OK   ] Xfinity: Pixel 10 Pro — $450 added to Trade-in value
+    [OK   ] Xfinity: 10 Pro XL — $450 added to Trade-in value
+    [OK   ] Spectrum: Pixel 10a — $104 off FRP
+    [OK   ] Spectrum: Pixel 10 Pro — $300 off FRP
+    [OK   ] Spectrum: 10 Pro XL — $400 off FRP
+    [OK   ] Spectrum: 10 Pro Fold — $350 off FRP
+    [OK   ] Spectrum: Pixel 10 Pro — $700 off
 
 --- Page 12 (postpaid_device_offers_motorola_affordable) ---
-  extracted 61 offer records
-    [OK   ] T-Mobile: Android Flagships — Up to $800/line
-    [OK   ] T-Mobile: Android Flagships — Up to $800/line
-    [OK   ] Verizon: select GW — $400 $250 off
-    [OK   ] Verizon: select Galaxy Tabs — $600 $420 off
-    [OK   ] Verizon: Android Flagships — $100 VZ GC
-    [OK   ] Verizon: Android Flagships — $800
-    [OK   ] AT&T: Android Flagships — $800
-    [OK   ] AT&T: Android Flagships — $200
-    [OK   ] Xfinity: Android Flagships — Elite Upgrade
-    [OK   ] Spectrum: Android Flagships — +$100
-    [CHECK] T-Mobile: Motorola Razr '25/'26 — $1.3K off
-    [CHECK] T-Mobile: Motorola Razr '25/'26 — $800 off
-    [CHECK] T-Mobile: Motorola Razr '25/'26 — $600 off
-    [CHECK] T-Mobile: Motorola Razr Ultra — $1.3K off
-    [CHECK] T-Mobile: Motorola Razr+ — $800 off
-    [CHECK] T-Mobile: Motorola Razr+ — $500 off
-    [CHECK] Verizon: Motorola Razr — Free
-    [CHECK] AT&T: Motorola Razr Ultra — FREE
-    [CHECK] AT&T: Motorola Razr+ 2026 — $9.99 ($685 off)
-    [CHECK] AT&T: Motorola Razr+ 2026 — $12.99
-    [OK   ] Xfinity: Android Flagships — $400 off
-    [OK   ] Xfinity: Android Flagships — Up to $700 off
-    [OK   ] Xfinity: Android Flagships — $200 added to Trade-in value
-    [CHECK] Spectrum: Motorola Razr '26 — $100 off
-    [CHECK] T-Mobile: Other Androids + Affordables — Up to $800/line
-    [CHECK] T-Mobile: Other Androids + Affordables — Up to $800/line
-    [OK   ] AT&T: AT&T phone deals — $800
-    [OK   ] AT&T: AT&T phone deals — $200
-    [CHECK] Spectrum: Android Affordables — +$100
-    [CHECK] T-Mobile: Samsung A17 5G — Free
-    [CHECK] T-Mobile: Samsung A16 — FREE
-    [CHECK] T-Mobile: Samsung A36 5G — $300 off
-    [CHECK] T-Mobile: Samsung A37 5G — $450 off
-    [CHECK] T-Mobile: Samsung A17 5G — Free
-    [CHECK] T-Mobile: Samsung A16 — FREE
-    [CHECK] T-Mobile: Samsung A36 5G — $300 off
-    [CHECK] Verizon: Samsung A37 5G — $400 off
-    [CHECK] Verizon: Samsung A37 5G — $450 off
-    [CHECK] AT&T: Samsung A17 5G — $0/mo. ($200 off)
-    [CHECK] AT&T: Samsung A17 5G — $4.99/mo.
-    [CHECK] AT&T: Samsung A37 5G — $2.99/mo. ($342 off)
-    [CHECK] AT&T: Samsung A37 5G — $7.99/mo. ($162 off)
-    [CHECK] Xfinity: Samsung A26 5G — Free
-    [CHECK] Xfinity: Samsung A36 5G — Free
-    [CHECK] Xfinity: Samsung A37 5G — Free
-    [CHECK] Spectrum: Samsung A16 5G — Addtl $160 added
-    [OK   ] T-Mobile: Moto G, Moto G Power, Moto Edge, Moto G5G — Free
+  extracted 58 offer records (1 flagged for review)
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $800 off
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $600 off
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $800 off
+    [OK   ] T-Mobile: Motorola Razr '25/'26 — $500 off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $800 off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $600 off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $800 off
+    [OK   ] T-Mobile: Motorola Razr Ultra — $500 off
+    [OK   ] T-Mobile: Motorola Razr+ — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr+ — $800 off
+    [OK   ] T-Mobile: Motorola Razr+ — $600 off
+    [OK   ] T-Mobile: Motorola Razr+ — $1.3K off
+    [OK   ] T-Mobile: Motorola Razr+ — $800 off
+    [OK   ] T-Mobile: Motorola Razr+ — $500 off
+    [OK   ] Verizon: Razr — Free
+    [OK   ] AT&T: Razr Ultra — FREE
+    [OK   ] AT&T: Razr+ 2026 — $9.99 ($685 off)
+    [OK   ] AT&T: Razr+ 2026 — $12.99
+    [OK   ] Xfinity: Motorola Razr '25/'26 — $400 off
+    [OK   ] Xfinity: Motorola Razr Ultra — $400 off
+    [OK   ] Xfinity: Motorola Razr+ — $400 off
+    [OK   ] Xfinity: Motorola Razr '25/'26 — Up to $700 off
+    [OK   ] Xfinity: Motorola Razr Ultra — Up to $700 off
+    [OK   ] Xfinity: Motorola Razr+ — Up to $700 off
+    [OK   ] Xfinity: Motorola Razr '25/'26 — $200 added to Trade-in value
+    [OK   ] Xfinity: Motorola Razr Ultra — $200 added to Trade-in value
+    [OK   ] Xfinity: Motorola Razr+ — $200 added to Trade-in value
+    [OK   ] Spectrum: Razr '26 — $100 off FRP
+    [OK   ] T-Mobile: A17 5G — Free
+    [OK   ] T-Mobile: A16 — FREE
+    [OK   ] T-Mobile: A36 5G — $300 off
+    [OK   ] T-Mobile: A37 5G — $450 off
+    [OK   ] T-Mobile: A17 5G — Free
+    [OK   ] T-Mobile: A16 — FREE
+    [OK   ] T-Mobile: A36 5G — $300 off
+    [OK   ] Verizon: A37 5G — $400 off
+    [OK   ] Verizon: A37 5G — $450 off
+    [OK   ] AT&T: A17 5G — $0/mo. ($200 off)
+    [OK   ] AT&T: A17 5G — $4.99/mo.
+    [OK   ] AT&T: A37 5G — $2.99/mo. ($342 off)
+    [OK   ] AT&T: A37 5G — $7.99/mo. ($162 off)
+    [OK   ] Xfinity: A26 5G — Free
+    [OK   ] Xfinity: A36 5G — Free
+    [OK   ] Xfinity: A37 5G — Free
+    [OK   ] Spectrum: A16 5G — Addtl $160 added
+    [OK   ] T-Mobile: Free Moto G — Free
+    [OK   ] T-Mobile: Moto G Power — Free
+    [OK   ] T-Mobile: Moto Edge — Free
+    [OK   ] T-Mobile: Moto G5G — Free
     [OK   ] T-Mobile: Moto G (2026) — On us
     [OK   ] AT&T: moto g stylus 5G ('25) — $2.99/mo.
     [OK   ] Xfinity: moto g stylus 5G 2025 — Free
     [OK   ] Xfinity: moto edge — Free
-    [OK   ] Spectrum: moto g stylus 5G 2025 — $140 off
-    [OK   ] T-Mobile: BYOD Incentives — <$800
-    [OK   ] T-Mobile: BYOD Incentives — $400
-    [OK   ] T-Mobile: BYOD Incentives — $300
-    [OK   ] Verizon: BYOD Incentives — $400 Credit ($10/mo. x 36 mos)
-    [OK   ] Verizon: BYOD Incentives — $360 Credit ($10/mo. x 36 mos)
-    [OK   ] Verizon: BYOD Incentives — $180 Credit ($10/mo. x 36 mos)
-    [OK   ] AT&T: BYOD Incentives — Up to $800
-    [OK   ] AT&T: BYOD Incentives — $360 credit ($10/mo. x 36 mos)
-    [OK   ] AT&T: BYOD Incentives — $180 credit ($5/mo. x 36 mos)
+    [CHECK] Spectrum: moto g stylus 5G 2025 — $140 off FRP
 
-[01be4b7e-5842-4b09-a73b-346295c1c7d4] Wrote 238 rows to silver postpaidDeviceOffers.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Wrote 436 rows to silver postpaidDeviceOffers.
+[c49a9473-efe6-4666-b42a-b3332e1048fb] Flagged 4 row(s) for review.
