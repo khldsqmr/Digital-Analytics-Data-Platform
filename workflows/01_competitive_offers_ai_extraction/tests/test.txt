@@ -153,6 +153,164 @@ Deleting existing data for 2026-05-29 ...
 [96142814-a280-4be7-b65f-e12797d0da68] Wrote 29 rows to bronze.
 
 
+================================================================================
+PAGE 1  |  page_type: title_slide  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 2  |  page_type: confidentiality_notice  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 3  |  page_type: toc  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 4  |  page_type: section_divider  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 5  |  page_type: ci_headlines  |  strategy: text-only
+================================================================================
+COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026
+Postpaid & Cable MVNO Key Highlights
+1. AT&T
+• Build-A-Plan to Launch 5/27: AT&T’s Build-A-Plan launched on May 27 but as of publication there are no links to the offer on AT&T’s website; an interested
+party must know the URL for the service to sign up. One customer who attempted to sign up when the service became available seemed to be in a doom loop
+and unable to receive support to get the service up and running. (5/27 - )
+• Pullback on GS26 Series Offers: AT&T removed its $1300 w/$230 trade discount for the Galaxy S26 series leaving the max offer at $1100 ($900 for the S26
+base model) with $95 min. trade – and reduced the $35 trade level to $500 (was $900); the $500 offer is still the max offer for AT&T Value 2.0 plans. AT&T also
+removed the Any, Galaxy, Any Condition construct from its Galaxy trade-in offer.
+2. Verizon
+• iPhone 17 Offers Change – Verizon brought back its no trade-in required offers on Friday, May 29, but with some minor changes from prior offers. The top
+offer, $1,000 off, is limited to the Unlimited Ultimate plan, Unlimited Plus grants an $830 discount and Unlimited Welcome (as of Friday) has no offer. There is
+a new trade-in offer for Unlimited Welcome which grants customers up to $830 off with trade, but a port-in is required.
+• Watch + Tablet On Us Bundles Return – Verizon brought back its phone + watch + tablet “on us” bundle for “Dads & Grads” as of Thursday, May 28. There is no
+end date listed for these offers like there was for the Mother’s Day bundles.
+3. Spectrum Mobile
+• No changes
+4. Xfinity Mobile
+• No changes
+T-Mobile Confidential
+
+================================================================================
+PAGE 6  |  page_type: ci_headlines  |  strategy: text-only
+================================================================================
+COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026
+Prepaid & MVNO Key Highlights
+1. Cricket Wireless
+• “Deal Drop” Sale features Free iPhone 16e: Repeating the month-end flash sale in April, Cricket launched a “deal drop” sale offering the same 4 free phones with port & $60 plan - with
+the latest offering valid through Sunday, June 7: iPhone 16 (online req. 3x plan), Galaxy A36, Galaxy A37 & moto edge 2025 (5/29 – 6/7)
+• New TV Spot for “Deal Drop” Sale: Cricket released a new TV ad, “Jaw-Dropping Deal: Free Samsung Galaxy A37 5G,” promoting the sale (iSpot)
+• Unlock Policy will change to 365 Days: Cricket’s unlock policy is set to change to 365 days (was 180 days) beginning July 1, as confirmed by the official web page.
+• EXPIRED: In select stores: $240 BYO/12month plan – & regional offer (exclusive to Florida and Southwest states) for $10 Off BYO UNL w/$45 or $55 plan, req. new BYO line &
+stackable w/multi-line savings (4/24 – 5/25)
+2. Boost Mobile
+• No changes
+3. Straight Talk
+• Up to $50 off Phones: 25% off any full-priced phone (max discount $50) w/activation on any plan and code NASCARFAN at checkout (5/22 – 5/28); not combinable w/other offers
+4. Total Wireless
+• iPhone 16e $79 In-Store: Total Wireless has reduced its iPhone 16e to $79 in stores (was $99) with a required port and 2-months of the $65 Total All Access plan (mid-May – TBD).
+Previously, the phone had been priced at $99 with port and 3-months of the $65 plan (1/7 – mid-May).
+• Total Spark Expansion: Announced expansion of Total Spark (social-impact program 1st launched in June 2025) to support working students – to Philadelphia, PA; Compton, CA; and
+Newark, NJ – joining Dallas & Chicago. Selected non-profit grantee in each city will receive $100k & host events at select stores; events include $50 credit for new service & World Cup
+ticket giveaways.
+
+================================================================================
+PAGE 7  |  page_type: section_divider  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 8  |  page_type: major_offer_changes  |  strategy: text+image
+================================================================================
+Major Offer Changes Effective May 29, 2026
+***TFB Offer Changes:
+Reference Slide #20***
+POSTPAID PREPAID
+OFFERS INTRODUCED OFFERS REMOVED
+OFFERS INTRODUCED OFFERS REMOVED
+CONSUMER: ▪Galaxy Watch7 $29/existing customer (5/28 - ) …was $99
+▪$1000 off iPhone 17 series w/ Port and Better Value ▪HINT $0 Gateway – existing/AAL only (5/28 - )
+METRO ▪No changes
+or Beyond (5/28 - ) CONSUMER
+▪HINT – promo MRC $50 or $45 w/autopay (5/28 - )
+T-MOBILE
+▪$830
+off iPhone 17 series w/ Port and More (5/28 - ) ▪No offers expired …was $45 or $40 w/autopay
+▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was
+$1,200) (5/28 - )
+BOOST ▪No changes ▪No changes
+CONSUMER:
+▪GS26 ▪“Deal Drop” Sale – FREE with port & $60 plan (5/29 – 6/7)
+Series Trade-in Offer Updates: (5/29) CONSUMER:
+▪In-Store: $240 12-month/BYO
+iPhone 16e …$99/new line
+S26+/S26 Ultra: >$1100 off w/min. $95 trade & ▪GS26 Series - removed o (3x $60 plan online, port or NL)
+UNL plan (4/30 –
+Galaxy A36 …$79/new line (reg. $300)
+Extra/Premium/Elite $1300/$230 trade level; $900/$35 o
+AT&T 5/25)
+Galaxy A37 …$99/new line
+o
+S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) &
+▪Regional Offer: In-store - $10
+Moto edge 2025 …$99/new line
+CRICKET o
+Extra/Premium/Elite removed select/any condition trade
+off new BYO lines $55/$45
+▪moto razr 2025 - $149 port or new line w/$60 plan (5/29 –
+(3/12 – 5/28)
+All models: $500 off w/min. $35 trade & Value 2.0 plans; stackable with multi-line
+TBD) …was $99
+plan savings (4/24 – 5/25) - Florida
+▪Unlock Policy: Will change on July 1 – to 365 days paid
+& Southwest States only
+CONSUMER:
+service required ...was 180 days
+▪iPhone 17 offers:
+▪$1,000 off w/ AAL & UNL Ultimate T-MOBILE
+▪No changes ▪No changes
+▪$830 off w/ AAL & UNL Plus
+▪Up to $830 off w/ Port, Trade & UNL Welcome
+▪AT&T Build-A-Plan – went live 5/27; offers customizable
+▪Dad & Grads Bundles (Phone + Watch + Tablet): CONSUMER:
+AT&T ▪No changes
+VERIZON
+plans with $15/1GB base option
+(5/28) ▪No expired offers
+▪Up to $500 off Apple Watch w/ iPhone purchase
+(was up to $250 off)
+VERIZON
+▪No changes ▪No changes
+▪$500 off iPad w/ iPhone purchase (was $320)
+▪^^Similar offers for Samsung and Google
+Total
+▪In-Store: iPhone 16e - $79 with port & 2x $60 All Access
+▪No changes
+Wireless plan (mid-May – TBD)
+Spectrum Mobile: Spectrum Mobile
+CABLE ▪No new offers ▪No expired offers
+MVNOs STRAIGHT ▪25% off FRP Phones – max. $50 savings w/any purchase,
+Xfinity Mobile: Xfinity Mobile
+▪No changes
+plan & promo code NASCARFAN (5/22 – 5/28)
+TALK
+▪No new offers ▪No expired offers
+T-Mobile Confidential
+
+================================================================================
+PAGE 9  |  page_type: section_divider  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 10  |  page_type: postpaid_device_offers_apple  |  strategy: text+image
+================================================================================
 [COLUMN 1]
 Post-Paid
 SMARTPHONES
@@ -412,3 +570,1828 @@ $200 added to
 trade-in (combinable
 offer above)
 --
+
+================================================================================
+PAGE 11  |  page_type: postpaid_device_offers_samsung_google  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Post-Paid
+SMARTPHONES
+ANDROID FLAGSHIPS
+- Family Freedom:
+(phone trade-in req'd,
+Android Flagships
+- Keep & Switch:
+(max
+Discounts (No Trade-in
+- $1100 off w/ AAL &
+- $900 off w/ AAL & most
+- $600 off w/ Port from
+SAMSUNG GALAXY
+Trade Offers (AAL or
+- $1100 off w/ Trade
+S26 ($900)
+^^ S20 or newer ^^
+S26+ ($1,100) - $650 off w/ Trade &
+S26 Ultra ($1,300) ^^ S7 or newer ^^
+- <$300 off w/ Trade
+Discounts (No Trade-in
+SAMSUNG GALAXY
+- $900 off w/ AAL & More/Beyond
+- $600 off w/ AAL & most
+S25 ($800)
+- $600 off w/ Port from
+S25+ ($1,000)
+S25 Ultra ($1,300) Trade Offers (AAL or
+- <$900 off w/ Trade
+S25 Edge ($1,100)
+- <$300 off w/ Trade
+Discounts (No Trade-in
+- $900 off w/ AAL & More/Beyond
+- $600 off w/ AAL & most
+SAMSUNG GALAXY Trade Offers (AAL or
+- <$900 off w/ Trade
+Foldables: - <$300 off w/ Trade
+Z Flip7 ($1,100)
+Z Fold7 ($2,000)
+Discount (No Trade-in
+- $600 off w/ AAL & most
+SAMSUNG GALAXY
+Trade Offer:
+S25 FE ($650)
+- <$300 off w/ UPG,
+Discounts (No Trade-in
+10a: On Us w/ AAL &
+GOOGLE 10 Series: $1K $1.2K
+Pixel 10a ($500 - $520) 10 Series: $1K off w/
+10 Series: $600 off w/
+Pixel 9a ($500 - $520)
+- $600 off w/ Port from
+Pixel 10 ($800 - $850)
+Trade Offers (AAL or
+Pixel 10 Pro
+9a: On Us w/ Trade &
+($1,000 - $,1050)
+10: $1200 off w/ Tier
+10 Pro XL
+10: $1K off w/ Tier 1
+($1,200 - $1,250)
+
+[COLUMN 2]
+Samsung and Google
+T-Mobile
+$400 $250 off select GW
+Up to $800/line EIP payoff
+w/ BTS AAL and Galaxy
+stacks w/ promos, max 4 lines)
+- $100 VZ GC w/ New Account
+Up to $800/line EIP payoff
+- $800 EIP Buyout w/ new
+4 lines)
+*All trades Select
+Needed): Discount (AAL & No Trade-in
+More/Beyond (4/BAN) S26: $0/mo. Good | $0/mo.
+plans S26+: $5.55/mo. Good | $0/mo.
+Metro or USCC & most plans S26 Ultra: $11.11/mo. Good
+Trade Offers: Select Phones
+Upgrade):
+Upgrades) (Only two trade
+& BV/More/Beyond
+- $1,100 off w/ Trade & UNL
+- $550 off w/ Trade & UNL
+BV/More/Beyond
+- $1100 off w/ Trade, Port
+& most plans - $900 off w/ Trade & UNL
+- $450 off w/ Trade & UNL
+- $900 off w/ Trade, Port
+- $360 off w/ Trade & UNL
+- $180 off w/ Trade & UNL
+Needed): Discount (AAL & No Trade-in
+(2/BAN) - No offers
+plans
+Metro or USCC & most plans Trade Offers: Select Phones,
+Upgrades)
+Upgrade): - No offers
+(Works) & More/Beyond
+(Working) & most plans
+Needed): Discount (AAL & No Trade-in
+(2/BAN) Flip7: $20 w/ Welcome, $15
+plans
+Upgrade): Trade Offers: Select Phone,
+Upgrades)
+(Works) & More/Beyond
+- No offers
+(Working) & most plans
+Needed): Discount (No Trade-in Needed):
+plans - $0/mo. w/ AAL & Any Unlimited
+Trade Offer:
+Trade (Working) & most plans - No offers
+Needed): Discounts (AAL & No Trade-in
+most plans 10a: Free w/Any UNL
+off w/ AAL & Beyond UPD 5/28 9a: No offer
+AAL & More 10: $5/mo. Good | $0/mo.
+AAL & most plans 10 Pro: $0 $10/mo. Good
+Metro or USCC & most plans ^^ UPDATED 5/29 ^^
+10 Pro XL: $10/mo. Good
+Upgrade):
+most plans 10 series Trade Offers: Select
+1 Trade (Any Cond.) & Beyond 10 Pro/10 Pro XL: $1K off
+Trade & More Ultimate, $800 off w/ Plus,
+
+[COLUMN 3]
+Smartphone Offers
+Verizon
+& $600 $420 off select Galaxy Tabs
+phone purchase UPDATED 5/28
+- $800 EIP
+& Any Plan (Online Only - Limit 1)
+- $200 New Line
+phone purchase (below the line)
+Phone, Any Condition*
+Needed): Discount (No Trade-in Needed):
+Better | $0/mo. Best - No offers
+Better | $0/mo. Best
+| $5.55/mo. Better | $5/mo. Best Trade Offers (AAL or Upgrade):
+S26: $900 off w/ Galaxy
+in Any Condition (AAL or Condition Trade w/ Extra/Premium/Elite
+tiers) S26+: Up to $1,100 off w/
+Ultimate (S21 or newer) Any Condition Trade w/
+Ultimate (GS20 or older) S26 Ultra: Up to $1,100
+& UNL Plus <-- NEW 5/29 S24+ or newer in Any Condition
+Plus (GS21 or newer) Extra/Premium/Elite 2.0
+Plus (GS20 or older) ^^ UPDATED 5/29 ^^
+& UNL Welcome <-- NEW 5/29 All models: $500 off w/
+Welcome (GS21 or newer) Condition Trade & Value
+Welcome (GS20 or older)
+Needed): All Channels Discount (No Trade-in Needed):
+S25: No offer
+S25 Edge: $15.99/mo. w/
+Any Condition (AAL or
+Trade Offers (AAL or Upgrade):
+- No offers
+Needed): Discount (No Trade-in Needed):
+w/ Plus, $10 w/ Ultimate Flip7: $15.99/mo. (~$524
+Flip7: No discount for Upgrades
+Any Condition (AAL or Trade Offers (AAL or Upgrade):
+Fold7: $1,000 off w/ Any
+(or min. $95 FMV for other
+Elite 2.0 plan
+Fold7: $800 off w/ S10
+min. $35-$94 FMV other
+Extra/Premium/Elite 2.0
+Fold7: $500 off w/ Trade
+Discount (No Trade-in Needed):
+Plan - $13.99/mo. ($146 off)
+- No discount for UPG
+Needed): Discounts (No Trade-in
+10a: $5.99/mo. ($304 off)
+9a: No offer
+Better | $0/mo. Best 10: $10.99/mo. (~$454
+| $0 $5/mo. Better | $0/mo. Best
+Trade Offers (AAL or Upgrade):
+| $5/mo. Better | $0/mo. Best - 10 Pro: $1,050 off w/ Any
+(or $35 FMV from other
+Phone, Any Cond. (AAL/UPG) Extra/Premium/Elite 2.0
+w/ Trade (Pixel 6 or newer) & UNL - 10 Pro XL: $1,250 off w/
+$360 off w/ Welcome Trade (or $35 FMV from
+& Extra/Premium/Elite 2.0
+- 10 Pro/XL: $500 off w/
+
+[COLUMN 4]
+Effective May
+AT&T
+Any credits require
+Buyout w/ Port agreement
+Credit *Online Only* Elite Upgrade (upgrade
+Premium
+Discounts (No Trade-in
+- $500 off w/ Mobile
+Trade Offers:
+S22+ S10 or newer in Any - Up to $900 off w/
+2.0 plan Plus (Top Tier cutoff
+Galaxy (S22+ or newer) in - $450 added to Trade-in
+Extra/Premium/Elite 2.0 plan and Mobile Select
+$1,300 off w/ Galaxy S22+
+Trade w/
+plan
+S10 or newer Any Galaxy, Any
+2.0 plan UPDATED 5/29
+Discounts (No Trade-in
+- $500 off w/ Mobile
+AAL/UPG & Any UNL plan
+Trade Offers:
+- Up to $900 off w/
+Plus (Top Tier cutoff
+- $450 added to Trade-in
+and Mobile Select
+Discounts (No Trade-in
+off) w/ AAL & Any UNL - $500 off w/ Mobile
+Trade Offers:
+S22+ or newer Working Trade - Up to $900 off w/
+OEMs) w/ Extra/Premium/ Plus (Top Tier cutoff
+- $450 added to Trade-in
+or newer Working Trade (or and Mobile Select
+OEMs) w/
+plan
+& Value 2.0 plan
+Discounts (No Trade-in
+w/ AAL & Any UNL plan - $500 off w/ Mobile
+Trade Offers:
+- Up to $650 off w/
+- $450 added to Trade-in
+and Mobile Select
+Needed) AAL or Upgrade: Discounts (No Trade-in
+w/ Any UNL - $400 off w/ Mobile
+off) w/ Any UNL plan Trade Offers (AAL
+- Up to $1200 off
+(Top Tier cutoff 9
+Pixel, Any Condition Trade - $450 added to Trade-in
+OEMs in Good Condition) & and Mobile Select
+plan
+Any Pixel, Any Condition
+other OEMs in Good Condition)
+plan
+Trade and Value 2.0 plan
+
+[COLUMN 5]
+29, 2026
+Xfinity
+a 24-month EIP Standard
++$100 added
+2x per year) w/ (Larger "added
+UNL below
+Needed): Discounts
+Plus & Port S26 base model:
+S26+/S26
+AAL, Trade & Mobile All S26: Trade
+S23 Ultra) - Addtl $200
+value w/ Upgrade Trade-in (combinable
+above)
+Needed): Discounts
+Plus & Port --
+AAL, Trade & Mobile
+S23 Ultra)
+value w/ Upgrade
+Needed): Discounts
+Plus & Port --
+Trade Offers
+AAL, Trade & Mobile --
+S23 Ultra)
+value w/ Upgrade
+Needed): Discounts
+Plus & Port -
+AAL, Trade & Mobile Plus
+value w/ Upgrade
+Needed): Discounts
+Plus & Port 10a: $104
+10 Pro: $300
+or Upgrade): 10 Pro XL:
+w/ Trade & Mobile Plus 10 Pro Fold:
+Pro Fold)
+value w/ Upgrade Trade Offers
+10 Pro: $700
+T-Mobile Confidential
+
+[COLUMN 6]
+Spectrum
+Trade-in Offer:
+to FMV of trade
+to trade-in" amounts
+supercede this offer)
+(No Trade-in Needed):
+Ultra: $300 off FRP
+Offers (AAL or Upg):
+added to $1+ FMV
+with offers
+(No Trade-in Needed):
+(No Trade-in Needed):
+(AAL or Upgrade):
+(No Trade-in Needed):
+(No Trade-in Needed):
+off FRP
+off FRP
+$400 off FRP
+$350 off FRP
+(AAL or Upgrade):
+off w/ Trade
+11
+
+================================================================================
+PAGE 12  |  page_type: postpaid_device_offers_motorola_affordable  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Post-Paid Motorola, Affordable Phones and BYOD
+Verizon
+SMARTPHONES T-Mobile
+ANDROID FLAGSHIPS
+$400 $250 off select GW & $600 $420 off select Galaxy Tabs
+- Family Freedom: Up to $800/line EIP payoff
+w/ BTS AAL and Galaxy phone purchase UPDATED 5/28
+(phone trade-in req'd, stacks w/ promos, max 4 lines) - $800 EIP
+Android Flagships - $100 VZ GC w/ New Account & Any Plan (Online Only - Limit 1)
+- Keep & Switch: Up to $800/line EIP payoff - $200 New Line
+- $800 EIP Buyout w/ new phone purchase (below the line)
+(max 4 lines)
+*All trades Select Phone, Any Condition*
+Discounts (AAL & No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in Needed)
+- $1.3K off w/ AAL & Exp. Beyond - None - Razr Ultra: FREE w/ $95+
+Motorola
+- $800 off w/ AAL & Exp. More - Razr+ 2026: $9.99 ($685
+Razr '25/'26($700
+- $650) - $600 off w/ AAL & most plans Trade Offers (AAL or Upgrade): - Razr+ 2026: $12.99 w/UPG
+Razr+ Trade Offers (AAL or Upgrade): - Razr: Free w/ AAL & Any UNL
+($900 - $1K)
+Razr Ultra (~$1,300) - $1.3K off w/ Tier 1 Trd & Beyond
+- $800 off w/ Tier 1 Trd & More
+- $500 off w/ Tier 1 Trade & most plans
+ANDROID AFFORDABLES
+- Family Freedom: Up to $800/line EIP payoff
+(requires phone trade-in, stacks w/ promos, max 4 AT&T phone deals good
+Other Androids +
+lines) -- - $800 EIP
+Affordables
+- Keep & Switch: Up to $800/line EIP payoff - $200 New Line
+(max 4 lines)
+Discounts (No Trade-in Needed): Discounts (No Trade-in Needed): Discounts (No Trade-in
+- A17 5G: Free w/ AAL & most plans - A16 5G: No offer - A17 5G: $0/mo. ($200
+- A16: FREE w/ AAL & most plans - A17 5G: No offer - A17 5G: $4.99/mo. w/
+- A36 5G: $300 off w/ AAL & most plans - A37 5G: $400 off w/ AAL - A36 5G: No offer
+Samsung Affordables - A37 5G: $450 off w/ AAL & most plans - A54 5G: No offer - A37 5G: $2.99/mo. ($342
+Trade Offers: - A37 5G: $7.99/mo. ($162
+- A17 5G: Free w/ Sel. Any Cond. Trade & most plans Trade Offers:
+- A16: FREE w/ Trade & Exp. More - A37 5G: $450 off w/ AAL & Trade
+- A36 5G: $300 off w/ Trade & Go5G Plus/Exp. More
+Discounts (No Trade-in Needed): Discounts (AAL Required): Discounts (No Trade-in
+- Free Moto G, Moto G Power, Moto Edge, Moto G5G -- moto g stylus 5G ('25):
+Other Android w/ AAL & most plans - $2.99/mo. w/ AAL/UPG
+Affordables Trade Offers (AAL or UPG):
+Moto G (2026): On us w/ Any Cond. Trade & most
+plans
+BYOD
+- As of 1/8/26, the offers below are combinable with new
+- <$800 Mastercard w/ Port (4/BAN) - Up to $800 EIP buyout
+account National Promo credits (1-line, $10/mo. savings, 2
+^^Phones must have EIP balance to receive offer ^^ not combinable w/ offers
+lines, $15/mo. savings 3+ lines $20.mo. savings)
+^^ Combinable with offers below ^^ - $360 credit ($10/mo. x
+BYOD Incentives - $400 Credit ($10/mo. x 36 mos) w/ AAL & UNL Ultimate
+Premium 2.0
+- $360 Credit ($10/mo. x 36 mos) w/ AAL & UNL Plus
+- $400 Port-in Credit on More/Beyond (4/BAN) - $180 credit ($5/mo. x
+- $180 Credit ($10/mo. x 36 mos) w/ AAL & UNL Welcome
+- $300 Port-in Credit on all plans (4/BAN) 2.0
+^^ Limited to 1 per account as of early-April ^^
+
+[COLUMN 2]
+Offers Effective May
+AT&T
+Any credits require
+Buyout w/ Port agreement
+Credit *Online Only* Elite Upgrade (upgrade
+Premium
+AAL or Upgrade): Discounts (No Trade-in
+FMV Trade & Any UNL - $400 off w/ Mobile
+off) w/AAL & Any UNL
+& Any UNL Trade Offers (AAL
+- Up to $700 off w/
+- $200 added to Trade-in
+and Mobile Select
+for New & Existing Customers
+Any credits require
+buyout w/ Port
+agreement
+Credit *Online Only*
+Needed) AAL or Upgrade: Discounts (No Trade-in
+off) w/ AAL & Any UNL - A 16 5G: No offer
+UPG & Any UNL - A17 5G: No offer
+- A26 5G: Free w/port
+off) w/ AAL & Any UNL - A36 5G: Free w/
+off) w/ UPG & Any UNL - A37 5G: Free w/port
+Needed) AAL or Upgrade: Discounts (No Trade-in
+- moto g stylus 5G
+& Any UNL upgrade
+- moto edge: Free
+(PPD Card) w/ Port
+below ^^
+36 mos) w/ Port & Extra 2.0 or
+36 mos) w/ Port & AT&T Value
+
+[COLUMN 3]
+29, 2026
+Xfinity
+a 24-month EIP Standard
++$100 added
+2x per year) w/ (Larger "added
+UNL below
+Needed): Discounts
+Plus & Port - Razr '26:
+or Upgrade):
+Trade & Mobile Plus
+value w/ Upgrade
+Standard
+a 24-month EIP +$100 added
+(Larger "added
+below
+Needed): Discounts
+- A16 5G:
+$1+ FMV Trade-in
+or upgrade - A36 5G:
+port or upgrade
+or upgrade
+Needed): Discounts
+2025: Free w/port or - moto g stylus
+off FRP
+w/port or upgrade
+--
+T-Mobile Confidential
+
+[COLUMN 4]
+Spectrum
+Trade-in Offer:
+to FMV of trade
+to trade-in" amounts
+supercede this offer)
+(No Trade-in Needed):
+$100 off FRP
+Trade-in Offer:
+to FMV of trade
+to trade-in" amounts
+supercede this offer)
+(No Trade-in Needed):
+Addtl $160 added to
+(for free phone)
+No additional offer
+(No Trade-in Needed):
+5G 2025: $140
+--
+12
+
+================================================================================
+PAGE 13  |  page_type: postpaid_bts_offers  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Post-Paid BTS (Watches)
+T-Mobile
+APPLE WATCHES: APPLE WATCHES:
+Apple Watch SE 3: All Apple
+▪Discount: $300 off w/ AAL & $15 plan
+• Discount:
+Select Apple
+Apple Watch S11:
+Addtl Credits
+Smartwatches ▪Discount: No offer
+Watch SE3
+All Apple Watches (Current and N-1 generations): Watch SE3
+discounted
+▪BOGO: BOGO $300 off w/ 1+ AAL & $10 plan
+ANDROID WATCHES: ANDROID
+Select Galaxy
+Galaxy and Pixel Watches:
+Flagship ▪Discount: Up to $400 off w/ AAL & $10 plan • BOGO: $400
+Pixel Watch
+• BOGO: $450
+CHILDREN’S & SENIOR’S CONNECTED WATCHES: CHILDREN’S
+Watches
+Other
+▪SYNCUP KIDS Watch 2: On Us ($174 off) – w/ AAL & $10 plan
+▪amiGO
+TRACKERS:
+▪SyncUP Tracker: On Us – w/ AAL
+
+[COLUMN 2]
+Effective May 29,
+AT&T
+$10.99 plan
+APPLE WATCHES:
+Watches (current & older generations): SE2/S10:
+▪Bundle Discount:
+$100 off w/purchase
+& iPhone
+Watches: $100 off w/ BTS AAL
+SE3/S11/Ultra3:
+▪Bundle Discount:
+w/ BTS AAL & iPhone purchase
+& iPhone
+40mm: Additional $264.36 off  $0.99 offer
+44mm:, Series 10 42mm/46mm also
+Apple Watch
+but not $.99
+▪Trade: Up
+WATCHES: ANDROID
+Watches: Galaxy Watch8,
+▪Bundle
+off w/ 1+ BTS AAL
+& 5G Android
+▪Trade: Free
+4:
+off w/ 1+ BTS AAL
+Pixel Watch
+Bundle Discount:
+5G Android
+Pixel Watches
+▪Trade: Free
+UPG, Trade
+& SENIOR’S CONNECTED WATCHES: CHILDREN’S
+▪GizmoWatch
+Jr. Watch
+▪GizmoWatch
+
+[COLUMN 3]
+2026
+$10 Gizmo/Care
+Verizon
+$15 Unlimited
+$25 Unlimited Plus
+Up to $450 $250 off w/ BTS AAL, min. $15 plan
+purchase UPDATED 5/28
+Up to $500 $120 off w/ BTS AAL, min. $15 plan
+purchase UPDATED 5/28
+10, SE3, 11, Ultra 2 & Ultra 3:
+to $300 off w/ AAL or UPG, Trade & min. $15 plan
+WATCHES:
+Watch Ultra (‘24 & 25):
+Discount: $250 Up to $400 off w/ AAL, Any BTS plan
+phone purchase UPDATED 5/28
+-Up to $400 off w/ AAL or UPG, Trade & $25 plan
+4:
+$250 Up to $450 off w/ AAL, Any BTS plan &
+phone purchase UPDATED 5/28
+(2, 3, and 4):
+- Up to $400 off + $50 promo credit w/AAL or
+& $25 plan
+& SENIOR’S CONNECTED WATCHES:
+3 ($150 FRP): $130 off w/ phone purchase
+3 Adventure ($130 FRP): $130 off w/ phone purchase
+T-Mobile Confidential
+
+================================================================================
+PAGE 14  |  page_type: postpaid_bts_offers  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Post-Paid BTS (Tablet)
+T-Mobile
+Apple iPads: Apple iPads:
+Tablets
+• Discount:
+iPad (A16):
+▪Discount: $400 off w/ $25 plan
+Addtl Credits
+iPad A16:
+Apple
+ANDROID TABLETS: ANDROID
+Chromebooks
+Galaxy Tab
+Galaxy Tab S10+:
+• Discount:
+▪No offer
+Galaxy Tab S10 FE 5G:
+Galaxy Tab
+▪Discount: 50% off ($300 off) w/ AAL & & $25 plan
+• No offer
+Galaxy Tab A9+ 5G:
+Galaxy Tab
+▪No offer
++
+• No offer
+Tablets Galaxy Tab A11+ 5G:
+Galaxy Tab
+▪Discount: On Us ($290 off) w/ AAL & $20 plan
+• No offer
+REVVL Tab2
+Android
+▪Discount: On Us ($276 off) w/ AAL & $10 plan
+
+[COLUMN 2]
+Effective May 29,
+AT&T
+$20.99 plan
+Apple iPads:
+$100 off w/ new BTS line
+Most iPads:
+▪Bundle
+w/ BTS AAL & iPhone purchase
+purchase,
+Additional $364 off  $0.99 offer
+5/28
+▪Trade:
+▪Discount:
+TABLETS: ANDROID
+Galaxy Tab
+A11+:
+▪Discount:
+50% off w/ new BTS line
+Galaxy Tab
+A9+:
+▪Bundle
+5G Android
+S10 FE:
+▪Trade: $600
+▪Discount:
+S10+:
+Galaxy Tab
+• Trade: $600
+• Bundle
+phone purchase
+•
+Discount:
+
+[COLUMN 3]
+2026
+$20 Welcome
+Verizon
+$40 Unlimited
+$50 Unlimited Plus
+Discount (A16): Up to $500 $320 off w/ iPhone
+BTS AAL & UNL or UNL Plus BTS plan UPDATED
+Up to $500 off w/ Trade & UNL or UNL Plus BTS Plan
+$140 off w/ AAL & Any BTS plan
+TABLETS:
+A11+ 5G:
+$270 off w/ AAL & Any BTS plan
+S10 FE 5G:
+Discount: $420 Up to $600 off w/ AAL, Any BTS plan &
+phone purchase UPDATED 5/28
+off w/ Trade & Any BTS plan
+$240 off w/ AAL & Any BTS plan
+S10+ 5G:
+off w/ Trade & Any BTS plan
+Discount: $420 off w/ AAL, Any BTS plan & 5G Android
+$240 off w/ AAL & Any BTS plan
+
+================================================================================
+PAGE 15  |  page_type: postpaid_bts_offers  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Post-Paid BTS & Other Offers
+T-Mobile
+CONNECTED CAR DEVICES: CONNECTED CAR DEVICES:
+Devices
+▪SYNCUP DRIVE: On Us – w/ AAL & $2 plan
+▪No offer
+IN-CAR WI-FI PLANS (UNL
+▪$15/month
+Connected
+BTS BYOD PIC: OTHER:
+▪$100 Virtual Prepaid Mastercard (max 4 lines)
+▪Netgear Nighthawk M7 Pro:
+offer)
+BTS BOGOHO:
+▪Buy 1 BTS Line, Get 2nd Line 50% off (lesser of two lines) ▪Franklin A70: $209.99 or $5.84/mo.
+▪Franklin A50: $209.99 or $5.84/mo.
+Other
+▪Netgear Nighthawk M6 Pro:
+offer)
+▪Netgear Nighthawk Mg: $309.99
+▪Franklin
+A10: $79.99 or $2.23/mo.
+
+[COLUMN 2]
+Effective May 29, 2026
+AT&T
+CONNECTED CAR DEVICES:
+▪Verizon Hum+ ($99 FRP):
+▪Verizon HumX ($120 FRP):
+DATA W/22GB FUT):
+CONNECTED CAR BY VERIZON:
+▪$20/month
+ROUTERS & HOTSPOTS:
+▪Inseego MiFi 2100 5G ($400
+$449.99 or $12.50/mo. (No
+▪Inseego MiFi X PRO 5G ($350
+▪TCL
+LINKZONE 5G UW ($300
+(No offer)
+▪Verizon Jetpack MiFi 8800L
+(No offer)
+▪Verizon Orbic Speed 5G
+$459.99 or $12.78/mo. (No
+▪Verizon Orbic Speed Mobile
+or $8.62/mo. (No offer)
+(No offer)
+
+[COLUMN 3]
+Verizon
+No offer
+No offer
+FRP) – No Offer
+FRP) – No Offer
+FRP) – No Offer
+Hotspot ($200 FRP) – No Offer
+UW ($300 FRP) – No Offer
+Hotspot ($80 FRP) – No Offer
+T-Mobile Confidential
+
+================================================================================
+PAGE 16  |  page_type: postpaid_service_offers  |  strategy: text+image
+================================================================================
+T-Mobile & AT&T Post-Paid Service Offers Effective May 29, 2026
+Brands BYOD Wireless Service Target Segment Offers Value- Added Services 5G News
+Keep and Switch (BYOD) ▪New subs: 3rd Line Free CONSUMER SEGMENT ENTERTAINMENT: T-MOBILE NATIONWIDE 5G:
+▪AT&T, Verizon, DISCOUNTS: ▪Netflix, Hulu, and Apple TV+ included with ▪600 GHz + 2.5 GHz
+▪Base subs: BOGO Voice AAL
+Spectrum, Xfinity, ▪Seniors certain plans
+(excludes segments: 55+, ▪> 7,100 5G cities/markets launched
+TRAVEL:
+USC, Claro and more Military) ▪Military
+▪Coverage: 308M people and more
+<$800 credit to pay ▪1-year of AAA On Us
+▪Normal price: $35 DCC for AALs ▪First Responders than million square miles
+off device ▪High-speed data abroad w/Exp.
+and Upgrades ▪Work Perks: 15% savings
+▪No charge for 5G access
+More/Beyond
+T-Mobile
+▪Network Pass: 3 Mos based on where you work
+▪In-flight streaming w/Exp. More/Beyond ▪All Limited Data subs → Unlimited
+Free Trial w/Esim
+T-MOBILE MONEY: Data
+▪Online banking; higher APR than average
+DEVICE PROTECTION:
+▪P<360>: $7–$25/mo.
+▪$10/mo. (for 36 ▪Unlimited Your WaySM (mix & CONSUMER SEGMENT ENTERTAINMENT/CONTENT: LOW BAND 5G CONSUMER/BUSINESS
+months) BYOD credit match UNL plans) DISCOUNTS: ▪GeForce NOW Ultimate Membership 6- OFFERING:
+w/ AT&T Extra 2.0 or ▪Appreciation Savings: mos. free (1/4/22 wireless – 1/3/23 ▪850 MHz
+▪AT&T Premium 2.0 $90
+AT&T Premium 2.0 (medical, teachers, military) +internet - TBD) ▪395 markets across 50 states
+No data cap, 100GB MHS, 4K UHD,
+10%, 15% or 20% depending
+UNL Extra or UNL Signature/Appreciation Savings ▪Bookful FREE 6-month subscription with launched
+on plan
+Premium ▪AT&T Extra 2.0 $70 AT&T service & 5G capable phone ▪Coverage: 290M people (3/22/23)
+▪Nurses Doctors & Teachers –
+▪Included w/Unlimited Extra, Elite &
+100GB data, 50GB MHS, Appreciation
+▪$5.99 $5/mo. (for 36
+25% off Wireless WARNERMEDIA RIDE:
+Savings
+Starter – (Legacy plans – consumer
+months) BYOD credit ▪Military – 25% off Wireless ▪In
+▪AT&T Value 2.0 $50 Vehicle Wi-Fi service/content
+March 2021, business April 2021)
+w/ AT&T Value 2.0 5GB data, 3GB MHS, Appreciation Savings ▪First Responders – 25% off
+DEVICE PROTECTION
+AT&T
+5G+ CONSUMER/BUSINESS OFFERING:
+– does not qualify for best Apple deals
+UNL Starter or Value Wireless (incl. Retired FR’s;
+▪Single Lines: $16, $19 or $25/mo. or
+▪Covers 70M POPs end of Q2 ‘22
+updated 10/28/25)
+Plus
+▪Multi-Line (up to 4) $50/mo.
+▪AT&T OneConnect –
+new bundles of ▪mm Wave – more than 50 cities –
+▪Signature Program for qual.
+wireless & 1Gig Fiber service/BYO only, ▪Open Enrollment (1/30 – 3/13)
+corp.’s/org.’s – 20% off AT&T FirstNet included APR 2021 (link)
+talk/text & deprioritized date that works
+Premium 2.0
+only in US/Online only/prepaid (3/31/26) ▪5G+ at more than 70 venues
+Save $10/mo. on UNL Premium
+▪AT&T Elite 2.0 –
+includes free watch
+& tablet line along w/ATT Turbo & other ▪Schools/Students: Business
+features (4/16/26)
+CL disc. Wireless Internet &
+▪ACTIVATION/UPGRADE FEE: $35 T-Mobile Confidential
+Hotspots
+
+================================================================================
+PAGE 17  |  page_type: postpaid_service_offers  |  strategy: text+image
+================================================================================
+Verizon Post-Paid Service Offers Effective May 29, 2026
+Target Segment Value-Added
+Brand BYOD Wireless Service Home Internet
+Offers Services
+Bring Your Own Device: Verizon myPlan (5/18/23) – Consumer Segment Offers: Perks Available Home Internet Offers (all)
+New Accounts as Add-Ons for Wireless: ▪
+mix/match New Customers: <$500 Credit to cover switching costs for New VZ
+▪
+International Credit History –
+Various options ranging Internet customers w proof of ETF charges (4/29/22 – TBD)
+▪$400 $540 $360 in Bill ▪3yr Price Guarantee (4/3/25) New Immigrants w little/no
+from $10 - $15/month
+Credits over 36 mos. w AAL ▪ Extra on Us (depending on service chosen):
+U.S. credit can use
+▪Netflix/Max
+▪Unlimited Ultimate: Unlimited Bundle, Disney
+Port, compatible BYOD • $400 off Samsung products (4/2 $500 – 5/21 $400 -) or 3mox FOX
+established overseas credit
+Bundle, 100GB mobile
+data includes 5G UW, 200GB
+phone, & UNL Ultimate/Plus One or VZ Home Protect 3mos $.99 (5/21 - )
+via partnership with Nova
+hotspot, Apple Music
+premium mobile hotspot, 50%
+(7/12/22–1/4/23: Port req’d; ▪ Price Guarantee: 3-5 Year+ depending on service; price guarantee
+Credit. (3/31/22) Family, Apple One, 3 Travel
+1/5: Port ; 2/1; 2/10: $504; 4/6 off 2xBTS plan, 15GB high
+Pass Days, Verizon Cloud (1/3/25 5yr – 2/27 2-4year – 5/1 3yr+ - 8/28 5yr/Fios only -)
+▪
+$360 – 4/28 $504/Prem – speed intl, elig for device College Students –
+Storage, Second Number
+5/18 $540/Port/UNL Plus – promos 8/31/23 Wireless/Mobile FAQs 4G LTE Home Internet: “as low as $35/mo.” was $25/mo.
+(savings vary $3 - $35/mo.)
+8/31 no port/Ult/Plus –
+(7/2/20) & Fios FAQs
+▪Unlimited Plus: Unlimited data (5/18/23…ongoing chgs) ▪UNL Plus/Prem Customers – $15 Off + autopay disc (1/5/22– 5/18
+7/17/25 $360 – 10/10 $540 –
+(8/24/22)
+includes 5G UW, 30GB UNL Plus – 8/31 $10 price increase - TBD)
+- 1/8/26 $360 – 5/14 $400 - ) Verizon Visa Card:
+Discounts
+premium mobile hotspot, 50%
+▪UNL Welcome Customers – $5 off w/ other VZW >$30/mo. plan
+▪ONLINE – $100 $50
+▪$360 $450 in Bill Credits
+off BTS plan, eligible for device ▪
+Nurses & Teachers – FAQ
+w/any purchase + $100
+over 36 mos. w AAL & UNL Fios Home Internet:
+promos
+Wireless & Fios (4/23/20)
+w/$1500 purchase -
+Plus (no port req),
+▪Only service still showing “as low as $25/month”
+▪Unlimited Welcome: Unlimited
+compatible BYOD phone, cash back in first 90 days
+▪ First Responders – Wireless
+Verizon ▪New Customers With Gigabit Connection :
+data on 5G nationwide only;
+(7/12/22–1/4/23: Port req’d; min. $1k purch/new acct
+& Fios FAQs
+o Fios 2Gig & 1Gig (online/no setup fee), 500Mbps, 300Mbps -
+eligible for select phone offers
+1/5: Port – 2/1 2/16 – 4/6 (- 8/1/23 – 4/5/24
+$25/month discount (all) w/mobile line
+$180 – 4/28 $360/Start – (6/7/23) and BYOD $180 ▪ Military –
+$150- 8/28 $100 –
+5/18 UNL Plus & no port –8/30 promo w/3-yr Price Guarantee Wireless & Fios FAQs
+1/23/25 $50/$100 -) 5G Home Internet: With C-Band Launch 1/19/22:
+end; 10/9/24 – $450 7/2/25 – (12/22 -)
+▪5G Home: Launched 1/5; Price change 1/19/22
+▪ 55+ Seniors – Wireless only ▪5% rewards up to $2k on
+7/17 $360 - )
+▪36-Month service credits - - purchases (11/6 - o $60 (w/o Autopay) / $50 (w Autopay) / $25 (w UNL Plus)
+▪$180 in Bill Credits over 36
+$10/1 line, $15/2 lines, $20/3+ 1.31.24) o New Customers: 30-Day Satisf Guar & 30-Day Setup Support Incl.
+mos. w AAL, compatible ▪5G
+lines – valid on any myPlan; Home+: Launched 1/5; Price change 1/19/22
+BYOD phone, & UNL Open Enrollment
+stackable with phone offers o $80 (w/o Autopay) / $70 (w Autopay) / $35 (w UNL Plus)
+Welcome (4/28 $180 – for Device Protection (3/3
+(12/ 5- TBD) o New Customers - Unlimited Verizon Cloud Storage ($20/mo.)
+5/18/23 UNL Welcome – – 5/3)
+ALL RETIRED 5/17/23
+9/18/24 $360 – 10/9/24 $180 5G Business Internet:
+– 11/7/24 $360 – 1/9/25
+▪One Unlimited for iPhone: ▪With C-Band Launch 1/19/22: >2 million Businesses
+$180 – 1/24 $360 – 1/28
+▪Welcome UNL 5G:
+$180 – 2/14 $360 – 7/17
+▪5G Mix/Match 5G UNL Plans
+Added Frontier Fiber (1/22/26) – qualify for existing HINT discount
+$180 – 10/22 $720 online first
+1/5/22
+line/$180 addt’l lines – 12/2 & mobile offers; existing Frontier customers elig. for additional acct-
+5G Get More UNL, Play More, Do More &
+o
+$180 – 1/8/26 $360 – 4/3
+Start UNL level discounts
+5G
+$180 - TBD)
+T-Mobile Confidential
+
+================================================================================
+PAGE 18  |  page_type: cable_mvno_offers  |  strategy: text+image
+================================================================================
+Postpaid Cable MVNO Handset Offers Effective May 29, 2026
+Optimum Mobile Spectrum Mobile Xfinity Mobile
+(36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP)
+since
+Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed)
+Credits award over 24 months 36 Months UPDATED 12/3/25
+awarded as credits over 36 months – $100 off (select up to $200 off) w/trade & AAL w/PORT on select phones
+Free UNL Mobile Line (1yr) –opened to existing internet subs w/o
+(since 2019 – 3/29/25; returned April – 2/24/26 port required - ) Savings
+mobile; consumer only
+▪Third Line Free – req. 1 port & UNL/Max; BIGSAVINGS (12/8/25 – (4/15/25 – 6/21/26)
+over 36 months with EIP
+TBD)
+Waived Activation Fee (1/15 – 6/21)
+▪iPhone 17 series + Air - $200 addtl off w/ trade & EIP (4/14 – 5/31)
+▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or ▪iPhone
+17/16 Series & iPhone 17e:
+▪iPhone 17e - $200 additional off w/trade & EIP (3/4 – 5/31)
+$250/$300/$350 off no-trade/UNL (combine with trade for up to
+<$830 off new/existing w/Trade & Mobile Plus – or
+▪S26+/S26 Ultra - $300 $400 off w/ EIP or pay in full; GS25E $400 off
+$1000 off) for new & existing w/EIP (2/25 – 5/18 reduced - TBD)
+$200 addt’l for existing w/trade & Select – or
+(4/14 – 4/22 $300 – 6/30)
+▪iPhone 17 Series – <$900 <$1K off w/elig. Trade w/UNL Max $400/Mobile Plus for new lines or $300/Mobile Select w/no trade
+SMARTPHONES
+▪GS26 Series - $700 $200 additional off with trade & EIP (2/25 $700
+($800/UNL) & EIP – or $400 no-trade/Max (9/12 $1100 – 11/10 (– 2/25 $830 – 4/22 Mplus- 5/11 $830/new – 6/21)
+– 4/22 $200 - TBD)
+▪Galaxy
+$900 – 11/24 $1100 – 12/8 $900 – 1/12 $1K - TBD) S26/S25/Z Series:
+▪Pixel 10 Series: FRP discounts – $200 $300 off Pixel 10, $300 off
+▪iPhone 16/Plus Series - $850 $400/Max or $650 $200/UNL <$1100 <$900 off new/existing w/Trade & Mobile Plus – or
+Pixel 10 Pro, $500 $400 off Pixel 10 Pro XL; stackable w/extra $100
+$450 addt’l for existing w/trade & Select – or
+w/elig. trade; new & existing (11/10 $300 – 1/12 $850 - 3/4
+trade offer (– 11/28 pro fold/$350 – 2/1 $300/10 & removed
+or $500/Mobile Plus for new lines or $200/Mobile Select w/no trade
+$400/$200 - )
+10Pro/Fold – 3/1 10pro returns – 4/1 removed Pixel10 – 6/30) ( –2/1 $1100 – 2/25 $500 – 4/22 Mplus – 5/11 $900/new – 6/21)
+▪iPhone 17e - $600 off w/UNL Max & any trade/any condition or
+▪Pixel
+▪Galaxy A16 - $160 additional off w/trade & EIP (5/1 - TBD) 9/10 Series & Moto Razr ’25/’26: <$830 <$1200 off new/existing
+$300 $430 additional off w/UNL & trade; new & existing (3/4 –
+▪moto g stylus 2025 - $140 off FRP (5/1 – 6/12) w/Trade & Mobile Plus – or $400 $450 addt’l w/trade & Select or
+5/19 $400 & removed any condition -)
+$300/Select no trade (2/25 $830 – 4/22 Mplus – 5/11 $1200/$450 –
+▪moto edge 2025 - $76 off FRP (2/27 – 9/30)
+▪iPhone 16e $599 $400/Max or $450 $200/UNL w/elig. Trade;
+6/21)
+new & existing (1/12 up to $600 – 3/4 $400/$200 – 5/1 OOS) ▪moto razr 2026 - $100 off FRP (5/22 – 7/2)
+▪Pixel
+10a – (new $350 FRP) free w/AAL or $200 off/upgrade & no trade;
+▪Moto razr 2025 $200 off with UNL/Max & EIP (3/6 – TBD) ▪moto razr 2025 - $150 off FRP (3/2 – 9/30)
+$350 addt’l w/trade & any plan (5/11 – TBD)
+▪Moto g 5G 2026 $30 off with any plan (2/1 – TBD) ▪Pixel 10a – $104 off FRP (3/6 – 6/30)
+▪A26,
+A36, A37, moto g stylus ’25, moto g stylus ‘26, moto edge, moto g
+▪Spectrum Savings Guarantee: Save $1,000 in the 1st yr or receive play ‘26 – >$500 w/port & Mobile Plus or $200 off w/UPG, any UNL &
+credit for difference (2/24/26 - ) EIP (7/18/25 free/new/existing – 5/11 free/new $200/upg – 6/21)
+▪Galaxy A17 – addt’l $200 off with upgrade & trade (5/11 – 6/21)
+▪ Up to $500 (virtual gift card) to pay off EIP balance w/previous ▪ Up to $500 (virtual gift card) to pay off EIP balance w/previous ▪ CONSUMER BYOD: $100 PPD MC w/ Port (6/5 – 7/14)
+carrier – req port & new EIP phone on UNL Max w/ TRD along w/
+carrier; for 3-5 2-5 lines of service; in store or telesales (5/15/24 3-
+▪ Watches: Apple 9/10/11/SE, Galaxy Watch 7/8/Ultra, Pixel 3/4
+proof of prev EIP/finance – or $300 w/BYO; limit 5 (12/4/23 $400 –
+line min. – 9/12/25 2-line min - )
+o <$300 off Apple & Samsung Watches with EIP, BTS AAL- offer
+OTHER 12/8/25 $500/$300BYO - TBD) LINK
+▪Tablets: Apple (7), Samsung (4) -req. addt’l plan for usage
+based on Xfinity Membership level (11/19 – 12/2 – 6/21)
+▪ Tablets: iPads added 5/17/24 (watches not offered)
+▪Watches: …plus $10/mo./line fee
+▪ Tablets: Apple, Samsung
+$45/mo. tablet plan – 20GB w/5GB hotspot
+o
+▪ Apple (SE, Series 9/10/11/Ultra) -- 3-months free watch service
+o iPad A16 – 50% off with new tablet line (4/22 – 6/21)
+…$25/mo. ($20 off) when bundled w/phone line
+w/AAL (8/30/24– 4/2/26)
+Tab A11+ – 50% off with new tablet line (3/11 – 5/10)
+o
+o Galaxy Tab A11+ - $180 off w/new BTS line & EIP (2/25 - 5/1)
+▪ Galaxy Watch 6/7/8/Ultra
+o iPad Air/Mini/Pro - $150 - $250 off w/new BTS line & EIP (3/11
+– 5/5 updated; was $200 Air only - TBD)
+T-Mobile Confidential
+
+================================================================================
+PAGE 19  |  page_type: cable_mvno_offers  |  strategy: text+image
+================================================================================
+Cable MVNO Service Pricing & Offers Effective May 29, 2026
+Optimum Mobile Spectrum Mobile Xfinity Mobile
+Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including international, 15GB hotspot before
+shown) Raised data limits 9/8/23; All Plans Flat Rate as of 10/3/22) throttling, 720p streaming
+▪Unlimited: $40 line 1, $60 2 lines, + $30 each addtl line
+▪Mobile Plus: $45 –
+▪$45/mo. UNL (20GB) or $55 UNL Max (50GB) UNL including international, 50GB hotspot before
+$30/line (throttle at 20GB 30GB), international text, 2k mins
+▪6/6/22 – New UNL multi-line discount: throttling, 4K streaming, Mobile Care Plus, Yearly UPG
+Mex/Can
+▪$15 off per line w/ 2-4 lines ▪Tablet/$20 (15GB) & Watch/$10 – max. $35/mo. up to 10 devices
+▪Unlimited Plus: $50 line 1, $80 2 lines, +$40 each addtl line
+▪$20 off per line w/ 5 lines No Multi-Line Discounts
+$40/line (throttle at 30GB 50GB) Includes Anytime Upgrade as of
+Flexible Data Plans (FlexAbility – new branding 9/13/21) ▪Unlimited: $40 (2-10 lines addt’l $20/line) - 30GB high-speed data, UNL
+PLANS 4/8/24; international text, 2k mins Mex/Can, international roaming
+Mex/Can …expired 4/21/26
+▪Per GB $15/mo. as of 8/1/22 (prev. $14) 180+ countries
+▪5GB $25/mo. ($22/3GB - 8/1/22 $25/3GB – 8/19/24 ▪By the Gig: $14 $20/1GB/line + $5/GB ▪Unlimited Premium: $50 (2-10 lines addt’l $30/line) 100GB high-speed
+▪Line limit increased from 5 to 10 per account (2/16/21 - ) data + w/30GB hotspot & early upgrade feature, 5GB UNL Mex/Can, 10GB
+$25/5GB)
+▪Spectrum
+▪Add option of 1GB for $6/mo. (data top-up) Mobile for Small Business – same as consumer UNL Intl (Prem. 4/15/25; Intl Updates – Oct ’25)
+SERVICE
+Line limit increased from 5 to 10 per acct (2/16/21 –)
+Tablet Plan (5/17/24) Bundles
+▪By
+▪$45/mo. ($25 when bundled w/wireless) – unlimited Spectrum One (free UNL line for 1 year) the Gig: $20/GB (per line; 3/22/24 – 4/14/25)
+data; 20GB premium data, HD streaming, 5GB hotspot ▪$50: 300 500 Mbps ($75?) + Advanced Wi-Fi ($5 $10) +
+Bundles: 400 300 Mbps or higher: Free UNL Mobile line for 1yr (3/10/25 – )
+Mobile UNL ($30)
+Additional
+▪$70 $89.99: 1 Gbps ($115?) + Advanced Wi-Fi ($5 included) +
+▪Military Benefits: Rewards Diamond status; 1 UNL line for 2 yrs w/ internet;
+Mobile UNL ($30)
+NOW TV included for one year
+▪All prices good for one year then increase by $60/mo. if all
+▪Early Upgrade Program: 50% must be paid off, acct in good standing
+services are kept (post 1-yr price in () above)
+▪Student Discount/Offer: $100 prepaid Visa (~8/1 – 10/2)
+▪Comcast Business Mobile: Launched July 20, 2021
+▪Storm-Ready/back-up service by Verizon (8/15/23)
+Altice Mobile → Optimum Mobile on 7/25/21 ▪Spectrum Internet: Required ($10 mo. fee for UNL/UNL+ if
+canceled) …lowered to $10 from $20 8/30/22
+▪Optimum Broadband: $20/mo. fee if no internet
+▪Xfinity Internet: Required
+▪Activation fee: $20 per line (charged at POS) ▪Activation Fee: $20 $10 per line; charged at POS
+▪$25 $10/line/mo. fee if canceled ($25 11/18/21; $10 4/22/26)
+OTHER
+▪Taxes/Fees: (…$10 – 11/30/23 $20 - )
+Extra
+▪Activation fee: $10 $25 per line (effective 3/25/24)
+▪Autopay: required; $5 discount ▪Taxes/Fees: Included
+▪Taxes/Fees: Extra
+▪Autopay (Internet): $5 discount eff. 8/9/23
+▪Autopay (Internet): required; $10 disc w/ bank acct autopay/$5 disc
+▪Mobile Repair: $5/mo. (4/8/24) & Premium $10/mo. (8/20/25)
+w/credit or debit card (~Aug’23) & eBill on both accts
+▪Anytime Upgrade: Limited to 4x per 12 mos (updated from no
+limit February 2026)
+T-Mobile Confidential
+
+================================================================================
+PAGE 20  |  page_type: business_device_offers  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Business – Flagship Device Offers
+T-Mobile
+Business
+New Line/Upgrade w/Trade
+17 Series and AIR
+• <$1,100 off w/ Adv Unl or higher (FMV
+• <$830 off w/ Adv Unl or higher (FMV $130+)
+• <$350 off w/ Adv Unl or higher (TiV $35-$129)
+• <$500 w/ Standard Unl
+Any Condition iPhone Trade Values
+New Line/TRD: (17, 17e, 17+, Pro, Pro Max) New!
+• <$1.1k off w/ SuperMobile $1,100 credit
+• <$830 off w/ ProMobile or SuperMobile Apple iPhone: 15 Plus, 15 Pro, 15 Pro Max,
+• <$630 off w/ CoreMobile
+Max, iPhone Air
+New Line/No Trade: : (17, 17e, 17+, Pro, Pro Max)
+$830 credit
+iPhone
+• $830 off w/ SuperMobile Apple iPhone: iPhone: 13 Pro, 13 Pro Max,
+• $530 off w/ ProMobile
+Pro, 15 Pro Max, 16, 16 Plus, 16 Pro, 16 Pro
+17 • $200 off w/ CoreMobile
+$350 credit
+Apple iPhone: iPhone, 3G, 3Gs, 4, 4S, 5, 5c,
+Upgrade/TRD: : (17, 17e, 17+, Pro, Pro Max)
+• <$830 off w/ SuperMobile 8 Plus, X, XR, XS, XS Max, iPhone SE (2nd Gen),
+12 mini, 12, 12 Pro, 12 Pro Max, 13 Mini, 13
+• <$500 off w/ ProMobile
+• <$200 off w/CoreMobile
+No Trade 05/29/2026
+17e for .99/mo w/ Any Unllimited Plan
+New Line/TRD: (16, 16e, 16+, Pro, Pro Max)
+• <$1.1k off w/ /SuperMobile
+• <$830 off w/ ProMobile or SuperMobile
+• <$630 off w/ CoreMobile
+iPhone New Line/No Trade: No Trade 05/29/2026
+• $830 off w/ SuperMobile iPhone 16 for $2.99/mo on unlimited Std
+16
+• $530 off w/ ProMobile
+• $200 off w/ CoreMobile
+Upgrade/TRD:
+• <$830 off w/ SuperMobile
+• <$500 off w/ ProMobile
+• <$200 off w/ CoreMobile
+New Line/Upgrade w/ Trade 05/29/2026
+Galaxy S26, S26+, S26 Ulta
+• <$1,100 off w/ Adv Unl or higher (FMV
+New Line/Trade S26, S26+, S26 Ultra
+• <$500 w/ Standard Unl (FMV $35+)
+• <$1.1K off w/ SuperMobile
+• <$800 off w/ ProMobile
+New! Trade Values
+• <$650 off w/ CoreMobile
+$1,100 credit
+New Line/No Trade:
+Galaxy Apple iPhone: 11Pro or newer
+• <$800 off w/ SuperMobile
+Samsung: A15 or nrewer
+S26 • <$600 off w/ ProMobile
+• <$400 off w/ CoreMobile Google: Pixel 10 Pro XL or newer
+$350 credit
+Upgrade/TRD:
+Apple iPhone: XR or newer
+• <$800 off w/ SuperMobile
+• <$500 off w/ ProMobile Samsung: A56 or nrewer
+• <$200 off w/ CoreMobile Google: Pixel 4 or newer
+Other Misc with FMV of $35
+New Line/Trade S25
+• <$1.1K off w/ SuperMobile
+• <$800 off w/ ProMobile
+• <$650 off w/ CoreMobile
+New Line/No Trade:
+Galaxy
+No Trade 05/29/2026
+• <$800 off w/ SuperMobile S25 for $5.99/mo on unlimited Std or higher
+S25 • <$600 off w/ ProMobile
+• <$400 off w/ CoreMobile
+
+[COLUMN 2]
+AT&T
+$230+)
+16, 16 Plus, 16 Pro, 16 Pro Max, 17, 17 Pro, 17 Pro
+Trade Offers w/ New Line
+• 17, 17 Pro Max, Pro, Air, and
+• 17: <$830 off w/My Biz & $15
+14, 14 Plus, 14 Pro, 14 Pro Max, 15, 15 Plus, 15
+No Trade Offers w/ New Line
+Max, 16e, 17, 17 Pro, 17 Pro Max, iPhone Air, 17e
+• 17, 17 Pro Max, Pro, and Plus:
+• 17: <$830 off w/My Biz & $20
+5s, 6, 6 Plus, 6s, 6s Plus, SE (1st Gen), 7, 7 Plus, 8, • 17e; Free w/ MyBiz
+iPhone SE (3rd Gen), 11, 11 Pro, 11 Pro Max,
+Trade Offers w/ New Line
+• 16, 16 Pro Max, Pro, and Plus:
+or higher No-Trade Offer w/New Line
+• 16 Pro Max, Pro, Plus, and
+$95+)
+Trade Offers for New Line .
+• S26 Ultra/S26+: 900 off w/
+• S26 : $900 off w/ My Biz & $15
+No-Trade Offers for New Line
+• S26 Ultra/S26+/26: $900 off
+• S26 : $900 off w/ My Biz & $20
+Trade Offers: New Line
+• S25+, Ultra, Edge: < $799.99
+No-Trade Offers: New Line
+S25, S25+ or Ultra: <$799.99 off
+
+[COLUMN 3]
+Verizon
+Requires
+Plus: <$830 off w/My Biz & $$20 Business
+With Trade
+• >$830
+Trade
+<$830 off w/My Biz & $$20 Flex
+No Trade
+• $400
+Biz UNL
+Requires
+Business
+<$730 off w/My Biz With Trade
+• >$830
+Trade
+16: $730 off w/ My Biz Flex
+No Trade
+• $400
+Biz UNL
+Requires
+My Biz & $20 add-on
+Internet
+add-on
+With Trade
+• >$900
+Trade
+w/ My Biz & $20 add-on
+Flex
+add-on
+No Trade
+• $500
+Biz UNL
+Requires
+Internet
+With Trade
+off w/ My Biz • >$900
+Trade
+Flex
+T-Mobile
+w/ My Biz
+No Trade
+
+[COLUMN 4]
+Comcast
+Comcast
+Internet
+17/Pro/Max:
+off w/ phone, EIP,
+•
+& Biz UNL Premium
+off w/ phone, EIP, &
+Premium Flex
+Comcast
+Internet
+off w/ phone, EIP,
+•
+& Biz UNL Premium
+(26+ and Ulta)
+off w/ phone, EIP, &
+Premium Flex
+Comcast Business
+•
+off w/ phone, EIP,
+& Biz UNL Premium
+•
+off w/ phone, EIP, &
+Premium Flex
+Comcast Business
+off w/ phone, EIP,
+& Biz UNL Premium •
+Confidential
+
+[COLUMN 5]
+Spectrum
+$200 added to
+trade-in
+$100 added to
+trade-in
+$300 off no
+trade
+$500 off with
+Trade
+$100 off with
+Trade
+
+================================================================================
+PAGE 21  |  page_type: business_device_offers  |  strategy: text+image
+================================================================================
+[COLUMN 1]
+Business – Flagship Device Offers
+T-Mobile
+Business
+Not combinable with other offers
+• $150 Activation Credit (with 10 for $200 plan)
+• $100/line (15 lines min) W/ port-in SuperMobile or higher 10 bill credits
+New
+• $200/line with Port on Super or ProMobile.
+• Online only Save $15/mo per line w/ Business
+• $1000/line (20 lines required) w/ New Line Activation & SuperMobile (36
+Line • $800/Line EIP via Reward Card (max 10
+credits)
+• 3rd line Free with 2 qualifying lines, regular rate plan, & autopay • $450/Line EIP Switcher Offer with Port In
+Offers
+Stackable with other device promos
+• Up to $800/Line EIP buyout up to 4 lines Any Unl Plan
+• Up to $800/Line EIP buyout 25 lines / $100 on lines 26+ on Any UNL
+• $600 off per line w/ Port & SuperMobile or Ultimate+ (20 credits)
+• Get up to $720 in Bill Credits when you
+BYOD
+• $500/line on CoreMobile plan ($60+/mo on Autopay) with 25+ lines with BYOD • Get up to $600 with BYOD and Port in
+• Up to $800/line credit BYOD, Port, New Line up to 4 lines 05/29/2026
+Offers
+• Try our network for FREE (T-Mobile) – 30 days on 5G device • Try AT&T Wireless Free for 30 days
+
+[COLUMN 2]
+AT&T
+• Get a 5G phone on us – new
+iPhone or Samsung < $899
+• $360 off w/ Port & Device Purchase
+• $15% off My Biz Plan base rate
+• $4 Monthly Credit with New
+Unlimited Adv or Premium • Online Only $200 Bill Credits
+• $800 toward bill payoff up to
+lines)
++$20
+(11+ Lines)
+BYOD and port in a new line Unl Adv+
+on New Line and Unl Standard or higher.
+• Save 50% on New BYOD Plan
+
+[COLUMN 3]
+Verizon
+line or upgrade w/ my Biz for N & N1
+off (device dependent) • Up to
+& My Biz w/$15 add-on 3 YR TERM you switch:
+Visa®
+Line on My Biz you add
+w/ Switch & Save New Line transfer
+5 lines w/ new phone, Port, and My Biz number
+plus
+each
+$2,000
+new
+Comcast
+customers.
+6/2/26.
+with Port • none
+T-Mobile
+
+[COLUMN 4]
+Comcast
+$2000 back when
+Get a $400
+Prepaid Card when
+two lines and
+at least one phone
+to our network,
+•
+an extra $200 back for
+additional line—up to
+back total with 10
+lines. Exclusively for
+Business Internet
+Offer ends
+•
+Confidential
+
+[COLUMN 5]
+Spectrum
+none
+none
+
+================================================================================
+PAGE 22  |  page_type: national_retail_readout  |  strategy: text-only
+================================================================================
+Key Highlights – Week Ending 5/29/26:
+•
+Best Buy slightly pulled backed on the unlocked phone subsidies this round as the top
+promotional offer was the $350 discount on the Samsung Galaxy Z Fold 7 phone, which is
+advertised for $1649 (versus the $400 discount on the predecessor Galaxy Z Fold 6 model
+last week). Other notable mentions are the $300 discounts on the Google Pixel 10 Pro Fold
+and 10 Pro XL models. The unlocked Apple iPhone 16e, which is a popular option among
+BYOD postpaid customers, is advertised for $539 after a $60 discount.
+•
+Notably, Best Buy did not have any new promotions launched on carrier-locked smartphones
+this week.
+• Walmart's hero offer for the week is the $150 discount on the Apple iPhone 16e model on the
+Cricket Wireless service. The phone’s final price is $299, and we expect it to perform well as
+anytime Walmart runs a $100+ discount on a prepaid iPhone, weekly volumes double or triple
+from the previous week.
+Reviewed/Updated by RB 5/29/26
+Click HERE to Open This Week’s Update
+22
+
+================================================================================
+PAGE 23  |  page_type: section_divider  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+
+================================================================================
+PAGE 24  |  page_type: prepaid_brand_offers  |  strategy: text+image
+================================================================================
+Prepaid Brands – Current Offers
+C Metro by T-Mobile Boost Mobile Cricket
+New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown
+TBD) w/5-year price guarantee • Sensible $35 plan/10GB plan – no benefits
+In-Store Unlimited Plans – Jan 2025 limiting to $25 BYO, $50 UNL+, $60 UNL Prem
+• Select UNL $35 new subs only/includes Mex/Can calls/texts
+Other Rate Plans: $35/5GB, $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps
+• Smart UNL $50 – 15GB hotspot, Mex/Can, 100GB Cloud St, Intl Text
+(25GB hs) - $5 autopay disc begins w/2nd mo. (autopay 4/21/23) before (Nov’21)
+• Supreme UNL $60 - 50GB hotspot, Mex/Can, 150GB Cloud St, Intl Text,
+…BYO $30 ($25 w/autopay) 10GB or UNL in retail ONLINE SIGNUPS: REBRAND 7/17/24 www.boostmobile.com
+HBO Max w/ads
+• 4 Lines/$100 Non-Port (retail only) w/free phone option (5/16/25 – TBD) Plans now available no contract (prepaid) or buy now/pay later (postpaid; all device financing)
+• • $25 UNL – 30GB, BYO or full FRP purchase; no hotspot; taxes extra (June 2022) Cricket Passport – intl call/text/data $10/day UNL or $25/5-day 5GB
+$25 BYO (with autopay) port or non-port (5/22/25 – TBD)
+• $50 UNL Plus – 40GB, hotspot, global talk/text, taxes incl, <$300 off phns – 6/11/25 taxes (11/14/25) …eligible plans $50/$60/multi-month
+HINT (launch 2/24/22)
+SERVICE
+extra (7/17 - )
+• HINT ($55 FRP) – promo MRC $50 $45 + (-$5 autopay) ( - 5/28 $50 – TBD) $10 Smartwatch UNL Plan – must activ. w/elig. iPhone (5/17/24)
+• $60 UNL Premium – 50GB, hotspot, N.Am Connect, global talk/text, taxes incl, >$400 off
+•
+HINT Gateway FRP $49 (8/28/25) …was $249; new gateway $0 (2/26/26 - )
+phones - 6/11/25 taxes extra (7/17/24 - ) Upgrade policy – changed from 180 days to 365 days (1/6/23)
+• Existing/AAL: Device $0 $9.99 OTD req. UNL (– 12/31/25 $0 – 1/8 $9.99 – 1/30
+Added multi-line pricing online – same as in stores (7/2/25)
+Free 14-Day Trial w/unlimited talk/text & 3GB data – signup via tryCricket
+$0 – 2/5 $9.99 – 5/28 $0 - ) w/1st month free
+• $15/5GB (2GB) plan – new customers only ( - 5GB 1/31/23 - ) REMOVED
+• HINT for Metro Contract Freedom Service - new HINT line w/submitted proof of App; https://www.cricketwireless.com/free-trial.html
+• $40 $50 UNL plan (reduced to $40 8/16/22) – new cust only; w/ or w/o port REMOVED
+ETL payment to old ISP eligible for virtual prepaid card reimbursement up to $500
+Referral Program - $25/$25 referring customer/referral with limit 10 per
+$750 (5/10 $500 – 12/16 $750 -) year; issued after 60 days service
+4 lines / $100 (reg. $50) for New Lines or Port/Dish network– In store only (11/22/23 –…)
+• HINT multi-month trial – $135 for 6-months (reg. $40/mo.); valid with free
+Family Connect – 4 lines/$120 (non-Dish network) 5/24/24 – TBD Added Bread Pay – financing up to 12 months (replaced Affirm) 10/29/25
+gateway (2/26/26 – 3/11)
+TM Internet Lite for Metro: 4 Limited Data Plans: 100GB, 150GB, 200GB, 300GB for
+Announced expansion thru 7-Eleven beginning Dec. 2022 – and through Walgreens 4/6/23 more
+subs not qual. for UNL; (7/14 – 9/22 VPM/new subs – VPM/Lite expired 5/3 -) Cricket Phone Upgrade Plus (loyalty program) – pay $5/month x 24 months
+than 7500 locations nationwide – thru Kroger/Dollar General 5/26/23
+to get $200 off next phone; no refunds (2/17/26)
+Tablet Rate plans: $15/35GB SD – (6/22/23) (5/18/23)
+$20/35GB SD + 2GB hotspot… eSIM/Intl Roaming -online option <5GB, 7-15 days, 10 countries/regions (4/28/23 - )
+$25/35GB SD + 5GB hotspot & $30/35GB SD + 8GB hotspot – …$30/35GB HD Quantum Fiber/AT&T available in 16 cities, begins @ $45 – April 2026
+• $5 BTS Activation Fee begins 4/21/23 • BYO UNL $25/Mo. (<30GB) w/autopay; $35 $30 w/o; no hotspot (7/25/22 – 7/17/24 BYOD/Single-line new customer
+• SAM Tab A9+ 5G: in-store/new $99; in-store/existing $49 $09 (– 10/16 updated ) In Select Stores: $25 UNL BYO w/New Line (Jun/Jul 2025; 3/11/26 – 4/2
+…combined prepaid/postpaid (7/17/24) - $25/month “forever” ($30 w/o autopay)
+$49/existing – 11/13 $0/existing – 12/17/25 $25+ RP – 1/9 $49/existing …no hotspot or add-ons; no autopay or multi-line; 12mos req before UPG
+– 2/11 $0 existing – 4/9 $49 - )
+o ONLINE: First 2 3 Months @ $10/month for new BYO customers (7/7/25 – TBD) PORT - Waived activation fee ($25) & Free SIM Kit ($9.99) w/port …in-store
+• REVVL Tab 2 - $29.99 / new - or free / existing w/$15 $20 plan ( - 8/1 $49
+BYO $60 savings ($10 x 5 mos) w/in-store activation on $50+ plan (11/17 – Q1) only (1/17/25 – 2/11; 9/19 – year end ’25; 3/16 – 4/2)
+o
+– 10/2 $15 plan – 12/18 $19.99 - 1/9 $9.99/new – 2/12 $29 - )
+ONLINE: Multi-month pricing for Unlimited (reg. $55) – 8/25/23
+• Student Beans - $9.99/mo. for 5 mos on $25 UNL plan w/new acct (2/26) LINK
+• TCL Tab 8 LE – $29 $0 OTD new w/$20RP; $0 existing w/$15RP (– 12/18
+• $45 $75 for 1st 3Months then returns to $120 (5/3/24 $75 – 12/6 $45 –
+Student offer landing page (5/12/26)
+$0/existing – 2/20/25 $0 new – 3/20 FRP – 4/3 $29/$0 – 5/1 $0 new –
+1/10 $75 – 1/24 $45 – 4/4 $75 – 6/13 $45 )
+• Senior Savings landing page
+BTS 8/4 $29/new – 8/21 $0/new – 9/4 $29/new – 2/19/26 $0 )
+• $276 $300 for 12-months = $25/month – updated 4/9/25 to $300 –
+• TM 5G hotspot ($99) $0 – 2/26/26 • Online: Multi-mo. promos (Stack Social, BoingBoing) w-free SIM (since July 2021)
+12/6 $276 – 1/10 300 - 4/30/26 $240 in-store – 5/25)
+• JEXtream RG2100 5G Hotspot $99 req /new BTS line (4/24/25 - )
+• Galaxy Watch7 ($150 off) & Watch8 ($100 off) w/ $10 watch plan (4/7/26 – 5/12 7 only) • SIMPLY DATA PLANS: Revamped data plans include
+$35/20GB (no change)
+• Apple Watches & iPads (4/22/25) – up to $300 off Watches or $200 $100 off for iPads
+$55/100GB 200GB promo (4/20 – TBD)
+w/36-mo. financing (––– 12/26 $100 - ) 12/26/25 Watches removed – returned
+$90/150GB 300GB promo (4/20 – TBD)
+2/12/26 – removed 2/25; only Android online
+• Galaxy Tab S10 FE ($599) $300 off or Celero5G Tab ($199) $100 off $150 off with new
+Mexico/Canada included (4/26/21)
+tablet line & plan (6/3/25 $200/$100 off – 7/16 $350Tab – 8/14 $200Tab – 10/8 $150
+• Galaxy Tab A11+ - added 3/20/26… in select stores @ $199
+Celero – 11/26 $350 Tab – 5/22 $300 - TBD) Celero removed online mid-Dec
+• Galaxy Tab A11+ ($280) $130 off with new tablet line & plan (1/8/26 $180 – 5/22 $130-)
+• Watch plan $10/2GB or Tablet plan $20/30GB (4/22/25)
+T-Mobile Confidential
+…req. bundled wireless line for signup; reverts to $25/$65 if phone is discontinued
+
+================================================================================
+PAGE 25  |  page_type: prepaid_price_grid_detail  |  strategy: text+image
+================================================================================
+METRO BY T-MOBILE
+Metro Price Grid 5.28.26
+New Number Port New Number Port
+No ID No ID w/ ID w/ ID
+Always Level 1 Level 2 Level 3
+RETAIL 4 for $100 $40, Period $40, Period
+Metro Phone Lineup
+Connected Metro Annual Metro Annual Metro Annual $40 w/AP $50 w/AP $60 w/AP $50 w/AP $60 w/AP $40 w/AP $50 w/AP $60 w/AP $50 w/AP $60 w/AP
+New Flex Rate Plans (4/24/25) PRICE Non-Port $40 w/AP $40 w/AP
+Upgrade Upgrade Upgrade Upgrade
+pricing includes $5 autopay discount
+ANDROID PHONES 110 150 150 $80 $100 $120 $120 $150 $180 $120 $150 $180 $170 $200 $230
+TCL K11 $59.99 $39.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE
+5-Year Guarantee (also on BTS & HINT)
+TCL Flip 4 5G $89.99 $69.99 FREE FREE FREE FREE $9.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE
+Flex UNL Plus $60, Flex UNL $50, Starter $40 TCL K32 5G $139.99 $99.99 FREE FREE FREE FREE $59.99 $39.99 $19.99 $19.99 FREE FREE $19.99 FREE FREE FREE FREE FREE
+moto g play - 2026 $169.99 $99.99 FREE FREE FREE FREE $89.99 $69.99 $49.99 $29.99 FREE FREE $29.99 FREE FREE FREE FREE FREE
+/10GB, *Starter Plus $40/UNL w/port & no
+motorola moto g - 2025 $169.99 $49.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE
+motorola moto g - 2026 $189.99 $79.99 FREE FREE $109.99 $89.99 $69.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE
+autopay req.
+Samsung Galaxy A15 5G (64GB) $189.99 $99.99 FREE FREE FREE FREE $109.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE FREE
+TCL NXTPAPER 70 Pro $199.99 $89.99 FREE FREE $119.99 $99.99 $79.99 $79.99 FREE FREE $79.99 FREE FREE $29.99 FREE FREE
+• Rate Plan Requirements – updated chart Motorola moto g power 5G - 2025 $209.99 $49.99 FREE FREE FREE $49.99 $49.99 $49.99 FREE FREE FREE $49.99 FREE FREE FREE FREE FREE
+T-Mobile Revvl 8 $179.99 $99.99 FREE FREE FREE FREE $69.99 $49.99 $29.99 $29.99 FREE FREE $29.99 FREE FREE FREE FREE FREE
+shown w/new plans (4/24/25)
+Samsung Galaxy A16 5G $189.99 $79.99 FREE FREE FREE $109.99 $89.99 $69.99 FREE FREE FREE FREE FREE FREE FREE FREE FREE
+Samsung Galaxy A17 5G $229.99 $119.99 FREE FREE $149.99 $129.99 $109.99 FREE FREE FREE $109.99 FREE FREE FREE FREE FREE
+• $25 Fee – Activation/React, Device Change, $249.99 $49.99
+T-Mobile Revvl 8 Pro $99.99 FREE $119.99 $99.99 $79.99 $79.99 $49.99 $19.99 $79.99 $49.99 $19.99 $29.99 FREE FREE
+Motorola g stylus 2025 $259.99 $99.99 $99.99 FREE $179.99 $159.99 $139.99 $139.99 $109.99 $79.99 $139.99 $109.99 FREE $89.99 $59.99 FREE
+Upgrade …was $20 (- 4/6/23 chg to $25 –
+$299.99 $149.99
+motorola edge - 2025 $189.99 $49.99 $219.99 $199.99 $179.99 $179.99 $149.99 $119.99 $179.99 $149.99 $49.99 $129.99 $99.99 FREE
+4/21 $25 BYO - ) Samsung Galaxy A36 5G $399.99 $289.99 $249.99 $49.99 $319.99 $299.99 $279.99 $279.99 $249.99 $219.99 $279.99 $249.99 $49.99 $229.99 $199.99 FREE
+Samsung Galaxy A37 5G - Ship To Only $449.99 $339.99 $299.99 $199.99 $369.99 $349.99 $329.99 $329.99 $299.99 $269.99 $329.99 $299.99 $269.99 $279.99 $249.99 $219.99
+• **Waived
+(2/1/24 all - 2/22 select motorola razr - 2024 $549.99 $99.99 FREE FREE FREE $349.99 $99.99 $99.99 $99.99 $99.99 $99.99 $99.99 $99.99 $99.99 FREE $99.99 $99.99 FREE
+Motorola razr - 2025 $549.99 $439.99 $399.99 $299.99 $469.99 $449.99 $429.99 $429.99 $399.99 $369.99 $429.99 $399.99 $369.99 $379.99 $349.99 $199.99
+phones/EOL/BYO – 3/7 ports & updates – 3/26
+Samsung Galaxy S24 FE 5G $649.99 $539.99 $499.99 $399.99 $449.99 $569.99 $549.99 $529.99 $529.99 $499.99 $469.99 $529.99 $499.99 $469.99 $479.99 $449.99 $419.99
+all – 4/26 select – 5/16 remove EOL – 5/23
+Samsung Galaxy S25 FE 5G $649.99 $539.99 $499.99 $399.99 $569.99 $549.99 $529.99 $529.99 $499.99 $469.99 $529.99 $499.99 $199.99 $479.99 $449.99 $99.99
+NL/added 3 moto 5G 2023 phones – 6/5 remove
+Samsung Galaxy S25 Ship To Only $799.99 $689.99 $649.99 $549.99 N/A N/A N/A N/A N/A N/A N/A $679.99 $649.99 $349.99 $629.99 $599.99 $249.99
+APPLE PHONES $150 $150 $150 $150 $150 $150 $200 $200 $200
+tablets – 8/1 added CPO devices – 8/29 add
+iPhone SE 3rd Gen 5G (64GB) $429.99 $319.99 $279.99 $179.99 $279.99 $279.99 $279.99 $279.99 $279.99 $279.99 $229.99 $229.99 $229.99
+moto g 5G 2024 – 9/12 add A15 5G (10/4 both
+iPhone 17e (256GB) $599.99 $489.99 $449.99 $349.99 $449.99 $449.99 $449.99 $449.99 $449.99 $449.99 $399.99 $349.99 $349.99
+mem var), Tab 8LE – 10/8/24 watches/A9+ -
+iPhone 16e (128GB) $599.99 $489.99 $299.99 $299.99 $449.99 $449.99 $449.99 $449.99 $299.99 $299.99 $399.99 $99.99 $99.99
+10/15/24 ALL acts/reacts – 2/26/26 $10 promo iPhone 13 (5G) (128GB) $629.99 $519.99 $199.99 $199.99 $479.99 $479.99 $479.99 $479.99 $199.99 $199.99 $429.99 $49.99 $49.99
+but waived for ports, BYO, reacts, BTS,HINT, iPhone 14 (128GB) $629.99 $519.99 $299.99 $299.99 $479.99 $479.99 $479.99 $479.99 $299.99 $299.99 $429.99 $99.99 $99.99
+iPhone 15 (128GB) $629.99 $519.99 $479.99 $379.99 $479.99 $479.99 $479.99 $479.99 $479.99 $479.99 $429.99 $429.99 $429.99
+A16/A17/A36/GS25 FE, REVVL 7/8/Pro, moto g
+iPhone 16 (128GB) $729.99 $619.99 $579.99 $479.99 $579.99 $579.99 $579.99 $579.99 $579.99 $579.99 $529.99 $529.99 $529.99
+’26, moto g play ’26 – 3/11 REVVL Tab/Tab2 – iPhone 17 (256 GB) $829.99 $719.99 $679.99 $579.99 $679.99 $679.99 $679.99 $679.99 $679.99 $679.99 $629.99 $529.99 $529.99
+Devices highlighted in magenta Limit 2
+3/19 waived/ALL –
+T-Mobile
+T-Mobile
+Gateway - Watch - Tablet - Existing Tablet- New
+Gateway - New Watch - New Tablet- Existing Tablet- Existing Hotspots and
+Existing BAN T-Mobile Gateway Existing BAN BAN 30+ Days BAN
+Android Rebates BTS BAN BAN BAN 30+ Days BAN 30+ Days Chrome-
+30+ Days HINT Lite Plans 30+ Days $15+ Tablet $20+ Tablet
+$50 UNL HINT $10 Watch Plan $20+ Tablet Plan $30 Tablet Plan book
+$50 UNL HINT $10 Watch Plan Plan Plan
+Plan
+▪Starter $45/10GB ($40 w/autopay) Plan
+…$80 rebate w/Android purchase, new#/no ID T-Mobile 5G Gateway $249.99 FREE $49.99 $49.99
+T-Mobile 5G Gateway (CPO) $49.99 FREE $49.99 $49.99
+…$120 rebate w/Android purchase, new#/ID
+TIMEX FamilyConnect Watch $159.99 $39.99 $39.99
+Samsung Galaxy Watch4 $249.99 $49.99 $99.99
+▪Starter Plus $40/UNL req. BYO (no autopay)
+Samsung Galaxy Watch FE $249.99 $49.99 $199.99
+▪Flex UNL $55/35GB ($50 w/autopay) w/device Samsung Galaxy Watch 7 $299.99 $29.99 $199.99
+Apple Watch SE2 40mm $249.99 $149.99 $149.99
+offers at 12/24mos
+Apple Watch SE3 (40mm) $299.99 $199.99 $199.99
+…$100 rebate w/Android purchase, new#/no ID
+Apple Watch 10 42mm $449.99 $349.99 $349.99
+Apple Watch Series 11 (42mm) $499.99 $399.99 $399.99
+…$150 rebate w/Android purchase, new#/ID
+Apple Watch Ultra 2 $559.99 $559.99
+$699.99
+▪Flex UNL Plus $65/35GB ($60 w/autopay) w/HD Apple Watch Ultra 3 (49mm) $799.99 $659.99 $659.99
+TCL Tab 8 LE FREE FREE FREE FREE
+streaming, Amazon Prime, $5/5GB watch or $159.99
+T-Mobile REVVL 5G Tablet $199.99 $29.99 $29.99 $119.99
+tablet line w/BYO, device offers at 12/24mos T-Mobile® Revvl® Tab 2​ $169.99 FREE FREE $29.99
+…$120 rebate w/Android purchase, new#/no ID Motorola moto pad 2026 Ship To Only $249.99 $49.99 $49.99 $99.99
+Samsung Galaxy Tab A9+ 5G $279.99 FREE FREE $99.99
+Samsung Galaxy Tab A11+ 5G Ship to Only $289.99 $149.99
+T-Mobile Hotspot $79.99 FREE
+▪Upgrade Offers (“Always Connected”) – includes
+T-Mobile 5G Hotspot $99.99 FREE
+phones as shown (5/1/24 – ongoing updates – JEXtream RG2100 5G Mobile Hotspot $199.99 $99.99
+Franklin JEXtream RG3100 *New $199.99 $99.99
+TBD) T-Mobile Confidential 25
+Samsung Galaxy Chromebook Go $359.99 $249.99
+
+================================================================================
+PAGE 26  |  page_type: prepaid_brand_offers  |  strategy: text+image
+================================================================================
+Prepaid Brands – Current Offers
+Cc
+BOOST MOBILE CRICKET WIRELESS
+In-Store PHONE OFFERS PORT or NEW LINE:
+• Selection of 11 FREE Androids w/Port (3 – valid 5/29 – 6/7)
+IN-STORE Pricing SRP New/Upgrade Port-in
+iPhone 15 $629.99 $259/$349 $209.99 • Req. $60 RP: Galaxy A16, Galaxy A17, Galaxy A36, Galaxy A37, moto g 5G 2026, moto edge ’25, moto g stylus
+iPhone 16e ("free w/trade ") $599.99 $149.99 $49 + 2x $60 plan 5G 2025 (online)
+iPhone 16 $729.99 $499.99 $499.99
+• Req. $50 RP: moto g power 5G 2025, moto g play 2026, Cricket Icon Plus 2026, Cricket Icon 2026, Cricket Icon
+iPhone 17e ("$99 w/trade ") $599.99 $399.99 $399.99 Pro 2026
+Galaxy A16 5G $199.99 $0.99 Free
+Select In-Store Pricing Free for New Line w/Select Rate Plan (All listed above except A17 & stylus)
+Galaxy A17 5G $199.99 $69/$99 Free
+provided by Wave7
+Galaxy A36 $399.99 $49.99 $19.99 Reduced Androids w/port & $60 RP:
+port-in pricing req. UNL
+GS25 FE 5G $649.99 $199.99 $99.99 • Galaxy A17 - $29 $0 w/port or $99 $19 w/NL – both req. $60 plan; $109 Upg (1/16 – 4/3 $0/port, $19/NL -TBD)
+(select offers limited to $60 RP)
+GS26 5G $899.99 $599.99 $399.99 • Galaxy A36 - $49 $39 port & $99 $79 NL - & BOGO ( - 7/11 $99/BOGO – 8/12 $59 port & exp BOGO – 11/14
+Moto Razr 2025 $599.99 $79/$199 $79.99 $49/$99 – 4/3 $39/$79 - added to Free/port 4/30 – 5/3; 5/4 $39 - )
+Moto G Stylus 5G (2025) $279.99 $24.99 $4.99
+• Galaxy A37 - ** Weekend 4/30 – 5/3, free w/port & $60 plan – or $99 NL; $99 port or NL w/$60 (5/4 - ) **Valid
+moto g 5G 2025 $159.99 $0 / $.99 Free 5/29 – 6/7, free w/port & $60 plan ($404 - 4/30 $0 – 5/4 $99 – 5/29 $0 - )
+moto g 5G 2026 $199.99 $14.99 $4.99
+• moto g stylus 5G 2025 $19 $0 w/port or $39 $29 NL ( – 7/25 $19NL – 8/12 $109 all – 9/5 $39/$69 – 11/14
+moto g play 2026 $149.99 $49.99 $29.99 $19/$39 – 1/9 $0/port –
+TCL 50 XL NXTPAPER 5G $149.99 $4.99 Free
+• moto g power 2026 - $9.99 $19 for port ($50RP) or $9.99 $39 for new line ($60RP) (1/30 $9.99 – 4/3 $19/$39 –)
+Celero 3 5G (2024) $159.99 $24.99 Free
+• moto razr 2025 – ($99 online/2x $60 plan) $99 $149 w/port or NL ; $399 upgrades (5/15 – 7/11 $199 – 2/20
+Celero 5G+ (2024) $239.99 $99.99 $49.99
+$99 – 4/3 $149 – 4/20 $99 online - TBD)
+• Galaxy S26 - $399 port, $499 new line, $899 upgrade …port req. $60 RP (3/11 - TBD)
+DEVICES ONLINE PHONE PRICING
+• Galaxy S26 Ultra - $699/port or $899/new line (existing only, online) w/$60 RP (4/3 – TBD)
+ONLINE Phone Pricing Offer Rate Plan Requirement Savings
+Celero 5G 2024 $29.99 min. $50 rate plan (UNL+) $130 • GS25 FE 5G $99 $149 w/port or NL (online/new acct req. 2x $60); $649 UPG (9/5 – 10/29 $168 – 1/9 $149 –
+2/20 $99 – 4/3 $149 - TBD)
+Celero 5G+ 2024 $49.99 min. $50 rate plan (UNL+) $190
+Galaxy A16 5G $0.00 min. $50 rate plan (UNL+) $170
+Galaxy A17 5G $69.99 min. $50 rate plan (UNL+) $130 • iPhone Offers:
+moto g 5G 2026 $14.99 min. $50 rate plan (UNL+) $120 iPhone 13 – $0 $29 port or $49 $99/new line w 2x $60 for online new/existing; $629 UPG (– 6/23 $29
+o
+moto g play 2026 $9.99 min. $50 rate plan (UNL+) $109 new/port or $349 – 7/1 $49 new/port – 8/12 $199/2x – 11/25 $49 port/$199 NL – 1/9 $29 port/$99NL – 1/30
+moto g stylus 5G 2025 $24.99 min. $50 rate plan (UNL+) $270
+$0/$49 – 3/16 plan req. update - 4/3 $29/$99 - )
+o iPhone 16e – ** 5/29 – 6/7, free w/port or $99 NL $0 $79 port or $99 $199 NL – online 2x 3x $60 for
+Galaxy S25 FE 5G $199.99 min. $60 rate plan (UNL Prem) $550
+moto razr 2025 $99.99 min. $60 rate plan (UNL Prem) $200 new/existing; $599 UPG (8/12 $239/3x – 11/25 $199 port or NL – 12/8 $99 port – 1/9/26 $49 port – 3/6
+$0/$99 – 3/16 plan req. update – 4/3 $79/$199 – 4/20 3x online – free/port 4/30-5/3; free/port 5/29 – 5/31 )
+moto razr 2026 $399.99 min. $60 rate plan (UNL Prem) $300
+Pixel 10a $99.99 min. $60 rate plan (UNL Prem) $400
+o iPhone 17e (added 3/11 $599) - $299/port or $399/new line; online req. 2x $60 plan (4/3 – TBD)
+Pixel 10 / Pro / XL $299 / $399 / $499 min. $60 rate plan (UNL Prem) $500+
+o iPhone 15 - $349/port or $449/new line; online req. 2x $60 plan (4/3 – TBD)
+iPhone 15 $259.99 min. $60 rate plan (UNL Prem) $430
+iPhone 16e $149.99 min. $60 rate plan (UNL Prem) $500
+iPhone 16 $499.99 min. $60 rate plan (UNL Prem) $230
+iPhone 17e $399.99 min. $60 rate plan (UNL Prem) $200 Apple Watches (5/17/24) – SE, SE 3, Series 10/11, Ultra 2/3
+• $60 off SE (6 x 10 monthly credits), $100 off Series 10 Series 9 (9 x 10 monthly credits), $150 off Ultra 2 (10 x $15
+Boost Infinite offers - $830 off / iPhone (8/27/25 $830 - ), $800 off / Samsung (GS26 Series added 2/25)
+monthly credits) (5/17/24 – 9/13 Watch9 removed – 9/20/24 Watch10 added – 9/19/25 11 added - TBD)
+SmartPay financing in store– Branded or Platinum only; some state limitations; $99 - $1500; 15-mo. fin. (3/20/23 – )
+and Progressive Leasing added in dealers (~June 2024) $1 First Mo Payment/Progressive Leasing –for $149+ phones (11/22 – 1/9; 2/14 – 4/3; 7/11 – 9/4; 3/11 – 4/12)
+T-Mobile Confidential
+Device Protection – Boost Protect– updated device protection program; $8 - $18 8/10/23 (Link)
+
+================================================================================
+PAGE 27  |  page_type: prepaid_brand_offers  |  strategy: text+image
+================================================================================
+Flagship Brands/Prepaid – Current Offers
+T-Mobile Prepaid AT&T Prepaid Verizon Prepaid
+New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)
+autopay added & 5-Year Guarantee • All plans now Unlimited 2/6/26 ( – last updates 1/12/24 limited 5G, $25 UNL 11/7 - )
+• Data-only plans for hotspot and tablets (9/30/21): - $40/5GB, $60/25GB,
+• $60 Unlimited Ultra – unlimited high-speed data with 5G, 30GB hotspot,
+$80/100GB, $100/150GB.
+2-lines/$75 – UNL w/3GB hotspot, talk/text Mex/Can, intl text
+Mexico/Canada usage, 100GB AT&T Personal Cloud, unlimited international text, and
+(promo) - Greater multi-line discounts: $30 off for each data plan added to acct.
+500 minutes international calling to 30+ countries, HD streaming
+Device:
+• $45 Unlimited Enhanced Plus – unlimited high-speed data with 5G (subject to
+PLANS UPDATED:
+• $100 ePIN In-Store Offer – $100 off FRP select devices;
+deprioritization), 10GB hotspot, Mexico/Canada usage, unlimited international text
+✓Autopay discount (ap) to $10 – valid after 1st mo. & not combinable with
+requires $100 ePIN/purch of service in same transaction; ex. 2
+• $35 Unlimited Saver – 30GB data at 3Mpbs then throttled to 1.5Mbps (no 5G speeds),
+mos. payment on $50 rate plan (Jan 2025 – 7/8/26) loyalty discount
+unlimited international text …eligible for select device offers
+• o 3-Year Price Lock Guarantee (8/29/25)
+$100 ePIN Device on Us – A16, A15 plus other Androids
+• $25 Unlimited (online only; launched 11/7/25) - 30GB data at 3Mpbs then throttled to
+(-- 3/11/26 A16 added – 7/8) o $45 $50 ($35 w/ap)/15GB – added Mex/Can usage (was calls to only)
+1.5Mbps (no 5G speeds), unlimited international text …not eligible for device offers.
+o $60 $65 ($50 w/ap)/UNL – hotspot with 5GB LTE/5G nationwide then UNL
+• $150 Off / In-store Galaxy A17 5G on Us requires min. $150
+UNL Level Up – available on all monthly plans 8/8/25 -- option to migrate to postpaid after
+ePIN purchase plus activation on $60 Unlimited Plus plan (1/8 hotspot at 600kbps (was NO hotspot)
+6mos payment (11/20/24 plan only – 8/8/25 for all plans )
+$70 $75 ($60 w/ap)/UNL Plus - 50GB premium data before subject to
+– 7/8/26) o
+• Student Offer (Student Beans) - $25 UNL w/10GB hotspot (~Nov 2025 – TBD)
+deprior; added Global Choice (was all LTE/5Gntnwide subject to deprior.)
+• (UScellular markets/in-store)
+• Hotspot/Data only (updated 6/21/22; 1/14/25) - $35/15GB, $55/50GB, $90/100GB
+$19.99 moto g play w/$50 UNL or higher; (12/4 - 7/31) …UNL hotspot -- 25GB premium before subject to throttling 3Mbps/5G UW
+• Multi-Month data-only plan offers – Online & Walmart: or 600kbps for LTE/5G nationwide (was UNL 5G UW w/10GB LTE)
+A17 or TCL Flip4 5G on Us w-port in (3/26 – 7/31)
+• 12-mo data-only plan $300 $240 w 20GB/mo. (1/28/21 $300 – 8/25/25 $240)
+Offers • Rate plans with loyalty rewards: $5 off after 3 months, $10 off after 9 months
+• DCC (activ. fee) $25 voice or $5 BTS/Hint
+• Autopay disc: In-Store $15/mo./NL $65 UNL (10/30/20-); Exist. lines $10/mo. Exp 2/6/26 (6/24/20 – no longer combinable w/autopay 10/20/22)
+• $10 DCC charge for new lines/upgrades (4/10/25 – TBD)
+• Multi-Month phone plan offers - Online: • Multi-Line Discount $20/mo. – begins w/2nd line; requires at least 2 UNL lines;
+Ongoing • $300 $240 12-mo plan w 16GB 8GB/mo. + 10GB hotspot - $25/mo. (8/25/25 reduced
+stackable with autopay or loyalty; not stackable w/data-plan discounts…2nd
+to $240 - TBD) line must be UNL wireless (6/7/23)
+Connect by T-Mobile (3/25/22 - ) Activation Fee - $15 in-store (none/online) • $10 Watch Plan* available as standalone or paired w/cell phone number
+(~Nov 2023) …supporting FAQ documentation.
+• $15 – unlimited talk/text + 5GB
+Data Add-On $10 – allowance now from 5GB to 1GB… plus $20/3GB option (3/17/22 1GB to
+•
+$25 – unlimited talk/text + 8GB • Tablet Plans: $50 UNL (5GB hostpot, 720 streaming) or $60 More UNL (5G
+5G – 7/7/22 reversed + $20/3GB option - ) …data-only plans get $10/5GB
+• $35 – unlimited talk/text + 12GB UW, 30GB hotspot, 1080p streaming) …both get $40 monthly discount when
+Phone Offers: Limit 1 online; 3 in-store.(in-store requires autopay & $15 activation fee)
+Taxes/fees not included. bundled with wireless UNL phone plan (4/9/25)
+ONLINE & In-Store Android AAL pricing (– 11/7/25 – 12/10- 1/9/26 - Android/Online same
+• Fios Bundle: $15/month discount w/Fios & elig. Prepaid service (for all
+Simply Prepaid (name change) to T-Mobile Prepaid (10/13/22) as in-store – 2/6/26 -3/23 removed free – 3/31 added free in-store – 4/20 - )
+Verizon Value Brands) – w/$10 discount for autopay (5/28/25)
+• Nationwide launch for in-store merchandising (11/3/22) --
+• Min. $30 $35/mo. plan: moto g play 2026 $9.99 ($0 in-store), moto g play 2024 $9.99
+dedicated retail merchandising zone in all T-Mobile stores ($0 in-store), A15 $19, AT&T Motivate Pro 2 5G $9.99 ($0 in-store), moto g 5G 2026 ONLINE Waived Activation Fee ($35) – req. online purchase/activation (6/23-
+$19.99 $9.99, moto g 5G ’25 $19.99 $9.99, A16 5G $29 $49 12/31/22… 1/19/23 – 2026 noted as a perk/not promo)
+T-Mobile Prepaid US Pass eSIM
+In-Store: New Line, $45+ plan & Autopay (– 11/1/24 – 7/11/25 – 11/7/25)
+DEVICE PROMOTIONS - ONLINE:
+•
+Short-term pass for intl. travelers in US w/50GB data & UNL
+• iPhone 13 $49 $199 or $299 online ( – 11/7 $99 – 1/9 $199 - 2/6 $49 – 3/15 end)
+o iPhone 16e $349 ($250 off) + 100 back ($10 x 10mos) w/ NL on any UNL
+talk/text for US/Can/Mex: $25/7day/14GB hotspot,
+• iPhone 16e $199 $99 in-store or $499 $299 online ( – 11/7 $299 – 1/9 $399 - 2/6 plan (4/13 – 6/30)
+$30/10day/20GB hotspot, $35/14day/28GB hotspot,
+$299 – 3/16 $99 – 4/20 $199 - ) o A16 5G or moto g play 2026 free w/new line & UNL plan (2/2 – 6/30)
+$50/30day/50GB hotspot (coming 5/18 – TBD)
+• BYOD $1.29 eSIM or pSIM Card (5/6 $0- 8/5 $.99 – 11/18/22 $0 – 9/12/23 eSIM $4.99 - $0 o Pixel 10a - $199 upfront + $100 credit ($10/10mos) with new line & UNL
+plan (4/1 - 6/30)
+eSIM 2/14/24 – 4/15/24 $4.99 both – 7/14/25 $.99 – 1/28/26 $1.29 - )
+Progressive Leasing - $1 first month payment (3/12 – 5/30)
+T-Mobile Confidential
+
+================================================================================
+PAGE 28  |  page_type: prepaid_brand_offers  |  strategy: text+image
+================================================================================
+Walmart – Current Offers
+C3 Metro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk
+RATE PLANS: RATE PLANS: $30/10GB, $35/Select, RATE PLANS: WM Plan Pricing – added Level Up Plans: New rate plans (5/13/26) w/autopay Rate Plans
+$45/Smart, $55/Supreme 8/22/25; plan updates 10/20/25
+• $30 5GB $35/15GB • $25 BYO + $4.88 SIM ($50 device
+…$5 autopay included Updated Plan Pricing – $35 UNL Saver (30GB) • $35 Total Starter – 10GB
+$50 UNL credit after 12mos)
+• $40 UNL
+10/20/25 – updated plans • $25 BYO UNL Forever w/first $45 UNL Enhanced Plus hotspot, Mex/Can, Intl text, Intl
+• $35 plan w/10GB allotment & 5GB
+$60/UNL Plus
+• $50 UNL, 5GB hotspot, 100GB 3mos for $10 (site updated 5/12) w/10GB hotspot & Mex/Can roaming 85+
+• $50 Total Max 5G hotspot enabled, Mex/Can talk/text
+Google One SIMPLY DATA PLANS: Revamped • $25 $35 Unlimited – 30GB (2 lines/$60 – expired 2/15/26) Pricing includes autopay & 3yr w/UNL
+• $45 Silver plan -
+data plans include (updated late 2025) price lock hotspot, 5G UW, Mex/Can, Intl UNL w/10GB hotspot,
+• $60 UNL, 20GB hotspot, 100GB $60 UNL Ultra w/30GB hotspot,
+call/text & roaming $140+, 6mos
+Mex/Can talk/text
+Google One • $35/20GB (no change) • $15/2GB w/hotspot Mex/Can & 500 Intl mins
+Disney+, 100GB storage
+Updated pricing ~1/20/25
+• $55/50GB (was 100GB) • $25/5GB w/hotspot Has not yet updated these
+Added 5-year price lock • $60 All Access w/UNL hotspot,
+Subject to deprioritzation after 35GB • $90/100GB (was $55) • $30/10GB w/hotspot online plans/pages with multi- • $55 Gold – UNL 5G UW w/30GB
+guarantee (2/16/26) 5G UW, Mex/Can, Intl call/text &
+SERVICE
+(…$90/100GB - 4/26/21 line pricing launched 6/7/23 hotspot & 100GB cloud storage,
+• $40/15GB w/hotspot roaming $140+, Disney+ on us, 1TB
+$55/100GB – 9/16/22 Mex/Can talk/text, Walmart+ &
+$40 Period – Unlimited Plan Phasing out limited data plans storage
+Hotspot plans – 15GB $35, 50GB
+$90/100GB - ) March 2025 annual $100 device credit
+BYO Unlimited $25/month (35GB) $55, 100GB $90 Advertising multi-line • $25 Total Max 5G BYO - w/UNL
+• $50/UNL+ - 40GB,w/hotspot, • $65 Platinum – UNL 5G UW w/UNL
+w/autopay – 5-year price guarantee • Mexico/Canada included discounts in some stores; hotspot, 5G UW, Mex/Can, Intl
+global talk/text
+(4/26/21) Multi-Month: call/text & roaming $140+, 6mos hotspot, Mex/Can usage, Intl. Text &
+targeting 2-lines UNL $80
+Disney+, 100GB storage
+• $60/UNL Premium – 50GB • $300: 12-mo data-only plan 500GB cloud storage, Walmart+ &
+(same as direct)
+w/hotspot, global talk/text, N. w/20GB/mo.(1/28/21) $100 annual device credit
+BYO $25/month w/single line signup
+Am. Connect 2/17/25 Rebranded to Total Wireless
+on $55 UNL (5/19 – 10/10/25 - TBD) ONLINE @ Walmart
+Buy 3mos, Get 3mos free on UNL
+Launched FWA Home Internet -
+5/20/26 Updated with new plans that
+Saver
+(Reset dates: 6/12 – 10/16 – 1/29 – (reg. $35) – req. $105 upfront $45/month service (10/17/22) LINK
+launched on 5/13/26
+Offer Reset 6/10/24 – 10/14 – purchase with BYO; renewable at the …$10 savings w/bundled wireless
+same price; not eligible for Level Up
+2/17/25 – 5/19/25 – 10/20 –
+(5/20 – TBD) LINK
+2/16/26 – 5/20 - )
+In-Store Offers: FREE w/In-Store Activation & new Discounted: In-store offers – requires in-store In-Store/Online Featured offers: Featured offers:
+In-store activations began 11/1/22 line on min. $40+ rate plan: activation on any UNL rate plan • Free A17 5G w/in-store • Galaxy A17 $99 • iPhone 14 $529
+• $0 A17 5G ($79) • Boost Bounce $49 (Reset Dates: – 10/20 – 2/16 – activation on $35+ plan (5/20 – • Galaxy A16 5G $49
+• iPhone 15 $429
+FREE Phones – requires in-store
+• $0 moto g power ’26 ($99) • moto g 5G 2025 $39 5/20- 10/16) TBD) • Galaxy A15 5G 64GB $39 • iPhone 16 $529
+activation on $40+ rate plan
+• moto g play 2024 $49 • Galaxy A26 5G $149
+In-Store Activation Required:
+( – 5/19/25 – 7/23/25 -) • $0 Galaxy A17 5G ($79)
+Additional Phone Pricing: • moto g stylus 5G 2024 $179 • $99 Galaxy A15 5G $44 • Moto g power 5G 2025 $99
+• $0 moto g play 2026 ($49) • Free A17 ($99) or TCL 50XL
+• $37 A15 5G • Galaxy A15 5G $49 • $49 Galaxy A16 5G • Moto g play 2024 $29
+• moto g power 5G 2024 ($90) NXTPAPER ($79) w/in-store activ. on
+• $49 A16 5G • Galaxy A16 5G $79 • $99 Galaxy A17 5G • Moto g stylus 5G 2025 $199
+• Galaxy A15 5G ($99) In-Store or Online: $45+ RP (5/18 – 10/18)
+• $49 moto g play 2026 • Galaxy A17 $179 • $32 moto g 5G 2025 64GB $39 • Moto g 5G 2025 64GB $39;
+• Galaxy A16 5G ($169) • $29 AT&T Vista 2 • iPhone 16e $199 w/in-store
+DEVICE • $59 moto g 5G 2026 • Galaxy A25 5G $168 • $48 moto g 5G 2025 128GB $59 128GB $59
+• moto g 5G 2025 ($49) • $34 AT&T Propel 3 5G activation on $45+ plan ($299)
+• $179 moto g stylus 2026 • Galaxy A36 $199 • $79 TCL 50XL NXTPAPER 5G • TCL 50 XL NXTPAPER $79
+• TCL Flip 4 5G ($29) • $39 AT&T Verge 2
+• $59 Cricket Icon Pro 2026 • Summit 5G $34 • $39 TCL K33 5G • TCL K24 $39
+• TCL K23 ($35) • $49 AT&T Motivate Pro 2 5G
+• $49 Cricket Icon Plus 2026 • TCL K33 $29 • $249 iPhone 13 • BLU View Speed $29 • TCL K33 $19
+• TCL K32 5G ($49) • $49 AT&T Trek ($119)
+• Moto g play 2026 $39
+• $299 A36 5G • TCL 50XL NXTPAPER $59
+• $49 moto g 5G 2025 • iPhone 13 $249
+• Moto g 5G 2025 $29
+• $49 Galaxy A16 • iPhone 14 $299
+• $29 moto g power 2025 ($149) Requires in-store activation & new • Moto g stylus 5G 2025 $199
+• $99 moto g power 5G 2026 • iPhone 16e $399
+• $69 moto g stylus 5G 2025 line on min. $50 plan & autopay • Galaxy A16 5G $39
+• $229 Galaxy A36 • iPhone 15 $529
+($229) signup: • Galaxy A26 5G $99
+• iPhone 17e $549
+• Galaxy A36 5G $239
+• $99 moto edge 5G ($279) • $199 iPhone 16e
+With NL on UNL plan & in-store
+or $299 online
+activation & autopay
+iPhone 13 $99 or $249 online
+iPhone 16e $299 (5/20 - )
+T-Mobile Confidential
+
+================================================================================
+PAGE 29  |  page_type: closing_slide  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
