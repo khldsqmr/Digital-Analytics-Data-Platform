@@ -1,1 +1,69 @@
 SELECT carrier, item_name, plan_tier, offer_amount FROM silver_postpaidDeviceOffers_weekly WHERE source_page = 11 AND item_name = 'S26'
+
+
+carrier	item_name	plan_tier	offer_amount
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$900 off
+T-Mobile	S26		$600 off
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$650 off
+T-Mobile	S26		<$300 off
+Verizon	S26	Good	$0/mo.
+Verizon	S26	Better	$0/mo.
+Verizon	S26	Best	$0/mo.
+Verizon	S26		"$1,100 off"
+Verizon	S26		$550 off
+Verizon	S26		$1100 off
+Verizon	S26		$900 off
+Verizon	S26		$450 off
+Verizon	S26		$900 off
+Verizon	S26		$360 off
+Verizon	S26		$180 off
+AT&T	S26		$900 off
+AT&T	S26		$500 off
+Xfinity	S26		$500 off
+Xfinity	S26		Up to $900 off
+Xfinity	S26		$450
+Spectrum	S26		Addtl $200
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$900 off
+T-Mobile	S26		$600 off
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$650 off
+T-Mobile	S26		<$300 off
+Verizon	S26		$0/mo. Good | $0/mo. Better | $0/mo. Best
+Verizon	S26		"$1,100 off"
+Verizon	S26		$550 off
+Verizon	S26		$1100 off
+Verizon	S26		$900 off
+Verizon	S26		$450 off
+Verizon	S26		$900 off
+Verizon	S26		$360 off
+Verizon	S26		$180 off
+AT&T	S26		$900 off
+AT&T	S26		$500 off
+Xfinity	S26		$500 off
+Xfinity	S26		Up to $900 off
+Xfinity	S26		$450 added to Trade-in value
+Spectrum	S26		Addtl $200 added to $1+ FMV Trade-in
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$900 off
+T-Mobile	S26		$600 off
+T-Mobile	S26		$1100 off
+T-Mobile	S26		$650 off
+T-Mobile	S26		<$300 off
+Verizon	S26		$0/mo.
+Verizon	S26		"$1,100 off"
+Verizon	S26		$550 off
+Verizon	S26		$1100 off
+Verizon	S26		$900 off
+Verizon	S26		$450 off
+Verizon	S26		$900 off
+Verizon	S26		$360 off
+Verizon	S26		$180 off
+AT&T	S26		$900 off
+AT&T	S26		$500 off
+Xfinity	S26		$500 off
+Xfinity	S26		Up to $900 off
+Xfinity	S26		$450 added to Trade-in value
+Spectrum	S26		Addtl $200 added to $1+ FMV
