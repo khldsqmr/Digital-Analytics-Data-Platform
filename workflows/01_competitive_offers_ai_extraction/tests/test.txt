@@ -1,9 +1,9 @@
 Manifest and bronze tables ready.
-Data for 2026-05-29 already exists (run 7a922857-64e5-4f27-b859-2eb41ce800a9, file 'Competitive_Offer_Report_052926.pdf').
+Data for 2026-05-29 already exists (run c0a72b41-0a48-43ad-9f45-05778f6c5d23, file 'Competitive_Offer_Report_052926.pdf').
 Choose how to proceed:
 Deleting existing data for 2026-05-29 ...
-[c0a72b41-0a48-43ad-9f45-05778f6c5d23] Opening Competitive_Offer_Report_052926.pdf ...
-[c0a72b41-0a48-43ad-9f45-05778f6c5d23] 29 pages found.
+[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] Opening Competitive_Offer_Report_052926.pdf ...
+[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] 29 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
@@ -150,25 +150,27 @@ Deleting existing data for 2026-05-29 ...
   page_type       : closing_slide
   text preview    : 'T-Mobile Confidential 29'
 
-[c0a72b41-0a48-43ad-9f45-05778f6c5d23] Wrote 29 rows to bronze.
+[7c0ce0ae-00ff-460f-b320-3bf6ed8b78cb] Wrote 29 rows to bronze.
 Text-only silver tables ready.
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  business_device_offers               |  2 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  cable_mvno_offers                    |  2 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  ci_headlines                         |  2 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  closing_slide                        |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  confidentiality_notice               |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  major_offer_changes                  |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  national_retail_readout              |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  postpaid_bts_offers                  |  3 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  postpaid_device_offers_apple         |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  postpaid_service_offers              |  2 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  prepaid_brand_offers                 |  4 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  prepaid_price_grid_detail            |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  section_divider                      |  4 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  title_slide                          |  1 page(s)
-2026-05-29  |  run_id 7a922857-64e5-4f27-b859-2eb41ce800a9  |  toc                                  |  1 page(s)
+[queried at 2026-07-09T10:04:51.259356 UTC]
+
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  business_device_offers               |  2 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  cable_mvno_offers                    |  2 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  ci_headlines                         |  2 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  closing_slide                        |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  confidentiality_notice               |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  major_offer_changes                  |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  national_retail_readout              |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_bts_offers                  |  3 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_apple         |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_device_offers_samsung_google  |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  postpaid_service_offers              |  2 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  prepaid_brand_offers                 |  4 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  prepaid_price_grid_detail            |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  section_divider                      |  4 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  title_slide                          |  1 page(s)
+2026-05-29  |  run_id c0a72b41-0a48-43ad-9f45-05778f6c5d23  |  toc                                  |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  business_device_offers               |  2 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  cable_mvno_offers                    |  2 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  ci_headlines                         |  2 page(s)
