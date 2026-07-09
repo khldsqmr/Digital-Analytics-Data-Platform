@@ -187,3 +187,37 @@ Text-only silver tables ready.
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  title_slide                          |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  toc                                  |  1 page(s)
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  unclassified                         |  5 page(s)
+
+
+[01be4b7e-5842-4b09-a73b-346295c1c7d4] Text-only extraction stage starting...
+
+--- Page 5 (ci_headlines) ---
+  extracted 6 headline records
+    [OK   ] AT&T: Build-A-Plan to Launch 5/27
+    [OK   ] AT&T: Pullback on GS26 Series Offers
+    [OK   ] Verizon: iPhone 17 Offers Change
+    [OK   ] Verizon: Watch + Tablet On Us Bundles Return
+    [OK   ] Spectrum Mobile: No changes
+    [OK   ] Xfinity Mobile: No changes
+
+--- Page 6 (ci_headlines) ---
+  extracted 8 headline records
+    [OK   ] Cricket Wireless: “Deal Drop” Sale features Free iPhone 16e
+    [OK   ] Cricket Wireless: New TV Spot for “Deal Drop” Sale
+    [OK   ] Cricket Wireless: Unlock Policy will change to 365 Days
+    [OK   ] Cricket Wireless: EXPIRED: In select stores: $240 BYO/12month plan – & regional offer
+    [OK   ] Boost Mobile: No changes
+    [OK   ] Straight Talk: Up to $50 off Phones
+    [OK   ] Total Wireless: iPhone 16e $79 In-Store
+    [OK   ] Total Wireless: Total Spark Expansion
+
+--- Page 22 (national_retail_readout) ---
+  extracted 5 retail offer records
+    [OK   ] Best Buy: Samsung Galaxy Z Fold 7 ($350)
+    [OK   ] Best Buy: Google Pixel 10 Pro Fold ($300)
+    [CHECK] Best Buy: Google Pixel 10 Pro XL ($300)
+    [OK   ] Best Buy: Apple iPhone 16e ($60)
+    [OK   ] Walmart: Apple iPhone 16e ($150)
+
+[01be4b7e-5842-4b09-a73b-346295c1c7d4] Wrote 14 rows to silver ci_headlines.
+[01be4b7e-5842-4b09-a73b-346295c1c7d4] Wrote 5 rows to silver national_retail_readout.
