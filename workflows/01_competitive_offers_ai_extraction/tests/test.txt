@@ -1,2 +1,39 @@
 Manifest and bronze tables ready.
-This exact file was already processed on 2026-07-09 08:48:26.812603+00:00 (run 4d09ac21-f469-402a-a75c-cd29c7705b1e). Skipping.
+Data for 2026-05-08 already exists (run 562e5abe-fcb5-4316-a9a7-fff8ef9111fe, file 'Competitive_Offer_Report_050826.pdf').
+Choose how to proceed:
+Deleting existing data for 2026-05-08 ...
+---------------------------------------------------------------------------
+BadRequest                                Traceback (most recent call last)
+<ipython-input-48-70240526a466> in proceed(report_date, run_id, file_name, hash_, pdf_bytes, mode)
+    290         if mode == "replace":
+    291             print(f"Deleting existing data for {report_date} ...")
+--> 292             delete_existing_run(report_date)
+    293         write_manifest_row(report_date, run_id, file_name, hash_, status="active")
+    294         run_extraction_pipeline(run_id, report_date, pdf_bytes, file_name)
+
+<ipython-input-48-70240526a466> in delete_existing_run(report_date)
+    141                 query_parameters=[bigquery.ScalarQueryParameter("report_date", "DATE", report_date)]
+    142             ),
+--> 143         ).result()
+    144 
+    145 
+
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in result(self, page_size, max_results, retry, timeout, start_index, job_retry)
+   1771                 # Since is_job_done() calls jobs.getQueryResults, which is a
+   1772                 # long-running API, don't delay the next request at all.
+-> 1773                 while not is_job_done():
+   1774                     pass
+   1775             else:
+
+12 frames
+/usr/local/lib/python3.10/dist-packages/google/cloud/_http/__init__.py in api_request(self, method, path, query_params, data, content_type, headers, api_base_url, api_version, expect_json, _target_object, timeout, extra_api_info)
+    492 
+    493         if not 200 <= response.status_code < 300:
+--> 494             raise exceptions.from_http_response(response)
+    495 
+    496         if expect_json and response.content:
+
+BadRequest: 400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/98cee05b-2ea6-4087-9e0f-32fb501443e9?maxResults=0&location=us-west1&prettyPrint=false: UPDATE or DELETE statement over table prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly would affect rows in the streaming buffer, which is not supported
+
+Location: us-west1
+Job ID: 98cee05b-2ea6-4087-9e0f-32fb501443e9
