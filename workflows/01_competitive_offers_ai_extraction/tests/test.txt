@@ -1,35 +1,4 @@
----------------------------------------------------------------------------
-NotFound                                  Traceback (most recent call last)
-<ipython-input-41-a8242c981ff9> in handle_upload(change)
-    151 
-    152         hash_ = file_hash(pdf_bytes)
---> 153         existing = get_active_manifest_row(report_date)
-    154         run_id = str(uuid.uuid4())
-    155 
-
-<ipython-input-41-a8242c981ff9> in get_active_manifest_row(report_date)
-     73         ),
-     74     )
----> 75     rows = list(job.result())
-     76     return rows[0] if rows else None
-     77 
-
-/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in result(self, page_size, max_results, retry, timeout, start_index, job_retry)
-   1771                 # Since is_job_done() calls jobs.getQueryResults, which is a
-   1772                 # long-running API, don't delay the next request at all.
--> 1773                 while not is_job_done():
-   1774                     pass
-   1775             else:
-
-4 frames
-/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in is_job_done()
-   1720                         # `job_retry` predicate.
-   1721                         restart_query_job = True
--> 1722                         raise job_failed_exception
-   1723                     else:
-   1724                         # Make sure that the _query_results are cached so we
-
-NotFound: 404 Not found: Table prj-dbi-prd-1:ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly was not found in location us-west1; reason: notFound, message: Not found: Table prj-dbi-prd-1:ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly was not found in location us-west1
-
-Location: us-west1
-Job ID: 32d0d107-a664-4768-9d87-d6d5c6a8a30f
+Manifest and bronze tables ready.
+No existing data for 2026-06-19. Proceeding.
+[79b4ce60-69a3-4810-8b4a-73a40952058f] Starting extraction for Competitive_Offer_Report_061926.pdf (2026-06-19) ...
+[79b4ce60-69a3-4810-8b4a-73a40952058f] Done.
