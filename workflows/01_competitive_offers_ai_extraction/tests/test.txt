@@ -1,9 +1,9 @@
 Manifest and bronze tables ready.
-Data for 2026-06-19 already exists (run 1a105aa1-bfd9-40ac-a65a-af3e159c3087, file 'Competitive_Offer_Report_061926.pdf').
+Data for 2026-06-19 already exists (run 890c632a-44a8-45f0-b1a0-7058c3bb7a2a, file 'Competitive_Offer_Report_061926.pdf').
 Choose how to proceed:
 Deleting existing data for 2026-06-19 ...
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Opening Competitive_Offer_Report_061926.pdf ...
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] 36 pages found.
+[854499ed-60ac-47d0-9182-0e02c663ad3b] Opening Competitive_Offer_Report_061926.pdf ...
+[854499ed-60ac-47d0-9182-0e02c663ad3b] 36 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
@@ -132,44 +132,44 @@ Deleting existing data for 2026-06-19 ...
   text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNot combinable with other offers\n• $150 Activation Credit'
 
 --- Page 22 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Business Internet Competitive Comparison'
+  page_type       : business_internet_comparison
   image rendered  : False
   text preview    : 'Business Internet Competitive Comparison June 18, 2026\nT-Mobile Business Internet AT&T Internet Air for Business Verizon'
 
 --- Page 23 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: TFB Voice Plans\nWhy AT&T / Verizon can show lower than T-Mobile: At rack (list) rates T-Mobile i'
 
 --- Page 24 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: TFB Voice Plans for Switchers\nWhat changes for switching customers: At rack (top table) T-Mobile'
 
 --- Page 25 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: Voice Plan Rack Rate\nWhy T-Mobile isn’t always lowest (rack): On list pricing T-Mobile becomes l'
 
 --- Page 26 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: Voice Plan with Auto Pay\nWhy T-Mobile isn’t always lowest (after AutoPay): AT&T’s $10/line AutoP'
 
 --- Page 27 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: Voice Plan Fully Discounted\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions): With '
 
 --- Page 28 ---
-  matched pattern : None
-  page_type       : unclassified
+  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
+  page_type       : voice_plan_comparison
   image rendered  : False
   text preview    : 'Competitive Comparison: Voice Plan Fully Discounted for Switchers\nWhy T-Mobile isn’t always lowest (after AutoPay + prom'
 
@@ -221,31 +221,28 @@ Deleting existing data for 2026-06-19 ...
   image rendered  : False
   text preview    : 'T-Mobile Confidential 36'
 
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] WARNING: 7 page(s) matched no known pattern: [22, 23, 24, 25, 26, 27, 28]
-These are still written to bronze as 'unclassified' — inspect them and add a pattern if they're real content pages, not just dividers/photos.
-
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Wrote 36 rows to bronze.
+[854499ed-60ac-47d0-9182-0e02c663ad3b] Wrote 36 rows to bronze.
 Text-only silver tables ready.
-[queried at 2026-07-09T12:15:20.997127 UTC]
+[queried at 2026-07-09T20:35:53.248937 UTC]
 
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  business_device_offers               |  2 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  cable_mvno_offers                    |  2 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  ci_headlines                         |  2 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  closing_slide                        |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  confidentiality_notice               |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  major_offer_changes                  |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  national_retail_readout              |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  postpaid_bts_offers                  |  3 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  postpaid_device_offers_apple         |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  postpaid_service_offers              |  2 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  prepaid_brand_offers                 |  4 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  prepaid_price_grid_detail            |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  section_divider                      |  4 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  title_slide                          |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  toc                                  |  1 page(s)
-2026-06-19  |  run_id 1a105aa1-bfd9-40ac-a65a-af3e159c3087  |  unclassified                         |  7 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  business_device_offers               |  2 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  cable_mvno_offers                    |  2 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  ci_headlines                         |  2 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  closing_slide                        |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  confidentiality_notice               |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  major_offer_changes                  |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  national_retail_readout              |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  postpaid_bts_offers                  |  3 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  postpaid_device_offers_apple         |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  postpaid_device_offers_samsung_google  |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  postpaid_service_offers              |  2 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  prepaid_brand_offers                 |  4 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  prepaid_price_grid_detail            |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  section_divider                      |  4 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  title_slide                          |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  toc                                  |  1 page(s)
+2026-06-19  |  run_id 890c632a-44a8-45f0-b1a0-7058c3bb7a2a  |  unclassified                         |  7 page(s)
 2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  business_device_offers               |  2 page(s)
 2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  cable_mvno_offers                    |  2 page(s)
 2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  ci_headlines                         |  2 page(s)
@@ -281,533 +278,325 @@ Text-only silver tables ready.
 2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  unclassified                         |  5 page(s)
 Silver postpaidDeviceOffers table ready.
 Review table ready.
+Silver carrierOfferGrid table ready.
 
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Text-only extraction stage starting...
+[854499ed-60ac-47d0-9182-0e02c663ad3b] Carrier grid (text-first) extraction starting...
 
---- Page 5 (ci_headlines) ---
-  extracted 6 headline records
-    [OK   ] AT&T: No changes
-    [OK   ] Verizon: Simplicity Plan
-    [OK   ] Verizon: Verizon Loyalty
-    [OK   ] Verizon: Verizon Shine
-    [OK   ] Spectrum Mobile: No changes
-    [OK   ] Xfinity Mobile: No changes
+--- Page 13 (postpaid_bts_offers) ---
+  extracted 33 records (11 flagged for review)
+  33 record(s): 22 OK, 11 flagged
+  --- flagged, full detail ---
+    [CHECK] Verizon: Apple Watches — 'Up to $450 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch SE2 — 'Up to $500 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch S10 — 'Up to $500 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch Series 10 — 'Up to $300 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch SE3 — 'Up to $300 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch Series 11 — 'Up to $300 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch Ultra 2 — 'Up to $300 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Apple Watch Ultra 3 — 'Up to $300 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Pixel Watch 2 — 'Up to $450 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Pixel Watch 3 — 'Up to $450 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+    [CHECK] Verizon: Pixel Watch 4 — 'Up to $450 off'
+       nearby source text: ...Verizon $15 Unlimited $25 Unlimited Plus Up to $250 $450 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10,...
+  --- sample of OK rows (3 of 22) ---
+    [OK] T-Mobile: Apple Watch SE 3 — $300 off
+    [OK] T-Mobile: All Apple Watches (Current and N-1 generations) — $300 off
+    [OK] T-Mobile: Galaxy Watches — Up to $400 off
 
---- Page 6 (ci_headlines) ---
-  extracted 2 headline records
-    [OK   ] Cricket Wireless: BYOD Tips for U.S. Visitors
-    [OK   ] Boost Mobile: 2-Month Req. for Online Offers
-
---- Page 29 (national_retail_readout) ---
-  extracted 14 retail offer records
-    [OK   ] Best Buy: Motorola Razr Ultra 2025 ($600)
-    [OK   ] Best Buy: Samsung Galaxy S25 Ultra 256GB ($450)
-    [OK   ] Best Buy: Galaxy S25 Ultra 1024GB ($409.99)
-    [OK   ] Best Buy: Samsung Galaxy Z Flip7 FE ($200-300)
-    [OK   ] Best Buy: Galaxy Z Fold7 ($200-300)
-    [OK   ] Best Buy: Galaxy S25 FE ($200-300)
-    [OK   ] Best Buy: Motorola G Stylus 5G 2024 ($200-300)
-    [OK   ] Best Buy: Nothing Phone (3) ($200-300)
-    [OK   ] Best Buy: iPhone Air (None)
-    [OK   ] Best Buy: Phone (4a) Pro (None)
-    [OK   ] Best Buy: Galaxy S25 Edge (None)
-    [OK   ] Best Buy: Jitterbug Flip2 (None)
-    [OK   ] Best Buy: Jitterbug Smart 4 (None)
-    [OK   ] Walmart: Samsung Galaxy A16 5G ($10)
-
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Wrote 8 rows to silver ci_headlines (prior rows for this date cleared first).
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Wrote 14 rows to silver national_retail_readout (prior rows for this date cleared first).
-
-
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Device offers (text+image) extraction starting...
-  Flagged 7 unclassified page(s) for review.
-  Grounding with 15 known carrier(s): ['T-Mobile', 'Verizon', 'AT&T', 'Xfinity', 'Spectrum', 'Comcast', 'Optimum', 'Metro by T-Mobile', 'Boost Mobile', 'Cricket Wireless', 'Straight Talk', 'Total Wireless', 'T-Mobile Prepaid', 'AT&T Prepaid', 'Verizon Prepaid']
-
---- Page 10 (postpaid_device_offers_apple) ---
-  (removed 32 exact-duplicate record(s) from model response)
-  extracted 168 offer records (14 flagged for review)
-    [OK   ] T-Mobile: iPhone 17 — $1,100 off
-    [OK   ] T-Mobile: iPhone Air — $1,100 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $1,100 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $1,100 off
-    [OK   ] T-Mobile: iPhone 17 — $1100 off
-    [OK   ] T-Mobile: iPhone Air — $1100 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $1100 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $1100 off
-    [OK   ] T-Mobile: iPhone 17 — $830 off
-    [OK   ] T-Mobile: iPhone Air — $830 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $830 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $830 off
-    [OK   ] T-Mobile: iPhone 17 — $500 off
-    [OK   ] T-Mobile: iPhone Air — $500 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $500 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $500 off
-    [OK   ] T-Mobile: iPhone 17 — $300 off
-    [OK   ] T-Mobile: iPhone Air — $300 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $300 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $300 off
-    [OK   ] T-Mobile: iPhone 17 — $150 off
-    [OK   ] T-Mobile: iPhone Air — $150 off
-    [OK   ] T-Mobile: iPhone 17 Pro — $150 off
-    [OK   ] T-Mobile: iPhone 17 Pro Max — $150 off
-    [OK   ] Verizon: iPhone 17 — $1,000 off
-    [OK   ] Verizon: iPhone Air — $1,000 off
-    [OK   ] Verizon: iPhone 17 Pro — $1,000 off
-    [OK   ] Verizon: iPhone 17 Pro Max — $1,000 off
-    [OK   ] Verizon: iPhone 17 — $830 off
-    [OK   ] Verizon: iPhone Air — $830 off
-    [OK   ] Verizon: iPhone 17 Pro — $830 off
-    [OK   ] Verizon: iPhone 17 Pro Max — $830 off
-    [OK   ] Verizon: iPhone 17 — $415 off
-    [OK   ] Verizon: iPhone Air — $415 off
-    [OK   ] Verizon: iPhone 17 Pro — $415 off
-    [OK   ] Verizon: iPhone 17 Pro Max — $415 off
-    [OK   ] Verizon: iPhone 17 — $360 off
-    [OK   ] Verizon: iPhone Air — $360 off
-    [OK   ] Verizon: iPhone 17 Pro — $360 off
-    [OK   ] Verizon: iPhone 17 Pro Max — $360 off
-    [OK   ] Verizon: iPhone 17 — $180 off
-    [OK   ] Verizon: iPhone Air — $180 off
-    [OK   ] Verizon: iPhone 17 Pro — $180 off
-    [OK   ] Verizon: iPhone 17 Pro Max — $180 off
-    [OK   ] AT&T: iPhone 17 Pro — $1,100 off
-    [OK   ] AT&T: iPhone 17 Pro Max — $1,100 off
-    [OK   ] AT&T: iPhone 17 — $700 off
-    [OK   ] AT&T: iPhone Air — $700 off
-    [OK   ] AT&T: iPhone 17 Pro — $700 off
-    [OK   ] AT&T: iPhone 17 Pro Max — $700 off
-    [OK   ] AT&T: iPhone 17 — $500 off
-    [OK   ] AT&T: iPhone Air — $500 off
-    [OK   ] AT&T: iPhone 17 Pro — $500 off
-    [OK   ] AT&T: iPhone 17 Pro Max — $500 off
-    [OK   ] AT&T: iPhone 17 — $350 off
-    [OK   ] AT&T: iPhone Air — $350 off
-    [OK   ] AT&T: iPhone 17 Pro — $350 off
-    [OK   ] AT&T: iPhone 17 Pro Max — $350 off
-    [OK   ] Xfinity: iPhone 17 — $400 off
-    [OK   ] Xfinity: iPhone Air — $400 off
-    [OK   ] Xfinity: iPhone 17 Pro — $400 off
-    [OK   ] Xfinity: iPhone 17 Pro Max — $400 off
-    [OK   ] Xfinity: iPhone 17 — $200 off
-    [OK   ] Xfinity: iPhone Air — $200 off
-    [OK   ] Xfinity: iPhone 17 Pro — $200 off
-    [OK   ] Xfinity: iPhone 17 Pro Max — $200 off
-    [OK   ] Xfinity: iPhone 17 — Up to $830 off
-    [OK   ] Xfinity: iPhone Air — Up to $830 off
-    [OK   ] Xfinity: iPhone 17 Pro — Up to $830 off
-    [OK   ] Xfinity: iPhone 17 Pro Max — Up to $830 off
-    [CHECK] Xfinity: iPhone 17 — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone Air — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone 17 Pro — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone 17 Pro Max — $200 added to Trade-in value
-    [CHECK] Spectrum: iPhone 17 — Addtl $200 off added to trade-in
-    [CHECK] Spectrum: iPhone Air — Addtl $200 off added to trade-in
-    [CHECK] Spectrum: iPhone 17 Pro — Addtl $200 off added to trade-in
-    [CHECK] Spectrum: iPhone 17 Pro Max — Addtl $200 off added to trade-in
-    [OK   ] T-Mobile: iPhone 16 — $630 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $630 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $630 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $630 off
-    [OK   ] T-Mobile: iPhone 16 — $315 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $315 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $315 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $315 off
-    [OK   ] T-Mobile: iPhone 16 — $1100 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $1100 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $1100 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $1100 off
-    [OK   ] T-Mobile: iPhone 16 — $830 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $830 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $830 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $830 off
-    [OK   ] T-Mobile: iPhone 16 — $300 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $300 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $300 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $300 off
-    [OK   ] T-Mobile: iPhone 16 — $730 off
-    [OK   ] T-Mobile: iPhone 16 Plus — $730 off
-    [OK   ] T-Mobile: iPhone 16 Pro — $730 off
-    [OK   ] T-Mobile: iPhone 16 Pro Max — $730 off
-    [OK   ] Verizon: iPhone 16 — $0
-    [OK   ] Verizon: iPhone 16 — $0
-    [OK   ] Verizon: iPhone 16 — $0
-    [OK   ] Verizon: iPhone 16 Plus — $0
-    [OK   ] Verizon: iPhone 16 Plus — $0
-    [OK   ] Verizon: iPhone 16 Plus — $0
-    [OK   ] Verizon: iPhone 16 Pro — $0
-    [OK   ] Verizon: iPhone 16 Pro — $0
-    [OK   ] Verizon: iPhone 16 Pro — $0
-    [OK   ] Verizon: iPhone 16 Pro Max — $0
-    [OK   ] Verizon: iPhone 16 Pro Max — $0
-    [OK   ] Verizon: iPhone 16 Pro Max — $0
-    [OK   ] AT&T: iPhone 16 — $2.99/mo. ($622 off)
-    [OK   ] AT&T: iPhone 16 — $7.99/mo. ($442 off)
-    [OK   ] Xfinity: iPhone 16 — $400 off
-    [OK   ] Xfinity: iPhone 16 Plus — $400 off
-    [OK   ] Xfinity: iPhone 16 Pro — $400 off
-    [OK   ] Xfinity: iPhone 16 Pro Max — $400 off
-    [OK   ] Xfinity: iPhone 16 — $200 off
-    [OK   ] Xfinity: iPhone 16 Plus — $200 off
-    [OK   ] Xfinity: iPhone 16 Pro — $200 off
-    [OK   ] Xfinity: iPhone 16 Pro Max — $200 off
-    [OK   ] Xfinity: iPhone 16 — Up to $830 off
-    [OK   ] Xfinity: iPhone 16 Plus — Up to $830 off
-    [OK   ] Xfinity: iPhone 16 Pro — Up to $830 off
-    [OK   ] Xfinity: iPhone 16 Pro Max — Up to $830 off
-    [CHECK] Xfinity: iPhone 16 — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone 16 Plus — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone 16 Pro — $200 added to Trade-in value
-    [CHECK] Xfinity: iPhone 16 Pro Max — $200 added to Trade-in value
-    [OK   ] T-Mobile: iPhone 17e — $630 off
-    [OK   ] T-Mobile: iPhone 17e — On Us
-    [OK   ] T-Mobile: iPhone 17e — $300 off
-    [OK   ] Verizon: iPhone 17e — $0
-    [OK   ] Verizon: iPhone 17e — $600 off
-    [OK   ] Verizon: iPhone 17e — Up to $600 off
-    [OK   ] Verizon: iPhone 17e — Up to $360 off
-    [OK   ] AT&T: iPhone 17e — $0.99/mo. ($564 off)
-    [OK   ] AT&T: iPhone 17e — $5.99/mo. ($384 off)
-    [OK   ] Xfinity: iPhone 17e — $400 off
-    [OK   ] Xfinity: iPhone 17e — $200 off
-    [OK   ] Xfinity: iPhone 17e — Up to $600 off
-    [CHECK] Xfinity: iPhone 17e — $200 added to Trade-in value
-    [CHECK] Spectrum: iPhone 17e — Additional $200 added to customer's trade-in
-    [OK   ] T-Mobile: iPhone 15 — $630 off
-    [OK   ] T-Mobile: iPhone 15 Plus — $630 off
-    [OK   ] T-Mobile: iPhone 15 Pro — $630 off
-    [OK   ] T-Mobile: iPhone 15 Pro Max — $630 off
-    [OK   ] T-Mobile: iPhone 15 — $315 off
-    [OK   ] T-Mobile: iPhone 15 Plus — $315 off
-    [OK   ] T-Mobile: iPhone 15 Pro — $315 off
-    [OK   ] T-Mobile: iPhone 15 Pro Max — $315 off
-    [OK   ] T-Mobile: iPhone 15 — On Us
-    [OK   ] T-Mobile: iPhone 15 Plus — On Us
-    [OK   ] T-Mobile: iPhone 15 Pro — On Us
-    [OK   ] T-Mobile: iPhone 15 Pro Max — On Us
-    [OK   ] T-Mobile: iPhone 15 — $300 off
-    [OK   ] T-Mobile: iPhone 15 Plus — $300 off
-    [OK   ] T-Mobile: iPhone 15 Pro — $300 off
-    [OK   ] T-Mobile: iPhone 15 Pro Max — $300 off
-    [OK   ] Verizon: iPhone 15 — $0
-    [OK   ] Verizon: iPhone 15 Plus — $0
-    [OK   ] T-Mobile: iPhone 14 — $630 off
-    [OK   ] T-Mobile: iPhone 14 — $315 off
-    [OK   ] T-Mobile: iPhone 14 — On Us
-    [OK   ] T-Mobile: iPhone 14 — $300 off
-
---- Page 11 (postpaid_device_offers_samsung_google) ---
-  (removed 32 exact-duplicate record(s) from model response)
-  extracted 266 offer records (40 flagged for review)
-    [OK   ] T-Mobile: S26 — Up to $800/line
-    [OK   ] T-Mobile: S26+ — Up to $800/line
-    [OK   ] T-Mobile: S26 Ultra — Up to $800/line
-    [OK   ] T-Mobile: S25 — Up to $800/line
-    [OK   ] T-Mobile: S25+ — Up to $800/line
-    [OK   ] T-Mobile: S25 Ultra — Up to $800/line
-    [OK   ] T-Mobile: S25 Edge — Up to $800/line
-    [OK   ] T-Mobile: Z Flip7 — Up to $800/line
-    [OK   ] T-Mobile: Z Fold7 — Up to $800/line
-    [OK   ] T-Mobile: S25 FE — Up to $800/line
-    [OK   ] T-Mobile: Pixel 10a — Up to $800/line
-    [OK   ] T-Mobile: Pixel 9a — Up to $800/line
-    [OK   ] T-Mobile: Pixel 10 — Up to $800/line
-    [OK   ] T-Mobile: Pixel 10 Pro — Up to $800/line
-    [OK   ] T-Mobile: 10 Pro XL — Up to $800/line
-    [OK   ] Verizon: S26 — $800
-    [OK   ] Verizon: S26+ — $800
-    [OK   ] Verizon: S26 Ultra — $800
-    [OK   ] Verizon: S25 — $800
-    [OK   ] Verizon: S25+ — $800
-    [OK   ] Verizon: S25 Ultra — $800
-    [OK   ] Verizon: S25 Edge — $800
-    [OK   ] Verizon: Z Flip7 — $800
-    [OK   ] Verizon: Z Fold7 — $800
-    [OK   ] Verizon: S25 FE — $800
-    [OK   ] Verizon: Pixel 10a — $800
-    [OK   ] Verizon: Pixel 9a — $800
-    [OK   ] Verizon: Pixel 10 — $800
-    [OK   ] Verizon: Pixel 10 Pro — $800
-    [OK   ] Verizon: 10 Pro XL — $800
-    [OK   ] AT&T: S26 — $800
-    [OK   ] AT&T: S26+ — $800
-    [OK   ] AT&T: S26 Ultra — $800
-    [OK   ] AT&T: S25 — $800
-    [OK   ] AT&T: S25+ — $800
-    [OK   ] AT&T: S25 Ultra — $800
-    [OK   ] AT&T: S25 Edge — $800
-    [OK   ] AT&T: Z Flip7 — $800
-    [OK   ] AT&T: Z Fold7 — $800
-    [OK   ] AT&T: S25 FE — $800
-    [OK   ] AT&T: Pixel 10a — $800
-    [OK   ] AT&T: Pixel 9a — $800
-    [OK   ] AT&T: Pixel 10 — $800
-    [OK   ] AT&T: Pixel 10 Pro — $800
-    [OK   ] AT&T: 10 Pro XL — $800
-    [OK   ] AT&T: S26 — $200
-    [OK   ] AT&T: S26+ — $200
-    [OK   ] AT&T: S26 Ultra — $200
-    [OK   ] AT&T: S25 — $200
-    [OK   ] AT&T: S25+ — $200
-    [OK   ] AT&T: S25 Ultra — $200
-    [OK   ] AT&T: S25 Edge — $200
-    [OK   ] AT&T: Z Flip7 — $200
-    [OK   ] AT&T: Z Fold7 — $200
-    [OK   ] AT&T: S25 FE — $200
-    [OK   ] AT&T: Pixel 10a — $200
-    [OK   ] AT&T: Pixel 9a — $200
-    [OK   ] AT&T: Pixel 10 — $200
-    [OK   ] AT&T: Pixel 10 Pro — $200
-    [OK   ] AT&T: 10 Pro XL — $200
-    [CHECK] Spectrum: S26 — +$100 added to FMV of trade
-    [CHECK] Spectrum: S26+ — +$100 added to FMV of trade
-    [CHECK] Spectrum: S26 Ultra — +$100 added to FMV of trade
-    [CHECK] Spectrum: S25 — +$100 added to FMV of trade
-    [CHECK] Spectrum: S25+ — +$100 added to FMV of trade
-    [CHECK] Spectrum: S25 Ultra — +$100 added to FMV of trade
-    [CHECK] Spectrum: S25 Edge — +$100 added to FMV of trade
-    [CHECK] Spectrum: Z Flip7 — +$100 added to FMV of trade
-    [CHECK] Spectrum: Z Fold7 — +$100 added to FMV of trade
-    [CHECK] Spectrum: S25 FE — +$100 added to FMV of trade
-    [CHECK] Spectrum: Pixel 10a — +$100 added to FMV of trade
-    [CHECK] Spectrum: Pixel 9a — +$100 added to FMV of trade
-    [CHECK] Spectrum: Pixel 10 — +$100 added to FMV of trade
-    [CHECK] Spectrum: Pixel 10 Pro — +$100 added to FMV of trade
-    [CHECK] Spectrum: 10 Pro XL — +$100 added to FMV of trade
-    [OK   ] T-Mobile: S26 — $1100 off
-    [OK   ] T-Mobile: S26+ — $1100 off
-    [OK   ] T-Mobile: S26 Ultra — $1100 off
-    [OK   ] T-Mobile: S26 — $900 off
-    [OK   ] T-Mobile: S26+ — $900 off
-    [OK   ] T-Mobile: S26 Ultra — $900 off
-    [OK   ] T-Mobile: S26 — $600 off
-    [OK   ] T-Mobile: S26+ — $600 off
-    [OK   ] T-Mobile: S26 Ultra — $600 off
-    [OK   ] T-Mobile: S26 — $550 off
-    [OK   ] T-Mobile: S26+ — $550 off
-    [OK   ] T-Mobile: S26 Ultra — $550 off
-    [OK   ] T-Mobile: S26 — <$300 off
-    [OK   ] T-Mobile: S26+ — <$300 off
-    [OK   ] T-Mobile: S26 Ultra — <$300 off
-    [OK   ] Verizon: S26 — $0/mo.
-    [OK   ] Verizon: S26 — $0/mo.
-    [OK   ] Verizon: S26 — $0/mo.
-    [OK   ] Verizon: S26+ — $5.55/mo.
-    [OK   ] Verizon: S26+ — $0/mo.
-    [OK   ] Verizon: S26+ — $0/mo.
-    [OK   ] Verizon: S26 Ultra — $11.11/mo.
-    [OK   ] Verizon: S26 Ultra — $5.55/mo.
-    [OK   ] Verizon: S26 Ultra — $5/mo.
-    [OK   ] Verizon: S26 — $1,100 off
-    [OK   ] Verizon: S26+ — $1,100 off
-    [OK   ] Verizon: S26 Ultra — $1,100 off
-    [OK   ] Verizon: S26 — $550 off
-    [OK   ] Verizon: S26+ — $550 off
-    [OK   ] Verizon: S26 Ultra — $550 off
-    [OK   ] Verizon: S26 — $1100 off
-    [OK   ] Verizon: S26+ — $1100 off
-    [OK   ] Verizon: S26 Ultra — $1100 off
-    [OK   ] Verizon: S26 — $900 off
-    [OK   ] Verizon: S26+ — $900 off
-    [OK   ] Verizon: S26 Ultra — $900 off
-    [OK   ] Verizon: S26 — $450 off
-    [OK   ] Verizon: S26+ — $450 off
-    [OK   ] Verizon: S26 Ultra — $450 off
-    [OK   ] Verizon: S26 — $360 off
-    [OK   ] Verizon: S26+ — $360 off
-    [OK   ] Verizon: S26 Ultra — $360 off
-    [OK   ] Verizon: S26 — $180 off
-    [OK   ] Verizon: S26+ — $180 off
-    [OK   ] Verizon: S26 Ultra — $180 off
-    [CHECK] AT&T: S26 — $10.99/mo. ($504 off)
-    [CHECK] AT&T: S26+ — Up to $1,100 off
-    [CHECK] AT&T: S26 Ultra — Up to $1,100 off
-    [OK   ] AT&T: S26+ — $500 off
-    [OK   ] AT&T: S26 Ultra — $500 off
-    [OK   ] Xfinity: S26 — $500 off
-    [OK   ] Xfinity: S26+ — $500 off
-    [OK   ] Xfinity: S26 Ultra — $500 off
-    [OK   ] Xfinity: S26 — $200 off
-    [OK   ] Xfinity: S26+ — $200 off
-    [OK   ] Xfinity: S26 Ultra — $200 off
-    [OK   ] Xfinity: S26 — Up to $900 off
-    [OK   ] Xfinity: S26+ — Up to $900 off
-    [OK   ] Xfinity: S26 Ultra — Up to $900 off
-    [CHECK] Xfinity: S26 — $450 added to Trade-in value
-    [CHECK] Xfinity: S26+ — $450 added to Trade-in value
-    [CHECK] Xfinity: S26 Ultra — $450 added to Trade-in value
-    [OK   ] Spectrum: S26 — $400 off FRP
-    [OK   ] Spectrum: S26+ — $400 off FRP
-    [OK   ] Spectrum: S26 Ultra — $400 off FRP
-    [CHECK] Spectrum: S26 — Addtl $200 added to $1+ FMV
-    [CHECK] Spectrum: S26+ — Addtl $200 added to $1+ FMV
-    [CHECK] Spectrum: S26 Ultra — Addtl $200 added to $1+ FMV
-    [OK   ] T-Mobile: S25 — $900 off
-    [OK   ] T-Mobile: S25+ — $900 off
-    [OK   ] T-Mobile: S25 Ultra — $900 off
-    [OK   ] T-Mobile: S25 Edge — $900 off
-    [OK   ] T-Mobile: S25 — $600 off
-    [OK   ] T-Mobile: S25+ — $600 off
-    [OK   ] T-Mobile: S25 Ultra — $600 off
-    [OK   ] T-Mobile: S25 Edge — $600 off
-    [OK   ] T-Mobile: S25 — <$900 off
-    [OK   ] T-Mobile: S25+ — <$900 off
-    [OK   ] T-Mobile: S25 Ultra — <$900 off
-    [OK   ] T-Mobile: S25 Edge — <$900 off
-    [OK   ] T-Mobile: S25 — <$300 off
-    [OK   ] T-Mobile: S25+ — <$300 off
-    [OK   ] T-Mobile: S25 Ultra — <$300 off
-    [OK   ] T-Mobile: S25 Edge — <$300 off
-    [OK   ] AT&T: S25 Edge — $15.99/mo.
-    [OK   ] Xfinity: S25 — $500 off
-    [OK   ] Xfinity: S25+ — $500 off
-    [OK   ] Xfinity: S25 Ultra — $500 off
-    [OK   ] Xfinity: S25 Edge — $500 off
-    [OK   ] Xfinity: S25 — $200 off
-    [OK   ] Xfinity: S25+ — $200 off
-    [OK   ] Xfinity: S25 Ultra — $200 off
-    [OK   ] Xfinity: S25 Edge — $200 off
-    [OK   ] Xfinity: S25 — Up to $900 off
-    [OK   ] Xfinity: S25+ — Up to $900 off
-    [OK   ] Xfinity: S25 Ultra — Up to $900 off
-    [OK   ] Xfinity: S25 Edge — Up to $900 off
-    [CHECK] Xfinity: S25 — $450 added to Trade-in value
-    [CHECK] Xfinity: S25+ — $450 added to Trade-in value
-    [CHECK] Xfinity: S25 Ultra — $450 added to Trade-in value
-    [CHECK] Xfinity: S25 Edge — $450 added to Trade-in value
-    [OK   ] T-Mobile: Z Flip7 — $900 off
-    [OK   ] T-Mobile: Z Fold7 — $900 off
-    [OK   ] T-Mobile: Z Flip7 — $600 off
-    [OK   ] T-Mobile: Z Fold7 — $600 off
-    [OK   ] T-Mobile: Z Flip7 — <$900 off
-    [OK   ] T-Mobile: Z Fold7 — <$900 off
-    [OK   ] T-Mobile: Z Flip7 — <$300 off
-    [OK   ] T-Mobile: Z Fold7 — <$300 off
-    [OK   ] Verizon: Z Flip7 — $20
-    [OK   ] Verizon: Z Flip7 — $15
-    [OK   ] Verizon: Z Flip7 — $10
-    [CHECK] AT&T: Z Flip7 — $15.99/mo. (~$524 off)
-    [OK   ] AT&T: Z Fold7 — $1,000 off
-    [OK   ] AT&T: Z Fold7 — $800 off
-    [OK   ] AT&T: Z Fold7 — $500 off
-    [OK   ] Xfinity: Z Flip7 — $500 off
-    [OK   ] Xfinity: Z Fold7 — $500 off
-    [OK   ] Xfinity: Z Flip7 — $200 off
-    [OK   ] Xfinity: Z Fold7 — $200 off
-    [OK   ] Xfinity: Z Flip7 — Up to $900 off
-    [OK   ] Xfinity: Z Fold7 — Up to $900 off
-    [CHECK] Xfinity: Z Flip7 — $450 added to Trade-in value
-    [CHECK] Xfinity: Z Fold7 — $450 added to Trade-in value
-    [OK   ] T-Mobile: S25 FE — $600 off
-    [OK   ] T-Mobile: S25 FE — <$300 off
-    [OK   ] Verizon: S25 FE — $0/mo.
-    [OK   ] AT&T: S25 FE — $13.99/mo. ($146 off)
-    [OK   ] Xfinity: S25 FE — $500 off
-    [OK   ] Xfinity: S25 FE — $200 off
-    [OK   ] Xfinity: S25 FE — Up to $650 off
-    [CHECK] Xfinity: S25 FE — $450 added to Trade-in value
-    [OK   ] T-Mobile: Pixel 10a — On Us
-    [OK   ] T-Mobile: Pixel 10 — $1K off
-    [OK   ] T-Mobile: Pixel 10 Pro — $1K off
-    [OK   ] T-Mobile: 10 Pro XL — $1K off
-    [OK   ] T-Mobile: Pixel 10 — $600 off
-    [OK   ] T-Mobile: Pixel 10 Pro — $600 off
-    [OK   ] T-Mobile: 10 Pro XL — $600 off
-    [OK   ] T-Mobile: Pixel 10a — $600 off
-    [OK   ] T-Mobile: Pixel 9a — $600 off
-    [OK   ] T-Mobile: Pixel 9a — On Us
-    [OK   ] T-Mobile: Pixel 10 — $1200 off
-    [OK   ] Verizon: Pixel 10a — Free
-    [OK   ] Verizon: Pixel 10 — $5/mo.
-    [OK   ] Verizon: Pixel 10 — $0/mo.
-    [OK   ] Verizon: Pixel 10 — $0/mo.
-    [OK   ] Verizon: Pixel 10 Pro — $0/mo.
-    [OK   ] Verizon: Pixel 10 Pro — $0/mo.
-    [OK   ] Verizon: Pixel 10 Pro — $0/mo.
-    [OK   ] Verizon: 10 Pro XL — $10/mo.
-    [OK   ] Verizon: 10 Pro XL — $5/mo.
-    [OK   ] Verizon: 10 Pro XL — $0/mo.
-    [OK   ] Verizon: Pixel 10 Pro — $1K off
-    [OK   ] Verizon: 10 Pro XL — $1K off
-    [OK   ] Verizon: Pixel 10 Pro — $800 off
-    [OK   ] Verizon: 10 Pro XL — $800 off
-    [OK   ] Verizon: Pixel 10 Pro — $360 off
-    [OK   ] Verizon: 10 Pro XL — $360 off
-    [OK   ] AT&T: Pixel 10a — $5.99/mo. ($304 off)
-    [OK   ] AT&T: Pixel 10 — $8.99/mo. (~$526 off)
-    [OK   ] AT&T: Pixel 10 — $12.99/mo. ($382 off)
-    [OK   ] AT&T: Pixel 10 Pro — $1,050 off
-    [OK   ] AT&T: 10 Pro XL — $1,250 off
-    [OK   ] AT&T: Pixel 10 Pro — $500 off
-    [OK   ] AT&T: 10 Pro XL — $500 off
-    [OK   ] Xfinity: Pixel 10a — $400 off
-    [OK   ] Xfinity: Pixel 9a — $400 off
-    [OK   ] Xfinity: Pixel 10 — $400 off
-    [OK   ] Xfinity: Pixel 10 Pro — $400 off
-    [OK   ] Xfinity: 10 Pro XL — $400 off
-    [OK   ] Xfinity: Pixel 10a — $200 off
-    [OK   ] Xfinity: Pixel 9a — $200 off
-    [OK   ] Xfinity: Pixel 10 — $200 off
-    [OK   ] Xfinity: Pixel 10 Pro — $200 off
-    [OK   ] Xfinity: 10 Pro XL — $200 off
-    [OK   ] Xfinity: Pixel 10a — Up to $1200 off
-    [OK   ] Xfinity: Pixel 9a — Up to $1200 off
-    [OK   ] Xfinity: Pixel 10 — Up to $1200 off
-    [OK   ] Xfinity: Pixel 10 Pro — Up to $1200 off
-    [OK   ] Xfinity: 10 Pro XL — Up to $1200 off
-    [CHECK] Xfinity: Pixel 10a — $450 added to Trade-in value
-    [CHECK] Xfinity: Pixel 9a — $450 added to Trade-in value
-    [CHECK] Xfinity: Pixel 10 — $450 added to Trade-in value
-    [CHECK] Xfinity: Pixel 10 Pro — $450 added to Trade-in value
-    [CHECK] Xfinity: 10 Pro XL — $450 added to Trade-in value
-    [CHECK] Spectrum: Pixel 10a — $104 off FRP
-    [CHECK] Spectrum: Pixel 10 Pro — $300 off FRP
-    [OK   ] Spectrum: 10 Pro XL — $400 off FRP
-    [OK   ] Spectrum: 10 Pro Fold — $350 off FRP
-    [CHECK] Spectrum: Pixel 10 Pro — $700 off
-
---- Page 12 (postpaid_device_offers_motorola_affordable) ---
+--- Page 14 (postpaid_bts_offers) ---
   (removed 1 exact-duplicate record(s) from model response)
-  extracted 40 offer records (6 flagged for review)
-    [OK   ] T-Mobile: Razr Ultra — $1.3K off
-    [OK   ] T-Mobile: Razr+ — $800 off
-    [OK   ] T-Mobile: Razr '25/'26 — $600 off
-    [OK   ] T-Mobile: Razr Ultra — $1.3K off
-    [OK   ] T-Mobile: Razr+ — $800 off
-    [OK   ] T-Mobile: Razr '25/'26 — $500 off
-    [OK   ] Verizon: Razr — Free
-    [OK   ] AT&T: Razr Ultra — FREE
-    [CHECK] AT&T: Razr+ 2026 — $9.99 ($685 off)
-    [OK   ] AT&T: Razr+ 2026 — $12.99
-    [OK   ] Xfinity: Android Flagships — $400 off
-    [OK   ] Xfinity: Android Flagships — $200 off
-    [OK   ] Xfinity: Android Flagships — Up to $700 off
-    [CHECK] Xfinity: Android Flagships — $200 added to Trade-in value
-    [OK   ] Spectrum: Razr '26 — $100 off FRP
-    [OK   ] T-Mobile: A17 5G — Free
-    [OK   ] T-Mobile: A16 — FREE
-    [OK   ] T-Mobile: A36 5G — $300 off
-    [OK   ] T-Mobile: A37 5G — $450 off
-    [OK   ] T-Mobile: A16 — FREE
-    [OK   ] T-Mobile: A36 5G — $300 off
-    [OK   ] Verizon: A37 5G — $400 off
-    [OK   ] Verizon: A37 5G — $450 off
-    [CHECK] AT&T: A17 5G — $0/mo. ($200 off)
-    [OK   ] AT&T: A17 5G — $4.99/mo.
-    [CHECK] AT&T: A37 5G — $2.99/mo. ($342 off)
-    [CHECK] AT&T: A37 5G — $7.99/mo. ($162 off)
-    [OK   ] Xfinity: A26 5G — Free
-    [OK   ] Xfinity: A36 5G — Free
-    [OK   ] Xfinity: A37 5G — Free
-    [OK   ] Spectrum: A16 5G — Addtl $160
-    [OK   ] T-Mobile: Moto G — Free
-    [OK   ] T-Mobile: Moto G Power — Free
-    [OK   ] T-Mobile: Moto Edge — Free
-    [OK   ] T-Mobile: Moto G5G — Free
-    [OK   ] T-Mobile: Moto G (2026) — On us
-    [OK   ] AT&T: moto g stylus 5G ('25) — $2.99/mo.
-    [OK   ] Xfinity: moto g stylus 5G 2025 — Free
-    [OK   ] Xfinity: moto edge — Free
-    [CHECK] Spectrum: moto g stylus 5G 2025 — $140 off FRP
+  extracted 15 records (1 flagged for review)
+  15 record(s): 14 OK, 1 flagged
+  --- flagged, full detail ---
+    [CHECK] Verizon: Galaxy Tab S10 FE 5G — 'Up to $600 off'
+       nearby source text: ...Verizon $40 Unlimited $50 Unlimited Plus Discount (A16): Up to $320 $500 off w/ iPhone BTS AAL & UNL or UNL Plus BTS plan UPDATED Up to $500 off w/ Trade & UNL or UNL Plus BTS Plan...
+  --- sample of OK rows (3 of 14) ---
+    [OK] T-Mobile: iPad (A16) — $400 off
+    [OK] T-Mobile: Galaxy Tab S10 FE 5G — 50% off ($300 off)
+    [OK] T-Mobile: Galaxy Tab A11+ 5G — On Us ($290 off)
 
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Wrote 474 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
-[890c632a-44a8-45f0-b1a0-7058c3bb7a2a] Flagged 60 row(s) for review.
+--- Page 15 (postpaid_bts_offers) ---
+  extracted 9 records (0 flagged for review)
+  9 record(s): 9 OK, 0 flagged
+  --- sample of OK rows (3 of 9) ---
+    [OK] T-Mobile: SYNCUP DRIVE — On Us
+    [OK] T-Mobile: IN-CAR WI-FI PLANS (UNL DATA W/22GB FUT) — $15/month
+    [OK] T-Mobile: BTS BYOD PIC — $100 Virtual Prepaid Mastercard
+
+--- Page 18 (cable_mvno_offers) ---
+  extracted 116 records (24 flagged for review)
+  116 record(s): 92 OK, 24 flagged
+  --- flagged, full detail ---
+    [CHECK] Optimum: iPhone 17 Series — '$800 off'  (tier: UNL)
+       nearby source text: ...Optimum Mobile Spectrum Mobile Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra t...
+    [CHECK] Spectrum: GS26 Series — '$500 off'  (tier: UNL Max)
+       nearby source text: ...Spectrum Mobile Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit ...
+    [CHECK] Spectrum: GS26 Series — '$200 addt’l off'
+       nearby source text: ...Spectrum Mobile Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit ...
+    [CHECK] Xfinity: iPhone 17 — '$200 addt’l off'  (tier: Select Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: iPhone 16 — '$200 addt’l off'  (tier: Select Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: iPhone 17e — '$200 addt’l off'  (tier: Select Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy S26 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy S25 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy Z Series — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy S26 — '$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy S25 — '$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Galaxy Z Series — '$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Pixel 9 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Pixel 10 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Moto Razr '25 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Moto Razr '26 — '$450 addt’l off'  (tier: Select)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: Pixel 10a — '$350 addt’l off'  (tier: any plan)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: A26 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: A36 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: A37 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: moto g stylus ’25 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: moto g stylus ‘26 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: moto edge — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+    [CHECK] Xfinity: moto g play ‘26 — '>$500 off'  (tier: Mobile Plus)
+       nearby source text: ...Xfinity Mobile (36 mos. EIP) (36 mos. EIP 2/21/23) (24 mos. EIP) since Some savings applied instantly (if noted) otherwise All phones (unless extra trade-in credit listed) Credits ...
+  --- sample of OK rows (3 of 92) ---
+    [OK] Optimum: UNL Mobile Line — Free
+    [OK] Optimum: Third Line — Free
+    [OK] Optimum: Mobile Service — $100 prepaid gift card
+
+--- Page 19 (cable_mvno_offers) ---
+  extracted 38 records (4 flagged for review)
+  38 record(s): 34 OK, 4 flagged
+  --- flagged, full detail ---
+    [CHECK] Optimum: Unlimited Max Plan (50GB) — '$55/mo.'
+       nearby source text: ...Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Selec...
+    [CHECK] Spectrum: Unlimited Plan — 'Free for 1 year'
+       nearby source text: ...Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL in...
+    [CHECK] Xfinity: Unlimited Mobile line — 'Free for 1 year'
+       nearby source text: ...Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including internat...
+    [CHECK] Xfinity: Unlimited Mobile line — 'Free for 2 years'
+       nearby source text: ...Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including internat...
+  --- sample of OK rows (3 of 34) ---
+    [OK] Optimum: Unlimited Plan (20GB) — $45/mo.
+    [OK] Optimum: Unlimited Plan — $15 off per line
+    [OK] Optimum: Unlimited Plan — $20 off per line
+
+--- Page 20 (business_device_offers) ---
+  (removed 24 exact-duplicate record(s) from model response)
+  extracted 145 records (26 flagged for review)
+  145 record(s): 119 OK, 26 flagged
+  --- flagged, full detail ---
+    [CHECK] T-Mobile: iPhone 17 — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17e — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone AIR — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17+ — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone Pro — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone Pro Max — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17 — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17e — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone AIR — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17+ — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone Pro — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone Pro Max — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 17e — '$0.99/mo'  (tier: Any Unlimited Plan)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 16 — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: iPhone 16+ — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S26 — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S26+ — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S26 Ultra — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S26+ — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S26 Ultra — '$1100 off'  (tier: Adv Unl or higher)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy Buds3 FE — '$0.99'
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] T-Mobile: Galaxy S25 — '$1100 off'  (tier: SuperMobile)
+       nearby source text: ...T-Mobile Business New Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/Upgrade w/Trade 17, Air, Pro and Pro Max • <$1.1k off w/ SuperMobile • <$1,100 off w/ Adv Unl or higher (...
+    [CHECK] AT&T: Galaxy S25+ — '$799.99 off'
+       nearby source text: ...AT&T $290+) Trade Offers w/ New Line $130+) • 17, 17 Pro Max, Pro, Air, and • 17: <$830 off w/My Biz & $15 No Trade Offers w/ New Line • 17 Pro Max, Pro, Air, and Plus: • 17e; Free...
+    [CHECK] AT&T: Galaxy S25 Ultra — '$799.99 off'
+       nearby source text: ...AT&T $290+) Trade Offers w/ New Line $130+) • 17, 17 Pro Max, Pro, Air, and • 17: <$830 off w/My Biz & $15 No Trade Offers w/ New Line • 17 Pro Max, Pro, Air, and Plus: • 17e; Free...
+    [CHECK] AT&T: Galaxy S25 Edge — '$799.99 off'
+       nearby source text: ...AT&T $290+) Trade Offers w/ New Line $130+) • 17, 17 Pro Max, Pro, Air, and • 17: <$830 off w/My Biz & $15 No Trade Offers w/ New Line • 17 Pro Max, Pro, Air, and Plus: • 17e; Free...
+    [CHECK] AT&T: Galaxy S25 — '$799.99 off'
+       nearby source text: ...AT&T $290+) Trade Offers w/ New Line $130+) • 17, 17 Pro Max, Pro, Air, and • 17: <$830 off w/My Biz & $15 No Trade Offers w/ New Line • 17 Pro Max, Pro, Air, and Plus: • 17e; Free...
+  --- sample of OK rows (3 of 119) ---
+    [OK] T-Mobile: iPhone 17 — $830 off
+    [OK] T-Mobile: iPhone 17e — $830 off
+    [OK] T-Mobile: iPhone AIR — $830 off
+
+--- Page 21 (business_device_offers) ---
+  FAILED: Unterminated string starting at: line 258 column 21 (char 7547)
+
+--- Page 31 (prepaid_brand_offers) ---
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 72 records (33 flagged for review)
+  72 record(s): 39 OK, 33 flagged
+  --- flagged, full detail ---
+    [CHECK] Metro by T-Mobile: Flex Plan 50 UNL — '$50/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Flex Plan 60 UNL — '$60/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: 5GB Plan — '$35/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: 10GB Plan — '$45/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: UNL Plan — '$55/mo'  (tier: $55)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: UNL Plan — '$65/mo'  (tier: $65)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: BYO 10GB Plan — '$30/mo'  (tier: without autopay)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: BYO UNL Plan — '$30/mo'  (tier: without autopay)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: UNL Plus Plan — '$50/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: UNL Premium Plan — '$60/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: HINT — '$45/mo'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Contract Freedom Service — 'up to $750'
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Tablet Rate Plan — '$15/mo'  (tier: 35GB SD)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Tablet Rate Plan — '$20/mo'  (tier: 35GB SD + 2GB hotspot)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Tablet Rate Plan — '$30/mo'  (tier: 35GB SD + 8GB hotspot)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Metro by T-Mobile: Tablet Rate Plan — '$30/mo'  (tier: 35GB HD)
+       nearby source text: ...Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UP...
+    [CHECK] Boost Mobile: In-Store Unlimited Plan — '$50/mo'  (tier: UNL+)
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: In-Store Unlimited Plan — '$60/mo'  (tier: UNL Prem)
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: Select UNL Plan — '$35/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: Smart UNL Plan — '$50/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: Supreme UNL Plan — '$60/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: 4 Line Family Plan — '$100/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: Family Connect 4 Line Plan — '$120/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: BYO UNL Plan — '$30/mo'  (tier: without autopay)
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: UNL BYO Plan — "$25/month 'forever'"
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: BYO Plan — '$10/month for first 3 months'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: BYO Add-a-Line — 'First month free'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Boost Mobile: Tablet plan — '$20/mo'
+       nearby source text: ...Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): a...
+    [CHECK] Cricket Wireless: Sensible Plan — '$35/mo'
+       (carrier 'Cricket Wireless' not found in source text at all)
+    [CHECK] Cricket Wireless: $25 UNL plan — '$9.99/mo for 5 months'
+       (carrier 'Cricket Wireless' not found in source text at all)
+    [CHECK] Cricket Wireless: Simply Data Plan — '$35/mo'  (tier: 20GB)
+       (carrier 'Cricket Wireless' not found in source text at all)
+    [CHECK] Cricket Wireless: Simply Data Plan — '$55/mo'  (tier: 200GB)
+       (carrier 'Cricket Wireless' not found in source text at all)
+    [CHECK] Cricket Wireless: Simply Data Plan — '$90/mo'  (tier: 300GB)
+       (carrier 'Cricket Wireless' not found in source text at all)
+  --- sample of OK rows (3 of 39) ---
+    [OK] Metro by T-Mobile: Flex Plan 10GB UNL — $40/mo
+    [OK] Metro by T-Mobile: Flex Plan UNL Period — $40/mo
+    [OK] Metro by T-Mobile: BYO 10GB Plan — $25/mo
+
+--- Page 33 (prepaid_brand_offers) ---
+  (removed 9 exact-duplicate record(s) from model response)
+  extracted 80 records (0 flagged for review)
+  80 record(s): 80 OK, 0 flagged
+  --- sample of OK rows (3 of 80) ---
+    [OK] Boost Mobile: iPhone 15 — $399.99
+    [OK] Boost Mobile: iPhone 16e — $99
+    [OK] Boost Mobile: iPhone 16e — FREE
+
+--- Page 34 (prepaid_brand_offers) ---
+  extracted 51 records (11 flagged for review)
+  51 record(s): 40 OK, 11 flagged
+  --- flagged, full detail ---
+    [CHECK] T-Mobile Prepaid: A17 — 'On Us'
+       nearby source text: ...T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guaran...
+    [CHECK] T-Mobile Prepaid: TCL Flip4 5G — 'On Us'
+       nearby source text: ...T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guaran...
+    [CHECK] AT&T Prepaid: A16 — 'On Us'
+       nearby source text: ...AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans n...
+    [CHECK] AT&T Prepaid: A15 — 'On Us'
+       nearby source text: ...AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans n...
+    [CHECK] AT&T Prepaid: other Androids — 'On Us'
+       nearby source text: ...AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans n...
+    [CHECK] Verizon Prepaid: 15GB Plan — '$15/mo discount'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+    [CHECK] Verizon Prepaid: UNL Plan — '$15/mo discount'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+    [CHECK] Verizon Prepaid: UNL Plus Plan — '$15/mo discount'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+    [CHECK] Verizon Prepaid: iPhone 16e — '$250 off + $100 back ($10 x 10mos)'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+    [CHECK] Verizon Prepaid: A16 5G — 'Free'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+    [CHECK] Verizon Prepaid: moto g play 2026 — 'Free'
+       nearby source text: ...Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited ...
+  --- sample of OK rows (3 of 40) ---
+    [OK] T-Mobile Prepaid: All monthly plans — option to migrate to postpaid
+    [OK] T-Mobile Prepaid: Unlimited Plan — $25
+    [OK] T-Mobile Prepaid: moto g play — $19.99
+
+--- Page 35 (prepaid_brand_offers) ---
+  (removed 2 exact-duplicate record(s) from model response)
+  extracted 87 records (0 flagged for review)
+  87 record(s): 87 OK, 0 flagged
+  --- sample of OK rows (3 of 87) ---
+    [OK] Metro by T-Mobile: A17 5G — $0
+    [OK] Metro by T-Mobile: moto g power ’26 — $0
+    [OK] Metro by T-Mobile: Galaxy A17 5G — $0
+
+[854499ed-60ac-47d0-9182-0e02c663ad3b] Wrote 646 rows to silver carrierOfferGrid (prior rows for this date cleared first).
+[854499ed-60ac-47d0-9182-0e02c663ad3b] Flagged 111 row(s) for review.
+  Breakdown: amount_mismatch=110, extraction_failed=1
