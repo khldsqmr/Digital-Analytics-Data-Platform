@@ -1,69 +1,162 @@
-SELECT carrier, item_name, plan_tier, offer_amount FROM silver_postpaidDeviceOffers_weekly WHERE source_page = 11 AND item_name = 'S26'
 
+SELECT
+  WeekEnding,
 
-carrier	item_name	plan_tier	offer_amount
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$900 off
-T-Mobile	S26		$600 off
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$650 off
-T-Mobile	S26		<$300 off
-Verizon	S26	Good	$0/mo.
-Verizon	S26	Better	$0/mo.
-Verizon	S26	Best	$0/mo.
-Verizon	S26		"$1,100 off"
-Verizon	S26		$550 off
-Verizon	S26		$1100 off
-Verizon	S26		$900 off
-Verizon	S26		$450 off
-Verizon	S26		$900 off
-Verizon	S26		$360 off
-Verizon	S26		$180 off
-AT&T	S26		$900 off
-AT&T	S26		$500 off
-Xfinity	S26		$500 off
-Xfinity	S26		Up to $900 off
-Xfinity	S26		$450
-Spectrum	S26		Addtl $200
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$900 off
-T-Mobile	S26		$600 off
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$650 off
-T-Mobile	S26		<$300 off
-Verizon	S26		$0/mo. Good | $0/mo. Better | $0/mo. Best
-Verizon	S26		"$1,100 off"
-Verizon	S26		$550 off
-Verizon	S26		$1100 off
-Verizon	S26		$900 off
-Verizon	S26		$450 off
-Verizon	S26		$900 off
-Verizon	S26		$360 off
-Verizon	S26		$180 off
-AT&T	S26		$900 off
-AT&T	S26		$500 off
-Xfinity	S26		$500 off
-Xfinity	S26		Up to $900 off
-Xfinity	S26		$450 added to Trade-in value
-Spectrum	S26		Addtl $200 added to $1+ FMV Trade-in
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$900 off
-T-Mobile	S26		$600 off
-T-Mobile	S26		$1100 off
-T-Mobile	S26		$650 off
-T-Mobile	S26		<$300 off
-Verizon	S26		$0/mo.
-Verizon	S26		"$1,100 off"
-Verizon	S26		$550 off
-Verizon	S26		$1100 off
-Verizon	S26		$900 off
-Verizon	S26		$450 off
-Verizon	S26		$900 off
-Verizon	S26		$360 off
-Verizon	S26		$180 off
-AT&T	S26		$900 off
-AT&T	S26		$500 off
-Xfinity	S26		$500 off
-Xfinity	S26		Up to $900 off
-Xfinity	S26		$450 added to Trade-in value
-Spectrum	S26		Addtl $200 added to $1+ FMV
+  -- ── 1. Activations BOPIS | Actuals ──────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'Actuals'
+     AND LOWER(TRIM(Page)) = 'digital'
+     AND TRIM(DateContext) = 'Normal'
+     AND MetricID IN (
+         'ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital',
+         'ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital'
+     )
+    THEN Amount END)                                  AS activations_bopis_actuals,
+
+  -- ── 2. Activations BOPIS | QGP ──────────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'QGP'
+     AND LOWER(TRIM(Page)) = 'digital'
+     AND TRIM(DateContext) = 'Normal'
+     AND TRIM(MetricID) = 'ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital'
+    THEN Amount END)                                  AS activations_bopis_qgp,
+
+  -- ── 3. Digital Activations (New + AAL, No Assistance) | Actuals ─────────
+  SUM(CASE
+    WHEN INSTR(LOWER(TRIM(MetricName)), 'activations (new + aal') > 0
+     AND INSTR(LOWER(TRIM(MetricName)), 'no assistance') > 0
+     AND LOWER(TRIM(MetricType)) IN ('actuals', 'actuals/outlook')
+     AND LOWER(TRIM(MetricID)) = 'totaldigitalphoneactivationstmoandsprintglancetm1mapped'
+     AND LOWER(TRIM(Page)) = 'digital'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+    THEN Amount END)                                  AS activations_digital_actuals,
+
+  -- ── 4. Digital Activations (New + AAL, No Assistance) | QGP ────────────
+  SUM(CASE
+    WHEN INSTR(LOWER(TRIM(MetricName)), 'activations (new + aal') > 0
+     AND INSTR(LOWER(TRIM(MetricName)), 'no assistance') > 0
+     AND LOWER(TRIM(MetricType)) = 'qgp'
+     AND LOWER(TRIM(MetricID)) = 'totaldigitalphoneactivationstmoandsprintglancetm1mapped'
+     AND LOWER(TRIM(Page)) = 'digital'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+    THEN Amount END)                                  AS activations_digital_qgp,
+
+  -- ── 5. Store Traffic | Actuals/Outlook ──────────────────────────────────
+  SUM(CASE
+    WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+     AND LOWER(TRIM(MetricType)) = 'actuals/outlook'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+    THEN Amount END)                                  AS store_traffic_actuals,
+
+  -- ── 6. Store Traffic | QGP ──────────────────────────────────────────────
+  SUM(CASE
+    WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+     AND LOWER(TRIM(MetricType)) = 'qgp'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+    THEN Amount END)                                  AS store_traffic_qgp,
+
+  -- ── 7. VR Calls | Actuals ───────────────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'Actuals/Outlook'
+     AND MetricID = 'VRInboundCallsinclHSIAutomatedManual'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+    THEN Amount END)                                  AS vr_calls_actuals,
+
+  -- ── 8. VR Calls | QGP ───────────────────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'QGP'
+     AND MetricID = 'VRInboundCallsinclHSIAutomatedManual'
+     AND DisplayMetricType = 'QGP'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND LOWER(TRIM(Page)) = 'virtual retail'
+    THEN Amount END)                                  AS vr_calls_qgp,
+
+  -- ── 9. VR Chats | Actuals ───────────────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'Actuals/Outlook'
+     AND MetricID = 'VRChatsinclHSIAutomatedManual'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+    THEN Amount END)                                  AS vr_chats_actuals,
+
+  -- ── 10. VR Chats | QGP ──────────────────────────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'QGP'
+     AND MetricID = 'VRChatsinclHSIAutomatedManual'
+     AND DisplayMetricType = 'QGP'
+     AND LOWER(TRIM(Page)) = 'virtual retail'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+    THEN Amount END)                                  AS vr_chats_qgp,
+
+  -- ── 11. VR Postpaid Activations | Actuals ───────────────────────────────
+  SUM(CASE
+    WHEN INSTR(LOWER(TRIM(MetricName)), 'postpaid activations') > 0
+     AND LOWER(TRIM(MetricType)) = 'actuals/outlook'
+     AND LOWER(TRIM(MetricID)) = 'vrpostpaidactivationsinclvirtualbusinesstm1mapped'
+     AND LOWER(TRIM(Page)) = 'virtual retail outcomes 1'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+    THEN Amount END)                                  AS vr_postpaid_acts_actuals,
+
+  -- ── 12. VR Postpaid Activations | QGP ───────────────────────────────────
+  SUM(CASE
+    WHEN INSTR(LOWER(TRIM(MetricName)), 'postpaid activations') > 0
+     AND LOWER(TRIM(MetricType)) = 'qgp'
+     AND LOWER(TRIM(MetricID)) = 'vrpostpaidactivationsinclvirtualbusinesstm1mapped'
+     AND LOWER(TRIM(Page)) = 'virtual retail outcomes 1'
+    THEN Amount END)                                  AS vr_postpaid_acts_qgp,
+
+  -- ── 13. Digital % Phone New Acct Acts (No + Assisted) | Actuals ─────────
+  --   Version A — Digital Transformation NEW page
+  SUM(CASE
+    WHEN TRIM(Page) = 'Digital Transformation NEW'
+     AND TRIM(MetricType) IN ('Actuals', 'Actuals/Outlook')
+     AND TRIM(DateContext) = 'Normal'
+     AND TRIM(MetricID) = 'ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+    THEN Amount END)                                  AS digital_pct_new_acct_acts_v1_actuals,
+
+  --   Version B — Digital page
+  SUM(CASE
+    WHEN MetricType = 'Actuals/Outlook'
+     AND MetricID = 'DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND LOWER(TRIM(IsFuture)) = 'is past'
+     AND TRIM(Page) = 'Digital'
+    THEN Amount END)                                  AS digital_pct_new_acct_acts_v2_actuals,
+
+  -- ── 14. Digital % Phone New Acct Acts | QGP ─────────────────────────────
+  SUM(CASE
+    WHEN MetricType = 'QGP'
+     AND MetricID = 'DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW'
+     AND DisplayMetricType = 'QGP'
+     AND LOWER(TRIM(DateContext)) = 'normal'
+     AND TRIM(Page) = 'Digital'
+    THEN Amount END)                                  AS digital_pct_new_acct_acts_qgp,
+
+  -- ── 15. Digital % No Assistance | Activations ───────────────────────────
+  SUM(CASE
+    WHEN TRIM(Page) = 'Digital Transformation NEW'
+     AND TRIM(MetricType) IN ('Actuals', 'Actuals/Outlook')
+     AND TRIM(DateContext) = 'Normal'
+     AND TRIM(MetricID) = 'DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect'
+    THEN Amount END)                                  AS digital_pct_no_assistance_acts,
+
+  -- ── 16. Digital % Assisted | Activations ────────────────────────────────
+  SUM(CASE
+    WHEN TRIM(Page) = 'Digital Transformation NEW'
+     AND TRIM(MetricType) IN ('Actuals', 'Actuals/Outlook')
+     AND TRIM(DateContext) = 'Normal'
+     AND TRIM(MetricID) = 'NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect'
+    THEN Amount END)                                  AS digital_pct_assisted_acts
+
+FROM `prj-dbi-prd-1.ds_dbi_dataprep.qgpweeklyview_test`
+
+WHERE DateContext = 'Normal'          -- exclude WoW / QTR / PQWA / ROQ noise
+  AND WeekEnding IS NOT NULL
+
+GROUP BY WeekEnding
+ORDER BY WeekEnding DESC;
