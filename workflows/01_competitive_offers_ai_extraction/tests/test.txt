@@ -1,567 +1,265 @@
-Manifest and bronze tables ready.
-Data for 2026-06-19 already exists (run 854499ed-60ac-47d0-9182-0e02c663ad3b, file 'Competitive_Offer_Report_061926.pdf').
+Manifest, bronze, and review tables ready.
+Data for 2026-06-19 already exists (run 2b331711-ff7e-4779-b17e-aa33228769af, file 'Competitive_Offer_Report_061926.pdf').
 Choose how to proceed:
 Deleting existing data for 2026-06-19 ...
-[2b331711-ff7e-4779-b17e-aa33228769af] Opening Competitive_Offer_Report_061926.pdf ...
-[2b331711-ff7e-4779-b17e-aa33228769af] 36 pages found.
+[a786fea0-eba3-4064-9c3d-284db80e3f6a] Opening Competitive_Offer_Report_061926.pdf ...
+[a786fea0-eba3-4064-9c3d-284db80e3f6a] 36 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
-  page_type       : title_slide
+  page_type       : title_slide  (strategy: skip)
   image rendered  : False
   text preview    : 'Competitive Competitive Offer Offer Report Report\nJune 19, 2026\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confiden'
 
 --- Page 2 ---
   matched pattern : 'NOTICE OF CONFIDENTIALITY'
-  page_type       : confidentiality_notice
+  page_type       : confidentiality_notice  (strategy: skip)
   image rendered  : False
   text preview    : 'NOTICE OF CONFIDENTIALITY\nThe information contained within this document (or meeting) is\ndesignated T-Mobile Confidentia'
 
 --- Page 3 ---
   matched pattern : 'Table of Contents'
-  page_type       : toc
+  page_type       : toc  (strategy: skip)
   image rendered  : False
   text preview    : 'Table of Contents:\n▪CI Headlines – Postpaid & Prepaid.........................……………….....……\n5 & 6\n▪Major Competitive Off'
 
 --- Page 4 ---
   matched pattern : 'CI Headlines'
-  page_type       : section_divider
+  page_type       : section_divider  (strategy: skip)
   image rendered  : False
   text preview    : 'CI Headlines\nMCI\nMARKET &\nCHANNEL\n44\nINSIGHTS T-Mobile T-Mobile Confidential Confidential'
 
 --- Page 5 ---
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
-  page_type       : ci_headlines
+  page_type       : ci_headlines  (strategy: text_only)
   image rendered  : False
   text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES June 19, 2026\nPostpaid & Cable MVNO Key Highlights\n1. AT&T\n• No changes\n2. Verizon\n• '
 
 --- Page 6 ---
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
-  page_type       : ci_headlines
+  page_type       : ci_headlines  (strategy: text_only)
   image rendered  : False
   text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES June 19, 2026\nPrepaid & MVNO Key Highlights\n1. Cricket Wireless\n• BYOD Tips for U.S. '
 
 --- Page 7 ---
   matched pattern : 'Competitive Offer Updates'
-  page_type       : section_divider
+  page_type       : section_divider  (strategy: skip)
   image rendered  : False
   text preview    : 'Competitive Offer Updates\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confidential Confidential 7 7'
 
 --- Page 8 ---
   matched pattern : 'Major Offer Changes Effective'
-  page_type       : major_offer_changes
+  page_type       : major_offer_changes  (strategy: text_only)
   image rendered  : True
   text preview    : 'Major Offer Changes Effective June 19, 2026\n***TFB Offer Changes:\nReference Slide #20***\nPOSTPAID PREPAID\nOFFERS INTRODU'
 
 --- Page 9 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
-  page_type       : section_divider
+  page_type       : section_divider  (strategy: skip)
   image rendered  : False
   text preview    : 'Competitive Offers &\nPromotional Updates\nPostpaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential INSIGHTS 9'
 
 --- Page 10 ---
   matched pattern : 'Post-Paid Apple Smartphone Offers'
-  page_type       : postpaid_device_offers_apple
+  page_type       : postpaid_device_offers_apple  (strategy: image)
   image rendered  : True
   text preview    : '[COLUMN 1]\nPost-Paid Apple Smartphone Offers Effective\nVerizon\nSMARTPHONES T-Mobile\nAPPLE\n- Up to $250 $500 off select A'
 
 --- Page 11 ---
   matched pattern : 'Post-Paid Samsung and Google Smartphone Offers'
-  page_type       : postpaid_device_offers_samsung_google
+  page_type       : postpaid_device_offers_samsung_google  (strategy: image)
   image rendered  : True
   text preview    : "[COLUMN 1]\nPost-Paid\nSMARTPHONES\nANDROID FLAGSHIPS\n- Family Freedom:\n(phone trade-in req'd,\nAndroid Flagships\n- Keep & S"
 
 --- Page 12 ---
   matched pattern : 'Post-Paid Motorola, Affordable Phones and BYOD'
-  page_type       : postpaid_device_offers_motorola_affordable
+  page_type       : postpaid_device_offers_motorola_affordable  (strategy: image)
   image rendered  : True
   text preview    : "[COLUMN 1]\nPost-Paid\nSMARTPHONES\nANDROID FLAGSHIPS\n- Family Freedom:\n(phone trade-in req'd,\nAndroid Flagships\n- Keep & S"
 
 --- Page 13 ---
   matched pattern : 'Post-Paid BTS'
-  page_type       : postpaid_bts_offers
+  page_type       : postpaid_bts_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : '[COLUMN 1]\nPost-Paid BTS (Watches)\nT-Mobile\nAPPLE WATCHES: APPLE WATCHES:\nApple Watch SE 3: All Apple\n▪Discount:\n$300 of'
 
 --- Page 14 ---
   matched pattern : 'Post-Paid BTS'
-  page_type       : postpaid_bts_offers
+  page_type       : postpaid_bts_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : '[COLUMN 1]\nPost-Paid BTS (Tablet)\nT-Mobile\nApple iPads: Apple iPads:\nTablets\niPad (A16): • Discount:\n▪Discount: $400 off'
 
 --- Page 15 ---
   matched pattern : 'Post-Paid BTS'
-  page_type       : postpaid_bts_offers
+  page_type       : postpaid_bts_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : '[COLUMN 1]\nPost-Paid BTS & Other Offers\nT-Mobile\nCONNECTED CAR DEVICES: CONNECTED CAR DEVICES:\nDevices\n▪SYNCUP DRIVE: On'
 
 --- Page 16 ---
   matched pattern : 'Post-Paid Service Offers'
-  page_type       : postpaid_service_offers
+  page_type       : postpaid_service_offers  (strategy: text_only)
   image rendered  : True
   text preview    : 'T-Mobile & AT&T Post-Paid Service Offers Effective June 19, 2026\nBrands BYOD Wireless Service Target Segment Offers Valu'
 
 --- Page 17 ---
   matched pattern : 'Post-Paid Service Offers'
-  page_type       : postpaid_service_offers
+  page_type       : postpaid_service_offers  (strategy: text_only)
   image rendered  : True
   text preview    : 'Verizon Post-Paid Service Offers Effective June 19, 2026\nTarget Segment Value-Added\nBrand BYOD Wireless Service Home Int'
 
 --- Page 18 ---
   matched pattern : 'Postpaid Cable MVNO Handset Offers'
-  page_type       : cable_mvno_offers
+  page_type       : cable_mvno_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Postpaid Cable MVNO Handset Offers Effective June 19, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\n(36 mos. EIP) ('
 
 --- Page 19 ---
   matched pattern : 'Cable MVNO Service Pricing'
-  page_type       : cable_mvno_offers
+  page_type       : cable_mvno_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Cable MVNO Service Pricing & Offers Effective June 19, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\nUnlimited Data'
 
 --- Page 20 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
-  page_type       : business_device_offers
+  page_type       : business_device_offers  (strategy: image)
   image rendered  : True
   text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNew Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/'
 
 --- Page 21 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
-  page_type       : business_device_offers
+  page_type       : business_device_offers  (strategy: image)
   image rendered  : True
   text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNot combinable with other offers\n• $150 Activation Credit'
 
 --- Page 22 ---
   matched pattern : 'Business Internet Competitive Comparison'
-  page_type       : business_internet_comparison
-  image rendered  : False
+  page_type       : business_internet_comparison  (strategy: text_only)
+  image rendered  : True
   text preview    : 'Business Internet Competitive Comparison June 18, 2026\nT-Mobile Business Internet AT&T Internet Air for Business Verizon'
 
 --- Page 23 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: TFB Voice Plans\nWhy AT&T / Verizon can show lower than T-Mobile: At rack (list) rates T-Mobile i'
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive\nWhy AT&T / Verizon can\npromotions. AT&T’s $15/line\nwhile T-Mobile’s “3rd line\nRack Rate — full pr'
 
 --- Page 24 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: TFB Voice Plans for Switchers\nWhat changes for switching customers: At rack (top table) T-Mobile'
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive\nWhat changes for switching\nAT&T’s larger per-line discount\nkeeps Good (AT&T Standard\nnarrowing th'
 
 --- Page 25 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: Voice Plan Rack Rate\nWhy T-Mobile isn’t always lowest (rack): On list pricing T-Mobile becomes l'
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (rack): On list pricing T-Mobile\nfalls fastest with '
 
 --- Page 26 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: Voice Plan with Auto Pay\nWhy T-Mobile isn’t always lowest (after AutoPay): AT&T’s $10/line AutoP'
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay): AT&T’s $10/line\nAT&T matches or bea'
 
 --- Page 27 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: Voice Plan Fully Discounted\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions): With '
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions):\n3.0+/Premium plans car'
 
 --- Page 28 ---
   matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison
-  image rendered  : False
-  text preview    : 'Competitive Comparison: Voice Plan Fully Discounted for Switchers\nWhy T-Mobile isn’t always lowest (after AutoPay + prom'
+  page_type       : voice_plan_comparison  (strategy: text_only)
+  image rendered  : True
+  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions):\nSwitcher credit on top'
 
 --- Page 29 ---
   matched pattern : 'Key Highlights\\s*[-–]\\s*Week Ending'
-  page_type       : national_retail_readout
+  page_type       : national_retail_readout  (strategy: text_only)
   image rendered  : False
   text preview    : 'Key Highlights – Week Ending 6/19/26:\n• Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the'
 
 --- Page 30 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
-  page_type       : section_divider
+  page_type       : section_divider  (strategy: skip)
   image rendered  : False
   text preview    : 'Competitive Offers\n& Promotional\nUpdates\nPrepaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential 30\nINSIGHTS'
 
 --- Page 31 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
-  page_type       : prepaid_brand_offers
+  page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nC Metro by T-Mobile Boost Mobile Cricket\nNew Flex Plans: $40/10GB UNL, $40/UNL Period, $'
 
 --- Page 32 ---
   matched pattern : 'METRO BY T-MOBILE'
-  page_type       : prepaid_price_grid_detail
+  page_type       : prepaid_price_grid_detail  (strategy: text_only)
   image rendered  : True
   text preview    : 'METRO BY T-MOBILE Metro Price Grid 6.18.26\nNew Number Port New Number Port\nNo ID No ID w/ ID w/ ID\nAlways Level 1 Level '
 
 --- Page 33 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
-  page_type       : prepaid_brand_offers
+  page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nCc\nBOOST MOBILE CRICKET WIRELESS\nIn-Store PHONE OFFERS PORT or NEW LINE:\n• Selection of '
 
 --- Page 34 ---
   matched pattern : 'Flagship Brands/Prepaid\\s*[-–]\\s*Current Offers'
-  page_type       : prepaid_brand_offers
+  page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Flagship Brands/Prepaid – Current Offers\nT-Mobile Prepaid AT&T Prepaid Verizon Prepaid\nNew Plans (6/24/25) - $40/15GB, $'
 
 --- Page 35 ---
   matched pattern : 'Walmart\\s*[-–]\\s*Current Offers'
-  page_type       : prepaid_brand_offers
+  page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Walmart – Current Offers\nC3\nMetro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk\nRATE PL'
 
 --- Page 36 ---
   matched pattern : '(fallback: last page of deck)'
-  page_type       : closing_slide
+  page_type       : closing_slide  (strategy: skip)
   image rendered  : False
   text preview    : 'T-Mobile Confidential 36'
 
-[2b331711-ff7e-4779-b17e-aa33228769af] Wrote 36 rows to bronze.
-Text-only silver tables ready.
-[queried at 2026-07-09T21:46:10.843954 UTC]
+[a786fea0-eba3-4064-9c3d-284db80e3f6a] Wrote 36 rows to bronze.
+Silver ciHeadlines & nationalRetailReadout tables ready.
+Silver majorOfferChanges table ready.
+Silver voicePlanComparison table ready.
+Silver businessInternetComparison table ready.
+---------------------------------------------------------------------------
+BadRequest                                Traceback (most recent call last)
+<ipython-input-99-b00c38d0332c> in <cell line: 1642>()
+   1651         values_agree BOOL, llm_extraction_raw STRING, extracted_at TIMESTAMP
+   1652     )
+-> 1653 """).result()
+   1654 print("Silver prepaidPriceGridDetail table ready.")
+   1655 
 
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  business_device_offers               |  2 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  business_internet_comparison         |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  cable_mvno_offers                    |  2 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  ci_headlines                         |  2 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  closing_slide                        |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  confidentiality_notice               |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  major_offer_changes                  |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  national_retail_readout              |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  postpaid_bts_offers                  |  3 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  postpaid_device_offers_apple         |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  postpaid_service_offers              |  2 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  prepaid_brand_offers                 |  4 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  prepaid_price_grid_detail            |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  section_divider                      |  4 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  title_slide                          |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  toc                                  |  1 page(s)
-2026-06-19  |  run_id 854499ed-60ac-47d0-9182-0e02c663ad3b  |  voice_plan_comparison                |  6 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  business_device_offers               |  2 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  cable_mvno_offers                    |  2 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  ci_headlines                         |  2 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  closing_slide                        |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  confidentiality_notice               |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  major_offer_changes                  |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  national_retail_readout              |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  postpaid_bts_offers                  |  3 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  postpaid_device_offers_apple         |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  postpaid_service_offers              |  2 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  prepaid_brand_offers                 |  4 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  prepaid_price_grid_detail            |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  section_divider                      |  4 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  title_slide                          |  1 page(s)
-2026-05-29  |  run_id 66d0eebf-ee3f-452f-97a2-b2406625f177  |  toc                                  |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  business_device_offers               |  2 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  cable_mvno_offers                    |  2 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  ci_headlines                         |  2 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  confidentiality_notice               |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  major_offer_changes                  |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  postpaid_bts_offers                  |  3 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  postpaid_device_offers_apple         |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  postpaid_device_offers_motorola_affordable  |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  postpaid_device_offers_samsung_google  |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  postpaid_service_offers              |  2 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  prepaid_brand_offers                 |  4 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  prepaid_price_grid_detail            |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  section_divider                      |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  title_slide                          |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  toc                                  |  1 page(s)
-2026-05-08  |  run_id 562e5abe-fcb5-4316-a9a7-fff8ef9111fe  |  unclassified                         |  5 page(s)
-Silver postpaidDeviceOffers table ready.
-Review table ready.
-Silver carrierOfferGrid table ready.
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in result(self, page_size, max_results, retry, timeout, start_index, job_retry)
+   1771                 # Since is_job_done() calls jobs.getQueryResults, which is a
+   1772                 # long-running API, don't delay the next request at all.
+-> 1773                 while not is_job_done():
+   1774                     pass
+   1775             else:
 
-[2b331711-ff7e-4779-b17e-aa33228769af] Carrier grid (text-first) extraction starting...
+4 frames
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in is_job_done()
+   1720                         # `job_retry` predicate.
+   1721                         restart_query_job = True
+-> 1722                         raise job_failed_exception
+   1723                     else:
+   1724                         # Make sure that the _query_results are cached so we
 
---- Page 13 (postpaid_bts_offers) ---
-  extracted 33 records (11 flagged for review)
-  33 record(s): 22 OK, 11 flagged
-  --- flagged, full detail ---
-    [CHECK] Verizon: Apple Watches — 'Up to $450 off'
-       nearby source text: ...OGO: $400 Flagship Pixel Watch • BOGO: $450 Watches CHILDREN’S & SENIOR’S CONNECTED WATCHES: CHILDREN’S Other ▪SYNCUP KIDS Watch 2: On Us ($174 off) – w/ AAL & $10 plan ▪amiGO TRACKERS: ▪Syn...
-    [CHECK] Verizon: Apple Watch SE2 — 'Up to $500 off'
-       nearby source text: ... plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10, SE3, 11, Ultra 2 & Ultra 3: to $300 off w/ AAL or UPG, Trade & min. $15 plan WATCHES: Watc...
-    [CHECK] Verizon: Apple Watch S10 — 'Up to $500 off'
-       nearby source text: ... plan purchase UPDATED 6/18 Up to $120 $500 off w/ BTS AAL, min. $15 plan purchase UPDATED 6/18 10, SE3, 11, Ultra 2 & Ultra 3: to $300 off w/ AAL or UPG, Trade & min. $15 plan WATCHES: Watc...
-    [CHECK] Verizon: Apple Watch Series 10 — 'Up to $300 off'
-       nearby source text: ...Apple Watch SE 3: All Apple ▪Discount: $300 off w/ AAL & $15 plan • Discount: Select Apple Apple Watch S11: Addtl Credits ▪Discount: No offer Smartwatches Watch SE3 Watch SE3 All Apple Watch...
-    [CHECK] Verizon: Apple Watch SE3 — 'Up to $300 off'
-       nearby source text: ...Apple Watch SE 3: All Apple ▪Discount: $300 off w/ AAL & $15 plan • Discount: Select Apple Apple Watch S11: Addtl Credits ▪Discount: No offer Smartwatches Watch SE3 Watch SE3 All Apple Watch...
-    [CHECK] Verizon: Apple Watch Series 11 — 'Up to $300 off'
-       nearby source text: ...Apple Watch SE 3: All Apple ▪Discount: $300 off w/ AAL & $15 plan • Discount: Select Apple Apple Watch S11: Addtl Credits ▪Discount: No offer Smartwatches Watch SE3 Watch SE3 All Apple Watch...
-    [CHECK] Verizon: Apple Watch Ultra 2 — 'Up to $300 off'
-       nearby source text: ...Apple Watch SE 3: All Apple ▪Discount: $300 off w/ AAL & $15 plan • Discount: Select Apple Apple Watch S11: Addtl Credits ▪Discount: No offer Smartwatches Watch SE3 Watch SE3 All Apple Watch...
-    [CHECK] Verizon: Apple Watch Ultra 3 — 'Up to $300 off'
-       nearby source text: ...Apple Watch SE 3: All Apple ▪Discount: $300 off w/ AAL & $15 plan • Discount: Select Apple Apple Watch S11: Addtl Credits ▪Discount: No offer Smartwatches Watch SE3 Watch SE3 All Apple Watch...
-    [CHECK] Verizon: Pixel Watch 2 — 'Up to $450 off'
-       nearby source text: ...OGO: $400 Flagship Pixel Watch • BOGO: $450 Watches CHILDREN’S & SENIOR’S CONNECTED WATCHES: CHILDREN’S Other ▪SYNCUP KIDS Watch 2: On Us ($174 off) – w/ AAL & $10 plan ▪amiGO TRACKERS: ▪Syn...
-    [CHECK] Verizon: Pixel Watch 3 — 'Up to $450 off'
-       nearby source text: ...OGO: $400 Flagship Pixel Watch • BOGO: $450 Watches CHILDREN’S & SENIOR’S CONNECTED WATCHES: CHILDREN’S Other ▪SYNCUP KIDS Watch 2: On Us ($174 off) – w/ AAL & $10 plan ▪amiGO TRACKERS: ▪Syn...
-    [CHECK] Verizon: Pixel Watch 4 — 'Up to $450 off'
-       nearby source text: ...OGO: $400 Flagship Pixel Watch • BOGO: $450 Watches CHILDREN’S & SENIOR’S CONNECTED WATCHES: CHILDREN’S Other ▪SYNCUP KIDS Watch 2: On Us ($174 off) – w/ AAL & $10 plan ▪amiGO TRACKERS: ▪Syn...
-  --- sample of OK rows (3 of 22) ---
-    [OK] T-Mobile: Apple Watch SE 3 — $300 off
-    [OK] T-Mobile: All Apple Watches (Current and N-1 generations) — $300 off
-    [OK] T-Mobile: Galaxy Watches — Up to $400 off
+BadRequest: 400 Syntax error: Expected ")" or "," but got integer literal "40" at [6:1]; reason: invalidQuery, location: query, message: Syntax error: Expected ")" or "," but got integer literal "40" at [6:1]
 
---- Page 14 (postpaid_bts_offers) ---
-  extracted 16 records (1 flagged for review)
-  16 record(s): 15 OK, 1 flagged
-  --- flagged, full detail ---
-    [CHECK] Verizon: Galaxy Tab S10 FE 5G — 'Up to $600 off'  (tier: Any BTS plan)
-       nearby source text: ...9+: ▪Bundle 5G Android S10 FE: ▪Trade: $600 ▪Discount: S10+: Galaxy Tab • Trade: $600 • Bundle phone purchase • Discount: [COLUMN 3] 2026 $20 Welcome Verizon $40 Unlimited $50 Unlimited Plus...
-  --- sample of OK rows (3 of 15) ---
-    [OK] T-Mobile: iPad (A16) — $400 off
-    [OK] T-Mobile: Galaxy Tab S10 FE 5G — 50% off ($300 off)
-    [OK] T-Mobile: Galaxy Tab A11+ 5G — On Us ($290 off)
+Location: US
+Job ID: d8ab2527-3658-4f1c-8bf8-24364cdcb0d4
 
---- Page 15 (postpaid_bts_offers) ---
-  extracted 9 records (0 flagged for review)
-  9 record(s): 9 OK, 0 flagged
-  --- sample of OK rows (3 of 9) ---
-    [OK] T-Mobile: SYNCUP DRIVE — On Us
-    [OK] T-Mobile: IN-CAR WI-FI PLANS (UNL DATA W/22GB FUT) — $15/month
-    [OK] T-Mobile: BTS BYOD PIC — $100 Virtual Prepaid Mastercard
 
---- Page 18 (cable_mvno_offers) ---
-  extracted 105 records (105 flagged for review)
-  105 record(s): 93 OK, 12 flagged
-  --- flagged, full detail ---
-    [CHECK] Optimum Mobile: GS26 Series — '$500 off'  (tier: UNL Max)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Optimum Mobile: iPhone 17 Series — '$800 off'  (tier: UNL)
-       nearby source text: ... S26/S25/Z Series: – 4/22 $200 – TBD) ($800/UNL) & EIP – or $400 no-trade/Max (9/12 $1100 – 11/10 <$1100 <$900 off new/existing w/Trade & Mobile Plus – or ▪Pixel 10 Series: FRP discounts – $...
-    [CHECK] Xfinity Mobile: Galaxy S26 Series — '$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: Galaxy S25 Series — '$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: Galaxy Z Series — '$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: A26 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: A36 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: A37 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: moto g stylus '25 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: moto g stylus '26 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: moto edge — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-    [CHECK] Xfinity Mobile: moto g play '26 — '>$500 off'  (tier: Mobile Plus)
-       nearby source text: ...200 off FRP (6/2 – 9/1) ▪GS26 Series – $500/$600/$700 off no-trade/UNL Max or $200 addt’l for existing w/trade & Select Mobile Plus – or ▪S26 Series - $400 $300 off w/ EIP or pay in full; GS...
-  --- sample of OK rows (3 of 93) ---
-    [OK] Optimum Mobile: GS26 Series — $600 off
-    [OK] Optimum Mobile: GS26 Series — $700 off
-    [OK] Optimum Mobile: GS26 Series — $200 addt’l
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+<ipython-input-100-5e67dc139f7c> in <cell line: 2>()
+      1 # run_text_only_extraction(run_id="854499ed-60ac-47d0-9182-0e02c663ad3b", report_date=date(2026, 6, 19))
+----> 2 run_all_stage2_extractions(run_id="a786fea0-eba3-4064-9c3d-284db80e3f6a", report_date=date(2026, 6, 19))
 
---- Page 19 (cable_mvno_offers) ---
-  extracted 34 records (34 flagged for review)
-  34 record(s): 31 OK, 3 flagged
-  --- flagged, full detail ---
-    [CHECK] Optimum Mobile: Unlimited Max Plan — '$55/mo.'
-       nearby source text: ...ile Plus: $45 – ▪$45/mo. UNL (20GB) or $55 UNL Max (50GB) UNL including international, 50GB hotspot before $30/line (throttle at 20GB 30GB), international text, 2k mins ▪6/6/22 – New UNL mul...
-    [CHECK] Xfinity Mobile: Unlimited Mobile Line — 'Free for 1 year'
-       nearby source text: ...Service Pricing & Offers Effective June 19, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2...
-    [CHECK] Xfinity Mobile: Unlimited Mobile Line — 'Free for 2 years'
-       nearby source text: ...ice Pricing & Offers Effective June 19, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ pr...
-  --- sample of OK rows (3 of 31) ---
-    [OK] Optimum Mobile: Unlimited Plan — $45/mo.
-    [OK] Optimum Mobile: Unlimited Plan — $15 off per line
-    [OK] Optimum Mobile: Unlimited Plan — $20 off per line
-
---- Page 20 (business_device_offers) ---
-    (response was truncated — recovered 196 record(s) before the cutoff)
-  (removed 8 exact-duplicate record(s) from model response)
-  extracted 188 records (29 flagged for review)
-  188 record(s): 159 OK, 29 flagged
-  --- flagged, full detail ---
-    [CHECK] AT&T: S25+ — '< $799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: Ultra — '< $799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: Edge — '< $799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: S25 — '<$799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: S25+ — '<$799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: Edge — '<$799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] AT&T: Ultra — '<$799.99 off'
-       nearby source text: ...ffers: New Line • S25+, Ultra, Edge: < $799.99 higher No-Trade Offers: New Line S25, S25+, Edge, or Ultra: <$799.99 [COLUMN 3] Verizon Requires Business Plus: <$830 off w/My Biz & $$20 With ...
-    [CHECK] Verizon: 17 — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: 17 Pro Max — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: Pro — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: Air — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: Plus — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: 16 — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: 16 Pro Max — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Verizon: S26 Ultra — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: S26+ — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: S26 — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: S25 — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: S25+ — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: Edge — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Verizon: Ultra — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Comcast: 17 — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Comcast: Pro — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Comcast: Max — '>$830 off'
-       nearby source text: ...1,100 off w/ Adv Unl or higher (FMV • <$830 off w/ ProMobile or SuperMobile • <$630 off w/ CoreMobile • < $700 off w/ Adv Unl or higher (FMV $130+) • <$500 w/ Standard Unl or higher (FMV New...
-    [CHECK] Comcast: S26+ — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Comcast: S26 Ulta — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Comcast: S25 — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Comcast: S25+ — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-    [CHECK] Comcast: Edge — '>$900 off'
-       nearby source text: ...Offers for New Line . • S26 Ultra/S26+: 900 off w/ $95+) No-Trade Offers for New Line • S26 Ultra/S26+/26: $900 off w/ new device through 6/25 Trade Offers: New Line • S25+, Ultra, Edge: < $...
-  --- sample of OK rows (3 of 159) ---
-    [OK] T-Mobile: 17 — <$1.1k off
-    [OK] T-Mobile: 17e — <$1.1k off
-    [OK] T-Mobile: AIR — <$1.1k off
-
---- Page 21 (business_device_offers) ---
-    (response was truncated — recovered 13 record(s) before the cutoff)
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 12 records (1 flagged for review)
-  12 record(s): 11 OK, 1 flagged
-  --- flagged, full detail ---
-    [CHECK] T-Mobile: EIP Device — '$100/Line'
-       nearby source text: ...ation Credit (with 10 for $200 plan) • $100/line (15 lines min) W/ port-in SuperMobile or higher 10 bill credits • $200/line with Port on CoreMobile or higher 06/18/2026 New • $1000/line (20...
-  --- sample of OK rows (3 of 11) ---
-    [OK] T-Mobile: Business Plan — $150
-    [OK] T-Mobile: SuperMobile — $100/line
-    [OK] T-Mobile: CoreMobile — $200/line
-
---- Page 31 (prepaid_brand_offers) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 72 records (22 flagged for review)
-  72 record(s): 50 OK, 22 flagged
-  --- flagged, full detail ---
-    [CHECK] Metro by T-Mobile: New Flex Plan $50 UNL — '$50/UNL'
-       nearby source text: ...x Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year pri...
-    [CHECK] Metro by T-Mobile: New Flex Plan $60 UNL — '$60/UNL'
-       nearby source text: ...$40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guaran...
-    [CHECK] Metro by T-Mobile: $55 UNL Plan — '$55/UNL'
-       nearby source text: ...te Plans: $35/5GB, $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps • Smart UNL $50 – 15GB hot...
-    [CHECK] Metro by T-Mobile: $65 UNL Plan — '$65/UNL'
-       nearby source text: ..., $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps • Smart UNL $50 – 15GB hotspot, Mex/Can, 10...
-    [CHECK] Metro by T-Mobile: 4 Lines Plan — '4 lines for $100'
-       nearby source text: ...e Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay p...
-    [CHECK] Metro by T-Mobile: $50 UNL Plus Plan — '$50/month'
-       nearby source text: ...x Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year pri...
-    [CHECK] Metro by T-Mobile: HINT — '$45/month with autopay'
-       nearby source text: ...calls/texts Other Rate Plans: $35/5GB, $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps • Smar...
-    [CHECK] Metro by T-Mobile: HINT for Metro Contract Freedom Service — 'up to $750'
-       nearby source text: ...ng customer/referral with limit 10 per $750 (5/10 $500 – 12/16 $750 -) 4 lines / $100 (reg. $50) for New Lines or Port/Dish network– In store only (11/22/23 –…) year; issued after 60 days se...
-    [CHECK] Boost Mobile: Sensible Plan — '$35/10GB'
-       nearby source text: ...(4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensible $35 plan/10GB plan – no benefits...
-    [CHECK] Boost Mobile: $25 BYO Plan — '$25 with autopay'
-       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
-    [CHECK] Boost Mobile: 4 Lines Plan — '4 lines for $100'
-       nearby source text: ...e Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay p...
-    [CHECK] Boost Mobile: Family Connect Plan — '4 lines for $120'
-       nearby source text: ...e Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay p...
-    [CHECK] Boost Mobile: BYO UNL Plan — '$25/Mo. w/autopay'
-       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
-    [CHECK] Boost Mobile: $25 UNL BYO Plan — "$25/month 'forever'"
-       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
-    [CHECK] Boost Mobile: BYO Plan — '$10/month for first 3 months'
-       nearby source text: ...oost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pric...
-    [CHECK] Boost Mobile: BYO AAL on $25 UNL Plan — 'First month free'
-       nearby source text: ...ds – Current Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) ...
-    [CHECK] Boost Mobile: Unlimited Multi-month Plan — '$45 for 1st 3 months'
-       nearby source text: ...calls/texts Other Rate Plans: $35/5GB, $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps • Smar...
-    [CHECK] Boost Mobile: Unlimited Multi-month Plan — '$240 for 12-months'
-       nearby source text: ...y 2021) 12/6 $276 – 1/10 300 - 4/30/26 $240 in-store – 5/25) • JEXtream RG2100 5G Hotspot $99 req /new BTS line (4/24/25 - ) • Galaxy Watch7 ($150 off) & Watch8 ($100 off) w/ $10 watch plan ...
-    [CHECK] Boost Mobile: $25 UNL Plan — '$9.99/mo. for 5 months'
-       nearby source text: ...es incl, >$400 off • HINT Gateway FRP $49 (8/28/25) …was $249; new gateway $0 (2/26/26 - ) phones - 6/11/25 taxes extra (7/17/24 - ) Upgrade policy – changed from 180 days to 365 days (1/6/2...
-    [CHECK] Boost Mobile: Simply Data Plan — '$55/200GB'
-       nearby source text: ...te Plans: $35/5GB, $45/10GB (+2GB hs), $55UNL (8GB hs), $65UNL THROTTLING ON NEW LINES: throttling to 512 Kbps after high-speed data allotment is used vs. 128 Kbps • Smart UNL $50 – 15GB hot...
-    [CHECK] Boost Mobile: Simply Data Plan — '$90/300GB'
-       nearby source text: ... ) 12/26/25 Watches removed – returned $90/150GB 300GB promo (4/20 – TBD) 2/12/26 – removed 2/25; only Android online • Galaxy Tab S10 FE ($599) $300 off or Celero5G Tab ($199) $100 off $150...
-    [CHECK] Cricket Wireless: Referral Program — '$25 for referring customer, $25 for referral'
-       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
-  --- sample of OK rows (3 of 50) ---
-    [OK] Metro by T-Mobile: New Flex Plan $40/10GB UNL — $40/10GB
-    [OK] Metro by T-Mobile: New Flex Plan $40/UNL Period — $40/UNL
-    [OK] Metro by T-Mobile: $35/5GB Plan — $35/5GB
-
---- Page 33 (prepaid_brand_offers) ---
-  (removed 9 exact-duplicate record(s) from model response)
-  extracted 80 records (0 flagged for review)
-  80 record(s): 80 OK, 0 flagged
-  --- sample of OK rows (3 of 80) ---
-    [OK] Boost Mobile: iPhone 15 — $399.99
-    [OK] Boost Mobile: iPhone 16e — $99
-    [OK] Boost Mobile: iPhone 16e — FREE
-
---- Page 34 (prepaid_brand_offers) ---
-  extracted 50 records (8 flagged for review)
-  50 record(s): 42 OK, 8 flagged
-  --- flagged, full detail ---
-    [CHECK] T-Mobile Prepaid: A17 — 'On Us'
-       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
-    [CHECK] T-Mobile Prepaid: TCL Flip4 5G — 'On Us'
-       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
-    [CHECK] T-Mobile Prepaid: Data Add-On — '$10/1GB'
-       nearby source text: ...tspot, talk/text Mex/Can, intl text $80/100GB, $100/150GB. Mexico/Canada usage, 100GB AT&T Personal Cloud, unlimited international text, and - Greater multi-line discounts: $30 off for each ...
-    [CHECK] AT&T Prepaid: A16 — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: A15 — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: other Androids — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: Galaxy A17 5G — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] Verizon Prepaid: iPhone 16e — '$250 off + $100 back'  (tier: Online)
-       nearby source text: ...99 – 1/9 $399 - 2/6 o iPhone 16e $349 ($250 off) + 100 back ($10 x 10mos) w/ NL on any UNL $30/10day/20GB hotspot, $35/14day/28GB hotspot, $299 – 3/16 $99 – 4/20 $199 - ) $50/30day/50GB hots...
-  --- sample of OK rows (3 of 42) ---
-    [OK] T-Mobile Prepaid: BYOD — free SIM card
-    [OK] T-Mobile Prepaid: Data Plan — $30 off
-    [OK] T-Mobile Prepaid: Student UNL Plan — $25
-
---- Page 35 (prepaid_brand_offers) ---
-  extracted 84 records (1 flagged for review)
-  84 record(s): 83 OK, 1 flagged
-  --- flagged, full detail ---
-    [CHECK] Total Wireless: BYO UNL Forever — 'first 3mos for $10'
-       nearby source text: ...Walmart – Current Offers C3 Metro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk RATE PLANS: RATE PLANS: $30/10GB, $35/Select, RATE PLANS: WM Pl...
-  --- sample of OK rows (3 of 83) ---
-    [OK] Metro by T-Mobile: A17 5G — $0
-    [OK] Metro by T-Mobile: moto g power ’26 — $0
-    [OK] Metro by T-Mobile: Galaxy A17 5G — $0
-
-[2b331711-ff7e-4779-b17e-aa33228769af] Wrote 683 rows to silver carrierOfferGrid (prior rows for this date cleared first).
-[2b331711-ff7e-4779-b17e-aa33228769af] Flagged 212 row(s) for review.
-  Breakdown: amount_mismatch=73, new_carrier=139
+NameError: name 'run_all_stage2_extractions' is not defined
