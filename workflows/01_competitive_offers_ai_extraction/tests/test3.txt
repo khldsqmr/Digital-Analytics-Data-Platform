@@ -26,3 +26,196 @@ SELECT metric_name, COUNT(*) AS n
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly`
 GROUP BY metric_name
 ORDER BY n DESC;
+
+
+
+offer_type	n
+discount	466
+trade-in credit	444
+Discount	380
+Trade-in	270
+Trade-in credit	178
+Trade-in Credit	163
+Discount	155
+discount	50
+EIP Buyout	40
+trade-in	37
+bill credit	34
+EIP Payoff	33
+Trade Offer	30
+credit	22
+Free	21
+added trade-in value	18
+Discounted Price	16
+Plan Pricing	15
+Plan Offer	15
+Gift Card	13
+Bundle Discount	11
+Trade-in	10
+Bill Credit	10
+Device Offer	10
+upgrade	9
+EIP payoff	8
+Device Discount	7
+port-in	7
+Credit	5
+Device on Us	5
+Device Price	4
+BOGO	4
+Multi-line Discount	4
+Bundle	4
+New Line Credit	3
+Add-on	3
+Family Plan	3
+EIP buyout	3
+Bundle Offer	3
+BYO Offer	3
+Free Trial	2
+Referral Bonus	2
+Trade	2
+Reward Card	2
+Student Offer	2
+Waived Fee	2
+International Roaming	2
+port-in credit	2
+Port-in Credit	2
+Discount + Bill Credits	2
+Trade-in Offer	2
+Plan Price	2
+Free Device	2
+Free Item	2
+Loyalty Program	1
+Rebate	1
+Mastercard	1
+incentive	1
+Reimbursement	1
+AAL	1
+AAL Offer	1
+Rebate	1
+Referral	1
+Autopay Discount	1
+Upgrade	1
+Free Trial	1
+Internet Service	1
+Activation Credit	1
+Fee Waiver	1
+Free Line	1
+Military Offer	1
+Switcher Offer	1
+Bill Payoff	1
+
+
+
+report_date	offer_type	n
+2026-06-19	discount	179
+2026-06-19	Discount	155
+2026-06-19	Trade-in	139
+2026-06-19	trade-in credit	115
+2026-06-19	Discount	69
+2026-06-19	discount	50
+2026-06-19	trade-in	37
+2026-06-19	EIP Buyout	32
+2026-06-19	EIP Payoff	31
+2026-06-19	Free	21
+2026-06-19	Discounted Price	16
+2026-06-19	credit	15
+2026-06-19	Plan Offer	15
+2026-06-19	Plan Pricing	15
+2026-06-19	Bundle Discount	11
+2026-06-19	Bill Credit	10
+2026-06-19	Device Offer	10
+2026-06-19	Trade-in	10
+2026-06-19	bill credit	10
+2026-06-19	upgrade	9
+2026-06-19	Device Discount	7
+2026-06-19	port-in	7
+2026-06-19	Gift Card	6
+2026-06-19	Device on Us	5
+2026-06-19	Bundle	4
+2026-06-19	BOGO	4
+2026-06-19	Multi-line Discount	4
+2026-06-19	Device Price	4
+2026-06-19	BYO Offer	3
+2026-06-19	Bundle Offer	3
+2026-06-19	Add-on	3
+2026-06-19	Family Plan	3
+2026-06-19	Free Trial	2
+2026-06-19	Free Device	2
+2026-06-19	Student Offer	2
+2026-06-19	Trade	2
+2026-06-19	Waived Fee	2
+2026-06-19	Referral Bonus	2
+2026-06-19	International Roaming	2
+2026-06-19	Reward Card	2
+2026-06-19	Discount + Bill Credits	2
+2026-06-19	Plan Price	2
+2026-06-19	Free Item	2
+2026-06-19	Switcher Offer	1
+2026-06-19	Rebate	1
+2026-06-19	Fee Waiver	1
+2026-06-19	Autopay Discount	1
+2026-06-19	Bill Payoff	1
+2026-06-19	Free Trial	1
+2026-06-19	Internet Service	1
+2026-06-19	AAL	1
+2026-06-19	AAL Offer	1
+2026-06-19	Referral	1
+2026-06-19	Reimbursement	1
+2026-06-19	Loyalty Program	1
+2026-06-19	Military Offer	1
+2026-06-19	Activation Credit	1
+2026-06-19	Free Line	1
+2026-06-19	Rebate	1
+2026-05-29	trade-in credit	329
+2026-05-29	Discount	311
+2026-05-29	discount	287
+2026-05-29	Trade-in credit	178
+2026-05-29	Trade-in Credit	163
+2026-05-29	Trade-in	131
+2026-05-29	Trade Offer	30
+2026-05-29	bill credit	24
+2026-05-29	added trade-in value	18
+2026-05-29	EIP payoff	8
+2026-05-29	EIP Buyout	8
+2026-05-29	Gift Card	7
+2026-05-29	credit	7
+2026-05-29	Credit	5
+2026-05-29	EIP buyout	3
+2026-05-29	New Line Credit	3
+2026-05-29	EIP Payoff	2
+2026-05-29	Trade-in Offer	2
+2026-05-29	port-in credit	2
+2026-05-29	Port-in Credit	2
+2026-05-29	Mastercard	1
+2026-05-29	incentive	1
+2026-05-29	Upgrade	1
+
+
+category	n
+Wireless Service	17
+Target Segment Offers	16
+Value-Added Services	12
+Home Internet	8
+5G News	4
+Brands	4
+BYOD	4
+Brand	3
+
+
+metric_name	n
+Priority Data	6
+Rack Rate MRC	6
+Promo Volume Limits	6
+Max Credit per Line	6
+AutoPay Discount/Month	6
+Install Type	6
+Bandwidth	6
+Data	6
+Promotional Rate without Wireless	6
+ETF / Switch Credit	6
+Connection Charge	6
+Price Guarantee	6
+Bundle Credit/Month	6
+Promotional Rate with Wireless	6
+Free Trial Period	6
+Device Included	6
