@@ -110,3 +110,72 @@ Traceback (most recent call last):
   File "/usr/lib/python3.10/sre_parse.py", line 669, in _parse
     raise source.error("nothing to repeat",
 re.error: nothing to repeat at position 6
+  FAILED: error: nothing to repeat at position 6
+
+--- Page 26 ---
+Traceback (most recent call last):
+  File "<ipython-input-108-18bcc0b05d64>", line 1743, in run_voice_plan_extraction
+    rows, review = extract_voice_plan_comparison(page["page_number"], page["text_extraction_raw"], report_date, run_id)
+  File "<ipython-input-108-18bcc0b05d64>", line 1714, in extract_voice_plan_comparison
+    price_ok = numeric_present_in_text(r.get("price"), page_text)
+  File "<ipython-input-108-18bcc0b05d64>", line 787, in numeric_present_in_text
+    re.findall(r"[<>]?$?[\d,]+\.?\d*k?", normalized_source, re.IGNORECASE)}
+  File "/usr/lib/python3.10/re.py", line 240, in findall
+    return _compile(pattern, flags).findall(string)
+  File "/usr/lib/python3.10/re.py", line 303, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.10/sre_compile.py", line 788, in compile
+    p = sre_parse.parse(p, flags)
+  File "/usr/lib/python3.10/sre_parse.py", line 955, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.10/sre_parse.py", line 444, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.10/sre_parse.py", line 669, in _parse
+    raise source.error("nothing to repeat",
+re.error: nothing to repeat at position 6
+  FAILED: error: nothing to repeat at position 6
+
+--- Page 27 ---
+Traceback (most recent call last):
+  File "<ipython-input-108-18bcc0b05d64>", line 1743, in run_voice_plan_extraction
+    rows, review = extract_voice_plan_comparison(page["page_number"], page["text_extraction_raw"], report_date, run_id)
+  File "<ipython-input-108-18bcc0b05d64>", line 1714, in extract_voice_plan_comparison
+    price_ok = numeric_present_in_text(r.get("price"), page_text)
+  File "<ipython-input-108-18bcc0b05d64>", line 787, in numeric_present_in_text
+    re.findall(r"[<>]?$?[\d,]+\.?\d*k?", normalized_source, re.IGNORECASE)}
+  File "/usr/lib/python3.10/re.py", line 240, in findall
+    return _compile(pattern, flags).findall(string)
+  File "/usr/lib/python3.10/re.py", line 303, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.10/sre_compile.py", line 788, in compile
+    p = sre_parse.parse(p, flags)
+  File "/usr/lib/python3.10/sre_parse.py", line 955, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.10/sre_parse.py", line 444, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.10/sre_parse.py", line 669, in _parse
+    raise source.error("nothing to repeat",
+re.error: nothing to repeat at position 6
+  FAILED: error: nothing to repeat at position 6
+
+--- Page 28 ---
+Traceback (most recent call last):
+  File "<ipython-input-108-18bcc0b05d64>", line 1743, in run_voice_plan_extraction
+    rows, review = extract_voice_plan_comparison(page["page_number"], page["text_extraction_raw"], report_date, run_id)
+  File "<ipython-input-108-18bcc0b05d64>", line 1714, in extract_voice_plan_comparison
+    price_ok = numeric_present_in_text(r.get("price"), page_text)
+  File "<ipython-input-108-18bcc0b05d64>", line 787, in numeric_present_in_text
+    re.findall(r"[<>]?$?[\d,]+\.?\d*k?", normalized_source, re.IGNORECASE)}
+  File "/usr/lib/python3.10/re.py", line 240, in findall
+    return _compile(pattern, flags).findall(string)
+  File "/usr/lib/python3.10/re.py", line 303, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/usr/lib/python3.10/sre_compile.py", line 788, in compile
+    p = sre_parse.parse(p, flags)
+  File "/usr/lib/python3.10/sre_parse.py", line 955, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/usr/lib/python3.10/sre_parse.py", line 444, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/usr/lib/python3.10/sre_parse.py", line 669, in _parse
+    raise source.error("nothing to repeat",
+re.error: nothing to repeat at position 6
