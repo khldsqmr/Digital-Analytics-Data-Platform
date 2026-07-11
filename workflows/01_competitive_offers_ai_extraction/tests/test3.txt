@@ -1,14 +1,14 @@
-
-Manifest, bronze, and review tables ready.
-No existing data for 2026-06-19. Proceeding.
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Opening Competitive_Offer_Report_061926.pdf ...
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] 36 pages found.
+Data for 2026-05-29 already exists (run 0350152e-0de4-435e-b104-980dabb21343, file 'Competitive_Offer_Report_052926.pdf').
+Choose how to proceed:
+Deleting existing data for 2026-05-29 ...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Opening Competitive_Offer_Report_052926.pdf ...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] 29 pages found.
 
 --- Page 1 ---
   matched pattern : '(fallback: first page of deck)'
   page_type       : title_slide  (strategy: skip)
   image rendered  : False
-  text preview    : 'Competitive Competitive Offer Offer Report Report\nJune 19, 2026\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confiden'
+  text preview    : 'Competitive Competitive Offer Offer Report Report\nMay 29, 2026\nMCI\nMARKET &\nCHANNEL\nINSIGHTS T-Mobile T-Mobile Confident'
 
 --- Page 2 ---
   matched pattern : 'NOTICE OF CONFIDENTIALITY'
@@ -32,13 +32,13 @@ No existing data for 2026-06-19. Proceeding.
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
   page_type       : ci_headlines  (strategy: text_only)
   image rendered  : False
-  text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES June 19, 2026\nPostpaid & Cable MVNO Key Highlights\n1. AT&T\n• No changes\n2. Verizon\n• '
+  text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026\nPostpaid & Cable MVNO Key Highlights\n1. AT&T\n• Build-A-Plan to Launch 5/'
 
 --- Page 6 ---
   matched pattern : 'COMPETITIVE INTELLIGENCE HEADLINES'
   page_type       : ci_headlines  (strategy: text_only)
   image rendered  : False
-  text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES June 19, 2026\nPrepaid & MVNO Key Highlights\n1. Cricket Wireless\n• BYOD Tips for U.S. '
+  text preview    : 'COMPETITIVE INTELLIGENCE HEADLINES May 29, 2026\nPrepaid & MVNO Key Highlights\n1. Cricket Wireless\n• “Deal Drop” Sale fea'
 
 --- Page 7 ---
   matched pattern : 'Competitive Offer Updates'
@@ -50,7 +50,7 @@ No existing data for 2026-06-19. Proceeding.
   matched pattern : 'Major Offer Changes Effective'
   page_type       : major_offer_changes  (strategy: text_only)
   image rendered  : True
-  text preview    : 'Major Offer Changes Effective June 19, 2026\n***TFB Offer Changes:\nReference Slide #20***\nPOSTPAID PREPAID\nOFFERS INTRODU'
+  text preview    : 'Major Offer Changes Effective May 29, 2026\n***TFB Offer Changes:\nReference Slide #20***\nPOSTPAID PREPAID\nOFFERS INTRODUC'
 
 --- Page 9 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
@@ -62,7 +62,7 @@ No existing data for 2026-06-19. Proceeding.
   matched pattern : 'Post-Paid Apple Smartphone Offers'
   page_type       : postpaid_device_offers_apple  (strategy: image)
   image rendered  : True
-  text preview    : '[COLUMN 1]\nPost-Paid Apple Smartphone Offers Effective\nVerizon\nSMARTPHONES T-Mobile\nAPPLE\n- Up to $250 $500 off select A'
+  text preview    : '[COLUMN 1]\nPost-Paid\nSMARTPHONES\nAPPLE\n- Family Freedom:\n(requires phone trade-in,\nAll Apple Flagships\n- Keep & Switch: '
 
 --- Page 11 ---
   matched pattern : 'Post-Paid Samsung and Google Smartphone Offers'
@@ -74,19 +74,19 @@ No existing data for 2026-06-19. Proceeding.
   matched pattern : 'Post-Paid Motorola, Affordable Phones and BYOD'
   page_type       : postpaid_device_offers_motorola_affordable  (strategy: image)
   image rendered  : True
-  text preview    : "[COLUMN 1]\nPost-Paid\nSMARTPHONES\nANDROID FLAGSHIPS\n- Family Freedom:\n(phone trade-in req'd,\nAndroid Flagships\n- Keep & S"
+  text preview    : '[COLUMN 1]\nPost-Paid Motorola, Affordable Phones and BYOD\nVerizon\nSMARTPHONES T-Mobile\nANDROID FLAGSHIPS\n$400 $250 off s'
 
 --- Page 13 ---
   matched pattern : 'Post-Paid BTS'
   page_type       : postpaid_bts_offers  (strategy: text_first_grid)
   image rendered  : True
-  text preview    : '[COLUMN 1]\nPost-Paid BTS (Watches)\nT-Mobile\nAPPLE WATCHES: APPLE WATCHES:\nApple Watch SE 3: All Apple\n▪Discount:\n$300 of'
+  text preview    : '[COLUMN 1]\nPost-Paid BTS (Watches)\nT-Mobile\nAPPLE WATCHES: APPLE WATCHES:\nApple Watch SE 3: All Apple\n▪Discount: $300 of'
 
 --- Page 14 ---
   matched pattern : 'Post-Paid BTS'
   page_type       : postpaid_bts_offers  (strategy: text_first_grid)
   image rendered  : True
-  text preview    : '[COLUMN 1]\nPost-Paid BTS (Tablet)\nT-Mobile\nApple iPads: Apple iPads:\nTablets\niPad (A16): • Discount:\n▪Discount: $400 off'
+  text preview    : '[COLUMN 1]\nPost-Paid BTS (Tablet)\nT-Mobile\nApple iPads: Apple iPads:\nTablets\n• Discount:\niPad (A16):\n▪Discount: $400 off'
 
 --- Page 15 ---
   matched pattern : 'Post-Paid BTS'
@@ -98,31 +98,31 @@ No existing data for 2026-06-19. Proceeding.
   matched pattern : 'Post-Paid Service Offers'
   page_type       : postpaid_service_offers  (strategy: text_only)
   image rendered  : True
-  text preview    : 'T-Mobile & AT&T Post-Paid Service Offers Effective June 19, 2026\nBrands BYOD Wireless Service Target Segment Offers Valu'
+  text preview    : 'T-Mobile & AT&T Post-Paid Service Offers Effective May 29, 2026\nBrands BYOD Wireless Service Target Segment Offers Value'
 
 --- Page 17 ---
   matched pattern : 'Post-Paid Service Offers'
   page_type       : postpaid_service_offers  (strategy: text_only)
   image rendered  : True
-  text preview    : 'Verizon Post-Paid Service Offers Effective June 19, 2026\nTarget Segment Value-Added\nBrand BYOD Wireless Service Home Int'
+  text preview    : 'Verizon Post-Paid Service Offers Effective May 29, 2026\nTarget Segment Value-Added\nBrand BYOD Wireless Service Home Inte'
 
 --- Page 18 ---
   matched pattern : 'Postpaid Cable MVNO Handset Offers'
   page_type       : cable_mvno_offers  (strategy: text_first_grid)
   image rendered  : True
-  text preview    : 'Postpaid Cable MVNO Handset Offers Effective June 19, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\n(36 mos. EIP) ('
+  text preview    : 'Postpaid Cable MVNO Handset Offers Effective May 29, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\n(36 mos. EIP) (3'
 
 --- Page 19 ---
   matched pattern : 'Cable MVNO Service Pricing'
   page_type       : cable_mvno_offers  (strategy: text_first_grid)
   image rendered  : True
-  text preview    : 'Cable MVNO Service Pricing & Offers Effective June 19, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\nUnlimited Data'
+  text preview    : 'Cable MVNO Service Pricing & Offers Effective May 29, 2026\nOptimum Mobile Spectrum Mobile Xfinity Mobile\nUnlimited Data '
 
 --- Page 20 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
   page_type       : business_device_offers  (strategy: image)
   image rendered  : True
-  text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNew Line/TRD: (17, 17e, AIR, 17+, Pro, Pro Max) New Line/'
+  text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNew Line/Upgrade w/Trade\n17 Series and AIR\n• <$1,100 off '
 
 --- Page 21 ---
   matched pattern : 'Business\\s*[-–]\\s*Flagship Device Offers'
@@ -131,531 +131,336 @@ No existing data for 2026-06-19. Proceeding.
   text preview    : '[COLUMN 1]\nBusiness – Flagship Device Offers\nT-Mobile\nBusiness\nNot combinable with other offers\n• $150 Activation Credit'
 
 --- Page 22 ---
-  matched pattern : 'Business Internet Competitive Comparison'
-  page_type       : business_internet_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : 'Business Internet Competitive Comparison June 18, 2026\nT-Mobile Business Internet AT&T Internet Air for Business Verizon'
-
---- Page 23 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive\nWhy AT&T / Verizon can\npromotions. AT&T’s $15/line\nwhile T-Mobile’s “3rd line\nRack Rate — full pr'
-
---- Page 24 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive\nWhat changes for switching\nAT&T’s larger per-line discount\nkeeps Good (AT&T Standard\nnarrowing th'
-
---- Page 25 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (rack): On list pricing T-Mobile\nfalls fastest with '
-
---- Page 26 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay): AT&T’s $10/line\nAT&T matches or bea'
-
---- Page 27 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions):\n3.0+/Premium plans car'
-
---- Page 28 ---
-  matched pattern : 'Competitive Comparison:\\s*(TFB\\s*)?Voice Plan'
-  page_type       : voice_plan_comparison  (strategy: image)
-  image rendered  : True
-  text preview    : '[COLUMN 1]\nCompetitive Comparison:\nWhy T-Mobile isn’t always lowest (after AutoPay + promotions):\nSwitcher credit on top'
-
---- Page 29 ---
   matched pattern : 'Key Highlights\\s*[-–]\\s*Week Ending'
   page_type       : national_retail_readout  (strategy: text_only)
   image rendered  : False
-  text preview    : 'Key Highlights – Week Ending 6/19/26:\n• Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the'
+  text preview    : 'Key Highlights – Week Ending 5/29/26:\n•\nBest Buy slightly pulled backed on the unlocked phone subsidies this round as th'
 
---- Page 30 ---
+--- Page 23 ---
   matched pattern : 'Competitive Offers\\s*&\\s*Promotional\\s*Updates'
   page_type       : section_divider  (strategy: skip)
   image rendered  : False
-  text preview    : 'Competitive Offers\n& Promotional\nUpdates\nPrepaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential 30\nINSIGHTS'
+  text preview    : 'Competitive Offers\n& Promotional\nUpdates\nPrepaid\nMCI\nMARKET &\nCHANNEL\nT-Mobile Confidential 23\nINSIGHTS'
 
---- Page 31 ---
+--- Page 24 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nC Metro by T-Mobile Boost Mobile Cricket\nNew Flex Plans: $40/10GB UNL, $40/UNL Period, $'
 
---- Page 32 ---
+--- Page 25 ---
   matched pattern : 'METRO BY T-MOBILE'
   page_type       : prepaid_price_grid_detail  (strategy: text_only)
   image rendered  : True
-  text preview    : 'METRO BY T-MOBILE Metro Price Grid 6.18.26\nNew Number Port New Number Port\nNo ID No ID w/ ID w/ ID\nAlways Level 1 Level '
+  text preview    : 'METRO BY T-MOBILE\nMetro Price Grid 5.28.26\nNew Number Port New Number Port\nNo ID No ID w/ ID w/ ID\nAlways Level 1 Level '
 
---- Page 33 ---
+--- Page 26 ---
   matched pattern : 'Prepaid Brands\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Prepaid Brands – Current Offers\nCc\nBOOST MOBILE CRICKET WIRELESS\nIn-Store PHONE OFFERS PORT or NEW LINE:\n• Selection of '
 
---- Page 34 ---
+--- Page 27 ---
   matched pattern : 'Flagship Brands/Prepaid\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
   text preview    : 'Flagship Brands/Prepaid – Current Offers\nT-Mobile Prepaid AT&T Prepaid Verizon Prepaid\nNew Plans (6/24/25) - $40/15GB, $'
 
---- Page 35 ---
+--- Page 28 ---
   matched pattern : 'Walmart\\s*[-–]\\s*Current Offers'
   page_type       : prepaid_brand_offers  (strategy: text_first_grid)
   image rendered  : True
-  text preview    : 'Walmart – Current Offers\nC3\nMetro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk\nRATE PL'
+  text preview    : 'Walmart – Current Offers\nC3 Metro Cricket Boost Mobile AT&T PREPAID Verizon Prepaid Total Wireless Straight Talk\nRATE PL'
 
---- Page 36 ---
+--- Page 29 ---
   matched pattern : '(fallback: last page of deck)'
   page_type       : closing_slide  (strategy: skip)
   image rendered  : False
-  text preview    : 'T-Mobile Confidential 36'
+  text preview    : 'T-Mobile Confidential 29'
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 36 rows to bronze.
-Silver ciHeadlines & nationalRetailReadout tables ready.
-Gold ciHeadlines & nationalRetailReadout tables ready.
-Silver majorOfferChanges table ready.
-Gold majorOfferChanges table ready.
-Silver voicePlanComparison table ready.
-Gold voicePlanComparison table ready.
-Silver businessInternetComparison table ready.
-Gold businessInternetComparison table ready.
-Silver prepaidPriceGridDetail table ready.
-Gold prepaidPriceGridDetail table ready.
-Silver postpaidServiceOffers table ready.
-Gold postpaidServiceOffers table ready.
-Silver carrierOfferGrid table ready.
-Gold carrierOfferGrid table ready.
-Silver postpaidDeviceOffers table ready.
-Gold postpaidDeviceOffers table ready.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 29 rows to bronze.
+
+
 ################################################################################
 # TEXT-ONLY: ci_headlines + national_retail_readout
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Text-only extraction stage starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Text-only extraction stage starting...
 
 --- Page 5 (ci_headlines) ---
   6 record(s), 0 flagged for review
-    carrier='AT&T' | headline_title='No changes' | has_changes=False
-    carrier='Verizon' | headline_title='Simplicity Plan' | has_changes=True
-    carrier='Verizon' | headline_title='Verizon Loyalty' | has_changes=True
-    carrier='Verizon' | headline_title='Verizon Shine' | has_changes=True
+    carrier='AT&T' | headline_title='Build-A-Plan to Launch 5/27' | has_changes=True
+    carrier='AT&T' | headline_title='Pullback on GS26 Series Offers' | has_changes=True
+    carrier='Verizon' | headline_title='iPhone 17 Offers Change' | has_changes=True
+    carrier='Verizon' | headline_title='Watch + Tablet On Us Bundles Return' | has_changes=True
     carrier='Spectrum' | headline_title='No changes' | has_changes=False
     ... and 1 more (full detail in the table, not the log)
 
 --- Page 6 (ci_headlines) ---
-  2 record(s), 0 flagged for review
-    carrier='Cricket Wireless' | headline_title='BYOD Tips for U.S. Visitors' | has_changes=True
-    carrier='Boost Mobile' | headline_title='2-Month Req. for Online Offers' | has_changes=True
+  8 record(s), 0 flagged for review
+    carrier='Cricket Wireless' | headline_title='“Deal Drop” Sale features Free iPhone 16e' | has_changes=True
+    carrier='Cricket Wireless' | headline_title='New TV Spot for “Deal Drop” Sale' | has_changes=True
+    carrier='Cricket Wireless' | headline_title='Unlock Policy will change to 365 Days' | has_changes=True
+    carrier='Cricket Wireless' | headline_title='EXPIRED: In select stores: $240 BYO/12month plan – & regional offer' | has_changes=True
+    carrier='Boost Mobile' | headline_title='No changes' | has_changes=False
+    ... and 3 more (full detail in the table, not the log)
 
---- Page 29 (national_retail_readout) ---
-  14 record(s): 14 OK, 0 flagged
-  --- sample of OK rows (3 of 14) ---
+--- Page 22 (national_retail_readout) ---
+  5 record(s): 5 OK, 0 flagged
+  --- sample of OK rows (3 of 5) ---
     [OK] None: None — None
     [OK] None: None — None
     [OK] None: None — None
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 8 rows to silver ciHeadlines (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 8 of 8 rows to gold ciHeadlines.
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 14 rows to silver nationalRetailReadout (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 14 of 14 rows to gold nationalRetailReadout.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 14 rows to silver ciHeadlines (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 14 of 14 rows to gold ciHeadlines.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 5 rows to silver nationalRetailReadout (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 5 of 5 rows to gold nationalRetailReadout.
 
 ################################################################################
 # TEXT-ONLY: major_offer_changes
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Major offer changes extraction starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Major offer changes extraction starting...
 
 --- Page 8 ---
-  28 record(s), 1 flagged for review
-    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='No new offers'
-    segment='postpaid' | carrier='T-Mobile' | change_type='removed' | description='No expired offers'
-    segment='postpaid' | carrier='AT&T' | change_type='introduced' | description='No new offers'
-    segment='postpaid' | carrier='AT&T' | change_type='removed' | description='No expired offers'
-    segment='postpaid' | carrier='Verizon' | change_type='introduced' | description='Up to $250 off Apple/Galaxy watches and/or $320 off iPads/$330 off Galaxy Tablets w/ iPhone or Galaxy smartphone purchase and myPlan'
-    ... and 23 more (full detail in the table, not the log)
+  46 record(s), 0 flagged for review
+    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='Galaxy Watch7 $29/existing customer …was $99'
+    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$1000 off iPhone 17 series w/ Port and Better Value or Beyond'
+    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$830 off iPhone 17 series w/ Port and More'
+    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was $1,200)'
+    segment='postpaid' | carrier='T-Mobile' | change_type='removed' | description='No offers expired'
+    ... and 41 more (full detail in the table, not the log)
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 28 rows to silver majorOfferChanges (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 27 of 28 rows to gold majorOfferChanges.
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Flagged 1 row(s) for review.
-  Breakdown: amount_mismatch=1
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 46 rows to silver majorOfferChanges (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 46 of 46 rows to gold majorOfferChanges.
 
 ################################################################################
 # IMAGE: voice_plan_comparison
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Voice plan comparison extraction starting...
-
---- Page 23 ---
-  140 record(s), 0 flagged for review
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='AT&T' | price=240
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='Verizon' | price=204
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='T-Mobile' | price=150
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='AT&T' | price=300
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='Verizon' | price=294
-    ... and 135 more (full detail in the table, not the log)
-
---- Page 24 ---
-  140 record(s), 0 flagged for review
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='AT&T' | price=240
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='Verizon' | price=204
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='T-Mobile' | price=150
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='AT&T' | price=300
-    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='Verizon' | price=294
-    ... and 135 more (full detail in the table, not the log)
-
---- Page 25 ---
-  120 record(s), 0 flagged for review
-    pricing_basis='Rack Rate' | lines=1 | tier='Good' | carrier='AT&T' | price=60
-    pricing_basis='Rack Rate' | lines=1 | tier='Good' | carrier='Verizon' | price=70
-    pricing_basis='Rack Rate' | lines=1 | tier='Good' | carrier='T-Mobile' | price=65
-    pricing_basis='Rack Rate' | lines=1 | tier='Better' | carrier='AT&T' | price=80
-    pricing_basis='Rack Rate' | lines=1 | tier='Better' | carrier='Verizon' | price=85
-    ... and 115 more (full detail in the table, not the log)
-
---- Page 26 ---
-  120 record(s), 0 flagged for review
-    pricing_basis='Competitive Comparison: Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='AT&T' | price=50
-    pricing_basis='Competitive Comparison: Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='Verizon' | price=65
-    pricing_basis='Competitive Comparison: Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
-    pricing_basis='Competitive Comparison: Voice Plan with Auto Pay' | lines=1 | tier='Better' | carrier='AT&T' | price=70
-    pricing_basis='Competitive Comparison: Voice Plan with Auto Pay' | lines=1 | tier='Better' | carrier='Verizon' | price=80
-    ... and 115 more (full detail in the table, not the log)
-
---- Page 27 ---
-  120 record(s), 0 flagged for review
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='AT&T' | price=50
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='Verizon' | price=54
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted' | lines=1 | tier='Better' | carrier='AT&T' | price=55
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted' | lines=1 | tier='Better' | carrier='Verizon' | price=70
-    ... and 115 more (full detail in the table, not the log)
-
---- Page 28 ---
-  120 record(s), 0 flagged for review
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='AT&T' | price=50
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='Verizon' | price=54
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Better' | carrier='AT&T' | price=55
-    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Better' | carrier='Verizon' | price=70
-    ... and 115 more (full detail in the table, not the log)
-
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 760 rows to silver voicePlanComparison (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 760 of 760 rows to gold voicePlanComparison.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Voice plan comparison extraction starting...
+  No matching bronze pages found for this run_id — fine if this week's deck doesn't include this page type, see run_extraction_pipeline's classification log.
 
 ################################################################################
 # IMAGE: business_internet_comparison
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Business internet comparison extraction starting...
-
---- Page 22 ---
-  96 record(s): 93 OK, 3 flagged
-  --- flagged, full detail ---
-    [CHECK] T-Mobile Business Internet: Install Type — 'Self (Inseego Go app) or Professional'  (tier: Business Advanced)
-       nearby source text: ...et Competitive Comparison June 18, 2026 T-Mobile Business Internet AT&T Internet Air for Business Verizon 5G Business Internet Small Business Grow Business Advanced Standard Premium 100 Mbps...
-    [CHECK] Verizon 5G Business Internet: Install Type — 'Self or Professional (location dependent)'  (tier: 100 Mbps)
-       nearby source text: ...Internet AT&T Internet Air for Business Verizon 5G Business Internet Small Business Grow Business Advanced Standard Premium 100 Mbps 200 Mbps Consumer/Micro Bandwidth Up to typical 5G speeds...
-    [CHECK] Verizon 5G Business Internet: Install Type — 'Self or Professional (location dependent)'  (tier: 200 Mbps)
-       nearby source text: ...Internet AT&T Internet Air for Business Verizon 5G Business Internet Small Business Grow Business Advanced Standard Premium 100 Mbps 200 Mbps Consumer/Micro Bandwidth Up to typical 5G speeds...
-  --- sample of OK rows (3 of 93) ---
-    [OK] None: None — None
-    [OK] None: None — None
-    [OK] None: None — None
-
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 96 rows to silver businessInternetComparison (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 93 of 96 rows to gold businessInternetComparison.
-  (collapsed 3 flagged row(s) into 2 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Flagged 3 row(s) for review.
-  Breakdown: amount_mismatch=3
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Business internet comparison extraction starting...
+  No matching bronze pages found for this run_id — fine if this week's deck doesn't include this page type, see run_extraction_pipeline's classification log.
 
 ################################################################################
 # TEXT-ONLY: prepaid_price_grid_detail
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Prepaid price grid extraction starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Prepaid price grid extraction starting...
 
---- Page 32 ---
-  (removed 22 exact-duplicate record(s) from model response)
+--- Page 25 ---
   429 record(s), 0 flagged for review
-    device_name='TCL K11' | connection_type='Always Connected Upgrade' | registration_type='Non-Port' | plan_price_tier='N/A' | device_price='$39.99'
-    device_name='TCL K11' | connection_type='Level 1 Metro Annual Upgrade' | registration_type='Upgrade' | plan_price_tier='$40 w/AP' | device_price='FREE'
-    device_name='TCL K11' | connection_type='Level 2 Metro Annual Upgrade' | registration_type='Upgrade' | plan_price_tier='$40 w/AP' | device_price='FREE'
-    device_name='TCL K11' | connection_type='Level 3 Metro Annual Upgrade' | registration_type='Upgrade' | plan_price_tier='N/A' | device_price='FREE'
-    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='New Number' | plan_price_tier='4 for $100' | device_price='FREE'
+    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='Non-Port' | plan_price_tier='$40 w/AP' | device_price='$39.99'
+    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='New Number Port' | plan_price_tier='$40 w/AP' | device_price='FREE'
+    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='New Number Port' | plan_price_tier='$50 w/AP' | device_price='FREE'
+    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='New Number Port' | plan_price_tier='$60 w/AP' | device_price='FREE'
+    device_name='TCL K11' | connection_type='New Flex Rate Plans' | registration_type='New Number Port' | plan_price_tier='$40 w/AP' | device_price='FREE'
     ... and 424 more (full detail in the table, not the log)
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 429 rows to silver prepaidPriceGridDetail (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 429 of 429 rows to gold prepaidPriceGridDetail.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 429 rows to silver prepaidPriceGridDetail (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 429 of 429 rows to gold prepaidPriceGridDetail.
 
 ################################################################################
 # TEXT-ONLY: postpaid_service_offers
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Postpaid service offers extraction starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Postpaid service offers extraction starting...
 
 --- Page 16 ---
-  39 record(s), 0 flagged for review
-    carrier='T-Mobile' | category='Brands' | feature_name='Keep and Switch (BYOD)'
-    carrier='T-Mobile' | category='Brands' | feature_name='Network Pass'
+  31 record(s), 0 flagged for review
+    carrier='T-Mobile' | category='Brands BYOD' | feature_name='Keep and Switch'
+    carrier='T-Mobile' | category='Brands BYOD' | feature_name='Network Pass'
     carrier='T-Mobile' | category='Wireless Service' | feature_name='3rd Line Free'
     carrier='T-Mobile' | category='Wireless Service' | feature_name='BOGO Voice AAL'
     carrier='T-Mobile' | category='Wireless Service' | feature_name='Device Connection Charge'
-    ... and 34 more (full detail in the table, not the log)
+    ... and 26 more (full detail in the table, not the log)
 
 --- Page 17 ---
-  30 record(s), 0 flagged for review
-    carrier='Verizon' | category='BYOD' | feature_name='BYOD Switching Credit'
-    carrier='Verizon' | category='BYOD' | feature_name='BYOD Add-a-Line Credit'
-    carrier='Verizon' | category='BYOD' | feature_name='BYOD Welcome Plan Credit'
-    carrier='Verizon' | category='BYOD' | feature_name='VERIZON ONE'
+  22 record(s), 0 flagged for review
+    carrier='Verizon' | category='BYOD' | feature_name='Bring Your Own Device Credit'
     carrier='Verizon' | category='Wireless Service' | feature_name='myPlan'
-    ... and 25 more (full detail in the table, not the log)
+    carrier='Verizon' | category='Wireless Service' | feature_name='Unlimited Ultimate'
+    carrier='Verizon' | category='Wireless Service' | feature_name='Unlimited Plus'
+    carrier='Verizon' | category='Wireless Service' | feature_name='Unlimited Welcome'
+    ... and 17 more (full detail in the table, not the log)
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 69 rows to silver postpaidServiceOffers (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 69 of 69 rows to gold postpaidServiceOffers.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 53 rows to silver postpaidServiceOffers (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 53 of 53 rows to gold postpaidServiceOffers.
 
 ################################################################################
 # TEXT-FIRST GRID: bts / cable_mvno / prepaid_brand
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Carrier grid (text-first) extraction starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Carrier grid (text-first) extraction starting...
 
 --- Page 13 (postpaid_bts_offers) ---
+  (removed 2 exact-duplicate record(s) from model response)
   extracted 38 records (0 flagged for review)
   38 record(s): 38 OK, 0 flagged
   --- sample of OK rows (3 of 38) ---
     [OK] T-Mobile: Apple Watch SE 3 — $300 off
-    [OK] T-Mobile: Apple Watch — BOGO $300 off
-    [OK] T-Mobile: Galaxy Watch — Up to $400 off
+    [OK] T-Mobile: Apple Watch S11 — BOGO $300 off
+    [OK] T-Mobile: Apple Watch SE3 — BOGO $300 off
 
 --- Page 14 (postpaid_bts_offers) ---
-  extracted 30 records (0 flagged for review)
-  30 record(s): 30 OK, 0 flagged
-  --- sample of OK rows (3 of 30) ---
+  extracted 34 records (0 flagged for review)
+  34 record(s): 34 OK, 0 flagged
+  --- sample of OK rows (3 of 34) ---
     [OK] T-Mobile: iPad (A16) — $400 off
     [OK] T-Mobile: Galaxy Tab S10 FE 5G — 50% off ($300 off)
     [OK] T-Mobile: Galaxy Tab A11+ 5G — On Us ($290 off)
 
 --- Page 15 (postpaid_bts_offers) ---
-  extracted 11 records (6 flagged for review)
-  11 record(s): 5 OK, 6 flagged
+  extracted 9 records (4 flagged for review)
+  9 record(s): 5 OK, 4 flagged
   --- flagged, full detail ---
     [CHECK] T-Mobile: Franklin A70 — '$209.99 or $5.84/mo.'
        nearby source text: ...f (lesser of two lines) ▪Franklin A70: $209.99 or $5.84/mo. ▪Franklin A50: $209.99 or $5.84/mo. Other ▪Netgear Nighthawk M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 o...
     [CHECK] T-Mobile: Franklin A50 — '$209.99 or $5.84/mo.'
        nearby source text: ...f (lesser of two lines) ▪Franklin A70: $209.99 or $5.84/mo. ▪Franklin A50: $209.99 or $5.84/mo. Other ▪Netgear Nighthawk M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 o...
     [CHECK] T-Mobile: Netgear Nighthawk Mg — '$309.99'
-       nearby source text: ... M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective June 19, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 ...
+       nearby source text: ... M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective May 29, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 F...
     [CHECK] T-Mobile: Franklin A10 — '$79.99 or $2.23/mo.'
-       nearby source text: ...r Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective June 19, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 FRP): DATA W/22GB FUT):...
-    [CHECK] AT&T: Inseego MiFi 2100 5G — '$449.99 or $12.50/mo.'
-       nearby source text: ... HOTSPOTS: ▪Inseego MiFi 2100 5G ($400 $449.99 or $12.50/mo. (No ▪Inseego MiFi X PRO 5G ($350 ▪TCL LINKZONE 5G UW ($300 (No offer) ▪Verizon Jetpack MiFi 8800L (No offer) ▪Verizon Orbic Speed...
-    [CHECK] AT&T: Inseego MiFi X PRO 5G — '$459.99 or $12.78/mo.'
-       nearby source text: ...00L (No offer) ▪Verizon Orbic Speed 5G $459.99 or $12.78/mo. (No ▪Verizon Orbic Speed Mobile or $8.62/mo. (No offer) (No offer) [COLUMN 3] Verizon No offer No offer FRP) – No Offer FRP) – No...
+       nearby source text: ...r Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective May 29, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 FRP): DATA W/22GB FUT): ...
   --- sample of OK rows (3 of 5) ---
     [OK] T-Mobile: SYNCUP DRIVE — On Us
-    [OK] T-Mobile: IN-CAR WI-FI PLANS (UNL DATA W/22GB FUT) — $15/month
-    [OK] T-Mobile: BTS BYOD PIC — $100 Virtual Prepaid Mastercard
+    [OK] T-Mobile: IN-CAR WI-FI PLANS (UNL) — $15/month
+    [OK] T-Mobile: BTS BYOD PIC — $100
 
 --- Page 18 (cable_mvno_offers) ---
-  extracted 118 records (0 flagged for review)
-  118 record(s): 118 OK, 0 flagged
-  --- sample of OK rows (3 of 118) ---
-    [OK] Optimum: GS26 — $500 off
-    [OK] Optimum: GS26+ — $600 off
-    [OK] Optimum: GS26 Ultra — $700 off
+  extracted 108 records (0 flagged for review)
+  108 record(s): 108 OK, 0 flagged
+  --- sample of OK rows (3 of 108) ---
+    [OK] Optimum: Galaxy S26 — $500 off
+    [OK] Optimum: Galaxy S26+ — $600 off
+    [OK] Optimum: Galaxy S26 Ultra — $700 off
 
 --- Page 19 (cable_mvno_offers) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 27 records (2 flagged for review)
-  27 record(s): 25 OK, 2 flagged
+  extracted 26 records (1 flagged for review)
+  26 record(s): 25 OK, 1 flagged
   --- flagged, full detail ---
-    [CHECK] Optimum: 1GB data top-up — '$6/mo.'
-       nearby source text: ... Pricing & Offers Effective June 19, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price...
-    [CHECK] Spectrum: New Mobile Signup — '$100'
-       nearby source text: ...emium: $50 (2-10 lines addt’l $30/line) 100GB high-speed ▪Line limit increased from 5 to 10 per account (2/16/21 - ) data + w/30GB hotspot & early upgrade feature, 5GB UNL Mex/Can, 10GB $25/...
+    [CHECK] Optimum: 1GB Data Top-up — '$6/mo.'
+       nearby source text: ...e Pricing & Offers Effective May 29, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price...
   --- sample of OK rows (3 of 25) ---
-    [OK] Optimum: Unlimited Plan — $45/mo.
-    [OK] Optimum: Unlimited Max Plan — $55/mo.
+    [OK] Optimum: Unlimited Plan (20GB) — $45/mo.
+    [OK] Optimum: Unlimited Max Plan (50GB) — $55/mo.
     [OK] Optimum: Unlimited Plan — $15 off per line
 
---- Page 31 (prepaid_brand_offers) ---
+--- Page 24 (prepaid_brand_offers) ---
   (removed 1 exact-duplicate record(s) from model response)
-  extracted 32 records (0 flagged for review)
-  32 record(s): 32 OK, 0 flagged
-  --- sample of OK rows (3 of 32) ---
-    [OK] Metro by T-Mobile: HINT for Metro Contract Freedom Service — up to $750
-    [OK] Metro by T-Mobile: HINT multi-month trial — $135 for 6-months
-    [OK] Metro by T-Mobile: SAM Tab A9+ 5G — $99
-
---- Page 33 (prepaid_brand_offers) ---
-  (removed 2 exact-duplicate record(s) from model response)
-  extracted 91 records (2 flagged for review)
-  91 record(s): 89 OK, 2 flagged
+  extracted 38 records (3 flagged for review)
+  38 record(s): 35 OK, 3 flagged
   --- flagged, full detail ---
-    [CHECK] Cricket Wireless: Apple Watch Series 10 — '$90 off'
-       nearby source text: ...2024 $49.99 min. $50 rate plan (UNL+) $190 • iPhone Offers: Galaxy A16 5G $0.00 min. $50 rate plan (UNL+) x 2mos $170 iPhone 13 – $0 $29 port or $49 $99/new line w 2x $60 for online new/exis...
-    [CHECK] Cricket Wireless: Apple Watch Series 11 — '$90 off'
-       nearby source text: ...2024 $49.99 min. $50 rate plan (UNL+) $190 • iPhone Offers: Galaxy A16 5G $0.00 min. $50 rate plan (UNL+) x 2mos $170 iPhone 13 – $0 $29 port or $49 $99/new line w 2x $60 for online new/exis...
-  --- sample of OK rows (3 of 89) ---
-    [OK] Boost Mobile: iPhone 15 — $399.99
-    [OK] Boost Mobile: iPhone 15 — $399.99
-    [OK] Boost Mobile: iPhone 16e — $99
+    [CHECK] Cricket Wireless: Service Trial — 'Free'
+       nearby source text: ...Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPG...
+    [CHECK] Cricket Wireless: Referral — '$25'
+       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
+    [CHECK] Cricket Wireless: Future phone upgrade — '$200 off'
+       nearby source text: ...ro: 4 Limited Data Plans: 100GB, 150GB, 200GB, 300GB for Announced expansion thru 7-Eleven beginning Dec. 2022 – and through Walgreens 4/6/23 more subs not qual. for UNL; (7/14 – 9/22 VPM/ne...
+  --- sample of OK rows (3 of 35) ---
+    [OK] Metro by T-Mobile: HINT Gateway — $49
+    [OK] Metro by T-Mobile: HINT line — up to $500
+    [OK] Metro by T-Mobile: HINT service — $135 for 6-months
 
---- Page 34 (prepaid_brand_offers) ---
-  extracted 25 records (6 flagged for review)
-  25 record(s): 19 OK, 6 flagged
+--- Page 26 (prepaid_brand_offers) ---
+  (removed 4 exact-duplicate record(s) from model response)
+  extracted 102 records (2 flagged for review)
+  102 record(s): 100 OK, 2 flagged
   --- flagged, full detail ---
-    [CHECK] AT&T Prepaid: A16 — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: A15 — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: Galaxy A17 5G — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: A17 — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] AT&T Prepaid: TCL Flip4 5G — 'On Us'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] Verizon Prepaid: iPhone 16e — '$350 off'
-       nearby source text: ...nt Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guaran...
-  --- sample of OK rows (3 of 19) ---
-    [OK] AT&T Prepaid: BYOD SIM card — free
-    [OK] AT&T Prepaid: moto g play — $19.99
-    [OK] AT&T Prepaid: moto g play 2026 — $9.99
+    [CHECK] Boost Infinite: iPhone — '$830 off'
+       nearby source text: ...ra 2 (10 x $15 Boost Infinite offers - $830 off / iPhone (8/27/25 $830 - ), $800 off / Samsung (GS26 Series added 2/25) monthly credits) (5/17/24 – 9/13 Watch9 removed – 9/20/24 Watch10 adde...
+    [CHECK] Boost Infinite: Samsung GS26 Series — '$800 off'
+       nearby source text: ...- $830 off / iPhone (8/27/25 $830 - ), $800 off / Samsung (GS26 Series added 2/25) monthly credits) (5/17/24 – 9/13 Watch9 removed – 9/20/24 Watch10 added – 9/19/25 11 added - TBD) SmartPay ...
+  --- sample of OK rows (3 of 100) ---
+    [OK] Boost Mobile: iPhone 15 — $259
+    [OK] Boost Mobile: iPhone 15 — $209.99
+    [OK] Boost Mobile: iPhone 16e — free
 
---- Page 35 (prepaid_brand_offers) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 83 records (0 flagged for review)
-  83 record(s): 83 OK, 0 flagged
-  --- sample of OK rows (3 of 83) ---
+--- Page 27 (prepaid_brand_offers) ---
+  extracted 29 records (4 flagged for review)
+  29 record(s): 25 OK, 4 flagged
+  --- flagged, full detail ---
+    [CHECK] T-Mobile Prepaid: A17 — 'On Us'
+       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
+    [CHECK] T-Mobile Prepaid: TCL Flip4 5G — 'On Us'
+       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
+    [CHECK] AT&T Prepaid: SIM card — 'free'
+       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
+    [CHECK] Verizon Prepaid: Activation Fee — 'Waived ($35)'
+       nearby source text: ...f service in same transaction; ex. 2 • $35 Unlimited Saver – 30GB data at 3Mpbs then throttled to 1.5Mbps (no 5G speeds), mos. payment on $50 rate plan (Jan 2025 – 7/8/26) loyalty discount u...
+  --- sample of OK rows (3 of 25) ---
+    [OK] T-Mobile Prepaid: A16 — $100 off
+    [OK] T-Mobile Prepaid: A15 — $100 off
+    [OK] T-Mobile Prepaid: Galaxy A17 5G — $150 Off
+
+--- Page 28 (prepaid_brand_offers) ---
+  extracted 87 records (0 flagged for review)
+  87 record(s): 87 OK, 0 flagged
+  --- sample of OK rows (3 of 87) ---
     [OK] Metro by T-Mobile: A17 5G — $0
     [OK] Metro by T-Mobile: moto g power ’26 — $0
-    [OK] Metro by T-Mobile: moto g play 2026 — $49
+    [OK] Metro by T-Mobile: A15 5G — $37
 
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 455 rows to silver carrierOfferGrid (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 447 of 455 rows to gold carrierOfferGrid.
-  (collapsed 16 flagged row(s) into 10 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Flagged 16 row(s) for review.
-  Breakdown: amount_mismatch=8, new_offer_type=8
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 471 rows to silver carrierOfferGrid (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 467 of 471 rows to gold carrierOfferGrid.
+  (collapsed 14 flagged row(s) into 12 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Flagged 14 row(s) for review.
+  Breakdown: amount_mismatch=2, new_carrier=2, new_offer_type=10
 
 ################################################################################
 # IMAGE: device offers incl. business
 ################################################################################
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Device offers (text+image) extraction starting...
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Device offers (text+image) extraction starting...
   Grounding with 15 known carrier(s): ['T-Mobile', 'Verizon', 'AT&T', 'Xfinity', 'Spectrum', 'Comcast', 'Optimum', 'Metro by T-Mobile', 'Boost Mobile', 'Cricket Wireless', 'Straight Talk', 'Total Wireless', 'T-Mobile Prepaid', 'AT&T Prepaid', 'Verizon Prepaid']
 
 --- Page 10 (postpaid_device_offers_apple) ---
-  (removed 36 exact-duplicate record(s) from model response)
-  extracted 206 offer records (0 flagged for review)
-  206 record(s): 206 OK, 0 flagged
-  --- sample of OK rows (3 of 206) ---
+  (removed 32 exact-duplicate record(s) from model response)
+  extracted 169 offer records (0 flagged for review)
+  169 record(s): 169 OK, 0 flagged
+  --- sample of OK rows (3 of 169) ---
     [OK] T-Mobile: iPhone 17 — Up to $800/line
     [OK] T-Mobile: iPhone Air — Up to $800/line
     [OK] T-Mobile: iPhone 17 Pro — Up to $800/line
 
 --- Page 11 (postpaid_device_offers_samsung_google) ---
-  (removed 18 exact-duplicate record(s) from model response)
-  extracted 197 offer records (0 flagged for review)
-  197 record(s): 197 OK, 0 flagged
-  --- sample of OK rows (3 of 197) ---
-    [OK] T-Mobile: Android Flagships — Up to $800/line
-    [OK] Verizon: Android Flagships — $200
-    [OK] Verizon: Android Flagships — $800
+  (removed 14 exact-duplicate record(s) from model response)
+  extracted 178 offer records (0 flagged for review)
+  178 record(s): 178 OK, 0 flagged
+  --- sample of OK rows (3 of 178) ---
+    [OK] T-Mobile: S26 — $1100 off
+    [OK] T-Mobile: S26+ — $1100 off
+    [OK] T-Mobile: S26 Ultra — $1100 off
 
 --- Page 12 (postpaid_device_offers_motorola_affordable) ---
-  (removed 4 exact-duplicate record(s) from model response)
-  extracted 67 offer records (0 flagged for review)
-  67 record(s): 67 OK, 0 flagged
-  --- sample of OK rows (3 of 67) ---
-    [OK] T-Mobile: Razr '25/'26 — Up to $800/line
-    [OK] T-Mobile: Razr+ — Up to $800/line
-    [OK] T-Mobile: Razr Ultra — Up to $800/line
+  (removed 2 exact-duplicate record(s) from model response)
+  extracted 54 offer records (0 flagged for review)
+  54 record(s): 54 OK, 0 flagged
+  --- sample of OK rows (3 of 54) ---
+    [OK] T-Mobile: Android Flagships — Up to $800/line
+    [OK] T-Mobile: Motorola Razr Ultra — $1.3K off
+    [OK] T-Mobile: Motorola Razr+ — $800 off
 
 --- Page 20 (business_device_offers) ---
-  (removed 16 exact-duplicate record(s) from model response)
-  extracted 149 offer records (0 flagged for review)
-  149 record(s): 149 OK, 0 flagged
-  --- sample of OK rows (3 of 149) ---
+  (removed 11 exact-duplicate record(s) from model response)
+  extracted 211 offer records (0 flagged for review)
+  211 record(s): 211 OK, 0 flagged
+  --- sample of OK rows (3 of 211) ---
     [OK] T-Mobile: iPhone 17 — <$1.1k off
     [OK] T-Mobile: iPhone 17e — <$1.1k off
-    [OK] T-Mobile: iPhone AIR — <$1.1k off
+    [OK] T-Mobile: iPhone 17+ — <$1.1k off
 
 --- Page 21 (business_device_offers) ---
   (removed 1 exact-duplicate record(s) from model response)
-  extracted 25 offer records (0 flagged for review)
-  25 record(s): 25 OK, 0 flagged
-  --- sample of OK rows (3 of 25) ---
-    [OK] T-Mobile: New Line — $150
-    [OK] T-Mobile: New Line — $100/line
-    [OK] T-Mobile: New Line — $200/line
+  extracted 24 offer records (0 flagged for review)
+  24 record(s): 24 OK, 0 flagged
+  --- sample of OK rows (3 of 24) ---
+    [OK] T-Mobile: Any — $150
+    [OK] T-Mobile: Any — $100/line
+    [OK] T-Mobile: Any — $200/line
 
---- Page 22 (business_internet_comparison) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 40 offer records (0 flagged for review)
-  40 record(s): 40 OK, 0 flagged
-  --- sample of OK rows (3 of 40) ---
-    [OK] T-Mobile: Business Internet — $65
-    [OK] T-Mobile: Business Internet — $10
-    [OK] T-Mobile: Business Internet — $20
-
---- Page 23 (voice_plan_comparison) ---
-  extracted 70 offer records (0 flagged for review)
-  70 record(s): 70 OK, 0 flagged
-  --- sample of OK rows (3 of 70) ---
-    [OK] AT&T: Standard 3.0 — $180
-    [OK] AT&T: Standard 3.0 — $210
-    [OK] AT&T: Standard 3.0 — $240
-
---- Page 24 (voice_plan_comparison) ---
-  extracted 70 offer records (0 flagged for review)
-  70 record(s): 70 OK, 0 flagged
-  --- sample of OK rows (3 of 70) ---
-    [OK] AT&T: Standard 3.0 plan for 6 lines — $180
-    [OK] Verizon: My Biz plan for 6 lines — $143
-    [OK] T-Mobile: CoreMobile plan for 6 lines — $126
-
---- Page 25 (voice_plan_comparison) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 119 offer records (0 flagged for review)
-  119 record(s): 119 OK, 0 flagged
-  --- sample of OK rows (3 of 119) ---
-    [OK] AT&T: Standard 3.0 — $60
-    [OK] AT&T: Standard 3.0 — $110
-    [OK] AT&T: Standard 3.0 — $135
-
---- Page 26 (voice_plan_comparison) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 119 offer records (0 flagged for review)
-  119 record(s): 119 OK, 0 flagged
-  --- sample of OK rows (3 of 119) ---
-    [OK] AT&T: Standard 3.0 — $50
-    [OK] Verizon: My Biz — $65
-    [OK] T-Mobile: CoreMobile — $60
-
---- Page 27 (voice_plan_comparison) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 119 offer records (0 flagged for review)
-  119 record(s): 119 OK, 0 flagged
-  --- sample of OK rows (3 of 119) ---
-    [OK] AT&T: Standard 3.0 — $50
-    [OK] AT&T: Standard 3.0 — $90
-    [OK] AT&T: Standard 3.0 — $105
-
---- Page 28 (voice_plan_comparison) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 119 offer records (0 flagged for review)
-  119 record(s): 119 OK, 0 flagged
-  --- sample of OK rows (3 of 119) ---
-    [OK] AT&T: Standard 3.0 — $50
-    [OK] Verizon: My Biz — $54
-    [OK] T-Mobile: CoreMobile — $60
-
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Wrote 1300 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
-[672ae449-2634-4f69-92f1-ab1b2d377ad2] Promoted 1300 of 1300 rows to gold postpaidDeviceOffers.
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Wrote 636 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
+[4739d92f-1f4b-4b8c-a81b-f097e2f2af55] Promoted 636 of 636 rows to gold postpaidDeviceOffers.
 
 ================================================================================
-Total rows in review for this run: 13
+Total rows in review for this run: 12
 ================================================================================
