@@ -1,1 +1,23 @@
-debug_amount_mismatches(run_id="4739d92f-1f4b-4b8c-a81b-f097e2f2af55", page_number=15, table_id=SILVER_GRID_TABLE)
+SELECT offer_type_raw, COUNT(*) AS n
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly`
+WHERE flag_reason = 'new_offer_type'
+GROUP BY offer_type_raw
+ORDER BY n DESC;
+
+SELECT
+  s.carrier,
+  s.item_name,
+  s.offer_amount,
+  REGEXP_EXTRACT(s.offer_amount, r'[\d,]+\.?\d*') AS number_only,
+  SUBSTR(
+    b.text_extraction_raw,
+    GREATEST(STRPOS(b.text_extraction_raw, REGEXP_EXTRACT(s.offer_amount, r'[\d,]+\.?\d*')) - 80, 1),
+    250
+  ) AS nearby_context
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly` s
+JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly` b
+  ON s.run_id = b.run_id AND s.source_page = b.page_number
+WHERE s.run_id = '4739d92f-1f4b-4b8c-a81b-f097e2f2af55'
+  AND s.source_page = 15
+  AND s.values_agree = FALSE;
+
