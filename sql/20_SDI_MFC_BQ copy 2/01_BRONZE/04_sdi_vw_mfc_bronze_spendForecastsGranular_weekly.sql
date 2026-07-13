@@ -1,8 +1,3 @@
-
--- ============================================================
--- BRONZE 4: FORECASTS - GRANULAR
--- ============================================================
-
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecastsGranular_weekly`()
 BEGIN
@@ -10,7 +5,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastsGranular_weekly`
   OPTIONS (
-    description = 'MFC Bronze Forecasts Granular Weekly'
+    description = 'MFC Bronze Forecasts Granular Weekly — latest forecast snapshot included regardless of actual arrival.'
   )
   AS
 
@@ -112,55 +107,21 @@ BEGIN
       Agency
   ),
 
-  first_actual_date AS (
-    SELECT
-      Quarter,
-      QGP_Week,
-      LOB_Supported,
-      Channel,
-      Tactic,
-      Message_Type,
-      Agency,
-      MIN(FileLoad_Date) AS first_actual_file_load_date
-    FROM raw
-    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
-      AND Spend_Actual IS NOT NULL
-      AND Spend_Actual != 0
-    GROUP BY
-      Quarter,
-      QGP_Week,
-      LOB_Supported,
-      Channel,
-      Tactic,
-      Message_Type,
-      Agency
-  ),
-
   ranked AS (
     SELECT
-      s.*,
+      *,
       ROW_NUMBER() OVER (
         PARTITION BY
-          s.Quarter,
-          s.QGP_Week,
-          s.LOB_Supported,
-          s.Channel,
-          s.Tactic,
-          s.Message_Type,
-          s.Agency
-        ORDER BY s.FileLoad_Date DESC, s.Source_File_Date DESC
+          Quarter,
+          QGP_Week,
+          LOB_Supported,
+          Channel,
+          Tactic,
+          Message_Type,
+          Agency
+        ORDER BY FileLoad_Date DESC, Source_File_Date DESC
       ) AS rn
-    FROM weekly_snapshots s
-    LEFT JOIN first_actual_date a
-      ON  s.Quarter = a.Quarter
-      AND s.QGP_Week = a.QGP_Week
-      AND s.LOB_Supported = a.LOB_Supported
-      AND s.Channel = a.Channel
-      AND s.Tactic = a.Tactic
-      AND s.Message_Type = a.Message_Type
-      AND s.Agency IS NOT DISTINCT FROM a.Agency
-    WHERE a.first_actual_file_load_date IS NULL
-       OR s.FileLoad_Date < a.first_actual_file_load_date
+    FROM weekly_snapshots
   ),
 
   best AS (
