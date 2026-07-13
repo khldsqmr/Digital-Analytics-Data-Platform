@@ -1,11 +1,34 @@
-from vertexai.generative_models import Tool, grounding
+from google import genai
+from google.genai.types import Tool, GoogleSearch
 
-test_model = GenerativeModel(GEMINI_MODEL)
-search_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
-test_response = test_model.generate_content(
-    "Is 'Boost Infinite' a real wireless carrier or MVNO brand? Answer in one sentence.",
-    tools=[search_tool],
+PROJECT_ID = "prj-dbi-prd-1"
+LOCATION = "us-central1"
+GEMINI_MODEL = "gemini-2.5-pro"
+
+client = genai.Client(
+    vertexai=True,
+    project=PROJECT_ID,
+    location="us-central1",
 )
-print(test_response.text)
-print("\n--- grounding metadata (should show search queries + sources if it worked) ---")
-print(test_response.candidates[0].grounding_metadata)
+
+response = client.models.generate_content(
+    model="gemini-2.5-pro",
+    contents="Is Boost Infinite a real wireless carrier?",
+    config={
+        "tools": [
+            Tool(
+                google_search=GoogleSearch()
+            )
+        ]
+    }
+)
+
+print(response.text)
+
+output: Yes, Boost Infinite was a real wireless carrier in the United States. It operated as a wholly owned subsidiary of Dish Wireless, which also owns the more widely known Boost Mobile. However, as of mid-2024, Boost Infinite has been merged into a rebranded Boost Mobile.
+
+Boost Infinite was positioned as a postpaid mobile virtual network operator (MVNO), distinguishing it from its prepaid sister carrier, Boost Mobile. A key feature of Boost Infinite was its use of what it called "America's Smart Network™," which combined the power of three major wireless networks: AT&T, T-Mobile, and Dish's own growing 5G network. This multi-network approach was designed to provide customers with more reliable nationwide coverage by allowing their devices to intelligently switch to the strongest available signal.
+
+The carrier launched in December 2022 and gained attention for its straightforward unlimited plans, with some offers including a locked-in price for life. In 2023, Republic Wireless customers were transitioned to Boost Infinite as that service was shut down. Boost Infinite even partnered with Amazon to sell its postpaid plans to Prime members.
+
+Despite its efforts to establish itself, Boost Infinite was ultimately folded into the Boost Mobile brand in July 2024. While it no longer operates as a separate entity, its plans and offerings have been largely integrated into the new Boost Mobile.
