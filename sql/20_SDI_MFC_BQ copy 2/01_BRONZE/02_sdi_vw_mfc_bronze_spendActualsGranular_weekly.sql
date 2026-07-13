@@ -1,7 +1,9 @@
+
 -- ============================================================
 -- BRONZE 2: ACTUALS - GRANULAR — BigQuery
 -- Uses TRUE raw FileLoad_Date for latest snapshot selection
 -- ============================================================
+
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendActualsGranular_weekly`()
 BEGIN
@@ -19,12 +21,15 @@ BEGIN
       SAFE_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
       SAFE_CAST(Week_Ending_Sunday AS DATE) AS Week_Ending_Sunday,
       SAFE_CAST(QGP_Week AS DATE) AS QGP_Week,
-      FileLoad_Date,
+
+      SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
       SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
+
       UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
       Channel,
       Tactic,
       Message_Type,
+
       CASE
         WHEN LOWER(TRIM(Agency)) = 'ini'
           THEN 'Initiative'
@@ -34,10 +39,12 @@ BEGIN
           THEN NULL
         ELSE TRIM(Agency)
       END AS Agency,
+
       CASE
         WHEN UPPER(TRIM(QGP)) = 'ACTUAL' THEN Spend
         ELSE NULL
       END AS Spend_Actual
+
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
       AND UPPER(TRIM(WM_NWM)) = 'WORKING'
@@ -57,6 +64,7 @@ BEGIN
       AND SAFE_CAST(Week_Beginning_Monday AS DATE) IS NOT NULL
       AND SAFE_CAST(Week_Ending_Sunday AS DATE) IS NOT NULL
       AND SAFE_CAST(QGP_Week AS DATE) IS NOT NULL
+      AND SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
       AND UPPER(TRIM(Message)) NOT IN (
         'SEM POSTPAID/MICRO',
@@ -153,3 +161,4 @@ BEGIN
   ;
 
 END;
+
