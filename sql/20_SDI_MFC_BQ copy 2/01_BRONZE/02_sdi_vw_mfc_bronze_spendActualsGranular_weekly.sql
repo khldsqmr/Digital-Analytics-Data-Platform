@@ -1,7 +1,6 @@
 
 -- ============================================================
--- BRONZE 2: ACTUALS - GRANULAR — BigQuery
--- Uses TRUE raw FileLoad_Date for latest snapshot selection
+-- BRONZE 2: ACTUALS - GRANULAR
 -- ============================================================
 
 CREATE OR REPLACE PROCEDURE
@@ -11,16 +10,25 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendActualsGranular_weekly`
   OPTIONS (
-    description = 'MFC Bronze Actuals Granular Weekly — refreshed via sdi_sp_mfc_bronze_spendActualsGranular_weekly.'
+    description = 'MFC Bronze Actuals Granular Weekly'
   )
   AS
 
   WITH raw AS (
     SELECT
       Quarter,
-      SAFE_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-      SAFE_CAST(Week_Ending_Sunday AS DATE) AS Week_Ending_Sunday,
-      SAFE_CAST(QGP_Week AS DATE) AS QGP_Week,
+
+      SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+
+      COALESCE(
+        SAFE_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+        DATE_ADD(
+          SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE),
+          INTERVAL 6 DAY
+        )
+      ) AS Week_Ending_Sunday,
+
+      SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
 
       SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
       SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
@@ -40,10 +48,7 @@ BEGIN
         ELSE TRIM(Agency)
       END AS Agency,
 
-      CASE
-        WHEN UPPER(TRIM(QGP)) = 'ACTUAL' THEN Spend
-        ELSE NULL
-      END AS Spend_Actual
+      Spend AS Spend_Actual
 
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
@@ -55,15 +60,8 @@ BEGIN
         'Unallocated',
         'Budget Held'
       )
-      AND Week_Beginning_Monday IS NOT NULL
-      AND Week_Beginning_Monday != 'None'
-      AND Week_Ending_Sunday IS NOT NULL
-      AND Week_Ending_Sunday != 'None'
-      AND QGP_Week IS NOT NULL
-      AND QGP_Week != 'None'
-      AND SAFE_CAST(Week_Beginning_Monday AS DATE) IS NOT NULL
-      AND SAFE_CAST(Week_Ending_Sunday AS DATE) IS NOT NULL
-      AND SAFE_CAST(QGP_Week AS DATE) IS NOT NULL
+      AND SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+      AND SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
       AND SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
       AND UPPER(TRIM(Message)) NOT IN (
@@ -161,4 +159,3 @@ BEGIN
   ;
 
 END;
-
