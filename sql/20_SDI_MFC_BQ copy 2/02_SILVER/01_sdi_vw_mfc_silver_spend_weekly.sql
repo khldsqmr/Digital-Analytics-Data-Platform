@@ -62,24 +62,28 @@ BEGIN
 
   -- Keep separate Quarter rows so daily disaggregation correctly
   -- splits boundary weeks to BOUNDARY_STUB and BOUNDARY_FIRST QGP dates
+
   source_joined AS (
     SELECT
       COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
       COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
-      COALESCE(
-        IF(a.FileLoad_Date > f.FileLoad_Date, a.FileLoad_Date, f.FileLoad_Date),
-        a.FileLoad_Date,
-        f.FileLoad_Date
+  
+      (
+        SELECT MAX(d)
+        FROM UNNEST([a.FileLoad_Date, f.FileLoad_Date]) AS d
       )                                                          AS FileLoad_Date,
+  
       COALESCE(a.LOB_Supported, f.LOB_Supported)                 AS LOB_Supported,
       a.weekly_actual,
       f.weekly_forecast,
+  
       COALESCE(
         IF(a.weekly_actual != 0, a.weekly_actual, NULL),
         f.weekly_forecast
       )                                                          AS weekly_display,
+  
       UPPER(TRIM(COALESCE(a.source_week_type, f.source_week_type))) AS source_week_type
     FROM actual_clean a
     FULL OUTER JOIN forecast_clean f
@@ -87,7 +91,7 @@ BEGIN
       AND a.QGP_Week      = f.QGP_Week
       AND a.LOB_Supported = f.LOB_Supported
   ),
-
+  
   -- Derive quarter bounds from Source_Quarter string (e.g. "Q1'26")
   -- NOT from Week_Beginning_Monday, which is the same date for both Q1 and Q2
   -- boundary rows
