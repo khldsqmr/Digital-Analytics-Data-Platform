@@ -47,13 +47,62 @@
 [2ae06061-a095-4eb0-b81b-9b57c1a15e00] Major offer changes extraction starting...
 
 --- Page 8 ---
-  45 record(s), 13 flagged for review
-    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='Galaxy Watch7 $29/existing customer …was $99'
-    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$1000 off iPhone 17 series w/ Port and Better Value or Beyond'
-    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$830 off iPhone 17 series w/ Port and More'
-    segment='postpaid' | carrier='T-Mobile' | change_type='introduced' | description='$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was $1,200)'
-    segment='postpaid' | carrier='T-Mobile' | change_type='removed' | description='No offers expired'
-    ... and 40 more (full detail in the table, not the log)
+  45 record(s): 20 OK, 25 flagged
+  --- flagged, full detail ---
+    [CHECK] T-Mobile: introduced — None  (tier: Galaxy Watch7 $29/existing customer …was $99)
+       nearby source text: ... TALK ▪No new offers ▪No expired offers T-Mobile Confidential...
+    [CHECK] T-Mobile: introduced — None  (tier: $1000 off iPhone 17 series w/ Port and Better Value or Beyond)
+       nearby source text: ... TALK ▪No new offers ▪No expired offers T-Mobile Confidential...
+    [CHECK] T-Mobile: introduced — None  (tier: $830 off iPhone 17 series w/ Port and More)
+       nearby source text: ... TALK ▪No new offers ▪No expired offers T-Mobile Confidential...
+    [CHECK] T-Mobile: introduced — None  (tier: $1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was $1,200))
+       nearby source text: ... TALK ▪No new offers ▪No expired offers T-Mobile Confidential...
+    [CHECK] AT&T: introduced — None  (tier: S26+/S26 Ultra: >$1100 off w/min. $95 trade & UNL plan)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] AT&T: introduced — None  (tier: S26: >$900 off w/ min. $95 trade & trade level)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] AT&T: introduced — None  (tier: All models: $500 off w/min. $35 trade & Value 2.0 plans; stackable with multi-line plan savings)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] AT&T: introduced — None  (tier: AT&T Build-A-Plan – went live 5/27; offers customizable plans with $15/1GB base option)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] AT&T: removed — None  (tier: GS26 Series - removed o Extra/Premium/Elite $1300/$230 trade level; $900/$35 trade level)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] AT&T: removed — None  (tier: removed select/any condition trade)
+       nearby source text: ...lite $1300/$230 trade level; $900/$35 o AT&T 5/25) Galaxy A37 …$99/new line o S26: >$900 off w/ min. $95 trade & trade level (2/25 – 5/28) & ▪Regional Offer: In-store - $10 Moto edge 2025 …$...
+    [CHECK] Verizon: introduced — None  (tier: iPhone 17 offers: $1,000 off w/ AAL & UNL Ultimate)
+       (nothing matching found in source text at all)
+    [CHECK] Verizon: introduced — None  (tier: iPhone 17 offers: $830 off w/ AAL & UNL Plus)
+       (nothing matching found in source text at all)
+    [CHECK] Verizon: introduced — None  (tier: iPhone 17 offers: Up to $830 off w/ Port, Trade & UNL Welcome)
+       (nothing matching found in source text at all)
+    [CHECK] Verizon: introduced — None  (tier: Dad & Grads Bundles (Phone + Watch + Tablet): Up to $500 off Apple Watch w/ iPhone purchase (was up to $250 off))
+       (nothing matching found in source text at all)
+    [CHECK] Verizon: introduced — None  (tier: Dad & Grads Bundles (Phone + Watch + Tablet): $500 off iPad w/ iPhone purchase (was $320))
+       (nothing matching found in source text at all)
+    [CHECK] Verizon: introduced — None  (tier: Dad & Grads Bundles (Phone + Watch + Tablet): ^^Similar offers for Samsung and Google)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: “Deal Drop” Sale – FREE with port & $60 plan)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: GS26 …$99/new line)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: Galaxy A36 …$79/new line (reg. $300))
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: Galaxy A37 …$99/new line)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: Moto edge 2025 …$99/new line)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: moto razr 2025 - $149 port or new line w/$60 plan …was $99)
+       (nothing matching found in source text at all)
+    [CHECK] Cricket Wireless: introduced — None  (tier: Unlock Policy: Will change on July 1 – to 365 days paid service required ...was 180 days)
+       (nothing matching found in source text at all)
+    [CHECK] Total Wireless: introduced — None  (tier: In-Store: iPhone 16e - $79 with port & 2x $60 All Access plan)
+       nearby source text: ...^^Similar offers for Samsung and Google Total ▪In-Store: iPhone 16e - $79 with port & 2x $60 All Access ▪No changes Wireless plan (mid-May – TBD) Spectrum Mobile: Spectrum Mobile CABLE ▪No n...
+    [CHECK] Straight Talk: removed — None  (tier: 25% off FRP Phones – max. $50 savings w/any purchase, plan & promo code NASCARFAN)
+       (nothing matching found in source text at all)
+  --- sample of OK rows (3 of 20) ---
+    [OK] T-Mobile: None — None
+    [OK] Verizon: None — None
+    [OK] Spectrum: None — None
 
 [2ae06061-a095-4eb0-b81b-9b57c1a15e00] Wrote 45 rows to silver majorOfferChanges (prior rows for this date cleared first).
 [2ae06061-a095-4eb0-b81b-9b57c1a15e00] Promoted 32 of 45 rows to gold majorOfferChanges.
@@ -122,13 +171,12 @@
 [2ae06061-a095-4eb0-b81b-9b57c1a15e00] Carrier grid (text-first) extraction starting...
 
 --- Page 13 (postpaid_bts_offers) ---
-  (removed 2 exact-duplicate record(s) from model response)
-  extracted 33 records (0 flagged for review)
-  33 record(s): 33 OK, 0 flagged
-  --- sample of OK rows (3 of 33) ---
+  extracted 35 records (0 flagged for review)
+  35 record(s): 35 OK, 0 flagged
+  --- sample of OK rows (3 of 35) ---
     [OK] T-Mobile: Apple Watch SE 3 — $300 off
-    [OK] T-Mobile: Apple Watch S11 — $300 off
-    [OK] T-Mobile: Apple Watch SE3 — $300 off
+    [OK] T-Mobile: Apple Watch SE 3 — BOGO $300 off
+    [OK] T-Mobile: Apple Watch Series 11 — BOGO $300 off
 
 --- Page 14 (postpaid_bts_offers) ---
   (removed 1 exact-duplicate record(s) from model response)
@@ -159,104 +207,83 @@
     [OK] T-Mobile: BTS BYOD PIC — $100
 
 --- Page 18 (cable_mvno_offers) ---
-  extracted 101 records (0 flagged for review)
-  101 record(s): 101 OK, 0 flagged
-  --- sample of OK rows (3 of 101) ---
-    [OK] Optimum: iPhone 17 Series — <$1000 off
-    [OK] Optimum: iPhone 17 Series — $800 off
-    [OK] Optimum: iPhone 17 Series — $400 off
+  extracted 108 records (0 flagged for review)
+  108 record(s): 108 OK, 0 flagged
+  --- sample of OK rows (3 of 108) ---
+    [OK] Optimum: Galaxy S26 — $500 off
+    [OK] Optimum: Galaxy S26+ — $600 off
+    [OK] Optimum: Galaxy S26 Ultra — $700 off
 
 --- Page 19 (cable_mvno_offers) ---
-  (removed 1 exact-duplicate record(s) from model response)
-  extracted 28 records (4 flagged for review)
-  28 record(s): 24 OK, 4 flagged
+  extracted 26 records (3 flagged for review)
+  26 record(s): 23 OK, 3 flagged
   --- flagged, full detail ---
-    [CHECK] Optimum: 1GB Data Top-Up — '$6/mo.'
+    [CHECK] Optimum: 1GB Data Top-up — '$6/mo.'
        nearby source text: ...e Pricing & Offers Effective May 29, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price...
-    [CHECK] Spectrum: Unlimited Plan — 'Free for 1 year'
-       nearby source text: ...iscount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including international, 15GB hotspot before shown) Raised data limits 9/8/23; Al...
-    [CHECK] Xfinity: Unlimited Mobile Line — 'Free for 1 year'
+    [CHECK] Spectrum: Unlimited Mobile Line — 'Free for 1 year'
        nearby source text: ...iscount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including international, 15GB hotspot before shown) Raised data limits 9/8/23; Al...
     [CHECK] Xfinity: Unlimited Mobile Line — 'Free for 2 years'
        nearby source text: ... Service Pricing & Offers Effective May 29, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2...
-  --- sample of OK rows (3 of 24) ---
-    [OK] Optimum: Unlimited Plan — $45/mo.
-    [OK] Optimum: Unlimited Max Plan — $55/mo.
+  --- sample of OK rows (3 of 23) ---
+    [OK] Optimum: Unlimited Plan (20GB) — $45/mo.
+    [OK] Optimum: Unlimited Max Plan (50GB) — $55/mo.
     [OK] Optimum: Unlimited Plan — $15 off per line
 
 --- Page 24 (prepaid_brand_offers) ---
-  extracted 34 records (0 flagged for review)
-  34 record(s): 34 OK, 0 flagged
-  --- sample of OK rows (3 of 34) ---
-    [OK] Metro by T-Mobile: HINT Gateway — $0
-    [OK] Metro by T-Mobile: HINT for Metro Contract Freedom Service — up to $750
-    [OK] Metro by T-Mobile: HINT multi-month trial — $135 for 6-months
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 38 records (3 flagged for review)
+  38 record(s): 35 OK, 3 flagged
+  --- flagged, full detail ---
+    [CHECK] Cricket Wireless: Service Trial — 'Free'
+       nearby source text: ...Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPG...
+    [CHECK] Cricket Wireless: Referral — '$25'
+       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
+    [CHECK] Cricket Wireless: Future phone upgrade — '$200 off'
+       nearby source text: ...ro: 4 Limited Data Plans: 100GB, 150GB, 200GB, 300GB for Announced expansion thru 7-Eleven beginning Dec. 2022 – and through Walgreens 4/6/23 more subs not qual. for UNL; (7/14 – 9/22 VPM/ne...
+  --- sample of OK rows (3 of 35) ---
+    [OK] Metro by T-Mobile: HINT Gateway — $49
+    [OK] Metro by T-Mobile: HINT line — up to $500
+    [OK] Metro by T-Mobile: HINT service — $135 for 6-months
 
 --- Page 26 (prepaid_brand_offers) ---
-  (removed 4 exact-duplicate record(s) from model response)
-  extracted 102 records (2 flagged for review)
-  102 record(s): 100 OK, 2 flagged
-  --- flagged, full detail ---
-    [CHECK] Boost Infinite: iPhone — '$830 off'
-       nearby source text: ...ra 2 (10 x $15 Boost Infinite offers - $830 off / iPhone (8/27/25 $830 - ), $800 off / Samsung (GS26 Series added 2/25) monthly credits) (5/17/24 – 9/13 Watch9 removed – 9/20/24 Watch10 adde...
-    [CHECK] Boost Infinite: Samsung GS26 Series — '$800 off'
-       nearby source text: ...- $830 off / iPhone (8/27/25 $830 - ), $800 off / Samsung (GS26 Series added 2/25) monthly credits) (5/17/24 – 9/13 Watch9 removed – 9/20/24 Watch10 added – 9/19/25 11 added - TBD) SmartPay ...
-  --- sample of OK rows (3 of 100) ---
+  extracted 115 records (0 flagged for review)
+  115 record(s): 115 OK, 0 flagged
+  --- sample of OK rows (3 of 115) ---
     [OK] Boost Mobile: iPhone 15 — $259
+    [OK] Boost Mobile: iPhone 15 — $349
     [OK] Boost Mobile: iPhone 15 — $209.99
-    [OK] Boost Mobile: iPhone 16e — free
 
 --- Page 27 (prepaid_brand_offers) ---
-  extracted 29 records (4 flagged for review)
-  29 record(s): 25 OK, 4 flagged
+  extracted 38 records (2 flagged for review)
+  38 record(s): 36 OK, 2 flagged
   --- flagged, full detail ---
-    [CHECK] T-Mobile Prepaid: A17 — 'On Us'
-       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
-    [CHECK] T-Mobile Prepaid: TCL Flip4 5G — 'On Us'
-       nearby source text: ...lagship Brands/Prepaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-)...
-    [CHECK] AT&T Prepaid: SIM card — 'free'
-       nearby source text: ...epaid – Current Offers T-Mobile Prepaid AT&T Prepaid Verizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & ...
-    [CHECK] Verizon Prepaid: Activation Fee — 'Waived ($35)'
-       nearby source text: ...f service in same transaction; ex. 2 • $35 Unlimited Saver – 30GB data at 3Mpbs then throttled to 1.5Mbps (no 5G speeds), mos. payment on $50 rate plan (Jan 2025 – 7/8/26) loyalty discount u...
-  --- sample of OK rows (3 of 25) ---
-    [OK] T-Mobile Prepaid: A16 — $100 off
-    [OK] T-Mobile Prepaid: A15 — $100 off
+    [CHECK] AT&T Prepaid: BYOD eSIM — '$1.29'
+       nearby source text: ...rizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited 2/6/26 ( – l...
+    [CHECK] AT&T Prepaid: BYOD pSIM Card — '$1.29'
+       nearby source text: ...rizon Prepaid New Plans (6/24/25) - $40/15GB, $45/UNL, $60/UNL Plus – Service: • BYOD gets a free SIM card (11/19/19-) autopay added & 5-Year Guarantee • All plans now Unlimited 2/6/26 ( – l...
+  --- sample of OK rows (3 of 36) ---
     [OK] T-Mobile Prepaid: Galaxy A17 5G — $150 Off
+    [OK] T-Mobile Prepaid: moto g play — $19.99
+    [OK] T-Mobile Prepaid: A17 — on Us
 
 --- Page 28 (prepaid_brand_offers) ---
-  (removed 2 exact-duplicate record(s) from model response)
-  extracted 84 records (0 flagged for review)
-  84 record(s): 84 OK, 0 flagged
-  --- sample of OK rows (3 of 84) ---
+  extracted 59 records (0 flagged for review)
+  59 record(s): 59 OK, 0 flagged
+  --- sample of OK rows (3 of 59) ---
     [OK] Metro by T-Mobile: A17 5G — $0
     [OK] Metro by T-Mobile: moto g power ’26 — $0
-    [OK] Metro by T-Mobile: moto g play 2024 — $49
+    [OK] Cricket Wireless: Boost Bounce — $49
 
-[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Wrote 437 rows to silver carrierOfferGrid (prior rows for this date cleared first).
-[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Promoted 429 of 437 rows to gold carrierOfferGrid.
-  (collapsed 15 flagged row(s) into 13 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
-
-!!! STAGE FAILED: TEXT-FIRST GRID: bts / cable_mvno / prepaid_brand
-!!! BadRequest: 400 Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.; reason: invalid, message: Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.; reason: invalid, message: Error while reading data, error message: JSON processing encountered too many errors, giving up. Rows: 1; errors: 1; max bad: 0; error percent: 0; reason: invalid, message: Error while reading data, error message: JSON parsing error in row starting at position 0: Could not convert value 'string_value: 	 "50% off 2nd line"' to integer. Field: offer_amount; Value: 50% off 2nd line
+[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Wrote 445 rows to silver carrierOfferGrid (prior rows for this date cleared first).
+[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Promoted 442 of 445 rows to gold carrierOfferGrid.
+  (collapsed 13 flagged row(s) into 11 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
+[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Flagged 13 row(s) for review.
+  Breakdown: amount_mismatch=3, new_offer_type=10
 
 ################################################################################
 # IMAGE: device offers incl. business
 ################################################################################
 [2ae06061-a095-4eb0-b81b-9b57c1a15e00] Device offers (text+image) extraction starting...
-Traceback (most recent call last):
-  File "<ipython-input-14-043d594eeb70>", line 2889, in run_all_stage2_extractions
-    fn(run_id, report_date)
-  File "<ipython-input-14-043d594eeb70>", line 2623, in run_carrier_grid_extraction
-    write_review_rows(all_review_rows)
-  File "<ipython-input-14-043d594eeb70>", line 340, in write_review_rows
-    write_rows(REVIEW_TABLE, deduped)
-  File "<ipython-input-14-043d594eeb70>", line 241, in write_rows
-    job.result()
-  File "/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/base.py", line 1047, in result
-    return super(_AsyncJob, self).result(timeout=timeout, retry=retry)
-  File "/usr/local/lib/python3.10/dist-packages/google/api_core/future/polling.py", line 261, in result
-    raise self._exception
-google.api_core.exceptions.BadRequest: 400 Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.; reason: invalid, message: Error while reading data, error message: JSON table encountered too many errors, giving up. Rows: 1; errors: 1. Please look into the errors[] collection for more details.; reason: invalid, message: Error while reading data, error message: JSON processing encountered too many errors, giving up. Rows: 1; errors: 1; max bad: 0; error percent: 0; reason: invalid, message: Error while reading data, error message: JSON parsing error in row starting at position 0: Could not convert value 'string_value: 	 "50% off 2nd line"' to integer. Field: offer_amount; Value: 50% off 2nd line
   Grounding with 15 known carrier(s): ['T-Mobile', 'Verizon', 'AT&T', 'Xfinity', 'Spectrum', 'Comcast', 'Optimum', 'Metro by T-Mobile', 'Boost Mobile', 'Cricket Wireless', 'Straight Talk', 'Total Wireless', 'T-Mobile Prepaid', 'AT&T Prepaid', 'Verizon Prepaid']
 
 --- Page 10 (postpaid_device_offers_apple) ---
@@ -269,50 +296,44 @@ google.api_core.exceptions.BadRequest: 400 Error while reading data, error messa
     [OK] T-Mobile: iPhone 17 Pro — Up to $800/line
 
 --- Page 11 (postpaid_device_offers_samsung_google) ---
-  (removed 14 exact-duplicate record(s) from model response)
-  extracted 178 offer records (0 flagged for review)
-  178 record(s): 178 OK, 0 flagged
-  --- sample of OK rows (3 of 178) ---
+  (removed 15 exact-duplicate record(s) from model response)
+  extracted 183 offer records (0 flagged for review)
+  183 record(s): 183 OK, 0 flagged
+  --- sample of OK rows (3 of 183) ---
     [OK] T-Mobile: S26 — $1100 off
     [OK] T-Mobile: S26+ — $1100 off
     [OK] T-Mobile: S26 Ultra — $1100 off
 
 --- Page 12 (postpaid_device_offers_motorola_affordable) ---
   (removed 5 exact-duplicate record(s) from model response)
-  extracted 70 offer records (0 flagged for review)
-  70 record(s): 70 OK, 0 flagged
-  --- sample of OK rows (3 of 70) ---
+  extracted 60 offer records (0 flagged for review)
+  60 record(s): 60 OK, 0 flagged
+  --- sample of OK rows (3 of 60) ---
     [OK] T-Mobile: Android Flagships — Up to $800/line
-    [OK] T-Mobile: Motorola Razr '25/'26 — $1.3K off
-    [OK] T-Mobile: Motorola Razr+ — $1.3K off
+    [OK] AT&T: Android Flagships — $800
+    [OK] AT&T: Android Flagships — $200
 
 --- Page 20 (business_device_offers) ---
-  (removed 13 exact-duplicate record(s) from model response)
-  extracted 144 offer records (0 flagged for review)
-  144 record(s): 144 OK, 0 flagged
-  --- sample of OK rows (3 of 144) ---
+  (removed 9 exact-duplicate record(s) from model response)
+  extracted 180 offer records (0 flagged for review)
+  180 record(s): 180 OK, 0 flagged
+  --- sample of OK rows (3 of 180) ---
     [OK] T-Mobile: iPhone 17 — <$1.1k off
     [OK] T-Mobile: iPhone 17e — <$1.1k off
     [OK] T-Mobile: iPhone 17+ — <$1.1k off
 
 --- Page 21 (business_device_offers) ---
   (removed 1 exact-duplicate record(s) from model response)
-  extracted 25 offer records (0 flagged for review)
-  25 record(s): 25 OK, 0 flagged
-  --- sample of OK rows (3 of 25) ---
-    [OK] T-Mobile: New Line — $150
-    [OK] T-Mobile: New Line — $100/line
-    [OK] T-Mobile: New Line — $200/line
+  extracted 24 offer records (0 flagged for review)
+  24 record(s): 24 OK, 0 flagged
+  --- sample of OK rows (3 of 24) ---
+    [OK] T-Mobile: Any — $150
+    [OK] T-Mobile: Any — $100/line
+    [OK] T-Mobile: Any — $200/line
 
-[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Wrote 586 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
-[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Promoted 586 of 586 rows to gold postpaidDeviceOffers.
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! 1 stage(s) failed entirely and were skipped:
-!   TEXT-FIRST GRID: bts / cable_mvno / prepaid_brand
-! Fix the cause, then re-run just those stages individually rather than the whole thing.
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Wrote 616 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
+[2ae06061-a095-4eb0-b81b-9b57c1a15e00] Promoted 616 of 616 rows to gold postpaidDeviceOffers.
 
 ================================================================================
-Total rows in review for this run: 8
+Total rows in review for this run: 19
 ================================================================================
