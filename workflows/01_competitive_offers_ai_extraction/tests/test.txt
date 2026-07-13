@@ -1,30 +1,27 @@
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.bigquery_storage_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.bigquery_storage_v1 past that date.
-  warnings.warn(message, FutureWarning)
----------------------------------------------------------------------------
-BadRequest                                Traceback (most recent call last)
-<ipython-input-7-3fd68316aab2> in <cell line: 1134>()
-   1144         resolution_note STRING
-   1145     )
--> 1146 """).result()
-   1147 for col, typ in [("review_row_id", "STRING"), ("silver_row_ids", "ARRAY"),
-   1148                   ("resolved_at", "TIMESTAMP"), ("resolution_note", "STRING")]:
+-- Bronze / manifest / review / control
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_pageTypePatterns`;
 
-/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in result(self, page_size, max_results, retry, timeout, start_index, job_retry)
-   1771                 # Since is_job_done() calls jobs.getQueryResults, which is a
-   1772                 # long-running API, don't delay the next request at all.
--> 1773                 while not is_job_done():
-   1774                     pass
-   1775             else:
+-- Silver (9)
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`;
 
-4 frames
-/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/job/query.py in is_job_done()
-   1720                         # `job_retry` predicate.
-   1721                         restart_query_job = True
--> 1722                         raise job_failed_exception
-   1723                     else:
-   1724                         # Make sure that the _query_results are cached so we
-
-BadRequest: 400 Syntax error: Expected "<" but got "," at [9:29]; reason: invalidQuery, location: query, message: Syntax error: Expected "<" but got "," at [9:29]
-
-Location: US
-Job ID: 4e0a929b-8e32-447c-be70-ef2d0c57ff27
+-- Gold (9)
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_ciHeadlines_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_nationalRetailReadout_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_voicePlanComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_businessInternetComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidServiceOffers_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`;
