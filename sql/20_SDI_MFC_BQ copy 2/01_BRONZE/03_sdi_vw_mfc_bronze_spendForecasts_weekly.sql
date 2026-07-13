@@ -1,8 +1,10 @@
+
 -- ============================================================
 -- BRONZE 3: FORECASTS - NON-GRANULAR / LOB LEVEL — BigQuery
 -- Uses TRUE raw FileLoad_Date for latest snapshot selection
--- Keeps latest pre-actual forecast per key
+-- Keeps latest forecast snapshot filed before first actual arrived
 -- ============================================================
+
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecasts_weekly`()
 BEGIN
@@ -20,17 +22,22 @@ BEGIN
       SAFE_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
       SAFE_CAST(Week_Ending_Sunday AS DATE) AS Week_Ending_Sunday,
       SAFE_CAST(QGP_Week AS DATE) AS QGP_Week,
-      FileLoad_Date,
+
+      SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
       SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
+
       UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+
       CASE
         WHEN UPPER(TRIM(QGP)) = 'FORECAST' THEN Spend
         ELSE NULL
       END AS Spend_Forecast,
+
       CASE
         WHEN UPPER(TRIM(QGP)) = 'ACTUAL' THEN Spend
         ELSE NULL
       END AS Spend_Actual
+
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
       AND UPPER(TRIM(WM_NWM)) = 'WORKING'
@@ -50,6 +57,7 @@ BEGIN
       AND SAFE_CAST(Week_Beginning_Monday AS DATE) IS NOT NULL
       AND SAFE_CAST(Week_Ending_Sunday AS DATE) IS NOT NULL
       AND SAFE_CAST(QGP_Week AS DATE) IS NOT NULL
+      AND SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
       AND UPPER(TRIM(Message)) NOT IN (
         'SEM POSTPAID/MICRO',
@@ -108,7 +116,7 @@ BEGIN
       ) AS rn
     FROM weekly_snapshots s
     LEFT JOIN first_actual_date a
-      ON s.Quarter = a.Quarter
+      ON  s.Quarter = a.Quarter
       AND s.QGP_Week = a.QGP_Week
       AND s.LOB_Supported = a.LOB_Supported
     WHERE a.first_actual_file_load_date IS NULL
@@ -184,16 +192,19 @@ BEGIN
         b.LOB_Supported,
         b.weekly_forecast AS source_forecast,
         bd.quarter_end_in_week,
+
         CASE
           WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
             THEN DATE_DIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday, DAY) + 1
           ELSE DATE_DIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week, DAY)
         END AS source_days,
+
         CASE
           WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
             THEN DATE_DIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week, DAY)
           ELSE DATE_DIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday, DAY) + 1
         END AS missing_days
+
       FROM best b
       JOIN week_type w
         ON b.QGP_Week = w.QGP_Week
@@ -225,12 +236,12 @@ BEGIN
       TRUE AS is_derived
     FROM boundary_with_forecast bwf
     JOIN actuals_quarters aq
-      ON aq.QGP_Week = bwf.QGP_Week
-     AND aq.Quarter != bwf.source_quarter
+      ON  aq.QGP_Week = bwf.QGP_Week
+      AND aq.Quarter != bwf.source_quarter
     LEFT JOIN best existing
-      ON existing.QGP_Week = bwf.QGP_Week
-     AND existing.Quarter = aq.Quarter
-     AND existing.LOB_Supported = bwf.LOB_Supported
+      ON  existing.QGP_Week = bwf.QGP_Week
+      AND existing.Quarter = aq.Quarter
+      AND existing.LOB_Supported = bwf.LOB_Supported
     WHERE existing.Quarter IS NULL
   )
 
@@ -269,3 +280,4 @@ BEGIN
   ;
 
 END;
+
