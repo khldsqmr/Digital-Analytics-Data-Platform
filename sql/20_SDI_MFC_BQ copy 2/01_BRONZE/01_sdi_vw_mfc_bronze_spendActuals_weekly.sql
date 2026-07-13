@@ -1,12 +1,6 @@
 -- ============================================================
 -- BRONZE 1: ACTUALS - NON-GRANULAR / LOB LEVEL — BigQuery
--- Converted from Databricks sdi_sp_mfc_bronze_spendActuals_weekly
---
--- Logic:
---   1. Filter raw to Actual spend rows only
---   2. Aggregate to week-level snapshots per (Quarter, QGP_Week, LOB)
---   3. Keep only the latest file load per key (rn = 1)
---   4. Tag boundary_week where a QGP_Week spans two Quarters
+-- Uses TRUE raw FileLoad_Date for latest snapshot selection
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendActuals_weekly`()
@@ -15,35 +9,56 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendActuals_weekly`
   OPTIONS (
-    description = 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
+    description = 'MFC Bronze Actuals Weekly — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
   )
   AS
 
   WITH raw AS (
     SELECT
       Quarter,
-      CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-      CAST(Week_Ending_Sunday    AS DATE) AS Week_Ending_Sunday,
-      CAST(QGP_Week              AS DATE) AS QGP_Week,
-      File_Date                           AS FileLoad_Date,
-      UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
-      CASE WHEN QGP = 'Actual' THEN Spend ELSE NULL END AS Spend_Actual
+      SAFE_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
+      SAFE_CAST(Week_Ending_Sunday AS DATE) AS Week_Ending_Sunday,
+      SAFE_CAST(QGP_Week AS DATE) AS QGP_Week,
+
+      -- Important:
+      -- FileLoad_Date is the actual ingestion/load date from raw.
+      FileLoad_Date,
+
+      -- File_Date is retained only as a secondary tie-breaker.
+      SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
+
+      UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+      CASE
+        WHEN UPPER(TRIM(QGP)) = 'ACTUAL' THEN Spend
+        ELSE NULL
+      END AS Spend_Actual
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-      AND WM_NWM = 'Working'
+      AND UPPER(TRIM(WM_NWM)) = 'WORKING'
       AND Channel IS NOT NULL
-      AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
-      AND Week_Beginning_Monday IS NOT NULL AND Week_Beginning_Monday != 'None'
-      AND Week_Ending_Sunday    IS NOT NULL AND Week_Ending_Sunday    != 'None'
-      AND QGP_Week              IS NOT NULL AND QGP_Week              != 'None'
-      AND REGEXP_CONTAINS(Week_Beginning_Monday,    r'^\d{4}-\d{2}-\d{2}$')
-      AND REGEXP_CONTAINS(Week_Ending_Sunday,       r'^\d{4}-\d{2}-\d{2}$')
-      AND REGEXP_CONTAINS(CAST(QGP_Week AS STRING), r'^\d{4}-\d{2}-\d{2}$')
+      AND Channel NOT IN (
+        'OTHER (do not use)',
+        'Non-Working',
+        'Unallocated',
+        'Budget Held'
+      )
+      AND Week_Beginning_Monday IS NOT NULL
+      AND Week_Beginning_Monday != 'None'
+      AND Week_Ending_Sunday IS NOT NULL
+      AND Week_Ending_Sunday != 'None'
+      AND QGP_Week IS NOT NULL
+      AND QGP_Week != 'None'
+      AND SAFE_CAST(Week_Beginning_Monday AS DATE) IS NOT NULL
+      AND SAFE_CAST(Week_Ending_Sunday AS DATE) IS NOT NULL
+      AND SAFE_CAST(QGP_Week AS DATE) IS NOT NULL
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-      AND UPPER(TRIM(Message))      NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      AND UPPER(TRIM(Message)) NOT IN (
+        'SEM POSTPAID/MICRO',
+        'MICRO POSTPAID OFFERS'
+      )
       AND Quarter IS NOT NULL
       AND REGEXP_CONTAINS(Quarter, r"^Q[1-4]'[0-9]{2}$")
-      AND QGP = 'Actual'
+      AND UPPER(TRIM(QGP)) = 'ACTUAL'
       AND Spend IS NOT NULL
   ),
 
@@ -54,13 +69,19 @@ BEGIN
       Week_Ending_Sunday,
       QGP_Week,
       FileLoad_Date,
+      Source_File_Date,
       LOB_Supported,
       SUM(Spend_Actual) AS weekly_actual
     FROM raw
-    WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
     GROUP BY
-      Quarter, Week_Beginning_Monday, Week_Ending_Sunday,
-      QGP_Week, FileLoad_Date, LOB_Supported
+      Quarter,
+      Week_Beginning_Monday,
+      Week_Ending_Sunday,
+      QGP_Week,
+      FileLoad_Date,
+      Source_File_Date,
+      LOB_Supported
   ),
 
   ranked AS (
@@ -68,13 +89,15 @@ BEGIN
       *,
       ROW_NUMBER() OVER (
         PARTITION BY Quarter, QGP_Week, LOB_Supported
-        ORDER BY FileLoad_Date DESC
+        ORDER BY FileLoad_Date DESC, Source_File_Date DESC
       ) AS rn
     FROM weekly_snapshots
   ),
 
   best AS (
-    SELECT * FROM ranked WHERE rn = 1
+    SELECT *
+    FROM ranked
+    WHERE rn = 1
   ),
 
   week_type AS (
@@ -98,7 +121,8 @@ BEGIN
     b.weekly_actual,
     w.week_type
   FROM best b
-  JOIN week_type w ON b.QGP_Week = w.QGP_Week
+  JOIN week_type w
+    ON b.QGP_Week = w.QGP_Week
   WHERE b.weekly_actual IS NOT NULL
     AND b.weekly_actual != 0
   ;
