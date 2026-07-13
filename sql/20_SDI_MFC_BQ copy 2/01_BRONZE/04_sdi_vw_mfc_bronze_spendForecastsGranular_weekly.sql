@@ -1,12 +1,7 @@
 -- ============================================================
 -- BRONZE 4: FORECASTS - GRANULAR — BigQuery
--- Converted from Databricks sdi_sp_mfc_bronze_spendForecastsGranular_weekly
---
--- Logic:
---   Same as Bronze 3 but partition key expands to
---   (Quarter, QGP_Week, LOB, Channel, Tactic, Message_Type, Agency)
---   NOT EXISTS check and derived forecast pro-ration also use
---   the full granular key.
+-- Uses TRUE raw FileLoad_Date for latest snapshot selection
+-- Null-safe joins added for Agency
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecastsGranular_weekly`()
@@ -15,18 +10,19 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastsGranular_weekly`
   OPTIONS (
-    description = 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendForecastsGranular_weekly.'
+    description = 'MFC Bronze Forecasts Granular Weekly — refreshed via sdi_sp_mfc_bronze_spendForecastsGranular_weekly.'
   )
   AS
 
   WITH raw AS (
     SELECT
       Quarter,
-      CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-      CAST(Week_Ending_Sunday    AS DATE) AS Week_Ending_Sunday,
-      CAST(QGP_Week              AS DATE) AS QGP_Week,
-      File_Date                           AS FileLoad_Date,
-      UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
+      SAFE_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
+      SAFE_CAST(Week_Ending_Sunday AS DATE) AS Week_Ending_Sunday,
+      SAFE_CAST(QGP_Week AS DATE) AS QGP_Week,
+      FileLoad_Date,
+      SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
+      UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
       Channel,
       Tactic,
       Message_Type,
@@ -38,22 +34,39 @@ BEGIN
         WHEN Agency IS NULL
           THEN NULL
         ELSE TRIM(Agency)
-      END                                 AS Agency,
-      CASE WHEN QGP = 'Forecast' THEN Spend ELSE NULL END AS Spend_Forecast,
-      CASE WHEN QGP = 'Actual'   THEN Spend ELSE NULL END AS Spend_Actual
+      END AS Agency,
+      CASE
+        WHEN UPPER(TRIM(QGP)) = 'FORECAST' THEN Spend
+        ELSE NULL
+      END AS Spend_Forecast,
+      CASE
+        WHEN UPPER(TRIM(QGP)) = 'ACTUAL' THEN Spend
+        ELSE NULL
+      END AS Spend_Actual
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-      AND WM_NWM = 'Working'
+      AND UPPER(TRIM(WM_NWM)) = 'WORKING'
       AND Channel IS NOT NULL
-      AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
-      AND Week_Beginning_Monday IS NOT NULL AND Week_Beginning_Monday != 'None'
-      AND Week_Ending_Sunday    IS NOT NULL AND Week_Ending_Sunday    != 'None'
-      AND QGP_Week              IS NOT NULL AND QGP_Week              != 'None'
-      AND REGEXP_CONTAINS(Week_Beginning_Monday,    r'^\d{4}-\d{2}-\d{2}$')
-      AND REGEXP_CONTAINS(Week_Ending_Sunday,       r'^\d{4}-\d{2}-\d{2}$')
-      AND REGEXP_CONTAINS(CAST(QGP_Week AS STRING), r'^\d{4}-\d{2}-\d{2}$')
+      AND Channel NOT IN (
+        'OTHER (do not use)',
+        'Non-Working',
+        'Unallocated',
+        'Budget Held'
+      )
+      AND Week_Beginning_Monday IS NOT NULL
+      AND Week_Beginning_Monday != 'None'
+      AND Week_Ending_Sunday IS NOT NULL
+      AND Week_Ending_Sunday != 'None'
+      AND QGP_Week IS NOT NULL
+      AND QGP_Week != 'None'
+      AND SAFE_CAST(Week_Beginning_Monday AS DATE) IS NOT NULL
+      AND SAFE_CAST(Week_Ending_Sunday AS DATE) IS NOT NULL
+      AND SAFE_CAST(QGP_Week AS DATE) IS NOT NULL
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-      AND UPPER(TRIM(Message))      NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      AND UPPER(TRIM(Message)) NOT IN (
+        'SEM POSTPAID/MICRO',
+        'MICRO POSTPAID OFFERS'
+      )
       AND Quarter IS NOT NULL
       AND REGEXP_CONTAINS(Quarter, r"^Q[1-4]'[0-9]{2}$")
       AND Spend IS NOT NULL
@@ -66,6 +79,7 @@ BEGIN
       Week_Ending_Sunday,
       QGP_Week,
       FileLoad_Date,
+      Source_File_Date,
       LOB_Supported,
       Channel,
       Tactic,
@@ -73,14 +87,22 @@ BEGIN
       Agency,
       SUM(Spend_Forecast) AS weekly_forecast
     FROM raw
-    WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
       AND Spend_Forecast IS NOT NULL
     GROUP BY
-      Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-      FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      Quarter,
+      Week_Beginning_Monday,
+      Week_Ending_Sunday,
+      QGP_Week,
+      FileLoad_Date,
+      Source_File_Date,
+      LOB_Supported,
+      Channel,
+      Tactic,
+      Message_Type,
+      Agency
   ),
 
-  -- First date on which an actual arrived for each granular key
   first_actual_date AS (
     SELECT
       Quarter,
@@ -92,46 +114,62 @@ BEGIN
       Agency,
       MIN(FileLoad_Date) AS first_actual_file_load_date
     FROM raw
-    WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-      AND Spend_Actual IS NOT NULL AND Spend_Actual != 0
-    GROUP BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+      AND Spend_Actual IS NOT NULL
+      AND Spend_Actual != 0
+    GROUP BY
+      Quarter,
+      QGP_Week,
+      LOB_Supported,
+      Channel,
+      Tactic,
+      Message_Type,
+      Agency
   ),
 
-  -- Keep only forecasts filed before the first actual; rank by latest first
   ranked AS (
     SELECT
       s.*,
       ROW_NUMBER() OVER (
-        PARTITION BY s.Quarter, s.QGP_Week, s.LOB_Supported,
-                     s.Channel, s.Tactic, s.Message_Type, s.Agency
-        ORDER BY s.FileLoad_Date DESC
+        PARTITION BY
+          s.Quarter,
+          s.QGP_Week,
+          s.LOB_Supported,
+          s.Channel,
+          s.Tactic,
+          s.Message_Type,
+          s.Agency
+        ORDER BY s.FileLoad_Date DESC, s.Source_File_Date DESC
       ) AS rn
     FROM weekly_snapshots s
     LEFT JOIN first_actual_date a
-      ON  s.Quarter       = a.Quarter
-      AND s.QGP_Week      = a.QGP_Week
-      AND s.LOB_Supported = a.LOB_Supported
-      AND s.Channel       = a.Channel
-      AND s.Tactic        = a.Tactic
-      AND s.Message_Type  = a.Message_Type
-      AND s.Agency        = a.Agency
+      ON s.Quarter = a.Quarter
+     AND s.QGP_Week = a.QGP_Week
+     AND s.LOB_Supported = a.LOB_Supported
+     AND s.Channel = a.Channel
+     AND s.Tactic = a.Tactic
+     AND s.Message_Type = a.Message_Type
+     AND IFNULL(s.Agency, '__NULL__') = IFNULL(a.Agency, '__NULL__')
     WHERE a.first_actual_file_load_date IS NULL
        OR s.FileLoad_Date < a.first_actual_file_load_date
   ),
 
   best AS (
-    SELECT * FROM ranked WHERE rn = 1
+    SELECT *
+    FROM ranked
+    WHERE rn = 1
   ),
 
-  -- QGP_Weeks that have at least one actual
   actuals_quarters AS (
-    SELECT DISTINCT Quarter, QGP_Week
+    SELECT DISTINCT
+      Quarter,
+      QGP_Week
     FROM raw
-    WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-      AND Spend_Actual IS NOT NULL AND Spend_Actual != 0
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+      AND Spend_Actual IS NOT NULL
+      AND Spend_Actual != 0
   ),
 
-  -- Flag boundary weeks
   week_type AS (
     SELECT
       QGP_Week,
@@ -147,22 +185,23 @@ BEGIN
     GROUP BY QGP_Week
   ),
 
-  -- Identify which quarter-end date falls inside each boundary week
   boundary_dates AS (
-    SELECT QGP_Week, quarter_end_in_week
+    SELECT
+      QGP_Week,
+      quarter_end_in_week
     FROM (
       SELECT DISTINCT
         QGP_Week,
         CASE
-          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 3,  31)
+          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 3, 31)
                BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 3,  31)
-          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 6,  30)
+            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 3, 31)
+          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 6, 30)
                BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 6,  30)
-          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 9,  30)
+            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 6, 30)
+          WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 9, 30)
                BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 9,  30)
+            THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 9, 30)
           WHEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 12, 31)
                BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
             THEN DATE(EXTRACT(YEAR FROM Week_Beginning_Monday), 12, 31)
@@ -172,12 +211,11 @@ BEGIN
     WHERE quarter_end_in_week IS NOT NULL
   ),
 
-  -- Calculate source_days and missing_days for boundary pro-ration
   boundary_with_forecast AS (
     SELECT *
     FROM (
       SELECT
-        b.Quarter                                                          AS source_quarter,
+        b.Quarter AS source_quarter,
         b.QGP_Week,
         b.Week_Beginning_Monday,
         b.Week_Ending_Sunday,
@@ -187,39 +225,40 @@ BEGIN
         b.Tactic,
         b.Message_Type,
         b.Agency,
-        b.weekly_forecast                                                  AS source_forecast,
+        b.weekly_forecast AS source_forecast,
         bd.quarter_end_in_week,
         CASE
           WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
             THEN DATE_DIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday, DAY) + 1
-            ELSE DATE_DIFF(b.Week_Ending_Sunday,   bd.quarter_end_in_week, DAY)
-        END                                                                AS source_days,
-        DATE_DIFF(b.Week_Ending_Sunday, b.Week_Beginning_Monday, DAY) + 1 AS total_week_days,
+          ELSE DATE_DIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week, DAY)
+        END AS source_days,
         CASE
           WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
-            THEN DATE_DIFF(b.Week_Ending_Sunday,   bd.quarter_end_in_week, DAY)
-            ELSE DATE_DIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday, DAY) + 1
-        END                                                                AS missing_days
+            THEN DATE_DIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week, DAY)
+          ELSE DATE_DIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday, DAY) + 1
+        END AS missing_days
       FROM best b
-      JOIN week_type    w  ON b.QGP_Week = w.QGP_Week AND w.week_type = 'boundary_week'
-      JOIN boundary_dates bd ON b.QGP_Week = bd.QGP_Week
-      -- Only process when the other quarter's granular forecast does NOT already exist
+      JOIN week_type w
+        ON b.QGP_Week = w.QGP_Week
+       AND w.week_type = 'boundary_week'
+      JOIN boundary_dates bd
+        ON b.QGP_Week = bd.QGP_Week
       WHERE NOT EXISTS (
         SELECT 1
         FROM best ob
-        WHERE ob.QGP_Week     = b.QGP_Week
-          AND ob.Quarter      != b.Quarter
+        WHERE ob.QGP_Week = b.QGP_Week
+          AND ob.Quarter != b.Quarter
           AND ob.LOB_Supported = b.LOB_Supported
-          AND ob.Channel       = b.Channel
-          AND ob.Tactic        = b.Tactic
-          AND ob.Message_Type  = b.Message_Type
-          AND ob.Agency        = b.Agency
+          AND ob.Channel = b.Channel
+          AND ob.Tactic = b.Tactic
+          AND ob.Message_Type = b.Message_Type
+          AND IFNULL(ob.Agency, '__NULL__') = IFNULL(b.Agency, '__NULL__')
       )
     )
-    WHERE source_days > 0 AND missing_days > 0
+    WHERE source_days > 0
+      AND missing_days > 0
   ),
 
-  -- Pro-rate forecast for the missing quarter
   derived_forecasts AS (
     SELECT
       aq.Quarter,
@@ -234,25 +273,24 @@ BEGIN
       bwf.Agency,
       ROUND((bwf.source_forecast / bwf.source_days) * bwf.missing_days, 2) AS weekly_forecast,
       'boundary_week' AS week_type,
-      TRUE            AS is_derived
+      TRUE AS is_derived
     FROM boundary_with_forecast bwf
     JOIN actuals_quarters aq
-      ON  aq.QGP_Week = bwf.QGP_Week
-      AND aq.Quarter != bwf.source_quarter
+      ON aq.QGP_Week = bwf.QGP_Week
+     AND aq.Quarter != bwf.source_quarter
     LEFT JOIN best existing
-      ON  existing.QGP_Week     = bwf.QGP_Week
-      AND existing.Quarter      = aq.Quarter
-      AND existing.LOB_Supported = bwf.LOB_Supported
-      AND existing.Channel       = bwf.Channel
-      AND existing.Tactic        = bwf.Tactic
-      AND existing.Message_Type  = bwf.Message_Type
-      AND existing.Agency        = bwf.Agency
+      ON existing.QGP_Week = bwf.QGP_Week
+     AND existing.Quarter = aq.Quarter
+     AND existing.LOB_Supported = bwf.LOB_Supported
+     AND existing.Channel = bwf.Channel
+     AND existing.Tactic = bwf.Tactic
+     AND existing.Message_Type = bwf.Message_Type
+     AND IFNULL(existing.Agency, '__NULL__') = IFNULL(bwf.Agency, '__NULL__')
     WHERE existing.Quarter IS NULL
   )
 
   SELECT *
   FROM (
-    -- Real best forecasts
     SELECT
       b.Quarter,
       b.Week_Beginning_Monday,
@@ -268,11 +306,11 @@ BEGIN
       w.week_type,
       FALSE AS is_derived
     FROM best b
-    JOIN week_type w ON b.QGP_Week = w.QGP_Week
+    JOIN week_type w
+      ON b.QGP_Week = w.QGP_Week
 
     UNION ALL
 
-    -- Derived pro-rated forecasts for missing boundary-week quarters
     SELECT
       Quarter,
       Week_Beginning_Monday,
