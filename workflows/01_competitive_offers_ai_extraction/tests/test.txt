@@ -1,9 +1,59 @@
-rows = list(bq.query(
-    f"""SELECT text_extraction_raw FROM `{BRONZE_TABLE}`
-        WHERE run_id = @run_id AND page_number = @page_number""",
-    job_config=bigquery.QueryJobConfig(query_parameters=[
-        bigquery.ScalarQueryParameter("run_id", "STRING", "01c5fdfb-2ea8-4516-8d25-fe35e08b0e60"),
-        bigquery.ScalarQueryParameter("page_number", "INT64", 15),
-    ]),
-).result())
-print(rows[0]["text_extraction_raw"])
+[COLUMN 1]
+Post-Paid BTS & Other Offers
+T-Mobile
+CONNECTED CAR DEVICES: CONNECTED CAR DEVICES:
+Devices
+▪SYNCUP DRIVE: On Us – w/ AAL & $2 plan
+▪No offer
+IN-CAR WI-FI PLANS (UNL
+▪$15/month
+Connected
+BTS BYOD PIC: OTHER:
+▪$100 Virtual Prepaid Mastercard (max 4 lines)
+▪Netgear Nighthawk M7 Pro:
+offer)
+BTS BOGOHO:
+▪Buy 1 BTS Line, Get 2nd Line 50% off (lesser of two lines) ▪Franklin A70: $209.99 or $5.84/mo.
+▪Franklin A50: $209.99 or $5.84/mo.
+Other
+▪Netgear Nighthawk M6 Pro:
+offer)
+▪Netgear Nighthawk Mg: $309.99
+▪Franklin
+A10: $79.99 or $2.23/mo.
+
+[COLUMN 2]
+Effective June 19, 2026
+AT&T
+CONNECTED CAR DEVICES:
+▪Verizon Hum+ ($99 FRP):
+▪Verizon HumX ($120 FRP):
+DATA W/22GB FUT):
+CONNECTED CAR BY VERIZON:
+▪$20/month
+ROUTERS & HOTSPOTS:
+▪Inseego MiFi 2100 5G ($400
+$449.99 or $12.50/mo. (No
+▪Inseego MiFi X PRO 5G ($350
+▪TCL
+LINKZONE 5G UW ($300
+(No offer)
+▪Verizon Jetpack MiFi 8800L
+(No offer)
+▪Verizon Orbic Speed 5G
+$459.99 or $12.78/mo. (No
+▪Verizon Orbic Speed Mobile
+or $8.62/mo. (No offer)
+(No offer)
+
+[COLUMN 3]
+Verizon
+No offer
+No offer
+FRP) – No Offer
+FRP) – No Offer
+FRP) – No Offer
+Hotspot ($200 FRP) – No Offer
+UW ($300 FRP) – No Offer
+Hotspot ($80 FRP) – No Offer
+T-Mobile Confidential
