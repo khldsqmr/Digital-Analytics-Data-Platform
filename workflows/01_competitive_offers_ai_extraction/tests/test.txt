@@ -1,12 +1,149 @@
-# Simplest — grabs whatever was uploaded most recently, no arguments needed
-dump_bronze_pages()
+/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.bigquery_storage_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.bigquery_storage_v1 past that date.
+  warnings.warn(message, FutureWarning)
+Guard regex integrity check passed — dollar-sign patterns are intact.
+Manifest, bronze, and review tables ready.
+Silver ciHeadlines & nationalRetailReadout tables ready.
+Gold ciHeadlines & nationalRetailReadout tables ready.
+Silver majorOfferChanges table ready.
+Gold majorOfferChanges table ready.
+Silver voicePlanComparison table ready.
+Gold voicePlanComparison table ready.
+Silver businessInternetComparison table ready.
+Gold businessInternetComparison table ready.
+Silver prepaidPriceGridDetail table ready.
+Gold prepaidPriceGridDetail table ready.
+Silver postpaidServiceOffers table ready.
+Gold postpaidServiceOffers table ready.
+Silver carrierOfferGrid table ready.
+Gold carrierOfferGrid table ready.
+Silver postpaidDeviceOffers table ready.
+Gold postpaidDeviceOffers table ready.
+==========================================================================================
+CALLABLE FUNCTIONS, BY PURPOSE
+==========================================================================================
 
-# Or be explicit about which run
-dump_bronze_pages(run_id="01c5fdfb-2ea8-4516-8d25-fe35e08b0e60")
+-- Setup / lookup --
+  get_latest_run_id(report_date)
+      find the active run_id for a date, without copy-pasting from logs
+  get_active_manifest_row(report_date)
+      full manifest row (run_id, file_name, uploaded_at) for a date
 
-# Or by date, if you don't have the run_id handy
-dump_bronze_pages(report_date=date(2026, 6, 19))
+-- Stage 1 — bronze --
+  (use the Upload widget above)
+      upload a PDF; handles new/replace/append automatically
+  resolve_upload_conflict(mode)
+      widget-free bypass for Replace/Append/Cancel if the buttons don't render — mode='replace'/'append'/'cancel'
+  run_extraction_pipeline(run_id, report_date, pdf_bytes, file_name)
+      manual Stage 1 call, if not using the widget
+  reset_tables()
+      DESTRUCTIVE — drops bronze + manifest entirely, not scoped to one date
 
+-- Diagnostics --
+  show_bronze_state()
+      page_type counts per run_id/report_date, across everything uploaded
+  dump_all_pages(pdf_bytes=None)
+      full reconstructed text for every page in a PDF, with strategy labels
+  dump_bronze_pages(run_id=None, report_date=None)
+      same, but from stored bronze — no PDF/upload needed, works any time
+  inspect_page(page_number, method='columns')
+      full text for one page — compare method='columns' vs 'rows'
+  debug_amount_mismatches(run_id, page_number, table_id=None)
+      why specific rows failed the guard, with source context
+  add_page_type_pattern(pattern, page_type, notes='')
+      teach classify_page() a new pattern without a code change
+  suggest_page_type(page_text)
+      ask Gemini to propose a category for unrecognized page text
+  list_all_tables()
+      every table this pipeline creates, grouped by layer
 
-get_active_manifest_row(date(2026, 6, 19))
-Row(('01c5fdfb-2ea8-4516-8d25-fe35e08b0e60', 'Competitive_Offer_Report_061926.pdf', '0c99a877819854cd23f165edfe6cb98a1868a1e403e82f8f0ebfdd6a13071860', datetime.datetime(2026, 7, 14, 1, 42, 21, 416934, tzinfo=datetime.timezone.utc)), {'run_id': 0, 'file_name': 1, 'file_hash': 2, 'uploaded_at': 3})
+-- Stage 2 — run individually --
+  run_text_only_extraction(run_id, report_date)
+      ci_headlines + national_retail_readout
+  run_major_changes_extraction(run_id, report_date)
+      major_offer_changes
+  run_voice_plan_extraction(run_id, report_date)
+      voice_plan_comparison (image tier)
+  run_biz_internet_extraction(run_id, report_date)
+      business_internet_comparison (image tier)
+  run_prepaid_grid_extraction(run_id, report_date)
+      prepaid_price_grid_detail
+  run_service_offers_extraction(run_id, report_date)
+      postpaid_service_offers
+  run_carrier_grid_extraction(run_id, report_date)
+      postpaid_bts_offers + cable_mvno_offers + prepaid_brand_offers
+  run_device_offers_extraction(run_id, report_date)
+      device offers incl. business (image tier)
+
+-- Stage 2 — run everything --
+  run_all_stage2_extractions(run_id, report_date)
+      all 8 extractors in sequence, with per-stage crash isolation
+
+==========================================================================================
+==========================================================================================
+ALL TABLES IN THIS PIPELINE
+==========================================================================================
+
+-- bronze / control (4) --
+  manifest (upload tracking)       prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly
+  bronze (per-page text/image)     prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly
+  review (flagged rows)            prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly
+  page type patterns (control)     prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_pageTypePatterns
+
+-- silver (9) --
+  ciHeadlines                      prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly
+  nationalRetailReadout            prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly
+  majorOfferChanges                prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly
+  voicePlanComparison              prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly
+  businessInternetComparison       prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly
+  prepaidPriceGridDetail           prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly
+  postpaidServiceOffers            prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly
+  carrierOfferGrid                 prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly
+  postpaidDeviceOffers             prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly
+
+-- gold (9) --
+  ciHeadlines                      prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_ciHeadlines_weekly
+  nationalRetailReadout            prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_nationalRetailReadout_weekly
+  majorOfferChanges                prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly
+  voicePlanComparison              prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_voicePlanComparison_weekly
+  businessInternetComparison       prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_businessInternetComparison_weekly
+  prepaidPriceGridDetail           prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly
+  postpaidServiceOffers            prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidServiceOffers_weekly
+  carrierOfferGrid                 prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly
+  postpaidDeviceOffers             prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly
+
+==========================================================================================
+Total: 22 tables
+==========================================================================================
+==========================================================================================
+PHASE 2 — CALLABLE FUNCTIONS
+==========================================================================================
+
+-- Run everything --
+  run_review_resolution(run_id, report_date)
+      the full pass: resolve, recheck, advise, refresh gold
+
+-- Run individually --
+  resolve_amount_mismatches(run_id, report_date)
+      auto-resolves amount_mismatch where the guard was wrong
+  recheck_new_carrier_flags(run_id)
+      marks new_carrier flags resolved if you've since added the carrier
+  review_new_carriers_and_types(run_id)
+      advisory recommendations — prints only, applies nothing
+  refresh_gold_for_date(report_date)
+      rebuilds every gold table from current silver — the only gold write
+
+-- Diagnostics --
+  show_review_summary(run_id)
+      pending vs resolved counts by flag_reason
+  fetch_pending_review(run_id, flag_reason=None)
+      raw pending review rows, optionally filtered
+
+-- Permanent taxonomy edits — always your call, never auto-applied --
+  KNOWN_CARRIERS.append('New Carrier Name')
+      then recheck_new_carrier_flags() + refresh_gold_for_date()
+  OFFER_TYPE_CATEGORIES
+      edit the list AND the enum in OFFER_ENRICHMENT_SCHEMA_FIELDS — takes effect on next extraction, not retroactively
+
+==========================================================================================
