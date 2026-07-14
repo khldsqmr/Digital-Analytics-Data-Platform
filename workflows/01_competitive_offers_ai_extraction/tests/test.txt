@@ -1,21 +1,21 @@
-IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
-THEN [Metric Value]
-END
+//QTD Avg Actual
+WINDOW_AVG(
+  IF [Is Complete Period] = TRUE
+  THEN SUM([Actual UPV])
+  END
+)
 
-IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast'
-THEN [Metric Value]
-END
+//QTD Avg Forecast (same weeks only)
+WINDOW_AVG(
+  IF [Is Complete Period] = TRUE
+  THEN SUM([Forecast UPV])
+  END
+)
 
-(SUM([Actual UPV]) - SUM([Forecast UPV])) / ABS(SUM([Forecast UPV]))
+//QTD Avg Variance %
+(WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Actual UPV]) END)
+- WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Forecast UPV]) END))
+/
+ABS(WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Forecast UPV]) END))
 
-IF SUM([Forecast UPV]) = 0 OR ISNULL(SUM([Forecast UPV]))
-THEN 'No Forecast'
-ELSEIF SUM([Actual UPV]) = 0 OR ISNULL(SUM([Actual UPV]))
-THEN 'No Actuals Yet'
-ELSE STR(ROUND((SUM([Actual UPV]) - SUM([Forecast UPV])) / ABS(SUM([Forecast UPV])) * 100, 1)) + '%'
-END
 
-qgp_date on Columns
-channel_group on Filters (or Rows if you want a breakdown)
-Marks: dual axis with SUM([Actual UPV]) and SUM([Forecast UPV]) as bars/lines
-[Actual vs Forecast %] as a second axis or label
