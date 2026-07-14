@@ -7,6 +7,11 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_
 WHERE run_id = '2ae06061-a095-4eb0-b81b-9b57c1a15e00'
   AND page_number = 15;
 
+output:
+has_309_99	has_209_99_dual_price	has_franklin_a70	has_nighthawk_mg
+true	true	true	true
+
+
 
 SELECT
   text_extraction_raw LIKE '%iPhone 17 offers:%$1,000 off w/ AAL & UNL Ultimate%' AS has_combined_desc,
@@ -14,10 +19,72 @@ SELECT
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`
 WHERE run_id = '2ae06061-a095-4eb0-b81b-9b57c1a15e00'
   AND page_number = 8;
-
+output: has_combined_desc	has_amount_alone
+true	true
 
 SELECT text_extraction_raw
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`
 WHERE run_id = '2ae06061-a095-4eb0-b81b-9b57c1a15e00'
   AND page_number = 15;
+
+output: text_extraction_raw
+"[COLUMN 1]
+Post-Paid BTS & Other Offers
+T-Mobile
+CONNECTED CAR DEVICES: CONNECTED CAR DEVICES:
+Devices
+▪SYNCUP DRIVE: On Us – w/ AAL & $2 plan
+▪No offer
+IN-CAR WI-FI PLANS (UNL
+▪$15/month
+Connected
+BTS BYOD PIC: OTHER:
+▪$100 Virtual Prepaid Mastercard (max 4 lines)
+▪Netgear Nighthawk M7 Pro:
+offer)
+BTS BOGOHO:
+▪Buy 1 BTS Line, Get 2nd Line 50% off (lesser of two lines) ▪Franklin A70: $209.99 or $5.84/mo.
+▪Franklin A50: $209.99 or $5.84/mo.
+Other
+▪Netgear Nighthawk M6 Pro:
+offer)
+▪Netgear Nighthawk Mg: $309.99
+▪Franklin
+A10: $79.99 or $2.23/mo.
+
+[COLUMN 2]
+Effective May 29, 2026
+AT&T
+CONNECTED CAR DEVICES:
+▪Verizon Hum+ ($99 FRP):
+▪Verizon HumX ($120 FRP):
+DATA W/22GB FUT):
+CONNECTED CAR BY VERIZON:
+▪$20/month
+ROUTERS & HOTSPOTS:
+▪Inseego MiFi 2100 5G ($400
+$449.99 or $12.50/mo. (No
+▪Inseego MiFi X PRO 5G ($350
+▪TCL
+LINKZONE 5G UW ($300
+(No offer)
+▪Verizon Jetpack MiFi 8800L
+(No offer)
+▪Verizon Orbic Speed 5G
+$459.99 or $12.78/mo. (No
+▪Verizon Orbic Speed Mobile
+or $8.62/mo. (No offer)
+(No offer)
+
+[COLUMN 3]
+Verizon
+No offer
+No offer
+FRP) – No Offer
+FRP) – No Offer
+FRP) – No Offer
+Hotspot ($200 FRP) – No Offer
+UW ($300 FRP) – No Offer
+Hotspot ($80 FRP) – No Offer
+T-Mobile Confidential"
 
