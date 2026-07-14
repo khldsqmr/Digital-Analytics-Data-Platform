@@ -9,3 +9,4 @@ dump_bronze_pages(report_date=date(2026, 6, 19))
 
 
 get_active_manifest_row(date(2026, 6, 19))
+Row(('01c5fdfb-2ea8-4516-8d25-fe35e08b0e60', 'Competitive_Offer_Report_061926.pdf', '0c99a877819854cd23f165edfe6cb98a1868a1e403e82f8f0ebfdd6a13071860', datetime.datetime(2026, 7, 14, 1, 42, 21, 416934, tzinfo=datetime.timezone.utc)), {'run_id': 0, 'file_name': 1, 'file_hash': 2, 'uploaded_at': 3})
