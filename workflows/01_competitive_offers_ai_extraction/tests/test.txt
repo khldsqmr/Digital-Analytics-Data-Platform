@@ -1,21 +1,19 @@
-//QTD Avg Actual
+//QTD Avg Actual 
 WINDOW_AVG(
-  IF [Is Complete Period] = TRUE
+  IF MIN([Is Complete Period]) = TRUE
   THEN SUM([Actual UPV])
   END
 )
 
-//QTD Avg Forecast (same weeks only)
+//QTD Avg Forecast
 WINDOW_AVG(
-  IF [Is Complete Period] = TRUE
+  IF MIN([Is Complete Period]) = TRUE
   THEN SUM([Forecast UPV])
   END
 )
 
 //QTD Avg Variance %
-(WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Actual UPV]) END)
-- WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Forecast UPV]) END))
+(WINDOW_AVG(IF MIN([Is Complete Period]) = TRUE THEN SUM([Actual UPV]) END)
+- WINDOW_AVG(IF MIN([Is Complete Period]) = TRUE THEN SUM([Forecast UPV]) END))
 /
-ABS(WINDOW_AVG(IF [Is Complete Period] = TRUE THEN SUM([Forecast UPV]) END))
-
-
+ABS(WINDOW_AVG(IF MIN([Is Complete Period]) = TRUE THEN SUM([Forecast UPV]) END))
