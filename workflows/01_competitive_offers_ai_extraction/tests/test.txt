@@ -1,54 +1,9 @@
-def values_present_in_text(record: dict, keys: list, source_text: str) -> bool:
-    """Checks that key extracted values are actually grounded in the bronze
-    text for this page. Layered, in order of strictness:
-    1. Literal substring match (whitespace- and bullet-normalized).
-    2. Strikethrough collapse: source often shows 'OLD NEW' price pairs back
-       to back (an old price struck through, replaced by the current one
-       right next to it) — recurring across weeks/page types. The extracted
-       value is correctly just the current price, which won't appear as a
-       contiguous substring with the old one sitting in between.
-    3. Numeric fallback: if the literal string still isn't found, check
-       whether ANY dollar figure in the source matches numerically once 'k'
-       abbreviations and a leading '<' are normalized away (source '<$1.1k'
-       vs extracted '$1100', or source '$50' vs extracted '$50/mo'). Looser
-       by design — trades some precision for not flagging correct, usefully-
-       normalized extractions as hallucinations.
-    4. Qualitative no-charge phrases ("On Us", "free", "Waived", etc.):
-       confirmed recurring false-positive pattern across multiple separate
-       runs — these describe a $0 cost with no dollar figure to check at
-       all, so the numeric fallback can never resolve them no matter how
-       it's tuned. Trades away verifying whatever's inside a parenthetical
-       (e.g. the $35 in "Waived ($35)") in exchange for eliminating a
-       confirmed, repeat source of noise.
-
-    Bullet markers (▪/•) are stripped before comparing, on both sides —
-    confirmed real cause of major_offer_changes false positives via direct
-    testing: the model often combines a "header" bullet with its own first
-    sub-bullet into one description (e.g. "iPhone 17 offers: $1,000 off w/
-    AAL & UNL Ultimate"), but the source presents these as two separate
-    bullets ("▪iPhone 17 offers: ▪$1,000 off..."), and the bullet character
-    sitting between them broke the literal contiguous match even though the
-    actual words matched perfectly. Bullets are pure structural formatting,
-    not content, so stripping them can't cause a false ACCEPT of wrong data —
-    only fix a false REJECT of correct data."""
-    normalized_source = re.sub(r"[▪•]", " ", source_text)
-    normalized_source = re.sub(r"\s+", " ", normalized_source)
-    collapsed_source = re.sub(r"[$][\d,]+\.?\d*\s+(?=[$])", "", normalized_source)
-    source_numbers = {extract_numeric_value(m) for m in
-                       re.findall(r"[<>]?[$][\d,]+\.?\d*k?", normalized_source, re.IGNORECASE)}
-
-    for key in keys:
-        val = str(record.get(key) or "").strip()
-        if not val:
-            continue
-        val_normalized = re.sub(r"[▪•]", " ", val)
-        val_normalized = re.sub(r"\s+", " ", val_normalized).strip()
-        if val_normalized in collapsed_source:
-            continue
-        target_num = extract_numeric_value(val)
-        if target_num is not None and target_num in source_numbers:
-            continue
-        if is_qualitative_no_charge(val):
-            continue
-        return False
-    return True
+rows = list(bq.query(
+    f"""SELECT text_extraction_raw FROM `{BRONZE_TABLE}`
+        WHERE run_id = @run_id AND page_number = @page_number""",
+    job_config=bigquery.QueryJobConfig(query_parameters=[
+        bigquery.ScalarQueryParameter("run_id", "STRING", "01c5fdfb-2ea8-4516-8d25-fe35e08b0e60"),
+        bigquery.ScalarQueryParameter("page_number", "INT64", 15),
+    ]),
+).result())
+print(rows[0]["text_extraction_raw"])
