@@ -1,5 +1,8 @@
 No PDF in memory yet — upload one first.
 
+import inspect
+print(inspect.getsource(values_present_in_text))
+
 Guard regex integrity check passed — dollar-sign patterns are intact.
 Manifest, bronze, and review tables ready.
 Silver ciHeadlines & nationalRetailReadout tables ready.
