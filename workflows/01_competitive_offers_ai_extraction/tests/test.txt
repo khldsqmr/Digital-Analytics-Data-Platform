@@ -1,33 +1,7 @@
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.bigquery_storage_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.bigquery_storage_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform_v1beta1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform_v1beta1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/cloud/aiplatform/models.py:52: FutureWarning: Support for google-cloud-storage < 3.0.0 will be removed in a future version of google-cloud-aiplatform. Please upgrade to google-cloud-storage >= 3.0.0.
-  from google.cloud.aiplatform.utils import gcs_utils
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1.schema.predict.instance_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1.schema.predict.instance_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1.schema.predict.params_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1.schema.predict.params_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1.schema.predict.prediction_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1.schema.predict.prediction_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1.schema.trainingjob.definition_v1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1.schema.trainingjob.definition_v1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1beta1.schema.predict.instance_v1beta1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1beta1.schema.predict.instance_v1beta1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1beta1.schema.predict.params_v1beta1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1beta1.schema.predict.params_v1beta1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1beta1.schema.predict.prediction_v1beta1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1beta1.schema.predict.prediction_v1beta1 past that date.
-  warnings.warn(message, FutureWarning)
-/usr/local/lib/python3.10/dist-packages/google/api_core/_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.12) which Google will stop supporting in new releases of google.cloud.aiplatform.v1beta1.schema.trainingjob.definition_v1beta1 once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.cloud.aiplatform.v1beta1.schema.trainingjob.definition_v1beta1 past that date.
-  warnings.warn(message, FutureWarning)
+No PDF in memory yet — upload one first.
+
 Guard regex integrity check passed — dollar-sign patterns are intact.
 Manifest, bronze, and review tables ready.
-Data for 2026-06-19 already exists (run 01c5fdfb-2ea8-4516-8d25-fe35e08b0e60, file 'Competitive_Offer_Report_061926.pdf').
-Choose how to proceed:
 Silver ciHeadlines & nationalRetailReadout tables ready.
 Gold ciHeadlines & nationalRetailReadout tables ready.
 Silver majorOfferChanges table ready.
@@ -168,6 +142,7 @@ PHASE 2 — CALLABLE FUNCTIONS
 
 ==========================================================================================
 
+Using run_id 01c5fdfb-2ea8-4516-8d25-fe35e08b0e60 (uploaded 2026-07-14 01:42:21.416934+00:00, file 'Competitive_Offer_Report_061926.pdf')
 
 ################################################################################
 # TEXT-ONLY: ci_headlines + national_retail_readout
@@ -175,37 +150,363 @@ PHASE 2 — CALLABLE FUNCTIONS
 [01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Text-only extraction stage starting...
 
 --- Page 5 (ci_headlines) ---
-/usr/local/lib/python3.10/dist-packages/vertexai/generative_models/_generative_models.py:433: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
-  warning_logs.show_deprecation_warning()
-  FAILED: AttributeError: 'str' object has no attribute 'isoformat'
+  6 record(s), 0 flagged for review
+    carrier='AT&T' | headline_title='No changes' | has_changes=False
+    carrier='Verizon' | headline_title='Simplicity Plan' | has_changes=True
+    carrier='Verizon' | headline_title='Verizon Loyalty' | has_changes=True
+    carrier='Verizon' | headline_title='Verizon Shine' | has_changes=True
+    carrier='Spectrum' | headline_title='No changes' | has_changes=False
+    ... and 1 more (full detail in the table, not the log)
 
-!!! STAGE FAILED: TEXT-ONLY: ci_headlines + national_retail_readout
-!!! AttributeError: 'str' object has no attribute 'isoformat'
+--- Page 6 (ci_headlines) ---
+  2 record(s), 0 flagged for review
+    carrier='Cricket Wireless' | headline_title='BYOD Tips for U.S. Visitors' | has_changes=True
+    carrier='Boost Mobile' | headline_title='2-Month Req. for Online Offers' | has_changes=True
+
+--- Page 29 (national_retail_readout) ---
+  14 record(s): 8 OK, 6 flagged
+  --- flagged, full detail ---
+    [CHECK] Best Buy: iPhone Air — 'null'
+       nearby source text: ...Key Highlights – Week Ending 6/19/26: • Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the Motorola Razr Ultra 2025, $450 off the Samsung Galaxy S25 Ultra 256GB...
+    [CHECK] Best Buy: Phone (4a) Pro — 'null'
+       nearby source text: ...Key Highlights – Week Ending 6/19/26: • Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the Motorola Razr Ultra 2025, $450 off the Samsung Galaxy S25 Ultra 256GB...
+    [CHECK] Best Buy: Galaxy S25 Edge — 'null'
+       nearby source text: ...Key Highlights – Week Ending 6/19/26: • Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the Motorola Razr Ultra 2025, $450 off the Samsung Galaxy S25 Ultra 256GB...
+    [CHECK] Best Buy: Jitterbug Flip2 — 'null'
+       nearby source text: ...Key Highlights – Week Ending 6/19/26: • Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the Motorola Razr Ultra 2025, $450 off the Samsung Galaxy S25 Ultra 256GB...
+    [CHECK] Best Buy: Jitterbug Smart 4 — 'null'
+       nearby source text: ...Key Highlights – Week Ending 6/19/26: • Best Buy’s unlocked promotions this week offer a maximum savings of $600 off the Motorola Razr Ultra 2025, $450 off the Samsung Galaxy S25 Ultra 256GB...
+    [CHECK] Walmart: Samsung Galaxy A16 5G — '$10'
+       nearby source text: ...6GB or $409.99 off the Galaxy S25 Ultra 1024GB. Discounts of $200-300 off are available on the Samsung Galaxy Z Flip7 FE, Galaxy Z Fold7, and Galaxy S25 FE, Motorola G Stylus 5G 2024, and th...
+  --- sample of OK rows (3 of 8) ---
+    [OK] Best Buy: Motorola Razr Ultra 2025 — $600
+    [OK] Best Buy: Samsung Galaxy S25 Ultra — $450
+    [OK] Best Buy: Galaxy S25 Ultra — $409.99
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 8 rows to silver ciHeadlines (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 8 of 8 rows to gold ciHeadlines.
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 14 rows to silver nationalRetailReadout (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 9 of 14 rows to gold nationalRetailReadout.
+  (collapsed 6 flagged row(s) into 2 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Flagged 6 row(s) for review.
+  Breakdown: amount_mismatch=5, new_retailer=1
 
 ################################################################################
 # TEXT-ONLY: major_offer_changes
 ################################################################################
 [01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Major offer changes extraction starting...
-Traceback (most recent call last):
-  File "<ipython-input-1-3717ceeeffa6>", line 1812, in run_text_only_extraction
-    rows, review = extract_ci_headlines(page["page_number"], page["text_extraction_raw"], report_date, run_id, known_carriers)
-  File "<ipython-input-1-3717ceeeffa6>", line 1740, in extract_ci_headlines
-    "report_date": report_date.isoformat(), "run_id": run_id, "source_page": page_number,
-AttributeError: 'str' object has no attribute 'isoformat'
-Traceback (most recent call last):
-  File "<ipython-input-1-3717ceeeffa6>", line 1812, in run_text_only_extraction
-    rows, review = extract_ci_headlines(page["page_number"], page["text_extraction_raw"], report_date, run_id, known_carriers)
-  File "<ipython-input-1-3717ceeeffa6>", line 1740, in extract_ci_headlines
-    "report_date": report_date.isoformat(), "run_id": run_id, "source_page": page_number,
-AttributeError: 'str' object has no attribute 'isoformat'
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "<ipython-input-1-3717ceeeffa6>", line 3073, in run_all_stage2_extractions
-    fn(run_id, report_date)
-  File "<ipython-input-1-3717ceeeffa6>", line 1819, in run_text_only_extraction
-    "report_date": report_date.isoformat(), "run_id": run_id, "source_page": page["page_number"],
-AttributeError: 'str' object has no attribute 'isoformat'
 
 --- Page 8 ---
+  29 record(s): 27 OK, 2 flagged
+  --- flagged, full detail ---
+    [CHECK] Verizon: introduced — None  (tier: Updated Verizon Loyalty program: All customers get 3% back in Verizon Dollars each month; Verizon Visa card customers continue to get 4%)
+       nearby source text: ...redit (6/16 - ) (6/17) VERIZON ▪Updated Verizon Loyalty program: All customers get ▪On Us watch and tablet “Dads & 3% back in Verizon Dollars each month; Verizon Visa Grads” w/ phone purchas...
+    [CHECK] Spectrum: removed — None  (tier: moto g stylus 2025 - $140 off FRP)
+       nearby source text: ... (6/16 - ) AT&T ▪No changes ▪No changes Spectrum Mobile Spectrum Mobile: ▪moto g stylus 2025 - $140 off CABLE ▪No new offers FRP (5/1 – 6/12) MVNOs Xfinity Mobile: VERIZON ▪No changes ▪No ch...
+  --- sample of OK rows (3 of 27) ---
+    [OK] T-Mobile: introduced — None
+    [OK] T-Mobile: removed — None
+    [OK] AT&T: introduced — None
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 29 rows to silver majorOfferChanges (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 27 of 29 rows to gold majorOfferChanges.
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Flagged 2 row(s) for review.
+  Breakdown: amount_mismatch=2
+
+################################################################################
+# IMAGE: voice_plan_comparison
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Voice plan comparison extraction starting...
+
+--- Page 23 ---
+  140 record(s), 0 flagged for review
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='AT&T' | price=240
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='Verizon' | price=204
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='T-Mobile' | price=150
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='AT&T' | price=300
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='Verizon' | price=294
+    ... and 135 more (full detail in the table, not the log)
+
+--- Page 24 ---
+  140 record(s), 0 flagged for review
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='AT&T' | price=240
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='Verizon' | price=204
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Good' | carrier='T-Mobile' | price=150
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='AT&T' | price=300
+    pricing_basis='Rack Rate — full price (lines 6–12)' | lines=6 | tier='Better' | carrier='Verizon' | price=294
+    ... and 135 more (full detail in the table, not the log)
+
+--- Page 25 ---
+  120 record(s), 0 flagged for review
+    pricing_basis='Voice Plan Rack Rate' | lines=1 | tier='Good' | carrier='AT&T' | price=60
+    pricing_basis='Voice Plan Rack Rate' | lines=1 | tier='Good' | carrier='Verizon' | price=70
+    pricing_basis='Voice Plan Rack Rate' | lines=1 | tier='Good' | carrier='T-Mobile' | price=65
+    pricing_basis='Voice Plan Rack Rate' | lines=1 | tier='Better' | carrier='AT&T' | price=80
+    pricing_basis='Voice Plan Rack Rate' | lines=1 | tier='Better' | carrier='Verizon' | price=85
+    ... and 115 more (full detail in the table, not the log)
+
+--- Page 26 ---
+  120 record(s), 0 flagged for review
+    pricing_basis='Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='AT&T' | price=50
+    pricing_basis='Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='Verizon' | price=65
+    pricing_basis='Voice Plan with Auto Pay' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
+    pricing_basis='Voice Plan with Auto Pay' | lines=1 | tier='Better' | carrier='AT&T' | price=70
+    pricing_basis='Voice Plan with Auto Pay' | lines=1 | tier='Better' | carrier='Verizon' | price=80
+    ... and 115 more (full detail in the table, not the log)
+
+--- Page 27 ---
+  120 record(s), 0 flagged for review
+    pricing_basis='Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='AT&T' | price=50
+    pricing_basis='Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='Verizon' | price=54
+    pricing_basis='Voice Plan Fully Discounted' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
+    pricing_basis='Voice Plan Fully Discounted' | lines=1 | tier='Better' | carrier='AT&T' | price=55
+    pricing_basis='Voice Plan Fully Discounted' | lines=1 | tier='Better' | carrier='Verizon' | price=70
+    ... and 115 more (full detail in the table, not the log)
+
+--- Page 28 ---
+  120 record(s), 0 flagged for review
+    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='AT&T' | price=50
+    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='Verizon' | price=54
+    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Good' | carrier='T-Mobile' | price=60
+    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Better' | carrier='AT&T' | price=55
+    pricing_basis='Competitive Comparison: Voice Plan Fully Discounted for Switchers' | lines=1 | tier='Better' | carrier='Verizon' | price=70
+    ... and 115 more (full detail in the table, not the log)
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 760 rows to silver voicePlanComparison (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 760 of 760 rows to gold voicePlanComparison.
+
+################################################################################
+# IMAGE: business_internet_comparison
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Business internet comparison extraction starting...
+
+--- Page 22 ---
+  96 record(s): 96 OK, 0 flagged
+  --- sample of OK rows (3 of 96) ---
+    [OK] T-Mobile: Bandwidth — Up to typical 5G speeds
+    [OK] T-Mobile: Data — Unlimited data
+    [OK] T-Mobile: Priority Data Included — 1.2TB
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 96 rows to silver businessInternetComparison (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 96 of 96 rows to gold businessInternetComparison.
+
+################################################################################
+# TEXT-ONLY: prepaid_price_grid_detail
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Prepaid price grid extraction starting...
+
+--- Page 32 ---
+  368 record(s), 0 flagged for review
+    device_name='TCL K11' | connection_type='Always Connected Upgrade' | registration_type='N/A' | plan_price_tier='N/A' | device_price='$39.99'
+    device_name='TCL K11' | connection_type='Level 1 Metro Annual Upgrade' | registration_type='N/A' | plan_price_tier='N/A' | device_price='FREE'
+    device_name='TCL K11' | connection_type='Level 2 Metro Annual Upgrade' | registration_type='N/A' | plan_price_tier='N/A' | device_price='FREE'
+    device_name='TCL K11' | connection_type='Level 3 Metro Annual Upgrade' | registration_type='N/A' | plan_price_tier='N/A' | device_price='FREE'
+    device_name='TCL K11' | connection_type='4 for $100 Non-Port' | registration_type='New Number' | plan_price_tier='$40' | device_price='FREE'
+    ... and 363 more (full detail in the table, not the log)
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 368 rows to silver prepaidPriceGridDetail (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 368 of 368 rows to gold prepaidPriceGridDetail.
+
+################################################################################
+# TEXT-ONLY: postpaid_service_offers
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Postpaid service offers extraction starting...
+
+--- Page 16 ---
+  39 record(s), 0 flagged for review
+    carrier='T-Mobile' | category='Brands' | feature_name='Keep and Switch (BYOD)'
+    carrier='T-Mobile' | category='Brands' | feature_name='Network Pass'
+    carrier='T-Mobile' | category='Wireless Service' | feature_name='3rd Line Free'
+    carrier='T-Mobile' | category='Wireless Service' | feature_name='BOGO Voice AAL'
+    carrier='T-Mobile' | category='Wireless Service' | feature_name='Device Connection Charge'
+    ... and 34 more (full detail in the table, not the log)
+
+--- Page 17 ---
+  29 record(s), 0 flagged for review
+    carrier='Verizon' | category='Brand' | feature_name='Verizon Visa Card'
+    carrier='Verizon' | category='Brand' | feature_name='VERIZON ONE'
+    carrier='Verizon' | category='Brand' | feature_name='Open Enrollment for Device Protection'
+    carrier='Verizon' | category='BYOD' | feature_name='Switching Credit'
+    carrier='Verizon' | category='BYOD' | feature_name='Bill Credits for UNL Ultimate/Plus'
+    ... and 24 more (full detail in the table, not the log)
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 68 rows to silver postpaidServiceOffers (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 68 of 68 rows to gold postpaidServiceOffers.
+
+################################################################################
+# TEXT-FIRST GRID: bts / cable_mvno / prepaid_brand
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Carrier grid (text-first) extraction starting...
+
+--- Page 13 (postpaid_bts_offers) ---
+  extracted 40 records (0 flagged for review)
+  40 record(s): 40 OK, 0 flagged
+  --- sample of OK rows (3 of 40) ---
+    [OK] T-Mobile: Apple Watch SE 3 — $300 off
+    [OK] T-Mobile: Apple Watch SE 3 — BOGO $300 off
+    [OK] T-Mobile: Apple Watch S11 — BOGO $300 off
+
+--- Page 14 (postpaid_bts_offers) ---
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 15 records (0 flagged for review)
+  15 record(s): 15 OK, 0 flagged
+  --- sample of OK rows (3 of 15) ---
+    [OK] T-Mobile: iPad (A16) — $400 off
+    [OK] T-Mobile: Galaxy Tab S10 FE 5G — 50% off ($300 off)
+    [OK] T-Mobile: Galaxy Tab A11+ 5G — On Us ($290 off)
+
+--- Page 15 (postpaid_bts_offers) ---
+  extracted 11 records (6 flagged for review)
+  11 record(s): 5 OK, 6 flagged
+  --- flagged, full detail ---
+    [CHECK] T-Mobile: Franklin A70 — '$5.84/mo.'
+       nearby source text: ...f two lines) ▪Franklin A70: $209.99 or $5.84/mo. ▪Franklin A50: $209.99 or $5.84/mo. Other ▪Netgear Nighthawk M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo....
+    [CHECK] T-Mobile: Franklin A50 — '$5.84/mo.'
+       nearby source text: ...f two lines) ▪Franklin A70: $209.99 or $5.84/mo. ▪Franklin A50: $209.99 or $5.84/mo. Other ▪Netgear Nighthawk M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo....
+    [CHECK] T-Mobile: Netgear Nighthawk Mg — '$309.99'
+       nearby source text: ... M6 Pro: offer) ▪Netgear Nighthawk Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective June 19, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 ...
+    [CHECK] T-Mobile: Franklin A10 — '$2.23/mo.'
+       nearby source text: ...k Mg: $309.99 ▪Franklin A10: $79.99 or $2.23/mo. [COLUMN 2] Effective June 19, 2026 AT&T CONNECTED CAR DEVICES: ▪Verizon Hum+ ($99 FRP): ▪Verizon HumX ($120 FRP): DATA W/22GB FUT): CONNECTED...
+    [CHECK] AT&T: Inseego MiFi 2100 5G — '$12.50/mo.'
+       nearby source text: ...▪Inseego MiFi 2100 5G ($400 $449.99 or $12.50/mo. (No ▪Inseego MiFi X PRO 5G ($350 ▪TCL LINKZONE 5G UW ($300 (No offer) ▪Verizon Jetpack MiFi 8800L (No offer) ▪Verizon Orbic Speed 5G $459.99...
+    [CHECK] AT&T: Inseego MiFi X PRO 5G — '$12.78/mo.'
+       nearby source text: ...er) ▪Verizon Orbic Speed 5G $459.99 or $12.78/mo. (No ▪Verizon Orbic Speed Mobile or $8.62/mo. (No offer) (No offer) [COLUMN 3] Verizon No offer No offer FRP) – No Offer FRP) – No Offer FRP)...
+  --- sample of OK rows (3 of 5) ---
+    [OK] T-Mobile: SYNCUP DRIVE — On Us
+    [OK] T-Mobile: IN-CAR WI-FI PLANS (UNL DATA W/22GB FUT) — $15/month
+    [OK] T-Mobile: BTS BYOD PIC — $100 Virtual Prepaid Mastercard
+
+--- Page 18 (cable_mvno_offers) ---
+  extracted 101 records (0 flagged for review)
+  101 record(s): 101 OK, 0 flagged
+  --- sample of OK rows (3 of 101) ---
+    [OK] Optimum: GS26 Series — $500 off
+    [OK] Optimum: GS26 Series — $600 off
+    [OK] Optimum: GS26 Series — $700 off
+
+--- Page 19 (cable_mvno_offers) ---
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 26 records (4 flagged for review)
+  26 record(s): 22 OK, 4 flagged
+  --- flagged, full detail ---
+    [CHECK] Optimum: 1GB Data Top-up — '$6/mo.'
+       nearby source text: ... Pricing & Offers Effective June 19, 2026 Optimum Mobile Spectrum Mobile Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price...
+    [CHECK] Spectrum: Mobile Repair — '$5/mo.'
+       nearby source text: ...e Xfinity Mobile Unlimited Data plans ($5/mo. autopay discount pricing Spectrum Mobile (Raised 1 line pricing, 2+ price unchanged 2/1/26; ▪Mobile Select: $30 – UNL including international, 1...
+    [CHECK] Spectrum: Premium Mobile Repair — '$10/mo.'
+       nearby source text: ...imits 9/8/23; All Plans Flat Rate as of 10/3/22) throttling, 720p streaming ▪Unlimited: $40 line 1, $60 2 lines, + $30 each addtl line ▪Mobile Plus: $45 – ▪$45/mo. UNL (20GB) or $55 UNL Max ...
+    [CHECK] Xfinity: Mobile Service — '$100'
+       nearby source text: ...emium: $50 (2-10 lines addt’l $30/line) 100GB high-speed ▪Line limit increased from 5 to 10 per account (2/16/21 - ) data + w/30GB hotspot & early upgrade feature, 5GB UNL Mex/Can, 10GB $25/...
+  --- sample of OK rows (3 of 22) ---
+    [OK] Optimum: Unlimited Plan (20GB) — $45/mo.
+    [OK] Optimum: Unlimited Max Plan (50GB) — $55/mo.
+    [OK] Optimum: Unlimited Plan — $15 off per line
+
+--- Page 31 (prepaid_brand_offers) ---
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 45 records (5 flagged for review)
+  45 record(s): 40 OK, 5 flagged
+  --- flagged, full detail ---
+    [CHECK] Boost Mobile: Activation Fee — 'Waived'
+       nearby source text: ...ds – Current Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) ...
+    [CHECK] Boost Mobile: SIM Kit — 'Free'
+       nearby source text: ...ds – Current Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) ...
+    [CHECK] Cricket Wireless: Cricket Passport (Daily) — '$10/day'
+       nearby source text: ...oost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pric...
+    [CHECK] Cricket Wireless: Cricket Passport (5-day) — '$25/5-day'
+       nearby source text: ... $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPGRADE (7/25/25): autopay pricing shown TBD) w/5-year price guarantee • Sensibl...
+    [CHECK] Cricket Wireless: 14-Day Trial — 'Free'
+       nearby source text: ...Offers C Metro by T-Mobile Boost Mobile Cricket New Flex Plans: $40/10GB UNL, $40/UNL Period, $50 UNL, $60 UNL (4/24/25 – Activation fee increased to $35; was $25 (eff. 4/4/23) RATE PLAN UPG...
+  --- sample of OK rows (3 of 40) ---
+    [OK] Metro by T-Mobile: HINT for Metro Contract Freedom Service — up to $750
+    [OK] Metro by T-Mobile: SAM Tab A9+ 5G — $99
+    [OK] Metro by T-Mobile: SAM Tab A9+ 5G — $49
+
+--- Page 33 (prepaid_brand_offers) ---
+  (removed 2 exact-duplicate record(s) from model response)
+  extracted 93 records (0 flagged for review)
+  93 record(s): 93 OK, 0 flagged
+  --- sample of OK rows (3 of 93) ---
+    [OK] Boost Mobile: iPhone 15 — $399.99
+    [OK] Boost Mobile: iPhone 16e — $99
+    [OK] Boost Mobile: iPhone 16e — FREE
+
+--- Page 34 (prepaid_brand_offers) ---
+  extracted 32 records (0 flagged for review)
+  32 record(s): 32 OK, 0 flagged
+  --- sample of OK rows (3 of 32) ---
+    [OK] AT&T Prepaid: BYOD SIM card — free
+    [OK] AT&T Prepaid: select devices — $100 off
+    [OK] AT&T Prepaid: A16 — On Us
+
+--- Page 35 (prepaid_brand_offers) ---
+  extracted 82 records (0 flagged for review)
+  82 record(s): 82 OK, 0 flagged
+  --- sample of OK rows (3 of 82) ---
+    [OK] Metro by T-Mobile: A17 5G — $0
+    [OK] Metro by T-Mobile: moto g power ’26 — $0
+    [OK] Metro by T-Mobile: Galaxy A17 5G — $0
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 445 rows to silver carrierOfferGrid (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 445 of 445 rows to gold carrierOfferGrid.
+  (collapsed 15 flagged row(s) into 14 distinct issue(s) for review — same offer applying to multiple items no longer multiplies review volume)
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Flagged 15 row(s) for review.
+  Breakdown: new_offer_type=15
+
+################################################################################
+# IMAGE: device offers incl. business
+################################################################################
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Device offers (text+image) extraction starting...
+  Grounding with 15 known carrier(s): ['T-Mobile', 'Verizon', 'AT&T', 'Xfinity', 'Spectrum', 'Comcast', 'Optimum', 'Metro by T-Mobile', 'Boost Mobile', 'Cricket Wireless', 'Straight Talk', 'Total Wireless', 'T-Mobile Prepaid', 'AT&T Prepaid', 'Verizon Prepaid']
+
+--- Page 10 (postpaid_device_offers_apple) ---
+  (removed 20 exact-duplicate record(s) from model response)
+  extracted 280 offer records (0 flagged for review)
+  280 record(s): 280 OK, 0 flagged
+  --- sample of OK rows (3 of 280) ---
+    [OK] T-Mobile: iPhone 17 — Up to $800/line
+    [OK] T-Mobile: iPhone Air — Up to $800/line
+    [OK] T-Mobile: iPhone 17 Pro — Up to $800/line
+
+--- Page 11 (postpaid_device_offers_samsung_google) ---
+  (removed 17 exact-duplicate record(s) from model response)
+  extracted 186 offer records (0 flagged for review)
+  186 record(s): 186 OK, 0 flagged
+  --- sample of OK rows (3 of 186) ---
+    [OK] T-Mobile: SAMSUNG GALAXY S26 — $1100 off
+    [OK] T-Mobile: SAMSUNG GALAXY S26+ — $1100 off
+    [OK] T-Mobile: SAMSUNG GALAXY S26 Ultra — $1100 off
+
+--- Page 12 (postpaid_device_offers_motorola_affordable) ---
+  (removed 4 exact-duplicate record(s) from model response)
+  extracted 70 offer records (0 flagged for review)
+  70 record(s): 70 OK, 0 flagged
+  --- sample of OK rows (3 of 70) ---
+    [OK] T-Mobile: Razr '25/'26 — Up to $800/line
+    [OK] T-Mobile: Razr+ — Up to $800/line
+    [OK] T-Mobile: Razr Ultra — Up to $800/line
+
+--- Page 20 (business_device_offers) ---
+  (removed 10 exact-duplicate record(s) from model response)
+  extracted 146 offer records (0 flagged for review)
+  146 record(s): 146 OK, 0 flagged
+  --- sample of OK rows (3 of 146) ---
+    [OK] T-Mobile: iPhone 17 — <$1.1k off
+    [OK] T-Mobile: iPhone 17e — <$1.1k off
+    [OK] T-Mobile: iPhone AIR — <$1.1k off
+
+--- Page 21 (business_device_offers) ---
+  (removed 1 exact-duplicate record(s) from model response)
+  extracted 26 offer records (0 flagged for review)
+  26 record(s): 26 OK, 0 flagged
+  --- sample of OK rows (3 of 26) ---
+    [OK] T-Mobile: Any Phone — $150
+    [OK] T-Mobile: Any Phone — $100/line
+    [OK] T-Mobile: Any Phone — $200/line
+
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Wrote 708 rows to silver postpaidDeviceOffers (prior rows for this date cleared first).
+[01c5fdfb-2ea8-4516-8d25-fe35e08b0e60] Promoted 708 of 708 rows to gold postpaidDeviceOffers.
+
+================================================================================
+Total rows in review for this run: 39
+================================================================================
