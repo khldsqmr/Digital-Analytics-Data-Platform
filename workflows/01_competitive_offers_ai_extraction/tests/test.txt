@@ -6,3 +6,6 @@ dump_bronze_pages(run_id="01c5fdfb-2ea8-4516-8d25-fe35e08b0e60")
 
 # Or by date, if you don't have the run_id handy
 dump_bronze_pages(report_date=date(2026, 6, 19))
+
+
+get_active_manifest_row(date(2026, 6, 19))
