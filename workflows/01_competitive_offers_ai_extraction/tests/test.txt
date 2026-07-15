@@ -1,14 +1,23 @@
 //Avg Actual
-SUM([Actual UPV]) 
-/ 
-COUNTD(IF NOT ISNULL([Actual UPV]) THEN [Qgp Date] END)
+SUM(
+  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+  THEN [Metric Value] END
+)
+/
+COUNTD(
+  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+  AND NOT ISNULL([Metric Value])
+  THEN [Qgp Date] END
+)
 
 //Avg Forecast
-SUM([Forecast UPV]) 
-/ 
-COUNTD(IF NOT ISNULL([Actual UPV]) THEN [Qgp Date] END)
-
-//Variance %
-(SUM([Actual UPV]) - SUM([Forecast UPV]))
+SUM(
+  IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast'
+  THEN [Metric Value] END
+)
 /
-ABS(SUM([Forecast UPV]))
+COUNTD(
+  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+  AND NOT ISNULL([Metric Value])
+  THEN [Qgp Date] END
+)
