@@ -1,23 +1,34 @@
 //Avg Actual
-SUM(
-  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
-  THEN [Metric Value] END
-)
-/
-COUNTD(
-  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
-  AND NOT ISNULL([Metric Value])
-  THEN [Qgp Date] END
-)
+{ FIXED [Channel Group] : 
+  SUM(
+    IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+    AND [Is Complete Period] = TRUE
+    THEN [Metric Value] END
+  )
+  /
+  COUNTD(
+    IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+    AND [Is Complete Period] = TRUE
+    AND NOT ISNULL([Metric Value])
+    THEN [Qgp Date] END
+  )
+}
 
 //Avg Forecast
-SUM(
-  IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast'
-  THEN [Metric Value] END
-)
-/
-COUNTD(
-  IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
-  AND NOT ISNULL([Metric Value])
-  THEN [Qgp Date] END
-)
+{ FIXED [Channel Group] : 
+  SUM(
+    IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast'
+    AND [Is Complete Period] = TRUE
+    THEN [Metric Value] END
+  )
+  /
+  COUNTD(
+    IF [Data Source] = 'ADOBE' AND [Metric Name] = 'upvTotalAdobe'
+    AND [Is Complete Period] = TRUE
+    AND NOT ISNULL([Metric Value])
+    THEN [Qgp Date] END
+  )
+}
+
+//Variance %
+([Avg Actual LOD] - [Avg Forecast LOD]) / ABS([Avg Forecast LOD])
