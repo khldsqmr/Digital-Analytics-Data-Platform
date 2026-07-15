@@ -1,11 +1,11 @@
-SELECT 'ciHeadlines' AS table_name, COUNT(*) AS rows FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'nationalRetailReadout', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'majorOfferChanges', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'voicePlanComparison', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'businessInternetComparison', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'prepaidPriceGridDetail', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'prepaidAccessoryPriceGrid', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidAccessoryPriceGrid_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'postpaidServiceOffers', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'carrierOfferGrid', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE report_date = '2026-06-19'
-UNION ALL SELECT 'postpaidDeviceOffers', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE report_date = '2026-06-19'
-ORDER BY table_name
+select * from `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly` where run_id = '62993cdf-e48e-45d8-9d76-1fba7672db9e' and carrier = 'T-Mobile';
+
+
+
+$1000 off iPhone 17 series w/ Port and Better Value 
+or Beyond (5/28 - )
+▪$830 off iPhone 17 series w/ Port and More (5/28 - )
+▪$1,000 off Pixel 10 Pro XL w/ AAL & Beyond (was 
+$1,200) (5/28 - )
+
+Galaxy Watch7 $29/existing customer (5/28 - ) …was $99 (This is Prepaid Metro, but being categorized as Postpaid T-Mobile)
