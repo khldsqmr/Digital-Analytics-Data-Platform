@@ -2,4 +2,13 @@ SELECT carrier, item_name, resolution_note
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly`
 WHERE run_id = '62993cdf-e48e-45d8-9d76-1fba7672db9e'
   AND source_table = 'silver_majorOfferChanges'
-  AND resolution_note LIKE 'AUTO-RESOLVED%'
+  AND resolution_note LIKE 'AUTO-RESOLVED%';
+
+
+carrier	item_name	resolution_note
+T-Mobile	introduced	AUTO-RESOLVED (grounded): The value is found verbatim in the source text under the 'T-MOBILE' section and the 'OFFERS INTRODUCED' column. The first line item reads: '▪Galaxy Watch7 $29/existing customer (5/28 - ) …was $99'.
+Total Wireless	introduced	"AUTO-RESOLVED (grounded): The text is explicitly present in the source document. Under the 'PREPAID' section for the carrier 'Total Wireless' and in the 'OFFERS INTRODUCED' column, the text reads: '▪In-Store: iPhone 16e - $79 with port & 2x $60 All Access plan (mid-May – TBD)'."
+AT&T	introduced (+2 more item(s) with this same offer)	AUTO-RESOLVED (grounded): The offer is listed verbatim under the AT&T carrier row and within the 'OFFERS INTRODUCED' column. The text appears as: 'S26+/S26 Ultra: >$1100 off w/min. $95 trade & UNL plan'.
+Verizon	introduced (+2 more item(s) with this same offer)	AUTO-RESOLVED (grounded): The value is found verbatim in the source text under the 'VERIZON' section in the 'OFFERS INTRODUCED' column. The text reads: '▪iPhone 17 offers: ... ▪$830 off w/ AAL & UNL Plus'.
+Cricket Wireless	introduced (+2 more item(s) with this same offer)	"AUTO-RESOLVED (grounded): The value is found verbatim in the source text under the 'CRICKET' carrier section, in the 'OFFERS INTRODUCED' column. The text reads: '▪GS26 …$99/new line'."
+Straight Talk	removed	"AUTO-RESOLVED (grounded): The value is present verbatim in the source text. Under the 'PREPAID' section, in the 'OFFERS REMOVED' column, the row for 'STRAIGHT TALK' contains the exact text: '25% off FRP Phones – max. $50 savings w/any purchase, plan & promo code NASCARFAN (5/22 – 5/28)'."
