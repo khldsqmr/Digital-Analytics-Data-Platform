@@ -1,5 +1,5 @@
-[CHECK] Best Buy: Samsung Galaxy Z Fold7 — '$200-300'
-       nearby source text: ... Galaxy S25 Ultra 1024GB. Discounts of $200-300 off are available on the Samsung Galaxy Z Flip7 FE, Galaxy Z Fold7, and Galaxy S25 FE, Motorola G Stylus 5G 2024, and the Nothing Phone (3). T...
-    [CHECK] Best Buy: Samsung Galaxy S25 FE — '$200-300'
-       nearby source text: ... Galaxy S25 Ultra 1024GB. Discounts of $200-300 off are available on the Samsung Galaxy Z Flip7 FE, Galaxy Z Fold7, and Galaxy S25 FE, Motorola G Stylus 5G 2024, and the Nothing Phone (3). T...
-  --- sample of OK rows (3 of 7) ---
+SELECT device, retailer, discount_amount, values_agree
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly`
+WHERE run_id = '9d519858-818b-4d0c-bad1-df19b1ad1dd8'
+  AND source_page = 29
+ORDER BY extracted_at
