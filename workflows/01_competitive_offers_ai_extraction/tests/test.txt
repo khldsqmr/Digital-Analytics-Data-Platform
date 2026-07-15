@@ -3,3 +3,15 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_
 WHERE run_id = '9d519858-818b-4d0c-bad1-df19b1ad1dd8'
   AND source_page = 29
 ORDER BY extracted_at
+
+
+device	retailer	discount_amount	values_agree
+Motorola Razr Ultra 2025	Best Buy	$600	true
+Samsung Galaxy S25 Ultra	Best Buy	$450	true
+Samsung Galaxy S25 Ultra	Best Buy	$409.99	true
+Samsung Galaxy Z Flip7 FE	Best Buy	$200-300	true
+Samsung Galaxy Z Fold7	Best Buy	$200-300	true
+Samsung Galaxy S25 FE	Best Buy	$200-300	true
+Motorola G Stylus 5G 2024	Best Buy	$200-300	true
+Nothing Phone (3)	Best Buy	$200-300	true
+Samsung Galaxy A16 5G	Walmart	$10	true
