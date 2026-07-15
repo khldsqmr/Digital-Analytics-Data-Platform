@@ -17,3 +17,12 @@ AND [Qgp Date] <= MAX([Max Actual Date])
 THEN [Metric Value]
 END
 
+
+//Avg Actual
+SUM([Actual UPV]) / COUNTD(IF NOT ISNULL([Actual UPV]) THEN [Qgp Date] END)
+
+//Avg Forecast
+SUM([Forecast UPV]) / COUNTD(IF NOT ISNULL([Actual UPV]) THEN [Qgp Date] END)
+
+//Variance %
+(SUM([Actual UPV]) - SUM([Forecast UPV])) / ABS(SUM([Forecast UPV]))
