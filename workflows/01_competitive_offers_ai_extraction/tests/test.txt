@@ -1,29 +1,11 @@
-qgp_week	total_actual	total_forecast
-2026-06-30	5760430.7900000019	5792511.450000002
-2026-06-27	37221784.730000012	37538793.280000016
-2026-06-20	34555386.739999995	37425098.139999993
-2026-06-13	34379348.07	34909689.269999996
-2026-06-06	29347332.450000003	29945085.240000002
-2026-05-30	31179278.530000005	31484989.810000006
-2026-05-23	29677699.06000001	29455559.950000014
-2026-05-16	26922952.069999989	27026179.540000003
-2026-05-09	24959913.950000007	24745139.620000005
-2026-05-02	23171520.300000004	22657793.880000003
-2026-04-25	25178300.04	25032886.890000004
-2026-04-18	24578443.81	24286326.569999993
-2026-04-11	25293284.67	24324134.079999994
-2026-04-04	21431031.87	19017648.549999997
-2026-03-31	8959732.6599999983	8508237.59
-2026-03-28	39668329.909999989	37301745.179999992
-2026-03-21	34162200.419999994	32601561.180000003
-2026-03-14	33467708.199999996	31884043.859999992
-2026-03-07	30376156.109999996	29223658.499999996
-2026-02-28	30116463.559999995	27512826.289999988
-2026-02-21	27874283.130000006	28659891.339999992
-2026-02-14	29734597.109999988	29111251.919999979
-2026-02-07	43942181.430000007	39256339.86999999
-2026-01-31	25956466.580000002	27156131.31
-2026-01-24	28866908.299999997	27172105.519999992
-2026-01-17	29210721.089999996	27143663.599999994
-2026-01-10	26271174.659999993	27237287.000000011
-2026-01-03	12512957.59	
+SELECT 'ciHeadlines' AS table_name, COUNT(*) AS rows FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'nationalRetailReadout', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'majorOfferChanges', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'voicePlanComparison', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'businessInternetComparison', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'prepaidPriceGridDetail', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'prepaidAccessoryPriceGrid', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidAccessoryPriceGrid_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'postpaidServiceOffers', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'carrierOfferGrid', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE report_date = '2026-06-19'
+UNION ALL SELECT 'postpaidDeviceOffers', COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE report_date = '2026-06-19'
+ORDER BY table_name
