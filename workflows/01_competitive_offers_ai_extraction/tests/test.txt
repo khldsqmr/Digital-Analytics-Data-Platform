@@ -9,3 +9,7 @@ WHERE
           INTERVAL 1 DAY
         )
   )
+
+
+qgp_dates
+378
