@@ -6,4 +6,9 @@ SELECT
   wow_prior_qgp_date
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar`
 WHERE qgp_date IN ('2026-09-30', '2026-10-03')
-ORDER BY qgp_date
+ORDER BY qgp_date;
+
+output:
+qgp_date	week_type	days_in_period	boundary_stub_date	wow_prior_qgp_date
+2026-09-30	BOUNDARY_STUB	4		
+2026-10-03	BOUNDARY_FIRST	3	2026-09-30	2026-09-26
