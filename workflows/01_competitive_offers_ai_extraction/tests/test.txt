@@ -14,3 +14,8 @@ WHERE SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE)
   AND Spend IS NOT NULL
 GROUP BY 1,2,3,4,5,6
 ORDER BY Quarter, qgp_type;
+
+output:
+Quarter	QGP_Week	Week_Beginning_Monday	Week_Ending_Sunday	lob	qgp_type	total_spend
+Q3'26	2026-10-03	2026-09-28	None	CONSUMER POSTPAID	FORECAST	3245377.3626708984
+Q4'26	2026-10-03	2026-09-28	None	CONSUMER POSTPAID	FORECAST	14064256.0
