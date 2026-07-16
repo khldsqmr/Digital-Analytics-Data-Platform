@@ -16,3 +16,7 @@ WHERE SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE)
   AND UPPER(TRIM(Channel)) = 'PAID SEARCH'
 GROUP BY 1,2,3,4,5,6,7
 ORDER BY Quarter, qgp_type;
+
+
+Quarter	QGP_Week	Week_Beginning_Monday	Week_Ending_Sunday	lob	channel	qgp_type	total_spend
+Q3'26	2026-10-03	2026-09-28	None	CONSUMER POSTPAID	PAID SEARCH	FORECAST	1398141.1733398438
