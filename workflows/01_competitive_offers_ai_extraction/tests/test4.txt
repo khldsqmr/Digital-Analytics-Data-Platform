@@ -1,2 +1,214 @@
-'DISPLAY', 'OLV' for programmatic
-OTT and OOH as other
+table_name	description	dataset	platform	lookback window	dashboard	visual
+google_search_ads_360_campaigns_tmo	Paid Search & TSD Campaign data	ds_dbi_improvado_master	SA360	30 days	Paid Search / Total Search	
+google_search_ads_360_campaign_entity_tmo	Paid Search & TSD campaign names	ds_dbi_improvado_master	SA360	30 days	Paid Search / Total Search	
+sdi_ps_sa360_adgroup_daily_tmo	Ad Group data for BYOD dash	ds_dbi_improvado_master	SA360	30 days	BYOD	
+adobe_cs_day_tmo	TSD:  cart start+ daily	ds_dbi_improvado_master	Adobe	30 days	Total Search	
+sdi_raw_adobe_pp_pulse_pro_orders_unassisted_daily_tmo	TSD and Pulse	ds_dbi_improvado_master	Adobe	30 days	Total Search	
+sdi_raw_adobe_pp_ts_pro_storelocator_visits_daily_tmo	TSD:  store locator visits	ds_dbi_improvado_master	Adobe	30 days	Total Search	
+adobe_analytics_prospect_customer_web_app_da_all_postpaid_apps_visits_da_enterprise_prospect_visits_tmo	TSD:  TLife APostpaid Visits daily	ds_dbi_improvado_master	Adobe	30 days	Total Search	
+adobe_analytics_custom_postpaid_voice_v2_tmo	TSD:  postpaid voice adobe metrics	ds_dbi_improvado_master	Adobe	30 days	Total Search	
+google_business_profile_google_my_business_location_insights_tmo	TSD	ds_dbi_improvado_master	Google My Business	7 days	Total Search	
+google_search_console_query_search_type_tmo	TSD:  GSC query data	ds_dbi_improvado_master	Google Search Console	14 days	Total Search	
+google_search_console_site_totals_tmo	TSD: GSC site data	ds_dbi_improvado_master	Google Search Console	14 days	Total Search	
+sdi_seo_profound_cit_domain_monthly_tmo	Citation Share by Domain Monthly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_cit_domain_weekly_tmo	Citation Share by Domain Weekly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_cit_tag_topic_weekly_tmo	Citation Share by Tag & Topic Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_cit_tag_topic_monthly_tmo	Citation Share by Tag & Topic Monthly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_cit_tag_weekly_sunday_tmo	Citation Share by Tag Weekly Sun-Sat	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_cit_tag_weekly_tmo	Citation Share by Tag Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_cit_tag_monthly_tmo	Citation Share by Tag Monthly	ds_dbi_improvado_master	Profound	30 days	Total Search / AI Search	
+sdi_seo_profound_cit_topic_monthly_tmo	Citation Share by Topic Monthly	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_cit_topic_weekly_tmo	Citation Share by Topic Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_gofish_cit_tag_monthly_tmo	Branded (GoFish) Citation Share by Tag Monthly	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_gofish_cit_tag_weekly_sunday_tmo	Branded (GoFish) Citation Share by Tag Weekly Sun-Sat	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_gofish_vis_asset_weekly_tmo	Branded (GoFish) Visibility Score by Asset Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days		
+sdi_seo_profound_gofish_vis_tag_monthly_tmo	Branded (GoFish) Visibility Score by Tag Monthly	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_gofish_vis_tag_weekly_sunday_tmo	Branded (GoFish) Visibility Score by Tag Weekly Sun-Sat	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_vis_asset_monthly_tmo	Visibility Score by Asset Monthly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_asset_weekly_tmo	Visibility Score by Asset Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_tag_monthly_tmo	Visibility Score by Tag Monthly	ds_dbi_improvado_master	Profound	30 days	Total Search / AI Search	
+sdi_seo_profound_vis_tag_topic_monthly_tmo	Visibility Score by Tag and Topic Monthly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_tag_topic_weekly_tmo	Visibility Score by Tag and Topic Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_tag_weekly_sunday_tmo	Visibility Score by Tag Weekly Sun-Sat	ds_dbi_improvado_master	Profound	30 days	Total Search	
+sdi_seo_profound_vis_tag_weekly_tmo	Visibility Score by Tag Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_topic_monthly_tmo	Visibility Score by Topic Monthly	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_seo_profound_vis_topic_weekly_tmo	Visibility Score by Topic Weekly Mon-Sun	ds_dbi_improvado_master	Profound	30 days	AI Search	
+sdi_raw_adobe_pp_uvnb_ltc_byod_cartstart_visits_weekly_tmo		ds_dbi_improvado_master	Adobe	30 days	BYOD	
+sdi_raw_adobe_pp_uvnb_ltc_byod_order_weekly_tmo		ds_dbi_improvado_master	Adobe	30 days	BYOD	
+sdi_raw_adobe_pp_uvnb_ltc_uvnb_byod_flow_weekly_tmo		ds_dbi_improvado_master	Adobe	30 days	BYOD	
+sdi_seo_googletrends_byod_weekly_tmo	BYOD Google Trends weekly	ds_dbi_improvado_master	Google Trends	Full reload	BYOD	
+sdi_raw_adobe_pp_uvnb_paid_search_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Paid Search- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_byod_order_assisted_weekly_tmo	Postpaid UPV  Paid Search- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_byod_order_weekly_tmo	Postpaid UPV  Paid Search- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Paid Search- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_assisted_weekly_tmo	Postpaid UPV  Paid Search- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_weekly_tmo	Postpaid UPV  Paid Search- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Paid Search- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Paid Search- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_weekly_tmo	Postpaid UPV  Paid Search- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Paid Search- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Paid Search- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Paid Search- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo	Postpaid UPV  Paid Search- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Organic Search- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_byod_order_assisted_weekly_tmo	Postpaid UPV  Organic Search- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_byod_order_weekly_tmo	Postpaid UPV  Organic Search- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Organic Search- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_assisted_weekly_tmo	Postpaid UPV  Organic Search- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_weekly_tmo	Postpaid UPV  Organic Search- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Organic Search- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Organic Search- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_weekly_tmo	Postpaid UPV  Organic Search- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Organic Search- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Organic Search- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Organic Search- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo	Postpaid UPV  Organic Search- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Direct- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_byod_order_assisted_weekly_tmo	Postpaid UPV  Direct- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_byod_order_weekly_tmo	Postpaid UPV  Direct- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Direct- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_hsi_order_assisted_weekly_tmo	Postpaid UPV  Direct- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_hsi_order_weekly_tmo	Postpaid UPV  Direct- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Direct- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Direct- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_postpaid_order_weekly_tmo	Postpaid UPV  Direct- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Direct- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Direct- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Direct- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo	Postpaid UPV  Direct- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Programmatic- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_byod_order_assisted_weekly_tmo	Postpaid UPV  Programmatic- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_byod_order_weekly_tmo	Postpaid UPV  Programmatic- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Programmatic- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_assisted_weekly_tmo	Postpaid UPV  Programmatic- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_weekly_tmo	Postpaid UPV  Programmatic- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Programmatic- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Programmatic- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_weekly_tmo	Postpaid UPV  Programmatic- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Programmatic- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Programmatic- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Programmatic- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo	Postpaid UPV  Programmatic- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Social- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_byod_order_assisted_weekly_tmo	Postpaid UPV  Social- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_byod_order_weekly_tmo	Postpaid UPV  Social- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Social- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_hsi_order_assisted_weekly_tmo	Postpaid UPV  Social- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_hsi_order_weekly_tmo	Postpaid UPV  Social- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Social- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Social- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_postpaid_order_weekly_tmo	Postpaid UPV  Social- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Social- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Social- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Social- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo	Postpaid UPV  Social- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_byod_cartstart_visits_weekly_tmo	Postpaid UPV  Other- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_byod_order_assisted_weekly_tmo	Postpaid UPV  Other- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_byod_order_weekly_tmo	Postpaid UPV  Other- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  Other- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_hsi_order_assisted_weekly_tmo	Postpaid UPV  Other- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_hsi_order_weekly_tmo	Postpaid UPV  Other- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  Other- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_postpaid_order_assisted_weekly_tmo	Postpaid UPV  Other- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_postpaid_order_weekly_tmo	Postpaid UPV  Other- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  Other- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  Other- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  Other- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo	Postpaid UPV  Other- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo	Postpaid UPV  All- BYOD Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo	Postpaid UPV  All- BYOD Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo	Postpaid UPV  All- BYOD Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo	Postpaid UPV  All- HSI Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo	Postpaid UPV  All- HSI Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo	Postpaid UPV  All- HSI Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo	Postpaid UPV  All- Postpaid Cartstart Visits	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo	Postpaid UPV  All- Postpaid Order Assisted	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo	Postpaid UPV  All- Postpaid Order	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo	Postpaid UPV  All- UPV BYOD Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo	Postpaid UPV  All- UPV HSI Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo	Postpaid UPV  All- UPV Postpaid Flow Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_pp_pro_uvnb_weekly_tmo	Postpaid UPV  All- UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_uvnb_visitors_weekly_tmo	BYOD flow- All- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- All- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- All- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- All- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- All- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- All- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_vr_chat_visitors_weekly_tmo	BYOD flow- All- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_call_visitors_weekly_tmo	BYOD flow- All- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_store_locator_visitors_weekly_tmo	BYOD flow- All- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_internaltmo_visitors_weekly_tmo	BYOD flow- All- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_bouncers_visitors_weekly_tmo	BYOD flow- All- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_all_byod_orders_weekly_tmo	BYOD flow- All- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_uvnb_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_call_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_store_locator_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_bouncers_visitors_weekly_tmo	BYOD flow- Paid Search- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_paid_search_byod_orders_weekly_tmo	BYOD flow- Paid Search- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_uvnb_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_call_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_store_locator_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_bouncers_visitors_weekly_tmo	BYOD flow- Organic Search- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_organic_search_byod_orders_weekly_tmo	BYOD flow- Organic Search- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_uvnb_visitors_weekly_tmo	BYOD flow- Direct- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Direct- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Direct- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Direct- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Direct- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Direct- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Direct- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_call_visitors_weekly_tmo	BYOD flow- Direct- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_store_locator_visitors_weekly_tmo	BYOD flow- Direct- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Direct- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_bouncers_visitors_weekly_tmo	BYOD flow- Direct- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_direct_byod_orders_weekly_tmo	BYOD flow- Direct- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_uvnb_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_call_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_store_locator_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_bouncers_visitors_weekly_tmo	BYOD flow- Programmatic- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_programmatic_byod_orders_weekly_tmo	BYOD flow- Programmatic- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_uvnb_visitors_weekly_tmo	BYOD flow- Social- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Social- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Social- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Social- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Social- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Social- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Social- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_call_visitors_weekly_tmo	BYOD flow- Social- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_store_locator_visitors_weekly_tmo	BYOD flow- Social- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Social- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_bouncers_visitors_weekly_tmo	BYOD flow- Social- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_social_byod_orders_weekly_tmo	BYOD flow- Social- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_uvnb_visitors_weekly_tmo	BYOD flow- Other- BYOD UPV Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_entry_byodpage_visitors_weekly_tmo	BYOD flow- Other- BYOD Entry Byodpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_entry_homepage_visitors_weekly_tmo	BYOD flow- Other- BYOD Entry Homepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_entry_devicepage_visitors_weekly_tmo	BYOD flow- Other- BYOD Entry Devicepage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_entry_planspage_visitors_weekly_tmo	BYOD flow- Other- BYOD Entry Planspage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_entry_otherpage_visitors_weekly_tmo	BYOD flow- Other- BYOD Entry Otherpage Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_vr_chat_visitors_weekly_tmo	BYOD flow- Other- BYOD VR Chat Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_call_visitors_weekly_tmo	BYOD flow- Other- BYOD Call Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_store_locator_visitors_weekly_tmo	BYOD flow- Other- BYOD Store Locator Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_internaltmo_visitors_weekly_tmo	BYOD flow- Other- BYOD InternalTMO Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_bouncers_visitors_weekly_tmo	BYOD flow- Other- BYOD Bouncers Visitors	ds_dbi_improvado_master	Adobe	30 days		
+sdi_raw_adobe_byod_flow_other_byod_orders_weekly_tmo	BYOD flow- Other- BYOD Orders	ds_dbi_improvado_master	Adobe	30 days		
