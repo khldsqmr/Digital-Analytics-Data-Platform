@@ -55,3 +55,42 @@ QGP_Week	LOB_Supported	spend_actual	spend_forecast	spend_display
 2026-09-19	CONSUMER POSTPAID		24730229.79	24730229.79
 2026-09-26	CONSUMER POSTPAID		24391616.92	24391616.92
 2026-09-30	CONSUMER POSTPAID		1302459.44	1302459.44
+
+
+WITH raw_check AS (
+  SELECT
+    SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
+    SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+    COALESCE(
+      SAFE_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+      DATE_ADD(
+        SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE),
+        INTERVAL 6 DAY
+      )
+    ) AS Week_Ending_Sunday,
+    Quarter,
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    CASE WHEN UPPER(TRIM(QGP)) = 'FORECAST' THEN Spend ELSE NULL END AS Spend_Forecast,
+    CASE WHEN UPPER(TRIM(QGP)) = 'ACTUAL'   THEN Spend ELSE NULL END AS Spend_Actual
+  FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
+  WHERE SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) = '2026-10-03'
+    AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(WM_NWM)) = 'WORKING'
+    AND Spend IS NOT NULL
+    AND UPPER(TRIM(Channel)) NOT IN ('OTHER (DO NOT USE)', 'NON-WORKING', 'UNALLOCATED', 'BUDGET HELD')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+)
+SELECT
+  Quarter,
+  QGP_Week,
+  Week_Beginning_Monday,
+  Week_Ending_Sunday,
+  LOB_Supported,
+  SUM(Spend_Forecast) AS total_forecast,
+  SUM(Spend_Actual)   AS total_actual
+FROM raw_check
+GROUP BY 1,2,3,4,5
+ORDER BY Quarter;
+
+output:
+
