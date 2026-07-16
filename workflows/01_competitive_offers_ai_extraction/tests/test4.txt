@@ -1,53 +1,53 @@
-table_name,description,category
-google_search_ads_360_beta_campaign_entity_custom_tmo,"SA360 campaign entity/settings snapshot (beta/custom variant). Reference list only has google_search_ads_360_campaign_entity_tmo - naming mismatch or stale list.",SA360 / Entity
-sdi_seo_profound_visibility_asset_daily_tmo,"ProFound Visibility Asset at DAILY grain. Reference list only has weekly/monthly asset visibility tables.",ProFound / Visibility (daily)
-sdi_seo_profound_visibility_tag_daily_tmo,"ProFound Visibility Tag at DAILY grain. Reference list only has weekly/monthly tag visibility tables.",ProFound / Visibility (daily)
-sdi_seo_profound_visibility_topic_daily_tmo,"ProFound Visibility Topic at DAILY grain. Reference list only has weekly/monthly topic visibility tables.",ProFound / Visibility (daily)
-sdi_seo_profound_visibility_topic_tag_daily_tmo,"ProFound Visibility Topic+Tag at DAILY grain. Reference list only has weekly/monthly variants (reversed name order: tag_topic).",ProFound / Visibility (daily)
-sdi_seo_profound_citations_tag_daily_tmo,"ProFound Citations by Tag at DAILY grain. Reference list only has weekly/monthly (prefix cit_, not citations_).",ProFound / Citations (daily)
-sdi_seo_profound_citations_topic_daily_tmo,"ProFound Citations by Topic at DAILY grain. No daily grain exists in the reference list.",ProFound / Citations (daily)
-sdi_seo_profound_citations_topic_tag_daily_tmo,"ProFound Citations by Topic+Tag at DAILY grain. No daily grain exists in the reference list.",ProFound / Citations (daily)
-sdi_seo_profound_citations_domain_daily_tmo,"ProFound Citations by Domain at DAILY grain. Reference list only has weekly (sdi_seo_profound_cit_domain_weekly_tmo) and monthly.",ProFound / Citations (daily)
-ps_admedia_daily_tmo,"Daily ad media campaign performance (clicks, impressions, conversions, spend). Not present anywhere in the reference list.",Ad Media
-sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - ALL channels. Canonical sum of all LOB flows (Postpaid+HSI+BYOD), sourced directly. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_direct_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - DIRECT channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_organic_search_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - ORGANIC SEARCH channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_other_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - OTHER channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_paid_search_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - PAID SEARCH channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_programmatic_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - PROGRAMMATIC channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_social_flow_total_visitors_weekly_tmo,"UVNB Flow Total visitors - SOCIAL channel group. Not in reference list.",Adobe UVNB / Flow Total
-sdi_raw_adobe_pp_uvnb_ltc_uvnb_postpaid_flow_visitors_weekly_tmo,"UVNB Postpaid flow visitors at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_pp_uvnb_ltc_uvnb_hsi_flow_visitors_weekly_tmo,"UVNB HSI flow visitors at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_pp_uvnb_ltc_postpaid_cartstart_visits_weekly_tmo,"Postpaid cart-start visits at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_pp_uvnb_ltc_hsi_cartstart_visits_weekly_tmo,"HSI cart-start visits at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_pp_uvnb_ltc_postpaid_order_weekly_tmo,"Postpaid unassisted orders at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_pp_uvnb_ltc_hsi_order_weekly_tmo,"HSI unassisted orders at Last-Touch-Channel grain. Reference list only has the BYOD ltc variant.",Adobe UVNB / LTC
-sdi_raw_adobe_byod_flow_all_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, ALL channels - true residual Other (replaces old otherpage per 2026-06 change). Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_all_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, ALL channels - Store page entry (new breakout). Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_all_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, ALL channels - BYOD landing page entry (new breakout). Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_all_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, ALL channels - Offers/Switch page entry (new breakout). Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_paid_search_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, PAID SEARCH - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_paid_search_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, PAID SEARCH - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_paid_search_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, PAID SEARCH - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_paid_search_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, PAID SEARCH - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_organic_search_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, ORGANIC SEARCH - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_organic_search_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, ORGANIC SEARCH - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_organic_search_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, ORGANIC SEARCH - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_organic_search_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, ORGANIC SEARCH - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_direct_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, DIRECT - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_direct_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, DIRECT - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_direct_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, DIRECT - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_direct_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, DIRECT - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_programmatic_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, PROGRAMMATIC - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_programmatic_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, PROGRAMMATIC - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_programmatic_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, PROGRAMMATIC - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_programmatic_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, PROGRAMMATIC - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_social_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, SOCIAL - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_social_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, SOCIAL - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_social_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, SOCIAL - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_social_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, SOCIAL - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_other_byod_entry_otherpage2_visitors_weekly_tmo,"BYOD entry-page metric, OTHER - true residual Other. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_other_byod_entry_storepage_visitors_weekly_tmo,"BYOD entry-page metric, OTHER - Store page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_other_byod_entry_byodlandingpage_visitors_weekly_tmo,"BYOD entry-page metric, OTHER - BYOD landing page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_byod_flow_other_byod_entry_offersswitch_visitors_weekly_tmo,"BYOD entry-page metric, OTHER - Offers/Switch page entry. Not in reference list.",Adobe BYOD / Entry Pages (new)
-sdi_raw_adobe_pp_pro_lt_uvnb_weekly_tmo,"Adobe weekly total UVNB visitors broken out by last-touch-channel. Not present anywhere in the reference list.",Adobe UVNB / Total
+table_name,description,dataset,platform,lookback window,dashboard,visual
+google_search_ads_360_beta_campaign_entity_custom_tmo,Paid Search & TSD campaign entity/settings (beta/custom variant),ds_dbi_improvado_master,SA360,30 days,Paid Search / Total Search,
+sdi_seo_profound_visibility_asset_daily_tmo,Visibility Score by Asset Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_visibility_tag_daily_tmo,Visibility Score by Tag Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_visibility_topic_daily_tmo,Visibility Score by Topic Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_visibility_topic_tag_daily_tmo,Visibility Score by Topic and Tag Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_citations_tag_daily_tmo,Citation Share by Tag Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_citations_topic_daily_tmo,Citation Share by Topic Daily,ds_dbi_improvado_master,Profound,30 days,Total Search,
+sdi_seo_profound_citations_topic_tag_daily_tmo,Citation Share by Tag & Topic Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+sdi_seo_profound_citations_domain_daily_tmo,Citation Share by Domain Daily,ds_dbi_improvado_master,Profound,30 days,AI Search,
+ps_admedia_daily_tmo,Daily ad media campaign performance (clicks impressions conversions spend),ds_dbi_improvado_master,Ad Media,30 days,,
+sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo,Postpaid UPV All- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_direct_flow_total_visitors_weekly_tmo,Postpaid UPV Direct- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_organic_search_flow_total_visitors_weekly_tmo,Postpaid UPV Organic Search- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_other_flow_total_visitors_weekly_tmo,Postpaid UPV Other- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_paid_search_flow_total_visitors_weekly_tmo,Postpaid UPV Paid Search- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_programmatic_flow_total_visitors_weekly_tmo,Postpaid UPV Programmatic- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_social_flow_total_visitors_weekly_tmo,Postpaid UPV Social- UPV Flow Total Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_uvnb_ltc_uvnb_postpaid_flow_visitors_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_pp_uvnb_ltc_uvnb_hsi_flow_visitors_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_pp_uvnb_ltc_postpaid_cartstart_visits_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_pp_uvnb_ltc_hsi_cartstart_visits_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_pp_uvnb_ltc_postpaid_order_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_pp_uvnb_ltc_hsi_order_weekly_tmo,,ds_dbi_improvado_master,Adobe,30 days,BYOD,
+sdi_raw_adobe_byod_flow_all_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- All- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_all_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- All- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_all_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- All- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_all_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- All- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Paid Search- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Paid Search- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Paid Search- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_paid_search_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Paid Search- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Organic Search- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Organic Search- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Organic Search- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_organic_search_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Organic Search- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_direct_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Direct- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_direct_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Direct- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_direct_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Direct- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_direct_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Direct- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Programmatic- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Programmatic- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Programmatic- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_programmatic_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Programmatic- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_social_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Social- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_social_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Social- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_social_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Social- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_social_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Social- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_other_byod_entry_otherpage2_visitors_weekly_tmo,BYOD flow- Other- BYOD Entry Otherpage2 Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_other_byod_entry_storepage_visitors_weekly_tmo,BYOD flow- Other- BYOD Entry Storepage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_other_byod_entry_byodlandingpage_visitors_weekly_tmo,BYOD flow- Other- BYOD Entry Byodlandingpage Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_byod_flow_other_byod_entry_offersswitch_visitors_weekly_tmo,BYOD flow- Other- BYOD Entry Offersswitch Visitors,ds_dbi_improvado_master,Adobe,30 days,,
+sdi_raw_adobe_pp_pro_lt_uvnb_weekly_tmo,Postpaid UPV All- UPV Visitors by Last Touch Channel,ds_dbi_improvado_master,Adobe,30 days,,
