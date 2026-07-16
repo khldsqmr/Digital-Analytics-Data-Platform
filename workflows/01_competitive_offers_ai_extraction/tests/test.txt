@@ -1,123 +1,13 @@
-Tableau Worksheet: Tab1 | MFC Postpaid
-
-Columns Shelf
---------------
-• Qgp Date
-  - Type: Date Dimension
-  - Location: Columns Shelf
-  - Purpose: Drives the horizontal layout of the view and displays weekly dates across the top (Jul-04, Jul-11, Jul-18, etc.).
-
-Rows Shelf
------------
-• No fields placed on the Rows shelf.
-  - Result: No row-level grouping or vertical axis is being created.
-
-Filters Shelf
---------------
-Data Quality / Calculated Filters:
-• c.tms.Agency Remove Null = True
-  - Removes records with null Agency values.
-
-• c.tms.Channel Remove Null = True
-  - Removes records with null Channel values.
-
-• c.tms.Tactic Remove Null = True
-  - Removes records with null Tactic values.
-
-• c.tms.Current Quarter = True
-  - Restricts the view to the current quarter.
-
-Business Filters:
-• Data Source = MFC_SPEND_GRANULAR
-  - Filters data to a specific source.
-
-• LoB = POSTPAID
-  - Filters data to the Postpaid Line of Business.
-
-• Mfc Channel
-  - User-selectable filter for marketing channels.
-
-• Mfc Tactic
-  - User-selectable filter for marketing tactics.
-
-• Mfc Agency
-  - User-selectable filter for agencies/vendors.
-
-Marks Card
------------
-Mark Type:
-• Automatic
-  - Tableau automatically determines the visualization type.
-
-Marks Properties:
-• Color
-  - Controls mark colors.
-
-• Size
-  - Controls mark size.
-
-• Text
-  - Controls labels displayed in the view.
-
-• Detail
-  - Adds dimensions to the level of detail without displaying them.
-
-• Tooltip
-  - Controls information shown on hover.
-
-Fields Used on Marks Card
---------------------------
-
-Dimensions (Blue Pills):
-• ATTR(Mfc Channel)
-  - Attribute aggregation of Channel.
-
-• ATTR(Mfc Tactic)
-  - Attribute aggregation of Tactic.
-
-• ATTR(Mfc Agency)
-  - Attribute aggregation of Agency.
-
-• ATTR(Qgp Quarter)
-  - Attribute aggregation of Quarter.
-
-Measures (Green Pills):
-• AGG(c.tms.MFC Actuals)
-  - Aggregated Actual MFC values.
-
-• AGG(c.tms.MFC Forecasts)
-  - Aggregated Forecast MFC values.
-
-• AGG(c.tms.MFC WoW% Pos)
-  - Positive Week-over-Week % change calculation.
-
-• AGG(c.tms.MFC WoW% Neg)
-  - Negative Week-over-Week % change calculation.
-
-• AGG(c.tms.MFC AvF % Pos)
-  - Positive Actual vs Forecast % variance.
-
-• AGG(c.tms.MFC AvF % Neg)
-  - Negative Actual vs Forecast % variance.
-
-Visualization Output
----------------------
-• Date headers displayed across columns:
-  Jul-04, Jul-11, Jul-18, Jul-25, Aug-01, Aug-08, Aug-15,
-  Aug-22, Aug-29, Sep-05, Sep-12, Sep-19, Sep-26, Sep-30
-
-• KPI Display:
-  - $11.4M (primary metric)
-  - ▼ 43.5% (negative variance/change indicator)
-
-• Additional weekly values displayed as text:
-  - $19.9M, $23.8M, $19.5M, $20.9M, $21.1M, $20.4M,
-    $21.2M, $22.1M, $21.9M, $25.5M, $24.7M, $24.4M, $1.3M
-
-Summary
---------
-• Columns: Qgp Date
-• Rows: Empty
-• Filters: Data quality filters, current quarter filter, data source filter, LoB filter, Channel filter, Tactic filter, Agency filter
-• Marks: Text-based KPI display using Actuals, Forecasts, WoW%, and Actual-vs-Forecast calculations
-• View Type: KPI / Scorecard-style worksheet showing weekly MFC Postpaid metrics.
+SELECT
+  qgp_date,
+  week_type,
+  days_in_period,
+  channel_group,
+  metric_name,
+  metric_value
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_mfcSpend_weekly`
+WHERE data_source = 'MFC_SPEND_GRANULAR'
+  AND lob_mfc     = 'POSTPAID'
+  AND qgp_date    = '2026-07-04'
+  AND metric_name = 'mfcSpendForecast'
+ORDER BY channel_group
