@@ -12,4 +12,7 @@ WHERE data_source  = 'MFC_SPEND_CHANNEL'
   AND channel_group = 'All Channels'
   AND metric_name  = 'mfcSpendForecast'
   AND qgp_date    IN ('2026-09-30', '2026-10-03')
-ORDER BY qgp_date
+ORDER BY qgp_date;
+
+qgp_date	week_type	days_in_period	lob_mfc	channel_group	metric_name	metric_value
+2026-09-30	BOUNDARY_STUB	4	POSTPAID	All Channels	mfcSpendForecast	1302459.43
