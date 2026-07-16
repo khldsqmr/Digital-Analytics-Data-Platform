@@ -27,6 +27,8 @@ CHANGE LOG:
   - Dropped passthrough date columns from source (quarter_raw, quarter_end_date,
     period_start, period_end, week_type) — QGP calendar dim is authoritative for these.
   - Added TBG → TFB LOB remap comment.
+  - Updated channel group mapping: Programmatic now only includes DISPLAY and OLV.
+    AUDIO, OTT, and OOH (previously partially Programmatic) now fall through to Other.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -39,7 +41,7 @@ BEGIN
   PARTITION BY qgp_week
   CLUSTER BY lob, channel_group
   OPTIONS (
-    description = 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Partitioned by qgp_week, clustered by lob and channel_group. Refreshed weekly via sp_sdi_pulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB.'
+    description = 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Partitioned by qgp_week, clustered by lob and channel_group. Refreshed weekly via sp_sdi_pulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB. Programmatic: DISPLAY, OLV only. AUDIO, OTT, OOH map to Other.'
   )
   AS
   SELECT
@@ -59,15 +61,13 @@ BEGIN
       ELSE UPPER(TRIM(raw.LOB_Supported))
     END                                                                   AS lob,
 
-    -- Channel group mapping to standard vocabulary
+    -- Channel group mapping to standard vocabulary:
+    --   Programmatic : DISPLAY, OLV only
+    --   Other        : everything else including AUDIO, OTT, OOH
     CASE
       WHEN UPPER(TRIM(raw.Channel)) = 'PAID SEARCH'                       THEN 'Paid Search'
       WHEN UPPER(TRIM(raw.Channel)) = 'PAID SOCIAL'                       THEN 'Paid Social'
-      WHEN UPPER(TRIM(raw.Channel)) IN ('DISPLAY', 'OLV', 'AUDIO')        THEN 'Programmatic'
-      WHEN UPPER(TRIM(raw.Channel)) = 'OTT'
-        AND UPPER(TRIM(raw.Tactic)) LIKE '%PROGRAMMATIC%'                 THEN 'Programmatic'
-      WHEN UPPER(TRIM(raw.Channel)) = 'OOH'
-        AND UPPER(TRIM(raw.Tactic)) LIKE '%PROGRAMMATIC%'                 THEN 'Programmatic'
+      WHEN UPPER(TRIM(raw.Channel)) IN ('DISPLAY', 'OLV')                 THEN 'Programmatic'
       ELSE                                                                     'Other'
     END                                                                   AS channel_group,
 
