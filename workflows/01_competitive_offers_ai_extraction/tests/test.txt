@@ -112,3 +112,6 @@ ORDER BY total_spend DESC
 LIMIT 20;
 
 output:
+
+channel	message_type	wm_nmw	total_spend
+UNALLOCATED	VALUE	WORKING	14064256.0
