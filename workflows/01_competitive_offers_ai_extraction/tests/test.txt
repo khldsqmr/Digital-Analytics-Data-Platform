@@ -93,4 +93,5 @@ GROUP BY 1,2,3,4,5
 ORDER BY Quarter;
 
 output:
-
+Quarter	QGP_Week	Week_Beginning_Monday	Week_Ending_Sunday	LOB_Supported	total_forecast	total_actual
+Q3'26	2026-10-03	2026-09-28	2026-10-04	CONSUMER POSTPAID	3245377.3626708984	
