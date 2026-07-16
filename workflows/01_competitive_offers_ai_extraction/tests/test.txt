@@ -8,10 +8,11 @@ SELECT
   UPPER(TRIM(QGP))            AS qgp_type,
   SUM(Spend)                  AS total_spend
 FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
-WHERE SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) = '2026-09-30'
+WHERE SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) 
+      BETWEEN '2026-09-28' AND '2026-10-04'
   AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND UPPER(TRIM(WM_NWM)) = 'WORKING'
   AND Spend IS NOT NULL
+  AND UPPER(TRIM(Channel)) = 'PAID SEARCH'
 GROUP BY 1,2,3,4,5,6,7
-ORDER BY Quarter, channel, qgp_type
-LIMIT 30;
+ORDER BY Quarter, qgp_type;
