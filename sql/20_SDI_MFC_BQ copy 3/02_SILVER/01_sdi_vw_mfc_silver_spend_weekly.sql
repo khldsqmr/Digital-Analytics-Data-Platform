@@ -23,6 +23,8 @@
 --   - Boundary week allocation updated: sum Q_prev + Q_next then allocate
 --     by days_in_period / 7. NULL handling: if one side is NULL, that QGP
 --     date stays NULL; the other uses its own value / 7 x days_in_period.
+--   - Replaced correlated subquery SELECT MAX(d) FROM UNNEST([...]) with
+--     GREATEST() in source_joined to avoid BigQuery correlated subquery error.
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_silver_spend_weekly`()
@@ -76,9 +78,10 @@ BEGIN
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
       COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
-      (
-        SELECT MAX(d)
-        FROM UNNEST([a.FileLoad_Date, f.FileLoad_Date]) AS d
+      -- GREATEST replaces correlated subquery SELECT MAX(d) FROM UNNEST([...])
+      GREATEST(
+        COALESCE(a.FileLoad_Date, DATE '2000-01-01'),
+        COALESCE(f.FileLoad_Date, DATE '2000-01-01')
       )                                                          AS FileLoad_Date,
       COALESCE(a.LOB_Supported, f.LOB_Supported)                 AS LOB_Supported,
       a.weekly_actual,
@@ -239,19 +242,25 @@ BEGIN
   -- ===========================================================================
   -- NEW: Boundary week reallocation
   --
-  -- For boundary weeks, replace independent Q_prev / Q_next values with:
-  --   total = stub_value + first_value
+  -- For boundary weeks, the daily disaggregation produces:
+  --   Jun 30 value = Q2 daily rate × stub_days
+  --   Jul 4  value = Q3 daily rate × first_days
+  -- Each uses its own quarter's daily rate independently.
+  --
+  -- New logic: combine both values, use a single daily rate:
+  --   total      = stub_value + first_value
   --   daily_rate = total / 7
-  --   stub_new  = daily_rate x stub_days_in_period
-  --   first_new = daily_rate x first_days_in_period
+  --   Jun 30 new = daily_rate × stub_days
+  --   Jul 4  new = daily_rate × first_days
   --
   -- NULL rules (applied independently per metric):
-  --   Both non-NULL : combine and reallocate by days
-  --   Stub NULL     : stub stays NULL, first = first / 7 x first_days
-  --   First NULL    : first stays NULL, stub = stub / 7 x stub_days
+  --   Both non-NULL : combine and reallocate
+  --   Stub NULL     : stub stays NULL, first = first / 7 × first_days
+  --   First NULL    : first stays NULL, stub = stub / 7 × stub_days
   --   Both NULL     : both stay NULL
   --
-  -- lob_universe materialized first to avoid correlated subquery error.
+  -- lob_universe materialized before boundary_pairs to avoid
+  -- correlated subquery error in BigQuery.
   -- ===========================================================================
   lob_universe AS (
     SELECT DISTINCT LOB_Supported FROM aggregated

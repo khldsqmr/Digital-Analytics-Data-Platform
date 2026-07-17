@@ -11,6 +11,8 @@
 --   - Boundary week allocation updated: sum Q_prev + Q_next then allocate
 --     by days_in_period / 7. NULL handling: if one side is NULL, that QGP
 --     date stays NULL; the other uses its own value / 7 x days_in_period.
+--   - Replaced correlated subquery SELECT MAX(d) FROM UNNEST([...]) with
+--     GREATEST() in source_joined to avoid BigQuery correlated subquery error.
 -- ============================================================
 
 CREATE OR REPLACE PROCEDURE
@@ -66,18 +68,18 @@ BEGIN
   ),
 
   -- Keep separate Quarter rows for correct boundary week daily split.
-  -- BigQuery equivalent of Databricks null-safe equality is:
-  -- IS NOT DISTINCT FROM
+  -- BigQuery equivalent of Databricks null-safe equality is IS NOT DISTINCT FROM.
   source_joined AS (
     SELECT
       COALESCE(a.Quarter, f.Quarter) AS Source_Quarter,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday, f.Week_Ending_Sunday) AS Week_Ending_Sunday,
       COALESCE(a.QGP_Week, f.QGP_Week) AS Source_QGP_Week,
-      (
-        SELECT MAX(d)
-        FROM UNNEST([a.FileLoad_Date, f.FileLoad_Date]) AS d
-      ) AS FileLoad_Date,
+      -- GREATEST replaces correlated subquery SELECT MAX(d) FROM UNNEST([...])
+      GREATEST(
+        COALESCE(a.FileLoad_Date, DATE '2000-01-01'),
+        COALESCE(f.FileLoad_Date, DATE '2000-01-01')
+      )                              AS FileLoad_Date,
       COALESCE(a.LOB_Supported, f.LOB_Supported) AS LOB_Supported,
       COALESCE(a.Channel, f.Channel) AS Channel,
       COALESCE(a.Tactic, f.Tactic) AS Tactic,
@@ -275,7 +277,8 @@ BEGIN
   -- NEW: Boundary week reallocation (granular grain)
   --
   -- Same logic as Silver 1 extended to Channel/Tactic/Message_Type/Agency.
-  -- dim_universe materialized first to avoid correlated subquery error.
+  -- dim_universe materialized before boundary_pairs to avoid
+  -- correlated subquery error in BigQuery.
   -- ===========================================================================
   dim_universe AS (
     SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
