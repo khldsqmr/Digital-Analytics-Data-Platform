@@ -427,6 +427,14 @@ BEGIN
     FROM aggregated_final
   ),
 
+  -- Materialize date range to avoid correlated subquery in spine WHERE clause
+  date_range AS (
+    SELECT
+      MIN(QGP_Week) AS min_date,
+      MAX(QGP_Week) AS max_date
+    FROM aggregated_final
+  ),
+
   spine AS (
     SELECT
       cal.qgp_date,
@@ -446,8 +454,9 @@ BEGIN
       dims.Agency
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` cal
     CROSS JOIN valid_combinations dims
-    WHERE cal.qgp_date >= (SELECT MIN(QGP_Week) FROM aggregated_final)
-      AND cal.qgp_date <= (SELECT MAX(QGP_Week) FROM aggregated_final)
+    CROSS JOIN date_range dr
+    WHERE cal.qgp_date >= dr.min_date
+      AND cal.qgp_date <= dr.max_date
   ),
 
   -- Join aggregated spend onto full granular spine
