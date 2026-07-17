@@ -265,58 +265,62 @@ BEGIN
   -- ===========================================================================
   -- NEW: Boundary week reallocation (granular grain)
   --
-  -- Same logic as Silver 1 but extended to include Channel/Tactic/Message_Type/Agency
-  -- in the join keys so reallocation is correct at granular grain.
-  --
-  -- NULL rules:
-  --   Both non-NULL : stub_new = (stub + first) / 7 x stub_days
-  --                  first_new = (stub + first) / 7 x first_days
-  --   Stub NULL     : stub_new = NULL
-  --                  first_new = first / 7 x first_days
-  --   First NULL    : stub_new = stub / 7 x stub_days
-  --                  first_new = NULL
-  --   Both NULL     : both stay NULL
+  -- Materialize granular dimension universe first to avoid correlated subquery.
+  -- Same logic as Silver 1 extended to Channel/Tactic/Message_Type/Agency grain.
   -- ===========================================================================
+
+  -- Materialize granular dimension universe to avoid correlated subquery
+  dim_universe AS (
+    SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
+    FROM aggregated
+  ),
+
+  -- Pull boundary stub/first calendar pairs
+  boundary_calendar AS (
+    SELECT
+      stub_cal.qgp_date       AS stub_date,
+      first_cal.qgp_date      AS first_date,
+      stub_cal.days_in_period AS stub_days,
+      first_cal.days_in_period AS first_days
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` stub_cal
+    JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` first_cal
+      ON  first_cal.boundary_stub_date = stub_cal.qgp_date
+      AND stub_cal.week_type           = 'BOUNDARY_STUB'
+      AND first_cal.week_type          = 'BOUNDARY_FIRST'
+  ),
+
   boundary_pairs AS (
     SELECT
-      stub_cal.qgp_date                             AS stub_date,
-      first_cal.qgp_date                            AS first_date,
-      stub_cal.days_in_period                       AS stub_days,
-      first_cal.days_in_period                      AS first_days,
+      bc.stub_date,
+      bc.first_date,
+      bc.stub_days,
+      bc.first_days,
       dims.LOB_Supported,
       dims.Channel,
       dims.Tactic,
       dims.Message_Type,
       dims.Agency,
       GREATEST(
-        COALESCE(a_stub.FileLoad_Date, DATE '2000-01-01'),
+        COALESCE(a_stub.FileLoad_Date,  DATE '2000-01-01'),
         COALESCE(a_first.FileLoad_Date, DATE '2000-01-01')
-      )                                             AS FileLoad_Date,
-      a_stub.spend_actual                           AS stub_actual,
-      a_first.spend_actual                          AS first_actual,
-      a_stub.spend_forecast                         AS stub_forecast,
-      a_first.spend_forecast                        AS first_forecast,
-      a_stub.spend_display                          AS stub_display,
-      a_first.spend_display                         AS first_display
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` stub_cal
-    JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` first_cal
-      ON  first_cal.boundary_stub_date = stub_cal.qgp_date
-      AND stub_cal.week_type           = 'BOUNDARY_STUB'
-      AND first_cal.week_type          = 'BOUNDARY_FIRST'
-    JOIN (
-      SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
-      FROM aggregated
-    ) dims
-      ON  TRUE
+      )                        AS FileLoad_Date,
+      a_stub.spend_actual      AS stub_actual,
+      a_first.spend_actual     AS first_actual,
+      a_stub.spend_forecast    AS stub_forecast,
+      a_first.spend_forecast   AS first_forecast,
+      a_stub.spend_display     AS stub_display,
+      a_first.spend_display    AS first_display
+    FROM boundary_calendar bc
+    JOIN dim_universe dims ON TRUE
     LEFT JOIN aggregated a_stub
-      ON  a_stub.QGP_Week                    = stub_cal.qgp_date
+      ON  a_stub.QGP_Week                    = bc.stub_date
       AND a_stub.LOB_Supported               = dims.LOB_Supported
       AND a_stub.Channel                     = dims.Channel
       AND a_stub.Tactic                      = dims.Tactic
       AND a_stub.Message_Type                = dims.Message_Type
       AND a_stub.Agency IS NOT DISTINCT FROM dims.Agency
     LEFT JOIN aggregated a_first
-      ON  a_first.QGP_Week                   = first_cal.qgp_date
+      ON  a_first.QGP_Week                   = bc.first_date
       AND a_first.LOB_Supported              = dims.LOB_Supported
       AND a_first.Channel                    = dims.Channel
       AND a_first.Tactic                     = dims.Tactic
@@ -327,57 +331,49 @@ BEGIN
   ),
 
   boundary_reallocated AS (
-    -- Stub rows with new values
+    -- Stub rows with reallocated values
     SELECT
       stub_date    AS QGP_Week,
-      LOB_Supported,
-      Channel,
-      Tactic,
-      Message_Type,
-      Agency,
+      LOB_Supported, Channel, Tactic, Message_Type, Agency,
       FileLoad_Date,
       NULLIF(CASE
-        WHEN stub_actual IS NULL THEN NULL
-        WHEN first_actual IS NULL THEN ROUND(stub_actual / 7 * stub_days, 2)
-        ELSE ROUND((stub_actual + first_actual) / 7 * stub_days, 2)
+        WHEN stub_actual IS NULL   THEN NULL
+        WHEN first_actual IS NULL  THEN ROUND(stub_actual  / 7 * stub_days,  2)
+        ELSE                            ROUND((stub_actual + first_actual)  / 7 * stub_days,  2)
       END, 0)      AS spend_actual,
       NULLIF(CASE
-        WHEN stub_forecast IS NULL THEN NULL
-        WHEN first_forecast IS NULL THEN ROUND(stub_forecast / 7 * stub_days, 2)
-        ELSE ROUND((stub_forecast + first_forecast) / 7 * stub_days, 2)
+        WHEN stub_forecast IS NULL  THEN NULL
+        WHEN first_forecast IS NULL THEN ROUND(stub_forecast  / 7 * stub_days,  2)
+        ELSE                             ROUND((stub_forecast + first_forecast) / 7 * stub_days,  2)
       END, 0)      AS spend_forecast,
       NULLIF(CASE
-        WHEN stub_display IS NULL THEN NULL
-        WHEN first_display IS NULL THEN ROUND(stub_display / 7 * stub_days, 2)
-        ELSE ROUND((stub_display + first_display) / 7 * stub_days, 2)
+        WHEN stub_display IS NULL  THEN NULL
+        WHEN first_display IS NULL THEN ROUND(stub_display  / 7 * stub_days,  2)
+        ELSE                            ROUND((stub_display + first_display)  / 7 * stub_days,  2)
       END, 0)      AS spend_display
     FROM boundary_pairs
 
     UNION ALL
 
-    -- First rows with new values
+    -- First rows with reallocated values
     SELECT
       first_date   AS QGP_Week,
-      LOB_Supported,
-      Channel,
-      Tactic,
-      Message_Type,
-      Agency,
+      LOB_Supported, Channel, Tactic, Message_Type, Agency,
       FileLoad_Date,
       NULLIF(CASE
-        WHEN first_actual IS NULL THEN NULL
-        WHEN stub_actual IS NULL THEN ROUND(first_actual / 7 * first_days, 2)
-        ELSE ROUND((stub_actual + first_actual) / 7 * first_days, 2)
+        WHEN first_actual IS NULL  THEN NULL
+        WHEN stub_actual IS NULL   THEN ROUND(first_actual  / 7 * first_days, 2)
+        ELSE                            ROUND((stub_actual + first_actual)  / 7 * first_days, 2)
       END, 0)      AS spend_actual,
       NULLIF(CASE
         WHEN first_forecast IS NULL THEN NULL
-        WHEN stub_forecast IS NULL THEN ROUND(first_forecast / 7 * first_days, 2)
-        ELSE ROUND((stub_forecast + first_forecast) / 7 * first_days, 2)
+        WHEN stub_forecast IS NULL  THEN ROUND(first_forecast  / 7 * first_days, 2)
+        ELSE                             ROUND((stub_forecast + first_forecast) / 7 * first_days, 2)
       END, 0)      AS spend_forecast,
       NULLIF(CASE
         WHEN first_display IS NULL THEN NULL
-        WHEN stub_display IS NULL THEN ROUND(first_display / 7 * first_days, 2)
-        ELSE ROUND((stub_display + first_display) / 7 * first_days, 2)
+        WHEN stub_display IS NULL  THEN ROUND(first_display  / 7 * first_days, 2)
+        ELSE                            ROUND((stub_display + first_display)  / 7 * first_days, 2)
       END, 0)      AS spend_display
     FROM boundary_pairs
   ),
@@ -391,20 +387,17 @@ BEGIN
       a.Tactic,
       a.Message_Type,
       a.Agency,
-      COALESCE(br.FileLoad_Date, a.FileLoad_Date)  AS FileLoad_Date,
+      COALESCE(br.FileLoad_Date, a.FileLoad_Date) AS FileLoad_Date,
       CASE
-        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
-          THEN br.spend_actual
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST') THEN br.spend_actual
         ELSE a.spend_actual
       END AS spend_actual,
       CASE
-        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
-          THEN br.spend_forecast
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST') THEN br.spend_forecast
         ELSE a.spend_forecast
       END AS spend_forecast,
       CASE
-        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
-          THEN br.spend_display
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST') THEN br.spend_display
         ELSE a.spend_display
       END AS spend_display
     FROM aggregated a
