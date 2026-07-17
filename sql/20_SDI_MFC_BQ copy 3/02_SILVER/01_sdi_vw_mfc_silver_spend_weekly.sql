@@ -11,10 +11,17 @@
 --   4. Explode to daily via GENERATE_DATE_ARRAY
 --   5. Map each day to its QGP_Week (next Saturday or quarter-end)
 --   6. Aggregate daily back to QGP_Week x LOB
---   7. Build full spine from QGP calendar x LOB universe
---   8. Join aggregated spend onto spine (dense fill)
---   9. Compute WoW: BOUNDARY_FIRST adds stub's actual; prior week
---      also adds its stub if applicable
+--   7. For boundary weeks: recalculate using combined total / 7 x days_in_period
+--      Both non-NULL : total = stub + first, allocate by days_in_period
+--      One NULL      : that QGP date stays NULL, other gets value / 7 x days_in_period
+--   8. Build full spine from QGP calendar x LOB universe
+--   9. Join aggregated spend onto spine (dense fill)
+--  10. Compute WoW
+--
+-- CHANGE LOG:
+--   - Boundary week allocation updated: sum Q_prev + Q_next then allocate
+--     by days_in_period / 7. NULL handling: if one side is NULL, that QGP
+--     date stays NULL; the other uses its own value / 7 x days_in_period.
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_silver_spend_weekly`()
@@ -24,7 +31,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_silver_spend_weekly`
   OPTIONS (
-    description = 'MFC Silver — LOB-level spend with WoW. One row per QGP_Week x LOB_Supported. Refreshed via sdi_sp_mfc_silver_spend_weekly.'
+    description = 'MFC Silver — LOB-level spend with WoW. One row per QGP_Week x LOB_Supported. Boundary weeks allocated as (stub + first) / 7 x days_in_period. Refreshed via sdi_sp_mfc_silver_spend_weekly.'
   )
   AS
 
@@ -60,30 +67,23 @@ BEGIN
       AND Week_Ending_Sunday    IS NOT NULL
   ),
 
-  -- Keep separate Quarter rows so daily disaggregation correctly
-  -- splits boundary weeks to BOUNDARY_STUB and BOUNDARY_FIRST QGP dates
-
   source_joined AS (
     SELECT
       COALESCE(a.Quarter,               f.Quarter)               AS Source_Quarter,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday,    f.Week_Ending_Sunday)    AS Week_Ending_Sunday,
       COALESCE(a.QGP_Week,              f.QGP_Week)              AS Source_QGP_Week,
-  
       (
         SELECT MAX(d)
         FROM UNNEST([a.FileLoad_Date, f.FileLoad_Date]) AS d
       )                                                          AS FileLoad_Date,
-  
       COALESCE(a.LOB_Supported, f.LOB_Supported)                 AS LOB_Supported,
       a.weekly_actual,
       f.weekly_forecast,
-  
       COALESCE(
         IF(a.weekly_actual != 0, a.weekly_actual, NULL),
         f.weekly_forecast
       )                                                          AS weekly_display,
-  
       UPPER(TRIM(COALESCE(a.source_week_type, f.source_week_type))) AS source_week_type
     FROM actual_clean a
     FULL OUTER JOIN forecast_clean f
@@ -91,10 +91,7 @@ BEGIN
       AND a.QGP_Week      = f.QGP_Week
       AND a.LOB_Supported = f.LOB_Supported
   ),
-  
-  -- Derive quarter bounds from Source_Quarter string (e.g. "Q1'26")
-  -- NOT from Week_Beginning_Monday, which is the same date for both Q1 and Q2
-  -- boundary rows
+
   with_source_quarter_bounds AS (
     SELECT
       *,
@@ -108,13 +105,11 @@ BEGIN
   with_bounds AS (
     SELECT
       *,
-      -- Quarter start: first day of the quarter
       DATE(CAST(CONCAT(
         CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
         LPAD(CAST(qtr_year_2digit AS STRING), 2, '0'), '-',
         LPAD(CAST(((qtr_num - 1) * 3) + 1 AS STRING), 2, '0'), '-01'
       ) AS DATE)) AS Source_Quarter_Start_Date,
-      -- Quarter end: last day of the quarter
       DATE_SUB(DATE_ADD(
         DATE(CAST(CONCAT(
           CASE WHEN qtr_year_2digit < 50 THEN '20' ELSE '19' END,
@@ -137,7 +132,6 @@ BEGIN
     FROM with_bounds
   ),
 
-  -- Prorate non-boundary weeks that straddle a quarter boundary
   normalized_weekly AS (
     SELECT
       FileLoad_Date,
@@ -173,7 +167,6 @@ BEGIN
     WHERE Period_End >= Period_Start
   ),
 
-  -- Explode to daily using GENERATE_DATE_ARRAY
   daily_spend AS (
     SELECT
       FileLoad_Date,
@@ -187,8 +180,6 @@ BEGIN
     UNNEST(GENERATE_DATE_ARRAY(Period_Start, Period_End)) AS calendar_date
   ),
 
-  -- Map each day to its QGP_Week:
-  -- next Saturday, capped at quarter-end and Source_QGP_Week
   daily_with_qgp AS (
     SELECT
       FileLoad_Date,
@@ -220,7 +211,6 @@ BEGIN
     FROM daily_spend
   ),
 
-  -- Aggregate daily back to QGP_Week x LOB
   aggregated AS (
     SELECT
       QGP_Week,
@@ -233,11 +223,136 @@ BEGIN
     GROUP BY QGP_Week, LOB_Supported
   ),
 
-  lob_universe AS (
-    SELECT DISTINCT LOB_Supported FROM aggregated
+  -- ===========================================================================
+  -- NEW: Boundary week reallocation
+  --
+  -- Pull stub + first pairs from QGP calendar, join to aggregated values,
+  -- then reallocate using: total / 7 x days_in_period per QGP date.
+  --
+  -- NULL rules:
+  --   Both non-NULL : stub_new = (stub + first) / 7 x stub_days
+  --                  first_new = (stub + first) / 7 x first_days
+  --   Stub NULL     : stub_new = NULL
+  --                  first_new = first / 7 x first_days
+  --   First NULL    : stub_new = stub / 7 x stub_days
+  --                  first_new = NULL
+  --   Both NULL     : both stay NULL
+  -- ===========================================================================
+  boundary_pairs AS (
+    SELECT
+      stub_cal.qgp_date                             AS stub_date,
+      first_cal.qgp_date                            AS first_date,
+      stub_cal.days_in_period                       AS stub_days,
+      first_cal.days_in_period                      AS first_days,
+      lobs.LOB_Supported,
+      GREATEST(
+        COALESCE(a_stub.FileLoad_Date, DATE '2000-01-01'),
+        COALESCE(a_first.FileLoad_Date, DATE '2000-01-01')
+      )                                             AS FileLoad_Date,
+      a_stub.spend_actual                           AS stub_actual,
+      a_first.spend_actual                          AS first_actual,
+      a_stub.spend_forecast                         AS stub_forecast,
+      a_first.spend_forecast                        AS first_forecast,
+      a_stub.spend_display                          AS stub_display,
+      a_first.spend_display                         AS first_display
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` stub_cal
+    JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` first_cal
+      ON  first_cal.boundary_stub_date = stub_cal.qgp_date
+      AND stub_cal.week_type           = 'BOUNDARY_STUB'
+      AND first_cal.week_type          = 'BOUNDARY_FIRST'
+    JOIN (SELECT DISTINCT LOB_Supported FROM aggregated) lobs
+      ON  TRUE
+    LEFT JOIN aggregated a_stub
+      ON  a_stub.QGP_Week      = stub_cal.qgp_date
+      AND a_stub.LOB_Supported = lobs.LOB_Supported
+    LEFT JOIN aggregated a_first
+      ON  a_first.QGP_Week      = first_cal.qgp_date
+      AND a_first.LOB_Supported = lobs.LOB_Supported
+    WHERE a_stub.QGP_Week IS NOT NULL
+       OR a_first.QGP_Week IS NOT NULL
   ),
 
-  -- Full spine: every QGP date x every LOB in the data range
+  boundary_reallocated AS (
+    -- Stub rows with new values
+    SELECT
+      stub_date    AS QGP_Week,
+      LOB_Supported,
+      FileLoad_Date,
+      NULLIF(CASE
+        WHEN stub_actual IS NULL THEN NULL
+        WHEN first_actual IS NULL THEN ROUND(stub_actual / 7 * stub_days, 2)
+        ELSE ROUND((stub_actual + first_actual) / 7 * stub_days, 2)
+      END, 0)      AS spend_actual,
+      NULLIF(CASE
+        WHEN stub_forecast IS NULL THEN NULL
+        WHEN first_forecast IS NULL THEN ROUND(stub_forecast / 7 * stub_days, 2)
+        ELSE ROUND((stub_forecast + first_forecast) / 7 * stub_days, 2)
+      END, 0)      AS spend_forecast,
+      NULLIF(CASE
+        WHEN stub_display IS NULL THEN NULL
+        WHEN first_display IS NULL THEN ROUND(stub_display / 7 * stub_days, 2)
+        ELSE ROUND((stub_display + first_display) / 7 * stub_days, 2)
+      END, 0)      AS spend_display
+    FROM boundary_pairs
+
+    UNION ALL
+
+    -- First rows with new values
+    SELECT
+      first_date   AS QGP_Week,
+      LOB_Supported,
+      FileLoad_Date,
+      NULLIF(CASE
+        WHEN first_actual IS NULL THEN NULL
+        WHEN stub_actual IS NULL THEN ROUND(first_actual / 7 * first_days, 2)
+        ELSE ROUND((stub_actual + first_actual) / 7 * first_days, 2)
+      END, 0)      AS spend_actual,
+      NULLIF(CASE
+        WHEN first_forecast IS NULL THEN NULL
+        WHEN stub_forecast IS NULL THEN ROUND(first_forecast / 7 * first_days, 2)
+        ELSE ROUND((stub_forecast + first_forecast) / 7 * first_days, 2)
+      END, 0)      AS spend_forecast,
+      NULLIF(CASE
+        WHEN first_display IS NULL THEN NULL
+        WHEN stub_display IS NULL THEN ROUND(first_display / 7 * first_days, 2)
+        ELSE ROUND((stub_display + first_display) / 7 * first_days, 2)
+      END, 0)      AS spend_display
+    FROM boundary_pairs
+  ),
+
+  -- Replace boundary week values; non-boundary weeks pass through unchanged
+  aggregated_final AS (
+    SELECT
+      a.QGP_Week,
+      a.LOB_Supported,
+      COALESCE(br.FileLoad_Date, a.FileLoad_Date)  AS FileLoad_Date,
+      CASE
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
+          THEN br.spend_actual
+        ELSE a.spend_actual
+      END AS spend_actual,
+      CASE
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
+          THEN br.spend_forecast
+        ELSE a.spend_forecast
+      END AS spend_forecast,
+      CASE
+        WHEN bc.week_type IN ('BOUNDARY_STUB', 'BOUNDARY_FIRST')
+          THEN br.spend_display
+        ELSE a.spend_display
+      END AS spend_display
+    FROM aggregated a
+    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` bc
+      ON  bc.qgp_date = a.QGP_Week
+    LEFT JOIN boundary_reallocated br
+      ON  br.QGP_Week      = a.QGP_Week
+      AND br.LOB_Supported = a.LOB_Supported
+  ),
+
+  lob_universe AS (
+    SELECT DISTINCT LOB_Supported FROM aggregated_final
+  ),
+
   spine AS (
     SELECT
       cal.qgp_date,
@@ -255,11 +370,10 @@ BEGIN
       lob.LOB_Supported
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` cal
     CROSS JOIN lob_universe lob
-    WHERE cal.qgp_date >= (SELECT MIN(QGP_Week) FROM aggregated)
-      AND cal.qgp_date <= (SELECT MAX(QGP_Week) FROM aggregated)
+    WHERE cal.qgp_date >= (SELECT MIN(QGP_Week) FROM aggregated_final)
+      AND cal.qgp_date <= (SELECT MAX(QGP_Week) FROM aggregated_final)
   ),
 
-  -- Join aggregated spend onto spine; show actuals only for complete periods
   dense_spend AS (
     SELECT
       s.qgp_date,
@@ -283,21 +397,16 @@ BEGIN
       a.spend_forecast,
       IF(s.is_complete_period, a.spend_display, a.spend_forecast) AS spend_display
     FROM spine s
-    LEFT JOIN aggregated a
+    LEFT JOIN aggregated_final a
       ON  a.QGP_Week      = s.qgp_date
       AND a.LOB_Supported = s.LOB_Supported
   ),
 
-  -- Metric lookup used for WoW stub joins
   metric_lookup AS (
     SELECT qgp_date, LOB_Supported, spend_actual
     FROM dense_spend
   ),
 
-  -- WoW computation:
-  --   BOUNDARY_FIRST current  = its own actual + stub's actual
-  --   BOUNDARY_FIRST prior    = prior BOUNDARY_FIRST actual + its stub's actual
-  --   NORMAL                  = its own actual
   with_spend_for_wow AS (
     SELECT
       d.*,
@@ -315,18 +424,14 @@ BEGIN
         ELSE COALESCE(prior_lkp.spend_actual, 0)
       END AS spend_for_wow
     FROM dense_spend d
-    -- Current week's stub (for BOUNDARY_FIRST)
     LEFT JOIN metric_lookup stub_lkp
       ON  stub_lkp.qgp_date      = d.boundary_stub_date
       AND stub_lkp.LOB_Supported = d.LOB_Supported
-    -- Prior week's main row
     LEFT JOIN metric_lookup prior_lkp
       ON  prior_lkp.qgp_date      = d.wow_prior_qgp_date
       AND prior_lkp.LOB_Supported = d.LOB_Supported
-    -- Prior week's calendar row (to look up its stub date)
     LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` prior_cal
       ON  prior_cal.qgp_date = d.wow_prior_qgp_date
-    -- Prior week's stub
     LEFT JOIN metric_lookup prior_stub_lkp
       ON  prior_stub_lkp.qgp_date      = prior_cal.boundary_stub_date
       AND prior_stub_lkp.LOB_Supported = d.LOB_Supported
