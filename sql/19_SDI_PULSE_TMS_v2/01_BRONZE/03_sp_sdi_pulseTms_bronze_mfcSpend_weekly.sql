@@ -83,7 +83,10 @@ BEGIN
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly` raw
   WHERE raw.Channel IS NOT NULL
     AND UPPER(TRIM(raw.Channel)) NOT IN (
-      'OTHER (DO NOT USE)', 'NON-WORKING', 'UNALLOCATED', 'BUDGET HELD'
+      'OTHER (DO NOT USE)', 
+      'NON-WORKING', 
+      --'UNALLOCATED', 
+      'BUDGET HELD'
     )
     AND UPPER(TRIM(raw.Message_Type)) != 'MICRO'
     -- Keep rows that have meaningful spend in at least one of actual or forecast.
