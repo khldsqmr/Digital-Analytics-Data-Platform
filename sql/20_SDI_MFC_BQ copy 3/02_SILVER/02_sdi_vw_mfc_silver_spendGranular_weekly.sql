@@ -65,6 +65,9 @@ BEGIN
       AND Week_Ending_Sunday IS NOT NULL
   ),
 
+  -- Keep separate Quarter rows for correct boundary week daily split.
+  -- BigQuery equivalent of Databricks null-safe equality is:
+  -- IS NOT DISTINCT FROM
   source_joined AS (
     SELECT
       COALESCE(a.Quarter, f.Quarter) AS Source_Quarter,
@@ -98,6 +101,7 @@ BEGIN
       AND a.Agency IS NOT DISTINCT FROM f.Agency
   ),
 
+  -- Derive quarter bounds from Source_Quarter string, e.g. Q1'26
   with_source_quarter_bounds AS (
     SELECT
       *,
@@ -152,6 +156,7 @@ BEGIN
     FROM with_bounds
   ),
 
+  -- Prorate spend to the portion within the source quarter
   normalized_weekly AS (
     SELECT
       FileLoad_Date,
@@ -194,6 +199,7 @@ BEGIN
     WHERE Period_End >= Period_Start
   ),
 
+  -- Explode weekly period into daily rows
   daily_spend AS (
     SELECT
       FileLoad_Date,
@@ -211,6 +217,8 @@ BEGIN
     UNNEST(GENERATE_DATE_ARRAY(Period_Start, Period_End)) AS calendar_date
   ),
 
+  -- Map each date to QGP week:
+  -- next Saturday, capped at quarter-end and Source_QGP_Week
   daily_with_qgp AS (
     SELECT
       FileLoad_Date,
@@ -246,6 +254,7 @@ BEGIN
     FROM daily_spend
   ),
 
+  -- Aggregate daily back to QGP_Week x granular dimensions
   aggregated AS (
     SELECT
       QGP_Week,
@@ -265,22 +274,19 @@ BEGIN
   -- ===========================================================================
   -- NEW: Boundary week reallocation (granular grain)
   --
-  -- Materialize granular dimension universe first to avoid correlated subquery.
-  -- Same logic as Silver 1 extended to Channel/Tactic/Message_Type/Agency grain.
+  -- Same logic as Silver 1 extended to Channel/Tactic/Message_Type/Agency.
+  -- dim_universe materialized first to avoid correlated subquery error.
   -- ===========================================================================
-
-  -- Materialize granular dimension universe to avoid correlated subquery
   dim_universe AS (
     SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
     FROM aggregated
   ),
 
-  -- Pull boundary stub/first calendar pairs
   boundary_calendar AS (
     SELECT
-      stub_cal.qgp_date       AS stub_date,
-      first_cal.qgp_date      AS first_date,
-      stub_cal.days_in_period AS stub_days,
+      stub_cal.qgp_date        AS stub_date,
+      first_cal.qgp_date       AS first_date,
+      stub_cal.days_in_period  AS stub_days,
       first_cal.days_in_period AS first_days
     FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` stub_cal
     JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` first_cal
@@ -333,48 +339,48 @@ BEGIN
   boundary_reallocated AS (
     -- Stub rows with reallocated values
     SELECT
-      stub_date    AS QGP_Week,
+      stub_date  AS QGP_Week,
       LOB_Supported, Channel, Tactic, Message_Type, Agency,
       FileLoad_Date,
       NULLIF(CASE
         WHEN stub_actual IS NULL   THEN NULL
         WHEN first_actual IS NULL  THEN ROUND(stub_actual  / 7 * stub_days,  2)
         ELSE                            ROUND((stub_actual + first_actual)  / 7 * stub_days,  2)
-      END, 0)      AS spend_actual,
+      END, 0)    AS spend_actual,
       NULLIF(CASE
         WHEN stub_forecast IS NULL  THEN NULL
         WHEN first_forecast IS NULL THEN ROUND(stub_forecast  / 7 * stub_days,  2)
         ELSE                             ROUND((stub_forecast + first_forecast) / 7 * stub_days,  2)
-      END, 0)      AS spend_forecast,
+      END, 0)    AS spend_forecast,
       NULLIF(CASE
         WHEN stub_display IS NULL  THEN NULL
         WHEN first_display IS NULL THEN ROUND(stub_display  / 7 * stub_days,  2)
         ELSE                            ROUND((stub_display + first_display)  / 7 * stub_days,  2)
-      END, 0)      AS spend_display
+      END, 0)    AS spend_display
     FROM boundary_pairs
 
     UNION ALL
 
     -- First rows with reallocated values
     SELECT
-      first_date   AS QGP_Week,
+      first_date AS QGP_Week,
       LOB_Supported, Channel, Tactic, Message_Type, Agency,
       FileLoad_Date,
       NULLIF(CASE
         WHEN first_actual IS NULL  THEN NULL
         WHEN stub_actual IS NULL   THEN ROUND(first_actual  / 7 * first_days, 2)
         ELSE                            ROUND((stub_actual + first_actual)  / 7 * first_days, 2)
-      END, 0)      AS spend_actual,
+      END, 0)    AS spend_actual,
       NULLIF(CASE
         WHEN first_forecast IS NULL THEN NULL
         WHEN stub_forecast IS NULL  THEN ROUND(first_forecast  / 7 * first_days, 2)
         ELSE                             ROUND((stub_forecast + first_forecast) / 7 * first_days, 2)
-      END, 0)      AS spend_forecast,
+      END, 0)    AS spend_forecast,
       NULLIF(CASE
         WHEN first_display IS NULL THEN NULL
         WHEN stub_display IS NULL  THEN ROUND(first_display  / 7 * first_days, 2)
         ELSE                            ROUND((stub_display + first_display)  / 7 * first_days, 2)
-      END, 0)      AS spend_display
+      END, 0)    AS spend_display
     FROM boundary_pairs
   ),
 
@@ -412,6 +418,7 @@ BEGIN
       AND br.Agency IS NOT DISTINCT FROM a.Agency
   ),
 
+  -- Full spine: every QGP date x every valid granular combination
   valid_combinations AS (
     SELECT DISTINCT LOB_Supported, Channel, Tactic, Message_Type, Agency
     FROM aggregated_final
@@ -440,6 +447,7 @@ BEGIN
       AND cal.qgp_date <= (SELECT MAX(QGP_Week) FROM aggregated_final)
   ),
 
+  -- Join aggregated spend onto full granular spine
   dense_spend AS (
     SELECT
       s.qgp_date,
@@ -475,11 +483,15 @@ BEGIN
       AND a.Agency IS NOT DISTINCT FROM s.Agency
   ),
 
+  -- Metric lookup for WoW and boundary stub joins
   metric_lookup AS (
     SELECT qgp_date, LOB_Supported, Channel, Tactic, Message_Type, Agency, spend_actual
     FROM dense_spend
   ),
 
+  -- WoW computation:
+  -- BOUNDARY_FIRST current = main actual + stub actual
+  -- Prior BOUNDARY_FIRST also includes prior stub actual
   with_spend_for_wow AS (
     SELECT
       d.*,
