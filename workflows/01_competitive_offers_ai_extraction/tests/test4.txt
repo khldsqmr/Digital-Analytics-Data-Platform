@@ -4,3 +4,17 @@ w = WorkspaceClient()
 
 for endpoint in w.serving_endpoints.list():
     print(endpoint.name)
+
+output:
+12:38 PM (2s)
+1
+1
+from databricks.sdk import WorkspaceClient
+
+w = WorkspaceClient()
+
+for endpoint in w.serving_endpoints.list():
+    print(endpoint.name)
+product_embedding_model_v0_endpoint
+user_embedding_model_v0_endpoint
+databricks-bge-large-en
