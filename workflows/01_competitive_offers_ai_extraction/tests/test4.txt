@@ -1,38 +1,27 @@
--- Bronze + manifest (upload state)
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly`;
-
--- Review queue
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly`;
-
--- Silver (10 tables)
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidAccessoryPriceGrid_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`;
-
--- Gold (10 tables)
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_ciHeadlines_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_nationalRetailReadout_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_voicePlanComparison_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_businessInternetComparison_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidServiceOffers_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`;
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`;
-
-
--- Only run this if you want to lose the classification patterns learned across
--- every week so far (the "Online Only Offers:" -> postpaid_service_offers fix,
--- the tablets pattern, every carrier/section header the auto-classifier has
--- already figured out). Wiping it means every future report re-discovers all
--- of this from scratch via the LLM classifier again.
-DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_pageTypePatterns`;
+{
+  "error": {
+    "code": 401,
+    "message": "Request is missing required authentication credential. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.",
+    "errors": [
+      {
+        "message": "Login Required.",
+        "domain": "global",
+        "reason": "required",
+        "location": "Authorization",
+        "locationType": "header"
+      }
+    ],
+    "status": "UNAUTHENTICATED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "CREDENTIALS_MISSING",
+        "domain": "googleapis.com",
+        "metadata": {
+          "method": "google.cloud.bigquery.v2.JobService.GetQueryResults",
+          "service": "bigquery.googleapis.com"
+        }
+      }
+    ]
+  }
+}
