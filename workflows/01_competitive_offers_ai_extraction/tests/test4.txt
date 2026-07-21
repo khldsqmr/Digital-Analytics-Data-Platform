@@ -1,3 +1,6 @@
+run_review_resolution(run_id,
+    report_date):
+
 ==========================================================================================
 PHASE 2: REVIEW RESOLUTION — run_id=c13d4f52-9f44-4eb2-8140-0851ad0795b6, report_date=2025-07-03
 ==========================================================================================
@@ -72,7 +75,7 @@ Still pending, need a human decision — see the advisory above, then run:
 ------------------------------------------------------------------------------------------
 
 
-#interactive_review_new_carriers('c13d4f52-9f44-4eb2-8140-0851ad0795b6'):
+# interactive_review_new_carriers(run_id):
 Reviewing 1 distinct new carrier(s)...
 
 /usr/local/lib/python3.10/dist-packages/vertexai/generative_models/_generative_models.py:433: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
@@ -81,4 +84,141 @@ Reviewing 1 distinct new carrier(s)...
   recommendation: add_as_new
   reasoning: MobileX is a real, currently active, and independent MVNO operating on Verizon's network. It is not a subsidiary or sub-brand of a major carrier, but a distinct service worth adding as a new entry.
   Add 'mobileX' as a NEW carrier (suggested segment: prepaid)? [y/N]: y
-  Segment — postpaid / prepaid / cable_mvno [prepaid]: 
+  Segment — postpaid / prepaid / cable_mvno [prepaid]: prepaid
+Added 'mobileX' (prepaid). Takes effect immediately — get_known_carriers() will include it on the very next call, no restart needed.
+  Propagating 'mobileX' to every other pending report...
+Found 2 run(s) with pending new_carrier flags for 'mobileX':
+
+--- run_id=c13d4f52-9f44-4eb2-8140-0851ad0795b6, report_date=2025-07-03 ---
+  [RESOLVED] 'mobileX' now a known carrier — Ambassador Program
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] Rechecked 1 new_carrier flag(s), resolved 1. Run refresh_gold_for_date() to let their rows into gold.
+
+--- run_id=e99436be-9d57-4dd4-b93d-6d7bd128a0b3, report_date=2025-07-03 ---
+  [RESOLVED] 'mobileX' now a known carrier — Ambassador Program
+[e99436be-9d57-4dd4-b93d-6d7bd128a0b3] Rechecked 1 new_carrier flag(s), resolved 1. Run refresh_gold_for_date() to let their rows into gold.
+
+Refreshing gold for 1 affected date(s)...
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 17 of 17 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 46 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 400 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 57 of 57 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 444 of 444 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 499 of 499 rows gold-eligible
+
+Done. If you added any synonyms above, run recheck_new_carrier_flags(run_id) and refresh_gold_for_date(report_date) for THIS run — new-carrier additions already propagated everywhere automatically.
+
+
+#recheck_new_carrier_flags(run_id):
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] No pending new_carrier flags.
+
+
+# interactive_review_new_offer_types(run_id):
+Reviewing 2 distinct new offer type label(s)...
+
+--- 'Activation Fee' (seen on 1 row(s)) ---
+  recommendation: likely_typo_or_duplicate
+  reasoning: Activation Fee is the specific charge that the existing 'fee waiver' offer type acts upon, making it a component or naming variant of that category.
+  Not recommended for a new category — leaving pending.
+
+--- 'Activation fee' (seen on 2 row(s)) ---
+  recommendation: likely_typo_or_duplicate
+  reasoning: An "Activation fee" is the specific charge that the existing "fee waiver" offer type is designed to remove, making it a conceptual duplicate.
+  Not recommended for a new category — leaving pending.
+
+Done. Restart the runtime and re-run the setup cells before any category you just added is actually honored in NEW extraction calls. Then run reclassify_other_offer_types() to retroactively fix historical rows that were extracted as 'other' before this category existed — that step does NOT need a restart itself, since it builds its classification schema fresh from the current control table at call time.
+
+
+# reclassify_other_offer_types():
+
+silver_carrierOfferGrid: 9 'other' row(s) across 5 distinct raw label(s)
+  [skip] 'Activation fee' — still 'other' or below confidence threshold (high): The raw label describes a type of charge, whereas the available categories describe types of offers, discounts, or credits, with 'fee waiver' being the opposite of charging a fee.
+  [HIGH] 'Activation Fee' -> 'fee waiver' (1 row(s)) — The raw label 'Activation Fee' names a specific charge that is commonly waived as a promotional offer, making 'fee waiver' an unambiguous fit.
+  [HIGH] 'Purchase Guarantee' -> 'satisfaction guarantee' (1 row(s)) — A 'Purchase Guarantee' is a direct synonym for or a type of 'Satisfaction Guarantee,' which assures a customer of their satisfaction with a product or service.
+  [HIGH] 'activation fee' -> 'fee waiver' (3 row(s)) — The raw label 'activation fee' identifies the specific charge that is the subject of the offer, and the most common and direct offer related to this charge is a fee waiver.
+  [skip] 'Free Wi-Fi Access' — still 'other' or below confidence threshold (medium): Free Wi-Fi access is a value-added service included with a primary plan, making it a type of benefit received for bundling services, even if it's a free perk rather than a monetary discount.
+
+  DRY RUN — 5 row(s) would be reclassified in silver_carrierOfferGrid. Call reclassify_other_offer_types(dry_run=False) to actually apply.
+silver_postpaidDeviceOffers: no 'other' rows to reclassify.
+
+# reclassify_other_offer_types(dry_run=False):
+
+silver_carrierOfferGrid: 9 'other' row(s) across 5 distinct raw label(s)
+  [skip] 'Activation fee' — still 'other' or below confidence threshold (high): The raw label describes a type of charge, whereas the available categories describe types of offers, discounts, or credits, with 'fee waiver' being the opposite of charging a fee.
+  [HIGH] 'Activation Fee' -> 'fee waiver' (1 row(s)) — The raw label 'Activation Fee' names a specific charge that is commonly waived as a promotional offer, making 'fee waiver' an unambiguous fit.
+  [HIGH] 'Purchase Guarantee' -> 'satisfaction guarantee' (1 row(s)) — A 'Purchase Guarantee' is a direct synonym for or a type of 'Satisfaction Guarantee,' which assures a customer of their satisfaction with a product or service.
+  [HIGH] 'activation fee' -> 'fee waiver' (3 row(s)) — The raw label 'activation fee' identifies the specific charge that is the subject of the offer, and the most common and direct offer related to this charge is a fee waiver.
+  [skip] 'Free Wi-Fi Access' — still 'other' or below confidence threshold (high): The offer provides a free ancillary service, which does not align well with the available categories focused on monetary credits, device offers, or plan pricing structures.
+  Applied: 5 row(s) updated in silver_carrierOfferGrid.
+silver_postpaidDeviceOffers: no 'other' rows to reclassify.
+
+Refreshing gold for 2 affected date(s)...
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 17 of 17 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 46 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 400 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 57 of 57 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 444 of 444 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 499 of 499 rows gold-eligible
+Refreshing gold for 2025-07-11 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 51 of 52 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 26 of 26 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 50 of 50 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 405 of 405 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 30 of 30 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 219 of 219 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 430 of 430 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 850 of 851 rows gold-eligible
+
+# 3. Taxonomy — real automation instead of hand-typing individual edits:
+#auto_register_recurring_offer_types()                       # offer types: fully automatic, evidence-gated
+#batch_apply_carrier_synonyms(run_id)                         # carrier synonyms: review the plan first
+#batch_apply_carrier_synonyms(run_id, auto_apply=True)        # then apply all of them in one pass
+#recheck_new_carrier_flags(run_id)
+#refresh_gold_for_date(report_date)
+
+Auto-registering 'military benefit' — seen across 2 distinct date(s): ['Military Benefit']
+Added category 'military benefit'. NOTE: this is baked into a JSON schema at load time — restart the runtime and re-run the setup cells for it to actually take effect in NEW extraction calls, same caveat as add_page_type_pattern(). Existing rows already extracted as 'other' won't retroactively pick this up — see reclassify_other_offer_types() in Cell 24, which does NOT need a restart.
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] No pending new_carrier flags.
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] No pending new_carrier flags.
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] No pending new_carrier flags.
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 17 of 17 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 46 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 400 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 57 of 57 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 444 of 444 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 499 of 499 rows gold-eligible
+
+
+
+## 4. Rebuild the insight tables now that gold reflects everything above:
+refresh_insight_tables(report_date):
+Insight tables refreshed for 2025-07-03.
+
+# 5. Check what's still genuinely stuck (needs engineering, not resolution):
+fetch_pending_review(run_id, flag_reason="extraction_failed")
+
+[]
+
+# check_segment_carrier_consistency(report_date):
+majorOfferChanges: 2 contradiction(s) found — segment doesn't match what this carrier can actually be:
+  segment='prepaid' but carrier='Verizon' -> introduced: No changes
+  segment='prepaid' but carrier='Verizon' -> removed: $5 off Visible (base) plan for 1 year w/NL
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+Each contradiction above is a genuine misattribution (these carrier/segment combinations cannot both be true) — worth tracing back to the source page the same way the Watch7 case was originally diagnosed.
