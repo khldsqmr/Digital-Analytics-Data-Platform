@@ -1,51 +1,61 @@
-Using run_id f78b1d86-f723-4ea1-a890-59442a91a47f (uploaded 2026-07-21 05:57:57.668980+00:00, file 'Competitive_Offer_Report_071125.pdf')
+Using run_id 1426ad6a-12cc-46b3-baa1-59cd34505d1e (uploaded 2026-07-21 06:13:03.435069+00:00, file 'Competitive_Offer_Report_071125.pdf')
   Auto-classifying 32 unclassified page(s)...
-    Page 11: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/2e3d50bb-11a2-4a1c-9e10-92fab95483bb?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
-
-Location: us-west1
-Job ID: 2e3d50bb-11a2-4a1c-9e10-92fab95483bb
-) — falling back to plain flag
-    Page 12: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/38ec80fa-4c14-4faf-a808-22c1cc338ea9?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
-
-Location: us-west1
-Job ID: 38ec80fa-4c14-4faf-a808-22c1cc338ea9
-) — falling back to plain flag
+Added: 'Post\\-Paid\\ Samsung\\ Smartphone\\ Offers' -> 'postpaid_device_offers_samsung_google'. Applies starting with the next Stage 1 run.
+    Page 11: matched existing -> page_type='postpaid_device_offers_samsung_google'  (pattern: 'Post-Paid Samsung Smartphone Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Post\\-Paid\\ Google,\\ Motorola\\ \\&\\ Other\\ Android/Affordable\\ Offers' -> 'postpaid_device_offers_samsung_google'. Applies starting with the next Stage 1 run.
+    Page 12: matched existing -> page_type='postpaid_device_offers_samsung_google'  (pattern: 'Post-Paid Google, Motorola & Other Android/Affordable Offers')  (image rendered + column-aware text stored retroactively)
 Added: 'APPENDICES\\ MMI\\ MARKETING\\ MEDIA\\ INSIGHTS' -> 'section_divider'. Applies starting with the next Stage 1 run.
     Page 28: matched existing -> page_type='section_divider'  (pattern: 'APPENDICES MMI MARKETING MEDIA INSIGHTS')
 Added: 'T\\-Mobile\\ –\\ Links\\ to\\ Offer\\ Calendars' -> 'offer_calendar_links'. Applies starting with the next Stage 1 run.
     Page 29: NEW category -> page_type='offer_calendar_links'  (pattern: 'T-Mobile – Links to Offer Calendars')
-    Page 30: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/570a8361-4058-47ce-a664-9ce392e7b09f?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
-
-Location: us-west1
-Job ID: 570a8361-4058-47ce-a664-9ce392e7b09f
-) — falling back to plain flag
-.... and so on so on ....
-
-When i clicked the link for one of them i see this:
-{
-  "error": {
-    "code": 401,
-    "message": "Request is missing required authentication credential. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.",
-    "errors": [
-      {
-        "message": "Login Required.",
-        "domain": "global",
-        "reason": "required",
-        "location": "Authorization",
-        "locationType": "header"
-      }
-    ],
-    "status": "UNAUTHENTICATED",
-    "details": [
-      {
-        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
-        "reason": "CREDENTIALS_MISSING",
-        "domain": "googleapis.com",
-        "metadata": {
-          "method": "google.cloud.bigquery.v2.JobService.GetQueryResults",
-          "service": "bigquery.googleapis.com"
-        }
-      }
-    ]
-  }
-}
+Added: 'National\\ Service\\ Plans\\ \\&\\ Offers' -> 'postpaid_service_offers'. Applies starting with the next Stage 1 run.
+    Page 30: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers')  (image rendered + column-aware text stored retroactively)
+    Page 31: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Handset\\ Offers:\\ Apple' -> 'postpaid_device_offers_apple'. Applies starting with the next Stage 1 run.
+    Page 32: matched existing -> page_type='postpaid_device_offers_apple'  (pattern: 'Handset Offers: Apple')  (image rendered + column-aware text stored retroactively)
+Added: 'National\\ Promotional\\ Device\\ Offers' -> 'postpaid_device_offers_google_motorola'. Applies starting with the next Stage 1 run.
+    Page 33: NEW category -> page_type='postpaid_device_offers_google_motorola'  (pattern: 'National Promotional Device Offers')
+Added: 'Wearables\\ \\&\\ Connected\\ Device\\ Offers:' -> 'postpaid_device_offers_wearables_tablets'. Applies starting with the next Stage 1 run.
+    Page 34: NEW category -> page_type='postpaid_device_offers_wearables_tablets'  (pattern: 'Wearables & Connected Device Offers:')
+CONFLICT: pattern 'National\\ Promotional\\ Device\\ Offers' already maps to ['postpaid_device_offers_google_motorola'] — NOT adding a second mapping to 'national_promotional_offers'. classify_page() only returns the first match by insertion order, so 'national_promotional_offers' would be permanently unreachable through this pattern. If it's genuinely a different page type, it needs a more specific/distinctive pattern than one it shares with an existing type.
+    Page 35: NEW category -> page_type='national_promotional_offers'  (pattern: 'National Promotional Device Offers')
+    Page 36: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Legacy\\ Pricing' -> 'legacy_pricing'. Applies starting with the next Stage 1 run.
+    Page 37: NEW category -> page_type='legacy_pricing'  (pattern: 'Legacy Pricing')
+Added: 'Combinable\\ Offers\\ w/\\ Device\\ Promos:' -> 'combinable_device_promos'. Applies starting with the next Stage 1 run.
+    Page 38: NEW category -> page_type='combinable_device_promos'  (pattern: 'Combinable Offers w/ Device Promos:')
+Added: 'iPhone\\ Handset\\ Offers' -> 'postpaid_device_offers_apple'. Applies starting with the next Stage 1 run.
+    Page 39: matched existing -> page_type='postpaid_device_offers_apple'  (pattern: 'iPhone Handset Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Samsung\\ Handset\\ Offers:' -> 'postpaid_device_offers_samsung_google'. Applies starting with the next Stage 1 run.
+    Page 40: matched existing -> page_type='postpaid_device_offers_samsung_google'  (pattern: 'Samsung Handset Offers:')  (image rendered + column-aware text stored retroactively)
+Added: 'Google\\ Handset\\ Offers' -> 'postpaid_device_offers_samsung_google'. Applies starting with the next Stage 1 run.
+    Page 41: matched existing -> page_type='postpaid_device_offers_samsung_google'  (pattern: 'Google Handset Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Motorola\\ Handset\\ Offers:' -> 'postpaid_device_offers_motorola_affordable'. Applies starting with the next Stage 1 run.
+    Page 42: matched existing -> page_type='postpaid_device_offers_motorola_affordable'  (pattern: 'Motorola Handset Offers:')  (image rendered + column-aware text stored retroactively)
+Added: 'Wearables/\\ Smartwatch\\ Offers:' -> 'postpaid_device_offers_wearables'. Applies starting with the next Stage 1 run.
+    Page 43: NEW category -> page_type='postpaid_device_offers_wearables'  (pattern: 'Wearables/ Smartwatch Offers:')
+CONFLICT: pattern 'National\\ Promotional\\ Device\\ Offers' already maps to ['postpaid_device_offers_google_motorola'] — NOT adding a second mapping to 'postpaid_device_offers_tablets'. classify_page() only returns the first match by insertion order, so 'postpaid_device_offers_tablets' would be permanently unreachable through this pattern. If it's genuinely a different page type, it needs a more specific/distinctive pattern than one it shares with an existing type.
+    Page 44: matched existing -> page_type='postpaid_device_offers_tablets'  (pattern: 'National Promotional Device Offers')  (image rendered + column-aware text stored retroactively)
+Added: 'Wearable\\ Tech\\ Watches/Trackers' -> 'postpaid_device_offers_wearables'. Applies starting with the next Stage 1 run.
+    Page 45: NEW category -> page_type='postpaid_device_offers_wearables'  (pattern: 'Wearable Tech Watches/Trackers')
+Added: 'Are\\ Activation\\ and\\ Upgrade\\ Fees\\ currently\\ being\\ waived\\?' -> 'connected_device_offers'. Applies starting with the next Stage 1 run.
+    Page 46: NEW category -> page_type='connected_device_offers'  (pattern: 'Are Activation and Upgrade Fees currently being waived?')
+Added: 'BYOD\\ Offers:' -> 'postpaid_byod_offers'. Applies starting with the next Stage 1 run.
+    Page 47: NEW category -> page_type='postpaid_byod_offers'  (pattern: 'BYOD Offers:')
+    Page 48: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers')  (image rendered + column-aware text stored retroactively)
+    Page 49: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers')  (image rendered + column-aware text stored retroactively)
+CONFLICT: pattern 'National\\ Service\\ Plans\\ \\&\\ Offers' already maps to ['postpaid_service_offers'] — NOT adding a second mapping to 'carrier_national_offers'. classify_page() only returns the first match by insertion order, so 'carrier_national_offers' would be permanently unreachable through this pattern. If it's genuinely a different page type, it needs a more specific/distinctive pattern than one it shares with an existing type.
+    Page 50: NEW category -> page_type='carrier_national_offers'  (pattern: 'National Service Plans & Offers')
+Added: 'Service\\ \\&\\ Offers\\ Cont’d:' -> 'postpaid_service_offers'. Applies starting with the next Stage 1 run.
+    Page 51: matched existing -> page_type='postpaid_service_offers'  (pattern: 'Service & Offers Cont’d:')  (image rendered + column-aware text stored retroactively)
+Added: 'National\\ Service\\ Plans\\ \\&\\ Offers\\ \\(Cont’d\\)' -> 'postpaid_service_offers'. Applies starting with the next Stage 1 run.
+    Page 52: matched existing -> page_type='postpaid_service_offers'  (pattern: 'National Service Plans & Offers (Cont’d)')  (image rendered + column-aware text stored retroactively)
+Added: 'Retired/Expired\\ Offers' -> 'expired_offers'. Applies starting with the next Stage 1 run.
+    Page 53: NEW category -> page_type='expired_offers'  (pattern: 'Retired/Expired Offers')
+    Page 54: NEW category -> page_type='expired_offers'  (pattern: 'Retired/Expired Offers')
+Added: 'Timeline\\ of\\ Recent\\ High\\-Level\\ Competitive\\ Changes' -> 'major_offer_changes'. Applies starting with the next Stage 1 run.
+    Page 55: matched existing -> page_type='major_offer_changes'  (pattern: 'Timeline of Recent High-Level Competitive Changes')  (image rendered + column-aware text stored retroactively)
+Added: 'Templates\\ \\&\\ Worksheets' -> 'templates_and_worksheets'. Applies starting with the next Stage 1 run.
+    Page 56: NEW category -> page_type='templates_and_worksheets'  (pattern: 'Templates & Worksheets')
+Added: 'BYOD\\ Wireless\\ Service\\ Value\\-Added\\ Services' -> 'postpaid_service_offers'. Applies starting with the next Stage 1 run.
+    Page 57: matched existing -> page_type='postpaid_service_offers'  (pattern: 'BYOD Wireless Service Value-Added Services')  (image rendered + column-aware text stored retroactively)
