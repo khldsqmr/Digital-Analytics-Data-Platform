@@ -1,3 +1,27 @@
+Using run_id f78b1d86-f723-4ea1-a890-59442a91a47f (uploaded 2026-07-21 05:57:57.668980+00:00, file 'Competitive_Offer_Report_071125.pdf')
+  Auto-classifying 32 unclassified page(s)...
+    Page 11: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/2e3d50bb-11a2-4a1c-9e10-92fab95483bb?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
+
+Location: us-west1
+Job ID: 2e3d50bb-11a2-4a1c-9e10-92fab95483bb
+) — falling back to plain flag
+    Page 12: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/38ec80fa-4c14-4faf-a808-22c1cc338ea9?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
+
+Location: us-west1
+Job ID: 38ec80fa-4c14-4faf-a808-22c1cc338ea9
+) — falling back to plain flag
+Added: 'APPENDICES\\ MMI\\ MARKETING\\ MEDIA\\ INSIGHTS' -> 'section_divider'. Applies starting with the next Stage 1 run.
+    Page 28: matched existing -> page_type='section_divider'  (pattern: 'APPENDICES MMI MARKETING MEDIA INSIGHTS')
+Added: 'T\\-Mobile\\ –\\ Links\\ to\\ Offer\\ Calendars' -> 'offer_calendar_links'. Applies starting with the next Stage 1 run.
+    Page 29: NEW category -> page_type='offer_calendar_links'  (pattern: 'T-Mobile – Links to Offer Calendars')
+    Page 30: classification FAILED (400 GET https://bigquery.googleapis.com/bigquery/v2/projects/prj-dbi-prd-1/queries/570a8361-4058-47ce-a664-9ce392e7b09f?maxResults=0&location=us-west1&prettyPrint=false: Value of type STRING cannot be assigned to page_image_png, which has type BYTES at [1:145]
+
+Location: us-west1
+Job ID: 570a8361-4058-47ce-a664-9ce392e7b09f
+) — falling back to plain flag
+.... and so on so on ....
+
+When i clicked the link for one of them i see this:
 {
   "error": {
     "code": 401,
