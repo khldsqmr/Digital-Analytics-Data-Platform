@@ -1,10 +1,7 @@
--- Find any pattern currently mapped to more than one page_type
-SELECT pattern, ARRAY_AGG(DISTINCT page_type) AS page_types, COUNT(*) AS n
+SELECT pattern, page_type, added_at, run_id_notes:=notes
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_pageTypePatterns`
-GROUP BY pattern
-HAVING COUNT(DISTINCT page_type) > 1;
-
-output:
-pattern	page_types	n
-National\ Service\ Plans\ \&\ Offers	"[carrier_national_offers,postpaid_service_offers]"	6
-National\ Promotional\ Device\ Offers	"[postpaid_connected_device_offers,postpaid_device_offers_apple,postpaid_device_offers_samsung_google,national_promotional_device_offers]"	4
+WHERE pattern IN (
+  'National\\ Promotional\\ Device\\ Offers',
+  'National\\ Service\\ Plans\\ \\&\\ Offers'
+)
+ORDER BY pattern, added_at
