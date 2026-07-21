@@ -1,3 +1,14 @@
 SELECT 'carrierOfferGrid' AS tbl, carrier, item_name, offer_amount, values_agree FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly` WHERE report_date = '2025-07-11' AND item_name LIKE '%amiGO%'
 UNION ALL
 SELECT 'postpaidDeviceOffers', carrier, item_name, offer_amount, values_agree FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly` WHERE report_date = '2025-07-11' AND item_name LIKE '%amiGO%'
+
+
+tbl	carrier	item_name	offer_amount	values_agree
+postpaidDeviceOffers	AT&T	amiGO Jr. Watch	Free	true
+postpaidDeviceOffers	AT&T	amiGO Jr. Tab	Free	true
+postpaidDeviceOffers	AT&T	amiGO Jr. Tab	50% off	true
+postpaidDeviceOffers	AT&T	amiGO Jr. Watch	50% off monthly service	true
+postpaidDeviceOffers	AT&T	amiGO Jr. Watch	50% off	true
+postpaidDeviceOffers	AT&T	amiGO Jr. Tab	50% off monthly service	true
+carrierOfferGrid	AT&T	amiGO Jr. Watch	50% off	true
+carrierOfferGrid	AT&T	amiGO Jr. Tab	50% off	true
