@@ -1,5 +1,106 @@
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-SET carrier = 'Visible'
-WHERE row_id = '1caf795d-3d72-49b1-a9f1-6208a7185775';
+some updates were applied successfully, while one item remains pending.
+✅ Applied
+1. New offer type category registered
+You successfully added:
+Plain Text1upgrade programShow more lines
+based on:
 
-refresh_gold_for_date(date(2025, 7, 25))
+Early Upgrade Program
+Anytime Upgrade feature
+
+Status:
+
+✅ Registered in configuration
+⚠️ Requires runtime restart and setup-cell re-execution before extraction calls will recognize it
+
+From the log:
+
+Added category 'upgrade program' ... restart the runtime and re-run the setup cells for it to actually take effect in extraction calls.
+
+
+2. Tracfone carrier synonym applied
+You first identified:
+Python1'Tracfone' -> 'Verizon'Show more lines
+Then actually applied it:
+Plain Text1Added: 'Tracfone' -> 'Verizon'2Takes effect immediatelyShow more lines
+Status:
+
+✅ Applied
+✅ normalize_carrier() uses it immediately
+✅ Recheck resolved the associated new_carrier flag
+
+Evidence:
+Plain Text1[RESOLVED] 'Tracfone' -> 'Verizon' (via CARRIER_SYNONYMS)2Rechecked 2 new_carrier flag(s), resolved 13 Show more lines
+
+❌ Not Applied
+mobileX
+The system repeatedly concluded:
+Plain Text1mobileX: add_as_newShow more lines
+but there is no evidence that it was added to KNOWN_CARRIERS.
+You would expect to see something like:
+Python1KNOWN_CARRIERS.append('mobileX')2``Show more lines
+or a log entry such as:
+Plain Text1Added carrier: mobileXShow more lines
+Neither appears in the output.
+Status:
+
+❌ Still pending
+❌ Still likely generating a new_carrier review flag
+
+
+Gold Refresh Impact
+After applying the Tracfone synonym and refreshing:
+Before
+Plain Text1ciHeadlines_weekly 12 of 14 gold-eligibleShow more lines
+After
+Plain Text1ciHeadlines_weekly 13 of 14 gold-eligibleShow more lines
+This confirms the Tracfone resolution successfully promoted at least one additional row into Gold.
+Other datasets were already fully eligible and remained unchanged.
+
+Current State
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ItemStatusTracfone → Verizon synonym✅ AppliedUpgrade Program category✅ Registered (restart required)Anytime Upgrade feature✅ Covered by new categoryEarly Upgrade Program✅ Covered by new categorymobileX carrier❌ Not yet addedMilitary Benefit offer type❌ No evidence it was added
+Remaining Open Items
+Based on everything shown, the likely remaining unresolved items are:
+
+mobileX (new_carrier)
+Military Benefit (new_offer_type)
+One remaining non-gold-eligible record in:
+
+sdi_competitiveOffers_gold_ciHeadlines_weekly (13/14)
+
+
+
+So the updates were partially applied: Tracfone and Upgrade Program were handled, but mobileX and Military Benefit still appear pending.
