@@ -1,16 +1,38 @@
-SELECT page_number, page_type,
-       page_image_png IS NULL AS image_is_null,
-       BYTE_LENGTH(page_image_png) AS image_bytes
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`
-WHERE run_id = 'b1a3719a-6aed-4034-a4a9-c4419e7066da' AND page_number IN (30, 31, 48, 49, 51, 52, 57)
+-- Bronze + manifest (upload state)
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly`;
+
+-- Review queue
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_review_flaggedOffers_weekly`;
+
+-- Silver (10 tables)
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_nationalRetailReadout_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_voicePlanComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_businessInternetComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidPriceGridDetail_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_prepaidAccessoryPriceGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`;
+
+-- Gold (10 tables)
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_ciHeadlines_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_nationalRetailReadout_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_voicePlanComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_businessInternetComparison_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidServiceOffers_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`;
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`;
 
 
-output:
-page_number	page_type	image_is_null	image_bytes
-49	postpaid_service_offers	true	
-30	postpaid_service_offers	true	
-31	postpaid_service_offers	true	
-57	postpaid_service_offers	true	
-52	postpaid_service_offers	true	
-48	postpaid_service_offers	true	
-51	postpaid_service_offers	true	
+-- Only run this if you want to lose the classification patterns learned across
+-- every week so far (the "Online Only Offers:" -> postpaid_service_offers fix,
+-- the tablets pattern, every carrier/section header the auto-classifier has
+-- already figured out). Wiping it means every future report re-discovers all
+-- of this from scratch via the LLM classifier again.
+DROP TABLE IF EXISTS `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_pageTypePatterns`;
