@@ -3,3 +3,14 @@ SELECT page_number, page_type,
        BYTE_LENGTH(page_image_png) AS image_bytes
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_pdfPages_weekly`
 WHERE run_id = 'b1a3719a-6aed-4034-a4a9-c4419e7066da' AND page_number IN (30, 31, 48, 49, 51, 52, 57)
+
+
+output:
+page_number	page_type	image_is_null	image_bytes
+49	postpaid_service_offers	true	
+30	postpaid_service_offers	true	
+31	postpaid_service_offers	true	
+57	postpaid_service_offers	true	
+52	postpaid_service_offers	true	
+48	postpaid_service_offers	true	
+51	postpaid_service_offers	true	
