@@ -1,1 +1,113 @@
-Query error: Correlated subqueries that reference other tables are not supported unless they can be de-correlated, such as by transforming them into an efficient JOIN. at [prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_silver_spend_weekly:3:3]
+# ============================================================================
+# STANDALONE PARALLEL-EXTRACTION FEASIBILITY TEST
+#
+# Not part of the production pipeline, doesn't import or depend on it at
+# all. Paste this into a fresh Colab notebook to answer one question: can
+# Gemini calls in THIS GCP project be safely parallelized, and how much
+# concurrency before rate limits show up? Nothing here writes to BigQuery
+# or any real table — it's pure timing + error observation.
+#
+# Run each cell in order (Shift+Enter). Each call costs real time/quota, so
+# start with N_CALLS small (8 is plenty to see the pattern).
+# ============================================================================
+
+# %% Cell 1 — setup (only needs the GCP project, nothing else from your pipeline)
+import time
+import concurrent.futures
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig
+
+PROJECT_ID = "prj-dbi-prd-1"       # same project your real pipeline uses
+GEMINI_LOCATION = "us-central1"
+GEMINI_MODEL = "gemini-2.5-pro"
+
+vertexai.init(project=PROJECT_ID, location=GEMINI_LOCATION)
+model = GenerativeModel(GEMINI_MODEL)
+print("Vertex AI initialized.")
+
+
+# %% Cell 2 — a representative test prompt
+# Roughly the length/complexity of a real page's reconstructed text, so the
+# timing you get is meaningful — doesn't need to be your real data, just a
+# similar-sized workload. Feel free to paste in an actual page's text here
+# instead, if you want this closer to production reality.
+TEST_PROMPT = """You are extracting structured offer data from a carrier
+comparison table. Below is reconstructed text from one page of a telecom
+competitive intelligence report, showing pricing across several carriers.
+
+[COLUMN 1]
+T-Mobile
+Discounts (No Trade-in Needed):
+- $1,100 off w/ Port & More, Better Value, or Beyond
+- $830 off w/ Tier 2 Trade & More, Better Value, Beyond
+- $500 off w/ Tier 3 Trade & most plans
+Trade Offers (AAL or Upgrade):
+- $1100 off w/ Tier 1 Trade & More, Better Value or Beyond
+- $300 off w/ Tier 1 Trade & most plans
+
+[COLUMN 2]
+AT&T
+Discounts (No Trade-in Needed):
+- $400 off w/ Port
+- $200 off w/ Upgrade, iPhone 15 Plus or newer Trade
+Trade Offers:
+- Up to $830 off w/ iPhone 13 Pro or newer Trade & Elite 2.0
+
+[COLUMN 3]
+Verizon
+Discounts (No Trade-in Needed):
+- $270 VZW GC w/ Port, 17 Pro series & Ultimate (Limit 12)
+- $200 VZ GC w/ New Line & Any Plan (Online - Limit 1)
+Trade Offers (AAL or UPG):
+- $1,100 off w/ Trade & Extra 2.0, Premium 2.0
+
+List every distinct dollar amount you see in this text, one per line, along
+with which carrier it's under."""
+
+
+# %% Cell 3 — the timed call wrapper
+def make_test_call(call_id):
+    start = time.time()
+    try:
+        model.generate_content(TEST_PROMPT, generation_config=GenerationConfig(max_output_tokens=2048))
+        return call_id, time.time() - start, None
+    except Exception as e:
+        return call_id, time.time() - start, f"{type(e).__name__}: {e}"
+
+
+# %% Cell 4 — sequential baseline
+N_CALLS = 8  # keep this small — each call costs real time and quota
+
+print("--- SEQUENTIAL (baseline) ---")
+seq_start = time.time()
+seq_results = [make_test_call(i) for i in range(N_CALLS)]
+seq_total = time.time() - seq_start
+seq_errors = [r for r in seq_results if r[2]]
+print(f"Total: {seq_total:.1f}s for {N_CALLS} calls  ({seq_total / N_CALLS:.1f}s/call avg)")
+if seq_errors:
+    print(f"  {len(seq_errors)} error(s) even sequentially — investigate before testing parallel:")
+    for cid, elapsed, err in seq_errors:
+        print(f"    call {cid}: {err[:200]}")
+
+
+# %% Cell 5 — parallel at increasing concurrency
+for workers in (2, 4, 8):
+    print(f"\n--- PARALLEL (max_workers={workers}) ---")
+    par_start = time.time()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        par_results = list(executor.map(make_test_call, range(N_CALLS)))
+    par_total = time.time() - par_start
+    par_errors = [r for r in par_results if r[2]]
+    speedup = seq_total / par_total if par_total > 0 else float("inf")
+    print(f"Total: {par_total:.1f}s   ({speedup:.1f}x speedup vs. sequential)")
+    if par_errors:
+        print(f"  {len(par_errors)} error(s) — possible rate-limit ceiling at this concurrency:")
+        for cid, elapsed, err in par_errors:
+            print(f"    call {cid}: {err[:200]}")
+    else:
+        print("  0 errors at this concurrency.")
+
+print("\nHow to read this: the highest worker count with a real speedup AND zero errors is "
+      "your safe concurrency ceiling for this project's Vertex AI quota. If errors start "
+      "appearing at a given level (look for words like 'ResourceExhausted' or '429' in the "
+      "error text), that's the rate limit showing up directly.")
