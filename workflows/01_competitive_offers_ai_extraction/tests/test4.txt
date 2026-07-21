@@ -1,1 +1,1 @@
-run_review_resolution(run_id="b548a1bf-ea35-4682-bc3d-5476f727f14e", report_date="2025-07-11")
+run_id, report_date = get_latest_upload()
