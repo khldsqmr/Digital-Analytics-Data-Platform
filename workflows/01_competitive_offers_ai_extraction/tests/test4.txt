@@ -5,3 +5,38 @@ WHERE pattern IN (
   'National\\ Service\\ Plans\\ \\&\\ Offers'
 )
 ORDER BY pattern, added_at
+
+
+pattern	page_type	added_by	added_at	notes
+Templates\ \&\ Worksheets	resource_links	khalid	2026-07-21 04:50:30.411692 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 56"
+APPENDICES\ MMI\ MARKETING\ MEDIA\ INSIGHTS	section_divider	khalid	2026-07-21 04:41:34.477665 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 28"
+AT\&T\ –\ Legacy\ Pricing	legacy_pricing	khalid	2026-07-21 04:44:59.725944 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 37"
+National\ Promotional\ Device\ Offers	postpaid_device_offers_apple	khalid	2026-07-21 04:43:03.524865 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 32"
+National\ Promotional\ Device\ Offers	postpaid_device_offers_samsung_google	khalid	2026-07-21 04:43:37.660908 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 33"
+National\ Promotional\ Device\ Offers	national_promotional_device_offers	khalid	2026-07-21 04:44:14.842504 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 35"
+National\ Service\ Plans\ \&\ Offers	carrier_national_offers	khalid	2026-07-21 04:44:40.492030 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 36"
+National\ Service\ Plans\ \&\ Offers	postpaid_service_offers	khalid	2026-07-21 04:42:47.793059 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 31"
+National\ Service\ Plans\ \&\ Offers	postpaid_service_offers	khalid	2026-07-21 04:42:31.144436 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 30"
+"Post\-Paid\ Google,\ Motorola\ \&\ Other\ Android/Affordable\ Offers"	postpaid_device_offers_samsung_google	khalid	2026-07-21 02:47:32.118359 UTC	"auto-added, run 4e2cfd50-ed04-49d5-a788-7f75ea629b12, page 12"
+Post\-Paid\ Samsung\ Smartphone\ Offers	postpaid_device_offers_samsung_google	khalid	2026-07-21 02:47:02.535382 UTC	"auto-added, run 4e2cfd50-ed04-49d5-a788-7f75ea629b12, page 11"
+T\-Mobile\ –\ Links\ to\ Offer\ Calendars	toc	khalid	2026-07-21 04:41:57.951366 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 29"
+Wearables\ \&\ Connected\ Device\ Offers:	wearable_tablet_offers	khalid	2026-07-21 04:43:53.572348 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 34"
+Brand\ BYOD\ Wireless\ Service\ Value\-Added\ Services	postpaid_service_offers	khalid	2026-07-21 04:50:48.416332 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 57"
+National\ Service\ Plans\ \&\ Offers	carrier_national_offers	khalid	2026-07-21 04:48:49.119371 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 50"
+Timeline\ of\ Recent\ High\-Level\ Competitive\ Changes	ci_headlines	khalid	2026-07-21 04:50:16.369282 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 55"
+Combinable\ Offers\ w/\ Device\ Promos:	combinable_device_offers	khalid	2026-07-21 04:45:19.798536 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 38"
+Activation\ \&\ Upgrade\ Fees:	connected_device_offers	khalid	2026-07-21 04:47:26.615882 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 46"
+Retired/Expired\ Offers	expired_offers	khalid	2026-07-21 04:49:52.656509 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 54"
+Retired/Expired\ Offers	expired_offers	khalid	2026-07-21 04:49:37.791637 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 53"
+BYOD\ Offers:	postpaid_byod_offers	khalid	2026-07-21 04:47:59.108812 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 47"
+National\ Promotional\ Device\ Offers	postpaid_connected_device_offers	khalid	2026-07-21 04:46:55.831729 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 44"
+iPhone\ Handset\ Offers\ \(Cont’d\):	postpaid_device_offers_apple	khalid	2026-07-21 04:45:33.271818 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 39"
+Motorola\ Handset\ Offers:	postpaid_device_offers_motorola_affordable	khalid	2026-07-21 04:46:20.471121 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 42"
+Samsung\ Handset\ Offers:	postpaid_device_offers_samsung_google	khalid	2026-07-21 04:45:48.165601 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 40"
+Google\ Handset\ Offers:	postpaid_device_offers_samsung_google	khalid	2026-07-21 04:46:02.063825 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 41"
+Wearable\ Tech\ Watches/Trackers	postpaid_device_offers_wearables	khalid	2026-07-21 04:47:09.783937 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 45"
+National\ Service\ Plans\ \&\ Offers	postpaid_service_offers	khalid	2026-07-21 04:48:30.349383 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 49"
+National\ Service\ Plans\ \&\ Offers	postpaid_service_offers	khalid	2026-07-21 04:48:14.209230 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 48"
+Service\ \&\ Offers\ Cont’d:	postpaid_service_offers	khalid	2026-07-21 04:49:06.328790 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 51"
+National\ Service\ Plans\ \&\ Offers\ \(Cont’d\)	postpaid_service_offers	khalid	2026-07-21 04:49:21.102439 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 52"
+Wearables/\ Smartwatch\ Offers:	wearable_device_offers	khalid	2026-07-21 04:46:39.078203 UTC	"auto-added, run b1a3719a-6aed-4034-a4a9-c4419e7066da, page 43"
