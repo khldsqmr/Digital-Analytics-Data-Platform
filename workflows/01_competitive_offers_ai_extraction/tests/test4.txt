@@ -1,1 +1,65 @@
-check_segment_carrier_consistency(report_date="2025-07-11")
+replaced by FREE Apple One subscription (one o $60 (w/o Autopa
+per Acct). All lines must be on plan. ▪Military –
+(9/7/22 – TBD)
+New Customers:
+Fios Home Internet: o
+▪Welcome UNL 5G: $30/line w 4 lines. All acct. >7M Connections by 3Q’22 end
+Wireless & Fios FAQs
+✓2-Year 5-Year
+lines Welcome. Unlimited Talk/ Text on 5G
+▪Only service still showing “as low as $25/month”
+Nationwide or 4GLTE. Always throttled. Eligible ✓<$500 Credit
+▪55+ Seniors –
+▪New Customers With Gigabit Connection :
+for No device disc.
+(7/12/22 – TBD) ✓30-Day Satisfa
+Wireless only o Fios 1Gig – $200 Target Gift Card /2Gig $300
+▪5G Mix/Match 5G UNL Plans 1/5/22
+▪5G Home+: Launch
+o 5G Get More UNL: UNL Talk/Text on all 5G networks. o 500Mbps/300Mbps…$100/$50 Amazon Gift Card
+UNL prem data; No throttle; 50GB prem. hotspot ▪Children (JustKids) –
+$80 (w/o Autopa
+o
+data; 1 FREE Travel Pass Day per mo.; <50% off o New Fios Internet Cust. w Fios TV: <$500 Credit to cover
+Wireless only ended
+($25/$35) 5G/LTE Home Internet & $30 off Fios.
+switching costs w proof of ETF charges (9/9/22 – TBD) o New Customers
+T-Mobile Confidential
+1/4/22
+o 5G Play More & Do More UNL: UNL Talk/Text on all ✓Home+ – $20
+5G net orks <50GB Prem data Throttled @ 50GB F t i l l i Fi /LTE/5G H
+
+================================================================================
+PAGE 58  |  page_type: closing_slide  |  strategy: skip
+================================================================================
+(non-content page, no extraction planned)
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+<ipython-input-141-b6c13d44e455> in <cell line: 8>()
+      6 
+      7 # Or by date, if you don't have the run_id handy
+----> 8 dump_bronze_pages(report_date)
+
+<ipython-input-136-5a6410b22d39> in dump_bronze_pages(run_id, report_date)
+    388             return
+    389 
+--> 390     pages = list(bq.query(
+    391         f"""SELECT page_number, page_type, text_extraction_raw FROM `{BRONZE_TABLE}`
+    392             WHERE run_id = @run_id ORDER BY page_number""",
+
+/usr/local/lib/python3.10/dist-packages/google/cloud/bigquery/client.py in query(self, query, job_config, job_id, job_id_prefix, location, project, retry, timeout, job_retry, api_method, timestamp_precision)
+   3588             )
+   3589         elif api_method == enums.QueryApiMethod.INSERT:
+-> 3590             return _job_helpers.query_jobs_insert(
+   3591                 self,
+   3592                 query,
+
+17 frames
+/usr/lib/python3.10/json/encoder.py in default(self, o)
+    177 
+    178         """
+--> 179         raise TypeError(f'Object of type {o.__class__.__name__} '
+    180                         f'is not JSON serializable')
+    181 
+
+TypeError: Object of type date is not JSON serializable
