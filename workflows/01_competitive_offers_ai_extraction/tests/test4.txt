@@ -1,106 +1,84 @@
-some updates were applied successfully, while one item remains pending.
-✅ Applied
-1. New offer type category registered
-You successfully added:
-Plain Text1upgrade programShow more lines
-based on:
+==========================================================================================
+PHASE 2: REVIEW RESOLUTION — run_id=c13d4f52-9f44-4eb2-8140-0851ad0795b6, report_date=2025-07-03
+==========================================================================================
 
-Early Upgrade Program
-Anytime Upgrade feature
+-- before --
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] Review summary:
+  amount_mismatch          pending    13
+  new_carrier              pending    1
+  new_offer_type           pending    3
 
-Status:
+-- resolving amount_mismatch --
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] Resolving 13 amount_mismatch flag(s) (parallel x8)...
+  [GROUNDED] AT&T: introduced — None  (The value is clearly visible in the image under the 'POSTPAID' section, in the 'OFFERS INTRODUCED' column, and)
+  [GROUNDED] AT&T: introduced — None  (The value is clearly visible in the image. In the 'POSTPAID' section, under the 'OFFERS INTRODUCED' column for)
+  [GROUNDED] Verizon: introduced — None  (The flagged text is the beginning of a description found in the image under the 'POSTPAID' section, in the 'VE)
+  [GROUNDED] Verizon: introduced — None  (The value is explicitly stated in the image within the 'VERIZON' row and the 'OFFERS INTRODUCED' column. The t)
+  [GROUNDED] Optimum: introduced — None  (The value is clearly visible in the image under the 'CABLE MVNOs' section, specifically for 'Optimum Mobile' i)
+  [GROUNDED] Cricket Wireless: introduced — None  (The flagged value is present in the image in the 'PREPAID' section, under the 'OFFERS INTRODUCED' column for t)
+  [GROUNDED] Verizon: removed — None  (The value is present in the image within the 'POSTPAID' section, under the 'VERIZON' row and in the 'OFFERS RE)
+  [GROUNDED] Optimum: removed — None  (The value is present in the image under the 'POSTPAID' section, in the 'OFFERS REMOVED' column for 'Optimum Mo)
+  [GROUNDED] Cricket Wireless: removed — None  (The value is present in the image in the 'PREPAID' section, under the 'OFFERS REMOVED' column, in the row for )
+  [ERROR]    Verizon: removed — None  (The flagged value '3yr & 5yr Price-Lock Guarantee with $5 off Visible+ or Visible+ Pro plan' is present on the) — stays out of gold
+  [GROUNDED] AT&T: Select Apple Watches — 'Buy One, Get One $300 off'  (The image clearly shows the text "Buy One, Get One $300 off w/ 1+ BTS AAL NEW 7/2" as the first bullet point u)
+  [GROUNDED] Best Buy: iPhone 15 Pro Max (+1 more item(s) with this same offer) — '$100'  (The text explicitly states under the Best Buy section: "The iPhone 15 Pro and Pro Max are offered at $100 off )
+  [ERROR]    Metro by T-Mobile: iPhone 13 (5G) (128GB) (+3 more item(s) with this same offer) — 'N/A'  (The flagged value is 'N/A', indicating a price was not found for the items under the specified plan. However, ) — stays out of gold
 
-✅ Registered in configuration
-⚠️ Requires runtime restart and setup-cell re-execution before extraction calls will recognize it
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] amount_mismatch resolution: 11 grounded (now gold-eligible once refresh_gold_for_date runs), 2 confirmed likely errors (stay out of gold), 0 left pending (uncertain), 0 skipped (missing text or call failure).
 
-From the log:
+-- rechecking new_carrier against current known carriers --
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] Rechecked 1 new_carrier flag(s), resolved 0. 
 
-Added category 'upgrade program' ... restart the runtime and re-run the setup cells for it to actually take effect in extraction calls.
+-- advisory: remaining new_carrier / new_offer_type --
 
+==========================================================================================
+1 distinct new carrier(s) this run — search-grounded advisory, nothing applied (parallel x8)
+==========================================================================================
 
-2. Tracfone carrier synonym applied
-You first identified:
-Python1'Tracfone' -> 'Verizon'Show more lines
-Then actually applied it:
-Plain Text1Added: 'Tracfone' -> 'Verizon'2Takes effect immediatelyShow more lines
-Status:
+  'mobileX'
+    recommendation: add_as_new
+    reasoning: MobileX is an active and independent MVNO in the US. Although it uses Verizon's network, it is a distinct, separate brand and not a subsidiary, warranting its own entry.
+    ready to paste: add_known_carrier('mobileX', '<postpaid/prepaid/cable_mvno>')
 
-✅ Applied
-✅ normalize_carrier() uses it immediately
-✅ Recheck resolved the associated new_carrier flag
+==========================================================================================
+2 distinct new offer type(s) this run — advisory only, nothing applied (parallel x8)
+==========================================================================================
+  'Activation Fee'                   -> likely_typo_or_duplicate   An 'Activation Fee' is a charge, so when it appears as an offer it is almost certainly in the context of a 'fee waiver', making it a duplicate of that existing type.
+  'Activation fee'                   -> likely_typo_or_duplicate   An offer related to an 'Activation fee' is almost certainly a waiver of that fee, which is already covered by the existing 'fee waiver' category.
 
-Evidence:
-Plain Text1[RESOLVED] 'Tracfone' -> 'Verizon' (via CARRIER_SYNONYMS)2Rechecked 2 new_carrier flag(s), resolved 13 Show more lines
+-- refreshing gold from corrected silver --
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 11 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 17 of 17 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 46 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 400 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 57 of 57 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 444 of 444 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 499 of 499 rows gold-eligible
 
-❌ Not Applied
-mobileX
-The system repeatedly concluded:
-Plain Text1mobileX: add_as_newShow more lines
-but there is no evidence that it was added to KNOWN_CARRIERS.
-You would expect to see something like:
-Python1KNOWN_CARRIERS.append('mobileX')2``Show more lines
-or a log entry such as:
-Plain Text1Added carrier: mobileXShow more lines
-Neither appears in the output.
-Status:
+-- after --
+[c13d4f52-9f44-4eb2-8140-0851ad0795b6] Review summary:
+  amount_mismatch          resolved   13
+  new_carrier              pending    1
+  new_offer_type           pending    3
 
-❌ Still pending
-❌ Still likely generating a new_carrier review flag
-
-
-Gold Refresh Impact
-After applying the Tracfone synonym and refreshing:
-Before
-Plain Text1ciHeadlines_weekly 12 of 14 gold-eligibleShow more lines
-After
-Plain Text1ciHeadlines_weekly 13 of 14 gold-eligibleShow more lines
-This confirms the Tracfone resolution successfully promoted at least one additional row into Gold.
-Other datasets were already fully eligible and remained unchanged.
-
-Current State
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+------------------------------------------------------------------------------------------
+Still pending, need a human decision — see the advisory above, then run:
+!   1 new_carrier flag(s) — interactive_review_new_carriers('c13d4f52-9f44-4eb2-8140-0851ad0795b6')
+!   3 new_offer_type flag(s) — interactive_review_new_offer_types('c13d4f52-9f44-4eb2-8140-0851ad0795b6')
+------------------------------------------------------------------------------------------
 
 
+#interactive_review_new_carriers('c13d4f52-9f44-4eb2-8140-0851ad0795b6'):
+Reviewing 1 distinct new carrier(s)...
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-ItemStatusTracfone → Verizon synonym✅ AppliedUpgrade Program category✅ Registered (restart required)Anytime Upgrade feature✅ Covered by new categoryEarly Upgrade Program✅ Covered by new categorymobileX carrier❌ Not yet addedMilitary Benefit offer type❌ No evidence it was added
-Remaining Open Items
-Based on everything shown, the likely remaining unresolved items are:
-
-mobileX (new_carrier)
-Military Benefit (new_offer_type)
-One remaining non-gold-eligible record in:
-
-sdi_competitiveOffers_gold_ciHeadlines_weekly (13/14)
-
-
-
-So the updates were partially applied: Tracfone and Upgrade Program were handled, but mobileX and Military Benefit still appear pending.
+/usr/local/lib/python3.10/dist-packages/vertexai/generative_models/_generative_models.py:433: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+--- 'mobileX' ---
+  recommendation: add_as_new
+  reasoning: MobileX is a real, currently active, and independent MVNO operating on Verizon's network. It is not a subsidiary or sub-brand of a major carrier, but a distinct service worth adding as a new entry.
+  Add 'mobileX' as a NEW carrier (suggested segment: prepaid)? [y/N]: y
+  Segment — postpaid / prepaid / cable_mvno [prepaid]: 
