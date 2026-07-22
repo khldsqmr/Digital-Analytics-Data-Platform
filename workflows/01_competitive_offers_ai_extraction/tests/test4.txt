@@ -1,54 +1,87 @@
--- Check first, so you don't create a duplicate row
-SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
-WHERE carrier_name = 'Tracfone';
+SELECT 'majorOfferChanges' AS source_table, row_id, report_date, carrier, description AS detail
+FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+WHERE carrier = 'Verizon' AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
+UNION ALL
+SELECT 'ciHeadlines', row_id, report_date, carrier, headline_detail
+FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly`
+WHERE carrier = 'Verizon' AND (headline_detail LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
+UNION ALL
+SELECT 'carrierOfferGrid', row_id, report_date, carrier, item_name
+FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
+WHERE carrier = 'Verizon' AND (item_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
+UNION ALL
+SELECT 'postpaidDeviceOffers', row_id, report_date, carrier, item_name
+FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE carrier = 'Verizon' AND (item_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
+UNION ALL
+SELECT 'postpaidServiceOffers', row_id, report_date, carrier, detail
+FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
+WHERE carrier = 'Verizon' AND (detail LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
 
-INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
-(carrier_name, segment_type, added_by, added_at, notes)
-VALUES (
-  'Tracfone',
-  'prepaid',
-  'khalid',
-  CURRENT_TIMESTAMP(),
-  'TracFone Wireless (owned by Verizon since 2021) — kept as its own carrier for consistency '
-  'with Straight Talk/Total Wireless, which are also Verizon-owned but tracked separately. '
-  'Previously mapped via a Tracfone->Verizon synonym, which caused a false postpaid/prepaid '
-  'contradiction (segment=prepaid, carrier=Verizon) since normalize_carrier() has no way to '
-  'know a synonym taarget segment. normalize_carrier() checks known-carrier membership before '
-  'synonyms, so this supersedes the old synonym mapping without needing to delete it.'
-);
 
-#force the refresh manually so it actually sees the row:
-load_known_carriers(force_refresh=True)
+-- review first
+SELECT row_id, report_date, run_id, carrier, description
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+WHERE carrier = 'Verizon'
+  AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+-- apply
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+SET carrier = 'Tracfone'
+WHERE carrier = 'Verizon'
+  AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
 
-(['T-Mobile',
-  'Verizon',
-  'AT&T',
-  'Xfinity',
-  'Spectrum',
-  'Comcast',
-  'Optimum',
-  'Metro by T-Mobile',
-  'Boost Mobile',
-  'Cricket Wireless',
-  'Straight Talk',
-  'Total Wireless',
-  'T-Mobile Prepaid',
-  'AT&T Prepaid',
-  'Verizon Prepaid',
-  'mobileX',
-  'Consumer Cellular',
-  'Google Fi',
-  'Tracfone'],
- {'AT&T Prepaid',
-  'Boost Mobile',
-  'Consumer Cellular',
-  'Cricket Wireless',
-  'Google Fi',
-  'Metro by T-Mobile',
-  'Straight Talk',
-  'T-Mobile Prepaid',
-  'Total Wireless',
-  'Tracfone',
-  'Verizon Prepaid',
-  'mobileX'},
- {'AT&T', 'T-Mobile', 'Verizon'})
+-- review first
+SELECT row_id, report_date, run_id, carrier, headline_title, headline_detail
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
+WHERE carrier = 'Verizon'
+  AND (headline_detail LIKE '%Tracfone%' OR headline_title LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+-- apply
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
+SET carrier = 'Tracfone'
+WHERE carrier = 'Verizon'
+  AND (headline_detail LIKE '%Tracfone%' OR headline_title LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+
+-- review first
+SELECT row_id, report_date, run_id, carrier, item_name, item_group
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
+WHERE carrier = 'Verizon'
+  AND (item_name LIKE '%Tracfone%' OR item_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+-- apply
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
+SET carrier = 'Tracfone'
+WHERE carrier = 'Verizon'
+  AND (item_name LIKE '%Tracfone%' OR item_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+
+-- review first
+SELECT row_id, report_date, run_id, carrier, item_name, device_group
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE carrier = 'Verizon'
+  AND (item_name LIKE '%Tracfone%' OR device_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+-- apply
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+SET carrier = 'Tracfone'
+WHERE carrier = 'Verizon'
+  AND (item_name LIKE '%Tracfone%' OR device_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+
+-- review first
+SELECT row_id, report_date, run_id, carrier, feature_name, detail
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
+WHERE carrier = 'Verizon'
+  AND (detail LIKE '%Tracfone%' OR feature_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+-- apply
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
+SET carrier = 'Tracfone'
+WHERE carrier = 'Verizon'
+  AND (detail LIKE '%Tracfone%' OR feature_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
+
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier = 'Tracfone'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier = 'Tracfone'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE carrier = 'Tracfone'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE carrier = 'Tracfone'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'Tracfone'
+ORDER BY report_date;
+
