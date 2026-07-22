@@ -1,51 +1,5 @@
--- 1. Confirm the exact rows
-SELECT row_id, segment, carrier, change_type, description
-FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE report_date = '2025-08-08' AND carrier = 'AT&T' AND segment = 'prepaid';
+majorOfferChanges: 1 contradiction(s) found — segment doesn't match what this carrier can actually be:
+  segment='prepaid' but carrier='Verizon' -> introduced: Tracfone Freedom – new unlimited plan with 15GB hotspot, Can/Mex & intl text
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
 
-
--- 2. Fix carrier, leave segment alone (it was already correct)
-UPDATE `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-SET carrier = 'AT&T Prepaid'
-WHERE row_id IN (...);  -- paste the row_ids from step 1
-
-refresh_gold_for_date(date(2025, 8, 8))
-
-# B. Code changes — three real bugs, fix these in the notebook source
-# 1. extract_ci_headlines — add the missing flag branch (this is the one actively losing rows silently):
-
-if carrier and carrier not in known_carriers:
-    review_rows.append({..."flag_reason": "new_carrier", ...})  # existing
-elif not carrier_ok:
-    review_rows.append({
-        "report_date": report_date.isoformat(), "run_id": run_id, "source_page": page_number,
-        "source_table": "silver_ciHeadlines", "flag_reason": "amount_mismatch",
-        "carrier": carrier, "item_name": h.get("headline_title"), "offer_amount": None,
-        "silver_row_id": row_id,
-        "detail": f"carrier '{carrier}' doesn't appear verbatim in the page's extracted text.",
-        "status": "pending", "flagged_at": datetime.utcnow().isoformat(),
-    })
-
-
-# 2. extract_major_changes — add the carrier membership check that's currently missing entirely:
-if carrier and carrier not in known_carriers:
-    review_rows.append({
-        "report_date": report_date.isoformat(), "run_id": run_id, "source_page": page_number,
-        "source_table": "silver_majorOfferChanges", "flag_reason": "new_carrier",
-        "carrier": carrier, "item_name": c.get("change_type"), "offer_amount": None,
-        "silver_row_id": row_id, "detail": f"'{carrier}' not in known carrier list.",
-        "status": "pending", "flagged_at": datetime.utcnow().isoformat(),
-    })
-elif not desc_ok:
-    review_rows.append({...})  # existing amount_mismatch branch
-
-
-
-SELECT s.row_id, s.report_date, s.run_id, s.carrier, s.headline_title
-FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly` s
-WHERE s.values_agree = FALSE
-  AND NOT EXISTS (
-    SELECT 1 FROM `sdi_competitiveOffers_review_flaggedOffers_weekly` r,
-    UNNEST(SPLIT(r.silver_row_ids, ',')) AS id
-    WHERE TRIM(id) = s.row_id
-  )
+Each contradiction above is a genuine misattribution (these carrier/segment combinations cannot both be true) — worth tracing back to the source page the same way the Watch7 case was originally diagnosed.
