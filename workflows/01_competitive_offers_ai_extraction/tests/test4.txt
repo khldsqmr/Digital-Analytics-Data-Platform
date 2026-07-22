@@ -1,6 +1,9 @@
 SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_carrierSynonyms`
 WHERE canonical_name = 'T-Mobile'
   AND LOWER(alias) LIKE '%uscc%';
+output:
+alias	canonical_name	added_by	added_at	notes
+USCC	T-Mobile	khalid	2026-07-22 07:40:33.766944 UTC	"confirmed interactively, run 85f87012-b483-4683-9019-a4344e8722e7"
 
 INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
 (carrier_name, segment_type, added_by, added_at, notes)
@@ -16,6 +19,52 @@ VALUES (
 );
 
 load_known_carriers(force_refresh=True)
+output:
+(['T-Mobile',
+  'Verizon',
+  'AT&T',
+  'Xfinity',
+  'Spectrum',
+  'Comcast',
+  'Optimum',
+  'Metro by T-Mobile',
+  'Boost Mobile',
+  'Cricket Wireless',
+  'Straight Talk',
+  'Total Wireless',
+  'T-Mobile Prepaid',
+  'AT&T Prepaid',
+  'Verizon Prepaid',
+  'mobileX',
+  'Consumer Cellular',
+  'Google Fi',
+  'Tracfone',
+  'Collegiate Mobile',
+  'Visible',
+  'Simple Mobile',
+  'Red Pocket',
+  'Noble Mobile',
+  'US Mobile',
+  'USCC'],
+ {'AT&T Prepaid',
+  'Boost Mobile',
+  'Collegiate Mobile',
+  'Consumer Cellular',
+  'Cricket Wireless',
+  'Google Fi',
+  'Metro by T-Mobile',
+  'Noble Mobile',
+  'Red Pocket',
+  'Simple Mobile',
+  'Straight Talk',
+  'T-Mobile Prepaid',
+  'Total Wireless',
+  'Tracfone',
+  'US Mobile',
+  'Verizon Prepaid',
+  'Visible',
+  'mobileX'},
+ {'AT&T', 'T-Mobile', 'USCC', 'Verizon'})
 
 DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_carrierSynonyms`
 WHERE canonical_name = 'T-Mobile' AND LOWER(alias) LIKE '%uscc%';
@@ -55,7 +104,7 @@ UNION DISTINCT
 SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE carrier = 'USCC'
 UNION DISTINCT
 SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'USCC';
-
+output: There is no data to display.
 from datetime import date
 for d in [...]:  # paste dates from the query above
     refresh_gold_for_date(d)
