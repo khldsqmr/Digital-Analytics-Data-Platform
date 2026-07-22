@@ -1,15 +1,16 @@
-Refreshing gold for 2025-07-03 from current silver state...
-  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
-  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 12 of 12 rows gold-eligible
-  sdi_competitiveOffers_gold_majorOfferChanges_weekly 47 of 47 rows gold-eligible
-  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 404 of 404 rows gold-eligible
-  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
-  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 426 of 426 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 512 of 512 rows gold-eligible
-majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
-carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+SELECT row_id, carrier, item_name, plan_tier, offer_amount, offer_condition, device_group
+FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE report_date = '2025-07-11'
+  AND carrier IN ('AT&T', 'Verizon') AND item_name = 'Android Flagships'
+ORDER BY carrier, offer_amount;
 
-No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+
+from datetime import date
+for d in [date(2025, 7, 18), date(2025, 7, 25)]:
+    refresh_gold_for_date(d)
+    check_segment_carrier_consistency(d)
+
+
+for d in [date(2025, 8, 1), date(2025, 8, 8), date(2025, 8, 15), date(2025, 8, 22), date(2025, 9, 5)]:
+    print(f"\n=== {d} ===")
+    check_segment_carrier_consistency(d)
