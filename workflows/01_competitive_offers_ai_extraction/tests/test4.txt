@@ -1,53 +1,117 @@
--- 1. Duplicate manifest run_id for this date? (same failure class as the
---    "Append" scenario flagged earlier for 2025-07-03)
-SELECT report_date, run_id, status, uploaded_at
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly`
-WHERE report_date = '2025-07-11'
-ORDER BY uploaded_at;
-output:
-report_date	run_id	status	uploaded_at
-2025-07-11	996c8e08-b663-48bb-9df0-29e600c717f4	active	2026-07-21 11:21:29.778856 UTC
+from datetime import date
+repair_overbroad_tracfone_update(date(2025, 7, 3))                   # dry run — review
+repair_overbroad_tracfone_update(date(2025, 7, 3), dry_run=False)    # apply
+repair_overbroad_tracfone_update(date(2025, 8, 29))                  # dry run — review
+repair_overbroad_tracfone_update(date(2025, 8, 29), dry_run=False)   # apply
 
--- 2. Literal duplicate offers in silver that dedupe_by_keys should have
---    caught but didn't (e.g. offer_amount differed slightly between two
---    near-identical records due to a strikethrough/old-price artifact)
-SELECT carrier, item_name, plan_tier, offer_amount, COUNT(*) AS n
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
-WHERE report_date = '2025-07-11' AND carrier IN ('AT&T', 'Verizon')
-GROUP BY carrier, item_name, plan_tier, offer_amount
-HAVING COUNT(*) > 1
-ORDER BY n DESC;
-output: There is no data to display.
 
--- 3. Same check against postpaidDeviceOffers (iPhone 16 lives here, not carrierOfferGrid)
-SELECT carrier, item_name, plan_tier, offer_amount, COUNT(*) AS n
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE report_date = '2025-07-11' AND carrier IN ('AT&T', 'Verizon')
-GROUP BY carrier, item_name, plan_tier, offer_amount
-HAVING COUNT(*) > 1
-ORDER BY n DESC;
-output:
-carrier	item_name	plan_tier	offer_amount	n
-AT&T	Android Flagships		$200	2
-Verizon	Android Flagships		$200	2
-AT&T	iPhone 15 Pro Max		$20.99/mo.	2
-Verizon	Android Flagships		$800	2
-AT&T	Android Flagships		$800	2
-
-WITH gold_counts AS (
-  SELECT report_date, carrier, COUNT(*) AS actual_gold_count
-  FROM (
-    SELECT report_date, carrier FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`
-    UNION ALL
-    SELECT report_date, carrier FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`
-  )
-  GROUP BY report_date, carrier
+WITH candidates AS (
+  SELECT
+    t.row_id, t.report_date, t.description, t.change_type,
+    JSON_VALUE(entry, '$.carrier') AS candidate_carrier
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t,
+  UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.changes')) AS entry
+  WHERE t.carrier = 'Tracfone'
+    AND JSON_VALUE(entry, '$.description') = t.description
+    AND JSON_VALUE(entry, '$.change_type') = t.change_type
+),
+match_counts AS (
+  SELECT row_id, COUNT(DISTINCT candidate_carrier) AS distinct_carrier_count
+  FROM candidates GROUP BY row_id
 )
-SELECT i.report_date, i.carrier, i.total_offer_count, COALESCE(g.actual_gold_count, 0) AS actual_gold_count
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly` i
-LEFT JOIN gold_counts g ON i.report_date = g.report_date AND i.carrier = g.carrier
-WHERE i.report_date IN ('2025-07-03', '2025-08-29')
-  AND i.total_offer_count <> COALESCE(g.actual_gold_count, 0)
-ORDER BY i.report_date, i.carrier;
-output: There is no data to display.
+SELECT c.row_id, c.report_date, c.change_type, c.description, c.candidate_carrier AS recovered_carrier,
+       m.distinct_carrier_count,
+       CASE WHEN m.distinct_carrier_count = 1 THEN 'will auto-fix' ELSE 'AMBIGUOUS — needs manual review' END AS status
+FROM candidates c JOIN match_counts m USING (row_id)
+ORDER BY m.distinct_carrier_count DESC, c.report_date;
+
+-- rows with ZERO matches at all — completely unrecoverable via this method, needs manual look
+SELECT t.row_id, t.report_date, t.change_type, t.description
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` t
+WHERE t.carrier = 'Tracfone'
+  AND NOT EXISTS (
+    SELECT 1 FROM UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.changes')) AS entry
+    WHERE JSON_VALUE(entry, '$.description') = t.description
+      AND JSON_VALUE(entry, '$.change_type') = t.change_type
+  );
+
+MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t
+USING (
+  WITH candidates AS (
+    SELECT
+      t2.row_id,
+      JSON_VALUE(entry, '$.carrier') AS candidate_carrier
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t2,
+    UNNEST(JSON_EXTRACT_ARRAY(t2.llm_extraction_raw, '$.changes')) AS entry
+    WHERE t2.carrier = 'Tracfone'
+      AND JSON_VALUE(entry, '$.description') = t2.description
+      AND JSON_VALUE(entry, '$.change_type') = t2.change_type
+  )
+  SELECT row_id, ANY_VALUE(candidate_carrier) AS original_carrier
+  FROM candidates
+  GROUP BY row_id
+  HAVING COUNT(DISTINCT candidate_carrier) = 1
+) AS s
+ON t.row_id = s.row_id
+WHEN MATCHED AND s.original_carrier != 'Tracfone' THEN
+  UPDATE SET carrier = s.original_carrier;
+
+WITH candidates AS (
+  SELECT
+    t.row_id, t.report_date, t.headline_title, t.headline_detail,
+    JSON_VALUE(entry, '$.carrier') AS candidate_carrier
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t,
+  UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.headlines')) AS entry
+  WHERE t.carrier = 'Tracfone'
+    AND JSON_VALUE(entry, '$.headline_title') = t.headline_title
+    AND JSON_VALUE(entry, '$.headline_detail') = t.headline_detail
+),
+match_counts AS (
+  SELECT row_id, COUNT(DISTINCT candidate_carrier) AS distinct_carrier_count
+  FROM candidates GROUP BY row_id
+)
+SELECT c.row_id, c.report_date, c.headline_title, c.candidate_carrier AS recovered_carrier,
+       m.distinct_carrier_count,
+       CASE WHEN m.distinct_carrier_count = 1 THEN 'will auto-fix' ELSE 'AMBIGUOUS — needs manual review' END AS status
+FROM candidates c JOIN match_counts m USING (row_id)
+ORDER BY m.distinct_carrier_count DESC, c.report_date;
+
+MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t
+USING (
+  WITH candidates AS (
+    SELECT
+      t2.row_id,
+      JSON_VALUE(entry, '$.carrier') AS candidate_carrier
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t2,
+    UNNEST(JSON_EXTRACT_ARRAY(t2.llm_extraction_raw, '$.headlines')) AS entry
+    WHERE t2.carrier = 'Tracfone'
+      AND JSON_VALUE(entry, '$.headline_title') = t2.headline_title
+      AND JSON_VALUE(entry, '$.headline_detail') = t2.headline_detail
+  )
+  SELECT row_id, ANY_VALUE(candidate_carrier) AS original_carrier
+  FROM candidates
+  GROUP BY row_id
+  HAVING COUNT(DISTINCT candidate_carrier) = 1
+) AS s
+ON t.row_id = s.row_id
+WHEN MATCHED AND s.original_carrier != 'Tracfone' THEN
+  UPDATE SET carrier = s.original_carrier;
+
+SELECT 'majorOfferChanges' AS t, report_date, row_id, description AS detail
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+WHERE carrier = 'Tracfone'
+UNION ALL
+SELECT 'ciHeadlines', report_date, row_id, headline_detail
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
+WHERE carrier = 'Tracfone'
+ORDER BY t, report_date;
+
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier != 'Tracfone' AND report_date IN ('2025-07-03', '2025-08-29')
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier != 'Tracfone' AND report_date IN ('2025-07-03', '2025-08-29');
+
+from datetime import date
+for d in [date(2025, 7, 3), date(2025, 8, 29)]:
+    refresh_gold_for_date(d)
+    check_segment_carrier_consistency(d)
 
