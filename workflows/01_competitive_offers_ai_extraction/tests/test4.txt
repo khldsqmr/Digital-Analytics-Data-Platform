@@ -1,2 +1,62 @@
-all_rows = dedupe_by_keys(all_rows, DEVICE_OFFERS_DEDUPE_KEYS)   # in run_device_offers_extraction
-all_rows = dedupe_by_keys(all_rows, CARRIER_GRID_DEDUPE_KEYS)    # in run_carrier_grid_extraction
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_carrierSynonyms`
+WHERE canonical_name = 'T-Mobile'
+  AND LOWER(alias) LIKE '%uscc%';
+
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
+(carrier_name, segment_type, added_by, added_at, notes)
+VALUES (
+  'USCC',
+  'postpaid',
+  'khalid',
+  CURRENT_TIMESTAMP(),
+  'US Cellular (UScellular) — regional postpaid carrier. Was accidentally added as a synonym '
+  'mapping to T-Mobile; registered here as its own carrier instead. normalize_carrier() checks '
+  'known-carrier membership before synonyms, so this supersedes the old mapping going forward '
+  'without needing to delete it first.'
+);
+
+load_known_carriers(force_refresh=True)
+
+DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_carrierSynonyms`
+WHERE canonical_name = 'T-Mobile' AND LOWER(alias) LIKE '%uscc%';
+
+SELECT 'majorOfferChanges' AS t, row_id, report_date, carrier, description AS detail
+FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+WHERE carrier = 'T-Mobile' AND (description LIKE '%USCC%' OR description LIKE '%UScellular%' OR description LIKE '%US Cellular%')
+UNION ALL
+SELECT 'ciHeadlines', row_id, report_date, carrier, headline_detail
+FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly`
+WHERE carrier = 'T-Mobile' AND (headline_detail LIKE '%USCC%' OR headline_detail LIKE '%UScellular%' OR headline_detail LIKE '%US Cellular%')
+UNION ALL
+SELECT 'carrierOfferGrid', row_id, report_date, carrier, item_name
+FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
+WHERE carrier = 'T-Mobile' AND (item_name LIKE '%USCC%' OR item_name LIKE '%UScellular%' OR item_group LIKE '%USCC%')
+UNION ALL
+SELECT 'postpaidDeviceOffers', row_id, report_date, carrier, item_name
+FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE carrier = 'T-Mobile' AND (item_name LIKE '%USCC%' OR device_group LIKE '%USCC%')
+UNION ALL
+SELECT 'postpaidServiceOffers', row_id, report_date, carrier, detail
+FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
+WHERE carrier = 'T-Mobile' AND (detail LIKE '%USCC%' OR feature_name LIKE '%USCC%')
+ORDER BY t, report_date;
+
+
+UPDATE `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+SET carrier = 'USCC'
+WHERE carrier = 'T-Mobile' AND (description LIKE '%USCC%' OR description LIKE '%UScellular%' OR description LIKE '%US Cellular%');
+
+SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier = 'USCC'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier = 'USCC'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE carrier = 'USCC'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE carrier = 'USCC'
+UNION DISTINCT
+SELECT DISTINCT report_date FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'USCC';
+
+from datetime import date
+for d in [...]:  # paste dates from the query above
+    refresh_gold_for_date(d)
+    check_segment_carrier_consistency(d)
