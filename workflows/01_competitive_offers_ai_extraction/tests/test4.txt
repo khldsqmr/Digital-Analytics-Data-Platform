@@ -1,8 +1,22 @@
-add_known_carrier('Tracfone', 'prepaid',
-    notes="TracFone Wireless (owned by Verizon since 2021) — kept as its own carrier for "
-          "consistency with Straight Talk/Total Wireless, which are also Verizon-owned but "
-          "tracked separately. Previously mapped via a 'Tracfone'->'Verizon' synonym, which "
-          "caused a false postpaid/prepaid contradiction (segment='prepaid', carrier='Verizon') "
-          "since normalize_carrier() has no way to know a synonym target's segment. "
-          "normalize_carrier() checks known-carrier membership BEFORE synonyms, so this "
-          "supersedes the old mapping without needing to delete it.")
+-- Check first, so you don't create a duplicate row
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
+WHERE carrier_name = 'Tracfone';
+
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
+(carrier_name, segment_type, added_by, added_at, notes)
+VALUES (
+  'Tracfone',
+  'prepaid',
+  'khalid',
+  CURRENT_TIMESTAMP(),
+  'TracFone Wireless (owned by Verizon since 2021) — kept as its own carrier for consistency '
+  'with Straight Talk/Total Wireless, which are also Verizon-owned but tracked separately. '
+  'Previously mapped via a Tracfone->Verizon synonym, which caused a false postpaid/prepaid '
+  'contradiction (segment=prepaid, carrier=Verizon) since normalize_carrier() has no way to '
+  'know a synonym target segment. normalize_carrier() checks known-carrier membership before '
+  'synonyms, so this supersedes the old synonym mapping without needing to delete it.'
+);
+
+#force the refresh manually so it actually sees the row:
+load_known_carriers(force_refresh=True)
+
