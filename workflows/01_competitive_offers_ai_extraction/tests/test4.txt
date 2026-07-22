@@ -16,3 +16,8 @@ FROM page_blob, UNNEST(JSON_EXTRACT_ARRAY(llm_extraction_raw, '$.offers')) AS en
 WHERE JSON_VALUE(entry, '$.carrier') = 'AT&T'
   AND JSON_VALUE(entry, '$.item_name') LIKE '%Android Flagships%'
 ORDER BY offer_amount;
+
+output:
+raw_entry	carrier	item_name	offer_amount	plan_tier	item_name_len	amount_len
+"""{\""carrier\"":\""AT&T\"",\""item_name\"":\""Android Flagships\"",\""device_category\"":\""Other\"",\""device_group\"":\""Android Flagships\"",\""offer_amount\"":\""$200\"",\""offer_condition\"":\""New Line Credit *Online Only*\"",\""offer_type\"":\""bill credit\"",\""offer_type_raw\"":\""New Line Credit\"",\""offer_amount_numeric\"":200}"""	AT&T	Android Flagships	$200		17	4
+"""{\""carrier\"":\""AT&T\"",\""item_name\"":\""Android Flagships\"",\""device_category\"":\""Other\"",\""device_group\"":\""Android Flagships\"",\""offer_amount\"":\""$800\"",\""offer_condition\"":\""w/ new phone purchase\"",\""offer_type\"":\""eip buyout\"",\""offer_type_raw\"":\""EIP Buyout\"",\""offer_amount_numeric\"":800}"""	AT&T	Android Flagships	$800		17	4
