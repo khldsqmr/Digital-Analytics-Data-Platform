@@ -4,13 +4,94 @@ WHERE report_date = '2025-07-11'
   AND carrier IN ('AT&T', 'Verizon') AND item_name = 'Android Flagships'
 ORDER BY carrier, offer_amount;
 
+row_id	carrier	item_name	plan_tier	offer_amount	offer_condition	device_group
+07d878e8-8d06-472c-8e70-ca515b9b9b51	AT&T	Android Flagships		$200	New Line Credit *Online Only*	Android Flagships
+a220d68d-a2e0-480b-8ad8-bb89e30c33e6	AT&T	Android Flagships		$200	New Line Credit *Online Only*	Android Flagships
+7a50ed19-73e2-44a6-ad04-a62c61e5904a	AT&T	Android Flagships		$800	w/ new phone purchase	Android Flagships
+af8f4e00-38fa-4d4f-9eb5-c1ea414dc09c	AT&T	Android Flagships		$800	w/ new phone purchase - Chat Only	Android Flagships
+05a07fe5-8f0f-42bf-acec-e8ef36cc55d3	Verizon	Android Flagships		$200	for New Lines (1 per account)	Android Flagships
+5fd26a2c-3f50-4d1a-936b-2ddf1c42c602	Verizon	Android Flagships		$200	for New Lines (1 per account)	Android Flagships
+cbb40ef9-5292-44c4-a52b-bd12e45a64e2	Verizon	Android Flagships		$800	w/ new phone purchase	Android Flagships
+dcf7b779-ca94-448a-9879-53d7326639df	Verizon	Android Flagships		$800	w/ new phone purchase	Android Flagships
+
 
 from datetime import date
 for d in [date(2025, 7, 18), date(2025, 7, 25)]:
     refresh_gold_for_date(d)
     check_segment_carrier_consistency(d)
 
+Refreshing gold for 2025-07-18 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 17 of 18 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 11 of 11 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 35 of 35 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 401 of 401 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 31 of 31 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 437 of 437 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 465 of 465 rows gold-eligible
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+Refreshing gold for 2025-07-25 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 16 of 16 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 13 of 13 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 42 of 42 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 330 of 330 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 36 of 36 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 59 of 59 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 436 of 436 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 526 of 526 rows gold-eligible
+majorOfferChanges: 7 contradiction(s) found — segment doesn't match what this carrier can actually be:
+  segment='prepaid' but carrier='AT&T' -> removed: No changes
+  segment='prepaid' but carrier='AT&T' -> introduced: No changes
+  segment='prepaid' but carrier='T-Mobile' -> introduced: No changes
+  segment='prepaid' but carrier='T-Mobile' -> removed: No changes
+  segment='prepaid' but carrier='Verizon' -> removed: No changes
+  segment='prepaid' but carrier='Verizon' -> introduced: No changes
+  segment='prepaid' but carrier='Verizon' -> removed: No changes
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+Each contradiction above is a genuine misattribution (these carrier/segment combinations cannot both be true) — worth tracing back to the source page the same way the Watch7 case was originally diagnosed.
+
+
 
 for d in [date(2025, 8, 1), date(2025, 8, 8), date(2025, 8, 15), date(2025, 8, 22), date(2025, 9, 5)]:
     print(f"\n=== {d} ===")
     check_segment_carrier_consistency(d)
+
+
+
+=== 2025-08-01 ===
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+
+=== 2025-08-08 ===
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+
+=== 2025-08-15 ===
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+
+=== 2025-08-22 ===
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
+
+=== 2025-09-05 ===
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
