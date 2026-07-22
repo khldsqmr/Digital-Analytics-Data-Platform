@@ -1,20 +1,2 @@
-SELECT 'majorOfferChanges' AS t, row_id, report_date, carrier, description AS detail
-FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE carrier = 'T-Mobile' AND (description LIKE '%USCC%' OR description LIKE '%UScellular%' OR description LIKE '%US Cellular%')
-UNION ALL
-SELECT 'ciHeadlines', row_id, report_date, carrier, headline_detail
-FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly`
-WHERE carrier = 'T-Mobile' AND (headline_detail LIKE '%USCC%' OR headline_detail LIKE '%UScellular%' OR headline_detail LIKE '%US Cellular%')
-UNION ALL
-SELECT 'carrierOfferGrid', row_id, report_date, carrier, item_name
-FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
-WHERE carrier = 'T-Mobile' AND (item_name LIKE '%USCC%' OR item_name LIKE '%UScellular%' OR item_group LIKE '%USCC%')
-UNION ALL
-SELECT 'postpaidDeviceOffers', row_id, report_date, carrier, item_name
-FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE carrier = 'T-Mobile' AND (item_name LIKE '%USCC%' OR device_group LIKE '%USCC%')
-UNION ALL
-SELECT 'postpaidServiceOffers', row_id, report_date, carrier, detail
-FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
-WHERE carrier = 'T-Mobile' AND (detail LIKE '%USCC%' OR feature_name LIKE '%USCC%')
-ORDER BY t, report_date;
+DELETE FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_carrierSynonyms`
+WHERE alias = 'USCC' AND canonical_name = 'T-Mobile';
