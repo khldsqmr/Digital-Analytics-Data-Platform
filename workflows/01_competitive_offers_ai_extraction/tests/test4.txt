@@ -16,6 +16,58 @@ FROM (
 GROUP BY table_name, report_date
 ORDER BY report_date DESC, table_name;
 
+output:table_name	report_date	last_refreshed
+offerAmountStatsByCarrier	2025-09-05	2026-07-22 04:55:25.805857 UTC
+offerCountsByCarrier	2025-09-05	2026-07-22 04:55:20.804301 UTC
+offerCountsByCarrierAndDevice	2025-09-05	2026-07-22 04:55:24.639470 UTC
+offerCountsByCarrierAndType	2025-09-05	2026-07-22 04:55:22.185016 UTC
+offerCountsByDevice	2025-09-05	2026-07-22 04:55:23.419238 UTC
+offerAmountStatsByCarrier	2025-08-29	2026-07-22 03:40:28.772515 UTC
+offerCountsByCarrier	2025-08-29	2026-07-22 03:40:23.775609 UTC
+offerCountsByCarrierAndDevice	2025-08-29	2026-07-22 03:40:27.664413 UTC
+offerCountsByCarrierAndType	2025-08-29	2026-07-22 03:40:25.115708 UTC
+offerCountsByDevice	2025-08-29	2026-07-22 03:40:26.244339 UTC
+offerAmountStatsByCarrier	2025-08-22	2026-07-22 02:12:41.512028 UTC
+offerCountsByCarrier	2025-08-22	2026-07-22 02:12:35.819918 UTC
+offerCountsByCarrierAndDevice	2025-08-22	2026-07-22 02:12:40.250533 UTC
+offerCountsByCarrierAndType	2025-08-22	2026-07-22 02:12:37.392081 UTC
+offerCountsByDevice	2025-08-22	2026-07-22 02:12:38.826873 UTC
+offerAmountStatsByCarrier	2025-08-15	2026-07-22 01:22:07.197154 UTC
+offerCountsByCarrier	2025-08-15	2026-07-22 01:22:01.858378 UTC
+offerCountsByCarrierAndDevice	2025-08-15	2026-07-22 01:22:06.088312 UTC
+offerCountsByCarrierAndType	2025-08-15	2026-07-22 01:22:03.298957 UTC
+offerCountsByDevice	2025-08-15	2026-07-22 01:22:04.685205 UTC
+offerAmountStatsByCarrier	2025-08-08	2026-07-22 00:50:26.196804 UTC
+offerCountsByCarrier	2025-08-08	2026-07-22 00:50:20.767471 UTC
+offerCountsByCarrierAndDevice	2025-08-08	2026-07-22 00:50:25.099053 UTC
+offerCountsByCarrierAndType	2025-08-08	2026-07-22 00:50:22.147922 UTC
+offerCountsByDevice	2025-08-08	2026-07-22 00:50:23.578686 UTC
+offerAmountStatsByCarrier	2025-08-01	2026-07-21 22:54:30.262191 UTC
+offerCountsByCarrier	2025-08-01	2026-07-21 22:54:25.367753 UTC
+offerCountsByCarrierAndDevice	2025-08-01	2026-07-21 22:54:29.166387 UTC
+offerCountsByCarrierAndType	2025-08-01	2026-07-21 22:54:26.792549 UTC
+offerCountsByDevice	2025-08-01	2026-07-21 22:54:27.968171 UTC
+offerAmountStatsByCarrier	2025-07-25	2026-07-21 17:32:14.711282 UTC
+offerCountsByCarrier	2025-07-25	2026-07-21 17:32:08.720860 UTC
+offerCountsByCarrierAndDevice	2025-07-25	2026-07-21 17:32:13.264709 UTC
+offerCountsByCarrierAndType	2025-07-25	2026-07-21 17:32:10.410861 UTC
+offerCountsByDevice	2025-07-25	2026-07-21 17:32:11.868236 UTC
+offerAmountStatsByCarrier	2025-07-18	2026-07-21 17:06:21.221488 UTC
+offerCountsByCarrier	2025-07-18	2026-07-21 17:06:15.242094 UTC
+offerCountsByCarrierAndDevice	2025-07-18	2026-07-21 17:06:19.821820 UTC
+offerCountsByCarrierAndType	2025-07-18	2026-07-21 17:06:16.880739 UTC
+offerCountsByDevice	2025-07-18	2026-07-21 17:06:18.314068 UTC
+offerAmountStatsByCarrier	2025-07-11	2026-07-21 11:51:13.719336 UTC
+offerCountsByCarrier	2025-07-11	2026-07-21 11:51:08.936225 UTC
+offerCountsByCarrierAndDevice	2025-07-11	2026-07-21 11:51:12.579755 UTC
+offerCountsByCarrierAndType	2025-07-11	2026-07-21 11:51:10.373149 UTC
+offerCountsByDevice	2025-07-11	2026-07-21 11:51:11.441850 UTC
+offerAmountStatsByCarrier	2025-07-03	2026-07-21 21:45:30.426509 UTC
+offerCountsByCarrier	2025-07-03	2026-07-21 21:45:25.230691 UTC
+offerCountsByCarrierAndDevice	2025-07-03	2026-07-21 21:45:29.254732 UTC
+offerCountsByCarrierAndType	2025-07-03	2026-07-21 21:45:26.896149 UTC
+offerCountsByDevice	2025-07-03	2026-07-21 21:45:28.098795 UTC
+
 -- 1. offerCountsByCarrier_weekly
 -- Columns: report_date, carrier, total_offer_count, distinct_device_count, distinct_offer_type_count
 
@@ -24,6 +76,22 @@ SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffer
 WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`)
 ORDER BY total_offer_count DESC;
 
+output:
+report_date	carrier	total_offer_count	distinct_device_count	distinct_offer_type_count	refreshed_at
+2025-09-05	Verizon	154	41	11	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Xfinity	146	63	15	2026-07-22 04:55:20.804301 UTC
+2025-09-05	T-Mobile	145	51	11	2026-07-22 04:55:20.804301 UTC
+2025-09-05	AT&T	92	42	10	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Boost Mobile	80	48	7	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Cricket Wireless	66	39	12	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Spectrum	54	45	11	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Verizon Prepaid	35	27	6	2026-07-22 04:55:20.804301 UTC
+2025-09-05	AT&T Prepaid	28	23	6	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Optimum	27	20	10	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Metro by T-Mobile	20	17	5	2026-07-22 04:55:20.804301 UTC
+2025-09-05	T-Mobile Prepaid	18	18	4	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Straight Talk	16	15	2	2026-07-22 04:55:20.804301 UTC
+2025-09-05	Total Wireless	12	12	2	2026-07-22 04:55:20.804301 UTC
 
 -- Sanity check: any carrier here that ISN'T a known carrier?
 -- (shouldn't be possible — gold only ever contains known carriers — but
@@ -33,18 +101,44 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insight
 WHERE carrier NOT IN (
   SELECT carrier_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
 );
+output: There is no data to display.
 
 
 -- Reconciliation: total_offer_count per carrier should exactly equal the
 -- count of gold rows for that carrier on that date, across both source tables
-SELECT i.report_date, i.carrier, i.total_offer_count,
-       (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly` g
-        WHERE g.report_date = i.report_date AND g.carrier = i.carrier)
-     + (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly` d
-        WHERE d.report_date = i.report_date AND d.carrier = i.carrier) AS actual_gold_count
+WITH gold_counts AS (
+  SELECT
+    report_date,
+    carrier,
+    COUNT(*) AS actual_gold_count
+  FROM (
+    SELECT report_date, carrier
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`
+
+    UNION ALL
+
+    SELECT report_date, carrier
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`
+  )
+  GROUP BY report_date, carrier
+)
+
+SELECT
+  i.report_date,
+  i.carrier,
+  i.total_offer_count,
+  COALESCE(g.actual_gold_count, 0) AS actual_gold_count
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly` i
-WHERE i.report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`)
-HAVING i.total_offer_count != actual_gold_count;  -- should return ZERO rows if healthy
+LEFT JOIN gold_counts g
+  ON i.report_date = g.report_date
+ AND i.carrier = g.carrier
+WHERE i.report_date = (
+  SELECT MAX(report_date)
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
+)
+AND i.total_offer_count <> COALESCE(g.actual_gold_count, 0)
+ORDER BY i.carrier;
+output: There is no data to display.
 
 -- 2. offerCountsByCarrierAndType_weekly
 -- Columns: report_date, carrier, offer_type, offer_count
@@ -53,6 +147,218 @@ SELECT report_date, offer_type, SUM(offer_count) AS total
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
 GROUP BY report_date, offer_type
 ORDER BY report_date DESC, total DESC;
+output: 
+report_date	offer_type	total
+2025-09-05	trade-in credit	262
+2025-09-05	discount	255
+2025-09-05	free device	98
+2025-09-05	plan pricing	66
+2025-09-05	eip buyout	39
+2025-09-05	port-in credit	35
+2025-09-05	bundle discount	24
+2025-09-05	bogo	18
+2025-09-05	bill credit	18
+2025-09-05	multi-line discount	15
+2025-09-05	upgrade program	15
+2025-09-05	device financing	12
+2025-09-05	activation fee	9
+2025-09-05	gift card	6
+2025-09-05	free trial or promotional period	5
+2025-09-05	add-on purchase	4
+2025-09-05	Cancellation Fee	2
+2025-09-05	fee waiver	2
+2025-09-05	Data Offers	2
+2025-09-05	SIM card cost	2
+2025-09-05	leasing	1
+2025-09-05	military benefit	1
+2025-09-05	referral credit	1
+2025-09-05	satisfaction guarantee	1
+2025-08-29	trade-in credit	268
+2025-08-29	discount	235
+2025-08-29	free device	108
+2025-08-29	plan pricing	53
+2025-08-29	port-in credit	40
+2025-08-29	eip buyout	35
+2025-08-29	bundle discount	27
+2025-08-29	bill credit	19
+2025-08-29	bogo	19
+2025-08-29	device financing	18
+2025-08-29	upgrade program	13
+2025-08-29	multi-line discount	13
+2025-08-29	gift card	9
+2025-08-29	activation fee	9
+2025-08-29	free trial or promotional period	8
+2025-08-29	fee waiver	4
+2025-08-29	add-on purchase	4
+2025-08-29	Cancellation Fee	2
+2025-08-29	satisfaction guarantee	1
+2025-08-29	Data Offers	1
+2025-08-29	military benefit	1
+2025-08-29	SIM card cost	1
+2025-08-29	referral credit	1
+2025-08-22	trade-in credit	272
+2025-08-22	discount	201
+2025-08-22	plan pricing	107
+2025-08-22	free device	104
+2025-08-22	port-in credit	47
+2025-08-22	eip buyout	40
+2025-08-22	bundle discount	29
+2025-08-22	device financing	25
+2025-08-22	bill credit	23
+2025-08-22	bogo	21
+2025-08-22	multi-line discount	14
+2025-08-22	upgrade program	13
+2025-08-22	gift card	10
+2025-08-22	activation fee	8
+2025-08-22	free trial or promotional period	7
+2025-08-22	add-on purchase	3
+2025-08-22	SIM card cost	2
+2025-08-22	fee waiver	2
+2025-08-22	satisfaction guarantee	1
+2025-08-22	Cancellation Fee	1
+2025-08-22	military benefit	1
+2025-08-22	referral credit	1
+2025-08-15	discount	243
+2025-08-15	trade-in credit	179
+2025-08-15	free device	109
+2025-08-15	plan pricing	96
+2025-08-15	port-in credit	45
+2025-08-15	device financing	28
+2025-08-15	eip buyout	28
+2025-08-15	bundle discount	26
+2025-08-15	bogo	19
+2025-08-15	bill credit	15
+2025-08-15	free trial or promotional period	13
+2025-08-15	multi-line discount	13
+2025-08-15	gift card	11
+2025-08-15	upgrade program	10
+2025-08-15	activation fee	9
+2025-08-15	fee waiver	3
+2025-08-15	add-on purchase	3
+2025-08-15	Cancellation Fee	2
+2025-08-15	SIM card cost	2
+2025-08-15	leasing	1
+2025-08-15	referral credit	1
+2025-08-15	military benefit	1
+2025-08-15	satisfaction guarantee	1
+2025-08-08	trade-in credit	288
+2025-08-08	discount	266
+2025-08-08	free device	105
+2025-08-08	plan pricing	55
+2025-08-08	device financing	55
+2025-08-08	port-in credit	38
+2025-08-08	eip buyout	35
+2025-08-08	bundle discount	29
+2025-08-08	bogo	20
+2025-08-08	bill credit	16
+2025-08-08	multi-line discount	14
+2025-08-08	upgrade program	12
+2025-08-08	gift card	8
+2025-08-08	free trial or promotional period	8
+2025-08-08	activation fee	7
+2025-08-08	add-on purchase	3
+2025-08-08	SIM card cost	2
+2025-08-08	fee waiver	2
+2025-08-08	referral credit	1
+2025-08-08	satisfaction guarantee	1
+2025-08-08	military benefit	1
+2025-08-08	leasing	1
+2025-08-01	trade-in credit	272
+2025-08-01	discount	260
+2025-08-01	free device	97
+2025-08-01	plan pricing	76
+2025-08-01	port-in credit	38
+2025-08-01	bill credit	34
+2025-08-01	eip buyout	31
+2025-08-01	bundle discount	28
+2025-08-01	device financing	24
+2025-08-01	bogo	17
+2025-08-01	multi-line discount	14
+2025-08-01	upgrade program	12
+2025-08-01	activation fee	7
+2025-08-01	Device Storage Upgrade	6
+2025-08-01	free trial or promotional period	6
+2025-08-01	add-on purchase	4
+2025-08-01	gift card	4
+2025-08-01	fee waiver	2
+2025-08-01	referral credit	1
+2025-08-01	satisfaction guarantee	1
+2025-08-01	other	1
+2025-08-01	military benefit	1
+2025-08-01	leasing	1
+2025-07-25	trade-in credit	311
+2025-07-25	discount	263
+2025-07-25	free device	100
+2025-07-25	port-in credit	53
+2025-07-25	plan pricing	51
+2025-07-25	eip buyout	41
+2025-07-25	device financing	36
+2025-07-25	bundle discount	28
+2025-07-25	bill credit	22
+2025-07-25	bogo	16
+2025-07-25	multi-line discount	14
+2025-07-25	gift card	10
+2025-07-25	add-on purchase	6
+2025-07-25	free trial or promotional period	6
+2025-07-25	fee waiver	2
+2025-07-25	other	1
+2025-07-25	referral credit	1
+2025-07-25	satisfaction guarantee	1
+2025-07-18	discount	254
+2025-07-18	trade-in credit	252
+2025-07-18	free device	98
+2025-07-18	plan pricing	56
+2025-07-18	port-in credit	51
+2025-07-18	eip buyout	42
+2025-07-18	device financing	33
+2025-07-18	bill credit	31
+2025-07-18	bundle discount	27
+2025-07-18	bogo	17
+2025-07-18	multi-line discount	17
+2025-07-18	gift card	8
+2025-07-18	free trial or promotional period	7
+2025-07-18	add-on purchase	4
+2025-07-18	fee waiver	2
+2025-07-18	satisfaction guarantee	1
+2025-07-18	other	1
+2025-07-18	referral credit	1
+2025-07-11	trade-in credit	372
+2025-07-11	discount	271
+2025-07-11	free device	141
+2025-07-11	bundle discount	79
+2025-07-11	device financing	77
+2025-07-11	eip buyout	73
+2025-07-11	bill credit	63
+2025-07-11	plan pricing	53
+2025-07-11	port-in credit	46
+2025-07-11	bogo	31
+2025-07-11	gift card	21
+2025-07-11	multi-line discount	18
+2025-07-11	free trial or promotional period	15
+2025-07-11	add-on purchase	12
+2025-07-11	other	4
+2025-07-11	fee waiver	3
+2025-07-11	referral credit	1
+2025-07-03	trade-in credit	296
+2025-07-03	discount	233
+2025-07-03	plan pricing	106
+2025-07-03	free device	104
+2025-07-03	eip buyout	39
+2025-07-03	port-in credit	39
+2025-07-03	bundle discount	25
+2025-07-03	device financing	19
+2025-07-03	multi-line discount	14
+2025-07-03	bill credit	14
+2025-07-03	bogo	12
+2025-07-03	upgrade program	12
+2025-07-03	gift card	7
+2025-07-03	free trial or promotional period	6
+2025-07-03	fee waiver	5
+2025-07-03	add-on purchase	4
+2025-07-03	satisfaction guarantee	1
+2025-07-03	military benefit	1
+2025-07-03	referral credit	1
+
 
 -- Sanity check: does any offer_type here NOT exist in the control table?
 -- (would indicate insights are stale relative to a reclassify_other_offer_types run)
@@ -61,6 +367,8 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insight
 WHERE offer_type NOT IN (
   SELECT category_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_offerTypeCategories`
 );
+output:
+There is no data to display.
 
 -- 3. offerCountsByDevice_weekly
 -- Columns: report_date, item_name, offer_count, distinct_carrier_count
@@ -69,8 +377,296 @@ WHERE offer_type NOT IN (
 SELECT report_date, item_name, offer_count, distinct_carrier_count
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`
 WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`)
-ORDER BY distinct_carrier_count DESC, offer_count DESC
-LIMIT 25;
+ORDER BY distinct_carrier_count DESC, offer_count DESC;
+
+output:
+report_date	item_name	offer_count	distinct_carrier_count
+2025-09-05	iPhone 16e	22	9
+2025-09-05	iPhone 14	14	7
+2025-09-05	iPhone 16	37	6
+2025-09-05	iPhone 15	25	6
+2025-09-05	Galaxy S25	18	6
+2025-09-05	Pixel 10 Pro	16	6
+2025-09-05	Pixel 10	16	6
+2025-09-05	iPhone 13	14	6
+2025-09-05	Galaxy A16 5G	9	6
+2025-09-05	iPhone 16 Pro Max	27	5
+2025-09-05	iPhone 16 Pro	27	5
+2025-09-05	iPhone 16 Plus	25	5
+2025-09-05	SAMSUNG GALAXY S25 Ultra	19	5
+2025-09-05	SAMSUNG GALAXY S25 Edge	16	5
+2025-09-05	SAMSUNG GALAXY S25	16	5
+2025-09-05	BYOD	16	5
+2025-09-05	SAMSUNG GALAXY S25+	15	5
+2025-09-05	10 Pro XL	14	5
+2025-09-05	moto g 5G 2025	9	5
+2025-09-05	Android Flagships	8	5
+2025-09-05	Activation Fee	5	5
+2025-09-05	Z Fold7	13	4
+2025-09-05	Z Flip7	13	4
+2025-09-05	SAMSUNG GALAXY S25 FE	11	4
+2025-09-05	moto g stylus 5G 2025	7	4
+2025-09-05	New Line	7	4
+2025-09-05	moto razr 2025	6	4
+2025-09-05	Galaxy A15 5G	6	4
+2025-09-05	Pixel 9a	5	4
+2025-09-05	Galaxy A14 5G	4	4
+2025-09-05	iPhone 15 Pro Max	10	3
+2025-09-05	iPhone 15 Pro	9	3
+2025-09-05	iPhone 15 Plus	9	3
+2025-09-05	Razr	8	3
+2025-09-05	Razr+	8	3
+2025-09-05	Razr Ultra	8	3
+2025-09-05	Galaxy A15 5G 64GB	5	3
+2025-09-05	Galaxy A36	5	3
+2025-09-05	Unlimited plan	4	3
+2025-09-05	Other Androids + Affordables	3	3
+2025-09-05	iPhone SE 3	3	3
+2025-09-05	Galaxy S25+	5	2
+2025-09-05	SAMSUNG GALAXY S24 FE	5	2
+2025-09-05	iPhone 14 Plus	4	2
+2025-09-05	Galaxy Tab A9+	4	2
+2025-09-05	GS25	4	2
+2025-09-05	Apple Watch Series 10	4	2
+2025-09-05	Apple Watch SE2	4	2
+2025-09-05	Galaxy S25 Ultra	4	2
+2025-09-05	Galaxy Z Flip7FE	3	2
+2025-09-05	Tablet Plan	3	2
+2025-09-05	moto edge	3	2
+2025-09-05	Galaxy Z Flip7	3	2
+2025-09-05	Galaxy Z Fold7	3	2
+2025-09-05	Galaxy A36 5G	3	2
+2025-09-05	A15 5G	2	2
+2025-09-05	Activation fee	2	2
+2025-09-05	Moto g stylus 5G 2024	2	2
+2025-09-05	A36 5G	2	2
+2025-09-05	A15	2	2
+2025-09-05	any new EIP phone	2	2
+2025-09-05	Moto g play 2024	2	2
+2025-09-05	TCL Flip Go	2	2
+2025-09-05	Galaxy A25 5G	2	2
+2025-09-05	moto g power 5G 2024	2	2
+2025-09-05	moto g 5G 2024	2	2
+2025-09-05	GS25 FE	2	2
+2025-09-05	A16 5G	2	2
+2025-09-05	By the Gig plan	2	2
+2025-09-05	Galaxy A26 5G	2	2
+2025-09-05	Home Internet	5	1
+2025-09-05	SAMSUNG GALAXY S24	4	1
+2025-09-05	Celero 5G SC	4	1
+2025-09-05	TCL 50 XL NXTPAPER 5G	4	1
+2025-09-05	Data-only plan	4	1
+2025-09-05	Galaxy Watch 8	3	1
+2025-09-05	moto g power 5G 2025	3	1
+2025-09-05	Motorola razr 2024	3	1
+2025-09-05	iPhone 14 Pro Max	3	1
+2025-09-05	Moto G	3	1
+2025-09-05	iPhone 14 Pro	3	1
+2025-09-05	Tab S10 FE 5G	3	1
+2025-09-05	Most iPads	3	1
+2025-09-05	Cricket Outlast 5G	3	1
+2025-09-05	Moto G Stylus 5G (2024)	2	1
+2025-09-05	GS25 Edge	2	1
+2025-09-05	UNL Mobile line	2	1
+2025-09-05	TCL Tab 8 LE	2	1
+2025-09-05	Celero 5G+ 2024	2	1
+2025-09-05	iPhones	2	1
+2025-09-05	Rate plan	2	1
+2025-09-05	moto g play 2024	2	1
+2025-09-05	Pixel 9/10 Series	2	1
+2025-09-05	UNL Plan	2	1
+2025-09-05	Galaxy A16	2	1
+2025-09-05	Galaxy A15 5G 128GB	2	1
+2025-09-05	Pixel	2	1
+2025-09-05	Galaxy S24 FE	2	1
+2025-09-05	Z6 Series	2	1
+2025-09-05	Tab S10+ 5G	2	1
+2025-09-05	moto edge 2025	2	1
+2025-09-05	S25 FE	2	1
+2025-09-05	UNL Plus Plan	2	1
+2025-09-05	Moto Razr 2025	2	1
+2025-09-05	Spectrum One Bundle (500 Mbps)	2	1
+2025-09-05	amiGO Jr. Watch	2	1
+2025-09-05	SAM Tab A9+ 5G	2	1
+2025-09-05	Galaxy Watches	2	1
+2025-09-05	Plan	2	1
+2025-09-05	GS24 FE	2	1
+2025-09-05	Motorola phones	2	1
+2025-09-05	Celero 3 5G+ (2024)	2	1
+2025-09-05	amiGO Jr. Tab	2	1
+2025-09-05	iPhone 15 / 16 Series	2	1
+2025-09-05	Galaxy S24	2	1
+2025-09-05	15GB Plan	2	1
+2025-09-05	Galaxy Watch 8 Ultra	2	1
+2025-09-05	Moto g 5G 2025	2	1
+2025-09-05	Celero 3 5G (2024)	2	1
+2025-09-05	REVVL 5G Tab	2	1
+2025-09-05	Pixel 3 Watch	2	1
+2025-09-05	Phones	2	1
+2025-09-05	Galaxy S10 FE	2	1
+2025-09-05	GS25 FE 5G	2	1
+2025-09-05	Pixel Watch 3	2	1
+2025-09-05	Moto G Stylus 5G (2025)	2	1
+2025-09-05	UNL multi-line discount	2	1
+2025-09-05	Moto G Power	2	1
+2025-09-05	Pixel Watch 4	2	1
+2025-09-05	Galaxy S10+	2	1
+2025-09-05	UNL Level Up plan	2	1
+2025-09-05	Galaxy A25	2	1
+2025-09-05	AT&T Motivate Pro 5G	2	1
+2025-09-05	Contract Freedom Service	1	1
+2025-09-05	eSIM or pSIM Card	1	1
+2025-09-05	Android Watches	1	1
+2025-09-05	Ultra 2	1	1
+2025-09-05	AT&T Verge	1	1
+2025-09-05	S25 series	1	1
+2025-09-05	Moto g power 5G 2025	1	1
+2025-09-05	Flexible Data Plan (Per GB)	1	1
+2025-09-05	unlimited talk/text + 12GB plan	1	1
+2025-09-05	Galaxy Tab S10 FE 5G	1	1
+2025-09-05	Watch Plan	1	1
+2025-09-05	AT&T Propel 2 5G	1	1
+2025-09-05	Mobile UNL line	1	1
+2025-09-05	Moto g stylus 5G 2025	1	1
+2025-09-05	Apple Watch Ultra 2	1	1
+2025-09-05	moto g stylus '25	1	1
+2025-09-05	iPhone SE3	1	1
+2025-09-05	Orbic Joy LTE	1	1
+2025-09-05	Chromebook Go	1	1
+2025-09-05	REVVL Tab 2	1	1
+2025-09-05	Unlimited talk/text & 3GB data	1	1
+2025-09-05	Flexible Data Plan (5GB)	1	1
+2025-09-05	2nd line	1	1
+2025-09-05	Autopay discount	1	1
+2025-09-05	Connected Car by Verizon	1	1
+2025-09-05	REVVL 7	1	1
+2025-09-05	Mex/Can Call Pass	1	1
+2025-09-05	Autopay discount (Internet)	1	1
+2025-09-05	GizmoWatch 3 Adventure	1	1
+2025-09-05	Cricket Icon 6	1	1
+2025-09-05	In-Car Wi-Fi Plan	1	1
+2025-09-05	TCL K32 5G	1	1
+2025-09-05	Celero 5G	1	1
+2025-09-05	Prepaid service	1	1
+2025-09-05	Early Upgrade Program	1	1
+2025-09-05	iPads	1	1
+2025-09-05	Unlimited Premium plan (additional line)	1	1
+2025-09-05	Pixel 9 Pro	1	1
+2025-09-05	unlimited talk/text + 8GB plan	1	1
+2025-09-05	moto g 5G 2023	1	1
+2025-09-05	Activation	1	1
+2025-09-05	TCL 40 XE 5G	1	1
+2025-09-05	JEXtream RG2100 5G Hotspot	1	1
+2025-09-05	GS 24 Plus	1	1
+2025-09-05	Moto g 5G 2025 128GB	1	1
+2025-09-05	Apple Watches	1	1
+2025-09-05	GS25+	1	1
+2025-09-05	Mobile Repair Premium	1	1
+2025-09-05	moto g play 2023	1	1
+2025-09-05	TCL Flip 4 5G	1	1
+2025-09-05	HINT	1	1
+2025-09-05	moto g stylus 5G ('25)	1	1
+2025-09-05	Unlimited Plus plan	1	1
+2025-09-05	TCL K24	1	1
+2025-09-05	Pixel 10 XL	1	1
+2025-09-05	REVVL Tab2	1	1
+2025-09-05	iPhone 14 or later	1	1
+2025-09-05	$40 UNL plan	1	1
+2025-09-05	GS24 Ultra	1	1
+2025-09-05	new lines/upgrades	1	1
+2025-09-05	Select Apple Watches	1	1
+2025-09-05	Galaxy A26	1	1
+2025-09-05	GS24	1	1
+2025-09-05	moto edge+ 2023	1	1
+2025-09-05	Moto G5G	1	1
+2025-09-05	Unlimited Premium plan	1	1
+2025-09-05	Celero5G Tab	1	1
+2025-09-05	UNL BYO plan	1	1
+2025-09-05	TCL K23	1	1
+2025-09-05	3rd line	1	1
+2025-09-05	GS25U	1	1
+2025-09-05	Military Benefits	1	1
+2025-09-05	Tab A9+ 5G	1	1
+2025-09-05	Existing lines	1	1
+2025-09-05	Moto edge 2024	1	1
+2025-09-05	Boost Bounce	1	1
+2025-09-05	moto g 5G '25	1	1
+2025-09-05	REVVL 7 Pro 5G	1	1
+2025-09-05	BTS Line	1	1
+2025-09-05	unlimited talk/text + 5GB plan	1	1
+2025-09-05	TCL 30 LE	1	1
+2025-09-05	Spectrum One Bundle (1 Gbps)	1	1
+2025-09-05	Galaxy Tab S10 FE	1	1
+2025-09-05	Mobile Repair	1	1
+2025-09-05	GS25E	1	1
+2025-09-05	By the Gig plan (additional data)	1	1
+2025-09-05	A16	1	1
+2025-09-05	Galaxy Tab A9+ 5G	1	1
+2025-09-05	Apple Watch Series 9	1	1
+2025-09-05	SYNCUP DRIVE	1	1
+2025-09-05	A35	1	1
+2025-09-05	Unlimited Plan	1	1
+2025-09-05	SIM Kit	1	1
+2025-09-05	Moto razr 2024	1	1
+2025-09-05	UNL wireless line	1	1
+2025-09-05	TCL Tab10 NXTPAPER 5G	1	1
+2025-09-05	Pixel 9 Pro Fold	1	1
+2025-09-05	Summit 5G	1	1
+2025-09-05	Device	1	1
+2025-09-05	Icon 6	1	1
+2025-09-05	any phone	1	1
+2025-09-05	Pixel 6a	1	1
+2025-09-05	A14 5G	1	1
+2025-09-05	Galaxy A35	1	1
+2025-09-05	Data	1	1
+2025-09-05	SE	1	1
+2025-09-05	Cricket Magic 2 5G	1	1
+2025-09-05	Unlimited Data plan (20GB)	1	1
+2025-09-05	Student Discount/Offer	1	1
+2025-09-05	Moto Edge	1	1
+2025-09-05	Family Connect plan	1	1
+2025-09-05	Galaxy A15	1	1
+2025-09-05	Unlimited plan (additional line)	1	1
+2025-09-05	UNL line	1	1
+2025-09-05	$65 UNL plan	1	1
+2025-09-05	Autopay discount (credit/debit card)	1	1
+2025-09-05	12-mo plan	1	1
+2025-09-05	SYNCUP KIDS Watch 2	1	1
+2025-09-05	voice activation	1	1
+2025-09-05	Cricket Icon Plus 2026	1	1
+2025-09-05	AT&T Vista 2	1	1
+2025-09-05	iPad A16	1	1
+2025-09-05	Series 10	1	1
+2025-09-05	Pixel 10 Pro XL	1	1
+2025-09-05	SyncUP Tracker	1	1
+2025-09-05	Select UNL plan	1	1
+2025-09-05	Icon Plus 2026	1	1
+2025-09-05	data plan	1	1
+2025-09-05	12-mo data-only plan	1	1
+2025-09-05	BTS/Hint activation	1	1
+2025-09-05	Sharp Rouvo V	1	1
+2025-09-05	Data top-up (1GB)	1	1
+2025-09-05	Autopay discount (bank account)	1	1
+2025-09-05	SIM card	1	1
+2025-09-05	Moto g power 5G 2024	1	1
+2025-09-05	A35 5G	1	1
+2025-09-05	select phones	1	1
+2025-09-05	Moto g 5G 2025 64GB	1	1
+2025-09-05	Cricket Debut S3	1	1
+2025-09-05	Moto g 5G 2024	1	1
+2025-09-05	Cancellation Fee	1	1
+2025-09-05	Internet Requirement Fee	1	1
+2025-09-05	A36	1	1
+2025-09-05	moto g power 5G	1	1
+2025-09-05	Debut S3	1	1
+2025-09-05	Unlimited Data plan UNL Max (50GB)	1	1
+2025-09-05	Multi-line plan	1	1
+2025-09-05	GizmoWatch 3	1	1
+2025-09-05	BYO plan	1	1
+2025-09-05	HINT Gateway	1	1
+2025-09-05	All Apple Watches	1	1
+2025-09-05	A26 5G	1	1
+2025-09-05	Referral Program	1	1
 
 -- Smell test: item_name values that look like extraction noise rather than
 -- real device names (multi-device strings, stray punctuation, empty-ish values)
@@ -80,6 +676,10 @@ WHERE item_name LIKE '%,%'          -- comma-joined device_group leaked through?
    OR LENGTH(item_name) < 3
    OR item_name LIKE '%null%'
 ORDER BY offer_count DESC;
+output:
+item_name	offer_count
+SE	1
+SE	1
 
 -- 4. offerCountsByCarrierAndDevice_weekly
 -- Columns: report_date, carrier, item_name, offer_count
@@ -87,12 +687,103 @@ ORDER BY offer_count DESC;
 SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
 WHERE carrier = 'AT&T' AND item_name LIKE '%iPhone 16%'
 ORDER BY report_date DESC;
+
+output:
+report_date	carrier	item_name	offer_count	refreshed_at
+2025-09-05	AT&T	iPhone 16 Pro Max	8	2026-07-22 04:55:24.639470 UTC
+2025-09-05	AT&T	iPhone 16 Pro	8	2026-07-22 04:55:24.639470 UTC
+2025-09-05	AT&T	iPhone 16	6	2026-07-22 04:55:24.639470 UTC
+2025-09-05	AT&T	iPhone 16 Plus	6	2026-07-22 04:55:24.639470 UTC
+2025-09-05	AT&T	iPhone 16e	1	2026-07-22 04:55:24.639470 UTC
+2025-08-29	AT&T	iPhone 16 Pro Max	8	2026-07-22 03:40:27.664413 UTC
+2025-08-29	AT&T	iPhone 16 Pro	8	2026-07-22 03:40:27.664413 UTC
+2025-08-29	AT&T	iPhone 16 Plus	6	2026-07-22 03:40:27.664413 UTC
+2025-08-29	AT&T	iPhone 16	6	2026-07-22 03:40:27.664413 UTC
+2025-08-29	AT&T	iPhone 16e	1	2026-07-22 03:40:27.664413 UTC
+2025-08-22	AT&T	iPhone 16 Pro	8	2026-07-22 02:12:40.250533 UTC
+2025-08-22	AT&T	iPhone 16 Pro Max	8	2026-07-22 02:12:40.250533 UTC
+2025-08-22	AT&T	iPhone 16 Plus	6	2026-07-22 02:12:40.250533 UTC
+2025-08-22	AT&T	iPhone 16	6	2026-07-22 02:12:40.250533 UTC
+2025-08-22	AT&T	iPhone 16e	1	2026-07-22 02:12:40.250533 UTC
+2025-08-15	AT&T	iPhone 16 Pro	4	2026-07-22 01:22:06.088312 UTC
+2025-08-15	AT&T	iPhone 16 Pro Max	4	2026-07-22 01:22:06.088312 UTC
+2025-08-15	AT&T	iPhone 16 Plus	3	2026-07-22 01:22:06.088312 UTC
+2025-08-15	AT&T	iPhone 16	3	2026-07-22 01:22:06.088312 UTC
+2025-08-15	AT&T	iPhone 16e	1	2026-07-22 01:22:06.088312 UTC
+2025-08-08	AT&T	iPhone 16e	1	2026-07-22 00:50:25.099053 UTC
+2025-08-08	AT&T	iPhone 16	4	2026-07-22 00:50:25.099053 UTC
+2025-08-08	AT&T	iPhone 16 Plus	5	2026-07-22 00:50:25.099053 UTC
+2025-08-08	AT&T	iPhone 16 Pro Max	6	2026-07-22 00:50:25.099053 UTC
+2025-08-08	AT&T	iPhone 16 Pro	6	2026-07-22 00:50:25.099053 UTC
+2025-08-01	AT&T	iPhone 16 Pro Max	6	2026-07-21 22:54:29.166387 UTC
+2025-08-01	AT&T	iPhone 16e	1	2026-07-21 22:54:29.166387 UTC
+2025-08-01	AT&T	iPhone 16 Plus	2	2026-07-21 22:54:29.166387 UTC
+2025-08-01	AT&T	iPhone 16	4	2026-07-21 22:54:29.166387 UTC
+2025-08-01	AT&T	iPhone 16 Pro	6	2026-07-21 22:54:29.166387 UTC
+2025-07-25	AT&T	iPhone 16 Pro	8	2026-07-21 17:32:13.264709 UTC
+2025-07-25	AT&T	iPhone 16 Pro Max	8	2026-07-21 17:32:13.264709 UTC
+2025-07-25	AT&T	iPhone 16	6	2026-07-21 17:32:13.264709 UTC
+2025-07-25	AT&T	iPhone 16 Plus	4	2026-07-21 17:32:13.264709 UTC
+2025-07-25	AT&T	iPhone 16e	1	2026-07-21 17:32:13.264709 UTC
+2025-07-18	AT&T	iPhone 16	6	2026-07-21 17:06:19.821820 UTC
+2025-07-18	AT&T	iPhone 16 Plus	8	2026-07-21 17:06:19.821820 UTC
+2025-07-18	AT&T	iPhone 16 Pro	8	2026-07-21 17:06:19.821820 UTC
+2025-07-18	AT&T	iPhone 16 Pro Max	8	2026-07-21 17:06:19.821820 UTC
+2025-07-18	AT&T	iPhone 16e	1	2026-07-21 17:06:19.821820 UTC
+2025-07-11	AT&T	iPhone 16	8	2026-07-21 11:51:12.579755 UTC
+2025-07-11	AT&T	iPhone 16e	4	2026-07-21 11:51:12.579755 UTC
+2025-07-11	AT&T	iPhone 16 Pro	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	AT&T	iPhone 16 Pro Max	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	AT&T	iPhone 16 Plus	8	2026-07-21 11:51:12.579755 UTC
+2025-07-03	AT&T	iPhone 16e	1	2026-07-21 21:45:29.254732 UTC
+2025-07-03	AT&T	iPhone 16	4	2026-07-21 21:45:29.254732 UTC
+2025-07-03	AT&T	iPhone 16 Plus	4	2026-07-21 21:45:29.254732 UTC
+2025-07-03	AT&T	iPhone 16 Pro Max	6	2026-07-21 21:45:29.254732 UTC
+2025-07-03	AT&T	iPhone 16 Pro	6	2026-07-21 21:45:29.254732 UTC
+
 -- Any single carrier+device combo with a suspiciously high offer_count?
 -- (a real device shouldn't have dozens of offers from ONE carrier in ONE week —
 -- worth checking if this is legitimate tiered pricing or a dedup failure upstream)
 SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
 WHERE offer_count > 10
 ORDER BY offer_count DESC;
+output:
+report_date	carrier	item_name	offer_count	refreshed_at
+2025-07-11	Verizon	iPhone 16	24	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	iPhone 16 Pro	23	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	iPhone 16 Plus	22	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	iPhone 16 Pro Max	22	2026-07-21 11:51:12.579755 UTC
+2025-08-29	Verizon	iPhone 16	14	2026-07-22 03:40:27.664413 UTC
+2025-07-11	T-Mobile	iPhone 16	13	2026-07-21 11:51:12.579755 UTC
+2025-07-11	T-Mobile	iPhone 15	13	2026-07-21 11:51:12.579755 UTC
+2025-07-25	Verizon	iPhone 16	13	2026-07-21 17:32:13.264709 UTC
+2025-07-18	T-Mobile	iPhone 16	12	2026-07-21 17:06:19.821820 UTC
+2025-08-29	Verizon	iPhone 16 Pro Max	12	2026-07-22 03:40:27.664413 UTC
+2025-08-29	Verizon	iPhone 16 Pro	12	2026-07-22 03:40:27.664413 UTC
+2025-08-29	Verizon	iPhone 16 Plus	12	2026-07-22 03:40:27.664413 UTC
+2025-07-03	T-Mobile	iPhone 15	12	2026-07-21 21:45:29.254732 UTC
+2025-07-03	T-Mobile	iPhone 16	12	2026-07-21 21:45:29.254732 UTC
+2025-07-25	T-Mobile	iPhone 15	12	2026-07-21 17:32:13.264709 UTC
+2025-07-25	T-Mobile	iPhone 16	12	2026-07-21 17:32:13.264709 UTC
+2025-07-25	Verizon	iPhone 16 Pro	12	2026-07-21 17:32:13.264709 UTC
+2025-07-25	Verizon	iPhone 16 Plus	12	2026-07-21 17:32:13.264709 UTC
+2025-07-25	Verizon	iPhone 16 Pro Max	12	2026-07-21 17:32:13.264709 UTC
+2025-09-05	T-Mobile	iPhone 16	11	2026-07-22 04:55:24.639470 UTC
+2025-07-11	AT&T	iPhone 16 Pro Max	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	AT&T	iPhone 16 Pro	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	T-Mobile	iPhone 14	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	Pixel 9 Pro XL	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	Pixel 9	11	2026-07-21 11:51:12.579755 UTC
+2025-07-11	Verizon	Pixel 9 Pro	11	2026-07-21 11:51:12.579755 UTC
+2025-08-01	T-Mobile	iPhone 16	11	2026-07-21 22:54:29.166387 UTC
+2025-07-03	Verizon	iPhone 16	11	2026-07-21 21:45:29.254732 UTC
+2025-08-29	T-Mobile	iPhone 16	11	2026-07-22 03:40:27.664413 UTC
+2025-08-22	Verizon	iPhone 16	11	2026-07-22 02:12:40.250533 UTC
+2025-08-22	Verizon	iPhone 16 Pro Max	11	2026-07-22 02:12:40.250533 UTC
+2025-08-22	T-Mobile	iPhone 16	11	2026-07-22 02:12:40.250533 UTC
+2025-09-05	Verizon	iPhone 16	11	2026-07-22 04:55:24.639470 UTC
+2025-07-18	T-Mobile	iPhone 15	11	2026-07-21 17:06:19.821820 UTC
+2025-07-18	Verizon	iPhone 16	11	2026-07-21 17:06:19.821820 UTC
 
 -- 5. offerAmountStatsByCarrier_weekly
 -- Columns: report_date, carrier, offers_with_amount_count, avg_offer_amount, min_offer_amount, max_offer_amount
@@ -100,6 +791,24 @@ ORDER BY offer_count DESC;
 SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
 WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`)
 ORDER BY avg_offer_amount DESC;
+
+output:
+report_date	carrier	offers_with_amount_count	avg_offer_amount	min_offer_amount	max_offer_amount	refreshed_at
+2025-09-05	T-Mobile	129	669.658914728682	10.0	1000.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Verizon	149	468.14355704697988	0.0	1100.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Xfinity	127	459.80314960629926	5.0	1000.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	AT&T	85	445.65258823529416	0.0	1250.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Cricket Wireless	47	226.76574468085113	0.0	799.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Spectrum	51	222.72509803921568	5.0	1000.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Optimum	24	195.04166666666669	5.0	600.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Straight Talk	16	124.4375	0.0	299.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Boost Mobile	63	123.04269841269843	0.0	599.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Total Wireless	12	93.916666666666671	0.0	249.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Metro by T-Mobile	19	77.788421052631591	0.0	750.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	T-Mobile Prepaid	18	74.444444444444443	5.0	150.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	AT&T Prepaid	28	71.355	0.0	399.0	2026-07-22 04:55:25.805857 UTC
+2025-09-05	Verizon Prepaid	32	71.0625	5.0	399.0	2026-07-22 04:55:25.805857 UTC
+
 -- Outlier hunt: a max_offer_amount that's wildly higher than avg often means
 -- offer_amount_numeric parsed something wrong (e.g. a monthly rate like
 -- "$5.84/mo." parsed as 584, or a phone number/plan code leaking in)
@@ -107,14 +816,149 @@ SELECT report_date, carrier, avg_offer_amount, min_offer_amount, max_offer_amoun
        max_offer_amount / NULLIF(avg_offer_amount, 0) AS max_to_avg_ratio
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
 WHERE avg_offer_amount > 0
-ORDER BY max_to_avg_ratio DESC
-LIMIT 20;
--- Trace an outlier back to its actual source row once you spot one above
-SELECT source_page, carrier, item_name, offer_amount, offer_amount_numeric, offer_condition
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`
-WHERE report_date = 'YYYY-MM-DD' AND carrier = 'CarrierName'
-ORDER BY offer_amount_numeric DESC
-LIMIT 10;
+ORDER BY max_to_avg_ratio DESC;
+output:
+report_date	carrier	avg_offer_amount	min_offer_amount	max_offer_amount	max_to_avg_ratio
+2025-07-18	Metro by T-Mobile	63.967142857142861	0.0	750.0	11.724769412868213
+2025-07-03	Metro by T-Mobile	69.106111111111119	0.0	750.0	10.85287520801344
+2025-07-25	Metro by T-Mobile	72.783333333333331	0.0	750.0	10.304556904053126
+2025-08-15	Metro by T-Mobile	74.656571428571425	0.0	750.0	10.046001117498029
+2025-08-08	Metro by T-Mobile	76.040833333333325	0.0	750.0	9.86312178763603
+2025-09-05	Metro by T-Mobile	77.788421052631591	0.0	750.0	9.6415377745301
+2025-08-22	Metro by T-Mobile	77.8686956521739	0.0	750.0	9.6315983428067327
+2025-07-11	Metro by T-Mobile	78.39500000000001	0.0	750.0	9.5669366668792648
+2025-08-29	Metro by T-Mobile	78.6995	0.0	750.0	9.529920774591961
+2025-08-22	AT&T Prepaid	48.913428571428568	0.0	399.0	8.1572691110241422
+2025-08-15	Boost Mobile	80.901190476190465	0.0	599.0	7.4040937651750385
+2025-07-25	Boost Mobile	85.47150000000002	0.0	599.0	7.0081840145545575
+2025-08-29	Boost Mobile	85.64933333333336	0.0	599.0	6.9936329529710273
+2025-07-03	Boost Mobile	98.911549295774662	0.0	599.0	6.0559156566116821
+2025-08-15	AT&T Prepaid	66.799000000000021	0.0	399.0	5.9731433105285987
+2025-07-11	Boost Mobile	100.65086206896549	0.0	599.0	5.9512654704295329
+2025-08-08	Verizon Prepaid	67.838709677419345	5.0	399.0	5.881597717546363
+2025-08-01	Boost Mobile	102.05567164179102	0.0	599.0	5.8693455284136711
+2025-08-22	Boost Mobile	102.10999999999999	0.0	599.0	5.8662227010087173
+2025-08-08	AT&T Prepaid	68.211904761904762	0.0	399.0	5.8494188278823
+2025-08-29	Verizon Prepaid	69.312499999999986	0.0	399.0	5.7565374211000915
+2025-09-05	Verizon Prepaid	71.0625	5.0	399.0	5.6147757255936677
+2025-09-05	AT&T Prepaid	71.355	0.0	399.0	5.5917595122976662
+2025-08-01	Verizon Prepaid	72.000000000000014	5.0	399.0	5.5416666666666652
+2025-08-22	Verizon Prepaid	72.068965517241381	5.0	399.0	5.5363636363636362
+2025-08-15	Verizon Prepaid	72.36	5.0	399.0	5.5140961857379764
+2025-07-18	Boost Mobile	109.89542857142857	0.0	599.0	5.4506361892084429
+2025-08-01	AT&T Prepaid	74.146176470588244	0.0	399.0	5.381261974557412
+2025-08-01	Metro by T-Mobile	48.999166666666653	0.0	249.0	5.08171907685505
+2025-08-08	Boost Mobile	119.22508196721314	0.0	599.0	5.0241106159585183
+2025-09-05	Boost Mobile	123.04269841269843	0.0	599.0	4.8682287346372206
+2025-08-29	AT&T Prepaid	81.9711111111111	0.0	399.0	4.8675685200748235
+2025-07-25	AT&T Prepaid	84.184444444444452	0.0	399.0	4.7395929572631523
+2025-07-18	AT&T Prepaid	84.184444444444466	0.0	399.0	4.7395929572631514
+2025-08-29	Spectrum	214.25436363636365	5.0	1000.0	4.6673495140440542
+2025-07-18	Optimum	108.0	5.0	500.0	4.62962962962963
+2025-07-11	AT&T Prepaid	86.38	0.0	399.0	4.6191247974068075
+2025-07-03	Optimum	108.45454545454545	5.0	500.0	4.610226320201174
+2025-07-11	Optimum	108.45454545454544	5.0	500.0	4.610226320201174
+2025-08-15	Spectrum	221.74958333333336	5.0	1000.0	4.5095913370750411
+2025-09-05	Spectrum	222.72509803921568	5.0	1000.0	4.4898397567387214
+2025-08-15	Cricket Wireless	153.26820895522394	0.0	679.0	4.4301424582991267
+2025-07-25	Cricket Wireless	154.53177419354839	0.0	679.0	4.3939183610845252
+2025-07-03	AT&T Prepaid	68.698000000000008	0.0	300.0	4.3669393577687847
+2025-08-01	Spectrum	230.43136363636367	5.0	1000.0	4.33968702966176
+2025-08-08	Spectrum	231.86622222222218	5.0	1000.0	4.3128317286404618
+2025-08-01	Optimum	116.3	5.0	500.0	4.2992261392949267
+2025-07-25	Verizon Prepaid	60.333333333333336	5.0	249.0	4.12707182320442
+2025-07-18	Verizon Prepaid	60.333333333333343	5.0	249.0	4.1270718232044192
+2025-07-25	Optimum	121.36842105263158	5.0	500.0	4.1196877710320905
+2025-07-11	Verizon Prepaid	60.458333333333336	5.0	249.0	4.1185389386629909
+2025-07-03	Verizon Prepaid	60.909090909090907	5.0	249.0	4.0880597014925373
+2025-08-22	Spectrum	247.91304347826087	5.0	1000.0	4.0336723956506484
+2025-07-25	Spectrum	248.19000000000003	5.0	1000.0	4.0291711994842654
+2025-08-29	Cricket Wireless	170.10678571428571	0.0	679.0	3.9916103120098931
+2025-07-18	Cricket Wireless	179.27551724137928	0.0	679.0	3.7874664117453589
+2025-07-11	Spectrum	264.99944444444441	0.0	1000.0	3.77359281675643
+2025-08-01	Cricket Wireless	188.1919230769231	0.0	679.0	3.6080188187590814
+2025-08-29	Optimum	168.5	1.0	600.0	3.5608308605341246
+2025-08-22	Cricket Wireless	191.52041666666668	0.0	679.0	3.5453139243205141
+2025-09-05	Cricket Wireless	226.76574468085113	0.0	799.0	3.5234598643834336
+2025-07-11	Cricket Wireless	193.74942307692311	0.0	679.0	3.5045265643470893
+2025-07-03	Cricket Wireless	196.1246428571429	0.0	679.0	3.4620840609743433
+2025-07-25	Straight Talk	116.7777777777778	0.0	399.0	3.4167459562321594
+2025-08-08	Optimum	179.68965517241384	5.0	600.0	3.3390903857225092
+2025-08-22	Optimum	182.33333333333334	5.0	600.0	3.2906764168190126
+2025-08-08	Cricket Wireless	207.15173913043481	0.0	679.0	3.277790487544312
+2025-07-03	Spectrum	158.31529411764708	5.0	500.0	3.1582545627489442
+2025-07-18	Spectrum	317.16666666666669	5.0	1000.0	3.1529164477141354
+2025-08-08	Straight Talk	129.47058823529412	0.0	399.0	3.08178100863244
+2025-08-01	Straight Talk	129.47058823529412	0.0	399.0	3.08178100863244
+2025-09-05	Optimum	195.04166666666669	5.0	600.0	3.0762657551805166
+2025-07-11	Straight Talk	130.2	0.0	399.0	3.0645161290322585
+2025-08-15	Optimum	197.1538461538461	5.0	600.0	3.043308622707765
+2025-07-18	Straight Talk	134.25	0.0	399.0	2.9720670391061454
+2025-07-03	Straight Talk	134.5625	0.0	399.0	2.9651648862052951
+2025-07-11	AT&T	446.08115789473686	0.99	1320.0	2.9591027924821796
+2025-08-15	Verizon	373.66475806451621	0.0	1100.0	2.943815214733406
+2025-08-22	Total Wireless	102.92857142857142	0.0	299.0	2.904927133934768
+2025-08-15	Total Wireless	87.928571428571416	0.0	249.0	2.8318440292445168
+2025-08-15	Straight Talk	141.23529411764707	29.0	399.0	2.825072886297376
+2025-08-29	AT&T	444.61999999999989	0.99	1250.0	2.8113895011470476
+2025-09-05	AT&T	445.65258823529416	0.0	1250.0	2.8048754410914118
+2025-08-29	Total Wireless	109.69230769230771	0.0	299.0	2.725806451612903
+2025-07-11	Verizon	414.33456193353493	0.0	1100.0	2.6548593843263681
+2025-09-05	Total Wireless	93.916666666666671	0.0	249.0	2.6512866015971603
+2025-08-22	AT&T	485.02574712643661	0.99	1250.0	2.5771827730913217
+2025-08-08	Total Wireless	77.384615384615387	0.0	199.0	2.5715705765407555
+2025-08-08	AT&T	429.13724137931035	0.99	1100.0	2.5632825444476408
+2025-07-18	AT&T	430.43670454545452	0.0	1100.0	2.5555441447810803
+2025-08-08	Verizon	445.57672839506188	0.0	1100.0	2.4687106168271575
+2025-08-15	AT&T	453.38704225352137	0.99	1100.0	2.4261831448303957
+2025-07-18	Verizon	454.11428571428576	0.0	1100.0	2.4222977224109723
+2025-08-29	Straight Talk	124.43749999999999	0.0	299.0	2.4028126569563035
+2025-09-05	Straight Talk	124.4375	0.0	299.0	2.4028126569563035
+2025-08-22	Straight Talk	124.75	0.0	299.0	2.3967935871743489
+2025-08-22	Xfinity	460.11999999999995	5.0	1100.0	2.3906806919933934
+2025-08-01	Verizon	462.15223880597034	5.0	1100.0	2.3801680650557731
+2025-08-01	AT&T	463.49973333333338	0.99	1100.0	2.3732483988484132
+2025-08-29	Verizon	463.94885906040275	0.0	1100.0	2.3709509755617009
+2025-09-05	Verizon	468.14355704697988	0.0	1100.0	2.3497065877371694
+2025-07-11	Xfinity	469.43661971830988	0.0	1100.0	2.3432343234323429
+2025-08-22	Verizon	475.95642384105952	0.0	1100.0	2.3111359462758991
+2025-08-01	Total Wireless	86.785714285714292	0.0	199.0	2.2930041152263372
+2025-07-25	Total Wireless	87.285714285714292	0.0	199.0	2.2798690671031094
+2025-07-18	Xfinity	482.64227642276404	5.0	1100.0	2.279120694011624
+2025-08-01	Xfinity	484.076923076923	5.0	1100.0	2.2723661210869226
+2025-07-25	AT&T	485.97799999999984	0.0	1100.0	2.2634769475161436
+2025-07-25	Xfinity	487.07142857142873	5.0	1100.0	2.2583956591875634
+2025-08-08	Xfinity	487.910447761194	5.0	1100.0	2.2545120832058734
+2025-08-29	Xfinity	488.3478260869565	10.0	1100.0	2.2524928774928776
+2025-07-25	Verizon	494.66730263157865	0.0	1100.0	2.2237168176431195
+2025-07-18	Total Wireless	91.285714285714263	15.0	199.0	2.1799687010954623
+2025-09-05	Xfinity	459.80314960629926	5.0	1000.0	2.1748437366212858
+2025-08-08	T-Mobile Prepaid	70.714285714285708	5.0	150.0	2.1212121212121215
+2025-07-03	Total Wireless	94.928571428571431	15.0	199.0	2.0963130173062452
+2025-07-03	AT&T	538.98205882352954	2.99	1100.0	2.0408842594891565
+2025-08-01	T-Mobile Prepaid	73.63636363636364	10.0	150.0	2.0370370370370368
+2025-08-22	T-Mobile Prepaid	74.0	10.0	150.0	2.0270270270270272
+2025-08-15	T-Mobile Prepaid	74.444444444444443	5.0	150.0	2.0149253731343282
+2025-09-05	T-Mobile Prepaid	74.444444444444443	5.0	150.0	2.0149253731343282
+2025-08-29	T-Mobile Prepaid	74.444444444444443	5.0	150.0	2.0149253731343282
+2025-07-11	Total Wireless	101.07692307692307	29.0	199.0	1.9687975646879758
+2025-07-03	Xfinity	423.78378378378386	5.0	830.0	1.9585459183673466
+2025-07-03	Verizon	528.35492187499983	5.0	1000.0	1.8926671421007104
+2025-07-11	T-Mobile Prepaid	80.0	15.0	150.0	1.875
+2025-08-15	Xfinity	447.32954545454555	5.0	830.0	1.8554553537406322
+2025-07-18	T-Mobile Prepaid	84.615384615384613	15.0	150.0	1.7727272727272727
+2025-07-25	T-Mobile Prepaid	84.615384615384613	15.0	150.0	1.7727272727272727
+2025-08-15	T-Mobile	671.4380165289258	0.0	1100.0	1.6382748264487219
+2025-08-08	T-Mobile	673.01234567901213	0.0	1100.0	1.6344425285247832
+2025-08-01	T-Mobile	683.58536585365846	0.0	1100.0	1.609162593213687
+2025-07-25	T-Mobile	694.82022471910125	10.0	1100.0	1.5831433237924284
+2025-07-18	T-Mobile	703.3818181818184	10.0	1100.0	1.5638732357958947
+2025-07-11	T-Mobile	713.14736842105253	10.0	1100.0	1.5424581912648159
+2025-09-05	T-Mobile	669.658914728682	10.0	1000.0	1.4932975250619316
+2025-08-29	T-Mobile	673.20863309352546	0.0	1000.0	1.485423612892194
+2025-08-22	T-Mobile	682.42068965517251	10.0	1000.0	1.465371749653869
+2025-07-03	T-Mobile Prepaid	102.5	75.0	150.0	1.4634146341463414
+2025-07-03	T-Mobile	692.53038674033144	10.0	1000.0	1.4439799597919394
 
 
 -- Week-over-week volatility — a carrier whose total_offer_count swings
@@ -132,3 +976,9 @@ FROM ranked
 WHERE prior_count IS NOT NULL
   AND (SAFE_DIVIDE(total_offer_count, prior_count) > 2 OR SAFE_DIVIDE(total_offer_count, prior_count) < 0.5)
 ORDER BY report_date DESC;
+output:
+carrier	report_date	prior_count	total_offer_count	ratio
+AT&T	2025-07-18	205	93	0.45365853658536587
+Verizon	2025-07-18	380	143	0.37631578947368421
+AT&T	2025-07-11	71	205	2.887323943661972
+Verizon	2025-07-11	160	380	2.375
