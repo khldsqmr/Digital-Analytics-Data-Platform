@@ -1,96 +1,22 @@
-SELECT 'majorOfferChanges' AS source_table, row_id, report_date, carrier, description AS detail
-FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE carrier = 'Verizon' AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
-UNION ALL
-SELECT 'ciHeadlines', row_id, report_date, carrier, headline_detail
-FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly`
-WHERE carrier = 'Verizon' AND (headline_detail LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
-UNION ALL
-SELECT 'carrierOfferGrid', row_id, report_date, carrier, item_name
-FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
-WHERE carrier = 'Verizon' AND (item_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
-UNION ALL
-SELECT 'postpaidDeviceOffers', row_id, report_date, carrier, item_name
-FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE carrier = 'Verizon' AND (item_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
-UNION ALL
-SELECT 'postpaidServiceOffers', row_id, report_date, carrier, detail
-FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
-WHERE carrier = 'Verizon' AND (detail LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%')
-
-
--- review first
-SELECT row_id, report_date, run_id, carrier, description
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE carrier = 'Verizon'
-  AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
--- apply
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-SET carrier = 'Tracfone'
-WHERE carrier = 'Verizon'
-  AND (description LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
-
--- review first
-SELECT row_id, report_date, run_id, carrier, headline_title, headline_detail
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
-WHERE carrier = 'Verizon'
-  AND (headline_detail LIKE '%Tracfone%' OR headline_title LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
--- apply
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
-SET carrier = 'Tracfone'
-WHERE carrier = 'Verizon'
-  AND (headline_detail LIKE '%Tracfone%' OR headline_title LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
-
--- review first
-SELECT row_id, report_date, run_id, carrier, item_name, item_group
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
-WHERE carrier = 'Verizon'
-  AND (item_name LIKE '%Tracfone%' OR item_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
--- apply
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
-SET carrier = 'Tracfone'
-WHERE carrier = 'Verizon'
-  AND (item_name LIKE '%Tracfone%' OR item_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
-
--- review first
-SELECT row_id, report_date, run_id, carrier, item_name, device_group
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE carrier = 'Verizon'
-  AND (item_name LIKE '%Tracfone%' OR device_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
--- apply
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-SET carrier = 'Tracfone'
-WHERE carrier = 'Verizon'
-  AND (item_name LIKE '%Tracfone%' OR device_group LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
-
--- review first
-SELECT row_id, report_date, run_id, carrier, feature_name, detail
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
-WHERE carrier = 'Verizon'
-  AND (detail LIKE '%Tracfone%' OR feature_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
--- apply
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly`
-SET carrier = 'Tracfone'
-WHERE carrier = 'Verizon'
-  AND (detail LIKE '%Tracfone%' OR feature_name LIKE '%Tracfone%' OR llm_extraction_raw LIKE '%Tracfone%');
-
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier = 'Tracfone'
-UNION DISTINCT
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier = 'Tracfone'
-UNION DISTINCT
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE carrier = 'Tracfone'
-UNION DISTINCT
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE carrier = 'Tracfone'
-UNION DISTINCT
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'Tracfone'
-ORDER BY report_date;
-
-report_date
-2025-07-03
-2025-08-29
-
-
-from datetime import date
-
-for d in [date(2025, 7, 3), date(2025, 8, 29)]:
-    refresh_gold_for_date(d)
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 12 of 12 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 13 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 404 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 426 of 426 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 512 of 512 rows gold-eligible
+Refreshing gold for 2025-08-29 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 17 of 17 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 9 of 9 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 40 of 41 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 384 of 384 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 32 of 32 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 64 of 64 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 420 of 420 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 469 of 469 rows gold-eligible
