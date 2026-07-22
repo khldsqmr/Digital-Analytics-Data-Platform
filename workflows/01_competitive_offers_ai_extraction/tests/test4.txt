@@ -88,3 +88,9 @@ ORDER BY report_date;
 report_date
 2025-07-03
 2025-08-29
+
+
+from datetime import date
+
+for d in [date(2025, 7, 3), date(2025, 8, 29)]:
+    refresh_gold_for_date(d)
