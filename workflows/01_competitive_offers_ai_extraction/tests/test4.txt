@@ -1,16 +1,61 @@
-SELECT carrier, COUNT(*) AS n
+-- review first
+SELECT row_id, carrier, description
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
 WHERE report_date = '2025-07-03'
+  AND carrier IN ('VERIZON', 'T-MOBILE', 'METRO', 'VISIBLE', 'BOOST', 'CRICKET', 'TOTAL WIRELESS')
+ORDER BY carrier;
+
+
+-- apply the case-normalization fix
+UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+SET carrier = CASE carrier
+  WHEN 'VERIZON' THEN 'Verizon'
+  WHEN 'T-MOBILE' THEN 'T-Mobile'
+  WHEN 'METRO' THEN 'Metro by T-Mobile'
+  WHEN 'VISIBLE' THEN 'Visible'
+  WHEN 'BOOST' THEN 'Boost Mobile'
+  WHEN 'CRICKET' THEN 'Cricket Wireless'
+  WHEN 'TOTAL WIRELESS' THEN 'Total Wireless'
+  ELSE carrier
+END
+WHERE report_date = '2025-07-03'
+  AND carrier IN ('VERIZON', 'T-MOBILE', 'METRO', 'VISIBLE', 'BOOST', 'CRICKET', 'TOTAL WIRELESS');
+
+refresh_gold_for_date(date(2025, 7, 3))
+check_segment_carrier_consistency(date(2025, 7, 3))
+
+
+def normalize_carrier(carrier, known_carriers=None):
+    """..."""
+    known_carriers = known_carriers or get_known_carriers()
+    if not carrier:
+        return carrier
+    if carrier in known_carriers:
+        return carrier
+    if carrier in CARRIER_SYNONYMS and CARRIER_SYNONYMS[carrier] in known_carriers:
+        return CARRIER_SYNONYMS[carrier]
+    stripped = re.sub(r"\s+Mobile$", "", carrier, flags=re.IGNORECASE).strip()
+    if stripped in known_carriers:
+        return stripped
+    # v28 FIX: case-insensitive fallback — confirmed real cause of a historical
+    # gold-eligibility gap: a source page printed carrier names in ALL CAPS
+    # (VERIZON, T-MOBILE, METRO, VISIBLE, BOOST, CRICKET, TOTAL WIRELESS),
+    # the model copied that casing verbatim despite the prompt's explicit
+    # "use these exact names" instruction, and none of it matched any known
+    # carrier — 34 otherwise-clean rows silently failed gold eligibility with
+    # zero review flag (pre-v27, no flag path existed for this case at all).
+    lower_map = {kc.lower(): kc for kc in known_carriers}
+    if carrier.lower() in lower_map:
+        return lower_map[carrier.lower()]
+    return carrier
+
+
+
+-- Every historical row where the guard passed but the carrier still isn't
+-- known — this is the true signature of the pre-v27 majorOfferChanges gap
+SELECT report_date, run_id, carrier, COUNT(*) AS n
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
+WHERE values_agree = TRUE
   AND carrier NOT IN (SELECT carrier_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`)
-GROUP BY carrier
-ORDER BY n DESC;
-
-
-carrier	n
-VERIZON	16
-T-MOBILE	5
-METRO	5
-VISIBLE	3
-BOOST	2
-CRICKET	2
-TOTAL WIRELESS	1
+GROUP BY report_date, run_id, carrier
+ORDER BY report_date, n DESC;
