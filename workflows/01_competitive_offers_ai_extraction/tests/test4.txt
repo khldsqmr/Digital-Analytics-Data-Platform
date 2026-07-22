@@ -1,74 +1,73 @@
 PROJECT: prj-dbi-prd-1
-DATASET: ds_dbi_digitalmedia_automation
 
 
 === CORE GOLD TABLES (one per page type) ===
 
-sdi_competitiveOffers_gold_ciHeadlines_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_ciHeadlines_weekly`
   What it holds: Narrative CI headline bullets per carrier
   Key columns: report_date, carrier, section, headline_title, headline_detail, has_changes
 
-sdi_competitiveOffers_gold_nationalRetailReadout_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_nationalRetailReadout_weekly`
   What it holds: Best Buy / Walmart retail promo call-outs
   Key columns: report_date, retailer, device, discount_amount, carrier_service
 
-sdi_competitiveOffers_gold_majorOfferChanges_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly`
   What it holds: Week-over-week diff — what was introduced/removed
   Key columns: report_date, segment, carrier, change_type, description, has_change
 
-sdi_competitiveOffers_gold_voicePlanComparison_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_voicePlanComparison_weekly`
   What it holds: Business voice plan pricing matrix (Good/Better/Best)
   Key columns: report_date, lines, tier, carrier, plan_name, price
 
-sdi_competitiveOffers_gold_businessInternetComparison_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_businessInternetComparison_weekly`
   What it holds: Business internet plan spec/pricing comparison
   Key columns: report_date, carrier, plan_tier, metric_name, metric_value
 
-sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly`
   What it holds: Metro by T-Mobile phone price grid
   Key columns: report_date, device_name, connection_type, plan_price_tier, device_price
 
-sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly`
   What it holds: Metro watch/tablet/gateway/hotspot pricing
   Key columns: report_date, device_name, device_category, ban_status, price
 
-sdi_competitiveOffers_gold_postpaidServiceOffers_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidServiceOffers_weekly`
   What it holds: Narrative service-level features (BYOD, 5G news, etc.)
   Key columns: report_date, carrier, category, feature_name, detail
 
-sdi_competitiveOffers_gold_carrierOfferGrid_weekly   [LARGEST TABLE]
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`   [LARGEST TABLE]
   What it holds: BTS / cable MVNO / prepaid brand offer grid
   Key columns: report_date, page_type, carrier, item_name, plan_tier, offer_type, offer_amount, offer_amount_numeric
 
-sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly   [2ND LARGEST TABLE]
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`   [2ND LARGEST TABLE]
   What it holds: Postpaid smartphone/tablet trade-in offers (Apple, Samsung/Google, Motorola, Business)
   Key columns: report_date, device_category, carrier, item_name, plan_tier, offer_type, offer_amount, offer_amount_numeric
 
 
 === INSIGHT TABLES (pre-aggregated, built only from carrierOfferGrid + postpaidDeviceOffers) ===
 
-sdi_competitiveOffers_insights_offerCountsByCarrier_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
   What it holds: Total offer count, distinct devices, distinct offer types — per carrier per week
 
-sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
   What it holds: Offer count broken down by offer_type (discount, trade-in credit, bogo, etc.)
 
-sdi_competitiveOffers_insights_offerCountsByDevice_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`
   What it holds: Offer count + distinct carrier count per device — good for "who's competing on what"
 
-sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
   What it holds: Cross-tab of carrier x device offer counts
 
-sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
   What it holds: avg/min/max dollar offer amount per carrier per week
 
 
 === REFERENCE / CONTROL TABLES (not analytical, but useful context) ===
 
-sdi_competitiveOffers_control_knownCarriers
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
   Purpose: Carrier name -> segment (postpaid/prepaid/cable_mvno) mapping — useful for JOINs to group by segment
 
-sdi_competitiveOffers_control_offerTypeCategories
+`ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_offerTypeCategories`
   Purpose: The canonical offer-type taxonomy (discount, trade-in credit, etc.)
 
 
