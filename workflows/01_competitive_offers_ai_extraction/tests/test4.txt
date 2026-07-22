@@ -13,10 +13,42 @@ VALUES (
   'with Straight Talk/Total Wireless, which are also Verizon-owned but tracked separately. '
   'Previously mapped via a Tracfone->Verizon synonym, which caused a false postpaid/prepaid '
   'contradiction (segment=prepaid, carrier=Verizon) since normalize_carrier() has no way to '
-  'know a synonym target segment. normalize_carrier() checks known-carrier membership before '
+  'know a synonym taarget segment. normalize_carrier() checks known-carrier membership before '
   'synonyms, so this supersedes the old synonym mapping without needing to delete it.'
 );
 
 #force the refresh manually so it actually sees the row:
 load_known_carriers(force_refresh=True)
 
+(['T-Mobile',
+  'Verizon',
+  'AT&T',
+  'Xfinity',
+  'Spectrum',
+  'Comcast',
+  'Optimum',
+  'Metro by T-Mobile',
+  'Boost Mobile',
+  'Cricket Wireless',
+  'Straight Talk',
+  'Total Wireless',
+  'T-Mobile Prepaid',
+  'AT&T Prepaid',
+  'Verizon Prepaid',
+  'mobileX',
+  'Consumer Cellular',
+  'Google Fi',
+  'Tracfone'],
+ {'AT&T Prepaid',
+  'Boost Mobile',
+  'Consumer Cellular',
+  'Cricket Wireless',
+  'Google Fi',
+  'Metro by T-Mobile',
+  'Straight Talk',
+  'T-Mobile Prepaid',
+  'Total Wireless',
+  'Tracfone',
+  'Verizon Prepaid',
+  'mobileX'},
+ {'AT&T', 'T-Mobile', 'Verizon'})
