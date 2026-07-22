@@ -1,15 +1,41 @@
-SELECT 'majorOfferChanges' AS t, report_date, COUNT(*) AS n FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
-UNION ALL
-SELECT 'ciHeadlines', report_date, COUNT(*) FROM `sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
-UNION ALL
-SELECT 'carrierOfferGrid', report_date, COUNT(*) FROM `sdi_competitiveOffers_silver_carrierOfferGrid_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
-UNION ALL
-SELECT 'postpaidDeviceOffers', report_date, COUNT(*) FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
-UNION ALL
-SELECT 'postpaidServiceOffers', report_date, COUNT(*) FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
-ORDER BY t, report_date;
+-- 1. Duplicate manifest run_id for this date? (same failure class as the
+--    "Append" scenario flagged earlier for 2025-07-03)
+SELECT report_date, run_id, status, uploaded_at
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_bronze_uploadManifest_weekly`
+WHERE report_date = '2025-07-11'
+ORDER BY uploaded_at;
 
-t	report_date	n
-ciHeadlines	2025-07-03	2
-ciHeadlines	2025-08-29	3
-majorOfferChanges	2025-08-29	8
+-- 2. Literal duplicate offers in silver that dedupe_by_keys should have
+--    caught but didn't (e.g. offer_amount differed slightly between two
+--    near-identical records due to a strikethrough/old-price artifact)
+SELECT carrier, item_name, plan_tier, offer_amount, COUNT(*) AS n
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_carrierOfferGrid_weekly`
+WHERE report_date = '2025-07-11' AND carrier IN ('AT&T', 'Verizon')
+GROUP BY carrier, item_name, plan_tier, offer_amount
+HAVING COUNT(*) > 1
+ORDER BY n DESC;
+
+-- 3. Same check against postpaidDeviceOffers (iPhone 16 lives here, not carrierOfferGrid)
+SELECT carrier, item_name, plan_tier, offer_amount, COUNT(*) AS n
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE report_date = '2025-07-11' AND carrier IN ('AT&T', 'Verizon')
+GROUP BY carrier, item_name, plan_tier, offer_amount
+HAVING COUNT(*) > 1
+ORDER BY n DESC;
+
+WITH gold_counts AS (
+  SELECT report_date, carrier, COUNT(*) AS actual_gold_count
+  FROM (
+    SELECT report_date, carrier FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`
+    UNION ALL
+    SELECT report_date, carrier FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`
+  )
+  GROUP BY report_date, carrier
+)
+SELECT i.report_date, i.carrier, i.total_offer_count, COALESCE(g.actual_gold_count, 0) AS actual_gold_count
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly` i
+LEFT JOIN gold_counts g ON i.report_date = g.report_date AND i.carrier = g.carrier
+WHERE i.report_date IN ('2025-07-03', '2025-08-29')
+  AND i.total_offer_count <> COALESCE(g.actual_gold_count, 0)
+ORDER BY i.report_date, i.carrier;
+
