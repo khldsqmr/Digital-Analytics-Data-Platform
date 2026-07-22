@@ -1,57 +1,15 @@
-def normalize_carrier(carrier, known_carriers=None):
-    """Collapses naming variants back to the grounded canonical name, when
-    the canonical name is already known. Four layers, in order:
-    1. Already canonical — no-op.
-    2. CARRIER_SYNONYMS — explicit, human-curated mappings for names that
-       don't fit a simple pattern (sub-brands, mergers, legacy names).
-    3. Strip a trailing 'Mobile' suffix — the model sometimes copies a
-       page's own column header verbatim (e.g. 'Optimum Mobile', 'Xfinity
-       Mobile') instead of the canonical name the prompt asked for; this was
-       a real, confirmed issue that flooded new_carrier flags on cable MVNO
-       pages before this heuristic existed.
-    4. Case-insensitive fallback — confirmed real cause of a historical
-       gold-eligibility gap: a source page printed carrier names in ALL CAPS
-       (VERIZON, T-MOBILE, METRO, VISIBLE, BOOST, CRICKET, TOTAL WIRELESS),
-       the model copied that casing verbatim despite the prompt's explicit
-       "use these exact names" instruction, and none of it matched any known
-       carrier — 34 otherwise-clean majorOfferChanges rows for the 2025-07-03
-       report silently failed gold eligibility with zero review flag (this
-       was pre-v27, when no flag path even existed for an unknown carrier on
-       that table — the case mismatch is what caused it to go unnoticed even
-       after v27 added the missing flag, since it never got the chance to
-       fire on THIS specific historical run's already-extracted data)."""
-    known_carriers = known_carriers or get_known_carriers()
-    if not carrier:
-        return carrier
-    if carrier in known_carriers:
-        return carrier
-    if carrier in CARRIER_SYNONYMS and CARRIER_SYNONYMS[carrier] in known_carriers:
-        return CARRIER_SYNONYMS[carrier]
-    stripped = re.sub(r"\s+Mobile$", "", carrier, flags=re.IGNORECASE).strip()
-    if stripped in known_carriers:
-        return stripped
-    lower_map = {kc.lower(): kc for kc in known_carriers}
-    if carrier.lower() in lower_map:
-        return lower_map[carrier.lower()]
-    return carrier
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 12 of 12 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 47 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 404 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 426 of 426 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 512 of 512 rows gold-eligible
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
 
-
-SELECT row_id, carrier, segment, change_type, description
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE report_date = '2025-07-03'
-  AND segment = 'prepaid'
-  AND carrier IN ('AT&T', 'T-Mobile', 'Verizon')
-  AND description = 'No changes';
-
-UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-SET carrier = CASE carrier
-  WHEN 'AT&T' THEN 'AT&T Prepaid'
-  WHEN 'T-Mobile' THEN 'T-Mobile Prepaid'
-  WHEN 'Verizon' THEN 'Verizon Prepaid'
-END
-WHERE report_date = '2025-07-03'
-  AND segment = 'prepaid'
-  AND carrier IN ('AT&T', 'T-Mobile', 'Verizon')
-  AND description = 'No changes';
-
-refresh_gold_for_date(date(2025, 7, 3))
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
