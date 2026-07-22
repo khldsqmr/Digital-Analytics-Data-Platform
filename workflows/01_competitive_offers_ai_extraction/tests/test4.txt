@@ -5,6 +5,26 @@ WHERE report_date = '2025-07-11'
   AND page_type LIKE 'postpaid_device_offers%'
 ORDER BY page_number;
 
+output:
+run_id	page_number	page_type
+996c8e08-b663-48bb-9df0-29e600c717f4	10	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	11	postpaid_device_offers_samsung_google
+996c8e08-b663-48bb-9df0-29e600c717f4	12	postpaid_device_offers_samsung_google
+996c8e08-b663-48bb-9df0-29e600c717f4	32	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	33	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	34	postpaid_device_offers_wearables
+996c8e08-b663-48bb-9df0-29e600c717f4	35	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	38	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	39	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	40	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	41	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	42	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	43	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	44	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	45	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	46	postpaid_device_offers_apple
+996c8e08-b663-48bb-9df0-29e600c717f4	47	postpaid_device_offers_apple
+
 
 -- Which page did the SURVIVING copy of each pair come from?
 SELECT row_id, source_page, carrier, item_name, offer_amount
@@ -13,43 +33,102 @@ WHERE report_date = '2025-07-11'
   AND carrier IN ('AT&T', 'Verizon') AND item_name = 'Android Flagships'
 ORDER BY carrier, offer_amount;
 
+row_id	source_page	carrier	item_name	offer_amount
+07d878e8-8d06-472c-8e70-ca515b9b9b51	11	AT&T	Android Flagships	$200
+7a50ed19-73e2-44a6-ad04-a62c61e5904a	11	AT&T	Android Flagships	$800
+05a07fe5-8f0f-42bf-acec-e8ef36cc55d3	11	Verizon	Android Flagships	$200
+cbb40ef9-5292-44c4-a52b-bd12e45a64e2	11	Verizon	Android Flagships	$800
 
-def dedupe_across_pages(rows, review_rows, key_fields):
-    """Cross-page/run-level dedup — a second pass after per-page
-    dedupe_by_keys, needed because that function only ever sees ONE page's
-    model response at a time. Confirmed real gap: two separate bronze pages
-    sharing the same page_type (e.g. two 'postpaid_device_offers_
-    samsung_google' pages) can each independently extract the identical
-    offer — confirmed by matching sample output across two different page
-    numbers in the same run's log (2025-08-08, pages 11 & 12). Since
-    dedupe_by_keys never sees page N+1's output while deduping page N, a
-    duplicate spanning two pages sails through untouched and inflates every
-    downstream count (this is what caused the 2025-07-11 volatility spike
-    in offerCountsByCarrier).
+This is what i have for dedupe functions:
+def dedupe_review_rows(rows: list) -> list:
+    """Collapses review flags that share the same (source_page, carrier,
+    offer_amount, flag_reason, detail) into one representative row. Confirmed
+    real cause of inflated review volume: one offer applying to several
+    devices (device_group/item_group fan-out) gets emitted as N separate
+    silver rows by design — correct for the data — but when the shared
+    offer_amount fails the guard, that's N near-identical flags for what a
+    reviewer would recognize as one question, not N different ones. One flag
+    noting how many items it affects is just as actionable and far less
+    exhausting to review.
 
-    Keeps the FIRST occurrence (pages are processed in page-number order
-    into `rows`) and drops the rest, then filters review_rows to match —
-    a review flag pointing at a dropped row_id would otherwise dangle."""
-    seen, kept_rows = set(), []
-    dropped_row_ids = set()
+    "detail" is part of the key for a real, confirmed reason: major_offer_
+    changes' offer_amount is always None (it guards "description", not an
+    amount), so without detail in the key, EVERY unrelated amount_mismatch
+    for the same carrier on the same page collapsed into one group —
+    confirmed to cause resolve_amount_mismatches to judge one representative
+    description as grounded and incorrectly apply that verdict to entirely
+    different, unrelated descriptions bundled into the same group, some of
+    which had NOT been shown to be grounded at all. Every other table's
+    detail is a generic, fixed string per flag_reason (not per-item), so
+    including it here doesn't change their existing correct collapsing
+    behavior at all — this only tightens the case that was actually broken.
+
+    Also assigns review_row_id (unique per output row) and collects
+    silver_row_ids (every underlying silver row this flag traces back to,
+    from each input row's own "silver_row_id" if present) — this is what
+    lets Phase 2 resolve a flag by updating the exact silver row(s), not by
+    re-matching on carrier/item_name/offer_amount, which isn't reliably
+    unique across this pipeline's tables."""
+    grouped = {}
+    order = []
     for r in rows:
-        sig = tuple(r.get(k) for k in key_fields)
+        key = (r.get("source_page"), r.get("carrier"), r.get("offer_amount"),
+               r.get("flag_reason"), r.get("detail"))
+        if key not in grouped:
+            grouped[key] = {**r, "_affected_items": [r.get("item_name")],
+                             "_silver_row_ids": [r["silver_row_id"]] if r.get("silver_row_id") else []}
+            order.append(key)
+        else:
+            grouped[key]["_affected_items"].append(r.get("item_name"))
+            if r.get("silver_row_id"):
+                grouped[key]["_silver_row_ids"].append(r["silver_row_id"])
+    out = []
+    for key in order:
+        g = grouped[key]
+        items = g.pop("_affected_items")
+        silver_row_ids = g.pop("_silver_row_ids")
+        g.pop("silver_row_id", None)  # superseded by the silver_row_ids string below
+        if len(items) > 1:
+            shown = [str(i) for i in items[:8] if i]
+            more = f", +{len(items) - len(shown)} more" if len(items) > len(shown) else ""
+            g["item_name"] = f"{items[0]} (+{len(items) - 1} more item(s) with this same offer)"
+            g["detail"] = f"{g.get('detail') or ''} — affects {len(items)} items: {', '.join(shown)}{more}".strip(" —")
+        g["review_row_id"] = str(uuid.uuid4())
+        g["silver_row_ids"] = ",".join(silver_row_ids) if silver_row_ids else None
+        g["resolved_at"] = None
+        g["resolution_note"] = None
+        out.append(g)
+    return out
+
+# ---- 2h. Dedup ---------------------------------------------------------------
+
+def dedupe_generic(items: list) -> list:
+    """Exact-duplicate removal for records within one model response — dense
+    pages have shown the same block of records repeated 2-3x in a single
+    response, likely a generation-length artifact on long structured outputs."""
+    seen, out = set(), []
+    for it in items:
+        key = tuple(sorted(it.items()))
+        if key not in seen:
+            seen.add(key)
+            out.append(it)
+    if len(out) < len(items):
+        print(f"  (removed {len(items) - len(out)} exact-duplicate record(s) from model response)")
+    return out
+
+and thiese too:
+def dedupe_by_keys(items: list, key_fields: list) -> list:
+    """Narrower dedup for cases where two records can be 'the same row' despite
+    differing on free-text fields the model can rephrase between repeats
+    (device_group, offer_condition) — matching on those was letting real
+    duplicates slip through. Used by the carrier-grid and device-offers
+    extractors specifically."""
+    seen, out = set(), []
+    for it in items:
+        sig = tuple(it.get(k) for k in key_fields)
         if sig not in seen:
             seen.add(sig)
-            kept_rows.append(r)
-        else:
-            dropped_row_ids.add(r["row_id"])
-    if dropped_row_ids:
-        print(f"  (cross-page dedup: removed {len(dropped_row_ids)} duplicate record(s) "
-              f"that spanned more than one page)")
-    kept_review_rows = [rr for rr in review_rows if rr.get("silver_row_id") not in dropped_row_ids]
-    return kept_rows, kept_review_rows
-
-
-
-# In run_device_offers_extraction, right before the if all_rows: write block:
-if all_rows:
-        all_rows, all_review_rows = dedupe_across_pages(all_rows, all_review_rows, DEVICE_OFFERS_DEDUPE_KEYS)
-        delete_silver_rows_for_date(SILVER_DEVICE_OFFERS_TABLE, report_date)
-        write_rows(SILVER_DEVICE_OFFERS_TABLE, all_rows)
-        ...
+            out.append(it)
+    if len(out) < len(items):
+        print(f"  (removed {len(items) - len(out)} exact-duplicate record(s) from model response)")
+    return out
