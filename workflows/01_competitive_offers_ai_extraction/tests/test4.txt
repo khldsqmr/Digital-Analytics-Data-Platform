@@ -58,7 +58,28 @@ WHERE report_date = '2025-07-03'
 
 refresh_gold_for_date(date(2025, 7, 3))
 check_segment_carrier_consistency(date(2025, 7, 3))
+output:
+Refreshing gold for 2025-07-03 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 12 of 12 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 47 of 47 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 404 of 404 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 426 of 426 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 512 of 512 rows gold-eligible
+majorOfferChanges: 6 contradiction(s) found — segment doesn't match what this carrier can actually be:
+  segment='prepaid' but carrier='AT&T' -> introduced: No changes
+  segment='prepaid' but carrier='T-Mobile' -> introduced: No changes
+  segment='prepaid' but carrier='Verizon' -> introduced: No changes
+  segment='prepaid' but carrier='AT&T' -> removed: No changes
+  segment='prepaid' but carrier='T-Mobile' -> removed: No changes
+  segment='prepaid' but carrier='Verizon' -> removed: No changes
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
 
+Each contradiction above is a genuine misattribution (these carrier/segment combinations cannot both be true) — worth tracing back to the source page the same way the Watch7 case was originally diagnosed.
 
 def normalize_carrier(carrier, known_carriers=None):
     """..."""
