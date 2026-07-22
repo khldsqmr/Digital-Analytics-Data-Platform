@@ -1,1 +1,4 @@
-load_known_carriers(force_refresh=True)
+from datetime import date
+for d in [date(2025, 7, 3), date(2025, 8, 29)]:
+    refresh_gold_for_date(d)
+    check_segment_carrier_consistency(d)
