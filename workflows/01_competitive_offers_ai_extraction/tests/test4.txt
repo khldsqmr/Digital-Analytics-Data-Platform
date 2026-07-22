@@ -4,7 +4,42 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_
 WHERE report_date = '2025-07-03'
   AND carrier IN ('VERIZON', 'T-MOBILE', 'METRO', 'VISIBLE', 'BOOST', 'CRICKET', 'TOTAL WIRELESS')
 ORDER BY carrier;
-
+output:
+row_id	carrier	description
+6e1339cd-f7e7-4e76-b1e7-20ab1f860915	BOOST	"ONLINE: Multi-Line Pricing for $50 UNL Plus/$60 UNL Premium - same as in-store pricing; savings on 2 lines/$20, 3-lines/$40, 4-lines/$60, 5-lines/$80; limit 3 lines in initial order for new customers"
+9289fae6-767c-4ca8-8ed0-4ce08aff51f2	BOOST	No changes
+35f56000-c2df-456a-89af-3b9b79b97d6f	CRICKET	iPhone 13 - $29 for new customers w/port & $60 rate plan ...returns to $49
+642ed808-ea39-4f4b-9b8a-9ee437f3d0dc	CRICKET	Galaxy A16 5G - $19.99 for new lines with activation on $60 rate plan ...was $59
+2c57473b-4f9f-4a00-b7b9-89129e8ebc9c	METRO	Tab A9+ $49 for existing customers w/$20RP ...was free
+675a6498-e1b8-4763-9889-607b25dc710e	METRO	"RETAIL: iPhone 13 ""on Us"" - $49 OTD with $50 VPM after 3mos; req. $50+ plan w/ID and port"
+00e9ad8b-ac94-48c8-a5aa-fd37fc75b076	METRO	RETAIL: HINT $100 VPM after 3 months w/new service; for base customers
+f340c0ab-2021-4e34-851a-b7412a22fa74	METRO	RETAIL: iPhone 13 on Us - $50+ plan/ID/Port
+bfb1e687-ca9a-4c54-9505-dda6cdd05582	METRO	"Free TCL Tab 8 w/ $10RP new/existing ...returns to $20/new, $15/existing"
+c8071595-2094-450b-be58-e05f55c4b554	T-MOBILE	Digital Only: $99 iPad A16 w/ $25 plan
+8eb35d50-83f8-47d0-be3f-888b5913efb4	T-MOBILE	Digital Only $99 Tab S10 FE w/ $25 plan
+87085a70-000e-4ea5-a0a0-93557cb57197	T-MOBILE	No changes
+d43bd538-b7ff-415e-97e1-2a581759220d	T-MOBILE	No changes
+82c5d025-b729-4ba6-ac56-0af7c6ed1b69	T-MOBILE	No expired offers
+1eac5637-d9a8-4f66-9914-da35479141bc	TOTAL WIRELESS	Brought back in-store activation fee - $25/line or $50 cap for 2 or more lines
+47457adb-5695-4213-abff-9b2e8fb72735	VERIZON	Any Phone in Any Condition Trade-in construct
+70d6aea7-9436-43eb-ba6b-01fd378e97ef	VERIZON	Online Only: $300 New Line Verizon GC (limit 1 per account)
+3f040d35-b617-4504-af30-309effdf08a7	VERIZON	Examples of values for iPhone 16 series
+baf21b5a-a736-4d33-8329-41dba9e19b4c	VERIZON	Free Tablet or Watch w/ smartphone purchase
+281619b4-ca41-4d98-aeea-bb5f9b337857	VERIZON	New Account line credits ($10 - $20 off per month for 36 months
+4424a410-51c5-4f17-ab52-291111d74594	VERIZON	Online Only: $35 Activation Fee waiver
+320d4f0c-4267-49be-9080-3fc3fa8895af	VERIZON	Welcome: $600 (top)/$360 (lower)
+979418fc-3682-456d-a9b2-d40e69686246	VERIZON	"Ultimate: $1,000 (top)/$600 (lower)"
+2f9eb1cf-1525-4a40-ae50-d26f8f79eef2	VERIZON	"Top tier = iPhone 11, Galaxy S20, Pixel 4 or newer"
+9157656d-197d-4de0-8da9-ad95f275c017	VERIZON	Plus: $830 (top)/$450 (lower)
+6cac5ba2-197c-497c-be81-bdc1c993bbcd	VERIZON	No changes
+d2809766-f13b-4617-8fa4-92a27368107a	VERIZON	No changes
+1103abde-a633-49a6-bdad-ba44491b205e	VERIZON	"$320 off iPad, $120 off Watch w/ iPhone purchase"
+95b4cdd4-1d37-47cb-a496-f74b7571a999	VERIZON	New and existing customers qualify for same offer
+369b749d-63a6-4684-9816-77b0af817513	VERIZON	Lower tier = Phones older than listed above
+d4a28b88-5648-48bd-bdf2-58a167814eaf	VERIZON	"Trade-in Construct: Phones can still be in any condition, but model of phone + rate plan determines trade-in value (last seen September '23)"
+74beab5e-263b-4bdd-8844-2740d2e2f632	VISIBLE	3yr & 5yr Price-Lock Guarantee with $5 off Visible+ or Visible+ Pro plan
+bc780cf9-1690-4865-87de-f519e1b6ce5d	VISIBLE	No changes
+62cbeb2f-dab9-40b9-ba55-577e069678f5	VISIBLE	$5 off Visible (base) plan for 1 year w/NL
 
 -- apply the case-normalization fix
 UPDATE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
@@ -48,7 +83,27 @@ def normalize_carrier(carrier, known_carriers=None):
     if carrier.lower() in lower_map:
         return lower_map[carrier.lower()]
     return carrier
-
+this is what i have. how to update this:
+def normalize_carrier(carrier, known_carriers=None):
+    """Collapses naming variants back to the grounded canonical name, when
+    the canonical name is already known. Three layers, in order:
+    1. Already canonical — no-op.
+    2. CARRIER_SYNONYMS — explicit, human-curated mappings for names that
+       don't fit a simple pattern (sub-brands, mergers, legacy names).
+    3. Strip a trailing 'Mobile' suffix — the model sometimes copies a
+       page's own column header verbatim (e.g. 'Optimum Mobile', 'Xfinity
+       Mobile') instead of the canonical name the prompt asked for; this was
+       a real, confirmed issue that flooded new_carrier flags on cable MVNO
+       pages before this heuristic existed."""
+    known_carriers = known_carriers or get_known_carriers()
+    if not carrier:
+        return carrier
+    if carrier in known_carriers:
+        return carrier
+    if carrier in CARRIER_SYNONYMS and CARRIER_SYNONYMS[carrier] in known_carriers:
+        return CARRIER_SYNONYMS[carrier]
+    stripped = re.sub(r"\s+Mobile$", "", carrier, flags=re.IGNORECASE).strip()
+    return stripped if stripped in known_carriers else carrier
 
 
 -- Every historical row where the guard passed but the carrier still isn't
@@ -59,3 +114,5 @@ WHERE values_agree = TRUE
   AND carrier NOT IN (SELECT carrier_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`)
 GROUP BY report_date, run_id, carrier
 ORDER BY report_date, n DESC;
+
+output: There is no data to display.
