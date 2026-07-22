@@ -1,152 +1,22 @@
-from datetime import date
-repair_overbroad_tracfone_update(date(2025, 7, 3))                   # dry run — review
-repair_overbroad_tracfone_update(date(2025, 7, 3), dry_run=False)    # apply
-repair_overbroad_tracfone_update(date(2025, 8, 29))                  # dry run — review
-repair_overbroad_tracfone_update(date(2025, 8, 29), dry_run=False)   # apply
-
-
-WITH candidates AS (
-  SELECT
-    t.row_id, t.report_date, t.description, t.change_type,
-    JSON_VALUE(entry, '$.carrier') AS candidate_carrier
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t,
-  UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.changes')) AS entry
-  WHERE t.carrier = 'Tracfone'
-    AND JSON_VALUE(entry, '$.description') = t.description
-    AND JSON_VALUE(entry, '$.change_type') = t.change_type
+INSERT INTO `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
+(carrier_name, segment_type, added_by, added_at, notes)
+VALUES
+(
+  'Visible',
+  'prepaid',
+  'khalid',
+  CURRENT_TIMESTAMP(),
+  'Verizon-owned prepaid flanker brand. Recovered via the Tracfone over-broad UPDATE repair — '
+  'rows were originally extracted correctly as Visible, then incorrectly renamed to Verizon by '
+  'the earlier bad UPDATE. Was flagged as a needed addition once before (July 25 report review) '
+  'but appears to have never actually been registered, which this closes.'
 ),
-match_counts AS (
-  SELECT row_id, COUNT(DISTINCT candidate_carrier) AS distinct_carrier_count
-  FROM candidates GROUP BY row_id
-)
-SELECT c.row_id, c.report_date, c.change_type, c.description, c.candidate_carrier AS recovered_carrier,
-       m.distinct_carrier_count,
-       CASE WHEN m.distinct_carrier_count = 1 THEN 'will auto-fix' ELSE 'AMBIGUOUS — needs manual review' END AS status
-FROM candidates c JOIN match_counts m USING (row_id)
-ORDER BY m.distinct_carrier_count DESC, c.report_date;
-
-output:
-row_id	report_date	change_type	description	recovered_carrier	distinct_carrier_count	status
-fae72fe8-afe7-4a11-b74d-bfeba8389e78	2025-08-29	introduced	$15/$7.50 plan for Apple/Android watches (price unchanged; 15GB of 5G UW data)	Verizon	1	will auto-fix
-15e04a95-406a-448b-9dc6-a7b99b060050	2025-08-29	introduced	Some promos now require the $25 watch plan	Verizon	1	will auto-fix
-e2645e2e-f354-42e6-a89c-032a9fbc5662	2025-08-29	removed	CONSUMER: No expired offers	Verizon	1	will auto-fix
-2da4f118-0475-4a1f-a383-139927e54977	2025-08-29	introduced	CONSUMER: New Watch Plans	Verizon	1	will auto-fix
-f8c9a825-deed-4a5d-95e8-e86cc2f8997d	2025-08-29	introduced	"Tracfone Freedom – new unlimited plan with 15GB hotspot, Can/Mex & intl text"	Tracfone	1	will auto-fix
-7d91a21f-7822-4671-924e-09c70329614e	2025-08-29	introduced	$25/$12.50 plan for Apple/Android watches (new plan; 100GB of 5G UW data)	Verizon	1	will auto-fix
-203c26ea-170d-4f71-9344-3416b187f493	2025-08-29	introduced	Began 8/28: More data for limited data plans – and increased intl benefits including Canada; all plans get unlimited global texting; more hotspot for UNL plans.	Simple Mobile	1	will auto-fix
-1c07d6c8-3d3d-46db-a79f-6ca993dbfeb4	2025-08-29	introduced	$10 plan for Kids Watches (unchanged)	Verizon	1	will auto-fix
-
--- rows with ZERO matches at all — completely unrecoverable via this method, needs manual look
-SELECT t.row_id, t.report_date, t.change_type, t.description
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` t
-WHERE t.carrier = 'Tracfone'
-  AND NOT EXISTS (
-    SELECT 1 FROM UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.changes')) AS entry
-    WHERE JSON_VALUE(entry, '$.description') = t.description
-      AND JSON_VALUE(entry, '$.change_type') = t.change_type
-  );
-
-output:
-There is no data to display.
-
-MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t
-USING (
-  WITH candidates AS (
-    SELECT
-      t2.row_id,
-      JSON_VALUE(entry, '$.carrier') AS candidate_carrier
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` AS t2,
-    UNNEST(JSON_EXTRACT_ARRAY(t2.llm_extraction_raw, '$.changes')) AS entry
-    WHERE t2.carrier = 'Tracfone'
-      AND JSON_VALUE(entry, '$.description') = t2.description
-      AND JSON_VALUE(entry, '$.change_type') = t2.change_type
-  )
-  SELECT row_id, ANY_VALUE(candidate_carrier) AS original_carrier
-  FROM candidates
-  GROUP BY row_id
-  HAVING COUNT(DISTINCT candidate_carrier) = 1
-) AS s
-ON t.row_id = s.row_id
-WHEN MATCHED AND s.original_carrier != 'Tracfone' THEN
-  UPDATE SET carrier = s.original_carrier;
-
-WITH candidates AS (
-  SELECT
-    t.row_id, t.report_date, t.headline_title, t.headline_detail,
-    JSON_VALUE(entry, '$.carrier') AS candidate_carrier
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t,
-  UNNEST(JSON_EXTRACT_ARRAY(t.llm_extraction_raw, '$.headlines')) AS entry
-  WHERE t.carrier = 'Tracfone'
-    AND JSON_VALUE(entry, '$.headline_title') = t.headline_title
-    AND JSON_VALUE(entry, '$.headline_detail') = t.headline_detail
-),
-match_counts AS (
-  SELECT row_id, COUNT(DISTINCT candidate_carrier) AS distinct_carrier_count
-  FROM candidates GROUP BY row_id
-)
-SELECT c.row_id, c.report_date, c.headline_title, c.candidate_carrier AS recovered_carrier,
-       m.distinct_carrier_count,
-       CASE WHEN m.distinct_carrier_count = 1 THEN 'will auto-fix' ELSE 'AMBIGUOUS — needs manual review' END AS status
-FROM candidates c JOIN match_counts m USING (row_id)
-ORDER BY m.distinct_carrier_count DESC, c.report_date;
-
-output:
-row_id	report_date	headline_title	recovered_carrier	distinct_carrier_count	status
-eb46be43-d258-43cf-b1f1-2fa1301e20f3	2025-07-03	EXPIRED: Plan discounts with price-locks	Visible	1	will auto-fix
-218b6f34-bac1-4aec-a0da-94e66f8959a5	2025-07-03	Phone Offers	Tracfone	1	will auto-fix
-63984552-8bff-4f54-9581-eb50630646de	2025-08-29	Pixel 10 Series Offer	Visible	1	will auto-fix
-48a215e5-9eb9-4168-b30b-df6086424791	2025-08-29	More Data & International Enhancements	Simple Mobile	1	will auto-fix
-f519d805-53c0-4812-a6b0-67cf438146a6	2025-08-29	New Tracfone Freedom Unlimited Plan	Tracfone	1	will auto-fix
-
-
-MERGE `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t
-USING (
-  WITH candidates AS (
-    SELECT
-      t2.row_id,
-      JSON_VALUE(entry, '$.carrier') AS candidate_carrier
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` AS t2,
-    UNNEST(JSON_EXTRACT_ARRAY(t2.llm_extraction_raw, '$.headlines')) AS entry
-    WHERE t2.carrier = 'Tracfone'
-      AND JSON_VALUE(entry, '$.headline_title') = t2.headline_title
-      AND JSON_VALUE(entry, '$.headline_detail') = t2.headline_detail
-  )
-  SELECT row_id, ANY_VALUE(candidate_carrier) AS original_carrier
-  FROM candidates
-  GROUP BY row_id
-  HAVING COUNT(DISTINCT candidate_carrier) = 1
-) AS s
-ON t.row_id = s.row_id
-WHEN MATCHED AND s.original_carrier != 'Tracfone' THEN
-  UPDATE SET carrier = s.original_carrier;
-
-SELECT 'majorOfferChanges' AS t, report_date, row_id, description AS detail
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE carrier = 'Tracfone'
-UNION ALL
-SELECT 'ciHeadlines', report_date, row_id, headline_detail
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly`
-WHERE carrier = 'Tracfone'
-ORDER BY t, report_date;
-
-output:
-t	report_date	row_id	detail
-ciHeadlines	2025-07-03	218b6f34-bac1-4aec-a0da-94e66f8959a5	"New phone offers include $149 iPhone 12 with 3-month $40 plan or higher – and free A14 5G with $30 plan (7/1 – 9/3). Also offered free with select plans or multi-month plans include moto g play 2023, moto g power 5G 2023, and BLU View 5 Pro (7/1 – 7/31)."
-ciHeadlines	2025-08-29	f519d805-53c0-4812-a6b0-67cf438146a6	"Tracfone Freedom plan at $50 or $45 with auto-refill includes unlimited talk, text and data (subject to deprioritization) along with 15GB hotspot, talk/text/data in Mexico and Canada, international texts, and Identity Protection by IDnotify."
-majorOfferChanges	2025-08-29	f8c9a825-deed-4a5d-95e8-e86cc2f8997d	"Tracfone Freedom – new unlimited plan with 15GB hotspot, Can/Mex & intl text"
-
-
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_majorOfferChanges_weekly` WHERE carrier != 'Tracfone' AND report_date IN ('2025-07-03', '2025-08-29')
-UNION DISTINCT
-SELECT DISTINCT report_date FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_silver_ciHeadlines_weekly` WHERE carrier != 'Tracfone' AND report_date IN ('2025-07-03', '2025-08-29');
-
-output:
-report_date
-2025-08-29
-2025-07-03
-
-from datetime import date
-for d in [date(2025, 7, 3), date(2025, 8, 29)]:
-    refresh_gold_for_date(d)
-    check_segment_carrier_consistency(d)
-
+(
+  'Simple Mobile',
+  'prepaid',
+  'khalid',
+  CURRENT_TIMESTAMP(),
+  'TracFone-family prepaid brand (Verizon network), kept as its own carrier for consistency with '
+  'Straight Talk/Total Wireless/Tracfone, which are also TracFone-family but tracked separately. '
+  'Recovered via the same Tracfone over-broad UPDATE repair.'
+);
