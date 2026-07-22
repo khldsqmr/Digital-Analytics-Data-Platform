@@ -9,6 +9,20 @@ WHERE row_id IN (
 
 refresh_gold_for_date(date(2025, 7, 11))
 refresh_insight_tables(date(2025, 7, 11))  # this table feeds insights, unlike majorOfferChanges
+output:
+Refreshing gold for 2025-07-11 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 51 of 52 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 26 of 26 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 50 of 50 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 405 of 405 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 30 of 30 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 219 of 219 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 430 of 430 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 846 of 847 rows gold-eligible
+Insight tables refreshed for 2025-07-11.
+
 
 SELECT row_id, carrier, segment, change_type, description
 FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
@@ -16,6 +30,15 @@ WHERE report_date = '2025-07-25'
   AND segment = 'prepaid'
   AND carrier IN ('AT&T', 'T-Mobile', 'Verizon')
   AND description = 'No changes';
+output:
+row_id	carrier	segment	change_type	description
+76a04f5a-a230-4029-9318-dba490b7e6b8	AT&T	prepaid	removed	No changes
+7d4cedc2-6ee1-4ff2-b54a-9cb395562ea2	AT&T	prepaid	introduced	No changes
+44359578-0faa-419b-b69d-72abd2b3a3de	T-Mobile	prepaid	introduced	No changes
+87f1c4bf-4ef0-4352-be9f-2116fe06d0c8	T-Mobile	prepaid	removed	No changes
+40ecf1d4-a0e6-40c0-9de2-7f8afd8f5a50	Verizon	prepaid	removed	No changes
+fb3eeead-b017-4b32-8255-3f53ac72ec1c	Verizon	prepaid	introduced	No changes
+530dc291-6226-4ecc-b2d7-d7671c293afd	Verizon	prepaid	removed	No changes
 
 UPDATE `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
 SET carrier = CASE carrier
@@ -30,4 +53,20 @@ WHERE report_date = '2025-07-25'
 
 refresh_gold_for_date(date(2025, 7, 25))
 check_segment_carrier_consistency(date(2025, 7, 25))  # expect 0 contradictions
+
+Refreshing gold for 2025-07-25 from current silver state...
+  sdi_competitiveOffers_gold_ciHeadlines_weekly 16 of 16 rows gold-eligible
+  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 13 of 13 rows gold-eligible
+  sdi_competitiveOffers_gold_majorOfferChanges_weekly 42 of 42 rows gold-eligible
+  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
+  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 330 of 330 rows gold-eligible
+  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 36 of 36 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 59 of 59 rows gold-eligible
+  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 436 of 436 rows gold-eligible
+  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 526 of 526 rows gold-eligible
+majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
+carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+
+No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
 
