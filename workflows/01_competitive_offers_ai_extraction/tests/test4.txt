@@ -1,6 +1,2 @@
-SELECT report_date, source_page, carrier, item_name, plan_tier, offer_amount, offer_condition, offer_type, COUNT(*) AS n
-FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE report_date IN ('2025-08-22', '2025-08-29', '2025-09-05')
-GROUP BY report_date, source_page, carrier, item_name, plan_tier, offer_amount, offer_condition, offer_type
-HAVING COUNT(*) > 1
-ORDER BY report_date;
+all_rows = dedupe_by_keys(all_rows, DEVICE_OFFERS_DEDUPE_KEYS)   # in run_device_offers_extraction
+all_rows = dedupe_by_keys(all_rows, CARRIER_GRID_DEDUPE_KEYS)    # in run_carrier_grid_extraction
