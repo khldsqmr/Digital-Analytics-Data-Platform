@@ -1,72 +1,55 @@
--- keep the lowest row_id in each duplicate group, delete the rest
-DELETE FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE row_id IN (
-  'a220d68d-a2e0-480b-8ad8-bb89e30c33e6',  -- AT&T $200, dup of 07d878e8
-  'af8f4e00-38fa-4d4f-9eb5-c1ea414dc09c',  -- AT&T $800, dup of 7a50ed19
-  '5fd26a2c-3f50-4d1a-936b-2ddf1c42c602',  -- Verizon $200, dup of 05a07fe5
-  'dcf7b779-ca94-448a-9879-53d7326639df'   -- Verizon $800, dup of cbb40ef9
-);
-
-refresh_gold_for_date(date(2025, 7, 11))
-refresh_insight_tables(date(2025, 7, 11))  # this table feeds insights, unlike majorOfferChanges
-output:
-Refreshing gold for 2025-07-11 from current silver state...
-  sdi_competitiveOffers_gold_ciHeadlines_weekly 51 of 52 rows gold-eligible
-  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 26 of 26 rows gold-eligible
-  sdi_competitiveOffers_gold_majorOfferChanges_weekly 50 of 50 rows gold-eligible
-  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 405 of 405 rows gold-eligible
-  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 30 of 30 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 219 of 219 rows gold-eligible
-  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 430 of 430 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 846 of 847 rows gold-eligible
-Insight tables refreshed for 2025-07-11.
+-- Were there two bronze pages with the same device-offer page_type that week?
+SELECT run_id, page_number, page_type
+FROM `sdi_competitiveOffers_bronze_pdfPages_weekly`
+WHERE report_date = '2025-07-11'
+  AND page_type LIKE 'postpaid_device_offers%'
+ORDER BY page_number;
 
 
-SELECT row_id, carrier, segment, change_type, description
-FROM `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-WHERE report_date = '2025-07-25'
-  AND segment = 'prepaid'
-  AND carrier IN ('AT&T', 'T-Mobile', 'Verizon')
-  AND description = 'No changes';
-output:
-row_id	carrier	segment	change_type	description
-76a04f5a-a230-4029-9318-dba490b7e6b8	AT&T	prepaid	removed	No changes
-7d4cedc2-6ee1-4ff2-b54a-9cb395562ea2	AT&T	prepaid	introduced	No changes
-44359578-0faa-419b-b69d-72abd2b3a3de	T-Mobile	prepaid	introduced	No changes
-87f1c4bf-4ef0-4352-be9f-2116fe06d0c8	T-Mobile	prepaid	removed	No changes
-40ecf1d4-a0e6-40c0-9de2-7f8afd8f5a50	Verizon	prepaid	removed	No changes
-fb3eeead-b017-4b32-8255-3f53ac72ec1c	Verizon	prepaid	introduced	No changes
-530dc291-6226-4ecc-b2d7-d7671c293afd	Verizon	prepaid	removed	No changes
+-- Which page did the SURVIVING copy of each pair come from?
+SELECT row_id, source_page, carrier, item_name, offer_amount
+FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE report_date = '2025-07-11'
+  AND carrier IN ('AT&T', 'Verizon') AND item_name = 'Android Flagships'
+ORDER BY carrier, offer_amount;
 
-UPDATE `sdi_competitiveOffers_silver_majorOfferChanges_weekly`
-SET carrier = CASE carrier
-  WHEN 'AT&T' THEN 'AT&T Prepaid'
-  WHEN 'T-Mobile' THEN 'T-Mobile Prepaid'
-  WHEN 'Verizon' THEN 'Verizon Prepaid'
-END
-WHERE report_date = '2025-07-25'
-  AND segment = 'prepaid'
-  AND carrier IN ('AT&T', 'T-Mobile', 'Verizon')
-  AND description = 'No changes';
 
-refresh_gold_for_date(date(2025, 7, 25))
-check_segment_carrier_consistency(date(2025, 7, 25))  # expect 0 contradictions
+def dedupe_across_pages(rows, review_rows, key_fields):
+    """Cross-page/run-level dedup — a second pass after per-page
+    dedupe_by_keys, needed because that function only ever sees ONE page's
+    model response at a time. Confirmed real gap: two separate bronze pages
+    sharing the same page_type (e.g. two 'postpaid_device_offers_
+    samsung_google' pages) can each independently extract the identical
+    offer — confirmed by matching sample output across two different page
+    numbers in the same run's log (2025-08-08, pages 11 & 12). Since
+    dedupe_by_keys never sees page N+1's output while deduping page N, a
+    duplicate spanning two pages sails through untouched and inflates every
+    downstream count (this is what caused the 2025-07-11 volatility spike
+    in offerCountsByCarrier).
 
-Refreshing gold for 2025-07-25 from current silver state...
-  sdi_competitiveOffers_gold_ciHeadlines_weekly 16 of 16 rows gold-eligible
-  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 13 of 13 rows gold-eligible
-  sdi_competitiveOffers_gold_majorOfferChanges_weekly 42 of 42 rows gold-eligible
-  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 330 of 330 rows gold-eligible
-  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 36 of 36 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 59 of 59 rows gold-eligible
-  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 436 of 436 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 526 of 526 rows gold-eligible
-majorOfferChanges: 0 contradictions — segment/carrier pairing is internally consistent.
-carrierOfferGrid: 0 contradictions — page_type/carrier pairing is internally consistent.
+    Keeps the FIRST occurrence (pages are processed in page-number order
+    into `rows`) and drops the rest, then filters review_rows to match —
+    a review flag pointing at a dropped row_id would otherwise dangle."""
+    seen, kept_rows = set(), []
+    dropped_row_ids = set()
+    for r in rows:
+        sig = tuple(r.get(k) for k in key_fields)
+        if sig not in seen:
+            seen.add(sig)
+            kept_rows.append(r)
+        else:
+            dropped_row_ids.add(r["row_id"])
+    if dropped_row_ids:
+        print(f"  (cross-page dedup: removed {len(dropped_row_ids)} duplicate record(s) "
+              f"that spanned more than one page)")
+    kept_review_rows = [rr for rr in review_rows if rr.get("silver_row_id") not in dropped_row_ids]
+    return kept_rows, kept_review_rows
 
-No definitional contradictions found — real evidence the postpaid/prepaid fix is holding, not just an assumption that it is.
 
+
+# In run_device_offers_extraction, right before the if all_rows: write block:
+if all_rows:
+        all_rows, all_review_rows = dedupe_across_pages(all_rows, all_review_rows, DEVICE_OFFERS_DEDUPE_KEYS)
+        delete_silver_rows_for_date(SILVER_DEVICE_OFFERS_TABLE, report_date)
+        write_rows(SILVER_DEVICE_OFFERS_TABLE, all_rows)
+        ...
