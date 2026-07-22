@@ -1,23 +1,9 @@
-WITH page_blob AS (
-  SELECT llm_extraction_raw
-  FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-  WHERE report_date = '2025-07-11' AND source_page = 11
-  LIMIT 1
-)
-SELECT
-  TO_JSON_STRING(entry) AS raw_entry,
-  JSON_VALUE(entry, '$.carrier') AS carrier,
-  JSON_VALUE(entry, '$.item_name') AS item_name,
-  JSON_VALUE(entry, '$.offer_amount') AS offer_amount,
-  JSON_VALUE(entry, '$.plan_tier') AS plan_tier,
-  LENGTH(JSON_VALUE(entry, '$.item_name')) AS item_name_len,
-  LENGTH(JSON_VALUE(entry, '$.offer_amount')) AS amount_len
-FROM page_blob, UNNEST(JSON_EXTRACT_ARRAY(llm_extraction_raw, '$.offers')) AS entry
-WHERE JSON_VALUE(entry, '$.carrier') = 'AT&T'
-  AND JSON_VALUE(entry, '$.item_name') LIKE '%Android Flagships%'
-ORDER BY offer_amount;
-
-output:
-raw_entry	carrier	item_name	offer_amount	plan_tier	item_name_len	amount_len
-"""{\""carrier\"":\""AT&T\"",\""item_name\"":\""Android Flagships\"",\""device_category\"":\""Other\"",\""device_group\"":\""Android Flagships\"",\""offer_amount\"":\""$200\"",\""offer_condition\"":\""New Line Credit *Online Only*\"",\""offer_type\"":\""bill credit\"",\""offer_type_raw\"":\""New Line Credit\"",\""offer_amount_numeric\"":200}"""	AT&T	Android Flagships	$200		17	4
-"""{\""carrier\"":\""AT&T\"",\""item_name\"":\""Android Flagships\"",\""device_category\"":\""Other\"",\""device_group\"":\""Android Flagships\"",\""offer_amount\"":\""$800\"",\""offer_condition\"":\""w/ new phone purchase\"",\""offer_type\"":\""eip buyout\"",\""offer_type_raw\"":\""EIP Buyout\"",\""offer_amount_numeric\"":800}"""	AT&T	Android Flagships	$800		17	4
+-- Run this after any future extraction, BEFORE deleting anything, if you
+-- see a duplicate-looking pair again — captures source_page and the raw
+-- JSON so the actual mechanism can be confirmed rather than guessed.
+SELECT row_id, source_page, carrier, item_name, plan_tier, offer_amount,
+       offer_condition, offer_type, llm_extraction_raw
+FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
+WHERE report_date = 'YYYY-MM-DD'
+GROUP BY row_id, source_page, carrier, item_name, plan_tier, offer_amount, offer_condition, offer_type, llm_extraction_raw
+HAVING COUNT(*) OVER (PARTITION BY carrier, item_name, plan_tier, offer_amount) > 1;
