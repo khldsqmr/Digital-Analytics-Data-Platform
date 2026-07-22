@@ -1,6 +1,6 @@
-SELECT DISTINCT report_date
+SELECT report_date, source_page, carrier, item_name, plan_tier, offer_amount, offer_condition, offer_type, COUNT(*) AS n
 FROM `sdi_competitiveOffers_silver_postpaidDeviceOffers_weekly`
-WHERE item_name = '10 Pro XL' AND carrier = 'AT&T';
-2025-09-05
-2025-08-29
-2025-08-22
+WHERE report_date IN ('2025-08-22', '2025-08-29', '2025-09-05')
+GROUP BY report_date, source_page, carrier, item_name, plan_tier, offer_amount, offer_condition, offer_type
+HAVING COUNT(*) > 1
+ORDER BY report_date;
