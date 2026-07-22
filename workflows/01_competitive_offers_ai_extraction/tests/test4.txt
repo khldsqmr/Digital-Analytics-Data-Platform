@@ -8,3 +8,8 @@ SELECT 'postpaidDeviceOffers', report_date, COUNT(*) FROM `sdi_competitiveOffers
 UNION ALL
 SELECT 'postpaidServiceOffers', report_date, COUNT(*) FROM `sdi_competitiveOffers_silver_postpaidServiceOffers_weekly` WHERE carrier = 'Tracfone' GROUP BY report_date
 ORDER BY t, report_date;
+
+t	report_date	n
+ciHeadlines	2025-07-03	2
+ciHeadlines	2025-08-29	3
+majorOfferChanges	2025-08-29	8
