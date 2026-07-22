@@ -1,197 +1,88 @@
--- ============================================================================
--- QUERY 1: Weekly Total Volume Story
--- Purpose: One narrative sentence per week — total live offers, split by
--- postpaid/prepaid/cable_mvno (via join to control_knownCarriers), and the
--- % change vs. the prior week. This is the single best query to export and
--- lay next to your Adobe UPV weekly series — look for weeks where the
--- narrative and the UPV trend move together.
--- Source: offerCountsByCarrier_weekly + control_knownCarriers
--- ============================================================================
-WITH weekly AS (
-  SELECT
-    i.report_date,
-    SUM(CASE WHEN i.carrier = 'T-Mobile' THEN i.total_offer_count ELSE 0 END) AS tmobile_offers,
-    SUM(CASE WHEN i.carrier != 'T-Mobile' THEN i.total_offer_count ELSE 0 END) AS competitor_offers,
-    SUM(CASE WHEN k.segment_type = 'postpaid' THEN i.total_offer_count ELSE 0 END) AS postpaid_offers,
-    SUM(CASE WHEN k.segment_type = 'prepaid' THEN i.total_offer_count ELSE 0 END) AS prepaid_offers,
-    SUM(CASE WHEN k.segment_type = 'cable_mvno' THEN i.total_offer_count ELSE 0 END) AS cable_mvno_offers,
-    SUM(i.total_offer_count) AS total_offers
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly` i
-  LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers` k
-    ON i.carrier = k.carrier_name
-  GROUP BY i.report_date
-),
-with_deltas AS (
-  SELECT *,
-    LAG(total_offers) OVER (ORDER BY report_date) AS prior_total
-  FROM weekly
-)
-SELECT
-  report_date,
-  total_offers, tmobile_offers, competitor_offers,
-  postpaid_offers, prepaid_offers, cable_mvno_offers,
-  prior_total,
-  ROUND(SAFE_DIVIDE(total_offers - prior_total, prior_total) * 100, 1) AS pct_change_vs_prior_week,
-  CONCAT(
-    'Week of ', CAST(report_date AS STRING), ': ',
-    CAST(total_offers AS STRING), ' total live offers (',
-    CAST(postpaid_offers AS STRING), ' postpaid, ',
-    CAST(prepaid_offers AS STRING), ' prepaid, ',
-    CAST(cable_mvno_offers AS STRING), ' cable MVNO). T-Mobile: ',
-    CAST(tmobile_offers AS STRING), ', competitors combined: ', CAST(competitor_offers AS STRING),
-    IF(prior_total IS NULL, '',
-      CONCAT(' — ',
-        IF(total_offers >= prior_total, 'up ', 'down '),
-        CAST(ABS(ROUND(SAFE_DIVIDE(total_offers - prior_total, prior_total) * 100, 1)) AS STRING),
-        '% vs prior week.'))
-  ) AS weekly_story
-FROM with_deltas
-ORDER BY report_date;
+PROJECT: prj-dbi-prd-1
+DATASET: ds_dbi_digitalmedia_automation
 
 
--- ============================================================================
--- QUERY 2: Weekly Carrier Leaderboard
--- Purpose: Names the top 3 most active carriers EACH WEEK, with their
--- week-over-week change in offer count spelled out. Answers "who was doing
--- the most this week" directly, rather than making you scan a full table.
--- Source: offerCountsByCarrier_weekly
--- ============================================================================
-WITH ranked AS (
-  SELECT
-    report_date, carrier, total_offer_count,
-    RANK() OVER (PARTITION BY report_date ORDER BY total_offer_count DESC) AS rank_this_week,
-    LAG(total_offer_count) OVER (PARTITION BY carrier ORDER BY report_date) AS prior_week_count
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
-)
-SELECT
-  report_date, rank_this_week, carrier, total_offer_count, prior_week_count,
-  total_offer_count - IFNULL(prior_week_count, 0) AS change_vs_prior_week,
-  CONCAT(
-    '#', CAST(rank_this_week AS STRING), ' this week: ', carrier, ' with ',
-    CAST(total_offer_count AS STRING), ' offers',
-    IF(prior_week_count IS NULL, ' (first week of data).',
-      CONCAT(' (', IF(total_offer_count >= prior_week_count, '+', ''),
-        CAST(total_offer_count - prior_week_count AS STRING), ' vs last week).'))
-  ) AS story
-FROM ranked
-WHERE rank_this_week <= 3
-ORDER BY report_date, rank_this_week;
+=== CORE GOLD TABLES (one per page type) ===
+
+sdi_competitiveOffers_gold_ciHeadlines_weekly
+  What it holds: Narrative CI headline bullets per carrier
+  Key columns: report_date, carrier, section, headline_title, headline_detail, has_changes
+
+sdi_competitiveOffers_gold_nationalRetailReadout_weekly
+  What it holds: Best Buy / Walmart retail promo call-outs
+  Key columns: report_date, retailer, device, discount_amount, carrier_service
+
+sdi_competitiveOffers_gold_majorOfferChanges_weekly
+  What it holds: Week-over-week diff — what was introduced/removed
+  Key columns: report_date, segment, carrier, change_type, description, has_change
+
+sdi_competitiveOffers_gold_voicePlanComparison_weekly
+  What it holds: Business voice plan pricing matrix (Good/Better/Best)
+  Key columns: report_date, lines, tier, carrier, plan_name, price
+
+sdi_competitiveOffers_gold_businessInternetComparison_weekly
+  What it holds: Business internet plan spec/pricing comparison
+  Key columns: report_date, carrier, plan_tier, metric_name, metric_value
+
+sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly
+  What it holds: Metro by T-Mobile phone price grid
+  Key columns: report_date, device_name, connection_type, plan_price_tier, device_price
+
+sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly
+  What it holds: Metro watch/tablet/gateway/hotspot pricing
+  Key columns: report_date, device_name, device_category, ban_status, price
+
+sdi_competitiveOffers_gold_postpaidServiceOffers_weekly
+  What it holds: Narrative service-level features (BYOD, 5G news, etc.)
+  Key columns: report_date, carrier, category, feature_name, detail
+
+sdi_competitiveOffers_gold_carrierOfferGrid_weekly   [LARGEST TABLE]
+  What it holds: BTS / cable MVNO / prepaid brand offer grid
+  Key columns: report_date, page_type, carrier, item_name, plan_tier, offer_type, offer_amount, offer_amount_numeric
+
+sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly   [2ND LARGEST TABLE]
+  What it holds: Postpaid smartphone/tablet trade-in offers (Apple, Samsung/Google, Motorola, Business)
+  Key columns: report_date, device_category, carrier, item_name, plan_tier, offer_type, offer_amount, offer_amount_numeric
 
 
--- ============================================================================
--- QUERY 3: Weekly Discount Depth by Carrier
--- Purpose: Tracks whether a carrier's average offer size is growing or
--- shrinking week to week — bigger average discounts suggest a more
--- aggressive, more traffic-worthy push, independent of how many offers
--- are live. Edit the carrier list to focus on whichever competitors matter.
--- Source: offerAmountStatsByCarrier_weekly
--- ============================================================================
-WITH stats AS (
-  SELECT
-    report_date, carrier, avg_offer_amount,
-    LAG(avg_offer_amount) OVER (PARTITION BY carrier ORDER BY report_date) AS prior_avg
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
-  WHERE carrier IN ('T-Mobile', 'Verizon', 'AT&T')  -- add/remove carriers as needed
-)
-SELECT
-  report_date, carrier,
-  ROUND(avg_offer_amount, 0) AS avg_offer_amount,
-  ROUND(prior_avg, 0) AS prior_week_avg,
-  ROUND(avg_offer_amount - prior_avg, 0) AS change_in_avg_discount,
-  CONCAT(
-    carrier, "'s average offer was $", CAST(ROUND(avg_offer_amount, 0) AS STRING),
-    IF(prior_avg IS NULL, ' this week.',
-      CONCAT(', ', IF(avg_offer_amount >= prior_avg, 'up $', 'down $'),
-        CAST(ABS(ROUND(avg_offer_amount - prior_avg, 0)) AS STRING), ' vs last week.'))
-  ) AS story
-FROM stats
-ORDER BY report_date, carrier;
+=== INSIGHT TABLES (pre-aggregated, built only from carrierOfferGrid + postpaidDeviceOffers) ===
+
+sdi_competitiveOffers_insights_offerCountsByCarrier_weekly
+  What it holds: Total offer count, distinct devices, distinct offer types — per carrier per week
+
+sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly
+  What it holds: Offer count broken down by offer_type (discount, trade-in credit, bogo, etc.)
+
+sdi_competitiveOffers_insights_offerCountsByDevice_weekly
+  What it holds: Offer count + distinct carrier count per device — good for "who's competing on what"
+
+sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly
+  What it holds: Cross-tab of carrier x device offer counts
+
+sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly
+  What it holds: avg/min/max dollar offer amount per carrier per week
 
 
--- ============================================================================
--- QUERY 4: Net Promotional Changes by Carrier & Segment
--- Purpose: Real week-over-week "what changed" — offers introduced minus
--- offers removed, split by postpaid/prepaid, excluding "No changes"
--- boilerplate. A carrier with a big positive net_change had a genuinely
--- active week; a big negative one pulled promotions back.
--- Source: gold_majorOfferChanges
--- ============================================================================
-WITH weekly_changes AS (
-  SELECT
-    report_date, carrier, segment,
-    COUNTIF(change_type = 'introduced') AS introduced,
-    COUNTIF(change_type = 'removed') AS removed
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_majorOfferChanges_weekly`
-  WHERE has_change = TRUE
-  GROUP BY report_date, carrier, segment
-)
-SELECT
-  report_date, carrier, segment, introduced, removed,
-  introduced - removed AS net_change,
-  CONCAT(
-    carrier, ' (', segment, '): ', CAST(introduced AS STRING), ' offers introduced, ',
-    CAST(removed AS STRING), ' removed — net ',
-    IF(introduced - removed >= 0, CONCAT('+', CAST(introduced - removed AS STRING)),
-       CAST(introduced - removed AS STRING)), ' this week.'
-  ) AS story
-FROM weekly_changes
-ORDER BY report_date, net_change DESC;
+=== REFERENCE / CONTROL TABLES (not analytical, but useful context) ===
+
+sdi_competitiveOffers_control_knownCarriers
+  Purpose: Carrier name -> segment (postpaid/prepaid/cable_mvno) mapping — useful for JOINs to group by segment
+
+sdi_competitiveOffers_control_offerTypeCategories
+  Purpose: The canonical offer-type taxonomy (discount, trade-in credit, etc.)
 
 
--- ============================================================================
--- QUERY 5: Device Launch Narrative
--- Purpose: Flags the first week each device name appears in gold data. A
--- real product launch (e.g. iPhone 17 in September) shows up as a sudden
--- burst of brand-new devices across many carriers in one week. CHECK THIS
--- BEFORE crediting a competitor's move for a UPV spike — a major device
--- launch is a strong traffic driver on its own, independent of any
--- competitive-offer activity.
--- Source: gold_postpaidDeviceOffers
--- ============================================================================
-WITH first_seen AS (
-  SELECT item_name, MIN(report_date) AS first_appearance
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly`
-  GROUP BY item_name
-)
-SELECT
-  first_appearance AS report_date,
-  COUNT(*) AS new_devices_this_week,
-  STRING_AGG(item_name, ', ' ORDER BY item_name LIMIT 12) AS sample_devices,
-  CONCAT(
-    'Week of ', CAST(first_appearance AS STRING), ': ', CAST(COUNT(*) AS STRING),
-    ' device name(s) appeared in gold data for the first time, e.g. ',
-    STRING_AGG(item_name, ', ' ORDER BY item_name LIMIT 5), '.'
-  ) AS story
-FROM first_seen
-GROUP BY first_appearance
-ORDER BY first_appearance;
+=== NOTES FOR THE TEAM ===
 
-
--- ============================================================================
--- QUERY 6: Standout Weeks — carriers whose offer count swung sharply
--- Purpose: Automatically flags any carrier/week combo where total_offer_count
--- moved 50%+ up or down vs. the prior week. These are the specific weeks
--- worth checking against your UPV timeline first — a sharp swing (up OR
--- down) is either a genuine competitive event or a data anomaly worth a
--- second look either way.
--- Source: offerCountsByCarrier_weekly
--- ============================================================================
-WITH ranked AS (
-  SELECT
-    carrier, report_date, total_offer_count,
-    LAG(total_offer_count) OVER (PARTITION BY carrier ORDER BY report_date) AS prior_count
-  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
-)
-SELECT
-  report_date, carrier, prior_count, total_offer_count,
-  ROUND(SAFE_DIVIDE(total_offer_count, prior_count), 2) AS ratio_vs_prior_week,
-  CONCAT(
-    'Standout week: ', carrier, ' went from ', CAST(prior_count AS STRING), ' to ',
-    CAST(total_offer_count AS STRING), ' offers (',
-    CAST(ROUND(SAFE_DIVIDE(total_offer_count, prior_count), 1) AS STRING),
-    'x prior week) — check this week against the UPV timeline.'
-  ) AS story
-FROM ranked
-WHERE prior_count IS NOT NULL
-  AND (SAFE_DIVIDE(total_offer_count, prior_count) > 1.5 OR SAFE_DIVIDE(total_offer_count, prior_count) < 0.67)
-ORDER BY report_date;
+- Every table is keyed by report_date (weekly snapshot) — join across
+  tables on that column for cross-table analysis.
+- carrierOfferGrid and postpaidDeviceOffers are the two tables that share a
+  genuine carrier x item x offer shape and are the source for every insight
+  table — start there for most competitive-offer questions.
+- offer_amount_numeric (a parsed float) is the column to use for any
+  aggregate math (AVG, SUM, etc.) — offer_amount is the display string
+  (e.g. "$800 off") and isn't safe to aggregate directly.
+- majorOfferChanges is the only table with a segment (postpaid/prepaid)
+  column directly — for segment cuts on other tables, join to
+  control_knownCarriers on carrier = carrier_name.
+- Data currently spans 2025-07-03 through 2025-09-05 (10 weekly reports).
