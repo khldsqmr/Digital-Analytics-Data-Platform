@@ -1,22 +1,134 @@
-Refreshing gold for 2025-07-03 from current silver state...
-  sdi_competitiveOffers_gold_ciHeadlines_weekly 12 of 14 rows gold-eligible
-  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 12 of 12 rows gold-eligible
-  sdi_competitiveOffers_gold_majorOfferChanges_weekly 13 of 47 rows gold-eligible
-  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 404 of 404 rows gold-eligible
-  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 27 of 27 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 58 of 58 rows gold-eligible
-  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 426 of 426 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 512 of 512 rows gold-eligible
-Refreshing gold for 2025-08-29 from current silver state...
-  sdi_competitiveOffers_gold_ciHeadlines_weekly 17 of 17 rows gold-eligible
-  sdi_competitiveOffers_gold_nationalRetailReadout_weekly 9 of 9 rows gold-eligible
-  sdi_competitiveOffers_gold_majorOfferChanges_weekly 40 of 41 rows gold-eligible
-  sdi_competitiveOffers_gold_voicePlanComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_businessInternetComparison_weekly 0 silver rows for this date, skipped
-  sdi_competitiveOffers_gold_prepaidPriceGridDetail_weekly 384 of 384 rows gold-eligible
-  sdi_competitiveOffers_gold_prepaidAccessoryPriceGrid_weekly 32 of 32 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidServiceOffers_weekly 64 of 64 rows gold-eligible
-  sdi_competitiveOffers_gold_carrierOfferGrid_weekly 420 of 420 rows gold-eligible
-  sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly 469 of 469 rows gold-eligible
+-- 0. Staleness check — run this first. If refreshed_at predates your last
+--    refresh_gold_for_date() call for a given date, the insight tables for
+--    that date are stale and need refresh_insight_tables() re-run.
+SELECT table_name, report_date, MAX(refreshed_at) AS last_refreshed
+FROM (
+  SELECT 'offerCountsByCarrier' AS table_name, report_date, refreshed_at FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
+  UNION ALL
+  SELECT 'offerCountsByCarrierAndType', report_date, refreshed_at FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
+  UNION ALL
+  SELECT 'offerCountsByDevice', report_date, refreshed_at FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`
+  UNION ALL
+  SELECT 'offerCountsByCarrierAndDevice', report_date, refreshed_at FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
+  UNION ALL
+  SELECT 'offerAmountStatsByCarrier', report_date, refreshed_at FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
+)
+GROUP BY table_name, report_date
+ORDER BY report_date DESC, table_name;
+
+-- 1. offerCountsByCarrier_weekly
+-- Columns: report_date, carrier, total_offer_count, distinct_device_count, distinct_offer_type_count
+
+-- Raw look, most recent week
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
+WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`)
+ORDER BY total_offer_count DESC;
+
+
+-- Sanity check: any carrier here that ISN'T a known carrier?
+-- (shouldn't be possible — gold only ever contains known carriers — but
+-- worth confirming after any control-table surgery like the Tracfone fix)
+SELECT DISTINCT carrier
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
+WHERE carrier NOT IN (
+  SELECT carrier_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_knownCarriers`
+);
+
+
+-- Reconciliation: total_offer_count per carrier should exactly equal the
+-- count of gold rows for that carrier on that date, across both source tables
+SELECT i.report_date, i.carrier, i.total_offer_count,
+       (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly` g
+        WHERE g.report_date = i.report_date AND g.carrier = i.carrier)
+     + (SELECT COUNT(*) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_postpaidDeviceOffers_weekly` d
+        WHERE d.report_date = i.report_date AND d.carrier = i.carrier) AS actual_gold_count
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly` i
+WHERE i.report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`)
+HAVING i.total_offer_count != actual_gold_count;  -- should return ZERO rows if healthy
+
+-- 2. offerCountsByCarrierAndType_weekly
+-- Columns: report_date, carrier, offer_type, offer_count
+-- Does 'other' still show up meaningfully, or has your taxonomy work paid off?
+SELECT report_date, offer_type, SUM(offer_count) AS total
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
+GROUP BY report_date, offer_type
+ORDER BY report_date DESC, total DESC;
+
+-- Sanity check: does any offer_type here NOT exist in the control table?
+-- (would indicate insights are stale relative to a reclassify_other_offer_types run)
+SELECT DISTINCT offer_type
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
+WHERE offer_type NOT IN (
+  SELECT category_name FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_control_offerTypeCategories`
+);
+
+-- 3. offerCountsByDevice_weekly
+-- Columns: report_date, item_name, offer_count, distinct_carrier_count
+-- Top devices by how many carriers are competing on them this week —
+-- a genuinely useful CI signal if the underlying data is clean
+SELECT report_date, item_name, offer_count, distinct_carrier_count
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`
+WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`)
+ORDER BY distinct_carrier_count DESC, offer_count DESC
+LIMIT 25;
+
+-- Smell test: item_name values that look like extraction noise rather than
+-- real device names (multi-device strings, stray punctuation, empty-ish values)
+SELECT item_name, offer_count
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByDevice_weekly`
+WHERE item_name LIKE '%,%'          -- comma-joined device_group leaked through?
+   OR LENGTH(item_name) < 3
+   OR item_name LIKE '%null%'
+ORDER BY offer_count DESC;
+
+-- 4. offerCountsByCarrierAndDevice_weekly
+-- Columns: report_date, carrier, item_name, offer_count
+-- Spot a specific carrier/device relationship directly
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
+WHERE carrier = 'AT&T' AND item_name LIKE '%iPhone 16%'
+ORDER BY report_date DESC;
+-- Any single carrier+device combo with a suspiciously high offer_count?
+-- (a real device shouldn't have dozens of offers from ONE carrier in ONE week —
+-- worth checking if this is legitimate tiered pricing or a dedup failure upstream)
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndDevice_weekly`
+WHERE offer_count > 10
+ORDER BY offer_count DESC;
+
+-- 5. offerAmountStatsByCarrier_weekly
+-- Columns: report_date, carrier, offers_with_amount_count, avg_offer_amount, min_offer_amount, max_offer_amount
+-- Raw look — eyeball whether avg/min/max look like real dollar figures
+SELECT * FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
+WHERE report_date = (SELECT MAX(report_date) FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`)
+ORDER BY avg_offer_amount DESC;
+-- Outlier hunt: a max_offer_amount that's wildly higher than avg often means
+-- offer_amount_numeric parsed something wrong (e.g. a monthly rate like
+-- "$5.84/mo." parsed as 584, or a phone number/plan code leaking in)
+SELECT report_date, carrier, avg_offer_amount, min_offer_amount, max_offer_amount,
+       max_offer_amount / NULLIF(avg_offer_amount, 0) AS max_to_avg_ratio
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerAmountStatsByCarrier_weekly`
+WHERE avg_offer_amount > 0
+ORDER BY max_to_avg_ratio DESC
+LIMIT 20;
+-- Trace an outlier back to its actual source row once you spot one above
+SELECT source_page, carrier, item_name, offer_amount, offer_amount_numeric, offer_condition
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_gold_carrierOfferGrid_weekly`
+WHERE report_date = 'YYYY-MM-DD' AND carrier = 'CarrierName'
+ORDER BY offer_amount_numeric DESC
+LIMIT 10;
+
+
+-- Week-over-week volatility — a carrier whose total_offer_count swings
+-- wildly (2x+ up or down) between adjacent weeks is either a genuine big
+-- news week, or a sign something broke in extraction/normalization that
+-- week. Worth a periodic glance, not just after a known incident.
+WITH ranked AS (
+  SELECT carrier, report_date, total_offer_count,
+         LAG(total_offer_count) OVER (PARTITION BY carrier ORDER BY report_date) AS prior_count
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrier_weekly`
+)
+SELECT carrier, report_date, prior_count, total_offer_count,
+       SAFE_DIVIDE(total_offer_count, prior_count) AS ratio
+FROM ranked
+WHERE prior_count IS NOT NULL
+  AND (SAFE_DIVIDE(total_offer_count, prior_count) > 2 OR SAFE_DIVIDE(total_offer_count, prior_count) < 0.5)
+ORDER BY report_date DESC;
