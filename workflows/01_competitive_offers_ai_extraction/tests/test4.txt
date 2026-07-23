@@ -24,3 +24,8 @@ WHERE File_Name IN (
   AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
   AND QGP = 'Actual'
 GROUP BY File_Name;
+
+File_Name	total_rows	after_working	after_channel	after_message	after_quarter_format	after_date_format	after_spend_not_null
+2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx	19319	19027	19017	19117	19319	0	19319
+2026 Master Flowchart - 20260710 DRAFT INTERNAL.xlsx	17380	17118	17118	17194	17380	0	17380
+2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx	19950	19646	19632	19742	19950	0	19950
