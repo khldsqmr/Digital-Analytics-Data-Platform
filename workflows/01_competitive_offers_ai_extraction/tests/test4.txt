@@ -2,3 +2,7 @@ SELECT MAX(Week_Beginning_Monday) AS max_actual_week
 FROM prdrzranalytics.lab42.raw_media_flowchart
 WHERE QGP = 'Actual'
   AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB');
+
+
+output
+2026-07-06
