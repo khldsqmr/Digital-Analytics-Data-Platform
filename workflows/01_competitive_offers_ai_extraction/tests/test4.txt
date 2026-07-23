@@ -10,3 +10,55 @@ GROUP BY File_Name, Agency, WS, Language, Message, Market, Platform, Tactic,
 HAVING COUNT(*) > 1
 ORDER BY row_count DESC
 LIMIT 50;
+
+File_Name	Agency	WS	Language	Message	Market	Platform	Tactic	ATLBTL	LOB_Supported	Funding_Source	Week_Beginning_Monday	row_count
+2025 Master Flowchart - 20250405 DRAFT INTERNALv1 with updated Q1 submissions.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	OTT	ATL	Broadband	Broadband	2025-03-31	7
+2025 Master Flowchart - 20250404 DRAFT INTERNALv1.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	OTT	ATL	Broadband	Broadband	2025-03-31	7
+2025 Master Flowchart - 20250418 DRAFT INTERNALv1.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	OTT	ATL	Broadband	Broadband	2025-03-31	7
+2025 Master Flowchart - 20250411 DRAFT INTERNALv2.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	OTT	ATL	Broadband	Broadband	2025-03-31	7
+2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx	INI	Prepaid	EL	Free A17	National	Campaign	OTT	null	Consumer Prepaid	Consumer Prepaid	2026-06-29	6
+2025 Master Flowchart - 20251017 DRAFTv1.xlsx	INI	TMO	EL	iPhone 17 Pro On Us	National	Campaign	Display	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	6
+2023 Media Book & Flowchart -20230120 DRAFT INTERNALv4.xlsx	INI	TMO	EL	55+	SMRA	SMRA	Newspaper	ATL	Consumer Postpaid	Consumer Postpaid	2021-06-28	6
+2021 Master Flowchart - 20260224 - Reupload.xlsx	INI	TMO	EL	55+	SMRA	SMRA	Newspaper	ATL	Consumer Postpaid	Consumer Postpaid	2021-06-28	6
+2025 Master Flowchart - 20251010 DRAFTv1.xlsx	INI	TMO	EL	iPhone 17 Pro On Us	National	Campaign	Display	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	6
+2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	INI	TMO	EL	55+	SMRA	SMRA	Newspaper	ATL	Consumer Postpaid	Consumer Postpaid	2021-06-28	6
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-09-04	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-08-28	5
+2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx	INI	TFB	EL	TFB Gov/Education	National	Campaign	Display	null	TFB	TFB	2026-06-29	5
+2025 Master Flowchart - 20260123 - Q4 Partial Actualization v3 with Brand updates.xlsx	INI	TMO	EL	Magenta Brand	National	Magenta Brand Creators	Paid Social - Creator	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-07-24	5
+2025 Master Flowchart - 20260123 - Q4 Partial Actualization v3 with Brand updates.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2025 Master Flowchart - 20251212 DRAFT INTERNAL_v1.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2026 Master Flowchart - 20260612 DRAFT INTERNAL v1.xlsx	INI	TFB	EL	TFB Gov/Education	National	Campaign	Display	BTL	TFB	TFB	2026-03-30	5
+2026 Master Flowchart - 20260618 DRAFT INTERNAL v1.xlsx	INI	TFB	EL	TFB Gov/Education	National	Campaign	Display	BTL	TFB	TFB	2026-03-30	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-07-17	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-08-21	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-09-18	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-09-25	5
+2025 Master Flowchart - 202501219 DRAFT INTERNALv2.xlsb	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-08-14	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-07-10	5
+2025 Master Flowchart - 20260408 - 2025 InHouse Restatement.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx	INI	TFB	EL	TFB Gov/Education	National	Campaign	Display	null	TFB	TFB	2026-06-29	5
+2025 Master Flowchart - 20260106 DRAFT INTERNAL.xlsx	INI	TMO	EL	Magenta Brand	National	Magenta Brand Creators	Paid Social - Creator	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	5
+2025 Master Flowchart - 20251219 DRAFT INTERNALv2.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-07-31	5
+2025 Master Flowchart - 20251219 DRAFT INTERNALv2.xlsx	INI	TMO	EL	Magenta Brand	National	Magenta Brand Creators	Paid Social - Creator	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	5
+2023 Master Flowchart Final updated - 20240513.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	Display	BTL	Broadband	Broadband	2023-09-25	5
+2025 Master Flowchart - 20250404 DRAFT INTERNALv1.xlsx	INI	TBG	EL	TBG Brand - Business Goes Further	National	Campaign	OTT	ATL	TFB	TBG	2025-03-31	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-06-26	5
+2023 Master Flowchart Final updated - 20240513.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	Display	BTL	Broadband	Broadband	2023-06-26	5
+2023 Final Actualized MFC -20240426 updated 4.26.24_.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	Display	BTL	Broadband	Broadband	2023-09-25	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-07-03	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-09-11	5
+2025 Master Flowchart - 20250405 DRAFT INTERNALv1 with updated Q1 submissions.xlsx	INI	TBG	EL	TBG Brand - Business Goes Further	National	Campaign	OTT	ATL	TFB	TBG	2025-03-31	5
+2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	2023-08-07	5
+2025 Master Flowchart - 20250411 DRAFT INTERNALv2.xlsx	INI	TBG	EL	TBG Brand - Business Goes Further	National	Campaign	OTT	ATL	TFB	TBG	2025-03-31	5
+2025 Master Flowchart - 20260106 DRAFT INTERNAL.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	null	Broadband	Broadband	2025-03-31	5
+2025 Master Flowchart - 202501219 DRAFT INTERNALv2.xlsb	INI	TMO	EL	Magenta Brand	National	Magenta Brand Creators	Paid Social - Creator	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	5
+2025 Master Flowchart - 20260408 - 2025 InHouse Restatement.xlsx	INI	TMO	EL	Magenta Brand	National	Magenta Brand Creators	Paid Social - Creator	BTL	Consumer Postpaid	Consumer Postpaid	2025-09-29	5
+2023 Final Actualized MFC -20240426 updated 4.26.24_.xlsx	INI	Broadband	EL	Home Internet	National	Campaign	Display	BTL	Broadband	Broadband	2023-06-26	5
+2025 Master Flowchart - 20251205 DRAFT INTERNALv2.xlsx	INI	Broadband	EL	Red Carpet (No Offer)	National	Campaign	OTT - Programmatic	ATL	Broadband	Broadband	2025-03-31	5
+2023 Media Book Flowchart -20231103 DRAFT INTERNALv2.xlsx	INI	TFB	EL	SMB Business Internet	National	Campaign	Display	BTL	TFB	TFB	2023-03-27	4
+2023 Media Book Flowchart -20231103 DRAFT INTERNALv2.xlsx	INI	TFB	EL	SMB Business Internet	National	Campaign	Display	BTL	TFB	TFB	2023-06-26	4
+2023 Master Flowchart Final with In House Brand restatement 202502024.xlsx	INI	TBG	EL	SMB Business Internet	National	Campaign	Display	BTL	TFB	TBG	2023-09-25	4
