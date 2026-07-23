@@ -9,3 +9,55 @@ GROUP BY File_Name, Agency, WS, Language, Message, Market, Platform, Tactic,
 HAVING COUNT(*) > 1
 ORDER BY row_count DESC
 LIMIT 50;
+
+File_Name	Agency	WS	Language	Message	Market	Platform	Tactic	ATLBTL	LOB_Supported	Funding_Source	Week_Beginning_Monday	row_count
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-15	1890
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones + Tablet on Us	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-12-02	1890
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $90	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-11	1674
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones + Tablet on Us	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-25	1674
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $90	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-04	1620
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones + Tablet on Us	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-18	1620
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones - Samsung + LG	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-18	1566
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-01	1512
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones - Samsung + LG	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-11	1512
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-08	1404
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-22	1350
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-15	1188
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-01	1134
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-19	1080
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $90	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-10-28	1080
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-08	1080
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones - Samsung + LG	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-04	1080
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-22	1026
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-02	1026
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-26	1026
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-22	972
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-29	972
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-16	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-02	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free SG Phones	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-15	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-05	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-29	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-26	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-08	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-09	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $90	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-11-18	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free Phones + Tablet on Us	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-12-02	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Streaming Radio	ATL	Consumer Prepaid	Consumer Prepaid	2019-07-22	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-26	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-22	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-12	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-05	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-02	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-01	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-15	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-29	918
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Streaming Radio	ATL	Consumer Prepaid	Consumer Prepaid	2019-08-05	918
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-05	864
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-30	864
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-08	864
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-12	864
+ADW Load 7-10-2025	Essence	Metro	EL	2 Free SG Phones	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-07-22	864
+ADW Load 7-10-2025	Essence	Metro	SL	2 for $80 + Amazon	National	Campaign	OLV	BTL	Consumer Prepaid	Consumer Prepaid	2019-09-16	864
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Streaming Radio	ATL	Consumer Prepaid	Consumer Prepaid	2019-07-29	864
+ADW Load 7-10-2025	Essence	Metro	EL	2 for $80 + Amazon	National	Campaign	Display	BTL	Consumer Prepaid	Consumer Prepaid	2019-08-12	864
