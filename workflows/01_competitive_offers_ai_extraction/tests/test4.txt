@@ -9,3 +9,56 @@ GROUP BY Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_S
 HAVING COUNT(*) > 1 AND (COUNT(DISTINCT Spend_Actual) > 1 OR COUNT(DISTINCT Spend) > 1)
 ORDER BY row_count DESC
 LIMIT 50;
+
+
+Agency	WS	Message	Platform	Tactic	ATLBTL	LOB_Supported	Funding_Source	Week_Beginning_Monday	row_count	distinct_spend_actual_values	distinct_spend_values
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	0	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	5	5
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	0	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Consideration	Display	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+InHouse	Metro	Prepaid Offers	Awareness	Streaming Radio	BTL	Consumer Prepaid	Consumer Prepaid	2025-09-29	10	10	10
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-29	9	7	7
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-09-27	9	4	4
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-25	9	8	8
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-12-27	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-04	9	7	7
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-08	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-08	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-01	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-15	9	8	8
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-09-27	9	4	4
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-29	9	7	7
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-11	9	7	7
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-04	9	7	7
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-12-13	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-18	9	8	8
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-12-27	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-12-13	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-22	9	6	6
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-10-18	9	8	8
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-22	9	6	6
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-12-06	9	9	9
+ProgAct	TFB	TFB Offer SMB	SMB/Micro	Paid Social	BTL	TFB	TFB	2021-11-15	9	8	8
