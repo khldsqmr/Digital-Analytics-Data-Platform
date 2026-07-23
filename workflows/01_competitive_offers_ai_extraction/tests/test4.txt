@@ -1,2 +1,12 @@
-SELECT MAX(QGP_Week) AS max_qgp_week
-FROM prdrzranalytics.lab42.vw_mfc_bronze_spendActualsGranular_weekly;
+SELECT MAX(TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE)) AS max_qgp_week
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+  AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
+  AND Channel IS NOT NULL
+  AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+  AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+  AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+  AND Quarter IS NOT NULL
+  AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+  AND UPPER(TRIM(QGP)) = 'ACTUAL'
+  AND Spend IS NOT NULL;
