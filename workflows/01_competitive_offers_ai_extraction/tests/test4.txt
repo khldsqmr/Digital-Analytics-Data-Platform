@@ -9,3 +9,8 @@ WHERE File_Name IN (
   '2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx'
 )
 GROUP BY File_Name;
+
+File_Name	total_rows	non_null_week_ending_sunday
+2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx	30366	0
+2026 Master Flowchart - 20260710 DRAFT INTERNAL.xlsx	21882	0
+2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx	31486	0
