@@ -1,14 +1,11 @@
 SELECT
-  Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source,
-  COUNT(DISTINCT Week_Beginning_Monday) AS distinct_weeks,
-  COUNT(*) AS total_rows,
-  COUNT(*) * 1.0 / COUNT(DISTINCT Week_Beginning_Monday) AS avg_rows_per_week
+  Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source, Week_Beginning_Monday,
+  COUNT(*) AS row_count,
+  COUNT(DISTINCT Spend_Actual) AS distinct_spend_actual_values,
+  COUNT(DISTINCT Spend) AS distinct_spend_values
 FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE File_Name = '2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx'
-  AND Agency = 'INI' AND WS = 'HINT' AND Message = 'Home Internet'
-  AND Platform = 'Sponsorship: Movers' AND Tactic = 'OLV'
-GROUP BY Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source;
-
-
-Agency	WS	Message	Platform	Tactic	ATLBTL	LOB_Supported	Funding_Source	distinct_weeks	total_rows	avg_rows_per_week
-INI	HINT	Home Internet	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	14	70	5.0000000000000000
+WHERE File_Name NOT LIKE 'ADW%'
+GROUP BY Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source, Week_Beginning_Monday, File_Name
+HAVING COUNT(*) > 1 AND (COUNT(DISTINCT Spend_Actual) > 1 OR COUNT(DISTINCT Spend) > 1)
+ORDER BY row_count DESC
+LIMIT 50;
