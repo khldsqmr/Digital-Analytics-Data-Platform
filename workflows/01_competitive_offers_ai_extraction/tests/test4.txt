@@ -1,16 +1,149 @@
-SELECT
-  File_Name,
-  COUNT(*) AS total_rows,
-  COUNT(Week_Ending_Sunday) AS non_null_week_ending_sunday
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE File_Name IN (
-  '2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx',
-  '2026 Master Flowchart - 20260710 DRAFT INTERNAL.xlsx',
-  '2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx'
+-- ============================================================
+-- VIEW: BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL
+-- ============================================================
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.vw_mfc_bronze_spendActuals_weekly AS
+WITH raw AS (
+  SELECT
+    Quarter,
+    TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
+    DATE_ADD(TRY_CAST(Week_Beginning_Monday AS DATE), 6) AS Week_Ending_Sunday,
+    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+    File_Date,
+    FileLoad_Date,
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    CASE WHEN QGP = 'Actual' THEN Spend ELSE NULL END AS Spend_Actual
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+    AND WM_V_NWM = 'Working'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+    AND Quarter IS NOT NULL
+    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+    AND QGP = 'Actual'
+    AND Spend IS NOT NULL
+),
+valid AS (
+  SELECT * FROM raw
+  WHERE Week_Beginning_Monday IS NOT NULL
+    AND QGP_Week IS NOT NULL
+),
+weekly_snapshots AS (
+  SELECT
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    File_Date, FileLoad_Date, LOB_Supported,
+    SUM(Spend_Actual) AS weekly_actual
+  FROM valid
+  GROUP BY
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday,
+    QGP_Week, File_Date, FileLoad_Date, LOB_Supported
+),
+ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week, Week_Beginning_Monday, LOB_Supported
+      ORDER BY File_Date DESC, FileLoad_Date DESC
+    ) AS rn
+  FROM weekly_snapshots
+),
+best AS (
+  SELECT * FROM ranked WHERE rn = 1
+),
+week_type AS (
+  SELECT
+    QGP_Week,
+    CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
+  FROM best
+  GROUP BY QGP_Week
 )
-GROUP BY File_Name;
+SELECT
+  b.Quarter,
+  b.Week_Beginning_Monday,
+  b.Week_Ending_Sunday,
+  b.QGP_Week,
+  b.File_Date,
+  b.FileLoad_Date,
+  b.LOB_Supported,
+  b.weekly_actual,
+  w.week_type
+FROM best b
+JOIN week_type w ON b.QGP_Week = w.QGP_Week
+WHERE b.weekly_actual IS NOT NULL
+  AND b.weekly_actual != 0;
 
-File_Name	total_rows	non_null_week_ending_sunday
-2026 Master Flowchart - 20260710 DRAFT INTERNAL v2.xlsx	30366	0
-2026 Master Flowchart - 20260710 DRAFT INTERNAL.xlsx	21882	0
-2026 Master Flowchart - 20260717 DRAFT INTERNAL V1.xlsx	31486	0
+-- ============================================================
+-- VIEW: BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL
+-- ============================================================
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.vw_mfc_bronze_spendForecast_weekly AS
+WITH raw AS (
+  SELECT
+    Quarter,
+    TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
+    DATE_ADD(TRY_CAST(Week_Beginning_Monday AS DATE), 6) AS Week_Ending_Sunday,
+    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+    File_Date,
+    FileLoad_Date,
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    CASE WHEN QGP = 'Forecast' THEN Spend ELSE NULL END AS Spend_Forecast
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+    AND WM_V_NWM = 'Working'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+    AND Quarter IS NOT NULL
+    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+    AND QGP = 'Forecast'
+    AND Spend IS NOT NULL
+),
+valid AS (
+  SELECT * FROM raw
+  WHERE Week_Beginning_Monday IS NOT NULL
+    AND QGP_Week IS NOT NULL
+),
+weekly_snapshots AS (
+  SELECT
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    File_Date, FileLoad_Date, LOB_Supported,
+    SUM(Spend_Forecast) AS weekly_forecast
+  FROM valid
+  GROUP BY
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday,
+    QGP_Week, File_Date, FileLoad_Date, LOB_Supported
+),
+ranked AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week, Week_Beginning_Monday, LOB_Supported
+      ORDER BY File_Date DESC, FileLoad_Date DESC
+    ) AS rn
+  FROM weekly_snapshots
+),
+best AS (
+  SELECT * FROM ranked WHERE rn = 1
+),
+week_type AS (
+  SELECT
+    QGP_Week,
+    CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
+  FROM best
+  GROUP BY QGP_Week
+)
+SELECT
+  b.Quarter,
+  b.Week_Beginning_Monday,
+  b.Week_Ending_Sunday,
+  b.QGP_Week,
+  b.File_Date,
+  b.FileLoad_Date,
+  b.LOB_Supported,
+  b.weekly_forecast,
+  w.week_type
+FROM best b
+JOIN week_type w ON b.QGP_Week = w.QGP_Week
+WHERE b.weekly_forecast IS NOT NULL
+  AND b.weekly_forecast != 0;
