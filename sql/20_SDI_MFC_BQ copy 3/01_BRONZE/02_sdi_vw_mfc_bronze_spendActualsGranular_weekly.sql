@@ -57,7 +57,7 @@ BEGIN
       AND Channel NOT IN (
         'OTHER (do not use)',
         'Non-Working',
-        'Unallocated',
+        --'Unallocated',
         'Budget Held'
       )
       AND SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL

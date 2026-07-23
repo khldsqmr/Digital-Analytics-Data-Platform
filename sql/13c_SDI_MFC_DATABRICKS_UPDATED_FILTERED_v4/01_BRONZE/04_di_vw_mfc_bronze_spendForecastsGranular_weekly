@@ -1,491 +1,74 @@
 
--- -- ============================================================
--- -- GRANULAR FORECASTS
--- -- ============================================================
--- CREATE OR REPLACE VIEW
---   prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecastsGranular_weekly
--- AS
-
--- /* ------------------------------------------------------------
---    The non-granular forecast bronze is authoritative for:
---    - selected source forecast snapshots
---    - boundary-derived LOB forecast totals
---    ------------------------------------------------------------ */
--- WITH authoritative_lob_forecasts AS (
---   SELECT
---     Quarter,
---     Week_Beginning_Monday,
---     Week_Ending_Sunday,
---     QGP_Week,
---     FileLoad_Date,
---     LOB_Supported,
---     weekly_forecast,
---     week_type,
---     is_derived
-
---   FROM prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecasts_weekly
--- ),
-
--- /* ------------------------------------------------------------
---    Aggregate detailed raw forecasts from the exact source snapshots
---    selected by the non-granular forecast bronze.
---    ------------------------------------------------------------ */
--- base_granular_forecasts AS (
---   SELECT
---     selected.Quarter,
---     selected.Week_Beginning_Monday,
---     selected.Week_Ending_Sunday,
---     selected.QGP_Week,
---     selected.FileLoad_Date,
---     selected.LOB_Supported,
-
---     raw.Channel,
---     raw.Tactic,
---     raw.Message_Type,
-
---     CASE
---       WHEN LOWER(TRIM(raw.Agency)) = 'ini'
---         THEN 'Initiative'
-
---       WHEN LOWER(TRIM(raw.Agency)) IN (
---              'in house',
---              'inhouse',
---              'internal',
---              'progact',
---              'search'
---            )
---         THEN 'In-House (TMO)'
-
---       WHEN raw.Agency IS NULL
---         THEN NULL
-
---       ELSE TRIM(raw.Agency)
---     END AS Agency,
-
---     SUM(raw.Spend_Forecast) AS weekly_forecast,
---     selected.week_type,
---     FALSE AS is_derived
-
---   FROM authoritative_lob_forecasts selected
-
---   INNER JOIN prdrzranalytics.lab42.raw_media_flowchart raw
---     ON  raw.Quarter               = selected.Quarter
---     AND raw.Week_Beginning_Monday = selected.Week_Beginning_Monday
---     AND raw.Week_Ending_Sunday    = selected.Week_Ending_Sunday
---     AND raw.QGP_Week              = selected.QGP_Week
---     AND raw.FileLoad_Date         = selected.FileLoad_Date
---     AND UPPER(TRIM(raw.LOB_Supported)) = selected.LOB_Supported
-
---   WHERE selected.is_derived = FALSE
---     AND UPPER(TRIM(raw.LOB_Supported)) IN (
---           'CONSUMER POSTPAID',
---           'BROADBAND'
---         )
---     AND raw.WM_V_NWM = 'Working'
---     AND raw.Channel IS NOT NULL
---     AND raw.Channel NOT IN (
---           'OTHER (do not use)',
---           'Non-Working',
---           'Unallocated',
---           'Budget Held'
---         )
---     AND raw.Week_Beginning_Monday <= raw.Week_Ending_Sunday
---     AND raw.Spend_Forecast IS NOT NULL
---     AND UPPER(TRIM(raw.Message_Type)) NOT IN ('MICRO')
---     AND UPPER(TRIM(raw.Message)) NOT IN (
---           'SEM POSTPAID/MICRO',
---           'MICRO POSTPAID OFFERS'
---         )
-
---   GROUP BY
---     selected.Quarter,
---     selected.Week_Beginning_Monday,
---     selected.Week_Ending_Sunday,
---     selected.QGP_Week,
---     selected.FileLoad_Date,
---     selected.LOB_Supported,
---     raw.Channel,
---     raw.Tactic,
---     raw.Message_Type,
-
---     CASE
---       WHEN LOWER(TRIM(raw.Agency)) = 'ini'
---         THEN 'Initiative'
-
---       WHEN LOWER(TRIM(raw.Agency)) IN (
---              'in house',
---              'inhouse',
---              'internal',
---              'progact',
---              'search'
---            )
---         THEN 'In-House (TMO)'
-
---       WHEN raw.Agency IS NULL
---         THEN NULL
-
---       ELSE TRIM(raw.Agency)
---     END,
-
---     selected.week_type
--- ),
-
--- /* ------------------------------------------------------------
---    Total selected detailed source forecasts.
---    This should reconcile to the authoritative non-granular base
---    forecast total before boundary derivation.
---    ------------------------------------------------------------ */
--- base_granular_totals AS (
---   SELECT
---     Quarter,
---     QGP_Week,
---     FileLoad_Date,
---     LOB_Supported,
---     SUM(weekly_forecast) AS source_detail_total
-
---   FROM base_granular_forecasts
-
---   GROUP BY
---     Quarter,
---     QGP_Week,
---     FileLoad_Date,
---     LOB_Supported
--- ),
-
--- /* ------------------------------------------------------------
---    Boundary-derived LOB forecast rows from the authoritative
---    non-granular branch.
---    ------------------------------------------------------------ */
--- derived_lob_forecasts AS (
---   SELECT
---     *
---   FROM authoritative_lob_forecasts
---   WHERE is_derived = TRUE
--- ),
-
--- /* ------------------------------------------------------------
---    Identify the opposite-quarter base source for each derived row.
---    It must share:
---    - QGP_Week
---    - FileLoad_Date
---    - LOB_Supported
---    but belong to the other quarter.
---    ------------------------------------------------------------ */
--- derived_with_source AS (
---   SELECT
---     derived.Quarter                  AS target_quarter,
---     derived.Week_Beginning_Monday    AS target_week_beginning_monday,
---     derived.Week_Ending_Sunday       AS target_week_ending_sunday,
---     derived.QGP_Week,
---     derived.FileLoad_Date,
---     derived.LOB_Supported,
---     derived.weekly_forecast          AS target_lob_weekly_forecast,
---     derived.week_type,
-
---     source.Quarter                   AS source_quarter,
---     source.source_detail_total
-
---   FROM derived_lob_forecasts derived
-
---   INNER JOIN base_granular_totals source
---     ON  source.QGP_Week      = derived.QGP_Week
---     AND source.FileLoad_Date = derived.FileLoad_Date
---     AND source.LOB_Supported = derived.LOB_Supported
---     AND source.Quarter       != derived.Quarter
--- ),
-
--- /* ------------------------------------------------------------
---    Allocate each derived LOB-level forecast across source details
---    proportionally. No rounding is applied here so the detailed sum
---    remains as close as possible to the authoritative LOB total.
---    ------------------------------------------------------------ */
--- derived_granular_forecasts AS (
---   SELECT
---     derived.target_quarter AS Quarter,
---     derived.target_week_beginning_monday AS Week_Beginning_Monday,
---     derived.target_week_ending_sunday    AS Week_Ending_Sunday,
---     derived.QGP_Week,
---     derived.FileLoad_Date,
---     derived.LOB_Supported,
-
---     detail.Channel,
---     detail.Tactic,
---     detail.Message_Type,
---     detail.Agency,
-
---     CASE
---       WHEN derived.source_detail_total IS NULL
---         OR derived.source_detail_total = 0
---       THEN NULL
-
---       ELSE
---         derived.target_lob_weekly_forecast
---         * (
---             detail.weekly_forecast
---             / derived.source_detail_total
---           )
---     END AS weekly_forecast,
-
---     derived.week_type,
---     TRUE AS is_derived
-
---   FROM derived_with_source derived
-
---   INNER JOIN base_granular_forecasts detail
---     ON  detail.Quarter       = derived.source_quarter
---     AND detail.QGP_Week      = derived.QGP_Week
---     AND detail.FileLoad_Date = derived.FileLoad_Date
---     AND detail.LOB_Supported = derived.LOB_Supported
--- )
-
--- SELECT
---   Quarter,
---   Week_Beginning_Monday,
---   Week_Ending_Sunday,
---   QGP_Week,
---   FileLoad_Date,
---   LOB_Supported,
---   Channel,
---   Tactic,
---   Message_Type,
---   Agency,
---   weekly_forecast,
---   week_type,
---   is_derived
-
--- FROM (
---   SELECT
---     *
---   FROM base_granular_forecasts
-
---   UNION ALL
-
---   SELECT
---     *
---   FROM derived_granular_forecasts
--- )
-
--- WHERE weekly_forecast IS NOT NULL
---   AND weekly_forecast != 0
--- ;
-
 -- ============================================================
--- BRONZE 4: FORECASTS - GRANULAR
--- Databricks / Spark SQL
--- Converted from BigQuery logic
+-- VIEW: BRONZE 4 — SPEND FORECAST, GRANULAR
 -- ============================================================
-CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_mfc_bronze_spendForecastsGranular_weekly
-AS
-
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.vw_mfc_bronze_spendForecastGranular_weekly AS
 WITH raw AS (
   SELECT
     Quarter,
-    CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-    CAST(Week_Ending_Sunday AS DATE)    AS Week_Ending_Sunday,
-    CAST(QGP_Week AS DATE)              AS QGP_Week,
-    File_Date                           AS FileLoad_Date,
-    UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
-    Channel,
-    Tactic,
-    Message_Type,
+    TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+    COALESCE(
+      TRY_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+      DATE_ADD(TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE), 6)
+    ) AS Week_Ending_Sunday,
+    TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    TRY_CAST(File_Date AS DATE) AS Source_File_Date,
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    Channel, Tactic, Message_Type,
     CASE
-      WHEN LOWER(TRIM(Agency)) = 'ini'
-        THEN 'Initiative'
-      WHEN LOWER(TRIM(Agency)) IN ('in house', 'inhouse', 'internal', 'progact', 'search')
-        THEN 'In-House (TMO)'
-      WHEN Agency IS NULL
-        THEN NULL
+      WHEN LOWER(TRIM(Agency)) = 'ini' THEN 'Initiative'
+      WHEN LOWER(TRIM(Agency)) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN Agency IS NULL THEN NULL
       ELSE TRIM(Agency)
-    END                                 AS Agency,
-    CASE WHEN QGP = 'Forecast' THEN Spend ELSE NULL END AS Spend_Forecast,
-    CASE WHEN QGP = 'Actual'   THEN Spend ELSE NULL END AS Spend_Actual
+    END AS Agency,
+    Spend AS Spend_Forecast
   FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-    AND WM_V_NWM = 'Working'
+  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+    AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
     AND Channel IS NOT NULL
-    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
-    AND Week_Beginning_Monday IS NOT NULL AND Week_Beginning_Monday != 'None'
-    AND Week_Ending_Sunday IS NOT NULL    AND Week_Ending_Sunday != 'None'
-    AND QGP_Week IS NOT NULL             AND QGP_Week != 'None'
-    AND Week_Beginning_Monday RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
-    AND Week_Ending_Sunday    RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
-    AND CAST(QGP_Week AS STRING) RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+    AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+    AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
+    AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
     AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
     AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
     AND Quarter IS NOT NULL
     AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
     AND Spend IS NOT NULL
 ),
-
 weekly_snapshots AS (
   SELECT
     Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
+    FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
     SUM(Spend_Forecast) AS weekly_forecast
   FROM raw
-  WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-    AND Spend_Forecast IS NOT NULL
-  GROUP BY
-    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
+  WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+  GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
 ),
-
-first_actual_date AS (
-  SELECT
-    Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency,
-    MIN(FileLoad_Date) AS first_actual_file_load_date
-  FROM raw
-  WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-    AND Spend_Actual IS NOT NULL AND Spend_Actual != 0
-  GROUP BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
-),
-
 ranked AS (
-  SELECT
-    s.*,
+  SELECT *,
     ROW_NUMBER() OVER (
-      PARTITION BY s.Quarter, s.QGP_Week, s.LOB_Supported,
-                   s.Channel, s.Tactic, s.Message_Type, s.Agency
-      ORDER BY s.FileLoad_Date DESC
+      PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      ORDER BY FileLoad_Date DESC, Source_File_Date DESC
     ) AS rn
-  FROM weekly_snapshots s
-  LEFT JOIN first_actual_date a
-    ON  s.Quarter       = a.Quarter
-    AND s.QGP_Week      = a.QGP_Week
-    AND s.LOB_Supported = a.LOB_Supported
-    AND s.Channel       = a.Channel
-    AND s.Tactic        = a.Tactic
-    AND s.Message_Type  = a.Message_Type
-    AND s.Agency        = a.Agency
-  WHERE a.first_actual_file_load_date IS NULL
-     OR s.FileLoad_Date < a.first_actual_file_load_date
+  FROM weekly_snapshots
 ),
-
 best AS (
   SELECT * FROM ranked WHERE rn = 1
 ),
-
-actuals_quarters AS (
-  SELECT DISTINCT Quarter, QGP_Week
-  FROM raw
-  WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-    AND Spend_Actual IS NOT NULL AND Spend_Actual != 0
-),
-
 week_type AS (
   SELECT
     QGP_Week,
     CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
-  FROM (
-    SELECT Quarter, QGP_Week FROM best
-    UNION
-    SELECT Quarter, QGP_Week FROM actuals_quarters
-  )
+  FROM best
   GROUP BY QGP_Week
-),
-
-boundary_dates AS (
-  SELECT QGP_Week, quarter_end_in_week
-  FROM (
-    SELECT DISTINCT
-      QGP_Week,
-      CASE
-        WHEN MAKE_DATE(YEAR(Week_Beginning_Monday), 3, 31)
-             BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-          THEN MAKE_DATE(YEAR(Week_Beginning_Monday), 3, 31)
-        WHEN MAKE_DATE(YEAR(Week_Beginning_Monday), 6, 30)
-             BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-          THEN MAKE_DATE(YEAR(Week_Beginning_Monday), 6, 30)
-        WHEN MAKE_DATE(YEAR(Week_Beginning_Monday), 9, 30)
-             BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-          THEN MAKE_DATE(YEAR(Week_Beginning_Monday), 9, 30)
-        WHEN MAKE_DATE(YEAR(Week_Beginning_Monday), 12, 31)
-             BETWEEN Week_Beginning_Monday AND Week_Ending_Sunday
-          THEN MAKE_DATE(YEAR(Week_Beginning_Monday), 12, 31)
-      END AS quarter_end_in_week
-    FROM weekly_snapshots
-  )
-  WHERE quarter_end_in_week IS NOT NULL
-),
-
-boundary_with_forecast AS (
-  SELECT *
-  FROM (
-    SELECT
-      b.Quarter                                                              AS source_quarter,
-      b.QGP_Week, b.Week_Beginning_Monday, b.Week_Ending_Sunday,
-      b.FileLoad_Date, b.LOB_Supported,
-      b.Channel, b.Tactic, b.Message_Type, b.Agency,
-      b.weekly_forecast                                                      AS source_forecast,
-      bd.quarter_end_in_week,
-      CASE
-        WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
-          THEN DATEDIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday) + 1
-        ELSE DATEDIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week)
-      END                                                                    AS source_days,
-      DATEDIFF(b.Week_Ending_Sunday, b.Week_Beginning_Monday) + 1           AS total_week_days,
-      CASE
-        WHEN b.Week_Beginning_Monday <= bd.quarter_end_in_week
-          THEN DATEDIFF(b.Week_Ending_Sunday, bd.quarter_end_in_week)
-        ELSE DATEDIFF(bd.quarter_end_in_week, b.Week_Beginning_Monday) + 1
-      END                                                                    AS missing_days
-    FROM best b
-    JOIN week_type w   ON b.QGP_Week = w.QGP_Week AND w.week_type = 'boundary_week'
-    JOIN boundary_dates bd ON b.QGP_Week = bd.QGP_Week
-    WHERE NOT EXISTS (
-      SELECT 1 FROM best other_best
-      WHERE other_best.QGP_Week      = b.QGP_Week
-        AND other_best.Quarter       != b.Quarter
-        AND other_best.LOB_Supported = b.LOB_Supported
-        AND other_best.Channel       = b.Channel
-        AND other_best.Tactic        = b.Tactic
-        AND other_best.Message_Type  = b.Message_Type
-        AND other_best.Agency        = b.Agency
-    )
-  )
-  WHERE source_days > 0 AND missing_days > 0
-),
-
-derived_forecasts AS (
-  SELECT
-    aq.Quarter, bwf.Week_Beginning_Monday, bwf.Week_Ending_Sunday,
-    bwf.QGP_Week, bwf.FileLoad_Date, bwf.LOB_Supported,
-    bwf.Channel, bwf.Tactic, bwf.Message_Type, bwf.Agency,
-    ROUND((bwf.source_forecast / bwf.source_days) * bwf.missing_days, 2) AS weekly_forecast,
-    'boundary_week' AS week_type,
-    TRUE            AS is_derived
-  FROM boundary_with_forecast bwf
-  JOIN actuals_quarters aq
-    ON aq.QGP_Week = bwf.QGP_Week AND aq.Quarter != bwf.source_quarter
-  LEFT JOIN best existing
-    ON  existing.QGP_Week      = bwf.QGP_Week
-    AND existing.Quarter       = aq.Quarter
-    AND existing.LOB_Supported = bwf.LOB_Supported
-    AND existing.Channel       = bwf.Channel
-    AND existing.Tactic        = bwf.Tactic
-    AND existing.Message_Type  = bwf.Message_Type
-    AND existing.Agency        = bwf.Agency
-  WHERE existing.Quarter IS NULL
 )
-
-SELECT *
-FROM (
-  SELECT
-    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
-    b.FileLoad_Date, b.LOB_Supported, b.Channel, b.Tactic, b.Message_Type, b.Agency,
-    b.weekly_forecast, w.week_type, FALSE AS is_derived
-  FROM best b
-  JOIN week_type w ON b.QGP_Week = w.QGP_Week
-
-  UNION ALL
-
-  SELECT
-    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-    FileLoad_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
-    weekly_forecast, week_type, is_derived
-  FROM derived_forecasts
-)
-WHERE weekly_forecast IS NOT NULL
-  AND weekly_forecast != 0
-;
+SELECT
+  b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
+  b.FileLoad_Date, b.Source_File_Date, b.LOB_Supported, b.Channel, b.Tactic, b.Message_Type, b.Agency,
+  b.weekly_forecast, w.week_type
+FROM best b
+JOIN week_type w ON b.QGP_Week = w.QGP_Week
+WHERE b.weekly_forecast IS NOT NULL AND b.weekly_forecast != 0;
