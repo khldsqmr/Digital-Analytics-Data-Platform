@@ -8,3 +8,7 @@ WHERE File_Name = '2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx'
   AND Agency = 'INI' AND WS = 'HINT' AND Message = 'Home Internet'
   AND Platform = 'Sponsorship: Movers' AND Tactic = 'OLV'
 GROUP BY Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source;
+
+
+Agency	WS	Message	Platform	Tactic	ATLBTL	LOB_Supported	Funding_Source	distinct_weeks	total_rows	avg_rows_per_week
+INI	HINT	Home Internet	Sponsorship: Movers	OLV	BTL	Home Internet	Home Internet	14	70	5.0000000000000000
