@@ -1,18 +1,5 @@
-WITH ranked AS (
-  SELECT *,
-    ROW_NUMBER() OVER (
-      PARTITION BY Agency, Message, Market, Platform, Tactic, Week_Beginning_Monday
-      ORDER BY FileLoad_Date DESC, FileModified_TimeStamp DESC
-    ) AS rn
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-)
-SELECT
-  Week_Beginning_Monday,
-  QGP_Week,
-  Quarter,
-  SUM(Spend_Actual)   AS spend_actual,
-  SUM(Spend_Forecast) AS spend_forecast
-FROM ranked
-WHERE rn = 1
-GROUP BY Week_Beginning_Monday, QGP_Week, Quarter
-ORDER BY Week_Beginning_Monday;
+SELECT File_Name, File_Date, FileModified_TimeStamp, FileLoad_Date
+FROM prdrzranalytics.lab42.raw_media_flowchart
+GROUP BY File_Name, File_Date, FileModified_TimeStamp, FileLoad_Date
+ORDER BY File_Date DESC
+LIMIT 50;
