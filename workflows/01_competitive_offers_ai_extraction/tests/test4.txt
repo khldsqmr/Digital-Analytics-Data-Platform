@@ -1,15 +1,10 @@
-SELECT *
+SELECT
+  Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source,
+  COUNT(DISTINCT Week_Beginning_Monday) AS distinct_weeks,
+  COUNT(*) AS total_rows,
+  COUNT(*) * 1.0 / COUNT(DISTINCT Week_Beginning_Monday) AS avg_rows_per_week
 FROM prdrzranalytics.lab42.raw_media_flowchart
 WHERE File_Name = '2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx'
   AND Agency = 'INI' AND WS = 'HINT' AND Message = 'Home Internet'
   AND Platform = 'Sponsorship: Movers' AND Tactic = 'OLV'
-  AND Week_Beginning_Monday = '2023-09-04'
-ORDER BY Spend_Actual;
-
-
-Agency	WS	Language	Message	Market	Platform	Tactic	Week_Beginning_Monday	QGP	Channel	ATLBTL	Location	Mkt_Tier	LOB_Supported	Funding_Source	WM_V_NWM	Message_Type	QGP_Message_Type	UE_Category	Row_Admin	Month	Quarter	Year	QGP_Week	Week_Ending_Sunday	Spend	Spend_Actual	Spend_Forecast	TRPs	TRPs_Actual	TRPs_Forecast	File_Name	File_Date	FileModified_TimeStamp	FileLoad_Date	Notes
-INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	2023-09-04	Forecast	OLV	BTL	National	National	Home Internet	Home Internet	Working	Offer	\Not Applicable	Home Internet DG	Media Inputs	September	Q3'23	2023	2023-09-09	2023-09-10	0	null	0	0	null	0	2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	2023-07-07	2024-12-10T20:28:59.000+00:00	2024-12-10	null
-INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	2023-09-04	Forecast	OLV	BTL	National	National	Home Internet	Home Internet	Working	Offer	\Not Applicable	Home Internet DG	Media Inputs	September	Q3'23	2023	2023-09-09	2023-09-10	0	null	0	0	null	0	2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	2023-07-07	2024-12-10T20:28:59.000+00:00	2024-12-10	null
-INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	2023-09-04	Forecast	OLV	BTL	National	National	Home Internet	Home Internet	Working	Offer	\Not Applicable	Home Internet DG	Media Inputs	September	Q3'23	2023	2023-09-09	2023-09-10	0	null	0	0	null	0	2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	2023-07-07	2024-12-10T20:28:59.000+00:00	2024-12-10	null
-INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	2023-09-04	Forecast	OLV	BTL	National	National	Home Internet	Home Internet	Working	Offer	\Not Applicable	Home Internet DG	Media Inputs	September	Q3'23	2023	2023-09-09	2023-09-10	0	null	0	0	null	0	2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	2023-07-07	2024-12-10T20:28:59.000+00:00	2024-12-10	null
-INI	HINT	EL	Home Internet	National	Sponsorship: Movers	OLV	2023-09-04	Forecast	OLV	BTL	National	National	Home Internet	Home Internet	Working	Offer	\Not Applicable	Home Internet DG	Media Inputs	September	Q3'23	2023	2023-09-09	2023-09-10	0	null	0	0	null	0	2023 Media Book & Flowchart -20230707 DRAFT INTERNALv3.xlsx	2023-07-07	2024-12-10T20:28:59.000+00:00	2024-12-10	null
+GROUP BY Agency, WS, Message, Platform, Tactic, ATLBTL, LOB_Supported, Funding_Source;
