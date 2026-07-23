@@ -1,5 +1,31 @@
 PROJECT: prj-dbi-prd-1
 
+-- ============================================================================
+-- QUERY (extended): Same as above, plus % change into and out of the
+-- Prime Day week (07-11), so the spike-and-reversion pattern is explicit.
+-- ============================================================================
+WITH pivoted AS (
+  SELECT
+    offer_type,
+    SUM(CASE WHEN report_date = '2025-07-03' THEN offer_count ELSE 0 END) AS wk_0703,
+    SUM(CASE WHEN report_date = '2025-07-11' THEN offer_count ELSE 0 END) AS wk_0711,
+    SUM(CASE WHEN report_date = '2025-07-18' THEN offer_count ELSE 0 END) AS wk_0718
+  FROM `ds_dbi_digitalmedia_automation.sdi_competitiveOffers_insights_offerCountsByCarrierAndType_weekly`
+  WHERE report_date IN ('2025-07-03', '2025-07-11', '2025-07-18')
+  GROUP BY offer_type
+)
+SELECT
+  offer_type,
+  wk_0703 AS `07-03`,
+  wk_0711 AS `07-11`,
+  wk_0718 AS `07-18`,
+  ROUND(SAFE_DIVIDE(wk_0711 - wk_0703, wk_0703) * 100, 1) AS pct_change_into_prime_day_week,
+  ROUND(SAFE_DIVIDE(wk_0718 - wk_0711, wk_0711) * 100, 1) AS pct_change_out_of_prime_day_week
+FROM pivoted
+ORDER BY wk_0711 DESC;
+
+
+The dates match almost exactly. Prime Day 2025 was confirmed as a 4-day event, July 8–11. It was a bigger event than usual. This was Prime Day's 10th anniversary, extended to 4 days for the first time ever (previously 2 days), with Amazon explicitly ramping up the promotion — plus a full week of lead-up deals starting July 1-3. Prime Day 2024 alone drove $14.2 billion in U.S. consumer spend per Adobe Analytics.
 
 === CORE GOLD TABLES (one per page type) ===
 
