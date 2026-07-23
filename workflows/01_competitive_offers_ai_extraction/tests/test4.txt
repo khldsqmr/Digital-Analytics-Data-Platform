@@ -1,35 +1,42 @@
+WITH file_ranked AS (
+  SELECT DISTINCT File_Name, File_Date, FileLoad_Date,
+    COALESCE(p.priority_tier, 99) AS priority_tier
+  FROM prdrzranalytics.lab42.raw_media_flowchart r
+  LEFT JOIN lab42.file_precedence p ON r.File_Name = p.File_Name
+),
+winning_file_per_key AS (
+  SELECT
+    r.Agency, r.WS, r.Language, r.Message, r.Market, r.Platform, r.Tactic,
+    r.ATLBTL, r.LOB_Supported, r.Funding_Source, r.Week_Beginning_Monday,
+    f.File_Name,
+    ROW_NUMBER() OVER (
+      PARTITION BY r.Agency, r.WS, r.Language, r.Message, r.Market, r.Platform, r.Tactic,
+                    r.ATLBTL, r.LOB_Supported, r.Funding_Source, r.Week_Beginning_Monday
+      ORDER BY f.priority_tier ASC, f.File_Date DESC, f.FileLoad_Date DESC
+    ) AS file_rank
+  FROM prdrzranalytics.lab42.raw_media_flowchart r
+  JOIN file_ranked f ON r.File_Name = f.File_Name
+)
+SELECT
+  w.Agency, w.WS, w.Language, w.Message, w.Market, w.Platform, w.Tactic,
+  w.ATLBTL, w.LOB_Supported, w.Funding_Source, w.Week_Beginning_Monday,
+  SUM(r.Spend_Actual)   AS spend_actual,
+  SUM(r.Spend_Forecast) AS spend_forecast
+FROM winning_file_per_key w
+JOIN prdrzranalytics.lab42.raw_media_flowchart r
+  ON r.Agency = w.Agency AND r.WS = w.WS AND r.Language = w.Language AND r.Message = w.Message
+ AND r.Market = w.Market AND r.Platform = w.Platform AND r.Tactic = w.Tactic
+ AND r.ATLBTL = w.ATLBTL AND r.LOB_Supported = w.LOB_Supported AND r.Funding_Source = w.Funding_Source
+ AND r.Week_Beginning_Monday = w.Week_Beginning_Monday AND r.File_Name = w.File_Name
+WHERE w.file_rank = 1
+GROUP BY w.Agency, w.WS, w.Language, w.Message, w.Market, w.Platform, w.Tactic,
+         w.ATLBTL, w.LOB_Supported, w.Funding_Source, w.Week_Beginning_Monday;
+
+
+
 SELECT *
 FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE Agency = 'ProgAct' AND WS = 'TFB' AND Message = 'TFB Offer SMB'
-  AND Platform = 'SMB/Micro' AND Tactic = 'Paid Social'
-  AND Week_Beginning_Monday = '2021-12-27'
+WHERE Agency = 'InHouse' AND WS = 'Metro' AND Message = 'Prepaid Offers'
+  AND Platform = 'Consideration' AND Tactic = 'Display'
+  AND Week_Beginning_Monday = '2025-09-29'
 ORDER BY Spend_Actual;
-
-Agency	WS	Language	Message	Market	Platform	Tactic	Week_Beginning_Monday	QGP	Channel	ATLBTL	Location	Mkt_Tier	LOB_Supported	Funding_Source	WM_V_NWM	Message_Type	QGP_Message_Type	UE_Category	Row_Admin	Month	Quarter	Year	QGP_Week	Week_Ending_Sunday	Spend	Spend_Actual	Spend_Forecast	TRPs	TRPs_Actual	TRPs_Forecast	File_Name	File_Date	FileModified_TimeStamp	FileLoad_Date	Notes
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2221.610107421875	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	13761.580078125	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2485.429931640625	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	0	0	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2478.02001953125	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	8026.97021484375	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	166243.109375	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	0	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	79219.90625	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	0	0	null	0	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	SL portion of this campaign will not be realunching.
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	1589.3599853515625	0	0	0	0	0	ADW Load 7-10-2025	2021-01-01	2025-07-10T15:26:11.245+00:00	2025-07-10	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	1589.3599853515625	1589.3599853515625	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	1589.3599853515625	1589.3599853515625	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2221.610107421875	2221.610107421875	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2221.610107421875	2221.610107421875	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2478.02001953125	2478.02001953125	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2478.02001953125	2478.02001953125	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	2 wk gap in spend due to campaign end 11.15 and new campaign launch 12/10
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2485.429931640625	2485.429931640625	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	Local	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	Local	Other	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	2485.429931640625	2485.429931640625	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	2 wk gap in spend due to campaign end 11.15 and new campaign launch 12/10
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	8026.97021484375	8026.97021484375	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	SL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	8026.97021484375	8026.97021484375	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	13761.580078125	13761.580078125	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	13761.580078125	13761.580078125	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	79219.90625	79219.90625	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	79219.90625	79219.90625	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	166243.109375	166243.109375	null	0	0	null	2021 Media Book  Flowchart  FINAL updated -20240111 with TFB Segments v2.xlsx	2024-01-11	2024-11-01T17:39:06.000+00:00	2024-11-01	null
-ProgAct	TFB	EL	TFB Offer SMB	National	SMB/Micro	Paid Social	2021-12-27	Actual	Paid Social	BTL	National	National	TFB	TFB	Working	Offer	\Not Applicable	TFB DG	Media Inputs	December	Q4'21	2021	2022-01-01	2022-01-02	166243.109375	166243.109375	null	0.00009999999747378752	0	null	2021 Master Flowchart - 20260224 - Reupload.xlsx	2026-02-24	2026-02-24T18:31:32.000+00:00	2026-02-24	nan
