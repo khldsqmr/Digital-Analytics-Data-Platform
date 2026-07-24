@@ -9,6 +9,7 @@ calendar_resolved AS (
     c.week_type,
     c.quarter            AS new_quarter,
     c.days_in_period     AS new_days,
+    stub.qgp_date        AS stub_QGP_Week,
     stub.quarter         AS old_quarter,
     stub.days_in_period  AS old_days
   FROM prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar c
@@ -31,15 +32,15 @@ actual_reallocated AS (
     t.FileLoad_Date, t.Source_File_Date,
     cr.new_quarter AS Quarter,
     t.total_actual * cr.new_days / 7.0 AS weekly_actual,
-    CASE WHEN cr.week_type = 'NORMAL' THEN 'normal' ELSE 'boundary_week' END AS week_type
+    cr.week_type AS week_type
   FROM actual_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   UNION ALL
-  SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
+  SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, cr.stub_QGP_Week AS QGP_Week, t.LOB_Supported,
     t.FileLoad_Date, t.Source_File_Date,
     cr.old_quarter AS Quarter,
     t.total_actual * cr.old_days / 7.0 AS weekly_actual,
-    'boundary_week' AS week_type
+    'BOUNDARY_STUB' AS week_type
   FROM actual_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
@@ -58,15 +59,15 @@ forecast_reallocated AS (
     t.FileLoad_Date, t.Source_File_Date,
     cr.new_quarter AS Quarter,
     t.total_forecast * cr.new_days / 7.0 AS weekly_forecast,
-    CASE WHEN cr.week_type = 'NORMAL' THEN 'normal' ELSE 'boundary_week' END AS week_type
+    cr.week_type AS week_type
   FROM forecast_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   UNION ALL
-  SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
+  SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, cr.stub_QGP_Week AS QGP_Week, t.LOB_Supported,
     t.FileLoad_Date, t.Source_File_Date,
     cr.old_quarter AS Quarter,
     t.total_forecast * cr.old_days / 7.0 AS weekly_forecast,
-    'boundary_week' AS week_type
+    'BOUNDARY_STUB' AS week_type
   FROM forecast_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
@@ -90,5 +91,5 @@ SELECT
   f.FileLoad_Date AS Forecast_FileLoad_Date, f.Source_File_Date AS Forecast_Source_File_Date
 FROM actual_reallocated a
 FULL OUTER JOIN forecast_reallocated f
-  ON a.Quarter = f.Quarter AND a.QGP_Week = f.QGP_Week AND a.LOB_Supported = f.LOB_Supported;
+  ON a.QGP_Week = f.QGP_Week AND a.LOB_Supported = f.LOB_Supported;
 
