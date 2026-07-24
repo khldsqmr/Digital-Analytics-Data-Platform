@@ -1,1 +1,9 @@
 are you seeing like 430k as the total for in house and initiative forecasts?
+
+SELECT
+  Agency,
+  SUM(weekly_forecast) AS total_forecast
+FROM prdrzranalytics.lab42.vw_mfc_bronze_spendForecastGranular_weekly
+WHERE Agency IN ('In-House (TMO)', 'Initiative')
+GROUP BY Agency
+ORDER BY Agency;
