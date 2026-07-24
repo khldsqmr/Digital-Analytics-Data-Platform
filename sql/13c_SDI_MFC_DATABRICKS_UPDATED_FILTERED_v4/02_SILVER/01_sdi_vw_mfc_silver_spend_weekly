@@ -18,21 +18,36 @@ calendar_resolved AS (
    AND stub.week_type = 'BOUNDARY_STUB'
   WHERE c.week_type IN ('NORMAL', 'BOUNDARY_FIRST')
 ),
-actual_totals AS (
+actual_quarter_totals AS (
   SELECT
-    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
-    SUM(weekly_actual) AS total_actual,
+    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Quarter,
+    SUM(weekly_actual) AS quarter_total_actual,
     MAX(FileLoad_Date) AS FileLoad_Date,
     MAX(Source_File_Date) AS Source_File_Date
   FROM prdrzranalytics.lab42.vw_mfc_bronze_spendActuals_weekly
+  GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Quarter
+),
+actual_totals AS (
+  SELECT
+    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
+    SUM(quarter_total_actual) AS total_actual,
+    COUNT(DISTINCT Quarter) AS n_quarters,
+    MAX(Quarter) AS single_quarter,
+    MAX(FileLoad_Date) AS FileLoad_Date,
+    MAX(Source_File_Date) AS Source_File_Date
+  FROM actual_quarter_totals
   GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
 ),
 actual_reallocated AS (
   SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
     t.FileLoad_Date, t.Source_File_Date,
-    cr.new_quarter AS Quarter,
     CASE
-      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL AND t.n_quarters = 2
+        THEN cr.new_quarter
+      ELSE COALESCE(t.single_quarter, cr.new_quarter)
+    END AS Quarter,
+    CASE
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL AND t.n_quarters = 2
         THEN t.total_actual * cr.new_days / 7.0
       ELSE t.total_actual
     END AS weekly_actual,
@@ -49,22 +64,38 @@ actual_reallocated AS (
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
     AND cr.stub_QGP_Week IS NOT NULL
+    AND t.n_quarters = 2
+),
+forecast_quarter_totals AS (
+  SELECT
+    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Quarter,
+    SUM(weekly_forecast) AS quarter_total_forecast,
+    MAX(FileLoad_Date) AS FileLoad_Date,
+    MAX(Source_File_Date) AS Source_File_Date
+  FROM prdrzranalytics.lab42.vw_mfc_bronze_spendForecast_weekly
+  GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Quarter
 ),
 forecast_totals AS (
   SELECT
     Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
-    SUM(weekly_forecast) AS total_forecast,
+    SUM(quarter_total_forecast) AS total_forecast,
+    COUNT(DISTINCT Quarter) AS n_quarters,
+    MAX(Quarter) AS single_quarter,
     MAX(FileLoad_Date) AS FileLoad_Date,
     MAX(Source_File_Date) AS Source_File_Date
-  FROM prdrzranalytics.lab42.vw_mfc_bronze_spendForecast_weekly
+  FROM forecast_quarter_totals
   GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
 ),
 forecast_reallocated AS (
   SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
     t.FileLoad_Date, t.Source_File_Date,
-    cr.new_quarter AS Quarter,
     CASE
-      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL AND t.n_quarters = 2
+        THEN cr.new_quarter
+      ELSE COALESCE(t.single_quarter, cr.new_quarter)
+    END AS Quarter,
+    CASE
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL AND t.n_quarters = 2
         THEN t.total_forecast * cr.new_days / 7.0
       ELSE t.total_forecast
     END AS weekly_forecast,
@@ -81,6 +112,7 @@ forecast_reallocated AS (
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
     AND cr.stub_QGP_Week IS NOT NULL
+    AND t.n_quarters = 2
 )
 SELECT
   COALESCE(a.Quarter, f.Quarter) AS Quarter,
