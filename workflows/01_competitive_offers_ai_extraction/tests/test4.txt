@@ -1,9 +1,37 @@
-2026-07-06	2026-07-12	2026-07-11	2026-07-22	2026-07-17	TFB	1311148.2774353027	normal
-2026-07-06	2026-07-12	2026-07-11	2026-07-22	2026-07-17	CONSUMER POSTPAID	19466842.89862442	normal
-2026-07-06	2026-07-12	2026-07-11	2026-07-22	2026-07-17	BROADBAND	9056468.427185059	normal
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	TFB	1130502.2502288818	boundary_week
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	CONSUMER POSTPAID	11434835.98399353	boundary_week
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	BROADBAND	7137920.205322266	boundary_week
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	TFB	302141.6428222656	boundary_week
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	CONSUMER POSTPAID	3517296.3100509644	boundary_week
-2026-06-29	2026-07-05	2026-07-04	2026-07-22	2026-07-17	BROADBAND	2243134.470199585	boundary_week
+WITH
+actual_boundary_totals AS (
+  SELECT
+    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
+    SUM(weekly_actual) AS total_week_actual,
+    MAX(FileLoad_Date) AS FileLoad_Date,
+    MAX(Source_File_Date) AS Source_File_Date
+  FROM prdrzranalytics.lab42.vw_mfc_bronze_spendActuals_weekly
+  WHERE week_type = 'boundary_week'
+  GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
+),
+actual_boundary_daily AS (
+  SELECT
+    t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
+    t.FileLoad_Date, t.Source_File_Date,
+    day_date,
+    t.total_week_actual / 7.0 AS daily_actual
+  FROM actual_boundary_totals t
+  LATERAL VIEW explode(sequence(t.Week_Beginning_Monday, t.Week_Ending_Sunday)) exploded AS day_date
+),
+actual_boundary_reallocated AS (
+  SELECT
+    CONCAT('Q', CAST(QUARTER(day_date) AS STRING), '''', LPAD(CAST(YEAR(day_date) % 100 AS STRING), 2, '0')) AS Quarter,
+    Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
+    MAX(FileLoad_Date) AS FileLoad_Date,
+    MAX(Source_File_Date) AS Source_File_Date,
+    SUM(daily_actual) AS weekly_actual,
+    'boundary_week' AS week_type
+  FROM actual_boundary_daily
+  GROUP BY QUARTER(day_date), YEAR(day_date), Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
+)
+SELECT Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, FileLoad_Date, Source_File_Date, weekly_actual, week_type
+FROM prdrzranalytics.lab42.vw_mfc_bronze_spendActuals_weekly
+WHERE week_type != 'boundary_week'
+UNION ALL
+SELECT Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, FileLoad_Date, Source_File_Date, weekly_actual, week_type
+FROM actual_boundary_reallocated;
