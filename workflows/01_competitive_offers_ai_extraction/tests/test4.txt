@@ -1,2 +1,6 @@
 SELECT MAX(Week_Beginning_Monday) FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spend_weekly;
 SELECT MAX(Week_Beginning_Monday) FROM prdrzranalytics.lab42.sdi_vw_mfc_silver_spendGranular_weekly;
+
+
+2026-12-21
+2026-12-21
