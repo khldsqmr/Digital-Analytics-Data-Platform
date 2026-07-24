@@ -34,7 +34,11 @@ actual_reallocated AS (
     t.Channel, t.Tactic, t.Message_Type, t.Agency,
     t.FileLoad_Date, t.Source_File_Date,
     cr.new_quarter AS Quarter,
-    t.total_actual * cr.new_days / 7.0 AS weekly_actual,
+    CASE
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+        THEN t.total_actual * cr.new_days / 7.0
+      ELSE t.total_actual
+    END AS weekly_actual,
     cr.week_type AS week_type
   FROM actual_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
@@ -48,6 +52,7 @@ actual_reallocated AS (
   FROM actual_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
+    AND cr.stub_QGP_Week IS NOT NULL
 ),
 forecast_totals AS (
   SELECT
@@ -64,7 +69,11 @@ forecast_reallocated AS (
     t.Channel, t.Tactic, t.Message_Type, t.Agency,
     t.FileLoad_Date, t.Source_File_Date,
     cr.new_quarter AS Quarter,
-    t.total_forecast * cr.new_days / 7.0 AS weekly_forecast,
+    CASE
+      WHEN cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+        THEN t.total_forecast * cr.new_days / 7.0
+      ELSE t.total_forecast
+    END AS weekly_forecast,
     cr.week_type AS week_type
   FROM forecast_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
@@ -78,6 +87,7 @@ forecast_reallocated AS (
   FROM forecast_totals t
   JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
   WHERE cr.week_type = 'BOUNDARY_FIRST'
+    AND cr.stub_QGP_Week IS NOT NULL
 )
 SELECT
   COALESCE(a.Quarter, f.Quarter) AS Quarter,
