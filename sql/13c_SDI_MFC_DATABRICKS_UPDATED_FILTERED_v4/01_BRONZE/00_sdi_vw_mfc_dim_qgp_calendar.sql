@@ -17,15 +17,20 @@ AS
 WITH
 
 -- Daily date spine: 2020-01-01 through the later of (end of current year)
--- or (end of next quarter) — guarantees at least one full quarter of
--- lookahead beyond "today" at all times, including the Q4 rollover into
--- the following year's Q1.
+-- or (end of next quarter), PLUS a 7-day buffer — guarantees at least one
+-- full quarter of lookahead beyond "today" at all times, including the
+-- Q4 rollover into the following year's Q1, and ensures BOUNDARY_FIRST
+-- always has room to find its Saturday even when the final quarter-end
+-- stub in range falls on a Sunday (the worst case, needing a full 6 days).
 date_spine AS (
   SELECT EXPLODE(SEQUENCE(
     DATE'2020-01-01',
-    GREATEST(
-      DATE_ADD(DATE_TRUNC('year', ADD_MONTHS(CURRENT_DATE(), 12)), -1),
-      LAST_DAY(ADD_MONTHS(DATE_TRUNC('quarter', CURRENT_DATE()), 5))
+    DATE_ADD(
+      GREATEST(
+        DATE_ADD(DATE_TRUNC('year', ADD_MONTHS(CURRENT_DATE(), 12)), -1),
+        LAST_DAY(ADD_MONTHS(DATE_TRUNC('quarter', CURRENT_DATE()), 5))
+      ),
+      7
     )
   )) AS day
 ),
