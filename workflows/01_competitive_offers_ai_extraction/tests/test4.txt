@@ -12,9 +12,12 @@ WHERE stub.week_type = 'BOUNDARY_STUB'
   AND stub.Spend_Actual IS NULL AND stub.Spend_Forecast IS NOT NULL
   AND first.week_type = 'BOUNDARY_FIRST'
   AND first.Spend_Actual IS NOT NULL;
-
+output: No rows returned
 
 SELECT QGP_Week, Quarter, week_type, Spend_Actual, Spend_Forecast, Spend_Final, Spend_Status
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly
 WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID'
   AND Channel = 'Affiliate' AND Tactic = 'Affiliate' AND Message_Type = 'BTS' AND Agency = 'In-House (TMO)';
+
+output: QGP_Week	Quarter	week_type	Spend_Actual	Spend_Forecast	Spend_Final	Spend_Status
+2026-04-04	2026 Q2	BOUNDARY_FIRST	2226.76416015625	13977.22314453125	2226.76416015625	Actual+Forecast
