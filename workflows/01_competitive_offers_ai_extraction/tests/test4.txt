@@ -1,7 +1,7 @@
+-- Broader check across all historical boundaries, not just this one campaign/week
 SELECT
-  stub.Week_Beginning_Monday, stub.LOB_Supported, stub.Channel, stub.Tactic, stub.Message_Type, stub.Agency,
-  stub.QGP_Week AS stub_QGP_Week, stub.Spend_Forecast AS orphaned_forecast,
-  first.QGP_Week AS first_QGP_Week, first.Spend_Actual AS sibling_actual
+  COUNT(*) AS remaining_orphans,
+  SUM(stub.Spend_Forecast) AS remaining_orphan_dollars
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly stub
 JOIN prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly first
   ON stub.Week_Beginning_Monday = first.Week_Beginning_Monday
@@ -12,12 +12,26 @@ WHERE stub.week_type = 'BOUNDARY_STUB'
   AND stub.Spend_Actual IS NULL AND stub.Spend_Forecast IS NOT NULL
   AND first.week_type = 'BOUNDARY_FIRST'
   AND first.Spend_Actual IS NOT NULL;
-output: No rows returned
+output:
 
-SELECT QGP_Week, Quarter, week_type, Spend_Actual, Spend_Forecast, Spend_Final, Spend_Status
-FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly
-WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID'
-  AND Channel = 'Affiliate' AND Tactic = 'Affiliate' AND Message_Type = 'BTS' AND Agency = 'In-House (TMO)';
 
-output: QGP_Week	Quarter	week_type	Spend_Actual	Spend_Forecast	Spend_Final	Spend_Status
-2026-04-04	2026 Q2	BOUNDARY_FIRST	2226.76416015625	13977.22314453125	2226.76416015625	Actual+Forecast
+SELECT
+  ng.QGP_Week, ng.LOB_Supported,
+  ng.Spend_Actual AS NonGranular_Actual, g.Spend_Actual AS Granular_Actual,
+  ng.Spend_Forecast AS NonGranular_Forecast, g.Spend_Forecast AS Granular_Forecast
+FROM (
+  SELECT QGP_Week, LOB_Supported, Spend_Actual, Spend_Forecast
+  FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
+) ng
+JOIN (
+  SELECT QGP_Week, LOB_Supported, SUM(Spend_Actual) AS Spend_Actual, SUM(Spend_Forecast) AS Spend_Forecast
+  FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly
+  GROUP BY QGP_Week, LOB_Supported
+) g
+  ON ng.QGP_Week = g.QGP_Week AND ng.LOB_Supported = g.LOB_Supported
+WHERE ABS(COALESCE(ng.Spend_Actual, 0) - COALESCE(g.Spend_Actual, 0)) > 0.01
+   OR ABS(COALESCE(ng.Spend_Forecast, 0) - COALESCE(g.Spend_Forecast, 0)) > 0.01
+ORDER BY ng.QGP_Week DESC;
+
+output:
+
