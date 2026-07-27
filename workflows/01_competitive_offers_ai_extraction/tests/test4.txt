@@ -1,1 +1,29 @@
-Query error: Name FileLoad_Date not found inside raw at [prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_sdi_pulseTms_bronze_mfcSpend_weekly:45:19]
+qgp_quarter	qgp_date	actuals	forecast
+2026 Q3	2026-09-30		6507329.51071167
+2026 Q3	2026-09-26		42132907.37852478
+2026 Q3	2026-09-19		39372967.08543396
+2026 Q3	2026-09-12		40011602.898147583
+2026 Q3	2026-09-05		36080249.937026978
+2026 Q3	2026-08-29		36432096.605667114
+2026 Q3	2026-08-22		34459745.879592896
+2026 Q3	2026-08-15		34116417.9478302
+2026 Q3	2026-08-08		34515751.317184448
+2026 Q3	2026-08-01		33529480.692173004
+2026 Q3	2026-07-25		32541646.046146393
+2026 Q3	2026-07-18	33890484.903507233	37377050.165912628
+2026 Q3	2026-07-11	29946477.39383316	28438479.618030548
+2026 Q3	2026-07-04	21334401.147056583	
+
+SELECT
+    qgp_quarter,
+    qgp_date,
+    --metric_name,
+    SUM(CASE WHEN metric_type = 'MFC_SPEND_ACTUAL' THEN metric_value END) AS actuals,
+    SUM(CASE WHEN metric_type = 'MFC_SPEND_FORECAST' THEN metric_value END) AS forecast
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_gold_unified_long`
+WHERE data_source = 'MFC_SPEND_GRANULAR'
+  AND lob in ('BROADBAND','POSTPAID')
+  AND metric_type IN ('MFC_SPEND_ACTUAL', 'MFC_SPEND_FORECAST')
+  AND qgp_quarter = '2026 Q3'
+GROUP BY 1,2
+ORDER BY qgp_quarter DESC, qgp_date DESC;
