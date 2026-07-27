@@ -1,3 +1,11 @@
+
+-- ============================================================
+-- SILVER 2 — SPEND, GRANULAR
+-- Forecast follows Actual's resolved shape whenever Actual exists
+-- (single- or dual-quarter). No rollup here, so no LOB-level
+-- fragmentation risk — Channel/Tactic/Message_Type/Agency already
+-- fully differentiate every row.
+-- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly()
 SQL SECURITY DEFINER

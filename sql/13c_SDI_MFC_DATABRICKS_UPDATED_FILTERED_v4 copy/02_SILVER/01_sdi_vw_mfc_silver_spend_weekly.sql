@@ -1,12 +1,21 @@
+-- ============================================================
+-- SILVER 1 — SPEND, NON-GRANULAR / LOB LEVEL
+-- Forecast follows Actual's resolved shape whenever Actual exists
+-- (single- or dual-quarter), resolved at campaign grain from
+-- Bronze 2/4, then rolled up to LOB level. Quarter/week_type at
+-- LOB level sourced authoritatively from the calendar — never
+-- grouped from per-campaign tags, which can disagree and
+-- fragment one true period into two rows.
+-- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly()
 SQL SECURITY DEFINER
-COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spend_weekly. Forecast follows Actual''s resolved shape whenever Actual exists, resolved at campaign grain from Bronze 2/4 then rolled up — refreshed via sdi_sp_mfc_silver_spend_weekly.'
+COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spend_weekly. Forecast follows Actual''s resolved shape whenever Actual exists, resolved at campaign grain from Bronze 2/4 then rolled up. Quarter/week_type at LOB level sourced authoritatively from the calendar, not per-campaign tags — refreshed via sdi_sp_mfc_silver_spend_weekly.'
 BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
   USING DELTA
-  COMMENT 'MFC Silver Spend (non-granular / LOB level). Forecast follows Actual''s resolved shape whenever Actual exists.'
+  COMMENT 'MFC Silver Spend (non-granular / LOB level). Forecast follows Actual''s resolved shape whenever Actual exists. Quarter/week_type sourced from the calendar to guarantee one row per period.'
   AS
   WITH
   calendar_resolved AS (
@@ -183,7 +192,6 @@ BEGIN
   ),
   resolved_granular AS (
     SELECT
-      COALESCE(a.Quarter, f.Quarter) AS Quarter,
       COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
       COALESCE(a.Week_Ending_Sunday, f.Week_Ending_Sunday) AS Week_Ending_Sunday,
       COALESCE(a.QGP_Week, f.QGP_Week) AS QGP_Week,
@@ -191,7 +199,6 @@ BEGIN
       a.weekly_actual AS Spend_Actual,
       f.weekly_forecast AS Spend_Forecast,
       COALESCE(a.weekly_actual, f.weekly_forecast) AS Spend_Final,
-      COALESCE(a.week_type, f.week_type) AS week_type,
       a.FileLoad_Date AS Actual_FileLoad_Date, a.Source_File_Date AS Actual_Source_File_Date,
       f.FileLoad_Date AS Forecast_FileLoad_Date, f.Source_File_Date AS Forecast_Source_File_Date
     FROM actual_reallocated a
@@ -205,7 +212,7 @@ BEGIN
   ),
   rolled_up AS (
     SELECT
-      Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, week_type, LOB_Supported,
+      Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
       SUM(Spend_Actual)   AS Spend_Actual,
       SUM(Spend_Forecast) AS Spend_Forecast,
       SUM(Spend_Final)    AS Spend_Final,
@@ -214,22 +221,25 @@ BEGIN
       MAX(Forecast_FileLoad_Date) AS Forecast_FileLoad_Date,
       MAX(Forecast_Source_File_Date) AS Forecast_Source_File_Date
     FROM resolved_granular
-    GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, week_type, LOB_Supported
+    GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
   )
   SELECT
-    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
-    Spend_Actual, Spend_Forecast, Spend_Final,
-    SUM(Spend_Actual)   OVER (PARTITION BY Week_Beginning_Monday, LOB_Supported) AS Spend_Actual_FullWeek,
-    SUM(Spend_Forecast) OVER (PARTITION BY Week_Beginning_Monday, LOB_Supported) AS Spend_Forecast_FullWeek,
-    SUM(Spend_Final)    OVER (PARTITION BY Week_Beginning_Monday, LOB_Supported) AS Spend_Final_FullWeek,
+    cal.quarter AS Quarter,
+    r.Week_Beginning_Monday, r.Week_Ending_Sunday, r.QGP_Week, r.LOB_Supported,
+    r.Spend_Actual, r.Spend_Forecast, r.Spend_Final,
+    SUM(r.Spend_Actual)   OVER (PARTITION BY r.Week_Beginning_Monday, r.LOB_Supported) AS Spend_Actual_FullWeek,
+    SUM(r.Spend_Forecast) OVER (PARTITION BY r.Week_Beginning_Monday, r.LOB_Supported) AS Spend_Forecast_FullWeek,
+    SUM(r.Spend_Final)    OVER (PARTITION BY r.Week_Beginning_Monday, r.LOB_Supported) AS Spend_Final_FullWeek,
     CASE
-      WHEN Spend_Actual IS NOT NULL AND Spend_Forecast IS NOT NULL THEN 'Actual+Forecast'
-      WHEN Spend_Actual IS NOT NULL THEN 'Actual'
-      WHEN Spend_Forecast IS NOT NULL THEN 'Forecast'
+      WHEN r.Spend_Actual IS NOT NULL AND r.Spend_Forecast IS NOT NULL THEN 'Actual+Forecast'
+      WHEN r.Spend_Actual IS NOT NULL THEN 'Actual'
+      WHEN r.Spend_Forecast IS NOT NULL THEN 'Forecast'
     END AS Spend_Status,
-    week_type,
-    Actual_FileLoad_Date, Actual_Source_File_Date,
-    Forecast_FileLoad_Date, Forecast_Source_File_Date
-  FROM rolled_up
+    cal.week_type,
+    r.Actual_FileLoad_Date, r.Actual_Source_File_Date,
+    r.Forecast_FileLoad_Date, r.Forecast_Source_File_Date
+  FROM rolled_up r
+  JOIN prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar cal ON r.QGP_Week = cal.qgp_date
   ;
 END;
+
