@@ -1,6 +1,6 @@
 
 -- ============================================================
--- BRONZE 2 — SPEND ACTUALS, GRANULAR
+-- BRONZE 2 — SPEND ACTUALS, GRANULAR (unchanged)
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActualsGranular_weekly()
@@ -34,31 +34,18 @@ BEGIN
       Spend AS Spend_Actual
     FROM prdrzranalytics.lab42.raw_media_flowchart
     WHERE 1=1
-      -- Scope to specific lines of business
       AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
-      -- Only "Working" media (excludes non-working/placeholder rows)
       AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
-      -- Exclude rows with no Channel assigned
       AND Channel IS NOT NULL
-      -- Exclude specific non-reportable channel buckets
       AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
-      -- Require a parseable Week_Beginning_Monday
       AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
-      -- Require a parseable QGP_Week
       AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
-      -- Require a parseable FileLoad_Date
       AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
-      -- Exclude "Micro" message-type rows
       AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-      -- Exclude specific micro-targeted campaign line items
       AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
-      -- Require a non-null Quarter tag
       AND Quarter IS NOT NULL
-      -- Require Quarter to match the expected "Q#'YY" format
       AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
-      -- Actuals only (Bronze 3/4 use 'FORECAST' instead)
       AND UPPER(TRIM(QGP)) = 'ACTUAL'
-      -- Exclude rows with no spend value
       AND Spend IS NOT NULL
   ),
   weekly_snapshots AS (

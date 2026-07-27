@@ -1,8 +1,6 @@
 
-
 -- ============================================================
--- BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL
--- Same fix mirrored for Forecast.
+-- BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL (unchanged)
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecast_weekly()
@@ -94,3 +92,4 @@ BEGIN
   WHERE r.weekly_forecast IS NOT NULL AND r.weekly_forecast != 0
   ;
 END;
+

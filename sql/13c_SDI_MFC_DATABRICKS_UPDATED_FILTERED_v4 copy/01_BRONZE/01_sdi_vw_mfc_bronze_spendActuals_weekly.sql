@@ -1,8 +1,6 @@
+
 -- ============================================================
--- BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL
--- Ranks at campaign grain internally (matching Bronze 2),
--- rolls up to LOB only in the final step — guarantees this
--- table's total always equals SUM(Bronze 2) exactly.
+-- BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL (unchanged)
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly()
@@ -94,3 +92,4 @@ BEGIN
   WHERE r.weekly_actual IS NOT NULL AND r.weekly_actual != 0
   ;
 END;
+
