@@ -119,3 +119,7 @@ SELECT * FROM forecast_reallocated
 WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID'
   AND Channel = 'Affiliate' AND Tactic = 'Affiliate' AND Message_Type = 'BTS' AND Agency = 'In-House (TMO)'
 ORDER BY branch, QGP_Week;
+
+output:
+branch	Week_Beginning_Monday	QGP_Week	LOB_Supported	Channel	Tactic	Message_Type	Agency	Quarter	weekly_forecast	week_type
+CASE_A_follows_actual	2026-03-30	2026-04-04	CONSUMER POSTPAID	Affiliate	Affiliate	BTS	In-House (TMO)	2026 Q2	13977.22314453125	BOUNDARY_FIRST
