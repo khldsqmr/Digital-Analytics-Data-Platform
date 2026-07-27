@@ -5,3 +5,7 @@ UNION ALL
 SELECT 'Silver (post-reallocation total)' AS source, SUM(Spend_Forecast) AS total_forecast
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly
 WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID';
+
+source	total_forecast
+Bronze (pre-reallocation total)	19004880.850586765
+Silver (post-reallocation total)	19004880.850586765
