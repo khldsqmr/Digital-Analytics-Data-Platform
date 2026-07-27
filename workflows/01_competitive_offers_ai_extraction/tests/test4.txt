@@ -66,3 +66,9 @@ actual_shape AS (
 SELECT * FROM actual_shape
 WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID'
   AND Channel = 'Affiliate' AND Tactic = 'Affiliate' AND Message_Type = 'BTS' AND Agency = 'In-House (TMO)';
+
+
+
+output:
+Week_Beginning_Monday	Week_Ending_Sunday	QGP_Week	LOB_Supported	Channel	Tactic	Message_Type	Agency	Quarter	week_type	shape_pct
+2026-03-30	2026-04-05	2026-04-04	CONSUMER POSTPAID	Affiliate	Affiliate	BTS	In-House (TMO)	2026 Q2	BOUNDARY_FIRST	1
