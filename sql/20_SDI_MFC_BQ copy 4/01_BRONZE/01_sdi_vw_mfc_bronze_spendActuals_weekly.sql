@@ -8,7 +8,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendActuals_weekly`
   OPTIONS (
-    description = 'MFC Bronze Actuals (non-granular / LOB level), ranked at campaign grain then rolled up.'
+    description = 'MFC Bronze Actuals (non-granular / LOB level), ranked at campaign grain then rolled up. Includes legacy LOB codes HSI (Broadband) and TBG (TFB), normalized to canonical values.'
   )
   AS
   WITH raw AS (
@@ -22,7 +22,11 @@ BEGIN
       SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
       SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
       SAFE_CAST(File_Date AS DATE) AS Source_File_Date,
-      UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+      CASE
+        WHEN UPPER(TRIM(LOB_Supported)) = 'HSI' THEN 'BROADBAND'
+        WHEN UPPER(TRIM(LOB_Supported)) = 'TBG' THEN 'TFB'
+        ELSE UPPER(TRIM(LOB_Supported))
+      END AS LOB_Supported,
       Channel, Tactic, Message_Type,
       CASE
         WHEN LOWER(TRIM(Agency)) = 'ini' THEN 'Initiative'
@@ -33,7 +37,7 @@ BEGIN
       Spend AS Spend_Actual
     FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
     WHERE 1=1
-      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
       AND UPPER(TRIM(WM_NWM)) = 'WORKING'
       AND Channel IS NOT NULL
       AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
