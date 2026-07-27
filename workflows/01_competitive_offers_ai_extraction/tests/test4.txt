@@ -1,29 +1,177 @@
-qgp_quarter	qgp_date	actuals	forecast
-2026 Q3	2026-09-30		6507329.51071167
-2026 Q3	2026-09-26		42132907.37852478
-2026 Q3	2026-09-19		39372967.08543396
-2026 Q3	2026-09-12		40011602.898147583
-2026 Q3	2026-09-05		36080249.937026978
-2026 Q3	2026-08-29		36432096.605667114
-2026 Q3	2026-08-22		34459745.879592896
-2026 Q3	2026-08-15		34116417.9478302
-2026 Q3	2026-08-08		34515751.317184448
-2026 Q3	2026-08-01		33529480.692173004
-2026 Q3	2026-07-25		32541646.046146393
-2026 Q3	2026-07-18	33890484.903507233	37377050.165912628
-2026 Q3	2026-07-11	29946477.39383316	28438479.618030548
-2026 Q3	2026-07-04	21334401.147056583	
+
+WITH raw_clean AS (
+  SELECT
+    Quarter,
+
+    SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE)
+      AS Week_Beginning_Monday,
+
+    COALESCE(
+      SAFE_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+      DATE_ADD(
+        SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE),
+        INTERVAL 6 DAY
+      )
+    ) AS Week_Ending_Sunday,
+
+    SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE)
+      AS QGP_Week,
+
+    SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
+      AS FileLoad_Date,
+
+    SAFE_CAST(File_Date AS DATE)
+      AS Source_File_Date,
+
+    UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+    UPPER(TRIM(QGP)) AS QGP,
+    Spend
+
+  FROM `prj-dbi-prd-1.ds_dbi_marketing.ma_mfc_raw`
+
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(WM_NWM)) = 'WORKING'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN (
+      'OTHER (do not use)',
+      'Non-Working',
+      'Unallocated',
+      'Budget Held'
+    )
+    AND SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+    AND SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
+    AND SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
+    AND UPPER(TRIM(QGP)) IN ('ACTUAL', 'FORECAST')
+    AND Spend IS NOT NULL
+    AND SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE)
+        >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 MONTH)
+),
+
+actual_snapshots AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+    Source_File_Date,
+    SUM(Spend) AS weekly_actual
+  FROM raw_clean
+  WHERE QGP = 'ACTUAL'
+  GROUP BY
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+    Source_File_Date
+),
+
+ranked_actuals AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week
+      ORDER BY
+        FileLoad_Date DESC,
+        Source_File_Date DESC,
+        Week_Beginning_Monday DESC,
+        Week_Ending_Sunday DESC
+    ) AS rn
+  FROM actual_snapshots
+),
+
+latest_actuals AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date AS Actual_FileLoad_Date,
+    Source_File_Date AS Actual_Source_File_Date,
+    weekly_actual
+  FROM ranked_actuals
+  WHERE rn = 1
+),
+
+forecast_snapshots AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+    Source_File_Date,
+    SUM(Spend) AS weekly_forecast
+  FROM raw_clean
+  WHERE QGP = 'FORECAST'
+  GROUP BY
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date,
+    Source_File_Date
+),
+
+ranked_forecasts AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY Quarter, QGP_Week
+      ORDER BY
+        FileLoad_Date DESC,
+        Source_File_Date DESC,
+        Week_Beginning_Monday DESC,
+        Week_Ending_Sunday DESC
+    ) AS rn
+  FROM forecast_snapshots
+),
+
+latest_forecasts AS (
+  SELECT
+    Quarter,
+    Week_Beginning_Monday,
+    Week_Ending_Sunday,
+    QGP_Week,
+    FileLoad_Date AS Forecast_FileLoad_Date,
+    Source_File_Date AS Forecast_Source_File_Date,
+    weekly_forecast
+  FROM ranked_forecasts
+  WHERE rn = 1
+)
 
 SELECT
-    qgp_quarter,
-    qgp_date,
-    --metric_name,
-    SUM(CASE WHEN metric_type = 'MFC_SPEND_ACTUAL' THEN metric_value END) AS actuals,
-    SUM(CASE WHEN metric_type = 'MFC_SPEND_FORECAST' THEN metric_value END) AS forecast
-FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_gold_unified_long`
-WHERE data_source = 'MFC_SPEND_GRANULAR'
-  AND lob in ('BROADBAND','POSTPAID')
-  AND metric_type IN ('MFC_SPEND_ACTUAL', 'MFC_SPEND_FORECAST')
-  AND qgp_quarter = '2026 Q3'
-GROUP BY 1,2
-ORDER BY qgp_quarter DESC, qgp_date DESC;
+  COALESCE(a.Quarter, f.Quarter) AS Quarter,
+
+  COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday) AS Week_Beginning_Monday,
+  COALESCE(a.Week_Ending_Sunday, f.Week_Ending_Sunday) AS Week_Ending_Sunday,
+  COALESCE(a.QGP_Week, f.QGP_Week) AS QGP_Week,
+
+  a.Actual_FileLoad_Date,
+  a.Actual_Source_File_Date,
+  f.Forecast_FileLoad_Date,
+  f.Forecast_Source_File_Date,
+
+  (
+    SELECT MAX(d)
+    FROM UNNEST([a.Actual_FileLoad_Date, f.Forecast_FileLoad_Date]) AS d
+  ) AS Latest_FileLoad_Date,
+
+  NULLIF(a.weekly_actual, 0) AS weekly_actual,
+  NULLIF(f.weekly_forecast, 0) AS weekly_forecast,
+
+  COALESCE(
+    NULLIF(a.weekly_actual, 0),
+    NULLIF(f.weekly_forecast, 0)
+  ) AS weekly_display
+
+FROM latest_forecasts f
+FULL OUTER JOIN latest_actuals a
+  ON  a.Quarter = f.Quarter
+  AND a.QGP_Week = f.QGP_Week
+
+ORDER BY
+  QGP_Week DESC,
+  Quarter;
+ 
