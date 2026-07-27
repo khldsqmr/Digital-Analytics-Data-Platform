@@ -1,1 +1,11 @@
-Error validating procedure body (add OPTIONS(strict_mode=false) to suppress): Query error: Not found: Table prj-dbi-prd-1:ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastGranular_weekly was not found in location us-west1 at [9:3]
+SELECT
+  COALESCE(a.QGP_Week, f.QGP_Week) AS QGP_Week,
+  COALESCE(a.LOB_Supported, f.LOB_Supported) AS LOB_Supported,
+  a.Quarter AS Actual_Quarter,
+  f.Quarter AS Forecast_Quarter
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendActualsGranular_weekly` a
+FULL OUTER JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastGranular_weekly` f
+  ON a.QGP_Week = f.QGP_Week AND a.LOB_Supported = f.LOB_Supported
+ AND a.Channel IS NOT DISTINCT FROM f.Channel AND a.Tactic IS NOT DISTINCT FROM f.Tactic
+ AND a.Message_Type IS NOT DISTINCT FROM f.Message_Type AND a.Agency IS NOT DISTINCT FROM f.Agency
+WHERE a.Quarter IS NOT NULL AND f.Quarter IS NOT NULL AND a.Quarter != f.Quarter;
