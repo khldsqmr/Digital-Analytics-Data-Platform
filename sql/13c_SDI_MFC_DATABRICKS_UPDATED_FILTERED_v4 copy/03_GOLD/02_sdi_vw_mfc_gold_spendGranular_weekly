@@ -1,20 +1,25 @@
 -- ============================================================
 -- GOLD 2: GRANULAR
 -- ============================================================
-CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
-AS
+
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly AS
 SELECT
-  Quarter, Quarter_Start_Date, Quarter_End_Date,
-  Period_Start, Period_End, QGP_Week, FileLoad_Date,
-  LOB_Supported, Channel, Tactic, Message_Type, Agency,
-  spend_actual, spend_forecast, spend_display,
-  spend_actual_for_wow, spend_for_wow,
-  CASE
-    WHEN spend_actual_for_wow IS NOT NULL AND spend_for_wow IS NOT NULL AND spend_for_wow != 0
-    THEN ROUND(((spend_actual_for_wow - spend_for_wow) / spend_for_wow) * 100, 2)
-    ELSE NULL
-  END AS spend_actual_wow_pct,
-  week_type, is_partial_week
-FROM prdrzranalytics.lab42.sdi_mfc_silver_spendGranular_weekly
-;
+  cur.Quarter, cur.Week_Beginning_Monday, cur.Week_Ending_Sunday, cur.QGP_Week, cur.week_type,
+  cur.LOB_Supported, cur.Channel, cur.Tactic, cur.Message_Type, cur.Agency,
+  cur.Spend_Actual, cur.Spend_Forecast, cur.Spend_Final,
+  wow.Spend_Final_FullWeek AS Spend_Final_Prior_Week,
+  cur.Spend_Final_FullWeek - wow.Spend_Final_FullWeek AS WoW_Delta,
+  (cur.Spend_Final_FullWeek - wow.Spend_Final_FullWeek) / NULLIF(wow.Spend_Final_FullWeek, 0) AS WoW_Pct,
+  yoy.Spend_Final_FullWeek AS Spend_Final_Prior_Year,
+  cur.Spend_Final_FullWeek - yoy.Spend_Final_FullWeek AS YoY_Delta,
+  (cur.Spend_Final_FullWeek - yoy.Spend_Final_FullWeek) / NULLIF(yoy.Spend_Final_FullWeek, 0) AS YoY_Pct
+FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly cur
+JOIN prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar cal ON cur.QGP_Week = cal.qgp_date
+LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly wow
+  ON wow.QGP_Week = cal.wow_prior_qgp_date AND wow.LOB_Supported = cur.LOB_Supported
+ AND wow.Channel <=> cur.Channel AND wow.Tactic <=> cur.Tactic
+ AND wow.Message_Type <=> cur.Message_Type AND wow.Agency <=> cur.Agency
+LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly yoy
+  ON yoy.QGP_Week = cal.prior_year_qgp_date AND yoy.LOB_Supported = cur.LOB_Supported
+ AND yoy.Channel <=> cur.Channel AND yoy.Tactic <=> cur.Tactic
+ AND yoy.Message_Type <=> cur.Message_Type AND yoy.Agency <=> cur.Agency;

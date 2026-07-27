@@ -1,92 +1,91 @@
 -- ============================================================
--- BRONZE 1: ACTUALS - NON-GRANULAR / LOB LEVEL
--- Databricks / Spark SQL
--- Converted from BigQuery logic
+-- BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly()
 SQL SECURITY DEFINER
-COMMENT 'Creates/refreshes sdi_mfc_bronze_spendActuals_weekly. Refreshed weekly.'
+COMMENT 'Creates/refreshes sdi_tbl_mfc_bronze_spendActuals_weekly. Refreshed weekly.'
 BEGIN
-
   CREATE OR REPLACE TABLE
-    prdrzranalytics.lab42.sdi_mfc_bronze_spendActuals_weekly
+    prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendActuals_weekly
   USING DELTA
-  COMMENT 'MFC Bronze — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
+  COMMENT 'MFC Bronze Actuals (non-granular / LOB level) — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
   AS
-
-WITH raw AS (
+  WITH raw AS (
+    SELECT
+      Quarter,
+      TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+      COALESCE(
+        TRY_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+        DATE_ADD(TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE), 6)
+      ) AS Week_Ending_Sunday,
+      TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
+      TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+      TRY_CAST(File_Date AS DATE) AS Source_File_Date,
+      UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+      Spend AS Spend_Actual
+    FROM prdrzranalytics.lab42.raw_media_flowchart
+    WHERE 1=1
+      -- Scope to specific lines of business
+      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+      -- Only "Working" media (excludes non-working/placeholder rows)
+      AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
+      -- Exclude rows with no Channel assigned
+      AND Channel IS NOT NULL
+      -- Exclude specific non-reportable channel buckets
+      AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+      -- Require a parseable Week_Beginning_Monday
+      AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+      -- Require a parseable QGP_Week
+      AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
+      -- Require a parseable FileLoad_Date
+      AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
+      -- Exclude "Micro" message-type rows
+      AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+      -- Exclude specific micro-targeted campaign line items
+      AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      -- Require a non-null Quarter tag
+      AND Quarter IS NOT NULL
+      -- Require Quarter to match the expected "Q#'YY" format
+      AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+      -- Actuals only (Bronze 3/4 use 'FORECAST' instead)
+      AND UPPER(TRIM(QGP)) = 'ACTUAL'
+      -- Exclude rows with no spend value
+      AND Spend IS NOT NULL
+  ),
+  weekly_snapshots AS (
+    SELECT
+      Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+      FileLoad_Date, Source_File_Date, LOB_Supported,
+      SUM(Spend_Actual) AS weekly_actual
+    FROM raw
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+    GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, LOB_Supported
+  ),
+  ranked AS (
+    SELECT *,
+      ROW_NUMBER() OVER (
+        PARTITION BY Quarter, QGP_Week, LOB_Supported
+        ORDER BY FileLoad_Date DESC, Source_File_Date DESC
+      ) AS rn
+    FROM weekly_snapshots
+  ),
+  best AS (
+    SELECT * FROM ranked WHERE rn = 1
+  ),
+  week_type AS (
+    SELECT
+      QGP_Week,
+      CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
+    FROM best
+    GROUP BY QGP_Week
+  )
   SELECT
-    Quarter,
-    CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-    CAST(Week_Ending_Sunday AS DATE)    AS Week_Ending_Sunday,
-    CAST(QGP_Week AS DATE)              AS QGP_Week,
-    File_Date                           AS FileLoad_Date,
-    UPPER(TRIM(LOB_Supported))          AS LOB_Supported,
-    CASE WHEN QGP = 'Actual' THEN Spend ELSE NULL END AS Spend_Actual
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND')
-    AND WM_V_NWM = 'Working'
-    AND Channel IS NOT NULL
-    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Unallocated', 'Budget Held')
-    AND Week_Beginning_Monday RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
-    AND Week_Ending_Sunday    RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
-    AND CAST(QGP_Week AS STRING) RLIKE '^\\d{4}-\\d{2}-\\d{2}$'
-    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
-    AND Quarter IS NOT NULL
-    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
-    AND QGP = 'Actual'
-    AND Spend IS NOT NULL
-),
-
-weekly_snapshots AS (
-  SELECT
-    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
-    FileLoad_Date, LOB_Supported,
-    SUM(Spend_Actual) AS weekly_actual
-  FROM raw
-  WHERE CAST(Week_Beginning_Monday AS DATE) <= CAST(Week_Ending_Sunday AS DATE)
-  GROUP BY
-    Quarter, Week_Beginning_Monday, Week_Ending_Sunday,
-    QGP_Week, FileLoad_Date, LOB_Supported
-),
-
-ranked AS (
-  SELECT
-    *,
-    ROW_NUMBER() OVER (
-      PARTITION BY Quarter, QGP_Week, LOB_Supported
-      ORDER BY FileLoad_Date DESC
-    ) AS rn
-  FROM weekly_snapshots
-),
-
-best AS (
-  SELECT * FROM ranked WHERE rn = 1
-),
-
-week_type AS (
-  SELECT
-    QGP_Week,
-    CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
-  FROM best
-  GROUP BY QGP_Week
-)
-
-SELECT
-  b.Quarter,
-  b.Week_Beginning_Monday,
-  b.Week_Ending_Sunday,
-  b.QGP_Week,
-  b.FileLoad_Date,
-  b.LOB_Supported,
-  b.weekly_actual,
-  w.week_type
-FROM best b
-JOIN week_type w ON b.QGP_Week = w.QGP_Week
-WHERE b.weekly_actual IS NOT NULL
-  AND b.weekly_actual != 0
-;
-
+    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
+    b.FileLoad_Date, b.Source_File_Date, b.LOB_Supported, b.weekly_actual, w.week_type
+  FROM best b
+  JOIN week_type w ON b.QGP_Week = w.QGP_Week
+  WHERE b.weekly_actual IS NOT NULL AND b.weekly_actual != 0
+  ;
 END;
+
