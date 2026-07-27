@@ -25,3 +25,7 @@ FULL OUTER JOIN forecast_summary f
  AND a.Channel IS NOT DISTINCT FROM f.Channel AND a.Tactic IS NOT DISTINCT FROM f.Tactic
  AND a.Message_Type IS NOT DISTINCT FROM f.Message_Type AND a.Agency IS NOT DISTINCT FROM f.Agency
 WHERE a.n_quarters = 1 AND f.n_quarters = 1 AND a.the_quarter != f.the_quarter;
+
+output:
+genuine_mismatched_combos	genuine_orphaned_forecast_dollars	earliest_week	latest_week
+31	4078010.7969024479	2024-10-05	2026-04-04
