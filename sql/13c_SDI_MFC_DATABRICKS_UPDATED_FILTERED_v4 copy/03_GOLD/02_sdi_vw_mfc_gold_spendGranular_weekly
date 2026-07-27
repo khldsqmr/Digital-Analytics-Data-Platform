@@ -1,6 +1,6 @@
 
 -- ============================================================
--- GOLD 2: GRANULAR
+-- GOLD 2: GRANULAR (unchanged)
 -- ============================================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly AS
 SELECT

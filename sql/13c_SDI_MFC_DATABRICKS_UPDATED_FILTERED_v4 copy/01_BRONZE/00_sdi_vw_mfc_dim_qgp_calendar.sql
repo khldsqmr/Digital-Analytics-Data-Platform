@@ -1,5 +1,5 @@
 -- ============================================================
--- MFC QGP CALENDAR DIMENSION (unchanged — exactly as pasted)
+-- MFC QGP CALENDAR DIMENSION (unchanged)
 -- ============================================================
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar

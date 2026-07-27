@@ -1,7 +1,6 @@
 
 -- ============================================================
--- GOLD 1: NON-GRANULAR / LOB-LEVEL
--- WoW/YoY as numerator/denominator (aggregation-safe at any grain)
+-- GOLD 1: NON-GRANULAR / LOB-LEVEL (unchanged)
 -- ============================================================
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly AS
 SELECT

@@ -1,7 +1,6 @@
 
 -- ============================================================
--- SILVER 2 — SPEND, GRANULAR
--- Same actual-priority routing fix, at the granular grain.
+-- SILVER 2 — SPEND, GRANULAR (unchanged)
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly()
