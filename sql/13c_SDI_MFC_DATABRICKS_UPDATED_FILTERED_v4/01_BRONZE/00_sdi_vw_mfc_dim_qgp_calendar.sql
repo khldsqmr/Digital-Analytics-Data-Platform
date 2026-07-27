@@ -103,17 +103,15 @@ enriched AS (
     WEEKOFYEAR(aq.qgp_date)                                              AS iso_week_number,
     YEAR(aq.qgp_date)                                                    AS iso_year,
 
-    -- Days in period
+    -- Days in period (Monday-anchored — fixed from the original Sunday-anchored
+    -- DAYOFWEEK()/DATE_SUB() arithmetic, which overcounted the stub portion by
+    -- one day and undercounted the BOUNDARY_FIRST portion by one day)
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
-        DATEDIFF(aq.qgp_date,
-          DATE_SUB(aq.qgp_date, DAYOFWEEK(aq.qgp_date) - 1)
-        ) + 1
+        DATEDIFF(aq.qgp_date, DATE_TRUNC('week', aq.qgp_date)) + 1
       WHEN 'BOUNDARY_FIRST' THEN
-        7 - (DATEDIFF(aq.boundary_stub_date,
-               DATE_SUB(aq.boundary_stub_date, DAYOFWEEK(aq.boundary_stub_date) - 1)
-             ) + 1)
+        7 - (DATEDIFF(aq.boundary_stub_date, DATE_TRUNC('week', aq.boundary_stub_date)) + 1)
     END                                                                  AS days_in_period,
 
     aq.qgp_date <= CURRENT_DATE()                                        AS is_complete_period,
