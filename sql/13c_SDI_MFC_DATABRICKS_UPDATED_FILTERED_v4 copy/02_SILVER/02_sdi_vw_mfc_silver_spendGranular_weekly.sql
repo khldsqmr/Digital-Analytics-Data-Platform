@@ -1,17 +1,12 @@
-
--- ============================================================
--- SILVER 2 — SPEND, GRANULAR
--- Same generalized fix, output kept at campaign grain.
--- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly()
 SQL SECURITY DEFINER
-COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spendGranular_weekly. Refreshed weekly.'
+COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spendGranular_weekly. Forecast follows Actual''s resolved shape whenever Actual exists — refreshed via sdi_sp_mfc_silver_spendGranular_weekly.'
 BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly
   USING DELTA
-  COMMENT 'MFC Silver Spend (granular). Forecast follows Actual''s resolved shape whenever Actual exists — refreshed via sdi_sp_mfc_silver_spendGranular_weekly.'
+  COMMENT 'MFC Silver Spend (granular). Forecast follows Actual''s resolved shape whenever Actual exists.'
   AS
   WITH
   calendar_resolved AS (

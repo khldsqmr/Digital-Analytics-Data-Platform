@@ -1,18 +1,12 @@
--- ============================================================
--- SILVER 1 — SPEND, NON-GRANULAR / LOB LEVEL
--- Forecast now follows Actual's exact resolved shape whenever
--- Actual exists at all (single- or dual-quarter) — not just the
--- single-quarter-disagreement case from the prior fix.
--- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly()
 SQL SECURITY DEFINER
-COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spend_weekly. Refreshed weekly.'
+COMMENT 'Creates/refreshes sdi_tbl_mfc_silver_spend_weekly. Forecast follows Actual''s resolved shape whenever Actual exists, resolved at campaign grain from Bronze 2/4 then rolled up — refreshed via sdi_sp_mfc_silver_spend_weekly.'
 BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
   USING DELTA
-  COMMENT 'MFC Silver Spend (non-granular / LOB level), resolved at campaign grain from Bronze 2/4 then rolled up. Forecast follows Actual''s resolved shape whenever Actual exists — refreshed via sdi_sp_mfc_silver_spend_weekly.'
+  COMMENT 'MFC Silver Spend (non-granular / LOB level). Forecast follows Actual''s resolved shape whenever Actual exists.'
   AS
   WITH
   calendar_resolved AS (
@@ -89,8 +83,6 @@ BEGIN
     JOIN calendar_resolved cr ON qt.QGP_Week = cr.QGP_Week
     WHERE NOT (t.n_quarters = 2 AND cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL)
   ),
-  -- NEW: what fraction of this campaign+week's Actual total landed at each
-  -- resolved destination. 1 row = 100% there; 2 rows (genuine split) sum to 100%.
   actual_shape AS (
     SELECT
       Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
@@ -123,8 +115,6 @@ BEGIN
     GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
   forecast_reallocated AS (
-    -- CASE A: Actual has any presence for this campaign+week — Forecast's raw total
-    -- (ignoring Forecast's own quarter tags entirely) follows Actual's exact shape.
     SELECT
       shp.Week_Beginning_Monday, shp.Week_Ending_Sunday, shp.QGP_Week, shp.LOB_Supported,
       shp.Channel, shp.Tactic, shp.Message_Type, shp.Agency,
@@ -139,8 +129,6 @@ BEGIN
      AND ft.Channel <=> shp.Channel AND ft.Tactic <=> shp.Tactic
      AND ft.Message_Type <=> shp.Message_Type AND ft.Agency <=> shp.Agency
     UNION ALL
-    -- CASE B: no Actual at all for this campaign+week — Forecast routes independently,
-    -- same day-split / passthrough logic as originally designed.
     SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
       t.Channel, t.Tactic, t.Message_Type, t.Agency,
       t.FileLoad_Date, t.Source_File_Date,
@@ -245,4 +233,3 @@ BEGIN
   FROM rolled_up
   ;
 END;
-
