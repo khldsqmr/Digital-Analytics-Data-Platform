@@ -8,7 +8,14 @@ JOIN prdrzranalytics.lab42.sdi_tbl_mfc_silver_spendGranular_weekly s
  AND UPPER(TRIM(r.LOB_Supported)) = s.LOB_Supported
  AND r.Channel <=> s.Channel AND r.Tactic <=> s.Tactic
  AND r.Message_Type <=> s.Message_Type
- AND r.Agency <=> s.Agency
+ AND (
+   CASE
+     WHEN LOWER(TRIM(r.Agency)) = 'ini' THEN 'Initiative'
+     WHEN LOWER(TRIM(r.Agency)) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+     WHEN r.Agency IS NULL THEN NULL
+     ELSE TRIM(r.Agency)
+   END
+ ) <=> s.Agency
 WHERE UPPER(TRIM(r.QGP)) = 'FORECAST'
   AND r.Week_Beginning_Monday = '2026-03-30'
   AND UPPER(TRIM(r.LOB_Supported)) = 'CONSUMER POSTPAID'
