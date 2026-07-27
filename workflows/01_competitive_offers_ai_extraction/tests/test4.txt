@@ -1,3 +1,12 @@
+SELECT QGP_Week, Quarter, week_type, Spend_Actual, Spend_Forecast
+FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
+WHERE Week_Beginning_Monday IN ('2026-03-30', '2026-04-06')
+  AND LOB_Supported = 'CONSUMER POSTPAID';
+output:
+
+DESCRIBE PROCEDURE EXTENDED prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly;
+output:
+
 DESCRIBE PROCEDURE EXTENDED prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly;
 
 output:
