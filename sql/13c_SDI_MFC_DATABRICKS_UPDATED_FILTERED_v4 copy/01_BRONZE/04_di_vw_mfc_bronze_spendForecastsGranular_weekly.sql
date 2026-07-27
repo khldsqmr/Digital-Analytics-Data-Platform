@@ -1,6 +1,6 @@
 
 -- ============================================================
--- BRONZE 4 — SPEND FORECAST, GRANULAR (unchanged)
+-- BRONZE 4 — SPEND FORECAST, GRANULAR
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecastGranular_weekly()
@@ -10,7 +10,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
   USING DELTA
-  COMMENT 'MFC Bronze Forecast (granular) — refreshed via sdi_sp_mfc_bronze_spendForecastGranular_weekly.'
+  COMMENT 'MFC Bronze Forecast (granular).'
   AS
   WITH raw AS (
     SELECT
@@ -84,4 +84,3 @@ BEGIN
   WHERE b.weekly_forecast IS NOT NULL AND b.weekly_forecast != 0
   ;
 END;
-

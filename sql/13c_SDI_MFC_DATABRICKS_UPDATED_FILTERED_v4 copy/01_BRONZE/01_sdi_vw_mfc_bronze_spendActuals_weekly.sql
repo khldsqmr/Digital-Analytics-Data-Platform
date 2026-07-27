@@ -1,6 +1,5 @@
-
 -- ============================================================
--- BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL (unchanged)
+-- BRONZE 1 — SPEND ACTUALS, NON-GRANULAR / LOB LEVEL
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly()
@@ -10,7 +9,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendActuals_weekly
   USING DELTA
-  COMMENT 'MFC Bronze Actuals (non-granular / LOB level), ranked at campaign grain then rolled up — refreshed via sdi_sp_mfc_bronze_spendActuals_weekly.'
+  COMMENT 'MFC Bronze Actuals (non-granular / LOB level), ranked at campaign grain then rolled up.'
   AS
   WITH raw AS (
     SELECT

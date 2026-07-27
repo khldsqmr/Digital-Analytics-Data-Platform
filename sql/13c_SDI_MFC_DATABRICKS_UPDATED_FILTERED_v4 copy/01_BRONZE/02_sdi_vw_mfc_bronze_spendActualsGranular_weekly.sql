@@ -1,6 +1,6 @@
 
 -- ============================================================
--- BRONZE 2 — SPEND ACTUALS, GRANULAR (unchanged)
+-- BRONZE 2 — SPEND ACTUALS, GRANULAR
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActualsGranular_weekly()
@@ -10,7 +10,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendActualsGranular_weekly
   USING DELTA
-  COMMENT 'MFC Bronze Actuals (granular) — refreshed via sdi_sp_mfc_bronze_spendActualsGranular_weekly.'
+  COMMENT 'MFC Bronze Actuals (granular).'
   AS
   WITH raw AS (
     SELECT

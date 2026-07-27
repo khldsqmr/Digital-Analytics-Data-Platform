@@ -1,6 +1,6 @@
 
 -- ============================================================
--- BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL (unchanged)
+-- BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecast_weekly()
@@ -10,7 +10,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecast_weekly
   USING DELTA
-  COMMENT 'MFC Bronze Forecast (non-granular / LOB level), ranked at campaign grain then rolled up — refreshed via sdi_sp_mfc_bronze_spendForecast_weekly.'
+  COMMENT 'MFC Bronze Forecast (non-granular / LOB level), ranked at campaign grain then rolled up.'
   AS
   WITH raw AS (
     SELECT
