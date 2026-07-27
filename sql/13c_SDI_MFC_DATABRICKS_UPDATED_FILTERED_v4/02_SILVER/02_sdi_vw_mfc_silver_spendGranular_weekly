@@ -150,6 +150,21 @@ SELECT
   a.weekly_actual AS Spend_Actual,
   f.weekly_forecast AS Spend_Forecast,
   COALESCE(a.weekly_actual, f.weekly_forecast) AS Spend_Final,
+  SUM(a.weekly_actual) OVER (
+    PARTITION BY COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday), COALESCE(a.LOB_Supported, f.LOB_Supported),
+                 COALESCE(a.Channel, f.Channel), COALESCE(a.Tactic, f.Tactic),
+                 COALESCE(a.Message_Type, f.Message_Type), COALESCE(a.Agency, f.Agency)
+  ) AS Spend_Actual_FullWeek,
+  SUM(f.weekly_forecast) OVER (
+    PARTITION BY COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday), COALESCE(a.LOB_Supported, f.LOB_Supported),
+                 COALESCE(a.Channel, f.Channel), COALESCE(a.Tactic, f.Tactic),
+                 COALESCE(a.Message_Type, f.Message_Type), COALESCE(a.Agency, f.Agency)
+  ) AS Spend_Forecast_FullWeek,
+  SUM(COALESCE(a.weekly_actual, f.weekly_forecast)) OVER (
+    PARTITION BY COALESCE(a.Week_Beginning_Monday, f.Week_Beginning_Monday), COALESCE(a.LOB_Supported, f.LOB_Supported),
+                 COALESCE(a.Channel, f.Channel), COALESCE(a.Tactic, f.Tactic),
+                 COALESCE(a.Message_Type, f.Message_Type), COALESCE(a.Agency, f.Agency)
+  ) AS Spend_Final_FullWeek,
   CASE
     WHEN a.weekly_actual IS NOT NULL AND f.weekly_forecast IS NOT NULL THEN 'Actual+Forecast'
     WHEN a.weekly_actual IS NOT NULL THEN 'Actual'
