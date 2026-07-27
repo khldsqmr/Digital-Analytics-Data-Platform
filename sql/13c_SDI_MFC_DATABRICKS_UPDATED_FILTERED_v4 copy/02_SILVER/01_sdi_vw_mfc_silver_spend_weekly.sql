@@ -1,11 +1,8 @@
-
 -- ============================================================
--- SILVER 1 — SPEND, NON-GRANULAR / LOB LEVEL — FIXED
--- Now carries Channel/Tactic/Message_Type/Agency all the way
--- through actual_reallocated/forecast_reallocated (matching
--- Silver 2's approach), and the single-quarter passthrough
--- branch now joins on full campaign grain — only rolling up
--- to LOB level in the very last step.
+-- SILVER 1 — SPEND, NON-GRANULAR / LOB LEVEL
+-- Forecast now follows Actual's exact resolved shape whenever
+-- Actual exists at all (single- or dual-quarter) — not just the
+-- single-quarter-disagreement case from the prior fix.
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly()
@@ -15,7 +12,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
   USING DELTA
-  COMMENT 'MFC Silver Spend (non-granular / LOB level), resolved at campaign grain from Bronze 2/4 then rolled up. Forecast defers to Actual''s quarter when both are single-quarter and disagree — refreshed via sdi_sp_mfc_silver_spend_weekly.'
+  COMMENT 'MFC Silver Spend (non-granular / LOB level), resolved at campaign grain from Bronze 2/4 then rolled up. Forecast follows Actual''s resolved shape whenever Actual exists — refreshed via sdi_sp_mfc_silver_spend_weekly.'
   AS
   WITH
   calendar_resolved AS (
@@ -92,6 +89,17 @@ BEGIN
     JOIN calendar_resolved cr ON qt.QGP_Week = cr.QGP_Week
     WHERE NOT (t.n_quarters = 2 AND cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL)
   ),
+  -- NEW: what fraction of this campaign+week's Actual total landed at each
+  -- resolved destination. 1 row = 100% there; 2 rows (genuine split) sum to 100%.
+  actual_shape AS (
+    SELECT
+      Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
+      Channel, Tactic, Message_Type, Agency, Quarter, week_type,
+      weekly_actual / SUM(weekly_actual) OVER (
+        PARTITION BY Week_Beginning_Monday, LOB_Supported, Channel, Tactic, Message_Type, Agency
+      ) AS shape_pct
+    FROM actual_reallocated
+  ),
   forecast_quarter_totals AS (
     SELECT
       Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
@@ -114,32 +122,25 @@ BEGIN
     FROM forecast_quarter_totals
     GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
-  actual_single_quarter AS (
-    SELECT
-      Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
-      Channel, Tactic, Message_Type, Agency,
-      n_quarters, MAX(Quarter) AS the_quarter
-    FROM (
-      SELECT t.*, qt.Quarter
-      FROM actual_totals t
-      JOIN actual_quarter_totals qt
-        ON t.QGP_Week = qt.QGP_Week AND t.LOB_Supported = qt.LOB_Supported
-       AND t.Channel <=> qt.Channel AND t.Tactic <=> qt.Tactic
-       AND t.Message_Type <=> qt.Message_Type AND t.Agency <=> qt.Agency
-    )
-    GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency, n_quarters
-  ),
-  forecast_quarter_totals_resolved AS (
-    SELECT
-      qt.*,
-      CASE WHEN a.n_quarters = 1 THEN a.the_quarter ELSE qt.Quarter END AS effective_quarter
-    FROM forecast_quarter_totals qt
-    LEFT JOIN actual_single_quarter a
-      ON qt.QGP_Week = a.QGP_Week AND qt.LOB_Supported = a.LOB_Supported
-     AND qt.Channel <=> a.Channel AND qt.Tactic <=> a.Tactic
-     AND qt.Message_Type <=> a.Message_Type AND qt.Agency <=> a.Agency
-  ),
   forecast_reallocated AS (
+    -- CASE A: Actual has any presence for this campaign+week — Forecast's raw total
+    -- (ignoring Forecast's own quarter tags entirely) follows Actual's exact shape.
+    SELECT
+      shp.Week_Beginning_Monday, shp.Week_Ending_Sunday, shp.QGP_Week, shp.LOB_Supported,
+      shp.Channel, shp.Tactic, shp.Message_Type, shp.Agency,
+      ft.FileLoad_Date, ft.Source_File_Date,
+      shp.Quarter,
+      ft.total_forecast * shp.shape_pct AS weekly_forecast,
+      shp.week_type
+    FROM forecast_totals ft
+    JOIN actual_shape shp
+      ON ft.Week_Beginning_Monday = shp.Week_Beginning_Monday
+     AND ft.LOB_Supported = shp.LOB_Supported
+     AND ft.Channel <=> shp.Channel AND ft.Tactic <=> shp.Tactic
+     AND ft.Message_Type <=> shp.Message_Type AND ft.Agency <=> shp.Agency
+    UNION ALL
+    -- CASE B: no Actual at all for this campaign+week — Forecast routes independently,
+    -- same day-split / passthrough logic as originally designed.
     SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, t.QGP_Week, t.LOB_Supported,
       t.Channel, t.Tactic, t.Message_Type, t.Agency,
       t.FileLoad_Date, t.Source_File_Date,
@@ -149,6 +150,12 @@ BEGIN
     FROM forecast_totals t
     JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
     WHERE t.n_quarters = 2 AND cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM actual_shape shp
+        WHERE shp.Week_Beginning_Monday = t.Week_Beginning_Monday AND shp.LOB_Supported = t.LOB_Supported
+          AND shp.Channel <=> t.Channel AND shp.Tactic <=> t.Tactic
+          AND shp.Message_Type <=> t.Message_Type AND shp.Agency <=> t.Agency
+      )
     UNION ALL
     SELECT t.Week_Beginning_Monday, t.Week_Ending_Sunday, cr.stub_QGP_Week AS QGP_Week, t.LOB_Supported,
       t.Channel, t.Tactic, t.Message_Type, t.Agency,
@@ -159,22 +166,32 @@ BEGIN
     FROM forecast_totals t
     JOIN calendar_resolved cr ON t.QGP_Week = cr.QGP_Week
     WHERE t.n_quarters = 2 AND cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM actual_shape shp
+        WHERE shp.Week_Beginning_Monday = t.Week_Beginning_Monday AND shp.LOB_Supported = t.LOB_Supported
+          AND shp.Channel <=> t.Channel AND shp.Tactic <=> t.Tactic
+          AND shp.Message_Type <=> t.Message_Type AND shp.Agency <=> t.Agency
+      )
     UNION ALL
     SELECT qt.Week_Beginning_Monday, qt.Week_Ending_Sunday,
-      CASE WHEN qt.effective_quarter = cr.old_quarter AND cr.stub_QGP_Week IS NOT NULL THEN cr.stub_QGP_Week ELSE cr.QGP_Week END AS QGP_Week,
+      CASE WHEN qt.Quarter = cr.old_quarter AND cr.stub_QGP_Week IS NOT NULL THEN cr.stub_QGP_Week ELSE cr.QGP_Week END AS QGP_Week,
       qt.LOB_Supported,
       qt.Channel, qt.Tactic, qt.Message_Type, qt.Agency,
       qt.FileLoad_Date, qt.Source_File_Date,
-      qt.effective_quarter AS Quarter,
+      qt.Quarter AS Quarter,
       qt.quarter_total_forecast AS weekly_forecast,
-      CASE WHEN qt.effective_quarter = cr.old_quarter AND cr.stub_QGP_Week IS NOT NULL THEN 'BOUNDARY_STUB' ELSE cr.week_type END AS week_type
-    FROM forecast_quarter_totals_resolved qt
-    JOIN forecast_totals t
-      ON qt.QGP_Week = t.QGP_Week AND qt.LOB_Supported = t.LOB_Supported
-     AND qt.Channel <=> t.Channel AND qt.Tactic <=> t.Tactic
-     AND qt.Message_Type <=> t.Message_Type AND qt.Agency <=> t.Agency
+      CASE WHEN qt.Quarter = cr.old_quarter AND cr.stub_QGP_Week IS NOT NULL THEN 'BOUNDARY_STUB' ELSE cr.week_type END AS week_type
+    FROM forecast_quarter_totals qt
+    JOIN forecast_totals t ON qt.QGP_Week = t.QGP_Week AND qt.LOB_Supported = t.LOB_Supported
+     AND qt.Channel <=> t.Channel AND qt.Tactic <=> t.Tactic AND qt.Message_Type <=> t.Message_Type AND qt.Agency <=> t.Agency
     JOIN calendar_resolved cr ON qt.QGP_Week = cr.QGP_Week
     WHERE NOT (t.n_quarters = 2 AND cr.week_type = 'BOUNDARY_FIRST' AND cr.stub_QGP_Week IS NOT NULL)
+      AND NOT EXISTS (
+        SELECT 1 FROM actual_shape shp
+        WHERE shp.Week_Beginning_Monday = qt.Week_Beginning_Monday AND shp.LOB_Supported = qt.LOB_Supported
+          AND shp.Channel <=> qt.Channel AND shp.Tactic <=> qt.Tactic
+          AND shp.Message_Type <=> qt.Message_Type AND shp.Agency <=> qt.Agency
+      )
   ),
   resolved_granular AS (
     SELECT
