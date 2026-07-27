@@ -25,9 +25,18 @@ actual_totals AS (
 )
 SELECT * FROM actual_totals;
 
+output:
+Week_Beginning_Monday	Week_Ending_Sunday	QGP_Week	LOB_Supported	Channel	Tactic	Message_Type	Agency	total_actual	n_quarters
+2026-03-30	2026-04-05	2026-04-04	CONSUMER POSTPAID	Affiliate	Affiliate	BTS	In-House (TMO)	2226.76416015625	1
+
 SELECT Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency, Quarter,
   SUM(weekly_forecast) AS quarter_total_forecast
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
 WHERE Week_Beginning_Monday = '2026-03-30' AND LOB_Supported = 'CONSUMER POSTPAID'
   AND Channel = 'Affiliate' AND Tactic = 'Affiliate' AND Message_Type = 'BTS' AND Agency = 'In-House (TMO)'
 GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency, Quarter;
+
+output:
+Week_Beginning_Monday	Week_Ending_Sunday	QGP_Week	LOB_Supported	Channel	Tactic	Message_Type	Agency	Quarter	quarter_total_forecast
+2026-03-30	2026-04-05	2026-04-04	CONSUMER POSTPAID	Affiliate	Affiliate	BTS	In-House (TMO)	Q1'26	8333.3330078125
+2026-03-30	2026-04-05	2026-04-04	CONSUMER POSTPAID	Affiliate	Affiliate	BTS	In-House (TMO)	Q2'26	5643.89013671875
