@@ -1,3 +1,4 @@
 SELECT routine_definition
 FROM prdrzranalytics.information_schema.routines
-WHERE routine_name = 'sdi_sp_mfc_silver_spendGranular_weekly';
+WHERE routine_schema = 'lab42'
+  AND routine_name = 'sdi_sp_mfc_silver_spendGranular_weekly';
