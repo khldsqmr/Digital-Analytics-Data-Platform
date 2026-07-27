@@ -83,7 +83,6 @@ enriched AS (
     EXTRACT(ISOWEEK FROM aq.qgp_date) AS iso_week_number,
     EXTRACT(YEAR FROM aq.qgp_date) AS iso_year,
 
-    -- Days in period (Monday-anchored via WEEK(MONDAY) truncation)
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN

@@ -1,6 +1,6 @@
 
 -- ============================================================
--- GOLD 2 — GRANULAR (WoW / YoY) — BigQuery
+-- GOLD 2 — GRANULAR — BigQuery
 -- ============================================================
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly`
@@ -9,12 +9,10 @@ SELECT
   cur.Quarter, cur.Week_Beginning_Monday, cur.Week_Ending_Sunday, cur.QGP_Week, cur.week_type,
   cur.LOB_Supported, cur.Channel, cur.Tactic, cur.Message_Type, cur.Agency,
   cur.Spend_Actual, cur.Spend_Forecast, cur.Spend_Final,
-  wow.Spend_Final_FullWeek AS Spend_Final_Prior_Week,
-  cur.Spend_Final_FullWeek - wow.Spend_Final_FullWeek AS WoW_Delta,
-  (cur.Spend_Final_FullWeek - wow.Spend_Final_FullWeek) / NULLIF(wow.Spend_Final_FullWeek, 0) AS WoW_Pct,
-  yoy.Spend_Final_FullWeek AS Spend_Final_Prior_Year,
-  cur.Spend_Final_FullWeek - yoy.Spend_Final_FullWeek AS YoY_Delta,
-  (cur.Spend_Final_FullWeek - yoy.Spend_Final_FullWeek) / NULLIF(yoy.Spend_Final_FullWeek, 0) AS YoY_Pct
+  cur.Spend_Final_FullWeek AS wow_numerator,
+  wow.Spend_Final_FullWeek AS wow_denominator,
+  cur.Spend_Final_FullWeek AS yoy_numerator,
+  yoy.Spend_Final_FullWeek AS yoy_denominator
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_silver_spendGranular_weekly` cur
 JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` cal
   ON cur.QGP_Week = cal.qgp_date

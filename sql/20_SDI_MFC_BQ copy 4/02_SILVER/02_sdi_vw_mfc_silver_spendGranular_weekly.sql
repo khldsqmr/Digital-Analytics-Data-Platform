@@ -9,7 +9,7 @@ BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_silver_spendGranular_weekly`
   OPTIONS (
-    description = 'MFC Silver Spend (granular). Refreshed weekly via sdi_sp_mfc_silver_spendGranular_weekly.'
+    description = 'MFC Silver Spend (granular). Actual and Forecast each reflect only their own raw source tagging, independently.'
   )
   AS
   WITH

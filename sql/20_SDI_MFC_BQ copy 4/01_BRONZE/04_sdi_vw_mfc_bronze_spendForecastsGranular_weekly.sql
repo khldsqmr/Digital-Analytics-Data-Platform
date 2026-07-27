@@ -4,11 +4,12 @@
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecastGranular_weekly`()
+OPTIONS (strict_mode=false)
 BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastGranular_weekly`
   OPTIONS (
-    description = 'MFC Bronze Forecast (granular). Refreshed weekly via sdi_sp_mfc_bronze_spendForecastGranular_weekly.'
+    description = 'MFC Bronze Forecast (granular).'
   )
   AS
   WITH raw AS (

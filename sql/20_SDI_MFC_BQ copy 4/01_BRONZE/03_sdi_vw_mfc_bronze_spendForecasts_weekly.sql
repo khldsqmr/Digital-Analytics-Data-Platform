@@ -4,11 +4,12 @@
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecast_weekly`()
+OPTIONS (strict_mode=false)
 BEGIN
   CREATE OR REPLACE TABLE
     `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecast_weekly`
   OPTIONS (
-    description = 'MFC Bronze Forecast (non-granular / LOB level), ranked at campaign grain then rolled up. Refreshed weekly via sdi_sp_mfc_bronze_spendForecast_weekly.'
+    description = 'MFC Bronze Forecast (non-granular / LOB level), ranked at campaign grain then rolled up.'
   )
   AS
   WITH raw AS (
