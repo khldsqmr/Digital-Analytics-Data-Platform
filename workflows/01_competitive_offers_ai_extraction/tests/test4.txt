@@ -553,3 +553,6 @@ FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly b
 WHERE b.QGP_Week = '2026-04-04'
   AND b.LOB_Supported = 'BROADBAND'
 GROUP BY b.FileLoad_Date;
+
+FileLoad_Date	distinct_campaigns	total_forecast
+2026-04-16	47	8454338.610792398
