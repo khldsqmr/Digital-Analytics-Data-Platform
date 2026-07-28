@@ -465,3 +465,11 @@ FileLoad_Date	total_rows	null_spend_rows	zero_spend_rows
 2026-07-24	4678	0	2298
 2026-07-22	5162	0	2498
 2026-07-11	4772	0	2132
+
+
+SELECT COUNT(*) AS row_count
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-24';
