@@ -23,3 +23,15 @@ DJs	62187.125
 
 
 in tableau, i opened the channel filter, and i see that i have excluded "null", "budget held", "non working" and "other (do not use)" categories.
+
+
+SELECT
+  SUM(Spend_Forecast) AS raw_precomputed_column,
+  SUM(CASE WHEN UPPER(TRIM(QGP)) = 'FORECAST' THEN Spend END) AS derived_from_spend_and_qgp_flag
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-22'
+  AND Channel IS NOT NULL
+  AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+  AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO');
