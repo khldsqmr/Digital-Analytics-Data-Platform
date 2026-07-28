@@ -449,6 +449,7 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
   AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IN ('2026-07-22', '2026-07-24')
 ORDER BY Message_Type, FileLoad_Date;
+output: No rows returned
 
 SELECT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
   COUNT(*) AS total_rows,
@@ -459,3 +460,8 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND UPPER(TRIM(QGP)) = 'FORECAST'
   AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IN ('2026-07-11','2026-07-22','2026-07-24')
 GROUP BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE);
+output:
+FileLoad_Date	total_rows	null_spend_rows	zero_spend_rows
+2026-07-24	4678	0	2298
+2026-07-22	5162	0	2498
+2026-07-11	4772	0	2132
