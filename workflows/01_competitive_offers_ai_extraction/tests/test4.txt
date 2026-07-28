@@ -375,3 +375,14 @@ OTT	OTT	Network	INI	2026-07-11	180512.66259765625
 OTT	OTT	Magenta Brand	INI	2026-07-11	94251.015625
 Audio	Streaming Radio	Magenta Brand	INI	2026-07-11	25293.615234375
 OOH	OOH	Magenta Brand	INI	2026-07-11	19230.76953125
+
+SELECT Channel, Tactic, Message_Type, Agency, SUM(Spend) AS forecast_722
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-22'
+  AND UPPER(TRIM(Channel)) IN ('AUDIO', 'OOH')
+  AND UPPER(TRIM(Agency)) = 'INI'
+GROUP BY Channel, Tactic, Message_Type, Agency
+ORDER BY Channel, forecast_722 DESC;
