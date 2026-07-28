@@ -386,3 +386,16 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND UPPER(TRIM(Agency)) = 'INI'
 GROUP BY Channel, Tactic, Message_Type, Agency
 ORDER BY Channel, forecast_722 DESC;
+output:
+Channel	Tactic	Message_Type	Agency	forecast_722
+Audio	Streaming Radio	Value	INI	175504.98046875
+Audio	Podcast	Value	INI	161812.505859375
+Audio	Podcast	Network	INI	51760.55859375
+Audio	Podcast	Magenta Brand	INI	27596.154296875
+Audio	Streaming Radio	Network	INI	7838.02978515625
+OOH	OOH - Digital	Value	INI	275000
+OOH	OOH - Static	Magenta Brand	INI	246888.84375
+OOH	OOH - Programmatic	Network	INI	161093.703125
+OOH	OOH - Programmatic	Value	INI	152541.6411895752
+OOH	OOH - Digital	Network	INI	131551.72729492188
+OOH	OOH - Static	Network	INI	50000
