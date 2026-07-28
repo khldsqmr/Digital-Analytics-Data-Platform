@@ -218,3 +218,31 @@ Spot TV	Spot TV	Network	INI	2026-07-22	0	26964845.228290558
 Unallocated	Unallocated	Magenta Brand	INI	2026-07-22	0	26964845.228290558
 Unallocated	Unallocated	Network	INI	2026-07-22	0	26964845.228290558
 Unallocated	Unallocated	Value	INI	2026-07-22	0	26964845.228290558
+
+
+SELECT Channel, Tactic, Message_Type, Agency, QGP_Week,
+  TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date, SUM(Spend) AS actual_spend
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'ACTUAL'
+  AND (
+    (Channel='OTT' AND Tactic='OTT' AND Message_Type='Value' AND Agency='INI') OR
+    (Channel='OTT' AND Tactic='OTT' AND Message_Type='Network' AND Agency='INI') OR
+    (Channel='OTT' AND Tactic='OTT' AND Message_Type='Magenta Brand' AND Agency='INI') OR
+    (Channel='Audio' AND Tactic='Streaming Radio' AND Message_Type='Magenta Brand' AND Agency='INI') OR
+    (Channel='OOH' AND Tactic='OOH' AND Message_Type='Magenta Brand' AND Agency='INI')
+  )
+  AND TRY_CAST(QGP_Week AS DATE) BETWEEN '2026-06-27' AND '2026-08-01'
+ORDER BY Channel, Tactic, Message_Type, QGP_Week;
+
+
+SELECT
+  TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+  TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+  SUM(Spend) AS forecast_this_file
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND Channel = 'OTT' AND Tactic = 'OTT' AND Message_Type = 'Value' AND Agency = 'INI'
+  AND TRY_CAST(QGP_Week AS DATE) BETWEEN '2026-06-27' AND '2026-08-08'
+ORDER BY QGP_Week, FileLoad_Date;
