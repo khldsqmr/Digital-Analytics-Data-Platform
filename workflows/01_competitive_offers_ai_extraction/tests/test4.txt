@@ -71,3 +71,31 @@ FROM latest_per_campaign;
 
 in_722_file_only	true_latest_per_campaign	campaigns_missing_from_722_file	dollars_from_older_files
 24784557.197956085	27460224.638446808	5	2675667.4404907227
+
+
+WITH per_campaign_snapshots AS (
+  SELECT
+    Channel, Tactic, Message_Type, Agency,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    SUM(Spend) AS campaign_forecast
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
+    AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+  GROUP BY Channel, Tactic, Message_Type, Agency, TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
+),
+latest_per_campaign AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY Channel, Tactic, Message_Type, Agency ORDER BY FileLoad_Date DESC) AS rn
+  FROM per_campaign_snapshots
+)
+SELECT
+  Channel, Tactic, Message_Type, Agency,
+  FileLoad_Date AS last_file_this_campaign_appeared_in,
+  campaign_forecast
+FROM latest_per_campaign
+WHERE rn = 1 AND FileLoad_Date < '2026-07-22'
+ORDER BY campaign_forecast DESC;
