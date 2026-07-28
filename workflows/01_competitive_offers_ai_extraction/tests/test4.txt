@@ -562,3 +562,8 @@ SELECT QGP_Week, Quarter, week_type, Spend_Forecast
 FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
 WHERE Week_Beginning_Monday = '2026-03-30'
   AND LOB_Supported = 'BROADBAND';
+
+output:
+QGP_Week	Quarter	week_type	Spend_Forecast
+2026-04-04	2026 Q2	BOUNDARY_FIRST	6444603.817214966
+2026-03-31	2026 Q1	BOUNDARY_STUB	2009734.7935774326
