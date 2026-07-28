@@ -367,3 +367,11 @@ SELECT Channel, Tactic, Message_Type, Agency, FileLoad_Date, forecast_value
 FROM latest_by_key
 WHERE rn = 1 AND FileLoad_Date < '2026-07-22'
 ORDER BY forecast_value DESC;
+
+output:
+Channel	Tactic	Message_Type	Agency	FileLoad_Date	forecast_value
+OTT	OTT	Value	INI	2026-07-11	2356379.3775024414
+OTT	OTT	Network	INI	2026-07-11	180512.66259765625
+OTT	OTT	Magenta Brand	INI	2026-07-11	94251.015625
+Audio	Streaming Radio	Magenta Brand	INI	2026-07-11	25293.615234375
+OOH	OOH	Magenta Brand	INI	2026-07-11	19230.76953125
