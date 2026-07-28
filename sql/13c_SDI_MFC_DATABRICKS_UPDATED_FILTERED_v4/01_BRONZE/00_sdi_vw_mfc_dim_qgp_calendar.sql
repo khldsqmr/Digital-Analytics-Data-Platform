@@ -1,27 +1,12 @@
 -- ============================================================
--- MFC QGP CALENDAR DIMENSION
--- Databricks / Spark SQL
--- Converted from PulseTMS BigQuery calendar logic
---
--- Grain: one row per QGP date
--- Week types:
---   NORMAL         → every Saturday
---   BOUNDARY_STUB  → quarter-end non-Saturday
---   BOUNDARY_FIRST → first Saturday after a BOUNDARY_STUB
+-- MFC QGP CALENDAR DIMENSION (unchanged)
 -- ============================================================
-
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar
 AS
 
 WITH
 
--- Daily date spine: 2020-01-01 through the later of (end of current year)
--- or (end of next quarter), PLUS a 7-day buffer — guarantees at least one
--- full quarter of lookahead beyond "today" at all times, including the
--- Q4 rollover into the following year's Q1, and ensures BOUNDARY_FIRST
--- always has room to find its Saturday even when the final quarter-end
--- stub in range falls on a Sunday (the worst case, needing a full 6 days).
 date_spine AS (
   SELECT EXPLODE(SEQUENCE(
     DATE'2020-01-01',
@@ -35,14 +20,12 @@ date_spine AS (
   )) AS day
 ),
 
--- All Gregorian quarter-end dates within the spine
 quarter_ends AS (
   SELECT DISTINCT
     LAST_DAY(ADD_MONTHS(TO_DATE(DATE_TRUNC('quarter', day)), 2)) AS quarter_end_date
   FROM date_spine
 ),
 
--- NORMAL: every Saturday
 saturdays AS (
   SELECT
     day              AS qgp_date,
@@ -52,7 +35,6 @@ saturdays AS (
   WHERE DAYOFWEEK(day) = 7
 ),
 
--- BOUNDARY_STUB: quarter-end dates that fall on a non-Saturday
 boundary_stubs AS (
   SELECT
     quarter_end_date AS qgp_date,
@@ -62,7 +44,6 @@ boundary_stubs AS (
   WHERE DAYOFWEEK(quarter_end_date) != 7
 ),
 
--- BOUNDARY_FIRST: first Saturday after each BOUNDARY_STUB
 boundary_firsts AS (
   SELECT
     s.day              AS qgp_date,
@@ -75,7 +56,6 @@ boundary_firsts AS (
   QUALIFY ROW_NUMBER() OVER (PARTITION BY bs.qgp_date ORDER BY s.day ASC) = 1
 ),
 
--- Combine all QGP dates — BOUNDARY_FIRST overrides NORMAL for same Saturday
 all_qgp_dates AS (
   SELECT qgp_date, week_type, boundary_stub_date FROM boundary_stubs
   UNION ALL
@@ -86,7 +66,6 @@ all_qgp_dates AS (
   WHERE s.qgp_date NOT IN (SELECT qgp_date FROM boundary_firsts)
 ),
 
--- Enrich with calendar attributes
 enriched AS (
   SELECT
     aq.qgp_date,
@@ -103,9 +82,6 @@ enriched AS (
     WEEKOFYEAR(aq.qgp_date)                                              AS iso_week_number,
     YEAR(aq.qgp_date)                                                    AS iso_year,
 
-    -- Days in period (Monday-anchored — fixed from the original Sunday-anchored
-    -- DAYOFWEEK()/DATE_SUB() arithmetic, which overcounted the stub portion by
-    -- one day and undercounted the BOUNDARY_FIRST portion by one day)
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
@@ -121,7 +97,6 @@ enriched AS (
   FROM all_qgp_dates aq
 ),
 
--- WoW prior date via LAG
 with_wow AS (
   SELECT
     e.*,
@@ -133,14 +108,12 @@ with_wow AS (
   FROM enriched e
 ),
 
--- Prior year lookup for YoY
 prior_year_lookup AS (
   SELECT qgp_date, iso_week_number, iso_year, week_type
   FROM enriched
   WHERE week_type IN ('NORMAL', 'BOUNDARY_FIRST')
 )
 
--- Non-stub rows with YoY lookup
 SELECT
   w.qgp_date, w.week_type, w.boundary_stub_date,
   w.qgp_year, w.qgp_quarter_num, w.quarter, w.quarter_end_date,
@@ -157,7 +130,6 @@ WHERE w.week_type != 'BOUNDARY_STUB'
 
 UNION ALL
 
--- Stub rows — all period lookups NULL
 SELECT
   w.qgp_date, w.week_type, w.boundary_stub_date,
   w.qgp_year, w.qgp_quarter_num, w.quarter, w.quarter_end_date,
