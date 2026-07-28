@@ -327,3 +327,14 @@ QGP_Week	FileLoad_Date	forecast_this_file
 2026-07-25	2026-07-11	2562193.400756836
 2026-08-01	2026-07-11	2790175.3748168945
 2026-08-08	2026-07-11	2453945.3826293945
+
+
+SELECT Tactic, Message_Type, Agency, SUM(Spend) AS forecast_722
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-22'
+  AND UPPER(TRIM(Channel)) = 'OTT'
+GROUP BY Tactic, Message_Type, Agency
+ORDER BY forecast_722 DESC;
