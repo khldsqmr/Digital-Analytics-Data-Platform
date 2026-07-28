@@ -67,3 +67,7 @@ SELECT
   COUNT(CASE WHEN rn = 1 AND FileLoad_Date < '2026-07-22' THEN 1 END) AS campaigns_missing_from_722_file,
   SUM(CASE WHEN rn = 1 AND FileLoad_Date < '2026-07-22' THEN campaign_forecast END) AS dollars_from_older_files
 FROM latest_per_campaign;
+
+
+in_722_file_only	true_latest_per_campaign	campaigns_missing_from_722_file	dollars_from_older_files
+24784557.197956085	27460224.638446808	5	2675667.4404907227
