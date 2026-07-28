@@ -35,3 +35,7 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND Channel IS NOT NULL
   AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
   AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO');
+
+output:
+raw_precomputed_column	derived_from_spend_and_qgp_flag
+24784557.197956085	24784557.197956085
