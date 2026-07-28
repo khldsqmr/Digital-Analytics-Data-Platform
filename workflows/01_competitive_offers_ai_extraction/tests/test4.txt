@@ -437,3 +437,25 @@ Two smaller items — Audio / Streaming Radio / Magenta Brand / INI ($25,293.62)
 Bottom line to report
 
 The forecast should be reported as approximately $24.3M, not $27M. The $27M figure your pipeline currently produces has a real, structural bug: it doesn't detect when the source renames a Tactic mid-flight, so it briefly double-counts the same spend under both the old and new names until the old one eventually ages out on its own. This is worth fixing at the pipeline level — right now nothing detects or reconciles renames, so this exact scenario will recur every time the source restructures its taxonomy. A reasonable next step would be either getting a rename crosswalk from whoever maintains the MFC flowchart, or adding logic that flags (rather than silently carries forward) any campaign that's been absent for more than one file load, so a human can catch renames before they inflate a reported number again.
+
+
+SELECT Channel, Tactic, Message_Type, Agency, QGP_Week,
+  TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+  Spend, QGP
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND Channel = 'OTT' AND Tactic = 'OTT' AND Agency = 'INI'
+  AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IN ('2026-07-22', '2026-07-24')
+ORDER BY Message_Type, FileLoad_Date;
+
+SELECT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+  COUNT(*) AS total_rows,
+  SUM(CASE WHEN Spend IS NULL THEN 1 ELSE 0 END) AS null_spend_rows,
+  SUM(CASE WHEN Spend = 0 THEN 1 ELSE 0 END) AS zero_spend_rows
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IN ('2026-07-11','2026-07-22','2026-07-24')
+GROUP BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE);
