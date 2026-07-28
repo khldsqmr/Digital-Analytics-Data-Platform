@@ -39,3 +39,31 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
 output:
 raw_precomputed_column	derived_from_spend_and_qgp_flag
 24784557.197956085	24784557.197956085
+
+
+
+WITH per_campaign_snapshots AS (
+  SELECT
+    Channel, Tactic, Message_Type, Agency,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    SUM(Spend) AS campaign_forecast
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
+    AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+  GROUP BY Channel, Tactic, Message_Type, Agency, TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
+),
+latest_per_campaign AS (
+  SELECT *,
+    ROW_NUMBER() OVER (PARTITION BY Channel, Tactic, Message_Type, Agency ORDER BY FileLoad_Date DESC) AS rn
+  FROM per_campaign_snapshots
+)
+SELECT
+  SUM(CASE WHEN FileLoad_Date = '2026-07-22' THEN campaign_forecast ELSE 0 END) AS in_722_file_only,
+  SUM(CASE WHEN rn = 1 THEN campaign_forecast ELSE 0 END) AS true_latest_per_campaign,
+  COUNT(CASE WHEN rn = 1 AND FileLoad_Date < '2026-07-22' THEN 1 END) AS campaigns_missing_from_722_file,
+  SUM(CASE WHEN rn = 1 AND FileLoad_Date < '2026-07-22' THEN campaign_forecast END) AS dollars_from_older_files
+FROM latest_per_campaign;
