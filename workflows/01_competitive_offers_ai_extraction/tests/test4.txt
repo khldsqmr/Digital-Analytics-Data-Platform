@@ -338,3 +338,11 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND UPPER(TRIM(Channel)) = 'OTT'
 GROUP BY Tactic, Message_Type, Agency
 ORDER BY forecast_722 DESC;
+
+Tactic	Message_Type	Agency	forecast_722
+OTT - Targeted	Value	INI	1980611.7297363281
+OTT - Targeted	Network	INI	237842.63916015625
+OTT - Sponsorships and Innovations	Value	INI	203240.7352294922
+OTT - Live Sports	Value	INI	175677.0732421875
+OTT - Sponsorships and Innovations	Magenta Brand	INI	94251.015625
+OTT - Live Sports	Network	INI	29784.24462890625
