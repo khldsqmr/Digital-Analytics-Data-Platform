@@ -346,3 +346,24 @@ OTT - Sponsorships and Innovations	Value	INI	203240.7352294922
 OTT - Live Sports	Value	INI	175677.0732421875
 OTT - Sponsorships and Innovations	Magenta Brand	INI	94251.015625
 OTT - Live Sports	Network	INI	29784.24462890625
+
+
+WITH latest_by_key AS (
+  SELECT Channel, Tactic, Message_Type, Agency,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    SUM(Spend) AS forecast_value,
+    ROW_NUMBER() OVER (
+      PARTITION BY Channel, Tactic, Message_Type, Agency
+      ORDER BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) DESC
+    ) AS rn
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
+    AND TRY_CAST(QGP_Week AS DATE) = '2026-07-18'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+)
+SELECT Channel, Tactic, Message_Type, Agency, FileLoad_Date, forecast_value
+FROM latest_by_key
+WHERE rn = 1 AND FileLoad_Date < '2026-07-22'
+ORDER BY forecast_value DESC;
