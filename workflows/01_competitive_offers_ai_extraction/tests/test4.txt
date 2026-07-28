@@ -99,3 +99,11 @@ SELECT
 FROM latest_per_campaign
 WHERE rn = 1 AND FileLoad_Date < '2026-07-22'
 ORDER BY campaign_forecast DESC;
+
+output:
+Channel	Tactic	Message_Type	Agency	last_file_this_campaign_appeared_in	campaign_forecast
+OTT	OTT	Value	INI	2026-07-11	2356379.3775024414
+OTT	OTT	Network	INI	2026-07-11	180512.66259765625
+OTT	OTT	Magenta Brand	INI	2026-07-11	94251.015625
+Audio	Streaming Radio	Magenta Brand	INI	2026-07-11	25293.615234375
+OOH	OOH	Magenta Brand	INI	2026-07-11	19230.76953125
