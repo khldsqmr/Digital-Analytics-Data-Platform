@@ -556,3 +556,9 @@ GROUP BY b.FileLoad_Date;
 
 FileLoad_Date	distinct_campaigns	total_forecast
 2026-04-16	47	8454338.610792398
+
+
+SELECT QGP_Week, Quarter, week_type, Spend_Forecast
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
+WHERE Week_Beginning_Monday = '2026-03-30'
+  AND LOB_Supported = 'BROADBAND';
