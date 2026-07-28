@@ -399,3 +399,41 @@ OOH	OOH - Programmatic	Network	INI	161093.703125
 OOH	OOH - Programmatic	Value	INI	152541.6411895752
 OOH	OOH - Digital	Network	INI	131551.72729492188
 OOH	OOH - Static	Network	INI	50000
+
+
+
+Here's the honest, complete answer: neither 27M nor 24M is exactly right as currently computed — but the true number is much closer to 24M than to 27M. Let me walk through exactly why, using the real figures we found.
+
+The verdict
+
+Our pipeline's $26,964,845.23 is overstated by about $2.6M, due to a specific, now-identified bug. The corrected number — what the forecast actually should show — is approximately $24.33M, which lands within $333K of the other team's $24,784,557.20. So if you have to pick a side: their number was closer to the truth, though not because their methodology was better — it's closer almost by coincidence, for a reason I'll explain below.
+
+The math, with the real numbers
+Our reported total:                    $26,964,845.23
+Minus: confirmed double-counted OTT:   −$2,631,143.06
+                                        ─────────────
+Corrected estimate:                     $24,333,702.17
+
+Other team's number:                    $24,784,557.20
+Remaining gap:                             ~$333,000 (unexplained, includes the two unresolved items below)
+Why our number was inflated — the OTT rename, proven with real matches
+
+We found that OTT / OTT / Value / INI ($2,356,379.38), OTT / OTT / Network / INI ($180,512.66), and OTT / OTT / Magenta Brand / INI ($94,251.02) all stopped appearing after the 7/11 file. At first this looked like the campaigns had gone stale or been cancelled. But checking the 7/22 file for any OTT campaign showed:
+
+Old (7/11)	New (7/22)	Match
+Magenta Brand: $94,251.02	OTT - Sponsorships and Innovations / Magenta Brand: $94,251.02	Exact, to the penny
+Value: $2,356,379.38	OTT - Targeted + OTT - Sponsorships + OTT - Live Sports (Value): $1,980,611.73 + $203,240.74 + $175,677.09 = $2,359,529.56	Within 0.13%
+
+That's not a coincidence — that's the same real campaign, reclassified into more specific Tactic names. The money never left the plan. But our pipeline's campaign identity is keyed on Channel + Tactic + Message_Type + Agency, so when Tactic changed from "OTT" to "OTT - Targeted", our system saw two unrelated things: an old campaign that "stopped reporting" (so it correctly carried forward its last value, per design) and three new campaigns that started reporting. Both got counted. That's double-counting the same real spend, not two separate real amounts.
+
+Why the other team's 24M happened to avoid this problem
+
+Their Tableau sheet reads straight from one raw file snapshot with no history and no carry-forward logic — it just sums whatever the 7/22 file literally contains. Since the 7/22 file only has the new OTT tactic names (the old "OTT" bucket is simply gone from that file), their number never double-counts — there's nothing to double-count when you only ever look at one file at a time. But this is not proof their method is generally sound — it happened to sidestep this specific rename event by luck of timing, not by design. For genuinely unchanged campaigns that just weren't resubmitted a given week (which we know happens, per your very first screenshot), their single-file approach would undercount instead — it has the opposite failure mode, just one that didn't happen to trigger for this particular week.
+
+What's still genuinely unresolved
+
+Two smaller items — Audio / Streaming Radio / Magenta Brand / INI ($25,293.62) and OOH / OOH / Magenta Brand / INI ($19,230.77), $44,524.38 combined — showed no rename match when we checked. Not confirmed active, not confirmed cancelled. Small enough not to change the overall conclusion, but the honest thing to do is flag them as "status unknown" rather than assume either way.
+
+Bottom line to report
+
+The forecast should be reported as approximately $24.3M, not $27M. The $27M figure your pipeline currently produces has a real, structural bug: it doesn't detect when the source renames a Tactic mid-flight, so it briefly double-counts the same spend under both the old and new names until the old one eventually ages out on its own. This is worth fixing at the pipeline level — right now nothing detects or reconciles renames, so this exact scenario will recur every time the source restructures its taxonomy. A reasonable next step would be either getting a rename crosswalk from whoever maintains the MFC flowchart, or adding logic that flags (rather than silently carries forward) any campaign that's been absent for more than one file load, so a human can catch renames before they inflate a reported number again.
