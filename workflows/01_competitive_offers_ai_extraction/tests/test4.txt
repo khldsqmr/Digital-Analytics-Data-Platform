@@ -20,3 +20,6 @@ Cinema	467767.875
 Affiliate	447413.072265625
 Print	75171.502197265625
 DJs	62187.125
+
+
+in tableau, i opened the channel filter, and i see that i have excluded "null", "budget held", "non working" and "other (do not use)" categories.
