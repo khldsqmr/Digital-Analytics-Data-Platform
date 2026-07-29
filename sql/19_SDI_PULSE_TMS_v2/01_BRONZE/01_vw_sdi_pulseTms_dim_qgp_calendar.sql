@@ -3,31 +3,25 @@ FILE:         01_vw_sdi_pulseTms_dim_qgp_calendar.sql
 LAYER:        Dimension View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseTms_dim_qgp_calendar
-
 RAW SOURCES:
   None — derived entirely from the Gregorian calendar using GENERATE_DATE_ARRAY.
-
 PURPOSE:
   Foundational QGP (Quarter-Grand-Period) calendar dimension for the PulseTMS pipeline.
   All Bronze, Silver, and Gold views join to this dim for date alignment, week typing,
   and WoW / YoY period lookups.
-
   QGP dates are defined as:
     1. Every week-ending Saturday                          → week_type = 'NORMAL'
     2. Quarter-end dates that fall on a non-Saturday       → week_type = 'BOUNDARY_STUB'
        (e.g. Mar 31 if it falls Mon–Fri)
     3. The first Saturday after a BOUNDARY_STUB            → week_type = 'BOUNDARY_FIRST'
        (e.g. Apr 5 if Mar 31 was the stub)
-
   Quarter boundaries follow standard Gregorian quarters:
     Q1: Jan 1  – Mar 31
     Q2: Apr 1  – Jun 30
     Q3: Jul 1  – Sep 30
     Q4: Oct 1  – Dec 31
-
 BUSINESS GRAIN:
   One row per QGP date.
-
 KEY COLUMNS:
   qgp_date                — Period-end date (Sat or quarter-end non-Sat)
   qgp_year                — Calendar year of qgp_date
@@ -51,7 +45,6 @@ KEY COLUMNS:
   prior_year_iso_week_number   — ISO week used for LY lookup: iso_week_number.
   ly_day_allocation_factor     — days_in_period / 7. Silver applies this to the
                                  prior-year same ISO week total for LY trend values.
-
 BUSINESS RULES:
   - BOUNDARY_STUB rows exist solely to hold partial-period metric values.
     They are never shown as standalone WoW or YoY comparison points.
@@ -70,7 +63,6 @@ BUSINESS RULES:
   - Date spine covers 2020-01-01 through end of the following calendar year (rolling).
   - ISO week matching for LY/YoY: same iso_week_number in prior iso_year.
     Partial periods use days_in_period / 7 allocation in Silver.
-
 DOWNSTREAM:
   02_sp_sdi_pulseTms_bronze_adobeFunnel_weekly   (joined in Silver)
   03_sp_sdi_pulseTms_bronze_mfcSpend_weekly      (joined in Silver)
@@ -78,21 +70,23 @@ DOWNSTREAM:
   05_sp_sdi_pulseTms_silver_adobeFunnel_weekly
   06_sp_sdi_pulseTms_silver_mfcSpend_weekly
   07_sp_sdi_pulseTms_silver_platformSpend_weekly
-
 CHANGE LOG:
   - Fixed duplicate BOUNDARY_STUB rows caused by prior-year ISO-week joins.
   - Removed prior-year QGP-date resolution from calendar. LY is now calculated
     in Silver as prior-year same ISO week weekly total × current days_in_period / 7.
   - Kept prior_year_qgp_date and prior_year_days_in_period as deprecated legacy
     fields for compatibility; added ISO-week helper fields for QA/debugging.
+  - FIX: days_in_period for BOUNDARY_STUB/BOUNDARY_FIRST now anchors the week to
+    Monday (DATE_TRUNC(date, WEEK(MONDAY))) instead of Sunday (the prior
+    DAYOFWEEK-1 subtraction). The Sunday anchor overcounted the stub by one day
+    for any stub falling Mon–Sat, matching a bug already found and fixed in the
+    MFC pipeline's own calendar. Confirmed with 2026-06-30/2026-07-04: correct
+    split is 2/5 days; the old formula gave 3/4.
 ================================================================================================= */
-
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar`
 AS
-
 WITH
-
 -- ---------------------------------------------------------------------------
 -- STEP 1: Generate a daily date spine
 --         Rolling range: 2020-01-01 through end of next calendar year.
@@ -110,7 +104,6 @@ DateSpine AS (
     )
   ) AS day
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 2: Identify all Gregorian quarter-end dates within the spine
 -- ---------------------------------------------------------------------------
@@ -122,7 +115,6 @@ QuarterEnds AS (
     ) AS quarter_end_date
   FROM DateSpine
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 3A: All Saturdays → NORMAL weeks
 -- ---------------------------------------------------------------------------
@@ -134,7 +126,6 @@ Saturdays AS (
   FROM DateSpine
   WHERE EXTRACT(DAYOFWEEK FROM day) = 7  -- 7 = Saturday in BigQuery
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 3B: Quarter-end dates that fall on a non-Saturday → BOUNDARY_STUB
 -- ---------------------------------------------------------------------------
@@ -146,7 +137,6 @@ BoundaryStubs AS (
   FROM QuarterEnds
   WHERE EXTRACT(DAYOFWEEK FROM quarter_end_date) != 7
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 3C: First Saturday after each BOUNDARY_STUB → BOUNDARY_FIRST
 --          This Saturday is already in Saturdays CTE as NORMAL;
@@ -166,7 +156,6 @@ BoundaryFirsts AS (
     ORDER BY s.day ASC
   ) = 1
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 4: Combine all QGP dates
 --         BOUNDARY_FIRST overrides the same Saturday's NORMAL entry
@@ -181,7 +170,6 @@ AllQgpDates AS (
   FROM Saturdays s
   WHERE s.qgp_date NOT IN (SELECT qgp_date FROM BoundaryFirsts)
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 5: Enrich with calendar attributes
 -- ---------------------------------------------------------------------------
@@ -190,7 +178,6 @@ Enriched AS (
     aq.qgp_date,
     aq.week_type,
     aq.boundary_stub_date,
-
     EXTRACT(YEAR    FROM aq.qgp_date)                                   AS qgp_year,
     EXTRACT(QUARTER FROM aq.qgp_date)                                   AS qgp_quarter_num,
     CONCAT(
@@ -198,44 +185,39 @@ Enriched AS (
       ' Q',
       CAST(EXTRACT(QUARTER FROM aq.qgp_date) AS STRING)
     )                                                                   AS quarter,
-
     -- Quarter end date: last day of the quarter containing qgp_date
     DATE_SUB(
       DATE_ADD(DATE_TRUNC(aq.qgp_date, QUARTER), INTERVAL 3 MONTH),
       INTERVAL 1 DAY
     )                                                                   AS quarter_end_date,
-
     EXTRACT(ISOWEEK  FROM aq.qgp_date)                                  AS iso_week_number,
     EXTRACT(ISOYEAR  FROM aq.qgp_date)                                  AS iso_year,
-
-    -- Days in period:
+    -- Days in period (Monday-anchored — matches the MFC pipeline's calendar):
     --   NORMAL         : always 7
-    --   BOUNDARY_STUB  : days from Sunday that opened this week through the quarter-end date
+    --   BOUNDARY_STUB  : days from the Monday that opened this week through the quarter-end date
     --   BOUNDARY_FIRST : complement = 7 - stub_days_in_period
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
         DATE_DIFF(
           aq.qgp_date,
-          DATE_SUB(aq.qgp_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.qgp_date) - 1) DAY),
+          DATE_TRUNC(aq.qgp_date, WEEK(MONDAY)),
           DAY
         ) + 1
       WHEN 'BOUNDARY_FIRST' THEN
         7 - (
           DATE_DIFF(
             aq.boundary_stub_date,
-            DATE_SUB(aq.boundary_stub_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.boundary_stub_date) - 1) DAY),
+            DATE_TRUNC(aq.boundary_stub_date, WEEK(MONDAY)),
             DAY
           ) + 1
         )
     END                                                                 AS days_in_period,
-
     aq.qgp_date <= CURRENT_DATE()                                       AS is_complete_period,
     DATE_TRUNC(aq.qgp_date, QUARTER) = DATE_TRUNC(CURRENT_DATE(), QUARTER)
                                                                         AS is_current_quarter
   FROM AllQgpDates aq
 ),
-
 -- ---------------------------------------------------------------------------
 -- STEP 6: Compute wow_prior_qgp_date via LAG
 --         BOUNDARY_STUB rows get NULL — WoW not shown for partial periods
@@ -251,7 +233,6 @@ WithWow AS (
     END AS wow_prior_qgp_date
   FROM Enriched e
 )
-
 -- ---------------------------------------------------------------------------
 -- STEP 7: Final output
 --
@@ -276,11 +257,9 @@ SELECT
   w.is_complete_period,
   w.is_current_quarter,
   w.wow_prior_qgp_date,
-
   -- Deprecated compatibility fields. Do not use these for LY logic.
   CAST(NULL AS DATE) AS prior_year_qgp_date,
   CAST(7 AS INT64)  AS prior_year_days_in_period,
-
   -- LY helper fields used by Silver QA/debugging.
   w.iso_year - 1 AS prior_year_iso_year,
   w.iso_week_number AS prior_year_iso_week_number,

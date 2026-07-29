@@ -24,6 +24,11 @@ WoW LOGIC (same for both grains):
 
 CHANGE LOG:
   - dim calendar column 'quarter' aliased as 'qgp_quarter' in output.
+  - FIX: Channel-grain wow_numerator and yoy_numerator now COALESCE the current
+    side (u.metric_value) before adding the stub's value, matching the
+    denominator formulas and the Granular grain. Previously, u.metric_value
+    being NULL (one side missing at a boundary week) silently nulled the
+    entire numerator, discarding a real value sitting at the paired stub.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -177,7 +182,7 @@ BEGIN
       -- WoW numerator
       CASE u.week_type
         WHEN 'BOUNDARY_STUB'  THEN NULL
-        WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0)
+        WHEN 'BOUNDARY_FIRST' THEN COALESCE(u.metric_value, 0) + COALESCE(stub_lookup.metric_value, 0)
         ELSE                       u.metric_value
       END                                                                 AS wow_numerator,
       -- WoW denominator
@@ -191,7 +196,7 @@ BEGIN
       -- YoY numerator
       CASE u.week_type
         WHEN 'BOUNDARY_STUB'  THEN NULL
-        WHEN 'BOUNDARY_FIRST' THEN u.metric_value + COALESCE(stub_lookup.metric_value, 0)
+        WHEN 'BOUNDARY_FIRST' THEN COALESCE(u.metric_value, 0) + COALESCE(stub_lookup.metric_value, 0)
         ELSE                       u.metric_value
       END                                                                 AS yoy_numerator,
       -- YoY denominator: same prior-year ISO week weekly total
