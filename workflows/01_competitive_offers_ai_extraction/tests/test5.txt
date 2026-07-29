@@ -1,1 +1,13 @@
 prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
+
+
+teamName_tableOrView_projectName_layer_purpose_cadence
+
+
+sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
+sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly
+
+sdi_vw_dashboardPulseTms_gold_unified_long
+sdi_vw_dashboardPulseTms_gold_unified_wide
+
+
