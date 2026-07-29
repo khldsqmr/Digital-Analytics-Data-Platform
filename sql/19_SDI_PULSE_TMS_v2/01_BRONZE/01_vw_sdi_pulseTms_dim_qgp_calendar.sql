@@ -32,6 +32,12 @@ KEY COLUMNS:
   iso_year                — ISO year (may differ from calendar year near year boundaries)
   week_type               — 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
   days_in_period          — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder days for BOUNDARY_FIRST
+                            Sunday-anchored — correct for Adobe/Platform's native Sun-Sat weeks.
+                            MFC's own boundary math is already handled upstream in the MFC
+                            pipeline's own Monday-anchored calendar (sdi_vw_mfc_dim_qgp_calendar);
+                            PulseTMS's mfcSpend Silver additionally computes its own
+                            Monday-anchored day-count locally, only for its LY trend line —
+                            see 06_sp_sdi_pulseTms_silver_mfcSpend_weekly.
   is_complete_period      — TRUE when qgp_date <= CURRENT_DATE()
   is_current_quarter      — TRUE when qgp_date falls in the current calendar quarter
   boundary_stub_date      — For BOUNDARY_FIRST rows: the preceding stub date (e.g. Mar 31)
@@ -76,12 +82,9 @@ CHANGE LOG:
     in Silver as prior-year same ISO week weekly total × current days_in_period / 7.
   - Kept prior_year_qgp_date and prior_year_days_in_period as deprecated legacy
     fields for compatibility; added ISO-week helper fields for QA/debugging.
-  - FIX: days_in_period for BOUNDARY_STUB/BOUNDARY_FIRST now anchors the week to
-    Monday (DATE_TRUNC(date, WEEK(MONDAY))) instead of Sunday (the prior
-    DAYOFWEEK-1 subtraction). The Sunday anchor overcounted the stub by one day
-    for any stub falling Mon–Sat, matching a bug already found and fixed in the
-    MFC pipeline's own calendar. Confirmed with 2026-06-30/2026-07-04: correct
-    split is 2/5 days; the old formula gave 3/4.
+  - CONFIRMED (no code change): days_in_period's Sunday-anchored day-count is correct
+    for Adobe and Platform's native Sun-Sat weekly data. MFC's Monday-anchored need is
+    handled locally in mfcSpend Silver, not here — see that file's change log.
 ================================================================================================= */
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar`
@@ -192,23 +195,25 @@ Enriched AS (
     )                                                                   AS quarter_end_date,
     EXTRACT(ISOWEEK  FROM aq.qgp_date)                                  AS iso_week_number,
     EXTRACT(ISOYEAR  FROM aq.qgp_date)                                  AS iso_year,
-    -- Days in period (Monday-anchored — matches the MFC pipeline's calendar):
+    -- Days in period (Sunday-anchored — correct for Adobe/Platform's native
+    -- Sun-Sat weekly data; MFC's Monday-anchored need is handled separately,
+    -- locally, inside mfcSpend's own Silver procedure):
     --   NORMAL         : always 7
-    --   BOUNDARY_STUB  : days from the Monday that opened this week through the quarter-end date
+    --   BOUNDARY_STUB  : days from Sunday that opened this week through the quarter-end date
     --   BOUNDARY_FIRST : complement = 7 - stub_days_in_period
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
         DATE_DIFF(
           aq.qgp_date,
-          DATE_TRUNC(aq.qgp_date, WEEK(MONDAY)),
+          DATE_SUB(aq.qgp_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.qgp_date) - 1) DAY),
           DAY
         ) + 1
       WHEN 'BOUNDARY_FIRST' THEN
         7 - (
           DATE_DIFF(
             aq.boundary_stub_date,
-            DATE_TRUNC(aq.boundary_stub_date, WEEK(MONDAY)),
+            DATE_SUB(aq.boundary_stub_date, INTERVAL (EXTRACT(DAYOFWEEK FROM aq.boundary_stub_date) - 1) DAY),
             DAY
           ) + 1
         )

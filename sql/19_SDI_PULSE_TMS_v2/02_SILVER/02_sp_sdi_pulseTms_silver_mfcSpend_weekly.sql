@@ -29,6 +29,16 @@ CHANGE LOG:
     denominator formulas and the Granular grain. Previously, u.metric_value
     being NULL (one side missing at a boundary week) silently nulled the
     entire numerator, discarding a real value sitting at the paired stub.
+  - FIX: metric_value_ly (both grains) now uses a locally-computed
+    mfc_days_in_period instead of the shared calendar's days_in_period.
+    MFC's raw data is genuinely Monday-Sunday; the shared PulseTMS calendar's
+    days_in_period is Sunday-anchored — correct for Adobe/Platform's native
+    Sun-Sat weeks, but off by one day for MFC's boundary weeks. Rather than
+    change the shared calendar (which would break Adobe/Platform), this
+    procedure computes its own Monday-anchored day-count locally, used only
+    for this one trend-line calculation. The days_in_period *output* column
+    is left as-is (still the shared calendar's value), consistent with every
+    other data_source in the unified Gold view.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -51,6 +61,16 @@ BEGIN
       cal.week_type,
       cal.quarter                                                         AS qgp_quarter,
       cal.days_in_period,
+      -- MFC-specific Monday-anchored day count, used only for this
+      -- procedure's metric_value_ly line below. cal.days_in_period stays
+      -- Sunday-anchored — correct for Adobe/Platform's real Sun-Sat weeks.
+      CASE cal.week_type
+        WHEN 'NORMAL' THEN 7
+        WHEN 'BOUNDARY_STUB' THEN
+          DATE_DIFF(cal.qgp_date, DATE_TRUNC(cal.qgp_date, WEEK(MONDAY)), DAY) + 1
+        WHEN 'BOUNDARY_FIRST' THEN
+          7 - (DATE_DIFF(cal.boundary_stub_date, DATE_TRUNC(cal.boundary_stub_date, WEEK(MONDAY)), DAY) + 1)
+      END                                                                 AS mfc_days_in_period,
       cal.is_complete_period,
       cal.is_current_quarter,
       cal.wow_prior_qgp_date,
@@ -97,23 +117,23 @@ BEGIN
   -- GRANULAR grain unpivot
   -- -------------------------------------------------------------------------
   UnpivotedGranular AS (
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendActual'   AS metric_name, spend_actual   AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendActual'   AS metric_name, spend_actual   AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
     UNION ALL
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendForecast' AS metric_name, spend_forecast AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, channel, tactic, message_type, agency, 'mfcSpendForecast' AS metric_name, spend_forecast AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL
   ),
 
   -- -------------------------------------------------------------------------
   -- CHANNEL grain: aggregate to lob x channel_group, then add All Channels rollup
   -- -------------------------------------------------------------------------
   UnpivotedChannelBase AS (
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, 'mfcSpendActual'   AS metric_name, SUM(spend_actual)   AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, 'mfcSpendActual'   AS metric_name, SUM(spend_actual)   AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group
     UNION ALL
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, 'mfcSpendForecast' AS metric_name, SUM(spend_forecast) AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group, 'mfcSpendForecast' AS metric_name, SUM(spend_forecast) AS metric_value FROM BronzeWithCalendar WHERE lob IS NOT NULL GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, channel_group
   ),
   UnpivotedChannelAllChannels AS (
-    SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, 'All Channels' AS channel_group, metric_name, SUM(metric_value) AS metric_value
+    SELECT qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, 'All Channels' AS channel_group, metric_name, SUM(metric_value) AS metric_value
     FROM UnpivotedChannelBase
-    GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, metric_name
+    GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, mfc_days_in_period, is_complete_period, is_current_quarter, wow_prior_qgp_date, prior_year_qgp_date, boundary_stub_date, iso_week_number, iso_year, lob, metric_name
   ),
   UnpivotedChannel AS (
     SELECT * FROM UnpivotedChannelBase
@@ -174,9 +194,10 @@ BEGIN
       u.qgp_date, u.week_type, u.qgp_quarter, u.days_in_period, u.is_complete_period,
       u.channel_group, u.metric_name, u.metric_value,
       -- LY trend value:
-      --   prior-year same ISO week weekly total × current days_in_period / 7
+      --   prior-year same ISO week weekly total × current MFC-specific
+      --   (Monday-anchored) days_in_period / 7
       ROUND(
-        ly_week.ly_weekly_metric_value * SAFE_DIVIDE(u.days_in_period, 7),
+        ly_week.ly_weekly_metric_value * SAFE_DIVIDE(u.mfc_days_in_period, 7),
         2
       )                                                                   AS metric_value_ly,
       -- WoW numerator
@@ -244,9 +265,10 @@ BEGIN
       u.qgp_date, u.week_type, u.qgp_quarter, u.days_in_period, u.is_complete_period,
       u.channel_group, u.metric_name, u.metric_value,
       -- LY trend value:
-      --   prior-year same ISO week weekly total × current days_in_period / 7
+      --   prior-year same ISO week weekly total × current MFC-specific
+      --   (Monday-anchored) days_in_period / 7
       ROUND(
-        ly_week.ly_weekly_metric_value * SAFE_DIVIDE(u.days_in_period, 7),
+        ly_week.ly_weekly_metric_value * SAFE_DIVIDE(u.mfc_days_in_period, 7),
         2
       )                                                                   AS metric_value_ly,
       -- WoW numerator
