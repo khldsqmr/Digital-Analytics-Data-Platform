@@ -88,7 +88,7 @@ BEGIN
       --'UNALLOCATED', 
       'BUDGET HELD'
     )
-    AND UPPER(TRIM(raw.Message_Type)) != 'MICRO'
+    --AND UPPER(TRIM(raw.Message_Type)) != 'MICRO'
     -- Keep rows that have meaningful spend in at least one of actual or forecast.
     -- A row may have forecast but no actual (future weeks) or actual but no forecast (past weeks).
     AND (
