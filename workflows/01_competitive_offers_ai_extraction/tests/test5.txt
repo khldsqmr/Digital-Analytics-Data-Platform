@@ -70,3 +70,185 @@ PublishKey	QuarterNum	YearNum	WeekEnding	MetricID	DateContext	Page	Section	Heade
 
 so how do you think we can develop a bronze and silver for this to incorporate this in our architecture?
 
+I need them in a Databricks table / view, which i can use.
+//c.Activations BOPIS Actual
+SUM(
+    IF
+        [Metric Type] = "Actuals"
+        AND LOWER(TRIM([Page])) = "digital"
+        AND TRIM([Date Context]) = "Normal"
+        AND [Metric ID] IN (
+            "ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital",
+            "ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital"
+        )
+    THEN
+        [Amount]
+    END
+)
+SUM(
+    IF
+        [Metric Type] = "QGP"
+        AND LOWER(TRIM([Page])) = "digital"
+        AND TRIM([Date Context]) = "Normal"
+        AND TRIM([Metric ID]) = "ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital"
+    THEN
+        [Amount]
+    END
+)
+// c.Activations Actuals — substring matching, no zeros
+SUM(
+  IF
+    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
+    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
+    AND LOWER(TRIM([Metric Type])) IN ("actuals", "actuals/outlook")
+    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
+    AND LOWER(TRIM([Page])) = "digital"
+    AND LOWER(TRIM([Is Future])) = "is past"
+AND LOWER(TRIM([Date Context])) = "normal"
+  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
+  END
+)
+// c.Activations Actuals — substring matching, no zeros
+SUM(
+  IF
+    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
+    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
+    AND LOWER(TRIM([Metric Type])) IN ("qgp")
+    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
+    AND LOWER(TRIM([Page])) = "digital"
+AND LOWER(TRIM([Date Context])) = "normal"
+  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
+  END
+)
+// c.Store Traffic Actuals/Outlook
+SUM(
+    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
+       AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
+        AND LOWER(TRIM([Date Context])) = "normal"
+        AND LOWER(TRIM([Is Future]))= "is past"
+    THEN FLOAT([Amount])
+    END
+)
+// c.Store Traffic QGP
+SUM(
+    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
+       AND LOWER(TRIM([Metric Type])) = "qgp"
+AND LOWER(TRIM([Date Context])) = "normal"
+    THEN FLOAT([Amount])
+    END
+)
+// c.VR Calls Actuals
+SUM(
+    IF 
+       [Metric Type] = "Actuals/Outlook"
+       AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
+AND LOWER(TRIM([Date Context])) = "normal"
+AND LOWER(TRIM([Is Future]))= "is past"
+    THEN FLOAT([Amount])
+    END
+)
+//c.VR Calls QGP
+SUM(
+    IF
+        [Metric Type] = "QGP"
+        AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
+        AND [Display Metric Type] = "QGP"
+        AND LOWER(TRIM([Date Context])) = "normal"
+        AND lower(trim([Page])) = "virtual retail"
+    THEN FLOAT([Amount])
+    END
+)
+//c.VR Chats Actuals
+SUM(
+    IF 
+       [Metric Type] = "Actuals/Outlook"
+       AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
+AND LOWER(TRIM([Date Context])) = "normal"
+AND LOWER(TRIM([Is Future]))= "is past"
+    THEN FLOAT([Amount])
+    END
+)
+//c.VR Chats QGP
+SUM(
+    IF
+        [Metric Type] = "QGP"
+        AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
+        AND [Display Metric Type] = "QGP"
+        AND lower(trim([Page])) = "virtual retail"
+        AND LOWER(TRIM([Date Context])) = "normal"
+    THEN FLOAT([Amount])
+    END
+)
+// VR Postpaid Activations — Actuals
+SUM(
+  IF
+    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
+    AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
+    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
+    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
+    AND LOWER(TRIM([Is Future])) = "is past"
+    AND LOWER(TRIM([Date Context])) = "normal"
+  THEN [Amount]
+  END
+)
+// VR Postpaid Activations — QGP
+SUM(
+  IF
+    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
+    AND LOWER(TRIM([Metric Type])) = "qgp"
+    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
+    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
+    //AND LOWER(TRIM([Is Future])) = "is past"
+    //AND LOWER(TRIM([Date Context])) = "normal"
+  THEN [Amount]
+  END
+)
+// c.Digital % Phone New Acct Acts (No Assistance + Assistance)
+SUM(
+  IF
+    TRIM([Page]) = "Digital Transformation NEW"
+    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
+    AND TRIM([Date Context]) = "Normal"
+    AND TRIM([Metric ID]) = "ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect"
+    AND LOWER(TRIM([Is Future])) = "is past"
+  THEN [Amount]
+  END
+)
+SUM(
+  IF [Metric Type] = "Actuals/Outlook"
+  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
+  AND LOWER(TRIM([Date Context])) = "normal"
+  AND LOWER(TRIM([Is Future])) = "is past"
+  AND TRIM([Page]) = "Digital"
+  THEN FLOAT([Amount])
+  END
+)
+SUM(
+  IF [Metric Type] = "QGP"
+  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
+  AND [Display Metric Type] = "QGP"
+  AND LOWER(TRIM([Date Context])) = "normal"
+  AND TRIM([Page]) = "Digital"
+  THEN FLOAT([Amount])
+  END
+)
+// c.Digital % No Assistance | Activations
+SUM(
+  IF
+    TRIM([Page]) = "Digital Transformation NEW"
+    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
+    AND TRIM([Date Context]) = "Normal"
+    AND TRIM([Metric ID]) = "DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect"
+  THEN [Amount]
+  END
+)
+// c.Digital % Assistance | Activations
+SUM(
+  IF
+    TRIM([Page]) = "Digital Transformation NEW"
+    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
+    AND TRIM([Date Context]) = "Normal"
+    AND TRIM([Metric ID]) = "NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect"
+  THEN [Amount]
+  END
+)
