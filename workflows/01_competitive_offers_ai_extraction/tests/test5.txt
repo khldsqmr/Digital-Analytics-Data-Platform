@@ -13,242 +13,45 @@ sdi_vw_dashboardPulseTms_gold_unified_wide
 
 prdrzrlakehouse.qgp_restricted.qgpweeklyview
 
-if i write select * from prdrzrlakehouse.qgp_restricted.qgpweeklyview limit 50; this is what i see:
-
-PublishKey	QuarterNum	YearNum	WeekEnding	MetricID	DateContext	Page	Section	Header	MetricName	MetricType	DisplayMetricType	MetricFormat	DaysInArrears	CumulativeDates	IsFuture	MetricOrder	VarianceDirection	LevelofPrecision	Amount	DisplayAmount	VariancePercentage	VarianceColor	MetricOwner	DataDictionaryURL	DrillDownURL1	DrillDownURL2	InsertDateTime
-2026-08-01	1	2026	2026-02-14	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0228	2.3%	-0.148148	0	Automated	null	null	null	2026-04-06T08:39:40.193+00:00
-2026-08-01	2	2026	2026-06-30	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0145	1.5%	-0.0625	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	WoW	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	0	0.0%	null	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-07-31	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-09-26	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.0233	2.3%	0.173913	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-09-19	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.0266	2.7%	0.227272	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-22	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.0273	2.7%	0	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-29	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.0251	2.5%	0.04	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-08	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.0296	3.0%	0.033333	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-01	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-07-11	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0273	2.7%	0.5	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-05-30	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0197	2.0%	-0.333333	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-05-16	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0312	3.1%	-0.290322	-2	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	1	2026	2026-01-24	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0236	2.4%	-0.2	0	Automated	null	null	null	2026-04-06T08:39:40.193+00:00
-2026-08-01	1	2026	2026-01-03	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.015	1.5%	-0.333333	-2	Automated	null	null	null	2026-04-06T08:39:40.193+00:00
-2026-08-01	1	2026	2026-02-28	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0356	3.6%	-0.25	-2	Automated	null	null	null	2026-04-06T08:39:40.193+00:00
-2026-08-01	3	2026	2026-09-19	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.0215	2.2%	0.227272	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-06-20	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0387	3.9%	-0.384615	-2	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	3	2026	2026-07-25	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0281	2.8%	-0.377777	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-08	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.0306	3.1%	0.033333	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-09-26	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.0273	2.7%	0.173913	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.0302	3.0%	0.25	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-15	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Future	2190	-1	3	0.026	2.6%	0.04	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-04-30	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-09-05	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.022	2.2%	0.136363	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	PQWA	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	0.029696	3.0%	-0.3	-2	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-06-30	5GBroadbandDisconnectRateBusinessManual	ROQ	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	null	null	null	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-06-30	5GBroadbandDisconnectRateBusinessManual	QTD	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	0.029696	3.0%	-0.3	-2	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	PQWA	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	0.021137	2.1%	-0.3	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-08-22	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Future	2200	-1	3	0.0266	2.7%	0	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-06-13	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0201	2.0%	0	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-06-06	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.023	2.3%	0	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-05-09	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0225	2.3%	0.095238	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-06-30	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	2	2026	2026-05-31	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	ROQ	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	0.024503	2.5%	0.08	1	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-09-30	5GBroadbandDisconnectRateBusinessManual	ROQ	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	0.027341	2.7%	0.08	0	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	3	2026	2026-07-25	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0452	4.5%	-0.377777	-2	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-06-30	5GBroadbandDisconnectRateBusinessManual	PQWA	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	0.034755	3.5%	-0.314285	-2	Automated	null	null	null	2026-06-29T08:25:12.333+00:00
-2026-08-01	3	2026	2026-07-11	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0182	1.8%	0.5	2	Automated	null	null	null	2026-07-29T18:33:10.737+00:00
-2026-08-01	2	2026	2026-06-27	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0209	2.1%	-0.16	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-06-20	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0238	2.4%	-0.384615	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-06-13	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0204	2.0%	0	1	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	3	2026	2026-08-31	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	IsFuture	2200	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	3	2026	2026-08-31	5GBroadbandDisconnectRateBusinessManual	Monthly Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	IsFuture	2190	-1	3	null	null	null	null	Automated	null	null	null	-
-2026-08-01	2	2026	2026-05-16	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.022	2.2%	-0.290322	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-05-02	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	QGP	Target	0.0%	0	null	Is Past	2190	-1	3	0.0191	1.9%	-0.472222	0	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-04-25	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.0288	2.9%	-0.310344	-2	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-2026-08-01	2	2026	2026-04-11	5GBroadbandDisconnectRateBusinessManual	Normal	Hero - Broadband KPI 2	Weekly	Section1	     Business	Actuals/Outlook	Actuals/Outlook	0.0%	0	null	Is Past	2200	-1	3	0.029	2.9%	-0.275862	-2	Automated	null	null	null	2026-07-06T10:23:40.157+00:00
-
-
-so how do you think we can develop a bronze and silver for this to incorporate this in our architecture?
-
-I need them in a Databricks table / view, which i can use.
-//c.Activations BOPIS Actual
-SUM(
-    IF
-        [Metric Type] = "Actuals"
-        AND LOWER(TRIM([Page])) = "digital"
-        AND TRIM([Date Context]) = "Normal"
-        AND [Metric ID] IN (
-            "ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital",
-            "ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital"
-        )
-    THEN
-        [Amount]
-    END
-)
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND LOWER(TRIM([Page])) = "digital"
-        AND TRIM([Date Context]) = "Normal"
-        AND TRIM([Metric ID]) = "ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital"
-    THEN
-        [Amount]
-    END
-)
-// c.Activations Actuals — substring matching, no zeros
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
-    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
-    AND LOWER(TRIM([Metric Type])) IN ("actuals", "actuals/outlook")
-    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
-    AND LOWER(TRIM([Page])) = "digital"
-    AND LOWER(TRIM([Is Future])) = "is past"
-AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
-  END
-)
-// c.Activations Actuals — substring matching, no zeros
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
-    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
-    AND LOWER(TRIM([Metric Type])) IN ("qgp")
-    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
-    AND LOWER(TRIM([Page])) = "digital"
-AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
-  END
-)
-// c.Store Traffic Actuals/Outlook
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-        AND LOWER(TRIM([Date Context])) = "normal"
-        AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-// c.Store Traffic QGP
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "qgp"
-AND LOWER(TRIM([Date Context])) = "normal"
-    THEN FLOAT([Amount])
-    END
-)
-// c.VR Calls Actuals
-SUM(
-    IF 
-       [Metric Type] = "Actuals/Outlook"
-       AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
-AND LOWER(TRIM([Date Context])) = "normal"
-AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Calls QGP
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
-        AND [Display Metric Type] = "QGP"
-        AND LOWER(TRIM([Date Context])) = "normal"
-        AND lower(trim([Page])) = "virtual retail"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Chats Actuals
-SUM(
-    IF 
-       [Metric Type] = "Actuals/Outlook"
-       AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
-AND LOWER(TRIM([Date Context])) = "normal"
-AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Chats QGP
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
-        AND [Display Metric Type] = "QGP"
-        AND lower(trim([Page])) = "virtual retail"
-        AND LOWER(TRIM([Date Context])) = "normal"
-    THEN FLOAT([Amount])
-    END
-)
-// VR Postpaid Activations — Actuals
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
-    AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
-    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
-    AND LOWER(TRIM([Is Future])) = "is past"
-    AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]
-  END
-)
-// VR Postpaid Activations — QGP
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
-    AND LOWER(TRIM([Metric Type])) = "qgp"
-    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
-    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
-    //AND LOWER(TRIM([Is Future])) = "is past"
-    //AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]
-  END
-)
-// c.Digital % Phone New Acct Acts (No Assistance + Assistance)
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect"
-    AND LOWER(TRIM([Is Future])) = "is past"
-  THEN [Amount]
-  END
-)
-SUM(
-  IF [Metric Type] = "Actuals/Outlook"
-  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
-  AND LOWER(TRIM([Date Context])) = "normal"
-  AND LOWER(TRIM([Is Future])) = "is past"
-  AND TRIM([Page]) = "Digital"
-  THEN FLOAT([Amount])
-  END
-)
-SUM(
-  IF [Metric Type] = "QGP"
-  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
-  AND [Display Metric Type] = "QGP"
-  AND LOWER(TRIM([Date Context])) = "normal"
-  AND TRIM([Page]) = "Digital"
-  THEN FLOAT([Amount])
-  END
-)
-// c.Digital % No Assistance | Activations
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect"
-  THEN [Amount]
-  END
-)
-// c.Digital % Assistance | Activations
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect"
-  THEN [Amount]
-  END
-)
+File <command-5776364549954898>, line 1
+----> 1 get_ipython().run_cell_magic('sql', '', '/* =================================================================================================\nFILE:         00_sdi_sp_dashboardPulseTms_call_all_weekly.sql   (Databricks port of 00_call_all_sp_pulseTms)\nPURPOSE:\n  Weekly orchestration entry point. Calls every PulseTMS Bronze and Silver procedure in\n  dependency order so the whole pipeline refreshes with one job run.\n\n  NOT included here: sdi_vw_dashboardPulseTms_dim_qgp_calendar, sdi_vw_dashboardPulseTms_gold_unified_long,\n  sdi_vw_dashboardPulseTms_gold_unified_wide -- these are VIEWS, not materialized by a procedure.\n  They resolve live off whatever is currently in the Silver tables, so they never need a CALL here.\n\nHOW TO SCHEDULE:\n  Databricks Jobs > Tasks > Type = SQL > SQL task = File > Source = Workspace, point at this file,\n  select a serverless or pro SQL warehouse. One task, one file, statements run top-to-bottom in\n  the order below -- no separate task dependency graph needed at this data volume.\n\n  If you\'d rather parallelize the independent Bronze calls (or get per-step retry/monitoring),\n  split this into one Job task per CALL instead and wire up "depends on" edges in the Jobs UI\n  matching the ordering below. Not necessary yet at this scale, but the option\'s there later.\n\nDEPENDENCY ORDER:\n  1. Bronze: adobeFunnel, mfcSpend, platformSpend, qgp -- no dependency on each other, any order\n     is fine. platformSpend stays commented out until its raw source catalog/schema is confirmed.\n  2. Silver: adobeFunnel, mfcSpend, platformSpend, qgp -- each depends only on its own Bronze\n     table plus the calendar view (a view, always live, no CALL needed). qgp has no cross-Silver\n     dependency (unlike upvForecast below), so it can run right alongside the others in this step.\n  3. Silver: upvForecast -- depends on Silver adobeFunnel specifically (prior-year channel\n     allocation ratios), so it must run strictly after step 2, not alongside it. Also depends on\n     its own Bronze table being populated by the external notebook upload mentioned in that\n     procedure\'s header -- make sure that\'s run before this job, or upvForecast will compute\n     against stale/missing Bronze data.\n================================================================================================= */\n\n-- ===========================================================================\n-- STEP 1: Bronze\n-- ===========================================================================\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly();\n--CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_platformSpend_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_qgp_weekly();\n\n-- ===========================================================================\n-- STEP 2: Silver -- adobeFunnel, mfcSpend, and qgp are already translated;\n--         platformSpend Silver hasn\'t been ported yet, left commented until it is.\n-- ===========================================================================\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly();\n-- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_platformSpend_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_qgp_weekly();\n\n-- ===========================================================================\n-- STEP 3: Silver upvForecast -- must come after Silver adobeFunnel above.\n--         Not yet translated/deployed -- left commented until it is.\n-- ===========================================================================\n-- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();\n')
+File /databricks/python/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2541, in InteractiveShell.run_cell_magic(self, magic_name, line, cell)
+   2539 with self.builtin_trap:
+   2540     args = (magic_arg_s, cell)
+-> 2541     result = fn(*args, **kwargs)
+   2543 # The code below prevents the output from being displayed
+   2544 # when using magics with decorator @output_can_be_silenced
+   2545 # when the last Python token in the expression is a ';'.
+   2546 if getattr(fn, magic.MAGIC_OUTPUT_CAN_BE_SILENCED, False):
+File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:183, in SqlMagic.sql(self, line, cell)
+    177 except BaseException as e:
+    178     self.driver_activity_logger.logExecuteCommandEvent(
+    179         "SQL_MAGIC_PY4J_FAILED",
+    180         exceptionClassName=e.__class__.__name__,
+    181         sqlState=safe_call(e, "getSqlState"),
+    182         errorClass=safe_call(e, "getCondition"))
+--> 183     raise e
+    185 self.driver_activity_logger.logExecuteCommandEvent("SQL_MAGIC_PY4J_SUCCEEDED")
+    186 return result
+File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:176, in SqlMagic.sql(self, line, cell)
+    174         query_text = sub_query.query()
+    175         sql_directive = self.entry_point.getSqlDirective(query_text)
+--> 176         result = self._handle_sql_directive(sql_directive, i == number_of_sub_queries - 1)
+    177 except BaseException as e:
+    178     self.driver_activity_logger.logExecuteCommandEvent(
+    179         "SQL_MAGIC_PY4J_FAILED",
+    180         exceptionClassName=e.__class__.__name__,
+    181         sqlState=safe_call(e, "getSqlState"),
+    182         errorClass=safe_call(e, "getCondition"))
+File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:202, in SqlMagic._handle_sql_directive(self, sql_directive, is_last_query)
+    200     query = sql_directive.sql()
+    201     self._register_udf_if_needed(query)
+--> 202     df = self._get_query_request_result(query)
+    203 elif directive_name == "RemoveWidgetSpec":
+    204     self.entry_point.getNotebookArguments().removeWidget(
+    205         sql_directive.name(), self.entry_point.getCurrentBindings())
+File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:140, in SqlMagic._get_query_request_result(self, query)
+    138 if len(widget_bindings := self._widget_cache.values) > 0:
+    139     self.driver_activity_logger.logExecuteCommandEvent("PARAM_SYNTAX_USAGE")
+--> 140 df = self.spark.sql(query, widget_bindings)
+    141 return df
