@@ -1,10 +1,10 @@
 /* =================================================================================================
-FILE:         05_sp_sdi_pulseTms_silver_adobeFunnel_weekly.sql   (Databricks port)
+FILE:         05_sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly.sql   (Databricks port)
 LAYER:        Stored Procedure
-PROCEDURE:    sp_sdi_pulseTms_silver_adobeFunnel_weekly
+PROCEDURE:    sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly
 
 PURPOSE:
-  Creates/refreshes physical table sdi_pulseTms_silver_adobeFunnel_weekly.
+  Creates/refreshes physical table sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly.
   Called as part of the weekly refresh.
 
   All heavy processing happens here — Gold is a pure pass-through view.
@@ -92,12 +92,12 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  <catalog>.<schema>.sp_sdi_pulseTms_silver_adobeFunnel_weekly()
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly()
 LANGUAGE SQL
 AS
 BEGIN
 
-  CREATE OR REPLACE TABLE <catalog>.<schema>.tmp_silver_adobe_unpivoted AS
+  CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_silver_adobe_unpivoted AS
   WITH
 
   BronzeWithCalendar AS (
@@ -171,15 +171,15 @@ BEGIN
            WHEN cal.week_type = 'BOUNDARY_FIRST' AND cal.is_complete_period THEN (b.ordersUnassistedPostpaid  + b.ordersUnassistedHsi  + b.ordersUnassistedByod  + b.ordersAssistedPostpaid  + b.ordersAssistedHsi  + b.ordersAssistedByod)  * cal.days_in_period / 7
            WHEN cal.is_complete_period THEN (b.ordersUnassistedPostpaid + b.ordersUnassistedHsi + b.ordersUnassistedByod) + (b.ordersAssistedPostpaid + b.ordersAssistedHsi + b.ordersAssistedByod) END AS ordersTotal
 
-    FROM <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar cal
+    FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
     CROSS JOIN (
       SELECT DISTINCT channel_group
-      FROM <catalog>.<schema>.sdi_pulseTms_bronze_adobeFunnel_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly
     ) channels
-    LEFT JOIN <catalog>.<schema>.sdi_pulseTms_bronze_adobeFunnel_weekly b
+    LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly b
       ON  b.week_sun_sat  = cal.qgp_date
       AND b.channel_group = channels.channel_group
-    LEFT JOIN <catalog>.<schema>.sdi_pulseTms_bronze_adobeFunnel_weekly bf
+    LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly bf
       ON  cal.week_type    = 'BOUNDARY_STUB'
       AND bf.week_sun_sat  = date_add(cal.qgp_date, 7 - EXTRACT(DAYOFWEEK FROM cal.qgp_date))
       AND bf.channel_group = channels.channel_group
@@ -325,16 +325,16 @@ BEGIN
 
 
   CREATE OR REPLACE TABLE
-    <catalog>.<schema>.sdi_pulseTms_silver_adobeFunnel_weekly
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
   USING DELTA
   CLUSTER BY (qgp_date, channel_group, metric_name)
-  COMMENT 'PulseTMS Silver — Adobe UPV funnel metrics in long format with WoW/YoY and inline CVR. One row per qgp_date x channel_group x metric_name. metric_type = ADOBE_VOLUME for all rows. Each row carries adobe_cvr_numerator, adobe_cvr_denominator, adobe_cvr_value inline. Clustered by qgp_date, channel_group, metric_name. Refreshed weekly via sp_sdi_pulseTms_silver_adobeFunnel_weekly.'
+  COMMENT 'PulseTMS Silver — Adobe UPV funnel metrics in long format with WoW/YoY and inline CVR. One row per qgp_date x channel_group x metric_name. metric_type = ADOBE_VOLUME for all rows. Each row carries adobe_cvr_numerator, adobe_cvr_denominator, adobe_cvr_value inline. Clustered by qgp_date, channel_group, metric_name. Refreshed weekly via sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly.'
   AS
   WITH
 
   MetricLookup AS (
     SELECT qgp_date, channel_group, metric_name, metric_value
-    FROM <catalog>.<schema>.tmp_silver_adobe_unpivoted
+    FROM prdrzranalytics.lab42.tmp_silver_adobe_unpivoted
   ),
 
   LYWeeklyLookup AS (
@@ -344,7 +344,7 @@ BEGIN
       channel_group,
       metric_name,
       SUM(metric_value) AS ly_weekly_metric_value
-    FROM <catalog>.<schema>.tmp_silver_adobe_unpivoted
+    FROM prdrzranalytics.lab42.tmp_silver_adobe_unpivoted
     WHERE metric_value IS NOT NULL
     GROUP BY iso_year, iso_week_number, channel_group, metric_name
   )
@@ -426,14 +426,14 @@ BEGIN
     u.adobe_cvr_denominator,
     u.adobe_cvr_value
 
-  FROM <catalog>.<schema>.tmp_silver_adobe_unpivoted u
+  FROM prdrzranalytics.lab42.tmp_silver_adobe_unpivoted u
 
   LEFT JOIN MetricLookup wow_prior_lookup
     ON  wow_prior_lookup.qgp_date      = u.wow_prior_qgp_date
     AND wow_prior_lookup.channel_group = u.channel_group
     AND wow_prior_lookup.metric_name   = u.metric_name
 
-  LEFT JOIN <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar prior_cal
+  LEFT JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar prior_cal
     ON  prior_cal.qgp_date = u.wow_prior_qgp_date
 
   LEFT JOIN MetricLookup wow_prior_stub_lookup
@@ -452,6 +452,6 @@ BEGIN
     AND ly_week.channel_group   = u.channel_group
     AND ly_week.metric_name     = u.metric_name;
 
-  DROP TABLE IF EXISTS <catalog>.<schema>.tmp_silver_adobe_unpivoted;
+  DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_silver_adobe_unpivoted;
 
 END;

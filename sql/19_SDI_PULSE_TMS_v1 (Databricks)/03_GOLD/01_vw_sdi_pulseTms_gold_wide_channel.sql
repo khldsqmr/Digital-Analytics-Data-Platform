@@ -1,7 +1,7 @@
 /* =================================================================================================
-FILE:         09_vw_sdi_pulseTms_gold_wide_channel.sql   (Databricks port)
+FILE:         09_sdi_vw_dashboardPulseTms_gold_unified_wide.sql   (Databricks port)
 LAYER:        Gold View — Wide / Sense Check
-VIEW NAME:    vw_sdi_pulseTms_gold_wide_channel
+VIEW NAME:    sdi_vw_dashboardPulseTms_gold_unified_wide
 
 PURPOSE:
   Wide pivot view for quick sense-checking of the PulseTMS pipeline.
@@ -12,12 +12,12 @@ PURPOSE:
     MFC_SPEND_CHANNEL  — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
     PLATFORM_SPEND_CHANNEL — platformSpend (POSTPAID LOB only; actuals only)
 
-  NOT included: MFC_SPEND_GRANULAR (use vw_sdi_pulseTms_gold_unified_long for that)
+  NOT included: MFC_SPEND_GRANULAR (use sdi_vw_dashboardPulseTms_gold_unified_long for that)
 
 LOB NOTE:
   Spend columns (MFC + Platform) reflect POSTPAID only. Both Silver tables are filtered
   to POSTPAID in their Bronze CROSS JOIN. No LOB column is surfaced here since the grain
-  is channel_group only — use vw_sdi_pulseTms_gold_unified_long for LOB-level analysis.
+  is channel_group only — use sdi_vw_dashboardPulseTms_gold_unified_long for LOB-level analysis.
 
 GRAIN:
   qgp_date × channel_group
@@ -32,7 +32,7 @@ ORDERING:
 
 NOTE:
   This view is for sense-checking only — not intended as a Tableau data source.
-  Use vw_sdi_pulseTms_gold_unified_long for all production reporting.
+  Use sdi_vw_dashboardPulseTms_gold_unified_long for all production reporting.
 
 PORTING NOTES (BQ -> Databricks), applies to this file only:
   - MAX(IF(cond, val, NULL))  -> unchanged; Databricks SQL supports IF() as a CASE WHEN alias
@@ -48,7 +48,7 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-  <catalog>.<schema>.vw_sdi_pulseTms_gold_wide_channel
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_wide
 AS
 
 WITH
@@ -100,7 +100,7 @@ Adobe AS (
     MAX(IF(metric_name = 'ordersAssistedHsi',        adobe_cvr_value, NULL)) AS cvrOrdersAssistedHsi,
     MAX(IF(metric_name = 'ordersUnassistedByod',     adobe_cvr_value, NULL)) AS cvrOrdersUnassistedByod,
     MAX(IF(metric_name = 'ordersAssistedByod',       adobe_cvr_value, NULL)) AS cvrOrdersAssistedByod
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_adobeFunnel_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
   WHERE metric_type = 'ADOBE_VOLUME'
   GROUP BY qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, channel_group
 ),
@@ -114,7 +114,7 @@ Mfc AS (
     channel_group,
     MAX(IF(metric_name = 'mfcSpendActual',   metric_value, NULL)) AS mfcSpendActual,
     MAX(IF(metric_name = 'mfcSpendForecast', metric_value, NULL)) AS mfcSpendForecast
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_mfcSpend_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
   WHERE data_source = 'MFC_SPEND_CHANNEL'
     AND lob_mfc     = 'POSTPAID'            -- POSTPAID only for channel-level sense check
   GROUP BY qgp_date, channel_group
@@ -128,7 +128,7 @@ Platform AS (
     qgp_date,
     channel_group,
     MAX(IF(metric_name = 'platformSpend', metric_value, NULL)) AS platformSpend
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_platformSpend_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly
   WHERE lob = 'POSTPAID'                    -- POSTPAID only; matches MFC channel grain
   GROUP BY qgp_date, channel_group
 )

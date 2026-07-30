@@ -1,7 +1,7 @@
 /* =================================================================================================
-FILE:         03_vw_sdi_pulseTms_gold_unified_long.sql   (Databricks port)
+FILE:         03_sdi_vw_dashboardPulseTms_gold_unified_long.sql   (Databricks port)
 LAYER:        Gold View
-VIEW NAME:    vw_sdi_pulseTms_gold_unified_long
+VIEW NAME:    sdi_vw_dashboardPulseTms_gold_unified_long
 
 PURPOSE:
   Final unified Gold view for the PulseTMS pipeline.
@@ -29,9 +29,9 @@ STRUCTURE:
   CTE 5 — UpvForecast   : UPV forecast channel-allocated (UPV_FORECAST)
   Final SELECT: UNION ALL of all five CTEs
 
-  Note: CTE 5 references sdi_pulseTms_silver_upvForecast_weekly, which wasn't part of this
+  Note: CTE 5 references sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly, which wasn't part of this
   translation batch — the CTE is a straight pass-through (same as the other four), so it's
-  included here as-is; just make sure that Silver table exists under <catalog>.<schema> by the
+  included here as-is; just make sure that Silver table exists under prdrzranalytics.lab42 by the
   time this view runs.
 
 DATA SOURCE VALUES:
@@ -110,7 +110,7 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-  <catalog>.<schema>.vw_sdi_pulseTms_gold_unified_long
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
 AS
 
 WITH
@@ -150,7 +150,7 @@ AdobeVolume AS (
     CAST(NULL AS STRING)                                                  AS mfc_message_type,
     CAST(NULL AS STRING)                                                  AS mfc_agency,
     CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_adobeFunnel_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
   WHERE s.metric_type = 'ADOBE_VOLUME'
 ),
 
@@ -200,7 +200,7 @@ MfcChannel AS (
     CAST(NULL AS STRING)                                                  AS mfc_message_type,
     CAST(NULL AS STRING)                                                  AS mfc_agency,
     CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_mfcSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
   WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 ),
 
@@ -250,7 +250,7 @@ MfcGranular AS (
     s.message_type                                                        AS mfc_message_type,
     s.agency                                                              AS mfc_agency,
     CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_mfcSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
   WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 ),
 
@@ -289,7 +289,7 @@ PlatformSpend AS (
     CAST(NULL AS STRING)                                                  AS mfc_message_type,
     CAST(NULL AS STRING)                                                  AS mfc_agency,
     CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_platformSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
 ),
 
 -- =============================================================================
@@ -330,7 +330,7 @@ UpvForecast AS (
     CAST(NULL AS STRING)                                                  AS mfc_message_type,
     CAST(NULL AS STRING)                                                  AS mfc_agency,
     s.allocation_ratio
-  FROM <catalog>.<schema>.sdi_pulseTms_silver_upvForecast_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
 )
 
 -- =============================================================================
@@ -377,7 +377,7 @@ UNION ALL SELECT * FROM UpvForecast
       CAST(NULL AS STRING)      AS mfc_message_type,
       CAST(NULL AS STRING)      AS mfc_agency,
       CAST(NULL AS DOUBLE)      AS allocation_ratio
-    FROM <catalog>.<schema>.<silver_table> s
+    FROM prdrzranalytics.lab42.<silver_table> s
   )
   =============================================================================
 */

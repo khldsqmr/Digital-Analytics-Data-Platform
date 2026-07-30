@@ -1,7 +1,7 @@
 /* =================================================================================================
-FILE:         01_vw_sdi_pulseTms_dim_qgp_calendar.sql   (Databricks port)
+FILE:         01_sdi_vw_dashboardPulseTms_dim_qgp_calendar.sql   (Databricks port)
 LAYER:        Dimension View
-VIEW NAME:    vw_sdi_pulseTms_dim_qgp_calendar
+VIEW NAME:    sdi_vw_dashboardPulseTms_dim_qgp_calendar
 RAW SOURCES:
   None — derived entirely from the Gregorian calendar using sequence()/explode().
 
@@ -38,7 +38,7 @@ KEY COLUMNS:
                             MFC's own boundary math is already handled upstream in the MFC
                             pipeline's own Monday-anchored calendar. PulseTMS's mfcSpend Silver
                             additionally computes its own Monday-anchored day-count locally, only
-                            for its LY trend line — see 06_sp_sdi_pulseTms_silver_mfcSpend_weekly.
+                            for its LY trend line — see 06_sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly.
   is_complete_period      — TRUE when qgp_date <= current_date()
   is_current_quarter      — TRUE when qgp_date falls in the current calendar quarter
   boundary_stub_date      — For BOUNDARY_FIRST rows: the preceding stub date (e.g. Mar 31)
@@ -95,7 +95,7 @@ CHANGE LOG:
     handled locally in mfcSpend Silver, not here — see that file's change log.
 ================================================================================================= */
 CREATE OR REPLACE VIEW
-  <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
 AS
 WITH
 -- ---------------------------------------------------------------------------

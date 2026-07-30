@@ -1,10 +1,10 @@
 /* =================================================================================================
-FILE:         06_sp_sdi_pulseTms_silver_mfcSpend_weekly.sql   (Databricks port)
+FILE:         06_sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly.sql   (Databricks port)
 LAYER:        Stored Procedure
-PROCEDURE:    sp_sdi_pulseTms_silver_mfcSpend_weekly
+PROCEDURE:    sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly
 
 PURPOSE:
-  Creates/refreshes physical table sdi_pulseTms_silver_mfcSpend_weekly.
+  Creates/refreshes physical table sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly.
   Called as part of the weekly refresh.
 
   Produces two grains in one table, distinguished by data_source:
@@ -68,16 +68,16 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  <catalog>.<schema>.sp_sdi_pulseTms_silver_mfcSpend_weekly()
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly()
 LANGUAGE SQL
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-    <catalog>.<schema>.sdi_pulseTms_silver_mfcSpend_weekly
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
   USING DELTA
   CLUSTER BY (qgp_date, data_source, channel_group, metric_name)
-  COMMENT 'PulseTMS Silver — MFC spend long format with WoW/YoY. Contains MFC_SPEND_CHANNEL (lob x channel_group) and MFC_SPEND_GRANULAR (full grain) data_source values. Clustered by qgp_date, data_source, channel_group, metric_name. Refreshed weekly via sp_sdi_pulseTms_silver_mfcSpend_weekly.'
+  COMMENT 'PulseTMS Silver — MFC spend long format with WoW/YoY. Contains MFC_SPEND_CHANNEL (lob x channel_group) and MFC_SPEND_GRANULAR (full grain) data_source values. Clustered by qgp_date, data_source, channel_group, metric_name. Refreshed weekly via sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly.'
   AS
   WITH
   BronzeWithCalendar AS (
@@ -109,12 +109,12 @@ BEGIN
       IF(cal.is_complete_period, b.spend_actual,   NULL)                  AS spend_actual,
       b.spend_forecast                                                    AS spend_forecast,
       b.file_load_date
-    FROM <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar cal
+    FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
     CROSS JOIN (
       SELECT DISTINCT lob, channel_group, channel, tactic, message_type, agency
-      FROM <catalog>.<schema>.sdi_pulseTms_bronze_mfcSpend_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly
     ) channels
-    LEFT JOIN <catalog>.<schema>.sdi_pulseTms_bronze_mfcSpend_weekly b
+    LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly b
       ON  b.qgp_week      = cal.qgp_date
       AND b.lob           = channels.lob
       AND b.channel_group = channels.channel_group
@@ -243,7 +243,7 @@ BEGIN
       AND ly_week.lob             = u.lob
       AND ly_week.channel_group   = u.channel_group
       AND ly_week.metric_name     = u.metric_name
-    LEFT JOIN <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar prior_cal_ch
+    LEFT JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar prior_cal_ch
       ON  prior_cal_ch.qgp_date = u.wow_prior_qgp_date
     LEFT JOIN MetricLookupChannel wow_prior_stub_ch
       ON  wow_prior_stub_ch.qgp_date      = prior_cal_ch.boundary_stub_date
@@ -317,7 +317,7 @@ BEGIN
       AND ly_week.message_type    = u.message_type
       AND ly_week.agency          = u.agency
       AND ly_week.metric_name     = u.metric_name
-    LEFT JOIN <catalog>.<schema>.vw_sdi_pulseTms_dim_qgp_calendar prior_cal_gr
+    LEFT JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar prior_cal_gr
       ON  prior_cal_gr.qgp_date = u.wow_prior_qgp_date
     LEFT JOIN MetricLookupGranular wow_prior_stub_gr
       ON  wow_prior_stub_gr.qgp_date      = prior_cal_gr.boundary_stub_date

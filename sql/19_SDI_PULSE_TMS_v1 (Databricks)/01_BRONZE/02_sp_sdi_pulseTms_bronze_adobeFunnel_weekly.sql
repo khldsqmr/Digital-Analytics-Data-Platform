@@ -1,10 +1,10 @@
 /* =================================================================================================
-FILE:         02_sp_sdi_pulseTms_bronze_adobeFunnel_weekly.sql   (Databricks port)
+FILE:         02_sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly.sql   (Databricks port)
 LAYER:        Stored Procedure
-PROCEDURE:    sp_sdi_pulseTms_bronze_adobeFunnel_weekly
+PROCEDURE:    sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly
 
 PURPOSE:
-  Creates/refreshes physical table sdi_pulseTms_bronze_adobeFunnel_weekly.
+  Creates/refreshes physical table sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly.
   Called as part of the weekly refresh.
 
 CHANNEL GROUPS (standard vocabulary):
@@ -33,16 +33,16 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  <catalog>.<schema>.sp_sdi_pulseTms_bronze_adobeFunnel_weekly()
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly()
 LANGUAGE SQL
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-    <catalog>.<schema>.sdi_pulseTms_bronze_adobeFunnel_weekly
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly
   USING DELTA
   CLUSTER BY (week_sun_sat, channel_group)
-  COMMENT 'PulseTMS Bronze — Adobe UPV funnel metrics. Wide format, one row per week_sun_sat x channel_group. Clustered by week_sun_sat, channel_group. Refreshed weekly via sp_sdi_pulseTms_bronze_adobeFunnel_weekly. Channel groups: All Channels, Paid Search, Paid Social, Organic Search, Direct, Programmatic, Other.'
+  COMMENT 'PulseTMS Bronze — Adobe UPV funnel metrics. Wide format, one row per week_sun_sat x channel_group. Clustered by week_sun_sat, channel_group. Refreshed weekly via sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly. Channel groups: All Channels, Paid Search, Paid Social, Organic Search, Direct, Programmatic, Other.'
   AS
   WITH RawUnion AS (
 
