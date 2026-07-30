@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         03_sdi_vw_dashboardPulseTms_gold_unified_long.sql   (Databricks port)
+FILE:         02_sdi_vw_dashboardPulseTms_gold_unified_long.sql   (Databricks port)
 LAYER:        Gold View
 VIEW NAME:    sdi_vw_dashboardPulseTms_gold_unified_long
 

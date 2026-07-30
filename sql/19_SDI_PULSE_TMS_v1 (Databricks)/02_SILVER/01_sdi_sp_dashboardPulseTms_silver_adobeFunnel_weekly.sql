@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         05_sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly.sql   (Databricks port)
+FILE:         01_sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly.sql   (Databricks port)
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly
 
