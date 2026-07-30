@@ -7,17 +7,30 @@ PURPOSE:
   Wide pivot view for quick sense-checking of the PulseTMS pipeline.
   One row per qgp_date × channel_group, ordered by qgp_date DESC.
 
-  Sources (channel grain only):
+  Sources currently active (channel grain only):
     ADOBE              — all UPV + cartstart + orders metrics (no LOB dimension)
     MFC_SPEND_CHANNEL  — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
+    QGP_SCORECARD      — the 10 QGP Actual/Target metric pairs (Activations BOPIS, Store
+                         Traffic, VR Calls/Chats, VR Postpaid Activations, 3 Digital % metrics)
+
+  Source currently commented out, not deleted -- see "COMMENTED-OUT SOURCES" below:
     PLATFORM_SPEND_CHANNEL — platformSpend (POSTPAID LOB only; actuals only)
 
   NOT included: MFC_SPEND_GRANULAR (use sdi_vw_dashboardPulseTms_gold_unified_long for that)
 
+QGP GRAIN NOTE (read before using the qgp* columns below):
+  QGP metrics have no channel_group dimension -- they're enterprise-wide KPIs, not
+  channel-specific. The Qgp CTE is joined on qgp_date only (not channel_group), which means
+  each QGP column's value is REPEATED across every channel_group row for that date -- it's a
+  date-level fact broadcast onto a channel-grain view, not something that varies by channel.
+  Don't SUM or otherwise aggregate qgp* columns across channel_group rows for the same date,
+  you'll multiply-count them. Look at any single row per date if you just want to eyeball the
+  QGP numbers alongside Adobe/MFC for that week.
+
 LOB NOTE:
-  Spend columns (MFC + Platform) reflect POSTPAID only. Both Silver tables are filtered
-  to POSTPAID in their Bronze CROSS JOIN. No LOB column is surfaced here since the grain
-  is channel_group only — use sdi_vw_dashboardPulseTms_gold_unified_long for LOB-level analysis.
+  MFC spend columns reflect POSTPAID only (filtered in Bronze's CROSS JOIN). No LOB column is
+  surfaced here since the grain is channel_group only -- use
+  sdi_vw_dashboardPulseTms_gold_unified_long for LOB-level analysis.
 
 GRAIN:
   qgp_date × channel_group
@@ -34,6 +47,12 @@ NOTE:
   This view is for sense-checking only — not intended as a Tableau data source.
   Use sdi_vw_dashboardPulseTms_gold_unified_long for all production reporting.
 
+COMMENTED-OUT SOURCES:
+  Platform is commented out (both its CTE and its join/columns in the final SELECT), per your
+  request to keep only Adobe, MFC, and QGP active for now. Nothing was deleted -- uncomment the
+  Platform CTE block, its LEFT JOIN, and its `p.platformSpend` column line together to bring it
+  back once you want it.
+
 PORTING NOTES (BQ -> Databricks), applies to this file only:
   - MAX(IF(cond, val, NULL))  -> unchanged; Databricks SQL supports IF() as a CASE WHEN alias
   - No date arithmetic or BQ-only functions in this file — otherwise a direct translation.
@@ -45,6 +64,8 @@ CHANGE LOG:
   - Added WHERE metric_type = 'ADOBE_VOLUME' to Adobe CTE — future-safe filter.
   - Added 17 CVR columns (adobe_cvr_value pivoted per metric_name) to Adobe CTE
     and final SELECT for sense-checking conversion rates alongside volumes.
+  - Added Qgp CTE (10 metric pairs, pivoted wide, qgp_date grain) and joined into final SELECT.
+  - Commented out Platform CTE, join, and column -- not deleted, see COMMENTED-OUT SOURCES above.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -121,8 +142,43 @@ Mfc AS (
 ),
 
 -- ---------------------------------------------------------------------------
--- Platform spend — POSTPAID channel grain only
+-- QGP scorecard — pivot from long to wide at qgp_date grain (no channel_group
+-- dimension on this source; see QGP GRAIN NOTE in the header)
 -- ---------------------------------------------------------------------------
+Qgp AS (
+  SELECT
+    qgp_date,
+    MAX(IF(metric_name = 'activationsBopis' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpActivationsBopisActual,
+    MAX(IF(metric_name = 'activationsBopis' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpActivationsBopisTarget,
+    MAX(IF(metric_name = 'activationsNewAalNoAssistance' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpActivationsNewAalNoAssistanceActual,
+    MAX(IF(metric_name = 'activationsNewAalNoAssistance' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpActivationsNewAalNoAssistanceTarget,
+    MAX(IF(metric_name = 'storeTraffic' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpStoreTrafficActual,
+    MAX(IF(metric_name = 'storeTraffic' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpStoreTrafficTarget,
+    MAX(IF(metric_name = 'vrCalls' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpVrCallsActual,
+    MAX(IF(metric_name = 'vrCalls' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpVrCallsTarget,
+    MAX(IF(metric_name = 'vrChats' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpVrChatsActual,
+    MAX(IF(metric_name = 'vrChats' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpVrChatsTarget,
+    MAX(IF(metric_name = 'vrPostpaidActivations' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpVrPostpaidActivationsActual,
+    MAX(IF(metric_name = 'vrPostpaidActivations' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpVrPostpaidActivationsTarget,
+    MAX(IF(metric_name = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpDigitalPctPhoneNewActsNoAssistPlusAssistActual,
+    MAX(IF(metric_name = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpDigitalPctPhoneNewActsNoAssistPlusAssistTarget,
+    MAX(IF(metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedActual,
+    MAX(IF(metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget,
+    MAX(IF(metric_name = 'digitalPctNoAssistanceActivations' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpDigitalPctNoAssistanceActivationsActual,
+    MAX(IF(metric_name = 'digitalPctNoAssistanceActivations' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpDigitalPctNoAssistanceActivationsTarget,
+    MAX(IF(metric_name = 'digitalPctAssistanceActivations' AND metric_type = 'QGP_ACTUAL', metric_value, NULL)) AS qgpDigitalPctAssistanceActivationsActual,
+    MAX(IF(metric_name = 'digitalPctAssistanceActivations' AND metric_type = 'QGP_TARGET', metric_value, NULL)) AS qgpDigitalPctAssistanceActivationsTarget
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+  GROUP BY qgp_date
+)
+
+-- ---------------------------------------------------------------------------
+-- COMMENTED OUT per your request -- Platform spend, POSTPAID channel grain only.
+-- Not deleted; uncomment this CTE together with its LEFT JOIN and p.platformSpend
+-- column below to bring it back.
+-- ---------------------------------------------------------------------------
+/*
+,
 Platform AS (
   SELECT
     qgp_date,
@@ -132,9 +188,10 @@ Platform AS (
   WHERE lob = 'POSTPAID'                    -- POSTPAID only; matches MFC channel grain
   GROUP BY qgp_date, channel_group
 )
+*/
 
 -- ---------------------------------------------------------------------------
--- Final join — Adobe as spine, MFC + Platform joined in
+-- Final join — Adobe as spine, MFC + QGP joined in (Platform commented out above)
 -- ---------------------------------------------------------------------------
 SELECT
   a.qgp_date,
@@ -172,8 +229,30 @@ SELECT
   m.mfcSpendActual,
   m.mfcSpendForecast,
 
-  -- Platform Spend (POSTPAID, actuals only)
-  p.platformSpend,
+  -- Platform Spend (POSTPAID, actuals only) -- COMMENTED OUT, see note above
+  -- p.platformSpend,
+
+  -- QGP scorecard (date-level, repeated across channel_group rows -- see QGP GRAIN NOTE)
+  q.qgpActivationsBopisActual,
+  q.qgpActivationsBopisTarget,
+  q.qgpActivationsNewAalNoAssistanceActual,
+  q.qgpActivationsNewAalNoAssistanceTarget,
+  q.qgpStoreTrafficActual,
+  q.qgpStoreTrafficTarget,
+  q.qgpVrCallsActual,
+  q.qgpVrCallsTarget,
+  q.qgpVrChatsActual,
+  q.qgpVrChatsTarget,
+  q.qgpVrPostpaidActivationsActual,
+  q.qgpVrPostpaidActivationsTarget,
+  q.qgpDigitalPctPhoneNewActsNoAssistPlusAssistActual,
+  q.qgpDigitalPctPhoneNewActsNoAssistPlusAssistTarget,
+  q.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedActual,
+  q.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget,
+  q.qgpDigitalPctNoAssistanceActivationsActual,
+  q.qgpDigitalPctNoAssistanceActivationsTarget,
+  q.qgpDigitalPctAssistanceActivationsActual,
+  q.qgpDigitalPctAssistanceActivationsTarget,
 
   -- Adobe CVR (pre-computed weekly rates)
   a.cvrUpvFlow,
@@ -198,8 +277,11 @@ FROM Adobe a
 LEFT JOIN Mfc m
   ON  m.qgp_date      = a.qgp_date
   AND m.channel_group = a.channel_group
-LEFT JOIN Platform p
-  ON  p.qgp_date      = a.qgp_date
-  AND p.channel_group = a.channel_group
+-- COMMENTED OUT per your request -- see note above the Platform CTE
+-- LEFT JOIN Platform p
+--   ON  p.qgp_date      = a.qgp_date
+--   AND p.channel_group = a.channel_group
+LEFT JOIN Qgp q
+  ON  q.qgp_date = a.qgp_date   -- date-only join; QGP has no channel_group to match on
 
 ORDER BY a.qgp_date DESC, a.channel_group ASC;

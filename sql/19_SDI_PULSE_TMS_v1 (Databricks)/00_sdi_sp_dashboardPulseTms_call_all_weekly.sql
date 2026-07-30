@@ -18,9 +18,11 @@ HOW TO SCHEDULE:
   matching the ordering below. Not necessary yet at this scale, but the option's there later.
 
 DEPENDENCY ORDER:
-  1. Bronze: adobeFunnel, mfcSpend, platformSpend -- no dependency on each other, any order is fine
-  2. Silver: adobeFunnel, mfcSpend, platformSpend -- each depends only on its own Bronze table
-     plus the calendar view (a view, always live, no CALL needed)
+  1. Bronze: adobeFunnel, mfcSpend, platformSpend, qgp -- no dependency on each other, any order
+     is fine. platformSpend stays commented out until its raw source catalog/schema is confirmed.
+  2. Silver: adobeFunnel, mfcSpend, platformSpend, qgp -- each depends only on its own Bronze
+     table plus the calendar view (a view, always live, no CALL needed). qgp has no cross-Silver
+     dependency (unlike upvForecast below), so it can run right alongside the others in this step.
   3. Silver: upvForecast -- depends on Silver adobeFunnel specifically (prior-year channel
      allocation ratios), so it must run strictly after step 2, not alongside it. Also depends on
      its own Bronze table being populated by the external notebook upload mentioned in that
@@ -33,15 +35,17 @@ DEPENDENCY ORDER:
 -- ===========================================================================
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly();
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly();
-CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_platformSpend_weekly();
+--CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_platformSpend_weekly();
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_qgp_weekly();
 
 -- ===========================================================================
--- STEP 2: Silver -- adobeFunnel and mfcSpend are already translated;
+-- STEP 2: Silver -- adobeFunnel, mfcSpend, and qgp are already translated;
 --         platformSpend Silver hasn't been ported yet, left commented until it is.
 -- ===========================================================================
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly();
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly();
 -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_platformSpend_weekly();
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_qgp_weekly();
 
 -- ===========================================================================
 -- STEP 3: Silver upvForecast -- must come after Silver adobeFunnel above.
