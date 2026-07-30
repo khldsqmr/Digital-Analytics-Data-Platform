@@ -80,7 +80,7 @@ WITH base AS (
     ByodEntryDevicePageVisitors,
     ByodEntryPlansPageVisitors,
     ByodEntryOtherPageVisitors,
-    ByodEntryGetStartedLandingPageVisitors,          -- NEW
+    ByodEntryStorePageVisitors as ByodEntryGetStartedLandingPageVisitors,          -- NEW
     ByodEntryByodLandingPageVisitors,    -- NEW
     ByodEntryOffersSwitchVisitors        -- NEW
   FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_byodFlowEntryPagesByChannelGroupsPlusAll_Weekly`
