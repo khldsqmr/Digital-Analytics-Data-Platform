@@ -1,1 +1,18 @@
 the platform spend table in Databricks is prdrzranalytics.lab42.media_analytics_integrated_snapshot
+
+
+SELECT DISTINCT MetricID
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE LOWER(MetricID) LIKE '%digitalpct%totalincl%assist%'
+   OR LOWER(MetricID) LIKE '%totaldigitalphoneactivation%'
+ORDER BY MetricID;
+
+SELECT metric_id, metric_type, date_context, page, display_metric_type, is_future, COUNT(*) AS n, MAX(week_ending) AS most_recent_week
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly
+WHERE UPPER(TRIM(metric_id)) IN (
+  'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT',
+  'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSPHONENEWSAMEPAGEWONRINDIRECT',
+  'NEWPHONEBANASSISTEDACTIVATIONSDIGITALPCTOFCONSUMERPOSTPAIDTM1MAPPEDWONRINDIRECT'
+)
+GROUP BY metric_id, metric_type, date_context, page, display_metric_type, is_future
+ORDER BY metric_id, metric_type;
