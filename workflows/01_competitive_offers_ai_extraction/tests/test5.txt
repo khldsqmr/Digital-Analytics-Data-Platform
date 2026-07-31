@@ -33,3 +33,50 @@ SELECT *
 FROM Weekly
 WHERE qgp_quarter IN ('2026 Q2', '2026 Q3')
 ORDER BY week_sun_sat;
+
+
+WITH Mapped AS (
+  SELECT
+    date_add(`Date`, 7 - EXTRACT(DAYOFWEEK FROM `Date`)) AS week_sun_sat,
+    CASE
+      WHEN view_source = 'media_analytics_affiliate'                              THEN 'Affiliate'
+      WHEN view_source = 'media_analytics_ispot' AND Channel_Group_Name = 'OTT'   THEN 'OTT (iSpot)'
+      WHEN view_source = 'media_analytics_ispot' AND Channel_Group_Name = 'National TV' THEN 'National TV'
+      WHEN view_source = 'media_analytics_ispot' AND Channel_Group_Name = 'UNKNOWN' THEN 'UNKNOWN'
+      ELSE Channel_Group_Name  -- Paid Search, Paid Social, Display, Online Video,
+                                -- Digital Audio, OTT (display), Other, Out of Home, UNKNOWN
+    END AS pivot_key,
+    Spend
+  FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+  -- widened past the quarter edges so boundary weeks aren't cut short; filtered back down below
+  WHERE `Date` BETWEEN '2026-03-29' AND '2026-10-03'
+),
+Weekly AS (
+  SELECT
+    week_sun_sat,
+    CONCAT(CAST(EXTRACT(YEAR FROM week_sun_sat) AS STRING), ' Q', CAST(EXTRACT(QUARTER FROM week_sun_sat) AS STRING)) AS qgp_quarter,
+
+    -- historically-in-scope categories
+    ROUND(SUM(IF(pivot_key = 'Paid Search',   Spend, 0)), 2) AS paid_search,
+    ROUND(SUM(IF(pivot_key = 'Paid Social',   Spend, 0)), 2) AS paid_social,
+    ROUND(SUM(IF(pivot_key = 'Display',       Spend, 0)), 2) AS display,
+    ROUND(SUM(IF(pivot_key = 'Online Video',  Spend, 0)), 2) AS online_video,
+    ROUND(SUM(IF(pivot_key = 'Digital Audio', Spend, 0)), 2) AS digital_audio,
+    ROUND(SUM(IF(pivot_key = 'OTT',           Spend, 0)), 2) AS ott_display,
+    ROUND(SUM(IF(pivot_key = 'Out of Home',   Spend, 0)), 2) AS out_of_home,
+    ROUND(SUM(IF(pivot_key = 'Other',         Spend, 0)), 2) AS other,
+    ROUND(SUM(IF(pivot_key = 'UNKNOWN',       Spend, 0)), 2) AS unknown,
+
+    -- categories the scope decision is actually about
+    ROUND(SUM(IF(pivot_key = 'National TV',   Spend, 0)), 2) AS national_tv,
+    ROUND(SUM(IF(pivot_key = 'OTT (iSpot)',   Spend, 0)), 2) AS ott_ispot,
+    ROUND(SUM(IF(pivot_key = 'Affiliate',     Spend, 0)), 2) AS affiliate,
+
+    ROUND(SUM(Spend), 2) AS total_spend  -- check column, should equal the sum of everything above
+  FROM Mapped
+  GROUP BY week_sun_sat
+)
+SELECT *
+FROM Weekly
+WHERE qgp_quarter IN ('2026 Q2', '2026 Q3')
+ORDER BY week_sun_sat;
