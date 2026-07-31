@@ -33,6 +33,102 @@ PublishKey	QuarterNum	YearNum	WeekEnding	MetricID	DateContext	Page	Section	Heade
 2026-08-01	3	2026	2026-07-11	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	3601989	3,602	0.010378	1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
 
 
+ 
+
+Query:
+
+ 
+
+  --Activation:
+
+  SELECT
+
+  'Activation' as MetricName,WeekEnding,MetricType,SUM(Amount) AS Amount
+
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+
+WHERE  MetricType in ('QGP', 'Actuals', 'Actuals/Outlook')
+
+  AND MetricID   = 'TotalDigitalPhoneActivationsTMOandSprintGlanceTM1Mapped'
+
+  AND DateContext = 'Normal'
+
+  AND Page = 'Digital'
+
+  Group by WeekEnding,MetricType --order by WeekEnding
+
+  Union all
+
+ 
+
+--Store Traffic:
+
+  SELECT
+
+  'Store Traffic' as MetricName,WeekEnding,MetricType,SUM(Amount) AS Amount
+
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+
+WHERE  MetricType in ('QGP', 'Actuals', 'Actuals/Outlook')
+
+  AND MetricID   = 'StoreTrafficPostpaidAutomated'
+
+  AND DateContext = 'Normal'
+
+  AND Page = 'Branded Retail Total'
+
+  Group by WeekEnding,MetricType --order by WeekEnding;
+
+ 
+
+  Union all
+
+ 
+
+  --VR Calls:
+
+  SELECT
+
+  'VR Calls' as MetricName,WeekEnding,MetricType,SUM(Amount) AS Amount
+
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+
+WHERE  MetricType in ('QGP', 'Actuals', 'Actuals/Outlook')
+
+  AND MetricID   = 'VRInboundCallsinclHSIAutomated'
+
+  AND DateContext = 'Normal'
+
+  AND Page = 'Postpaid'
+
+  Group by WeekEnding,MetricType --order by WeekEnding;
+
+  Union all
+
+ 
+
+    --VR Chats:
+
+  SELECT
+
+  'VR Chats' as MetricName,WeekEnding,MetricType,SUM(Amount) AS Amount
+
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+
+WHERE  MetricType in ('QGP', 'Actuals', 'Actuals/Outlook')
+
+  AND MetricID   = 'VRChatsinclHSIAutomated'
+
+  AND DateContext = 'Normal'
+
+  AND Page = 'Postpaid'
+
+  Group by WeekEnding,MetricType order by WeekEnding,MetricType;
+
+ 
+
+
+
 
 SELECT MetricID, WeekEnding, MetricType, Page, Amount
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
