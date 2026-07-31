@@ -1,19 +1,7 @@
-// c.tms.Exit Traffic Actuals
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-        AND LOWER(TRIM([Date Context])) = "normal"
-        AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-
-// c.tms.Exit Traffic QGP
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "qgp"
-AND LOWER(TRIM([Date Context])) = "normal"
-    THEN FLOAT([Amount])
-    END
-)
-
+SELECT WeekEnding, MetricID, MetricName, PublishKey, InsertDateTime, Amount
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+  AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+  AND UPPER(TRIM(DateContext)) = 'NORMAL'
+  AND WeekEnding IN ('2026-07-04', '2026-07-11', '2026-07-18')
+ORDER BY WeekEnding, InsertDateTime;
