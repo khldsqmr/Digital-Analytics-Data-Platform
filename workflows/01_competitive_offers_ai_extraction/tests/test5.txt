@@ -18,8 +18,294 @@ FROM prdrzranalytics.information_schema.routines
 WHERE routine_schema = 'lab42'
   AND routine_name = 'sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly';
 
+output: no rows found
+
 
 DESCRIBE PROCEDURE EXTENDED prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly;
+output:
+procedure_desc
+Procedure:     prdrzranalytics.lab42.sdi_sp_dashboardpulsetms_bronze_adobefunnel_weekly
+Parameters:    ()
+Deterministic: false
+Data Access:   MODIFIES SQL DATA
+Security Type: INVOKER
+Configs:       spark.connect.session.connectML.enabled=true
+               spark.connect.session.planCompression.threshold=10485760
+               spark.databricks.ai.adaptiveBatch.initialSize=4
+               spark.databricks.ai.adaptiveBatch.maxRetries=100
+               spark.databricks.ai.adaptiveBatch.partitionJitterEnabled=true
+               spark.databricks.ai.adaptiveBatch.retriableInvokeStatusCodes=UNAVAILABLE,RESOURCE_EXHAUSTED,DEADLINE_EXCEEDED,ABORTED,CANCELLED
+               spark.databricks.ai.adaptiveBatch.retryMaxDelayMs=120000
+               spark.databricks.ai.grpc.sync.retriableStatusCodes=UNAVAILABLE,RESOURCE_EXHAUSTED,DEADLINE_EXCEEDED,ABORTED,CANCELLED
+               spark.databricks.docingest.batchEval.size=32
+               spark.databricks.docingest.contentElementTypes.excluded=
+               spark.databricks.docingest.maxDocumentPages=1000
+               spark.databricks.docingest.pagination.concurrency=4
+               spark.databricks.docingest.stage2.descriptionModel=databricks-gemma-3-12b
+               spark.databricks.docingest.version.default=2.0
+               spark.databricks.docingest.version.supported=2.0
+               spark.databricks.sql.ai.partitionProcessor.aimdLimiter.enabled=true
+               spark.databricks.sql.ai.partitionProcessor.aimdLimiter.max=200
+               spark.databricks.sql.ai.partitionProcessor.globalMaxInFlightElements=10240
+               spark.databricks.sql.ai.partitionProcessor.maxBufferedResults=512
+               spark.databricks.sql.ai.partitionProcessor.maxInFlightElements=200
+               spark.databricks.sql.ai.partitionProcessor.maxWaitTimeSeconds=172800
+               spark.databricks.sql.ai.remoteFunction.grpc.initialRetryInterval=100
+               spark.databricks.sql.ai.remoteFunction.grpc.maxRetryInterval=10000
+               spark.databricks.sql.ai.remoteFunction.grpc.retryIntervalJitterFactor=1.0
+               spark.databricks.sql.ai.remoteFunction.grpc.richArguments.enabled=true
+               spark.databricks.sql.ai.remoteFunction.hermes.extendedTypeConversion.enabled=true
+               spark.databricks.sql.expression.aiFunctions.repartition=0
+               spark.databricks.sql.functions.aiForecast.enabled=false
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.clusterSizeBasedGlobalParallelism.scaleFactor=512.0
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.debugLogEnabled=true
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.dynamicPoolSizeEnabled=false
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.enabled=true
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.maxPoolSize=2048
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.maxPoolSize.aiParseDocument=64
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.scaleUpThresholdCurrentQpsIncreaseRatio=0.0
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.scaleUpThresholdSuccessRatio=0.95
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.scaleUpThresholdTotalQpsIncreaseRatio=0.0
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.taskWaitTimeInSeconds=1000
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.threadKeepAliveTimeInSeconds=600
+               spark.databricks.sql.functions.aiFunctions.adaptiveThreadPool.useDynamicTaskQueueExecutor=false
+               spark.databricks.sql.functions.aiFunctions.batch.aiQuery.embedding.request.size=40
+               spark.databricks.sql.functions.aiFunctions.batch.execution.size=2048
+               spark.databricks.sql.functions.aiFunctions.batchInferenceApi.enabled=true
+               spark.databricks.sql.functions.aiFunctions.batchSession.enabled=true
+               spark.databricks.sql.functions.aiFunctions.batchSession.terminate.enabled=true
+               spark.databricks.sql.functions.aiFunctions.createBatchSessionOnExecutor=false
+               spark.databricks.sql.functions.aiFunctions.decimal.dataType.enabled=true
+               spark.databricks.sql.functions.aiFunctions.embeddingsEndpointName=databricks-gte-large-en
+               spark.databricks.sql.functions.aiFunctions.extract.tileMetadata.enabled=true
+               spark.databricks.sql.functions.aiFunctions.grpc.enabled=true
+               spark.databricks.sql.functions.aiFunctions.hermes.aiQuery.failOnError.enabled=true
+               spark.databricks.sql.functions.aiFunctions.hermes.aiQuery.files.enabled=false
+               spark.databricks.sql.functions.aiFunctions.hermes.errorTemplate.enabled=true
+               spark.databricks.sql.functions.aiFunctions.hermes.partitionProcessorConf.enabled=true
+               spark.databricks.sql.functions.aiFunctions.hermesEnabledFunctions=ai_classify,ai_extract,ai_prep_search,ai_parse_document,ai_search,ai_query
+               spark.databricks.sql.functions.aiFunctions.includeWorkspaceUrl=false
+               spark.databricks.sql.functions.aiFunctions.model.parameters.enabled=true
+               spark.databricks.sql.functions.aiFunctions.modelEndpointTypeParsing.enabled=true
+               spark.databricks.sql.functions.aiFunctions.multiModality.model.list=databricks-llama-4-maverick,databricks-claude-sonnet-4,databricks-claude-3-7-sonnet,databricks-gemma-3-12b,databricks-gpt-5,databricks-gpt-5-mini,databricks-gpt-5-nano,databricks-gpt-5-1,databricks-gpt-5-2,databricks-gemini-2-5-flash,databricks-gemini-2-5-pro,databricks-gemini-3-flash,databricks-gemini-3-pro,databricks-claude-haiku-4-5
+               spark.databricks.sql.functions.aiFunctions.nullInputJsonOutput={"response":null,"error_message":null}
+               spark.databricks.sql.functions.aiFunctions.purposeBuiltFunctions.batch.execution.enabled=true
+"               spark.databricks.sql.functions.aiFunctions.purposeBuiltFunctions.translate.instruction=### Instruction
+
+Translate the provided text to %s, and output only the translated text
+in the target language in this format: <DBSQLAI>translated text</DBSQLAI>.
+
+If the text is already in the target language, output the provided text.
+
+### Text
+
+%s"
+               spark.databricks.sql.functions.aiFunctions.registry.enabled=true
+               spark.databricks.sql.functions.aiFunctions.remoteFunction.grpc.batch.maxConcurrentRequests=2048
+               spark.databricks.sql.functions.aiFunctions.remoteHttpClient.maxConnections=2048
+               spark.databricks.sql.functions.aiFunctions.remoteHttpClient.timeoutInSeconds=360
+               spark.databricks.sql.functions.aiFunctions.safe.inference.enabled=true
+               spark.databricks.sql.functions.aiFunctions.scalingReasonLogging.enabled=false
+               spark.databricks.sql.functions.aiFunctions.useDedicatedHttpClient=true
+               spark.databricks.sql.functions.aiFunctions.useGrpcForSessionManagement=true
+               spark.databricks.sql.functions.aiFunctions.vectorSearch.initialRetryIntervalMillis=1000
+               spark.databricks.sql.functions.aiFunctions.vectorSearch.maxRetryInterval=120000
+               spark.databricks.sql.functions.aiFunctions.vectorSearch.retryIntervalMultiplierFactor=2.0
+               spark.databricks.sql.functions.aiGen.endpointName=databricks-meta-llama-3-3-70b-instruct
+               spark.databricks.sql.functions.aiQuery.hybrid.reasoning.foundation.model.list=databricks-claude-3-7-sonnet,databricks-gemini-2-5-pro,databricks-gemini-2-5-flash,databricks-gemini-3-flash
+               spark.databricks.sql.functions.aiQuery.openAI.oSeries.model.list=o1-mini,o1,o3-mini,o3,o4-mini,gpt-5,gpt-5-mini,gpt-5-nano,GPT-5,GPT-5 Mini,GPT-5 Nano
+               spark.databricks.sql.functions.aiQuery.temperature.whitelistMode.enabled=true
+               spark.databricks.sql.functions.aiQuery.ucModelService.enabled=false
+               spark.databricks.sql.functions.vectorSearch.enabled=true
+               spark.databricks.sql.functions.vectorSearch.use.indexIdentifierOnly=true
+               spark.databricks.sql.rowColumnAccess.useEffectivePolicies.enabled=true
+               spark.sql.analyzer.dontDeduplicateExpressionIfExprIdInOutput=false
+               spark.sql.ansi.enabled=true
+               spark.sql.copyInto.timeout.threadDump.enabled=false
+               spark.sql.cte.recursion.enabled=true
+               spark.sql.excel.streaming.enabled=true
+               spark.sql.functions.remoteHttpClient.retryOn400TimeoutError=true
+               spark.sql.functions.remoteHttpClient.retryOnSocketTimeoutException=true
+               spark.sql.hive.convertCTAS=true
+               spark.sql.insertIntoReplaceUsing.disallowMisalignedColumns.enabled=true
+               spark.sql.insertIntoReplaceUsing.oldDPOCodePath.enabled=true
+               spark.sql.legacy.codingErrorAction=true
+               spark.sql.legacy.createHiveTableByDefault=false
+               spark.sql.legacy.useLegacyXMLParser.migrationValidation.enabled=false
+               spark.sql.parquet.compression.codec=snappy
+               spark.sql.scripting.enabled=true
+               spark.sql.scripting.maxNumberOfCharacters=1000000
+               spark.sql.scripting.maxNumberOfLines=30000
+               spark.sql.session.timeZone=Etc/UTC
+               spark.sql.sources.commitProtocolClass=com.databricks.sql.transaction.directory.DirectoryAtomicCommitProtocol
+               spark.sql.sources.default=delta
+               spark.sql.streaming.optimizer.subqueryEarlyUnnesting.enabled=false
+               spark.sql.streaming.stopTimeout=15s
+               spark.sql.validateColumnNamesSync.throwException=true
+               spark.sql.variant.pushVariantIntoScan=true
+               spark.sql.variant.pushVariantIntoScan.deferCastError=true
+               spark.sql.variant.writeShredding.enabled=true
+Owner:         khalid.qamar1@t-mobile.com
+Create Time:   Thu Jul 30 14:11:41 UTC 2026
+"Body:          BEGIN
+
+  CREATE OR REPLACE TABLE
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly
+  USING DELTA
+  CLUSTER BY (week_sun_sat, channel_group)
+  COMMENT 'PulseTMS Bronze — Adobe UPV funnel metrics. Wide format, one row per week_sun_sat x channel_group. Clustered by week_sun_sat, channel_group. Refreshed weekly via sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly. Channel groups: All Channels, Paid Search, Paid Social, Organic Search, Direct, Programmatic, Other.'
+  AS
+  WITH RawUnion AS (
+
+    /* ======= ALL CHANNELS ======= */
+    SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6) AS week_sun_sat, 'All Channels' AS channel_group, 'upvPostpaid' AS metric_name, TRY_CAST(visitors AS DOUBLE) AS metric_value, 'sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo' AS source_table, __insert_date AS insert_date, File_Load_datetime AS file_load_datetime, Filename AS filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'upvHsi',                   TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'upvByod',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'upvFlowTotal',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'upvTotalAdobe',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_pp_pro_uvnb_weekly_tmo',                                            __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'cartstartPostpaid',        TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo',             __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'cartstartHsi',             TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo',                 __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'cartstartByod',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersUnassistedPostpaid', TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo',                       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersUnassistedHsi',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo',                            __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersUnassistedByod',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo',                           __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersAssistedPostpaid',   TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo',              __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersAssistedHsi',        TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'All Channels', 'ordersAssistedByod',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo',                  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
+
+    /* ======= DIRECT ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_direct_uvnb_postpaid_flow_visitors_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_direct_uvnb_hsi_flow_visitors_weekly_tmo',             __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_direct_uvnb_byod_flow_visitors_weekly_tmo',            __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_direct_flow_total_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo',                      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_postpaid_cartstart_visits_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_hsi_cartstart_visits_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_byod_cartstart_visits_weekly_tmo',              __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_postpaid_order_weekly_tmo',                     __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_hsi_order_weekly_tmo',                          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_byod_order_weekly_tmo',                         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_postpaid_order_assisted_weekly_tmo',            __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_hsi_order_assisted_weekly_tmo',                 __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Direct', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_direct_byod_order_assisted_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_byod_order_assisted_weekly_tmo
+
+    /* ======= ORGANIC SEARCH ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_postpaid_flow_visitors_weekly_tmo',  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_hsi_flow_visitors_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_byod_flow_visitors_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_organic_search_flow_total_visitors_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_postpaid_cartstart_visits_weekly_tmo',   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_hsi_cartstart_visits_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_byod_cartstart_visits_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_weekly_tmo',              __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_byod_order_weekly_tmo',                  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_assisted_weekly_tmo',     __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_assisted_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Organic Search', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_organic_search_byod_order_assisted_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_byod_order_assisted_weekly_tmo
+
+    /* ======= OTHER ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_other_uvnb_postpaid_flow_visitors_weekly_tmo',  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_other_uvnb_hsi_flow_visitors_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_other_uvnb_byod_flow_visitors_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_other_flow_total_visitors_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_postpaid_cartstart_visits_weekly_tmo',    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_hsi_cartstart_visits_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_byod_cartstart_visits_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_postpaid_order_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_hsi_order_weekly_tmo',                    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_byod_order_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_postpaid_order_assisted_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_hsi_order_assisted_weekly_tmo',           __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Other', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_other_byod_order_assisted_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_byod_order_assisted_weekly_tmo
+
+    /* ======= PAID SEARCH ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_postpaid_flow_visitors_weekly_tmo',  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_hsi_flow_visitors_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_byod_flow_visitors_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_paid_search_flow_total_visitors_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_postpaid_cartstart_visits_weekly_tmo',    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_hsi_cartstart_visits_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_byod_cartstart_visits_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_weekly_tmo',                    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_byod_order_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_assisted_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_assisted_weekly_tmo',           __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Search', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_paid_search_byod_order_assisted_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_byod_order_assisted_weekly_tmo
+
+    /* ======= PAID SOCIAL ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_social_uvnb_postpaid_flow_visitors_weekly_tmo',  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_social_uvnb_hsi_flow_visitors_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_social_uvnb_byod_flow_visitors_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_social_flow_total_visitors_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_postpaid_cartstart_visits_weekly_tmo',    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_hsi_cartstart_visits_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_byod_cartstart_visits_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_postpaid_order_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_hsi_order_weekly_tmo',                    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_byod_order_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_postpaid_order_assisted_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_hsi_order_assisted_weekly_tmo',           __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Paid Social', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_social_byod_order_assisted_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_byod_order_assisted_weekly_tmo
+
+    /* ======= PROGRAMMATIC ======= */
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'upvPostpaid',             TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_postpaid_flow_visitors_weekly_tmo',  __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_postpaid_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'upvHsi',                  TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_hsi_flow_visitors_weekly_tmo',       __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_hsi_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'upvByod',                 TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_byod_flow_visitors_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_byod_flow_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'upvFlowTotal',            TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_programmatic_flow_total_visitors_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_flow_total_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'upvTotalAdobe',           TRY_CAST(visitors AS DOUBLE), 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo',                __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'cartstartPostpaid',       TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_postpaid_cartstart_visits_weekly_tmo',    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_postpaid_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'cartstartHsi',            TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_hsi_cartstart_visits_weekly_tmo',         __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_hsi_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'cartstartByod',           TRY_CAST(visits AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_byod_cartstart_visits_weekly_tmo',        __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_byod_cartstart_visits_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersUnassistedPostpaid',TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_weekly_tmo',               __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersUnassistedHsi',     TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_weekly_tmo',                    __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersUnassistedByod',    TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_byod_order_weekly_tmo',                   __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_byod_order_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersAssistedPostpaid',  TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_assisted_weekly_tmo',      __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersAssistedHsi',       TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_assisted_weekly_tmo',           __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_hsi_order_assisted_weekly_tmo
+    UNION ALL SELECT date_add(to_date(date_yyyymmdd, 'yyyyMMdd'), 6), 'Programmatic', 'ordersAssistedByod',      TRY_CAST(orders AS DOUBLE),   'sdi_raw_adobe_pp_uvnb_programmatic_byod_order_assisted_weekly_tmo',          __insert_date, File_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_byod_order_assisted_weekly_tmo
+  ),
+  Deduped AS (
+    SELECT *
+    FROM RawUnion
+    QUALIFY ROW_NUMBER() OVER (
+      PARTITION BY week_sun_sat, channel_group, metric_name, source_table
+      ORDER BY file_load_datetime DESC, filename DESC, insert_date DESC
+    ) = 1
+  )
+  SELECT
+    week_sun_sat,
+    channel_group,
+    MAX(IF(metric_name = 'upvPostpaid',              metric_value, NULL)) AS upvPostpaid,
+    MAX(IF(metric_name = 'upvHsi',                   metric_value, NULL)) AS upvHsi,
+    MAX(IF(metric_name = 'upvByod',                  metric_value, NULL)) AS upvByod,
+    MAX(IF(metric_name = 'upvFlowTotal',             metric_value, NULL)) AS upvFlowTotal,
+    MAX(IF(metric_name = 'upvTotalAdobe',            metric_value, NULL)) AS upvTotalAdobe,
+    MAX(IF(metric_name = 'cartstartPostpaid',        metric_value, NULL)) AS cartstartPostpaid,
+    MAX(IF(metric_name = 'cartstartHsi',             metric_value, NULL)) AS cartstartHsi,
+    MAX(IF(metric_name = 'cartstartByod',            metric_value, NULL)) AS cartstartByod,
+    MAX(IF(metric_name = 'ordersUnassistedPostpaid', metric_value, NULL)) AS ordersUnassistedPostpaid,
+    MAX(IF(metric_name = 'ordersUnassistedHsi',      metric_value, NULL)) AS ordersUnassistedHsi,
+    MAX(IF(metric_name = 'ordersUnassistedByod',     metric_value, NULL)) AS ordersUnassistedByod,
+    MAX(IF(metric_name = 'ordersAssistedPostpaid',   metric_value, NULL)) AS ordersAssistedPostpaid,
+    MAX(IF(metric_name = 'ordersAssistedHsi',        metric_value, NULL)) AS ordersAssistedHsi,
+    MAX(IF(metric_name = 'ordersAssistedByod',       metric_value, NULL)) AS ordersAssistedByod,
+    string_agg(DISTINCT source_table, ', ') WITHIN GROUP (ORDER BY source_table) AS source_tables_used,
+    MAX(file_load_datetime)                                               AS max_file_load_datetime,
+    string_agg(DISTINCT filename, ', ')     WITHIN GROUP (ORDER BY filename)     AS filenames_used
+  FROM Deduped
+  GROUP BY week_sun_sat, channel_group;
+
+END"
+Language:      SQL
+
+
+
+
 UnknownException: (java.lang.ClassCastException) class org.apache.spark.sql.catalyst.expressions.AttributeReference cannot be cast to class org.apache.spark.sql.catalyst.expressions.SortOrder (org.apache.spark.sql.catalyst.expressions.AttributeReference and org.apache.spark.sql.catalyst.expressions.SortOrder are in unnamed module of loader 'app')
 
 JVM stacktrace:
