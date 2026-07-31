@@ -1,69 +1,35 @@
-this table covers way more than "platform spend" ever meant historically
-
-view_source breaks out into 10 distinct feeds, and two of them are categories the original BQ pipeline never touched at all:
-
-media_analytics_ispot — National TV (Broadcast, Cable, Live Sports TV) plus its own OTT/streaming, ~$4.1B combined. This is linear/CTV TV buying data, not digital programmatic.
-media_analytics_affiliate — ~$79M, also never part of the original scope.
-
-Everything else lines up cleanly with the historical digital scope:
-
-Paid Search → media_analytics_paid_search, Channel_Group_Name = 'Paid Search', ~$1.28B — clean. (One wrinkle: that same view_source also has Channel_Group_Name = 'Display' / Display - Discovery, $36.5M — Discovery ads. Judgment call on whether that stays with Paid Search since it's the same platform, or moves to Programmatic since it's structurally Display. Low stakes either way given the dollar size, I'll default it to Paid Search and flag it in the file unless you say otherwise.)
-Paid Social → six view_sources (ini_direct_social, linkedin, meta, pinterest, snapchat, tiktok), all cleanly tagged Channel_Group_Name = 'Paid Social' — no ambiguity at all here.
-Programmatic → media_analytics_display's Display/Online Video/Digital Audio/OTT/Content Syndication — this maps directly onto the original BQ Programmatic bucket ('Programmatic Display', 'Online Video', 'Over The Top', 'Display', 'Streaming Radio', 'Content Syndication'). Digital OTT here is tiny (~$5.3M combined across the three OTT rows) — genuinely different from iSpot's OTT, which is TV-buy-adjacent and orders of magnitude larger.
-Small stuff that's obviously Other: UNKNOWN rows (~$128M), OOH (~$250K), the zero-spend TMS/T-Mobile - Search rows (43K rows, literally $0 — safe to drop with the same "meaningful spend" filter the rest of the pipeline uses).
-
-Given the dollar amounts here (multiple billions either way), I don't want to guess on this one: should Bronze include media_analytics_ispot (TV/OTT) and media_analytics_affiliate, or should it stay scoped to the historical digital-only definition (display, paid search, and the six paid social sources)? My default assumption, absent other instructions, would be to keep the historical scope and exclude TV/affiliate — but "platform spend" quietly turning into a $4B+/year bigger number in Gold is the kind of thing that should be a deliberate call, not an inference from a query.
-
-LOB: Prepaid is real, the rest is a rounding error
-
-PREPAID is genuinely ~$1.19B — needs to be a real canonical LOB value alongside POSTPAID/BROADBAND/TFB, not folded into something else. Everything past that (Not Specified $84M, Other $23.8M, ASSURANCE $22M, FINANCIAL SERVICES $9.3M, T-VISION $8.5M) is small relative to the ~$4-6B lines above it. Unless you want them broken out individually, I'd default all five of those into a generic 'OTHER' LOB bucket rather than inventing five more canonical values for what's collectively under 1% of total spend — flag if you'd rather keep any of them distinct.
-
-Duplication check: not a blocker, don't worry about it
-
-27.4M rows vs. 25.7M distinct on that natural key — about 6.4% apart. But this doesn't actually threaten anything we're building: Bronze is going to aggregate all the way up to week_sun_sat x lob x channel_group, far coarser than campaign/placement/creative grain. Whatever's creating that gap (most likely legitimate additional grain like Site_ID or Publisher that I didn't include in the key, not true duplicate rows) washes out once we SUM(Spend) GROUP BY at the grain we actually need. Nothing to fix here.
-
-Once you confirm the TV/OTT/Affiliate scope question, I can write the actual Bronze file — that's the one genuinely blocking decision left.
-
-So what question should i ask my team / manager in teams message to get these answers?
-
-write in concise, and include categories and columns etc, for them to reference in the table. concise please
-
-Architected two-decision framework with reference tables for team alignment
-Architected two-decision framework with reference tables for team alignment
-
-That's ready to copy into Teams — hit the button above. Two decisions, both blocking Bronze until answered.
-
-so say in terms of our channel grouping and how do we map them to our channel groups?
-
-Architected channel mapping strategy using canonical groupings
-Architected channel mapping strategy using canonical groupings
-
-Mapping cleanly off Channel_Group_Name alone turns out to be the simplest approach — it's a small, clean set of 11 values, and I don't need view_source or the more granular Channel_Abbr/Channel_Name at all for this part:
-
-Channel_Group_Name	→ Our channel_group	Notes
-Paid Search	Paid Search	clean
-Paid Social	Paid Social	clean, spans all 6 social view_sources
-Display	Programmatic	matches original BQ list
-Online Video	Programmatic	matches original BQ list
-Digital Audio	Programmatic	historical "Streaming Radio" equivalent; covers both Audio and Podcast subtypes
-OTT (digital, via media_analytics_display only)	Programmatic	matches original BQ list; tiny $ (~$5.3M) — not the iSpot TV-adjacent OTT
-Affiliate	Other	new category, modest $ (~$79M) — flag if you'd rather it be its own bucket
-UNKNOWN	Other	
-Other	Other	
-Out of Home	Other	wasn't in the original Programmatic list
-National TV	excluded	pending your team's answer on the TV/OTT scope question
-
-One judgment call worth flagging: media_analytics_paid_search has a Display - Discovery row (DDIS, ~$36.5M) tagged Channel_Group_Name = 'Display', not 'Paid Search'. Mapping by Channel_Group_Name consistently (rather than by which platform it came from) puts this in Programmatic, not Paid Search — that's the more defensible default since every other row follows the same rule, but say the word if you'd rather it ride with Paid Search since it's Google-platform-native.
-
-The actual CASE logic ends up simple:
-
-sql
-CASE
-  WHEN raw.Channel_Group_Name = 'Paid Search'                                          THEN 'Paid Search'
-  WHEN raw.Channel_Group_Name = 'Paid Social'                                          THEN 'Paid Social'
-  WHEN raw.Channel_Group_Name IN ('Display', 'Online Video', 'Digital Audio', 'OTT')   THEN 'Programmatic'
-  WHEN raw.Channel_Group_Name = 'National TV'                                          THEN NULL  -- excluded pending scope decision
-  ELSE 'Other'  -- Affiliate, UNKNOWN, Other, Out of Home
-END AS channel_group
-
-Also worth folding into the same Bronze WHERE clause: the TMS/T-Mobile - Search rows under Display (43K rows, $0 spend) — safe to drop via the existing "meaningful spend" filter pattern the rest of the pipeline already uses, no mapping decision needed there.
+WITH Mapped AS (
+  SELECT
+    date_add(`Date`, 7 - EXTRACT(DAYOFWEEK FROM `Date`)) AS week_sun_sat,
+    CASE
+      WHEN view_source = 'media_analytics_ispot'      THEN 'National TV'
+      WHEN view_source = 'media_analytics_affiliate'  THEN 'Affiliate'
+      WHEN Channel_Group_Name = 'Paid Search'          THEN 'Paid Search'
+      WHEN Channel_Group_Name = 'Paid Social'          THEN 'Paid Social'
+      WHEN Channel_Group_Name IN ('Display', 'Online Video', 'Digital Audio', 'OTT') THEN 'Programmatic'
+      ELSE 'Other'
+    END AS channel_group,
+    Spend
+  FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+  -- widened a few days past the quarter edges so boundary weeks aren't cut short;
+  -- filtered back down to just Q2/Q3 2026 (by week_sun_sat's own quarter) below
+  WHERE `Date` BETWEEN '2026-03-29' AND '2026-10-03'
+),
+Weekly AS (
+  SELECT
+    week_sun_sat,
+    CONCAT(CAST(EXTRACT(YEAR FROM week_sun_sat) AS STRING), ' Q', CAST(EXTRACT(QUARTER FROM week_sun_sat) AS STRING)) AS qgp_quarter,
+    ROUND(SUM(IF(channel_group = 'Paid Search',  Spend, 0)), 2) AS paid_search,
+    ROUND(SUM(IF(channel_group = 'Paid Social',  Spend, 0)), 2) AS paid_social,
+    ROUND(SUM(IF(channel_group = 'Programmatic', Spend, 0)), 2) AS programmatic,
+    ROUND(SUM(IF(channel_group = 'National TV',  Spend, 0)), 2) AS national_tv,
+    ROUND(SUM(IF(channel_group = 'Affiliate',    Spend, 0)), 2) AS affiliate,
+    ROUND(SUM(IF(channel_group = 'Other',        Spend, 0)), 2) AS other,
+    ROUND(SUM(Spend), 2) AS total_spend
+  FROM Mapped
+  GROUP BY week_sun_sat
+)
+SELECT *
+FROM Weekly
+WHERE qgp_quarter IN ('2026 Q2', '2026 Q3')
+ORDER BY week_sun_sat;
