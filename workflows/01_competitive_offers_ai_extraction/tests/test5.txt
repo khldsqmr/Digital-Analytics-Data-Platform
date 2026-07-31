@@ -1,180 +1,19 @@
-WITH Dedup AS (
-  SELECT *
-  FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
-  QUALIFY ROW_NUMBER() OVER (
-    PARTITION BY WeekEnding, MetricID, DateContext, MetricType
-    ORDER BY InsertDateTime DESC, PublishKey DESC
-  ) = 1
+// c.tms.Exit Traffic Actuals
+SUM(
+    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
+       AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
+        AND LOWER(TRIM([Date Context])) = "normal"
+        AND LOWER(TRIM([Is Future]))= "is past"
+    THEN FLOAT([Amount])
+    END
 )
-SELECT
-  WeekEnding AS qgp_date,
 
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS'
-            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) IN (
-              'CONSUMERPOSTPAIDNEWPHONEBANBOPISUNASSISTEDACTIVATIONSTM1MAPPEDDIGITAL',
-              'CONSUMERPOSTPAIDNEWPHONEBANNONBOPISUNASSISTEDACTIVATIONSTM1MAPPEDDIGITAL'
-            )
-       THEN Amount END)                                                   AS activationsBopis_actual,
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) = 'CONSUMERPOSTPAIDNEWPHONEBANACTIVATIONSTM1MAPPEDDIGITAL'
-       THEN Amount END)                                                   AS activationsBopis_target,
+// c.tms.Exit Traffic QGP
+SUM(
+    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
+       AND LOWER(TRIM([Metric Type])) = "qgp"
+AND LOWER(TRIM([Date Context])) = "normal"
+    THEN FLOAT([Amount])
+    END
+)
 
-  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'activations (new + aal')
-            AND CONTAINS(LOWER(TRIM(MetricName)), 'no assistance')
-            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
-            AND UPPER(TRIM(MetricID)) = 'TOTALDIGITALPHONEACTIVATIONSTMOANDSPRINTGLANCETM1MAPPED'
-            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS activationsNewAalNoAssistance_actual,
-  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'activations (new + aal')
-            AND CONTAINS(LOWER(TRIM(MetricName)), 'no assistance')
-            AND UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(MetricID)) = 'TOTALDIGITALPHONEACTIVATIONSTMOANDSPRINTGLANCETM1MAPPED'
-            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS activationsNewAalNoAssistance_target,
-
-  SUM(CASE WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
-            AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-       THEN Amount END)                                                   AS storeTraffic_actual,
-  SUM(CASE WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
-            AND UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS storeTraffic_target,
-
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-            AND UPPER(TRIM(MetricID)) = 'VRINBOUNDCALLSINCLHSIAUTOMATEDMANUAL'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-       THEN Amount END)                                                   AS vrCalls_actual,
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(MetricID)) = 'VRINBOUNDCALLSINCLHSIAUTOMATEDMANUAL'
-            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
-       THEN Amount END)                                                   AS vrCalls_target,
-
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-            AND UPPER(TRIM(MetricID)) = 'VRCHATSINCLHSIAUTOMATEDMANUAL'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-       THEN Amount END)                                                   AS vrChats_actual,
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(MetricID)) = 'VRCHATSINCLHSIAUTOMATEDMANUAL'
-            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
-       THEN Amount END)                                                   AS vrChats_target,
-
-  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'postpaid activations')
-            AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-            AND UPPER(TRIM(MetricID)) = 'VRPOSTPAIDACTIVATIONSINCLVIRTUALBUSINESSTM1MAPPED'
-            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL OUTCOMES 1'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS vrPostpaidActivations_actual,
-  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'postpaid activations')
-            AND UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(MetricID)) = 'VRPOSTPAIDACTIVATIONSINCLVIRTUALBUSINESSTM1MAPPED'
-            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL OUTCOMES 1'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS vrPostpaidActivations_target,
-
-  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) = 'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-       THEN Amount END)                                                   AS digitalPctPhoneNewActsNoAssistPlusAssist_actual,
-  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) = 'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT'
-       THEN Amount END)                                                   AS digitalPctPhoneNewActsNoAssistPlusAssist_target,
-
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSTOTALINCLASSISTEDNEW'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
-            AND UPPER(TRIM(Page)) = 'DIGITAL'
-       THEN Amount END)                                                   AS digitalPctConsumerPostpaidActivationsTotalInclAssisted_actual,
-  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
-            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSTOTALINCLASSISTEDNEW'
-            AND UPPER(TRIM(Page)) = 'DIGITAL'
-            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-       THEN Amount END)                                                   AS digitalPctConsumerPostpaidActivationsTotalInclAssisted_target,
-
-  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSPHONENEWSAMEPAGEWONRINDIRECT'
-       THEN Amount END)                                                   AS digitalPctNoAssistanceActivations_actual,
-  CAST(NULL AS DOUBLE)                                                    AS digitalPctNoAssistanceActivations_target,  -- confirmed no Target row exists
-
-  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
-            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
-            AND UPPER(TRIM(DateContext)) = 'NORMAL'
-            AND UPPER(TRIM(MetricID)) = 'NEWPHONEBANASSISTEDACTIVATIONSDIGITALPCTOFCONSUMERPOSTPAIDTM1MAPPEDWONRINDIRECT'
-       THEN Amount END)                                                   AS digitalPctAssistanceActivations_actual,
-  CAST(NULL AS DOUBLE)                                                    AS digitalPctAssistanceActivations_target  -- confirmed no Target row exists
-
-FROM Dedup
-GROUP BY WeekEnding
-ORDER BY WeekEnding DESC;
-
-output:
-qgp_date	activationsBopis_actual	activationsBopis_target	activationsNewAalNoAssistance_actual	activationsNewAalNoAssistance_target	storeTraffic_actual	storeTraffic_target	vrCalls_actual	vrCalls_target	vrChats_actual	vrChats_target	vrPostpaidActivations_actual	vrPostpaidActivations_target	digitalPctPhoneNewActsNoAssistPlusAssist_actual	digitalPctPhoneNewActsNoAssistPlusAssist_target	digitalPctConsumerPostpaidActivationsTotalInclAssisted_actual	digitalPctConsumerPostpaidActivationsTotalInclAssisted_target	digitalPctNoAssistanceActivations_actual	digitalPctNoAssistanceActivations_target	digitalPctAssistanceActivations_actual	digitalPctAssistanceActivations_target
-2026-09-30	null	11628.729972	null	null	null	null	null	null	null	15204.9324	null	37861.561312	null	null	null	null	null	null	null	null
-2026-09-26	null	23626.90008	null	null	null	null	null	82215.305298	null	29543.628002	null	65644.636743	null	null	null	null	null	null	null	null
-2026-09-19	null	null	null	null	null	3513935.000002	null	null	null	29772.771399	null	null	null	null	null	null	null	null	null	null
-2026-09-12	null	20134.299962	null	null	null	3242411.000003	null	79099.882302	null	null	null	61658.339673	null	null	null	null	null	null	null	null
-2026-09-05	null	21888.010018	null	null	null	3596782.999999	null	null	null	27260.861299	null	53397.410626	null	null	null	null	null	null	null	null
-2026-08-31	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
-2026-08-29	null	null	null	null	null	null	null	null	null	30045.566803	null	null	null	0.431639	null	null	null	null	null	null
-2026-08-22	null	18571.149947	null	null	null	3576201.000001	null	84156.194003	null	null	null	57747.005785	null	0.42602	null	null	null	null	null	null
-2026-08-15	null	20089.820016	null	null	null	4121040.999999	null	null	null	31416.080003	null	null	null	null	null	null	null	null	null	null
-2026-08-08	null	18849.360012	null	null	null	3578031.999997	null	80952.209303	null	32019.648703	null	null	null	0.430774	null	null	null	null	null	null
-2026-08-01	9634	19085.999996	null	null	2261478	3630486.000001	null	80088.3874	null	29846.9332	null	null	null	0.429329	null	null	null	null	null	null
-2026-07-31	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
-2026-07-25	13486	null	null	null	null	null	85832.000002	null	22391.000002	30966.166602	null	64907.239831	0.358479	null	null	null	0.092218	null	null	null
-2026-07-18	13965	20159.459964	null	null	null	3967250	85507.999997	81711.521801	21833	29073.539397	75162.000004	64856.417619	0.377235	0.426786	null	null	0.090605	null	0.28663	null
-2026-07-11	4144	19612.070044	null	null	3601989	null	87956.999998	83960.397402	22825.000002	29424.414502	null	null	0.383299	0.420109	null	null	null	null	null	null
-2026-07-04	6062	null	null	null	2010409	null	50428	null	12987	null	null	36006.102768	0.428326	null	null	null	0.10081	null	null	null
-2026-06-30	7105	10922.055114	null	null	1424421	null	39081.999999	null	11574	14605.536099	null	null	0.380829	0.386101	null	null	null	null	null	null
-2026-06-27	4613	26332.946311	null	null	null	3357782.082998	91775.000002	90696.237002	25145.999998	null	null	null	null	0.386281	null	null	0.093691	null	null	null
-2026-06-20	15920	24714.371332	null	null	3509267	null	93669.999997	93032.232797	24991.999998	36054.8664	84879.000003	null	0.388305	null	null	null	null	null	0.297313	null
-2026-06-13	10890	22888.411336	null	null	null	3461230.608997	86198	null	23463.000001	null	null	45673.65089	0.403466	null	null	null	0.094353	null	0.309112	null
-2026-06-06	11137	22254.690003	null	null	4217520	null	85292.000003	null	20540.999997	36433.3473	null	null	null	0.36523	null	null	null	null	0.313194	null
-2026-05-31	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
-2026-05-30	null	null	null	null	3282144	3344197.202997	80287.000003	88594.7475	26565.999999	null	null	null	0.447891	null	null	null	0.104941	null	null	null
-2026-05-23	6949	19876.285569	null	null	null	3307405.050999	81096.999998	null	27540.999997	null	49833	null	null	null	null	null	null	null	null	null
-2026-05-16	11637	17116.977101	null	null	3255604	3251715.761	79440.000003	87189.611299	29981	null	null	43673.282471	0.39431	null	null	null	0.087722	null	null	null
-2026-05-09	13702	16636.081203	null	null	3330158	null	80908.999997	83899.399101	33591.000002	33632.375798	54051.999995	null	0.411215	0.342025	null	null	0.10094	null	0.310275	null
-2026-05-02	15109	17042.087468	null	null	null	3382899.426998	79624.000001	null	33594.999998	37018.9008	null	46768.182139	0.40019	0.336508	null	null	null	null	null	null
-2026-04-30	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
-2026-04-25	12518	17055.09078	null	null	3644091	3855156.744999	82630.999997	83651.490797	32603.000003	36532.7494	57108.999997	null	0.372744	null	null	null	0.099767	null	null	null
-2026-04-18	3306	15083.658653	null	null	3321467	3179060.832003	78313.000003	80662.945797	32900	null	57196.000001	null	0.378924	0.330004	null	null	0.094288	null	null	null
-2026-04-11	11988	null	null	null	null	3406552.409001	73647.999999	null	32130	35002.640701	null	null	0.375292	null	null	null	0.10014	null	null	null
-2026-04-04	7607	9530.254892	null	null	null	2312503.937	47864	null	19319	null	null	null	0.386652	null	null	null	null	null	null	null
-2026-03-31	5808	5555.639985	null	null	null	null	35691.999999	null	14936.000001	17830.138599	38994.999999	null	null	null	null	null	null	null	null	null
-2026-03-28	4192	12583.680018	null	null	null	null	88457.000002	null	37134.000001	32506.957903	null	null	null	null	null	null	null	null	null	null
-2026-03-21	13092	13483.919988	null	null	null	null	89494.000001	98229.090099	35820.999998	33000.159997	77115.999996	46814.168359	null	null	null	null	null	null	null	null
-2026-03-14	null	null	null	null	null	null	93447.000003	98229.6168	38691.999997	null	null	null	null	null	null	null	null	null	null	null
-2026-03-07	15737	null	null	null	null	null	104232.999997	99293.029402	40110.999999	35671.164599	86485.999999	null	null	null	null	null	null	null	null	null
-2026-02-28	15494	15284.81997	null	null	null	3502849.999999	115677.999997	null	36709.999998	null	81558.999998	51648.848958	null	null	null	null	null	null	null	null
-2026-02-21	13480	null	null	null	null	null	98758.999997	94153.567599	35278.000002	34331.353301	null	null	null	null	null	null	null	null	null	null
-2026-02-14	3410	12383.279972	null	null	null	3143404.000002	88358.000003	null	33670.999999	null	50572.999995	48811.909503	null	null	null	null	null	null	null	null
-2026-02-07	11272	null	null	null	null	null	86585.999997	88790.158002	38663.999997	33068.716303	44929.000004	47750.902297	null	null	null	null	null	null	null	null
-2026-01-31	null	10579.509969	null	null	null	2985834.000002	90098.999998	89538.624798	39799.000003	34948.099697	48300.999999	48057.669128	null	null	null	null	null	null	null	null
-2026-01-24	10615	10134.590004	null	null	3094019	2927260	96878.000002	91829.124303	41651.999998	null	null	48597.169369	null	null	null	null	null	null	null	null
-2026-01-17	12768	10228.730008	null	null	3263962	null	98720.000001	null	45458	34786.1206	null	null	null	null	null	null	null	null	null	null
-2026-01-10	12808	9939.369972	null	null	null	null	83825	87987.936001	39277.999999	null	45169.000002	null	null	null	null	null	null	null	null	null
-2026-01-03	3965	5126.160003	null	null	null	null	33288.999999	null	16365	13179.366699	17432.000001	15386.507892	null	null	null	null	null	null	null	null
