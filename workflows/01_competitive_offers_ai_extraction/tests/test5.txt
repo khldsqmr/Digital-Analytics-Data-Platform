@@ -13,6 +13,7 @@ sdi_vw_dashboardPulseTms_gold_unified_wide
 
 prdrzrlakehouse.qgp_restricted.qgpweeklyview
 
+
 UnknownException: (java.lang.ClassCastException) class org.apache.spark.sql.catalyst.expressions.AttributeReference cannot be cast to class org.apache.spark.sql.catalyst.expressions.SortOrder (org.apache.spark.sql.catalyst.expressions.AttributeReference and org.apache.spark.sql.catalyst.expressions.SortOrder are in unnamed module of loader 'app')
 
 JVM stacktrace:
@@ -424,47 +425,3 @@ java.lang.ClassCastException
 	at scala.util.Using$.resource(Using.scala:296)
 	at com.databricks.unity.HandleImpl.runWithAndClose(UCSHandle.scala:108)
 	at org.apache.spark.sql.connect.execution.ExecuteThreadRunner$ExecutionThread.run(ExecuteThreadRunner.scala:625)
-
-
-File <command-5776364549954898>, line 1
-----> 1 get_ipython().run_cell_magic('sql', '', '/* =================================================================================================\nFILE:         00_sdi_sp_dashboardPulseTms_call_all_weekly.sql   (Databricks port of 00_call_all_sp_pulseTms)\nPURPOSE:\n  Weekly orchestration entry point. Calls every PulseTMS Bronze and Silver procedure in\n  dependency order so the whole pipeline refreshes with one job run.\n\n  NOT included here: sdi_vw_dashboardPulseTms_dim_qgp_calendar, sdi_vw_dashboardPulseTms_gold_unified_long,\n  sdi_vw_dashboardPulseTms_gold_unified_wide -- these are VIEWS, not materialized by a procedure.\n  They resolve live off whatever is currently in the Silver tables, so they never need a CALL here.\n\nHOW TO SCHEDULE:\n  Databricks Jobs > Tasks > Type = SQL > SQL task = File > Source = Workspace, point at this file,\n  select a serverless or pro SQL warehouse. One task, one file, statements run top-to-bottom in\n  the order below -- no separate task dependency graph needed at this data volume.\n\n  If you\'d rather parallelize the independent Bronze calls (or get per-step retry/monitoring),\n  split this into one Job task per CALL instead and wire up "depends on" edges in the Jobs UI\n  matching the ordering below. Not necessary yet at this scale, but the option\'s there later.\n\nDEPENDENCY ORDER:\n  1. Bronze: adobeFunnel, mfcSpend, platformSpend, qgp -- no dependency on each other, any order\n     is fine. platformSpend stays commented out until its raw source catalog/schema is confirmed.\n  2. Silver: adobeFunnel, mfcSpend, platformSpend, qgp -- each depends only on its own Bronze\n     table plus the calendar view (a view, always live, no CALL needed). qgp has no cross-Silver\n     dependency (unlike upvForecast below), so it can run right alongside the others in this step.\n  3. Silver: upvForecast -- depends on Silver adobeFunnel specifically (prior-year channel\n     allocation ratios), so it must run strictly after step 2, not alongside it. Also depends on\n     its own Bronze table being populated by the external notebook upload mentioned in that\n     procedure\'s header -- make sure that\'s run before this job, or upvForecast will compute\n     against stale/missing Bronze data.\n================================================================================================= */\n\n-- ===========================================================================\n-- STEP 1: Bronze\n-- ===========================================================================\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly();\n--CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_platformSpend_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_qgp_weekly();\n\n-- ===========================================================================\n-- STEP 2: Silver -- adobeFunnel, mfcSpend, and qgp are already translated;\n--         platformSpend Silver hasn\'t been ported yet, left commented until it is.\n-- ===========================================================================\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly();\n-- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_platformSpend_weekly();\nCALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_qgp_weekly();\n\n-- ===========================================================================\n-- STEP 3: Silver upvForecast -- must come after Silver adobeFunnel above.\n--         Not yet translated/deployed -- left commented until it is.\n-- ===========================================================================\n-- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();\n')
-File /databricks/python/lib/python3.12/site-packages/IPython/core/interactiveshell.py:2541, in InteractiveShell.run_cell_magic(self, magic_name, line, cell)
-   2539 with self.builtin_trap:
-   2540     args = (magic_arg_s, cell)
--> 2541     result = fn(*args, **kwargs)
-   2543 # The code below prevents the output from being displayed
-   2544 # when using magics with decorator @output_can_be_silenced
-   2545 # when the last Python token in the expression is a ';'.
-   2546 if getattr(fn, magic.MAGIC_OUTPUT_CAN_BE_SILENCED, False):
-File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:183, in SqlMagic.sql(self, line, cell)
-    177 except BaseException as e:
-    178     self.driver_activity_logger.logExecuteCommandEvent(
-    179         "SQL_MAGIC_PY4J_FAILED",
-    180         exceptionClassName=e.__class__.__name__,
-    181         sqlState=safe_call(e, "getSqlState"),
-    182         errorClass=safe_call(e, "getCondition"))
---> 183     raise e
-    185 self.driver_activity_logger.logExecuteCommandEvent("SQL_MAGIC_PY4J_SUCCEEDED")
-    186 return result
-File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:176, in SqlMagic.sql(self, line, cell)
-    174         query_text = sub_query.query()
-    175         sql_directive = self.entry_point.getSqlDirective(query_text)
---> 176         result = self._handle_sql_directive(sql_directive, i == number_of_sub_queries - 1)
-    177 except BaseException as e:
-    178     self.driver_activity_logger.logExecuteCommandEvent(
-    179         "SQL_MAGIC_PY4J_FAILED",
-    180         exceptionClassName=e.__class__.__name__,
-    181         sqlState=safe_call(e, "getSqlState"),
-    182         errorClass=safe_call(e, "getCondition"))
-File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:202, in SqlMagic._handle_sql_directive(self, sql_directive, is_last_query)
-    200     query = sql_directive.sql()
-    201     self._register_udf_if_needed(query)
---> 202     df = self._get_query_request_result(query)
-    203 elif directive_name == "RemoveWidgetSpec":
-    204     self.entry_point.getNotebookArguments().removeWidget(
-    205         sql_directive.name(), self.entry_point.getCurrentBindings())
-File /databricks/python_shell/lib/dbruntime/sql_magic/sql_magic.py:140, in SqlMagic._get_query_request_result(self, query)
-    138 if len(widget_bindings := self._widget_cache.values) > 0:
-    139     self.driver_activity_logger.logExecuteCommandEvent("PARAM_SYNTAX_USAGE")
---> 140 df = self.spark.sql(query, widget_bindings)
-    141 return df
