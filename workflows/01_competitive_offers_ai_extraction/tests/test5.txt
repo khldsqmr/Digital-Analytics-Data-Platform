@@ -10,3 +10,129 @@ WHERE UPPER(TRIM(metric_id)) IN (
 )
 GROUP BY metric_id, metric_type, date_context, page, display_metric_type, is_future
 ORDER BY metric_id, metric_type;
+
+
+metric_id	metric_type	date_context	page	display_metric_type	is_future	n	most_recent_week
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	PQWA	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	PQWA	Digital Transformation NEW	Actuals/Outlook	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	5	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	QTD	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	WoW	Digital Transformation NEW	Actuals/Outlook	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	ROQ	Digital Transformation NEW	Actuals/Outlook	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	QTR	Digital Transformation NEW	Actuals/Outlook	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	true	4	2026-09-19
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	false	21	2026-07-25
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Monthly Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Monthly Normal	Digital Transformation NEW	Actuals/Outlook	true	4	2026-08-31
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	QTD	Digital Transformation NEW	Actuals/Outlook	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	false	12	2026-08-01
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	true	2	2026-09-26
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	WoW	Digital Transformation NEW	Target	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	Normal	Digital Transformation NEW	Target	true	7	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	QTD	Digital Transformation NEW Outcomes 2	Target	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	PQWA	Digital Transformation NEW	Target	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	false	13	2026-07-25
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	ROQ	Digital Transformation NEW Outcomes 2	Target	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	QTR	Digital Transformation NEW Outcomes 2	Target	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	QTD	Digital Transformation NEW	Target	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	WoW	Digital Transformation NEW Outcomes 2	Target	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	PQWA	Digital Transformation NEW Outcomes 2	Target	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	Monthly Normal	Digital Transformation NEW	Target	true	6	2026-09-30
+ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital	QGP	Normal	Digital Transformation NEW	Target	false	20	2026-08-01
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	ROQ	Digital Transformation NEW	BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	QTR	Digital Transformation NEW	BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	PQWA	Digital Transformation NEW Outcomes 2	BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	WoW	Digital Transformation NEW	BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	WoW	Digital Transformation NEW Outcomes 2	BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	QTD	Digital Transformation NEW	BOPIS	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW	BOPIS	true	7	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	PQWA	Digital Transformation NEW	BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	QTR	Digital Transformation NEW Outcomes 2	BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Monthly Normal	Digital Transformation NEW	BOPIS	true	6	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW	BOPIS	false	23	2026-08-01
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	ROQ	Digital Transformation NEW Outcomes 2	BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW Outcomes 2	BOPIS	true	2	2026-09-12
+ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW Outcomes 2	BOPIS	false	10	2026-07-04
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	QTR	Digital Transformation NEW	Non-BOPIS	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	WoW	Digital Transformation NEW	Non-BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	PQWA	Digital Transformation NEW Outcomes 2	Non-BOPIS	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	ROQ	Digital Transformation NEW Outcomes 2	Non-BOPIS	true	1	2026-06-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Monthly Normal	Digital Transformation NEW Outcomes 2	Non-BOPIS	true	3	2026-08-31
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW Outcomes 2	Non-BOPIS	true	6	2026-09-26
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Monthly Normal	Digital Transformation NEW	Non-BOPIS	true	3	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW	Non-BOPIS	false	23	2026-08-01
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	ROQ	Digital Transformation NEW	Non-BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW	Non-BOPIS	true	3	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	QTD	Digital Transformation NEW	Non-BOPIS	true	2	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	WoW	Digital Transformation NEW Outcomes 2	Non-BOPIS	true	1	2026-09-30
+ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Normal	Digital Transformation NEW Outcomes 2	Non-BOPIS	false	10	2026-07-25
+VRChatsinclHSIAutomatedManual	Actuals	Monthly Normal	Virtual Retail Outcomes 1	Actuals	true	3	2026-08-31
+VRChatsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail Outcomes 1	Actuals	true	4	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	Monthly Normal	Virtual Retail	Actuals	true	3	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	WoW	Virtual Retail	Actuals	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail	Actuals	false	17	2026-07-04
+VRChatsinclHSIAutomatedManual	Actuals	ROQ	Virtual Retail Outcomes 1	Actuals	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	QTR	Virtual Retail	Actuals	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	QTD	Virtual Retail Outcomes 1	Actuals	true	1	2026-06-30
+VRChatsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail Outcomes 1	Actuals	false	16	2026-08-01
+VRChatsinclHSIAutomatedManual	Actuals	QTD	Virtual Retail	Actuals	true	1	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail	Actuals	true	5	2026-09-26
+VRChatsinclHSIAutomatedManual	Actuals	PQWA	Virtual Retail	Actuals	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	Normal	Hero - Core Postpaid KP2	Actuals/Outlook	true	9	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	WoW	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	ROQ	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	PQWA	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	Normal	Hero - Core Postpaid KP2	Actuals/Outlook	false	33	2026-08-01
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	Monthly Normal	Hero - Core Postpaid KP2	Actuals/Outlook	true	6	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	QTD	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	Actuals/Outlook	QTR	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	QTR	Virtual Retail	Target	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Virtual Retail	Target	false	12	2026-06-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Hero - Core Postpaid KP2	Target	true	1	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	PQWA	Virtual Retail Outcomes 1	Target	true	1	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	QTD	Virtual Retail	Target	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	PQWA	Hero - Core Postpaid KP2	Target	true	1	2026-06-30
+VRChatsinclHSIAutomatedManual	QGP	Monthly Normal	Virtual Retail Outcomes 1	Target	true	2	2026-06-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Virtual Retail	Target	true	4	2026-09-12
+VRChatsinclHSIAutomatedManual	QGP	Monthly Normal	Hero - Core Postpaid KP2	Target	true	3	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Hero - Core Postpaid KP2	Target	false	12	2026-08-01
+VRChatsinclHSIAutomatedManual	QGP	WoW	Virtual Retail	Target	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Virtual Retail Outcomes 1	Target	false	9	2026-07-11
+VRChatsinclHSIAutomatedManual	QGP	Monthly Normal	Virtual Retail	Target	true	1	2026-07-31
+VRChatsinclHSIAutomatedManual	QGP	ROQ	Virtual Retail	Target	true	2	2026-09-30
+VRChatsinclHSIAutomatedManual	QGP	Normal	Virtual Retail Outcomes 1	Target	true	4	2026-09-26
+VRInboundCallsinclHSIAutomatedManual	Actuals	PQWA	Virtual Retail	Actuals	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	QTD	Virtual Retail	Actuals	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail	Actuals	true	6	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail Outcomes 1	Actuals	false	22	2026-08-01
+VRInboundCallsinclHSIAutomatedManual	Actuals	Monthly Normal	Virtual Retail Outcomes 1	Actuals	true	6	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail	Actuals	false	11	2026-07-25
+VRInboundCallsinclHSIAutomatedManual	Actuals	WoW	Virtual Retail	Actuals	true	1	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	Normal	Virtual Retail Outcomes 1	Actuals	true	3	2026-09-12
+VRInboundCallsinclHSIAutomatedManual	Actuals	WoW	Virtual Retail Outcomes 1	Actuals	true	1	2026-06-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	ROQ	Virtual Retail Outcomes 1	Actuals	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals	QTR	Virtual Retail	Actuals	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	ROQ	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	Monthly Normal	Hero - Core Postpaid KP2	Actuals/Outlook	true	6	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	PQWA	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	Normal	Hero - Core Postpaid KP2	Actuals/Outlook	false	33	2026-08-01
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	WoW	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	QTR	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	Normal	Hero - Core Postpaid KP2	Actuals/Outlook	true	9	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	Actuals/Outlook	QTD	Hero - Core Postpaid KP2	Actuals/Outlook	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Hero - Core Postpaid KP2	Target	true	3	2026-09-26
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Virtual Retail Outcomes 1	Target	false	7	2026-07-18
+VRInboundCallsinclHSIAutomatedManual	QGP	Monthly Normal	Virtual Retail Outcomes 1	Target	true	1	2026-07-31
+VRInboundCallsinclHSIAutomatedManual	QGP	PQWA	Virtual Retail	Target	true	1	2026-06-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Monthly Normal	Virtual Retail	Target	true	2	2026-06-30
+VRInboundCallsinclHSIAutomatedManual	QGP	PQWA	Hero - Core Postpaid KP2	Target	true	1	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	WoW	Hero - Core Postpaid KP2	Target	true	1	2026-06-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Hero - Core Postpaid KP2	Target	false	15	2026-07-25
+VRInboundCallsinclHSIAutomatedManual	QGP	ROQ	Virtual Retail	Target	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	WoW	Virtual Retail	Target	true	1	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	QTD	Virtual Retail Outcomes 1	Target	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Virtual Retail	Target	true	4	2026-09-19
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Virtual Retail Outcomes 1	Target	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Monthly Normal	Hero - Core Postpaid KP2	Target	true	3	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	QTR	Virtual Retail	Target	true	2	2026-09-30
+VRInboundCallsinclHSIAutomatedManual	QGP	Normal	Virtual Retail	Target	false	11	2026-08-01
