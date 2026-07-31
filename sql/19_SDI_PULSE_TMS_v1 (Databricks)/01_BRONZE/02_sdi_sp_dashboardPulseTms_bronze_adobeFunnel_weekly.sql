@@ -18,9 +18,18 @@ PORTING NOTES (BQ -> Databricks), applies to this file only:
   - DATE_ADD(x, INTERVAL 6 DAY)         -> date_add(x, 6)
   - SAFE_CAST(x AS FLOAT64)             -> TRY_CAST(x AS DOUBLE)
   - QUALIFY ROW_NUMBER() ... = 1        -> unchanged; Databricks SQL supports QUALIFY natively (DBR 10.4 LTS+)
-  - STRING_AGG(DISTINCT x, ', ' ORDER BY x) -> string_agg(DISTINCT x, ', ') WITHIN GROUP (ORDER BY x)
-    (Databricks string_agg requires DBR 16.4+; DISTINCT requires the WITHIN GROUP sort key to match
-    the aggregated expression, which it does here)
+  - STRING_AGG(DISTINCT x, ', ' ORDER BY x) -> array_join(sort_array(collect_set(x)), ', ')
+    ⚠ REVISED after hitting a real Databricks bug: this originally used
+    string_agg(DISTINCT x, ', ') WITHIN GROUP (ORDER BY x), which is the more direct syntactic
+    equivalent of BQ's STRING_AGG. That works fine with ONE such call in a query, but this
+    procedure has TWO (source_tables_used and filenames_used, over different columns) in the
+    same GROUP BY. With two different-column DISTINCT string_agg calls in one aggregate,
+    Spark's RewriteDistinctAggregates optimizer rule throws a ClassCastException inside
+    ListAgg.withNewChildrenInternal (AttributeReference cannot be cast to SortOrder) --
+    confirmed against DBR's actual execution, not just a syntax guess. collect_set() +
+    sort_array() + array_join() produces the identical result (deduplicated, sorted,
+    comma-joined) using older, more mature Spark functions that don't go through that rewrite
+    path, so it sidesteps the bug entirely rather than working around it.
   - MAX(IF(cond, val, NULL))            -> unchanged; Databricks SQL supports IF() as a CASE WHEN alias
   - OPTIONS(strict_mode=false)          -> dropped; BQ-scripting-only setting, no Databricks equivalent
   - CREATE TABLE ... PARTITION BY x CLUSTER BY y ... OPTIONS(description=...)
@@ -183,9 +192,9 @@ BEGIN
     MAX(IF(metric_name = 'ordersAssistedPostpaid',   metric_value, NULL)) AS ordersAssistedPostpaid,
     MAX(IF(metric_name = 'ordersAssistedHsi',        metric_value, NULL)) AS ordersAssistedHsi,
     MAX(IF(metric_name = 'ordersAssistedByod',       metric_value, NULL)) AS ordersAssistedByod,
-    string_agg(DISTINCT source_table, ', ') WITHIN GROUP (ORDER BY source_table) AS source_tables_used,
+    array_join(sort_array(collect_set(source_table)), ', ')              AS source_tables_used,
     MAX(file_load_datetime)                                               AS max_file_load_datetime,
-    string_agg(DISTINCT filename, ', ')     WITHIN GROUP (ORDER BY filename)     AS filenames_used
+    array_join(sort_array(collect_set(filename)), ', ')                  AS filenames_used
   FROM Deduped
   GROUP BY week_sun_sat, channel_group;
 
