@@ -1,181 +1,131 @@
-//c.Activations BOPIS Actual
-SUM(
-    IF
-        [Metric Type] = "Actuals"
-        AND LOWER(TRIM([Page])) = "digital"
-        AND TRIM([Date Context]) = "Normal"
-        AND [Metric ID] IN (
-            "ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital",
-            "ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital"
-        )
-    THEN
-        [Amount]
-    END
+WITH Dedup AS (
+  SELECT *
+  FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY WeekEnding, MetricID, DateContext, MetricType
+    ORDER BY InsertDateTime DESC, PublishKey DESC
+  ) = 1
 )
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND LOWER(TRIM([Page])) = "digital"
-        AND TRIM([Date Context]) = "Normal"
-        AND TRIM([Metric ID]) = "ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital"
-    THEN
-        [Amount]
-    END
-)
-// c.Activations Actuals — substring matching, no zeros
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
-    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
-    AND LOWER(TRIM([Metric Type])) IN ("actuals", "actuals/outlook")
-    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
-    AND LOWER(TRIM([Page])) = "digital"
-    AND LOWER(TRIM([Is Future])) = "is past"
-AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
-  END
-)
-// c.Activations Actuals — substring matching, no zeros
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "activations (new + aal")
-    AND CONTAINS(LOWER(TRIM([Metric Name1])), "no assistance")
-    AND LOWER(TRIM([Metric Type])) IN ("qgp")
-    AND LOWER(TRIM([Metric ID])) = "totaldigitalphoneactivationstmoandsprintglancetm1mapped"
-    AND LOWER(TRIM([Page])) = "digital"
-AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]   // If [Amount] is text, use FLOAT([Amount])
-  END
-)
-// c.Store Traffic Actuals/Outlook
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-        AND LOWER(TRIM([Date Context])) = "normal"
-        AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-// c.Store Traffic QGP
-SUM(
-    IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-       AND LOWER(TRIM([Metric Type])) = "qgp"
-AND LOWER(TRIM([Date Context])) = "normal"
-    THEN FLOAT([Amount])
-    END
-)
-// c.VR Calls Actuals
-SUM(
-    IF 
-       [Metric Type] = "Actuals/Outlook"
-       AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
-AND LOWER(TRIM([Date Context])) = "normal"
-AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Calls QGP
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND [Metric ID] = "VRInboundCallsinclHSIAutomatedManual"
-        AND [Display Metric Type] = "QGP"
-        AND LOWER(TRIM([Date Context])) = "normal"
-        AND lower(trim([Page])) = "virtual retail"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Chats Actuals
-SUM(
-    IF 
-       [Metric Type] = "Actuals/Outlook"
-       AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
-AND LOWER(TRIM([Date Context])) = "normal"
-AND LOWER(TRIM([Is Future]))= "is past"
-    THEN FLOAT([Amount])
-    END
-)
-//c.VR Chats QGP
-SUM(
-    IF
-        [Metric Type] = "QGP"
-        AND [Metric ID] = "VRChatsinclHSIAutomatedManual"
-        AND [Display Metric Type] = "QGP"
-        AND lower(trim([Page])) = "virtual retail"
-        AND LOWER(TRIM([Date Context])) = "normal"
-    THEN FLOAT([Amount])
-    END
-)
-// VR Postpaid Activations — Actuals
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
-    AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
-    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
-    AND LOWER(TRIM([Is Future])) = "is past"
-    AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]
-  END
-)
-// VR Postpaid Activations — QGP
-SUM(
-  IF
-    CONTAINS(LOWER(TRIM([Metric Name1])), "postpaid activations")
-    AND LOWER(TRIM([Metric Type])) = "qgp"
-    AND LOWER(TRIM([Metric ID])) = "vrpostpaidactivationsinclvirtualbusinesstm1mapped"
-    AND LOWER(TRIM([Page])) = "virtual retail outcomes 1"
-    //AND LOWER(TRIM([Is Future])) = "is past"
-    //AND LOWER(TRIM([Date Context])) = "normal"
-  THEN [Amount]
-  END
-)
-// c.Digital % Phone New Acct Acts (No Assistance + Assistance)
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect"
-    AND LOWER(TRIM([Is Future])) = "is past"
-  THEN [Amount]
-  END
-)
-SUM(
-  IF [Metric Type] = "Actuals/Outlook"
-  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
-  AND LOWER(TRIM([Date Context])) = "normal"
-  AND LOWER(TRIM([Is Future])) = "is past"
-  AND TRIM([Page]) = "Digital"
-  THEN FLOAT([Amount])
-  END
-)
-SUM(
-  IF [Metric Type] = "QGP"
-  AND [Metric ID] = "DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW"
-  AND [Display Metric Type] = "QGP"
-  AND LOWER(TRIM([Date Context])) = "normal"
-  AND TRIM([Page]) = "Digital"
-  THEN FLOAT([Amount])
-  END
-)
-// c.Digital % No Assistance | Activations
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect"
-  THEN [Amount]
-  END
-)
-// c.Digital % Assistance | Activations
-SUM(
-  IF
-    TRIM([Page]) = "Digital Transformation NEW"
-    AND TRIM([Metric Type]) IN ("Actuals", "Actuals/Outlook")
-    AND TRIM([Date Context]) = "Normal"
-    AND TRIM([Metric ID]) = "NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect"
-  THEN [Amount]
-  END
-)
+SELECT
+  WeekEnding AS qgp_date,
+
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS'
+            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) IN (
+              'CONSUMERPOSTPAIDNEWPHONEBANBOPISUNASSISTEDACTIVATIONSTM1MAPPEDDIGITAL',
+              'CONSUMERPOSTPAIDNEWPHONEBANNONBOPISUNASSISTEDACTIVATIONSTM1MAPPEDDIGITAL'
+            )
+       THEN Amount END)                                                   AS activationsBopis_actual,
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) = 'CONSUMERPOSTPAIDNEWPHONEBANACTIVATIONSTM1MAPPEDDIGITAL'
+       THEN Amount END)                                                   AS activationsBopis_target,
+
+  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'activations (new + aal')
+            AND CONTAINS(LOWER(TRIM(MetricName)), 'no assistance')
+            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
+            AND UPPER(TRIM(MetricID)) = 'TOTALDIGITALPHONEACTIVATIONSTMOANDSPRINTGLANCETM1MAPPED'
+            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS activationsNewAalNoAssistance_actual,
+  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'activations (new + aal')
+            AND CONTAINS(LOWER(TRIM(MetricName)), 'no assistance')
+            AND UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(MetricID)) = 'TOTALDIGITALPHONEACTIVATIONSTMOANDSPRINTGLANCETM1MAPPED'
+            AND UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS activationsNewAalNoAssistance_target,
+
+  SUM(CASE WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+            AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+       THEN Amount END)                                                   AS storeTraffic_actual,
+  SUM(CASE WHEN LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+            AND UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS storeTraffic_target,
+
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+            AND UPPER(TRIM(MetricID)) = 'VRINBOUNDCALLSINCLHSIAUTOMATEDMANUAL'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+       THEN Amount END)                                                   AS vrCalls_actual,
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(MetricID)) = 'VRINBOUNDCALLSINCLHSIAUTOMATEDMANUAL'
+            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
+       THEN Amount END)                                                   AS vrCalls_target,
+
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+            AND UPPER(TRIM(MetricID)) = 'VRCHATSINCLHSIAUTOMATEDMANUAL'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+       THEN Amount END)                                                   AS vrChats_actual,
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(MetricID)) = 'VRCHATSINCLHSIAUTOMATEDMANUAL'
+            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
+       THEN Amount END)                                                   AS vrChats_target,
+
+  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'postpaid activations')
+            AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+            AND UPPER(TRIM(MetricID)) = 'VRPOSTPAIDACTIVATIONSINCLVIRTUALBUSINESSTM1MAPPED'
+            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL OUTCOMES 1'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS vrPostpaidActivations_actual,
+  SUM(CASE WHEN CONTAINS(LOWER(TRIM(MetricName)), 'postpaid activations')
+            AND UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(MetricID)) = 'VRPOSTPAIDACTIVATIONSINCLVIRTUALBUSINESSTM1MAPPED'
+            AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL OUTCOMES 1'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS vrPostpaidActivations_target,
+
+  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) = 'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+       THEN Amount END)                                                   AS digitalPctPhoneNewActsNoAssistPlusAssist_actual,
+  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) = 'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT'
+       THEN Amount END)                                                   AS digitalPctPhoneNewActsNoAssistPlusAssist_target,
+
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSTOTALINCLASSISTEDNEW'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND LOWER(REPLACE(TRIM(IsFuture), ' ', '')) = 'ispast'
+            AND UPPER(TRIM(Page)) = 'DIGITAL'
+       THEN Amount END)                                                   AS digitalPctConsumerPostpaidActivationsTotalInclAssisted_actual,
+  SUM(CASE WHEN UPPER(TRIM(MetricType)) = 'QGP'
+            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSTOTALINCLASSISTEDNEW'
+            AND UPPER(TRIM(Page)) = 'DIGITAL'
+            AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+       THEN Amount END)                                                   AS digitalPctConsumerPostpaidActivationsTotalInclAssisted_target,
+
+  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSPHONENEWSAMEPAGEWONRINDIRECT'
+       THEN Amount END)                                                   AS digitalPctNoAssistanceActivations_actual,
+  CAST(NULL AS DOUBLE)                                                    AS digitalPctNoAssistanceActivations_target,  -- confirmed no Target row exists
+
+  SUM(CASE WHEN UPPER(TRIM(Page)) = 'DIGITAL TRANSFORMATION NEW'
+            AND UPPER(TRIM(MetricType)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
+            AND UPPER(TRIM(DateContext)) = 'NORMAL'
+            AND UPPER(TRIM(MetricID)) = 'NEWPHONEBANASSISTEDACTIVATIONSDIGITALPCTOFCONSUMERPOSTPAIDTM1MAPPEDWONRINDIRECT'
+       THEN Amount END)                                                   AS digitalPctAssistanceActivations_actual,
+  CAST(NULL AS DOUBLE)                                                    AS digitalPctAssistanceActivations_target  -- confirmed no Target row exists
+
+FROM Dedup
+GROUP BY WeekEnding
+ORDER BY WeekEnding DESC;
