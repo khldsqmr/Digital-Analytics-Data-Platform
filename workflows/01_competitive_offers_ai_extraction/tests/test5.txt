@@ -5,3 +5,12 @@ WHERE LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
   AND UPPER(TRIM(DateContext)) = 'NORMAL'
   AND WeekEnding IN ('2026-07-04', '2026-07-11', '2026-07-18')
 ORDER BY WeekEnding, InsertDateTime;
+
+
+WeekEnding	MetricID	MetricName	PublishKey	InsertDateTime	Amount
+2026-07-04	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	2010409
+2026-07-04	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	2010409
+2026-07-11	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	3601989
+2026-07-11	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	3601989
+2026-07-18	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	3928237
+2026-07-18	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	2026-08-01	2026-07-31T07:08:55.283+00:00	3928237
