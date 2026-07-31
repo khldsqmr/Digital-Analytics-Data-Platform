@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         05_sdi_sp_dashboardPulseTms_silver_qgp_weekly.sql
+FILE:         sdi_sp_dashboardPulseTms_silver_qgp_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_qgp_weekly
 
@@ -117,7 +117,7 @@ BEGIN
       b.week_ending,
 
       SUM(CASE WHEN UPPER(TRIM(b.metric_type)) = 'ACTUALS'
-                AND UPPER(TRIM(b.page)) = 'DIGITAL'
+                AND UPPER(TRIM(b.page)) = 'DIGITAL TRANSFORMATION NEW'
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
                 AND UPPER(TRIM(b.metric_id)) IN (
                   UPPER('ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital'),
@@ -125,7 +125,7 @@ BEGIN
                 )
            THEN b.amount END)                                              AS activationsBopis_actual,
       SUM(CASE WHEN UPPER(TRIM(b.metric_type)) = 'QGP'
-                AND UPPER(TRIM(b.page)) = 'DIGITAL'
+                AND UPPER(TRIM(b.page)) = 'DIGITAL TRANSFORMATION NEW'
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
                 AND UPPER(TRIM(b.metric_id)) = UPPER('ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital')
            THEN b.amount END)                                              AS activationsBopis_qgp,
@@ -134,7 +134,7 @@ BEGIN
                 AND CONTAINS(LOWER(TRIM(b.metric_name_label)), 'no assistance')
                 AND UPPER(TRIM(b.metric_type)) IN ('ACTUALS', 'ACTUALS/OUTLOOK')
                 AND UPPER(TRIM(b.metric_id)) = UPPER('TotalDigitalPhoneActivationsTMOAndSprintGlanceTM1Mapped') /* ⚠ UNCONFIRMED casing, see note */
-                AND UPPER(TRIM(b.page)) = 'DIGITAL'
+                AND UPPER(TRIM(b.page)) = 'DIGITAL TRANSFORMATION NEW' /* inferred from activationsBopis fix, not independently confirmed */
                 AND b.is_future = FALSE
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
            THEN b.amount END)                                              AS activationsNewAalNoAssistance_actual,
@@ -142,7 +142,7 @@ BEGIN
                 AND CONTAINS(LOWER(TRIM(b.metric_name_label)), 'no assistance')
                 AND UPPER(TRIM(b.metric_type)) = 'QGP'
                 AND UPPER(TRIM(b.metric_id)) = UPPER('TotalDigitalPhoneActivationsTMOAndSprintGlanceTM1Mapped') /* ⚠ UNCONFIRMED casing, see note */
-                AND UPPER(TRIM(b.page)) = 'DIGITAL'
+                AND UPPER(TRIM(b.page)) = 'DIGITAL TRANSFORMATION NEW' /* inferred from activationsBopis fix, not independently confirmed */
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
            THEN b.amount END)                                              AS activationsNewAalNoAssistance_qgp,
 
@@ -163,7 +163,7 @@ BEGIN
            THEN b.amount END)                                              AS vrCalls_actual,
       SUM(CASE WHEN UPPER(TRIM(b.metric_type)) = 'QGP'
                 AND UPPER(TRIM(b.metric_id)) = UPPER('VRInboundCallsinclHSIAutomatedManual')
-                AND UPPER(TRIM(b.display_metric_type)) = 'QGP'
+                AND UPPER(TRIM(b.display_metric_type)) = 'TARGET'
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
                 AND UPPER(TRIM(b.page)) = 'VIRTUAL RETAIL'
            THEN b.amount END)                                              AS vrCalls_qgp,
@@ -175,7 +175,7 @@ BEGIN
            THEN b.amount END)                                              AS vrChats_actual,
       SUM(CASE WHEN UPPER(TRIM(b.metric_type)) = 'QGP'
                 AND UPPER(TRIM(b.metric_id)) = UPPER('VRChatsinclHSIAutomatedManual')
-                AND UPPER(TRIM(b.display_metric_type)) = 'QGP'
+                AND UPPER(TRIM(b.display_metric_type)) = 'TARGET'
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
                 AND UPPER(TRIM(b.page)) = 'VIRTUAL RETAIL'
            THEN b.amount END)                                              AS vrChats_qgp,
@@ -217,7 +217,7 @@ BEGIN
       SUM(CASE WHEN UPPER(TRIM(b.metric_type)) = 'QGP'
                 AND UPPER(TRIM(b.metric_id)) = UPPER('DigitalPctofConsumerPostpaidActivationsTotalInclAssistedNEW')
                 AND UPPER(TRIM(b.page)) = 'DIGITAL'
-                AND UPPER(TRIM(b.display_metric_type)) = 'QGP'
+                AND UPPER(TRIM(b.display_metric_type)) = 'TARGET'
                 AND UPPER(TRIM(b.date_context)) = 'NORMAL'
            THEN b.amount END)                                              AS digitalPctConsumerPostpaidActivationsTotalInclAssisted_qgp,
 
