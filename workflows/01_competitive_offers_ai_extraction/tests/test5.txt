@@ -6,6 +6,8 @@ FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE LOWER(MetricID) LIKE '%digitalpct%totalincl%assist%'
    OR LOWER(MetricID) LIKE '%totaldigitalphoneactivation%'
 ORDER BY MetricID;
+output:
+no rows written
 
 SELECT metric_id, metric_type, date_context, page, display_metric_type, is_future, COUNT(*) AS n, MAX(week_ending) AS most_recent_week
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly
@@ -16,3 +18,58 @@ WHERE UPPER(TRIM(metric_id)) IN (
 )
 GROUP BY metric_id, metric_type, date_context, page, display_metric_type, is_future
 ORDER BY metric_id, metric_type;
+output:
+metric_id	metric_type	date_context	page	display_metric_type	is_future	n	most_recent_week
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	4	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	true	5	2026-09-26
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	QTR	Digital Transformation NEW	Actuals/Outlook	true	2	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	false	7	2026-08-01
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	WoW	Digital Transformation NEW	Actuals/Outlook	true	2	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Monthly Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	3	2026-07-31
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	ROQ	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	1	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	QTD	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	1	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	PQWA	Digital Transformation NEW	Actuals/Outlook	true	1	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	ROQ	Digital Transformation NEW	Actuals/Outlook	true	1	2026-06-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	QTD	Digital Transformation NEW	Actuals/Outlook	true	1	2026-06-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	PQWA	Digital Transformation NEW Outcomes 2	Actuals/Outlook	true	1	2026-06-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Monthly Normal	Digital Transformation NEW	Actuals/Outlook	true	3	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	false	26	2026-07-25
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Monthly Normal	Digital Transformation NEW	Target	true	2	2026-05-31
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	QTR	Digital Transformation NEW Outcomes 2	Target	true	2	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	false	19	2026-08-01
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	WoW	Digital Transformation NEW	Target	true	1	2026-06-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Normal	Digital Transformation NEW	Target	false	14	2026-07-18
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	ROQ	Digital Transformation NEW	Target	true	1	2026-06-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Monthly Normal	Digital Transformation NEW Outcomes 2	Target	true	4	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	QTD	Digital Transformation NEW Outcomes 2	Target	true	2	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	ROQ	Digital Transformation NEW Outcomes 2	Target	true	1	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Normal	Digital Transformation NEW	Target	true	4	2026-09-12
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	WoW	Digital Transformation NEW Outcomes 2	Target	true	1	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	true	5	2026-09-30
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	QGP	PQWA	Digital Transformation NEW	Target	true	2	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	PQWA	Digital Transformation NEW	No Assistance %	true	2	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	true	6	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Monthly Normal	Digital Transformation NEW Outcomes 2	No Assistance %	true	1	2026-06-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Normal	Digital Transformation NEW	No Assistance %	false	18	2026-08-01
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	WoW	Digital Transformation NEW Outcomes 2	No Assistance %	true	2	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	QTR	Digital Transformation NEW	No Assistance %	true	2	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	QTD	Digital Transformation NEW Outcomes 2	No Assistance %	true	1	2026-06-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Normal	Digital Transformation NEW	No Assistance %	true	3	2026-09-26
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	ROQ	Digital Transformation NEW	No Assistance %	true	1	2026-06-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	false	15	2026-07-11
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	ROQ	Digital Transformation NEW Outcomes 2	No Assistance %	true	1	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	Monthly Normal	Digital Transformation NEW	No Assistance %	true	5	2026-09-30
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	Actuals	QTD	Digital Transformation NEW	No Assistance %	true	1	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Normal	Digital Transformation NEW	Assistance %	false	18	2026-07-18
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	false	15	2026-08-01
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Normal	Digital Transformation NEW	Assistance %	true	5	2026-09-26
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	true	4	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	QTD	Digital Transformation NEW	Assistance %	true	2	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	ROQ	Digital Transformation NEW	Assistance %	true	1	2026-06-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	QTR	Digital Transformation NEW	Assistance %	true	1	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Monthly Normal	Digital Transformation NEW Outcomes 2	Assistance %	true	1	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	WoW	Digital Transformation NEW	Assistance %	true	2	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	Monthly Normal	Digital Transformation NEW	Assistance %	true	5	2026-08-31
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	QTR	Digital Transformation NEW Outcomes 2	Assistance %	true	1	2026-06-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	PQWA	Digital Transformation NEW	Assistance %	true	2	2026-09-30
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	Actuals	ROQ	Digital Transformation NEW Outcomes 2	Assistance %	true	1	2026-09-30
