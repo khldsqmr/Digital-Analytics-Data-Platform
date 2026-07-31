@@ -13,7 +13,13 @@ sdi_vw_dashboardPulseTms_gold_unified_wide
 
 prdrzrlakehouse.qgp_restricted.qgpweeklyview
 
+SELECT routine_definition
+FROM prdrzranalytics.information_schema.routines
+WHERE routine_schema = 'lab42'
+  AND routine_name = 'sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly';
 
+
+DESCRIBE PROCEDURE EXTENDED prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly;
 UnknownException: (java.lang.ClassCastException) class org.apache.spark.sql.catalyst.expressions.AttributeReference cannot be cast to class org.apache.spark.sql.catalyst.expressions.SortOrder (org.apache.spark.sql.catalyst.expressions.AttributeReference and org.apache.spark.sql.catalyst.expressions.SortOrder are in unnamed module of loader 'app')
 
 JVM stacktrace:
