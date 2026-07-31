@@ -21,4 +21,13 @@ FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
   AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
   AND UPPER(TRIM(DateContext)) = 'NORMAL'
-  AND WeekEnding = '2026-07-04';
+  AND WeekEnding IN ('2026-07-04', '2026-07-11', '2026-07-18');
+
+output:
+PublishKey	QuarterNum	YearNum	WeekEnding	MetricID	DateContext	Page	Section	Header	MetricName	MetricType	DisplayMetricType	MetricFormat	DaysInArrears	CumulativeDates	IsFuture	MetricOrder	VarianceDirection	LevelofPrecision	Amount	DisplayAmount	VariancePercentage	VarianceColor	MetricOwner	DataDictionaryURL	DrillDownURL1	DrillDownURL2	InsertDateTime
+2026-08-01	3	2026	2026-07-04	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	2010409	2,010	-0.032723	-1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
+2026-08-01	3	2026	2026-07-11	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total Outcomes	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	3601989	3,602	0.010378	1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
+2026-08-01	3	2026	2026-07-18	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total Outcomes	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	3928237	3,928	-0.009831	-1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
+2026-08-01	3	2026	2026-07-04	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total Outcomes	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	2010409	2,010	-0.032723	-1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
+2026-08-01	3	2026	2026-07-18	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	3928237	3,928	-0.009831	-1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
+2026-08-01	3	2026	2026-07-11	StoreTrafficPostpaidAutomated	Normal	Branded Retail Total	Weekly	Section1	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	#,0,	0	null	Is Past	7020	1	-3	3601989	3,602	0.010378	1	Automated	null	null	null	2026-07-31T07:08:55.283+00:00
