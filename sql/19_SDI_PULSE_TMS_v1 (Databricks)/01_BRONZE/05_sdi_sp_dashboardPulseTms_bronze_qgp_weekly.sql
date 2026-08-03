@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         sdi_sp_dashboardPulseTms_bronze_qgp_weekly.sql
+FILE:         05_sdi_sp_dashboardPulseTms_bronze_qgp_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_bronze_qgp_weekly
 
@@ -9,9 +9,15 @@ PURPOSE:
   PulseTMS Bronze, deduped to the latest insert per grain key.
 
 SOURCE:
-  prdrzrlakehouse.qgp_restricted.qgpweeklyview -- a different catalog (prdrzrlakehouse, not
-  prdrzranalytics) from everything else in this pipeline. This is an enterprise-wide KPI
-  scorecard feed, not PulseTMS-specific, so the WHERE clause below scopes it down.
+  prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly -- NOT the raw feed directly
+  anymore. That table (sdi_sp_qgpArchive_bronze_snapshot_weekly.sql) is a standalone,
+  never-shrinking mirror of the true raw source, prdrzrlakehouse.qgp_restricted.qgpweeklyview
+  (a different catalog, an enterprise-wide KPI scorecard feed, not PulseTMS-specific -- the
+  WHERE clause below still scopes it down to PulseTMS's 10 metrics). The swap to the archive
+  exists because the raw feed has rolling retention and drops old quarters outright; every
+  predicate, dedup rule, and normalization in this file is completely unchanged from when it
+  read the raw feed directly -- the archive mirrors its exact column names and casing. This
+  procedure must run AFTER sdi_sp_qgpArchive_bronze_snapshot_weekly in the orchestration script.
 
 GRAIN:
   One row per week_ending x metric_id x date_context x metric_type x page.
@@ -196,7 +202,13 @@ BEGIN
       raw.DrillDownURL1                             AS drill_down_url_1,
       raw.DrillDownURL2                             AS drill_down_url_2,
       TRY_CAST(raw.InsertDateTime AS TIMESTAMP)     AS insert_datetime
-    FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview raw
+    -- Reads from the standalone QGP archive (see sdi_sp_qgpArchive_bronze_snapshot_weekly.sql),
+    -- not the raw feed directly -- the raw source has rolling retention and drops old quarters;
+    -- the archive never does. This is the ONLY line that changed to adopt the archive -- every
+    -- predicate, dedup rule, and normalization below is completely unchanged, since the archive
+    -- mirrors the raw feed's exact column names/casing. Must run AFTER
+    -- sdi_sp_qgpArchive_bronze_snapshot_weekly in the orchestration script.
+    FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly raw
     -- Scoped to the MetricIDs behind your existing Tableau calcs. See the SCOPE FILTER section in
     -- the header above for which literals are confirmed verbatim vs. best-effort reconstructions.
     WHERE UPPER(TRIM(raw.MetricID)) IN (
