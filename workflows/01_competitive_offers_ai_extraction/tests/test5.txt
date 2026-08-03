@@ -5,6 +5,8 @@ WHERE Page = 'Digital'
   AND MetricType IN ('Actuals', 'Actuals/Outlook')
 ORDER BY Header, MetricOrder;
 
+output: No rows written
+
 
 SELECT Header, Section, MetricOrder, MetricID, MetricName, DisplayMetricType
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
@@ -13,8 +15,2467 @@ WHERE Page IN ('IT Summary', 'IT Summary Outcomes')
   AND MetricType IN ('Actuals', 'Actuals/Outlook')
 ORDER BY Header, MetricOrder;
 
+output:
+Header	Section	MetricOrder	MetricID	MetricName	DisplayMetricType
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6130	PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6150	PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomatedSAMEPAGErepeated	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6170	PostpaidPhoneAssistedDigitalUpgradesMixAUTOMATED	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6190	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6210	DigitalPctofConsumerPostpaidUnassistedActivationsExclFiberNRIndirectChannelBTSODA	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6230	DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODAAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6250	ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6270	ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"    No Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6290	ConsumerPctofPhoneBTSHSINewAcctActsDigitalAssisted	"    Assistance 
+    "	Actuals/Outlook
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section1	Weekly	6310	ConsumerCarePostpaidCallsPerAccount	Care Calls per Account	Actuals
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6340	BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6360	ITBusinessProdperRepManual	Productivity per Rep	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section2	Weekly	6380	BusinessSupportTotalCallsperSubscriber	Calls per Subscriber	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6410	ITOutrageImpactedTransactionsManual	IT Outage Impacted Transactions	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6430	ITCustomersImpactedbyCyberSecurityIncidentsManual	"Cyber Security Incidents 
+Impacted Customers"	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section3	Weekly	6450	ITTransactionalNPS	Digital NPS	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6480	ITCashSpendManual	IT Cash Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+Section4	Weekly	6500	ITOPEXSpendManual	IT OPEX Spend	Actuals/Outlook
+
 
 SELECT DISTINCT Page
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE LOWER(Page) LIKE '%digital%'
 ORDER BY Page;
+
+output:
+Page
+Digital Transformation NEW
+Digital Transformation NEW Outcomes 1
+Digital Transformation NEW Outcomes 2
+Digital Transformation NEW Outcomes 3
+Hero - Digital
