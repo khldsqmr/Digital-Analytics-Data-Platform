@@ -4,3 +4,174 @@ WHERE UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSEXCLFIBERN
   AND UPPER(TRIM(Page)) IN ('IT SUMMARY', 'IT SUMMARY OUTCOMES')
   AND UPPER(TRIM(DateContext)) = 'NORMAL'
 ORDER BY Page, MetricType, WeekEnding DESC;
+
+output:
+WeekEnding	MetricType	Page	DateContext	DisplayMetricType	IsFuture	Amount
+2026-09-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.312446
+2026-09-26	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.34181
+2026-09-19	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.323186
+2026-09-12	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.326555
+2026-09-05	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.339468
+2026-08-29	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.330209
+2026-08-22	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.317433
+2026-08-15	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.326245
+2026-08-08	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Future	0.313607
+2026-08-01	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.487489
+2026-07-25	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.455834
+2026-07-18	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.444558
+2026-07-11	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.466472
+2026-07-04	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.49183
+2026-06-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.467037
+2026-06-27	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.476254
+2026-06-20	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.479893
+2026-06-13	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.486705
+2026-06-06	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.495927
+2026-05-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.510795
+2026-05-23	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.443525
+2026-05-16	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.487788
+2026-05-09	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.494586
+2026-05-02	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.483489
+2026-04-25	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.469513
+2026-04-18	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.47488
+2026-04-11	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.469369
+2026-04-04	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	0.473133
+2026-03-31	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-03-28	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-03-21	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-03-14	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-03-07	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-02-28	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-02-21	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-02-14	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-02-07	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-01-31	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-01-24	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-01-17	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-01-10	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-01-03	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	Is Past	null
+2026-09-30	QGP	IT Summary	Normal	Target	Is Future	0.309334
+2026-09-26	QGP	IT Summary	Normal	Target	Is Future	0.337051
+2026-09-19	QGP	IT Summary	Normal	Target	Is Future	0.322195
+2026-09-12	QGP	IT Summary	Normal	Target	Is Future	0.327414
+2026-09-05	QGP	IT Summary	Normal	Target	Is Future	0.339319
+2026-08-29	QGP	IT Summary	Normal	Target	Is Future	0.3292
+2026-08-22	QGP	IT Summary	Normal	Target	Is Future	0.315946
+2026-08-15	QGP	IT Summary	Normal	Target	Is Future	0.324889
+2026-08-08	QGP	IT Summary	Normal	Target	Is Future	0.31369
+2026-08-01	QGP	IT Summary	Normal	Target	Is Past	0.31275
+2026-07-25	QGP	IT Summary	Normal	Target	Is Past	0.326513
+2026-07-18	QGP	IT Summary	Normal	Target	Is Past	0.32885
+2026-07-11	QGP	IT Summary	Normal	Target	Is Past	0.321692
+2026-07-04	QGP	IT Summary	Normal	Target	Is Past	0.338602
+2026-06-30	QGP	IT Summary	Normal	Target	Is Past	0.562352
+2026-06-27	QGP	IT Summary	Normal	Target	Is Past	0.552433
+2026-06-20	QGP	IT Summary	Normal	Target	Is Past	0.54992
+2026-06-13	QGP	IT Summary	Normal	Target	Is Past	0.548888
+2026-06-06	QGP	IT Summary	Normal	Target	Is Past	0.542687
+2026-05-30	QGP	IT Summary	Normal	Target	Is Past	0.539653
+2026-05-23	QGP	IT Summary	Normal	Target	Is Past	0.542003
+2026-05-16	QGP	IT Summary	Normal	Target	Is Past	0.54541
+2026-05-09	QGP	IT Summary	Normal	Target	Is Past	0.541799
+2026-05-02	QGP	IT Summary	Normal	Target	Is Past	0.528594
+2026-04-25	QGP	IT Summary	Normal	Target	Is Past	0.524959
+2026-04-18	QGP	IT Summary	Normal	Target	Is Past	0.531271
+2026-04-11	QGP	IT Summary	Normal	Target	Is Past	0.530292
+2026-04-04	QGP	IT Summary	Normal	Target	Is Past	0.512588
+2026-03-31	QGP	IT Summary	Normal	Target	Is Past	null
+2026-03-28	QGP	IT Summary	Normal	Target	Is Past	null
+2026-03-21	QGP	IT Summary	Normal	Target	Is Past	null
+2026-03-14	QGP	IT Summary	Normal	Target	Is Past	null
+2026-03-07	QGP	IT Summary	Normal	Target	Is Past	null
+2026-02-28	QGP	IT Summary	Normal	Target	Is Past	null
+2026-02-21	QGP	IT Summary	Normal	Target	Is Past	null
+2026-02-14	QGP	IT Summary	Normal	Target	Is Past	null
+2026-02-07	QGP	IT Summary	Normal	Target	Is Past	null
+2026-01-31	QGP	IT Summary	Normal	Target	Is Past	null
+2026-01-24	QGP	IT Summary	Normal	Target	Is Past	null
+2026-01-17	QGP	IT Summary	Normal	Target	Is Past	null
+2026-01-10	QGP	IT Summary	Normal	Target	Is Past	null
+2026-01-03	QGP	IT Summary	Normal	Target	Is Past	null
+2026-09-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.312446
+2026-09-26	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.34181
+2026-09-19	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.323186
+2026-09-12	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.326555
+2026-09-05	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.339468
+2026-08-29	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.330209
+2026-08-22	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.317433
+2026-08-15	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.326245
+2026-08-08	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Future	0.313607
+2026-08-01	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.487489
+2026-07-25	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.455834
+2026-07-18	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.444558
+2026-07-11	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.466472
+2026-07-04	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.49183
+2026-06-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.467037
+2026-06-27	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.476254
+2026-06-20	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.479893
+2026-06-13	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.486705
+2026-06-06	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.495927
+2026-05-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.510795
+2026-05-23	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.443525
+2026-05-16	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.487788
+2026-05-09	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.494586
+2026-05-02	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.483489
+2026-04-25	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.469513
+2026-04-18	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.47488
+2026-04-11	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.469369
+2026-04-04	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	0.473133
+2026-03-31	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-03-28	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-03-21	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-03-14	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-03-07	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-02-28	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-02-21	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-02-14	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-02-07	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-01-31	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-01-24	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-01-17	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-01-10	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-01-03	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	Is Past	null
+2026-09-30	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.309334
+2026-09-26	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.337051
+2026-09-19	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.322195
+2026-09-12	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.327414
+2026-09-05	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.339319
+2026-08-29	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.3292
+2026-08-22	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.315946
+2026-08-15	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.324889
+2026-08-08	QGP	IT Summary Outcomes	Normal	Target	Is Future	0.31369
+2026-08-01	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.31275
+2026-07-25	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.326513
+2026-07-18	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.32885
+2026-07-11	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.321692
+2026-07-04	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.338602
+2026-06-30	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.562352
+2026-06-27	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.552433
+2026-06-20	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.54992
+2026-06-13	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.548888
+2026-06-06	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.542687
+2026-05-30	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.539653
+2026-05-23	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.542003
+2026-05-16	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.54541
+2026-05-09	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.541799
+2026-05-02	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.528594
+2026-04-25	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.524959
+2026-04-18	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.531271
+2026-04-11	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.530292
+2026-04-04	QGP	IT Summary Outcomes	Normal	Target	Is Past	0.512588
+2026-03-31	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-03-28	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-03-21	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-03-14	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-03-07	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-02-28	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-02-21	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-02-14	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-02-07	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-01-31	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-01-24	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-01-17	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-01-10	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
+2026-01-03	QGP	IT Summary Outcomes	Normal	Target	Is Past	null
