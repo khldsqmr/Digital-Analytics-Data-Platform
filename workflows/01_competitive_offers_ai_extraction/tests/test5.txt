@@ -3,9 +3,363 @@ FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE UPPER(TRIM(MetricID)) = 'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSEXCLFIBERNRINDIRECTCHANNELBTSODA'
   AND UPPER(TRIM(DateContext)) = 'NORMAL'
 ORDER BY WeekEnding DESC
-LIMIT 20;
+LIMIT 100;
+
+output:
+MetricID	WeekEnding	MetricType	Page	DateContext	DisplayMetricType	Amount
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.312446
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.312446
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-30	QGP	IT Summary	Normal	Target	0.309334
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-30	QGP	IT Summary Outcomes	Normal	Target	0.309334
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-26	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.34181
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-26	QGP	IT Summary Outcomes	Normal	Target	0.337051
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-26	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.34181
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-26	QGP	IT Summary	Normal	Target	0.337051
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-19	QGP	IT Summary	Normal	Target	0.322195
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-19	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.323186
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-19	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.323186
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-19	QGP	IT Summary Outcomes	Normal	Target	0.322195
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-12	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.326555
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-12	QGP	IT Summary Outcomes	Normal	Target	0.327414
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-12	QGP	IT Summary	Normal	Target	0.327414
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-12	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.326555
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-05	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.339468
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-05	QGP	IT Summary	Normal	Target	0.339319
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-05	QGP	IT Summary Outcomes	Normal	Target	0.339319
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-09-05	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.339468
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-29	QGP	IT Summary Outcomes	Normal	Target	0.3292
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-29	QGP	IT Summary	Normal	Target	0.3292
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-29	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.330209
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-29	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.330209
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-22	QGP	IT Summary	Normal	Target	0.315946
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-22	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.317433
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-22	QGP	IT Summary Outcomes	Normal	Target	0.315946
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-22	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.317433
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-15	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.326245
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-15	QGP	IT Summary	Normal	Target	0.324889
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-15	QGP	IT Summary Outcomes	Normal	Target	0.324889
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-15	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.326245
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-08	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.313607
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-08	QGP	IT Summary Outcomes	Normal	Target	0.31369
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-08	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.313607
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-08	QGP	IT Summary	Normal	Target	0.31369
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-01	QGP	IT Summary	Normal	Target	0.31275
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-01	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.487489
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-01	QGP	IT Summary Outcomes	Normal	Target	0.31275
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-08-01	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.487489
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-25	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.455834
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-25	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.455834
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-25	QGP	IT Summary	Normal	Target	0.326513
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-25	QGP	IT Summary Outcomes	Normal	Target	0.326513
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-18	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.444558
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-18	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.444558
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-18	QGP	IT Summary Outcomes	Normal	Target	0.32885
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-18	QGP	IT Summary	Normal	Target	0.32885
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-11	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.466472
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-11	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.466472
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-11	QGP	IT Summary	Normal	Target	0.321692
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-11	QGP	IT Summary Outcomes	Normal	Target	0.321692
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-04	QGP	IT Summary	Normal	Target	0.338602
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-04	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.49183
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-04	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.49183
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-07-04	QGP	IT Summary Outcomes	Normal	Target	0.338602
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-30	QGP	IT Summary	Normal	Target	0.562352
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.467037
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.467037
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-30	QGP	IT Summary Outcomes	Normal	Target	0.562352
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-27	QGP	IT Summary Outcomes	Normal	Target	0.552433
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-27	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.476254
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-27	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.476254
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-27	QGP	IT Summary	Normal	Target	0.552433
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-20	QGP	IT Summary Outcomes	Normal	Target	0.54992
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-20	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.479893
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-20	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.479893
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-20	QGP	IT Summary	Normal	Target	0.54992
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-13	QGP	IT Summary	Normal	Target	0.548888
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-13	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.486705
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-13	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.486705
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-13	QGP	IT Summary Outcomes	Normal	Target	0.548888
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-06	QGP	IT Summary Outcomes	Normal	Target	0.542687
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-06	QGP	IT Summary	Normal	Target	0.542687
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-06	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.495927
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-06-06	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.495927
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-30	QGP	IT Summary Outcomes	Normal	Target	0.539653
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-30	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.510795
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-30	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.510795
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-30	QGP	IT Summary	Normal	Target	0.539653
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-23	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.443525
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-23	QGP	IT Summary	Normal	Target	0.542003
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-23	QGP	IT Summary Outcomes	Normal	Target	0.542003
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-23	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.443525
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-16	QGP	IT Summary	Normal	Target	0.54541
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-16	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.487788
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-16	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.487788
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-16	QGP	IT Summary Outcomes	Normal	Target	0.54541
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-09	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.494586
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-09	QGP	IT Summary	Normal	Target	0.541799
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-09	QGP	IT Summary Outcomes	Normal	Target	0.541799
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-09	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.494586
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-02	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.483489
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-02	QGP	IT Summary Outcomes	Normal	Target	0.528594
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-02	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.483489
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-05-02	QGP	IT Summary	Normal	Target	0.528594
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-04-25	Actuals/Outlook	IT Summary	Normal	Actuals/Outlook	0.469513
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-04-25	Actuals/Outlook	IT Summary Outcomes	Normal	Actuals/Outlook	0.469513
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-04-25	QGP	IT Summary	Normal	Target	0.524959
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	2026-04-25	QGP	IT Summary Outcomes	Normal	Target	0.524959
 
 SELECT DISTINCT MetricID, MetricName, Page
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE LOWER(MetricName) LIKE '%aal%' OR LOWER(MetricID) LIKE '%aal%'
 ORDER BY MetricName, MetricID;
+
+output:
+MetricID	MetricName	Page
+ConsumerPostpaidBTSAALTM1Mapped	     BTS Lines	Revenue Scorecard
+ConsumerPostpaidAALBANPhoneBTSLinesUnassistedTM1Mapped	     Digital % of AALs (Non-Assist)	Hero - Core Postpaid KP1
+ConsumerPostpaidPhoneAALinclUSCCTM1Mapped	     Phone Lines	Revenue Scorecard
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALAutomated	   AALs 	Hero - VAS P360 KPIs 1
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansAutomated	   AALs 	Hero - VAS P360 KPIs 1
+CorePostpaidP360EnrollmentVolDeviceSaleExistingBansPostpaidAutomated	   AALs 	Hero - VAS P360 KPIs 1
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALARN	   AALs -  New Device	Hero - VAS Diganostics 1
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALAllOther	   AALs -  New Device	Hero - VAS Diganostics 1
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALCORN	   AALs -  New Device	Hero - VAS Diganostics 1
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALExperience	   AALs -  New Device	Hero - VAS Diganostics 1
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALWeb	   AALs -  New Device	Hero - VAS Diganostics 1
+ConsumerPostpaidP360EnrollmentVolDeviceSaleExistingBansARNAutomated	   AALs -  New Device	Hero - VAS Diganostics 3
+ConsumerPostpaidP360EnrollmentVolDeviceSaleExistingBansAllOtherChannelsAutomated	   AALs -  New Device	Hero - VAS Diganostics 3
+ConsumerPostpaidP360EnrollmentVolDeviceSaleExistingBansCORNAutomated	   AALs -  New Device	Hero - VAS Diganostics 3
+ConsumerPostpaidP360EnrollmentVolDeviceSaleExistingBansExperienceAutomated	   AALs -  New Device	Hero - VAS Diganostics 3
+ConsumerPostpaidP360EnrollmentVolDeviceSaleExistingBansWebAutomated	   AALs -  New Device	Hero - VAS Diganostics 3
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansARNAutomated	   AALs -  New Device	Hero - VAS Diganostics 2
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansAllOtherChannelsAutomatedv2	   AALs -  New Device	Hero - VAS Diganostics 2
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansCORNAutomated	   AALs -  New Device	Hero - VAS Diganostics 2
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansExperienceAutomated	   AALs -  New Device	Hero - VAS Diganostics 2
+ConsumerPostpaidP360OpportunityVolDeviceSaleExistingBansWebAutomated	   AALs -  New Device	Hero - VAS Diganostics 2
+ConsumerBRSiSPostpaidAALHSIActivationsTM1Mapped	5G Broadband	Branded Retail SiS Outcomes
+ConsumerBRSiSPostpaidAALHSIActivationsTM1Mapped	5G Broadband	Branded Retail SiS
+DigitalConsumerPostpaidActsHSINOASSISTTM1Mapped	5G Broadband Activations (New+AALs)	Hero - Digital
+ConsumerBRARNPostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail ARN
+ConsumerBRARNPostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail ARN Outcomes 2
+ConsumerBRExperiencePostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail Experience Outcomes 2
+ConsumerBRExperiencePostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail Experience
+ConsumerBRNeighborhoodPostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail Neighborhood Outcomes 2
+ConsumerBRNeighborhoodPostpaidAALHSIActivationsTM1Mapped	5G Broadband | Activations	Branded Retail Neighborhood
+ConsumerBRPostpaidAALHSIActivationsINCLSiSTM1Mapped	5G Broadband | Activations	Branded Retail Total
+ConsumerBRPostpaidAALHSIActivationsINCLSiSTM1Mapped	5G Broadband | Activations	Branded Retail Total Outcomes 2
+ConsumerBRAALHSIActsARNConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail ARN Outcomes 2
+ConsumerBRAALHSIActsARNConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail ARN
+ConsumerBRAALHSIActsExperienceConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail Experience Outcomes 2
+ConsumerBRAALHSIActsExperienceConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail Experience
+ConsumerBRAALHSIActsNeighborhoodConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail Neighborhood
+ConsumerBRAALHSIActsNeighborhoodConversionRateAutomated	5G Broadband | Conversion Rate	Branded Retail Neighborhood Outcomes 2
+ConsumerDigitalExtremeEffortAALAssistMANUAL	AALs	Digital Transformation NEW Outcomes 3
+ConsumerDigitalExtremeEffortAALAssistMANUAL	AALs	Digital Transformation NEW
+ConsumerDigitalExtremeEffortAALNoAsstMANUAL	AALs	Digital Transformation NEW
+ConsumerDigitalExtremeEffortAALNoAsstMANUAL	AALs	Digital Transformation NEW Outcomes 3
+ConsumerDigitalExtremeEffortAALNoAsstPlusAssistMANUAL	AALs	Digital Transformation NEW
+ConsumerDigitalExtremeEffortAALNoAsstPlusAssistMANUAL	AALs	Digital Transformation NEW Outcomes 3
+ConsumerPostpaidDigitalFiberAALActsPctofConsPostwoNRIndirect	AALs	Digital Transformation NEW
+ConsumerPostpaidDigitalFiberAALActsPctofConsPostwoNRIndirect	AALs	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidDigitalHSIAALActsPctofConsPostwoNRIndirect	AALs	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidDigitalHSIAALActsPctofConsPostwoNRIndirect	AALs	Digital Transformation NEW
+ConsumerPostpaidDigitalHSINewLinesonExistingAccountsTM1Mapped	AALs	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidDigitalHSINewLinesonExistingAccountsTM1Mapped	AALs	Digital Transformation NEW
+ConsumerPostpaidExistingFiberActivationsTM1MappedDigital	AALs	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidExistingFiberActivationsTM1MappedDigital	AALs	Digital Transformation NEW
+Header5	AALs	Branded Retail SiS
+Header5	AALs	Branded Retail Neighborhood
+Header5	AALs	Branded Retail Total Outcomes 2
+Header5	AALs	Branded Retail Total
+Header5	AALs	Branded Retail Experience Outcomes 2
+Header5	AALs	Branded Retail ARN Outcomes 2
+Header5	AALs	Branded Retail Neighborhood Outcomes 2
+Header5	AALs	Branded Retail Experience
+Header5	AALs	Branded Retail ARN
+Header5	AALs	Branded Retail SiS Outcomes
+DigitalAALActivationsUnassistedInclFiberPCTofConsPostwoNRIndirect	"AALs
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW
+DigitalAALActivationsUnassistedInclFiberPCTofConsPostwoNRIndirect	"AALs
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW Outcomes 1
+DigitalAALActivationsUnassistedInclFiberTotalNew	"AALs
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW Outcomes 1
+DigitalAALActivationsUnassistedInclFiberTotalNew	"AALs
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW
+Header12	AALs (Phone + BTS + 5G Broadband)	Key Priorities
+Header12	AALs (Phone + BTS +5G Broadband)	Key Priorities Outcomes 2
+Header4	AALs / Partial Accounts Revenue	Revenue Scorecard
+UltraAALNonPrimaryActsPctofTotalActivations	AALs Non-Primary Activations	Mint Ultra
+UltraAALNonPrimaryActsPctofTotalActivations	AALs Non-Primary Activations	Mint Ultra Outcomes 2
+ConsumerPostpaidHSIAALsActsVRandTeleCombinedinclDigAff	AALs | 5G Broadband	Virtual Retail Outcomes 2
+ConsumerPostpaidHSIAALsActsVRandTeleCombinedinclDigAff	AALs | 5G Broadband	Virtual Retail
+ConsumerPostpaidBTSAALsActsVRandTeleCombinedinclDigAff	AALs | BTS	Virtual Retail
+ConsumerPostpaidBTSAALsActsVRandTeleCombinedinclDigAff	AALs | BTS	Virtual Retail Outcomes 2
+ConsumerPostpaidPhoneAALsActsVRandTeleCombinedTM1Mapped	AALs | Phone	Virtual Retail Outcomes 2
+ConsumerPostpaidPhoneAALsActsVRandTeleCombinedTM1Mapped	AALs | Phone	Virtual Retail
+RevenueScorecardIncrementalAALAccountsAddingLinesAUTOMATED	Accounts Adding Lines	Revenue Scorecard
+MINTActPlanMixDataAllotmentLARGE	Activation Plan Mix % - by Data Allotment	Mint Ultra
+MINTActPlanMixDataAllotmentLARGE	Activation Plan Mix % - by Data Allotment	Mint Ultra Outcomes 1
+MINTActPlanMixDataAllotmentMEDIUM	Activation Plan Mix % - by Data Allotment	Mint Ultra
+MINTActPlanMixDataAllotmentMEDIUM	Activation Plan Mix % - by Data Allotment	Mint Ultra Outcomes 1
+MINTActPlanMixDataAllotmentSMALL	Activation Plan Mix % - by Data Allotment	Mint Ultra
+MINTActPlanMixDataAllotmentSMALL	Activation Plan Mix % - by Data Allotment	Mint Ultra Outcomes 1
+MINTActPlanMixDataAllotmentUNLIMITED	Activation Plan Mix % - by Data Allotment	Mint Ultra
+MINTActPlanMixDataAllotmentUNLIMITED	Activation Plan Mix % - by Data Allotment	Mint Ultra Outcomes 1
+UltraActivationPlanMixDataAllowance12GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowance12GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowance24GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowance24GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowance4GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowance4GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowance500MB	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowance500MB	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowance8GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowance8GB	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowanceOtherNew	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowanceOtherNew	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowanceUnlimitedNew	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+UltraActivationPlanMixDataAllowanceUnlimitedNew	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowanceUnlimitedPlusUpdated	Activation Plan Mix by Data Allowance (%)	Mint Ultra Outcomes 2
+UltraActivationPlanMixDataAllowanceUnlimitedPlusUpdated	Activation Plan Mix by Data Allowance (%)	Mint Ultra
+ConsumerNextGenPostpaidHSIActivationsDigitalTM1MappedTHOU	Activations (New + AALs)	Digital Transformation NEW Outcomes 2
+ConsumerNextGenPostpaidHSIActivationsDigitalTM1MappedTHOU	Activations (New + AALs)	Digital Transformation NEW
+ConsumerPostpaidDigitalFiberActsTM1Mapped	Activations (New + AALs)	Digital Transformation NEW
+ConsumerPostpaidDigitalFiberActsTM1Mapped	Activations (New + AALs)	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsFiberwoNRIndirect	Activations (New + AALs)	Digital Transformation NEW
+DigitalPctofConsumerPostpaidActivationsFiberwoNRIndirect	Activations (New + AALs)	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsHSIwoNRIndirect	Activations (New + AALs)	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsHSIwoNRIndirect	Activations (New + AALs)	Digital Transformation NEW
+ConsumerPostpaidPhoneAssistedDigitalAALPctofConsumerPostwoNRIndirect	Assistance | Activations	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidPhoneAssistedDigitalAALPctofConsumerPostwoNRIndirect	Assistance | Activations	Digital Transformation NEW
+ConsumerPostpaidPhoneAssistedDigitalAALTM1MappedNEW	Assistance | Activations	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidPhoneAssistedDigitalAALTM1MappedNEW	Assistance | Activations	Digital Transformation NEW
+ConsumerBRSiSPostpaidAALBTSActivationsTM1Mapped	BTS	Branded Retail SiS
+ConsumerBRSiSPostpaidAALBTSActivationsTM1Mapped	BTS	Branded Retail SiS Outcomes
+ConsumerPostpaidBTSAALTM1Mapped	BTS AALs Activations	Hero - Core Postpaid KP1
+DigitalConsumerPostpaidActsBTSNOASSISTTM1Mapped	BTS Activations (New+AALs)	Hero - Digital
+ConsumerBRARNPostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail ARN
+ConsumerBRARNPostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail ARN Outcomes 2
+ConsumerBRExperiencePostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail Experience
+ConsumerBRExperiencePostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail Experience Outcomes 2
+ConsumerBRNeighborhoodPostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail Neighborhood Outcomes 2
+ConsumerBRNeighborhoodPostpaidAALBTSActivationsTM1Mapped	BTS | Activations	Branded Retail Neighborhood
+ConsumerBRPostpaidAALBTSActivationsINCLSiSTM1Mapped	BTS | Activations	Branded Retail Total
+ConsumerBRPostpaidAALBTSActivationsINCLSiSTM1Mapped	BTS | Activations	Branded Retail Total Outcomes 2
+ConsumerBRAALBTSActsARNConversionRateAutomated	BTS | Conversion Rate	Branded Retail ARN
+ConsumerBRAALBTSActsARNConversionRateAutomated	BTS | Conversion Rate	Branded Retail ARN Outcomes 2
+ConsumerBRAALBTSActsExperienceConversionRateAutomated	BTS | Conversion Rate	Branded Retail Experience Outcomes 2
+ConsumerBRAALBTSActsExperienceConversionRateAutomated	BTS | Conversion Rate	Branded Retail Experience
+ConsumerBRAALBTSActsNeighborhoodConversionRateAutomated	BTS | Conversion Rate	Branded Retail Neighborhood
+ConsumerBRAALBTSActsNeighborhoodConversionRateAutomated	BTS | Conversion Rate	Branded Retail Neighborhood Outcomes 2
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALCORandARN	Blended P360 Attach Rate at POS (%) | AALs - New Device	Digital Transformation NEW
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALCORandARN	Blended P360 Attach Rate at POS (%) | AALs - New Device	Digital Transformation NEW Outcomes 3
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALWeb	Blended P360 Attach Rate at POS (%) | AALs - New Device	Digital Transformation NEW Outcomes 3
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALWeb	Blended P360 Attach Rate at POS (%) | AALs - New Device	Digital Transformation NEW
+ConsumerPctofPhoneBTSHSIAALAcctActsUnassistedPlusAssisted	"Digital % of AALs
+(No Assistance + Assistance)"	Key Priorities Outcomes 2
+ConsumerPctofPhoneBTSHSIAALAcctActsUnassistedPlusAssisted	"Digital % of AALs
+(No Assistance + Assistance)"	Key Priorities
+ConsumerPctofPhoneBTSHSIAALAcctActsDigitalUnassisted	"Digital % of AALs
+(No Assistance)"	Key Priorities
+ConsumerPctofPhoneBTSHSIAALAcctActsDigitalUnassisted	"Digital % of AALs
+(No Assistance)"	Key Priorities Outcomes 2
+ConsumerPctofAALAcctActsUnassistedPlusAssistedv2	Digital % of AALs (Non-Assist + Assist)	Hero - Core Postpaid KP1
+PostpaidPhoneAALBOPISSelfServeAssistedDigitalPCTwoNRIndirect	"Digital % of Phone AALs
+(No Assistance + Assistance)"	Digital Transformation NEW Outcomes 2
+PostpaidPhoneAALBOPISSelfServeAssistedDigitalPCTwoNRIndirect	"Digital % of Phone AALs
+(No Assistance + Assistance)"	Digital Transformation NEW
+PostpaidConsumerPhoneandBTSAALIntent	Digital Shopping Traffic  | AAL Intent	Hero - Core Postpaid KP2
+ConsumerBRARNPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail ARN Outcomes 2
+ConsumerBRARNPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail ARN
+ConsumerBRAllFormatPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Total
+ConsumerBRAllFormatPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Total Outcomes 2
+ConsumerBRExperiencePostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Experience Outcomes 2
+ConsumerBRExperiencePostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Experience
+ConsumerBRNeighborhoodPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Neighborhood
+ConsumerBRNeighborhoodPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail Neighborhood Outcomes 2
+ConsumerBRSiSPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail SiS
+ConsumerBRSiSPostpaidFiberAALActivationsTM1Mapped	Fiber	Branded Retail SiS Outcomes
+Header5	Incremental AALs Account Revenue	Revenue Scorecard
+RevenueScorecardIncrementalAALAccountRevenueAUTOMATED	Incremental AALs Account Revenue	Revenue Scorecard
+RevenueScorecardIncrementalAALIncrementalARPALostperBaseAccountManual	Incremental ARPA / Accounts Changed (Operational)	Revenue Scorecard
+RevenueScorecardCoreMobilityIncrementalAALsPostpaidLinesTM1Mapped	Lines Added	Revenue Scorecard
+RevenueScorecardIncrementalAALMRCperLineAddedManual	MRC / Line Added	Revenue Scorecard
+RevenueScorecardIncrementalAALMRCperLineAddedAutomated	MRC / Line Added - Automated	Revenue Scorecard
+DigitalBTSIntentAAL	No Assistance | AAL Intents	Digital Transformation NEW Outcomes 2
+DigitalBTSIntentAAL	No Assistance | AAL Intents	Digital Transformation NEW
+DigitalVoiceIntentAAL	No Assistance | AAL Intents	Digital Transformation NEW
+DigitalVoiceIntentAAL	No Assistance | AAL Intents	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidAALPhoneBANBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations	Digital Transformation NEW
+ConsumerPostpaidAALPhoneBANBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidAALPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations	Digital Transformation NEW
+ConsumerPostpaidAALPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsPhoneAALwoNRIndirect	No Assistance | Activations	Digital Transformation NEW
+DigitalPctofConsumerPostpaidActivationsPhoneAALwoNRIndirect	No Assistance | Activations	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations (New + AALs) 	Digital Transformation NEW
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations (New + AALs) 	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations (New + AALs) 	Digital Transformation NEW
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	No Assistance | Activations (New + AALs) 	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	No Assistance | Activations (New + AALs) 	Digital Transformation NEW Outcomes 2
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	No Assistance | Activations (New + AALs) 	Digital Transformation NEW
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	No Assistance | Activations (New + AALs) 	Digital Transformation NEW
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	No Assistance | Activations (New + AALs) 	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebBTSAALCheckoutsasaPCTofCartStarts	No Assistance | Cart to Checkout %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebBTSAALCheckoutsasaPCTofCartStarts	No Assistance | Cart to Checkout %	Digital Transformation NEW
+ConsumerPostpaidWebPhoneAALCheckoutsasaPCTofCartStarts	No Assistance | Cart to Checkout %	Digital Transformation NEW
+ConsumerPostpaidWebPhoneAALCheckoutsasaPCTofCartStarts	No Assistance | Cart to Checkout %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebBTSAALOrdersasaPCTofCheckouts	No Assistance | Checkout to Order %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebBTSAALOrdersasaPCTofCheckouts	No Assistance | Checkout to Order %	Digital Transformation NEW
+ConsumerPostpaidWebPhoneAALOrdersasaPCTofCheckouts	No Assistance | Checkout to Order %	Digital Transformation NEW
+ConsumerPostpaidWebPhoneAALOrdersasaPCTofCheckouts	No Assistance | Checkout to Order %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebBTSAALOrdersasaPCTofAALIntent	No Assistance | Intent to Order %	Digital Transformation NEW
+ConsumerPostpaidWebBTSAALOrdersasaPCTofAALIntent	No Assistance | Intent to Order %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidWebPhoneAALOrdersasaPCTofAALIntent	No Assistance | Intent to Order %	Digital Transformation NEW
+ConsumerPostpaidWebPhoneAALOrdersasaPCTofAALIntent	No Assistance | Intent to Order %	Digital Transformation NEW Outcomes 2
+ConsumerPostpaidBlendedAttachP360NewDevicePctAALWeb	P360 Attach Rate at POS (%) | AALs - New Device	Hero - Digital
+ConsumerBRSiSPostpaidAALPhoneActivationsTM1Mapped	Phone	Branded Retail SiS Outcomes
+ConsumerBRSiSPostpaidAALPhoneActivationsTM1Mapped	Phone	Branded Retail SiS
+ConsumerPostpaidPhoneAALinclUSCCTM1Mapped	Phone AALs Activations	Hero - Core Postpaid KP1
+PrepaidTMOConnectPhoneActMRCNewandAAL	Phone Activating MRC (Rate Plan)  | Connect by T-Mobile	TMO Prepaid & Connect
+PrepaidTMOPhoneActMRCNewandAAL	Phone Activating MRC (Rate Plan)  | TMO Prepaid	TMO Prepaid & Connect
+DigitalConsumerPostpaidActsPhoneNOASSISTTM1Mapped	Phone Activations (New+AALs)	Hero - Digital
+ConsumerBRARNPostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail ARN
+ConsumerBRARNPostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail ARN Outcomes 2
+ConsumerBRExperiencePostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail Experience Outcomes 2
+ConsumerBRExperiencePostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail Experience
+ConsumerBRNeighborhoodPostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail Neighborhood
+ConsumerBRNeighborhoodPostpaidAALPhoneActivationsTM1Mapped	Phone | Activations	Branded Retail Neighborhood Outcomes 2
+ConsumerBRPostpaidAALPhoneActivationsINCLSiSTM1Mapped	Phone | Activations	Branded Retail Total
+ConsumerBRPostpaidAALPhoneActivationsINCLSiSTM1Mapped	Phone | Activations	Branded Retail Total Outcomes 2
+ConsumerBRAALPhoneActsARNConversionRateAutomated	Phone | Conversion Rate	Branded Retail ARN Outcomes 2
+ConsumerBRAALPhoneActsARNConversionRateAutomated	Phone | Conversion Rate	Branded Retail ARN
+ConsumerBRAALPhoneActsExperienceConversionRateAutomated	Phone | Conversion Rate	Branded Retail Experience Outcomes 2
+ConsumerBRAALPhoneActsExperienceConversionRateAutomated	Phone | Conversion Rate	Branded Retail Experience
+ConsumerBRAALPhoneActsNeighborhoodConversionRateAutomated	Phone | Conversion Rate	Branded Retail Neighborhood Outcomes 2
+ConsumerBRAALPhoneActsNeighborhoodConversionRateAutomated	Phone | Conversion Rate	Branded Retail Neighborhood
+PostpaidAllProductsAALInclUSCCTM1Mapped	Postpaid AALs (All Products)	Hero - TMUS Outcomes
+PostpaidAllProductsAALInclUSCCTM1Mapped	Postpaid AALs (All Products)	Hero - TMUS
+ConsumerAALTotalPostpaidActsDigitalTM1Mapped	Postpaid AALs (All Products) | Volume	Hero - Digital
+ConsumerAALTotalPostpaidActsDigitalPCTofTotalTM1Mapped	Postpaid AALs (All Products)| Non-Assist SOE	Hero - Digital
+ConsumerPostpaidPhoneBTSAALTM1Mapped	Postpaid AALs (Phone+BTS)	Hero - Core Postpaid
+ConsumerPostpaidPhoneBTSAALTM1Mapped	Postpaid AALs (Phone+BTS)	Hero - Core Postpaid Outcomes
+ConsumerCarePostpaidBTSAALTM1Mapped	Postpaid AALs - Total	Cons Care Outcomes 1
+ConsumerCarePostpaidBTSAALTM1Mapped	Postpaid AALs - Total	Cons Care 1
+ConsumerCarePostpaidHSIAALTM1Mapped	Postpaid AALs - Total	Cons Care Outcomes 1
+ConsumerCarePostpaidHSIAALTM1Mapped	Postpaid AALs - Total	Cons Care 1
+ConsumerCarePostpaidPhoneAALTM1Mapped	Postpaid AALs - Total	Cons Care 1
+ConsumerCarePostpaidPhoneAALTM1Mapped	Postpaid AALs - Total	Cons Care Outcomes 1
+ConsumerCareTotalPostpaidAALactsTM1Mapped	Postpaid AALs - Total	Cons Care Outcomes 1
+ConsumerCareTotalPostpaidAALactsTM1Mapped	Postpaid AALs - Total	Cons Care 1
+Header6	Postpaid Phone - AALs	Digital Transformation NEW
+Header6	Postpaid Phone - AALs	Digital Transformation NEW Outcomes 2
+TotalPrepaidPhoneBTSAALsTM1Mapped	Prepaid AALs (Phone + BTS)	Hero - Core Prepaid Outcomes
+TotalPrepaidPhoneBTSAALsTM1Mapped	Prepaid AALs (Phone + BTS)	Hero - Core Prepaid 
+DigitalPctofConsumerPostpaidActivationsPhoneBTSHSIFiberwoNRIndirect	"Total Activations (New + AALs)
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW Outcomes 1
+DigitalPctofConsumerPostpaidActivationsPhoneBTSHSIFiberwoNRIndirect	"Total Activations (New + AALs)
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW
+TotalConsumerPostpaidActsDigitalTM1MappedUnassistedPhoneBTSHSIFiber	"Total Activations (New + AALs)
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW
+TotalConsumerPostpaidActsDigitalTM1MappedUnassistedPhoneBTSHSIFiber	"Total Activations (New + AALs)
+(incl Phone, BTS, Broadband)"	Digital Transformation NEW Outcomes 1
+AALNPSforAssistedandUnassisted	Transactional NPS | AALs	Hero - Digital
