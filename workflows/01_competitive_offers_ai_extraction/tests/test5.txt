@@ -818,3 +818,21 @@ NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	
 NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-09-26	Actuals	Digital Transformation NEW Outcomes 2	null
 NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-09-30	Actuals	Digital Transformation NEW	null
 NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-09-30	Actuals	Digital Transformation NEW Outcomes 2	null
+
+
+
+SELECT MetricID, WeekEnding, MetricType, DateContext, Page, DisplayMetricType, IsFuture, Amount
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE UPPER(TRIM(MetricID)) IN (
+  'CONPOSTPAIDDIGITALPCTOFNEWBANPHONEUNASSISTEDANDASSISTEDWONRINDIRECT',
+  'DIGITALPCTOFCONSUMERPOSTPAIDACTIVATIONSPHONENEWSAMEPAGEWONRINDIRECT',
+  'NEWPHONEBANASSISTEDACTIVATIONSDIGITALPCTOFCONSUMERPOSTPAIDTM1MAPPEDWONRINDIRECT'
+)
+AND WeekEnding < '2026-04-04'
+ORDER BY MetricID, WeekEnding, MetricType, Page, DateContext;
+
+SELECT DISTINCT MetricID, MetricName, Page
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE WeekEnding BETWEEN '2026-01-01' AND '2026-03-31'
+  AND LOWER(MetricName) LIKE '%digital%'
+ORDER BY MetricName, MetricID;
