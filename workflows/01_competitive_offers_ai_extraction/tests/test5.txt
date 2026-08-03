@@ -831,8 +831,282 @@ WHERE UPPER(TRIM(MetricID)) IN (
 AND WeekEnding < '2026-04-04'
 ORDER BY MetricID, WeekEnding, MetricType, Page, DateContext;
 
+output:
+MetricID	WeekEnding	MetricType	DateContext	Page	DisplayMetricType	IsFuture	Amount
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-03	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-03	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-03	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-03	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-10	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-10	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-10	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-10	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-17	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-17	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-17	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-17	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-24	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-24	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-24	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-24	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-31	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-31	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-31	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-01-31	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-07	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-07	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-07	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-07	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-14	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-14	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-14	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-14	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-21	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-21	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-21	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-21	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-28	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-28	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-28	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-02-28	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-07	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-07	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-07	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-07	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-14	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-14	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-14	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-14	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-21	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-21	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-21	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-21	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-28	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-28	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-28	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-28	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-31	Actuals/Outlook	Normal	Digital Transformation NEW	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-31	Actuals/Outlook	Normal	Digital Transformation NEW Outcomes 2	Actuals/Outlook	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-31	QGP	Normal	Digital Transformation NEW	Target	Is Past	null
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	2026-03-31	QGP	Normal	Digital Transformation NEW Outcomes 2	Target	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-03	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-03	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-10	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-10	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-17	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-17	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-24	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-24	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-31	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-01-31	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-07	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-07	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-14	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-14	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-21	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-21	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-28	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-02-28	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-07	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-07	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-14	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-14	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-21	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-21	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-28	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-28	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-31	Actuals	Normal	Digital Transformation NEW	No Assistance %	Is Past	null
+DigitalPctofConsumerPostpaidActivationsPhoneNEWSamePagewoNRIndirect	2026-03-31	Actuals	Normal	Digital Transformation NEW Outcomes 2	No Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-03	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-03	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-10	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-10	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-17	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-17	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-24	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-24	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-31	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-01-31	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-07	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-07	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-14	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-14	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-21	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-21	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-28	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-02-28	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-07	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-07	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-14	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-14	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-21	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-21	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-28	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-28	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-31	Actuals	Normal	Digital Transformation NEW	Assistance %	Is Past	null
+NewPhoneBANAssistedActivationsDigitalPCTofConsumerPostpaidTM1MappedwoNRIndirect	2026-03-31	Actuals	Normal	Digital Transformation NEW Outcomes 2	Assistance %	Is Past	null
+
 SELECT DISTINCT MetricID, MetricName, Page
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE WeekEnding BETWEEN '2026-01-01' AND '2026-03-31'
   AND LOWER(MetricName) LIKE '%digital%'
 ORDER BY MetricName, MetricID;
+
+output:
+MetricID	MetricName	Page
+TotalCreditAppsTFBWeb	        Digital	TFB Channels
+TFBChannelActsENTSegmentinDigitalLegacyTM1Mapped	        Legacy Digital Platforms	TFB Channels
+TFBChannelActsGovSegmentinDigitalLegacyTM1Mapped	        Legacy Digital Platforms	TFB Channels
+TFBChannelActsSMBSegmentinDigitalLegacyTM1Mapped	        Legacy Digital Platforms	TFB Channels
+ConsumerPostpaidAALBANPhoneBTSLinesUnassistedTM1Mapped	     Digital % of AALs (Non-Assist)	Hero - Core Postpaid KP1
+ConsumerPostpaidNewBANPhoneBTSLinesUnassistedTM1Mapped	     Digital % of New Account Activations (Non-Assist)	Hero - Core Postpaid KP1
+ConsumerPostpaidP360AttachOnDevicesActANDUpgradeAUTOMATEDDigital	     Digital Channel Attach	Hero - VAS
+ConsumerPostpaidP360AttachOnDevicesActANDUpgradeAUTOMATEDDigital	     Digital Channel Attach	Hero - VAS Outcomes
+CreditCardDigitalNewAcctsPCTofTotal	     Digital | Mix %	Credit Card
+CreditCardDigitalNewAccountsManual	     Digital | Volume	Credit Card
+ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	IT Summary
+ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"    Thereof: Digital % of New Acct Acts
+    (No Assistance + Assistance)"	IT Summary Outcomes
+ConsumerMINTIoTDigitalNonODAConversionRate	BTS Traffic Conversion | Digital	Hero - Core Postpaid KP2
+Header5	Blended Attach Rate at POS (%) - Digital	Hero - VAS Diganostics 1
+Header13	Business Digitalization & Solutions	Key Priorities
+Header13	Business Digitalization & Solutions	Key Priorities Outcomes 2
+Header3	Business Digitalization and Simplification	IT Summary
+Header3	Business Digitalization and Simplification	IT Summary Outcomes
+TMOConnectPSPVs	Connect Digital Shopping Visits	Hero - Core Prepaid KP2
+Header2	Consumer Digitalization and Simplification	IT Summary
+Header2	Consumer Digitalization and Simplification	IT Summary Outcomes
+Header8	Core Postpaid Digitalization & Simplification	Key Priorities
+Header8	Core Postpaid Digitalization & Simplification	Key Priorities Outcomes 2
+DigitalCreditAppConversionRateTotal	Credit Apps (incl Phone, BTS, Broadband) | Conversion in Digital	Digital Transformation NEW Outcomes 1
+DigitalCreditAppConversionRateTotal	Credit Apps (incl Phone, BTS, Broadband) | Conversion in Digital	Digital Transformation NEW
+DigitalCreditAppConversionRateTotalVartoPYAUTOMATED	Credit Apps (incl Phone, BTS, Broadband) | Conversion in Digital	Digital Transformation NEW Outcomes 1
+DigitalCreditAppConversionRateTotalVartoPYAUTOMATED	Credit Apps (incl Phone, BTS, Broadband) | Conversion in Digital	Digital Transformation NEW
+DigitalCreditAppConversionRateTotal	Credit Apps by Channel | Digital	New Postpaid Account Channel Mix
+TotalDigitalCreditAppsAUTOTotal	Credit Apps by Channel | Digital	New Postpaid Account Channel Mix
+TotalDigitalCreditAppsAUTOTotalVartoPY	Credit Apps by Channel | Digital	New Postpaid Account Channel Mix
+DigitalCreditAppConversionRateTotal	Credit Apps by Channel | Digital (No Assistance)	Hero - Core Postpaid KP2
+TotalDigitalCreditAppsAUTOTotal	Credit Apps by Channel | Digital (No Assistance)	Hero - Core Postpaid KP2
+Blank56	Digital	Credit App Conversion
+Blank57	Digital	Credit App Conversion
+Blank58	Digital	Credit App Conversion
+DigitalCreditAppPrimeMix	Digital	Credit App Conversion
+Header3	Digital	Hero - Fiber KPI 2
+MintMobileActivationsEcommerceTM1Mapped	Digital	Mint Ultra Outcomes 1
+MintMobileActivationsEcommerceTM1Mapped	Digital	Mint Ultra
+NewAccountsChannelMixExclBroadbandDigital	Digital	New Postpaid Account Channel Mix
+PrepaidDigitalActsExclHSIInclMintTM1Mapped	Digital	Hero - Core Prepaid KP1
+TMOPpdPlusConnectPhoneBTSShareofAllChannelsDigital	Digital	TMO Prepaid & Connect
+TotalDigitalCreditAppsAUTOTotal	Digital	Credit App Conversion
+TotalDigitalCreditAppsConvNearPrimeAUTOTotal	Digital	Credit App Conversion
+TotalDigitalCreditAppsConvPrimeAUTOTotal	Digital	Credit App Conversion
+TotalDigitalCreditAppsConvSubPrimeAUTOTotal	Digital	Credit App Conversion
+ConsumerPostpaidPhoneandBTSPCTofTotalDigital	Digital 	Hero - Core Postpaid KP2
+MJBMetroConversiononWebVisitsPhonenadBTS	Digital 	Metro by T-Mobile
+MJBMetroConversiononWebVisitsPhonenadBTS	Digital 	Metro by T-Mobile Outcomes
+MetroPhoneBTSShareofAllChannelsDigital	Digital 	Metro by T-Mobile Outcomes 1
+MetroPhoneBTSShareofAllChannelsDigital	Digital 	Metro by T-Mobile
+TMOPrepaidandConnectDigitalConversion	Digital 	TMO Prepaid & Connect
+TMobilePrepaidDigitalActivationsExclHSITM1Mapped	Digital 	TMO Prepaid & Connect
+TotalDigitalMetroActivationsPhoneandOtherTM1Mapped	Digital 	Metro by T-Mobile Outcomes
+TotalDigitalMetroActivationsPhoneandOtherTM1Mapped	Digital 	Metro by T-Mobile
+MixConsumerNewLinesbyRatePlanTierBESTTM1MappedDigital	Digital  | Best	Consumer Postpaid Revenue
+MixConsumerNewLinesbyRatePlanTierBETTERTM1MappedDigital	Digital  | Better	Consumer Postpaid Revenue
+MixConsumerNewLinesbyRatePlanTierGOODTM1MappedDigital	Digital  | Good	Consumer Postpaid Revenue
+DigitalPCTEnterpriseHSIActivationsConsumerTM1Mapped�	Digital % of 5G Broadband activations	FinancialQGP
+ConsumerPctofPhoneBTSHSIAALAcctActsUnassistedPlusAssisted	"Digital % of AALs
+(No Assistance + Assistance)"	Key Priorities Outcomes 2
+ConsumerPctofPhoneBTSHSIAALAcctActsUnassistedPlusAssisted	"Digital % of AALs
+(No Assistance + Assistance)"	Key Priorities
+ConsumerPctofPhoneBTSHSIAALAcctActsDigitalUnassisted	"Digital % of AALs
+(No Assistance)"	Key Priorities
+ConsumerPctofPhoneBTSHSIAALAcctActsDigitalUnassisted	"Digital % of AALs
+(No Assistance)"	Key Priorities Outcomes 2
+ConsumerPctofAALAcctActsUnassistedPlusAssistedv2	Digital % of AALs (Non-Assist + Assist)	Hero - Core Postpaid KP1
+DigitalPctofBTSActsUnassistedANDAssistedwoNRIndirect	"Digital % of BTS  
+(No Assistance + Assistance)"	Digital Transformation NEW Outcomes 2
+DigitalPctofBTSActsUnassistedANDAssistedwoNRIndirect	"Digital % of BTS  
+(No Assistance + Assistance)"	Digital Transformation NEW
+BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	IT Summary Outcomes
+BusinessTotalPostpaidActivationsAssistedandUnassistedMIX	"Digital % of Business Postpaid Activations
+(No Assistance + Assistance)"	IT Summary
+TotalDigitalPctActsMetroPhoneTM1Mapped	Digital % of Channels: Metro 	FinancialQGP
+TotalDigitalPctActsTMOPrepaidPhoneTM1Mapped	Digital % of Channels: TMO Prepaid	FinancialQGP
+TotalDigitalPctofTFBActivationsTM1Mapped	Digital % of Channels: Total TFB Postpaid	FinancialQGP
+ConsumerPctofNewAcctActsUnassistedPlusAssisted	Digital % of New Account Activations (Non-Assist + Assist)	Hero - Core Postpaid KP1
+ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"Digital % of New Acct Acts
+(No Assistance + Assistance)"	Key Priorities
+ConsumerPctofNewAcctActsUnassistedPlusAssistedPhoneBTSHSI	"Digital % of New Acct Acts
+(No Assistance + Assistance)"	Key Priorities Outcomes 2
+ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"Digital % of New Accts Acts
+(No Assistance)"	Key Priorities
+ConsumerPctofPhoneBTSHSINewAcctActsDigitalUnassisted	"Digital % of New Accts Acts
+(No Assistance)"	Key Priorities Outcomes 2
+PostpaidPhoneAALBOPISSelfServeAssistedDigitalPCTwoNRIndirect	"Digital % of Phone AALs
+(No Assistance + Assistance)"	Digital Transformation NEW Outcomes 2
+PostpaidPhoneAALBOPISSelfServeAssistedDigitalPCTwoNRIndirect	"Digital % of Phone AALs
+(No Assistance + Assistance)"	Digital Transformation NEW
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	"Digital % of Phone New Acct Acts 
+(No Assistance + Assistance)"	Digital Transformation NEW Outcomes 2
+ConPostpaidDigitalPctofNewBANPhoneUnassistedANDAssistedwoNRIndirect	"Digital % of Phone New Acct Acts 
+(No Assistance + Assistance)"	Digital Transformation NEW
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	IT Summary Outcomes
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades
+(No Assistance + Assistance)"	IT Summary
+QGPTeamDigitalPctofPhoneUpgrades	Digital % of Phone Upgrades 	FinancialQGP
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedNEWDigitalPageMJB	"Digital % of Phone Upgrades 
+(No Assistance + Assistance)"	Digital Transformation NEW
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedNEWDigitalPageMJB	"Digital % of Phone Upgrades 
+(No Assistance + Assistance)"	Digital Transformation NEW Outcomes 3
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades 
+(No Assistance + Assistance)"	Key Priorities Outcomes 2
+PostpaidPhoneUpgradeVolumeBOPISSelfServeAssistedDigitalPCTAutomatedwFinanceTargetNEW	"Digital % of Phone Upgrades 
+(No Assistance + Assistance)"	Key Priorities
+PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomated	"Digital % of Phone Upgrades 
+(No Assistance)"	Key Priorities Outcomes 2
+PostpaidPhoneUpgradeVolumeDigitalUnassistedPCTofConPostpaidAutomated	"Digital % of Phone Upgrades 
+(No Assistance)"	Key Priorities
+PostpaidPhoneUpgradeVolumeDigitalPCTAutomated	Digital % of Phone Upgrades - AUTO	FinancialQGP
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	IT Summary
+DigitalPctofConsumerPostpaidActivationsExclFiberNRIndirectChannelBTSODA	"Digital % of Postpaid Activations
+(No Assistance + Assistance)"	IT Summary Outcomes
+Header3	Digital Adoption	Hero - Core Postpaid KP1
+ConsumerPostpaidPhoneandBTSPCTofTotaDigitalAffiliates	Digital Affiliates	Hero - Core Postpaid KP2
+Header3	Digital Affiliates	Virtual Retail
+Header3	Digital Affiliates	Virtual Retail Outcomes 1
+Header6	Digital Affiliates	Hero - Fiber KPI 2
+HSIPostpaidWebEligChecksAutomatedNEW	Digital EC Volume	Hero - Broadband KPI 1
+Header16	Digital Experience	Digital Transformation NEW Outcomes 3
+Header16	Digital Experience	Digital Transformation NEW
+DigitallyConnectedDigitalMediaSpend	Digital Media Spend	FinancialQGP
+DigitallyConnectedPaidMediaSpend	Digital Media Spend	FinancialQGP
+TotalDigitalMetroActivationsPhoneTM1Mapped	Digital Metro Prepaid Phone Activations	FinancialQGP
+ITTransactionalNPS	Digital NPS	IT Summary
+ITTransactionalNPS	Digital NPS	IT Summary Outcomes
+Header2	Digital Performance	Digital Transformation NEW
+Header2	Digital Performance	Digital Transformation NEW Outcomes 1
+Header11	Digital Revenue	Digital Transformation NEW
+Header11	Digital Revenue	Digital Transformation NEW Outcomes 3
+PostpaidConsumerPhoneandBTSAALIntent	Digital Shopping Traffic  | AAL Intent	Hero - Core Postpaid KP2
+DigitalPostpaidUniqueProspectVisitor	Digital Shopping Traffic  | UPVs	Hero - Core Postpaid KP2
+TotalDigitalTMOPrepaidActivationsPhoneTM1Mapped	Digital TMO Prepaid Phone Activations	FinancialQGP
+Header8	Legacy Digital Platforms	TFB Channels
+MetroPSPVs	Metro Digital Traffic	Hero - Core Prepaid KP2
+MINTWebTraffic	Mint Digital Traffic	Hero - Core Prepaid KP2
+DigitalUnassistedMixofNewAcctLinesAllProductsPCT	Non-Assist Digital Mix of New Account Lines (All Products)	Hero - TMUS
+DigitalUnassistedMixofNewAcctLinesAllProductsPCT	Non-Assist Digital Mix of New Account Lines (All Products)	Hero - TMUS Outcomes
+ConsumerPctofPhoneBTSHSIFiberNewAcctActsDigitalUnassisted	Non-Assist Digital Mix of New Account Lines (all products)	Hero - Core Postpaid Outcomes
+ConsumerPctofPhoneBTSHSIFiberNewAcctActsDigitalUnassisted	Non-Assist Digital Mix of New Account Lines (all products)	Hero - Core Postpaid
+TotalPrepaidUnassistedDigitalNewAcctActsPCTofTotalExclNRIndirectTM1Mapped	Non-Assist Digital Mix of New Account Lines (all products)	Hero - Core Prepaid 
+TotalPrepaidUnassistedDigitalNewAcctActsPCTofTotalExclNRIndirectTM1Mapped	Non-Assist Digital Mix of New Account Lines (all products)	Hero - Core Prepaid Outcomes
+Header5	POS Enrollment Volume - Digital	Hero - VAS Diganostics 3
+Header5	POS Opportunity Volume - Digital	Hero - VAS Diganostics 2
+ConsumerPostpaidDigitalPhoneConversionRate	Phone Traffic Conversion | Digital 	Hero - Core Postpaid KP2
+ConsumerVRInclVirtualBusinessTotalPostpaidActivationsTM1Mapped	Postpaid Activations  (incl Digital Affiliates and Business Liable)	Virtual Retail Outcomes 1
+ConsumerVRInclVirtualBusinessTotalPostpaidActivationsTM1Mapped	Postpaid Activations  (incl Digital Affiliates and Business Liable)	Virtual Retail
+TMOPrepaidPSPVs	"TMO Prepaid (excl Connect)
+Digital Shopping Visits "	Hero - Core Prepaid KP2
