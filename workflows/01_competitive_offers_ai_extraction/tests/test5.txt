@@ -8,3 +8,426 @@ WHERE UPPER(TRIM(MetricID)) IN (
 )
 AND UPPER(TRIM(DateContext)) = 'NORMAL'
 ORDER BY MetricID, WeekEnding DESC;
+
+
+MetricID	WeekEnding	MetricType	Page	DisplayMetricType	Amount
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-30	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-30	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-26	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-26	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-19	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-19	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-12	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-12	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-05	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-09-05	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-29	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-29	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-22	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-22	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-15	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-15	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-08	Actuals	Digital Transformation NEW	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-08	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	null
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-01	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2539
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-08-01	Actuals	Digital Transformation NEW	         BOPIS	2539
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-25	Actuals	Digital Transformation NEW	         BOPIS	2578
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-25	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2578
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-18	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2742
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-18	Actuals	Digital Transformation NEW	         BOPIS	2742
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-11	Actuals	Digital Transformation NEW	         BOPIS	2817
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-11	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2817
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-04	Actuals	Digital Transformation NEW	         BOPIS	1600
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-07-04	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	1600
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-30	Actuals	Digital Transformation NEW	         BOPIS	1160
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-30	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	1160
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-27	Actuals	Digital Transformation NEW	         BOPIS	2937
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-27	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2937
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-20	Actuals	Digital Transformation NEW	         BOPIS	3112
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-20	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	3112
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-13	Actuals	Digital Transformation NEW	         BOPIS	2701
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-13	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2701
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-06	Actuals	Digital Transformation NEW	         BOPIS	2557
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-06-06	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2557
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-30	Actuals	Digital Transformation NEW	         BOPIS	2260
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-30	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2260
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-23	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2223
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-23	Actuals	Digital Transformation NEW	         BOPIS	2223
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-16	Actuals	Digital Transformation NEW	         BOPIS	2314
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-16	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2314
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-09	Actuals	Digital Transformation NEW	         BOPIS	2632
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-09	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2632
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-02	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2531
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-05-02	Actuals	Digital Transformation NEW	         BOPIS	2531
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-25	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2389
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-25	Actuals	Digital Transformation NEW	         BOPIS	2389
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-18	Actuals	Digital Transformation NEW	         BOPIS	2228
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-18	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2228
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-11	Actuals	Digital Transformation NEW	         BOPIS	2252
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-11	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2252
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-04	Actuals	Digital Transformation NEW	         BOPIS	1448
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-04-04	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	1448
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-31	Actuals	Digital Transformation NEW	         BOPIS	868
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-31	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	868
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-28	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2445
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-28	Actuals	Digital Transformation NEW	         BOPIS	2445
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-21	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2482
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-21	Actuals	Digital Transformation NEW	         BOPIS	2482
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-14	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2648
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-14	Actuals	Digital Transformation NEW	         BOPIS	2648
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-07	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	3124
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-03-07	Actuals	Digital Transformation NEW	         BOPIS	3124
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-28	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	3080
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-28	Actuals	Digital Transformation NEW	         BOPIS	3080
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-21	Actuals	Digital Transformation NEW	         BOPIS	2450
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-21	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2450
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-14	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2349
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-14	Actuals	Digital Transformation NEW	         BOPIS	2349
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-07	Actuals	Digital Transformation NEW	         BOPIS	2226
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-02-07	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2226
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-31	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	1952
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-31	Actuals	Digital Transformation NEW	         BOPIS	1952
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-24	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2045
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-24	Actuals	Digital Transformation NEW	         BOPIS	2045
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-17	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2246
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-17	Actuals	Digital Transformation NEW	         BOPIS	2246
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-10	Actuals	Digital Transformation NEW	         BOPIS	2021
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-10	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	2021
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-03	Actuals	Digital Transformation NEW	         BOPIS	1046
+ConsumerPostpaidBTSBOPISUnassistedActivationsTM1MappedDigital	2026-01-03	Actuals	Digital Transformation NEW Outcomes 2	         BOPIS	1046
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-30	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-30	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-26	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-26	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-19	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-19	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-12	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-12	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-05	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-09-05	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-29	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-29	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-22	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-22	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-15	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-15	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-08	Actuals	Digital Transformation NEW	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-08	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	null
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-01	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10391
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-08-01	Actuals	Digital Transformation NEW	         Non-BOPIS	10391
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-25	Actuals	Digital Transformation NEW	         Non-BOPIS	9212
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-25	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9212
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-18	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9470
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-18	Actuals	Digital Transformation NEW	         Non-BOPIS	9470
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-11	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10539
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-11	Actuals	Digital Transformation NEW	         Non-BOPIS	10539
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-04	Actuals	Digital Transformation NEW	         Non-BOPIS	5584
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-07-04	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	5584
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-30	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	4988
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-30	Actuals	Digital Transformation NEW	         Non-BOPIS	4988
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-27	Actuals	Digital Transformation NEW	         Non-BOPIS	10914
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-27	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10914
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-20	Actuals	Digital Transformation NEW	         Non-BOPIS	11241
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-20	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	11241
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-13	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9917
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-13	Actuals	Digital Transformation NEW	         Non-BOPIS	9917
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-06	Actuals	Digital Transformation NEW	         Non-BOPIS	10469
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-06-06	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10469
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-30	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10055
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-30	Actuals	Digital Transformation NEW	         Non-BOPIS	10055
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-23	Actuals	Digital Transformation NEW	         Non-BOPIS	9573
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-23	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9573
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-16	Actuals	Digital Transformation NEW	         Non-BOPIS	10397
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-16	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10397
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-09	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10513
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-09	Actuals	Digital Transformation NEW	         Non-BOPIS	10513
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-02	Actuals	Digital Transformation NEW	         Non-BOPIS	9913
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-05-02	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9913
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-25	Actuals	Digital Transformation NEW	         Non-BOPIS	9665
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-25	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9665
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-18	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	8674
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-18	Actuals	Digital Transformation NEW	         Non-BOPIS	8674
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-11	Actuals	Digital Transformation NEW	         Non-BOPIS	9471
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-11	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9471
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-04	Actuals	Digital Transformation NEW	         Non-BOPIS	5351
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-04-04	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	5351
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-31	Actuals	Digital Transformation NEW	         Non-BOPIS	4216
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-31	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	4216
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-28	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10037
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-28	Actuals	Digital Transformation NEW	         Non-BOPIS	10037
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-21	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10599
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-21	Actuals	Digital Transformation NEW	         Non-BOPIS	10599
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-14	Actuals	Digital Transformation NEW	         Non-BOPIS	11900
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-14	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	11900
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-07	Actuals	Digital Transformation NEW	         Non-BOPIS	12256
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-03-07	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	12256
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-28	Actuals	Digital Transformation NEW	         Non-BOPIS	12219
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-28	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	12219
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-21	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9603
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-21	Actuals	Digital Transformation NEW	         Non-BOPIS	9603
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-14	Actuals	Digital Transformation NEW	         Non-BOPIS	8850
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-14	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	8850
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-07	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9612
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-02-07	Actuals	Digital Transformation NEW	         Non-BOPIS	9612
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-31	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9482
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-31	Actuals	Digital Transformation NEW	         Non-BOPIS	9482
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-24	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	9006
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-24	Actuals	Digital Transformation NEW	         Non-BOPIS	9006
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-17	Actuals	Digital Transformation NEW	         Non-BOPIS	10489
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-17	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	10489
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-10	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	12555
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-10	Actuals	Digital Transformation NEW	         Non-BOPIS	12555
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-03	Actuals	Digital Transformation NEW	         Non-BOPIS	6934
+ConsumerPostpaidBTSNonBOPISUnassistedActivationsTM1MappedDigital	2026-01-03	Actuals	Digital Transformation NEW Outcomes 2	         Non-BOPIS	6934
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-30	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-30	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-26	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-26	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-19	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-19	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-12	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-12	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-05	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-09-05	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-29	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-29	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-22	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-22	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-15	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-15	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-08	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-08	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-01	Actuals	Digital Transformation NEW	No Assistance %	0.181029
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-08-01	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.181029
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-25	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.135588
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-25	Actuals	Digital Transformation NEW	No Assistance %	0.135588
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-18	Actuals	Digital Transformation NEW	No Assistance %	0.11436
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-18	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.11436
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-11	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.140378
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-11	Actuals	Digital Transformation NEW	No Assistance %	0.140378
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-04	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.131531
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-07-04	Actuals	Digital Transformation NEW	No Assistance %	0.131531
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-30	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.154978
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-30	Actuals	Digital Transformation NEW	No Assistance %	0.154978
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-27	Actuals	Digital Transformation NEW	No Assistance %	0.14007
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-27	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.14007
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-20	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.134528
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-20	Actuals	Digital Transformation NEW	No Assistance %	0.134528
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-13	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.12664
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-13	Actuals	Digital Transformation NEW	No Assistance %	0.12664
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-06	Actuals	Digital Transformation NEW	No Assistance %	0.122905
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-06-06	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.122905
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-30	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.130582
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-30	Actuals	Digital Transformation NEW	No Assistance %	0.130582
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-23	Actuals	Digital Transformation NEW	No Assistance %	0.119613
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-23	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.119613
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-16	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.127224
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-16	Actuals	Digital Transformation NEW	No Assistance %	0.127224
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-09	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.123997
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-09	Actuals	Digital Transformation NEW	No Assistance %	0.123997
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-02	Actuals	Digital Transformation NEW	No Assistance %	0.123624
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-05-02	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.123624
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-25	Actuals	Digital Transformation NEW	No Assistance %	0.120124
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-25	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.120124
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-18	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.113654
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-18	Actuals	Digital Transformation NEW	No Assistance %	0.113654
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-11	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.125006
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-11	Actuals	Digital Transformation NEW	No Assistance %	0.125006
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-04	Actuals	Digital Transformation NEW	No Assistance %	0.10835
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-04-04	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	0.10835
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-31	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-31	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-28	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-28	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-21	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-21	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-14	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-14	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-07	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-03-07	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-28	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-28	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-21	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-21	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-14	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-14	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-07	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-02-07	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-31	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-31	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-24	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-24	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-17	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-17	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-10	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-10	Actuals	Digital Transformation NEW	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-03	Actuals	Digital Transformation NEW Outcomes 2	No Assistance %	null
+DigitalPctofConsumerPostpaidActivationsBTSwoNRIndirect	2026-01-03	Actuals	Digital Transformation NEW	No Assistance %	null
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-30	QGP	Digital Transformation NEW	Target	8573.41246
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-30	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	7875.196488
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-30	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	7875.196488
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-30	QGP	Digital Transformation NEW Outcomes 2	Target	8573.41246
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-26	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	17818.892798
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-26	QGP	Digital Transformation NEW	Target	19833.117647
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-26	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	17818.892798
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-26	QGP	Digital Transformation NEW Outcomes 2	Target	19833.117647
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-19	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14909.253737
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-19	QGP	Digital Transformation NEW	Target	15012.272121
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-19	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14909.253737
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-19	QGP	Digital Transformation NEW Outcomes 2	Target	15012.272121
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-12	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13071.300585
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-12	QGP	Digital Transformation NEW	Target	12742.739569
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-12	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13071.300585
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-12	QGP	Digital Transformation NEW Outcomes 2	Target	12742.739569
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-05	QGP	Digital Transformation NEW Outcomes 2	Target	14479.404548
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-05	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14661.389421
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-05	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14661.389421
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-09-05	QGP	Digital Transformation NEW	Target	14479.404548
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-29	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14240.289798
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-29	QGP	Digital Transformation NEW Outcomes 2	Target	14252.818713
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-29	QGP	Digital Transformation NEW	Target	14252.818713
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-29	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14240.289798
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-22	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14198.942303
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-22	QGP	Digital Transformation NEW	Target	14356.026909
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-22	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14198.942303
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-22	QGP	Digital Transformation NEW Outcomes 2	Target	14356.026909
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-15	QGP	Digital Transformation NEW	Target	16810.82095
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-15	QGP	Digital Transformation NEW Outcomes 2	Target	16810.82095
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-15	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	16643.368301
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-15	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	16643.368301
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-08	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13730.880002
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-08	QGP	Digital Transformation NEW	Target	13855.174928
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-08	QGP	Digital Transformation NEW Outcomes 2	Target	13855.174928
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-08	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13730.880002
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-01	QGP	Digital Transformation NEW Outcomes 2	Target	13791.437107
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-01	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12930
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-01	QGP	Digital Transformation NEW	Target	13791.437107
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-08-01	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12930
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-25	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11790
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-25	QGP	Digital Transformation NEW	Target	15183.510909
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-25	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11790
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-25	QGP	Digital Transformation NEW Outcomes 2	Target	15183.510909
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-18	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12212
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-18	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12212
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-18	QGP	Digital Transformation NEW Outcomes 2	Target	16239.103349
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-18	QGP	Digital Transformation NEW	Target	16239.103349
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-11	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13356
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-11	QGP	Digital Transformation NEW	Target	15117.684589
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-11	QGP	Digital Transformation NEW Outcomes 2	Target	15117.684589
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-11	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13356
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-04	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	7184
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-04	QGP	Digital Transformation NEW Outcomes 2	Target	7763.40756
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-04	QGP	Digital Transformation NEW	Target	7763.40756
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-07-04	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	7184
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-30	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	6148
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-30	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	6148
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-30	QGP	Digital Transformation NEW Outcomes 2	Target	6933.655551
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-30	QGP	Digital Transformation NEW	Target	6933.655551
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-27	QGP	Digital Transformation NEW Outcomes 2	Target	14883.92192
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-27	QGP	Digital Transformation NEW	Target	14883.92192
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-27	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13851
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-27	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13851
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-20	QGP	Digital Transformation NEW	Target	15477.096446
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-20	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14353
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-20	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14353
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-20	QGP	Digital Transformation NEW Outcomes 2	Target	15477.096446
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-13	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12618
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-13	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12618
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-13	QGP	Digital Transformation NEW	Target	15673.507843
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-13	QGP	Digital Transformation NEW Outcomes 2	Target	15673.507843
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-06	QGP	Digital Transformation NEW Outcomes 2	Target	15338.729469
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-06	QGP	Digital Transformation NEW	Target	15338.729469
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-06	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13026
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-06-06	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13026
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-30	QGP	Digital Transformation NEW	Target	14747.070464
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-30	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12315
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-30	QGP	Digital Transformation NEW Outcomes 2	Target	14747.070464
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-30	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12315
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-23	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11796
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-23	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11796
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-23	QGP	Digital Transformation NEW Outcomes 2	Target	16007.376896
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-23	QGP	Digital Transformation NEW	Target	16007.376896
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-16	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12711
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-16	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12711
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-16	QGP	Digital Transformation NEW	Target	16293.507069
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-16	QGP	Digital Transformation NEW Outcomes 2	Target	16293.507069
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-09	QGP	Digital Transformation NEW Outcomes 2	Target	16590.548989
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-09	QGP	Digital Transformation NEW	Target	16590.548989
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-09	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13145
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-09	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13145
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-02	QGP	Digital Transformation NEW Outcomes 2	Target	15842.55813
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-02	QGP	Digital Transformation NEW	Target	15842.55813
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-02	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12444
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-05-02	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12444
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-25	QGP	Digital Transformation NEW Outcomes 2	Target	15486.594858
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-25	QGP	Digital Transformation NEW	Target	15486.594858
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-25	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12054
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-25	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12054
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-18	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	10902
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-18	QGP	Digital Transformation NEW Outcomes 2	Target	15087.858912
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-18	QGP	Digital Transformation NEW	Target	15087.858912
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-18	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	10902
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-11	QGP	Digital Transformation NEW	Target	14074.575557
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-11	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11723
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-11	QGP	Digital Transformation NEW Outcomes 2	Target	14074.575557
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-11	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11723
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-04	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	6799
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-04	QGP	Digital Transformation NEW Outcomes 2	Target	8563.805372
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-04	QGP	Digital Transformation NEW	Target	8563.805372
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-04-04	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	6799
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-31	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	5084
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-31	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	5084
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-31	QGP	Digital Transformation NEW	Target	6731.7837
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-31	QGP	Digital Transformation NEW Outcomes 2	Target	6731.7837
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-28	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12482
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-28	QGP	Digital Transformation NEW	Target	15398.3256
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-28	QGP	Digital Transformation NEW Outcomes 2	Target	15398.3256
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-28	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12482
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-21	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	13081
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-21	QGP	Digital Transformation NEW	Target	16495.813803
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-21	QGP	Digital Transformation NEW Outcomes 2	Target	16495.813803
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-21	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	13081
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-14	QGP	Digital Transformation NEW	Target	16697.290197
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-14	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14548
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-14	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14548
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-14	QGP	Digital Transformation NEW Outcomes 2	Target	16697.290197
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-07	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	15380
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-07	QGP	Digital Transformation NEW Outcomes 2	Target	16656.622801
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-07	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	15380
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-03-07	QGP	Digital Transformation NEW	Target	16656.622801
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-28	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	15299
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-28	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	15299
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-28	QGP	Digital Transformation NEW	Target	17401.926003
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-28	QGP	Digital Transformation NEW Outcomes 2	Target	17401.926003
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-21	QGP	Digital Transformation NEW	Target	16356.800397
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-21	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12053
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-21	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12053
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-21	QGP	Digital Transformation NEW Outcomes 2	Target	16356.800397
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-14	QGP	Digital Transformation NEW Outcomes 2	Target	16447.438203
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-14	QGP	Digital Transformation NEW	Target	16447.438203
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-14	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11199
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-14	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11199
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-07	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11838
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-07	QGP	Digital Transformation NEW Outcomes 2	Target	16010.861699
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-07	QGP	Digital Transformation NEW	Target	16010.861699
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-02-07	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11838
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-31	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11434
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-31	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11434
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-31	QGP	Digital Transformation NEW	Target	15648.443398
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-31	QGP	Digital Transformation NEW Outcomes 2	Target	15648.443398
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-24	QGP	Digital Transformation NEW Outcomes 2	Target	13057.823702
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-24	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	11051
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-24	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	11051
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-24	QGP	Digital Transformation NEW	Target	13057.823702
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-17	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	12735
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-17	QGP	Digital Transformation NEW	Target	12880.9338
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-17	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	12735
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-17	QGP	Digital Transformation NEW Outcomes 2	Target	12880.9338
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-10	QGP	Digital Transformation NEW Outcomes 2	Target	12344.283602
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-10	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	14576
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-10	QGP	Digital Transformation NEW	Target	12344.283602
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-10	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	14576
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-03	QGP	Digital Transformation NEW Outcomes 2	Target	5892.6531
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-03	Actuals/Outlook	Digital Transformation NEW	Actuals/Outlook	7980
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-03	QGP	Digital Transformation NEW	Target	5892.6531
+TotalDigitalOtherActivationsTMOandSprintGlanceTM1Mapped	2026-01-03	Actuals/Outlook	Digital Transformation NEW Outcomes 2	Actuals/Outlook	7980
