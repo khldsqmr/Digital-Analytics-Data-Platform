@@ -1110,3 +1110,9 @@ ConsumerVRInclVirtualBusinessTotalPostpaidActivationsTM1Mapped	Postpaid Activati
 ConsumerVRInclVirtualBusinessTotalPostpaidActivationsTM1Mapped	Postpaid Activations  (incl Digital Affiliates and Business Liable)	Virtual Retail
 TMOPrepaidPSPVs	"TMO Prepaid (excl Connect)
 Digital Shopping Visits "	Hero - Core Prepaid KP2
+
+
+SELECT MetricID, MetricName, Page, MetricType, Amount
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE WeekEnding = '2026-02-14'
+  AND ROUND(Amount, 4) = ROUND(<the number from the dashboard>, 4)
