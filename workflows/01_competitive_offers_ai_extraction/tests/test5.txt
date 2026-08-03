@@ -4,6 +4,10 @@ GROUP BY PublishKey
 ORDER BY PublishKey DESC
 LIMIT 20;
 
+output:
+PublishKey	n_rows	n_weeks	min_insert	max_insert
+2026-08-01	400683	46	2026-02-11T14:35:41.373+00:00	2026-08-02T08:16:54.227+00:00
+
 SELECT MetricID, WeekEnding, MetricType, Page, COUNT(DISTINCT PublishKey) AS n_publish_keys, COUNT(DISTINCT Amount) AS n_distinct_amounts, MIN(Amount) AS min_amt, MAX(Amount) AS max_amt
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE UPPER(TRIM(MetricID)) IN (
@@ -23,3 +27,6 @@ GROUP BY MetricID, WeekEnding, MetricType, Page
 HAVING COUNT(DISTINCT PublishKey) > 1
 ORDER BY n_distinct_amounts DESC, MetricID, WeekEnding
 LIMIT 50;
+
+output:
+No rows returned
