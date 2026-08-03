@@ -6,3 +6,23 @@ WHERE UPPER(TRIM(MetricID)) = 'VRINBOUNDCALLSINCLHSIAUTOMATEDMANUAL'
   AND WeekEnding BETWEEN '2026-07-04' AND '2026-09-30'
   AND DateContext IN ('Normal', 'QTD', 'QTR', 'Monthly Normal')
 ORDER BY WeekEnding, DateContext;
+MetricID	WeekEnding	DateContext	Amount
+VRInboundCallsinclHSIAutomatedManual	2026-07-04	Normal	50428
+VRInboundCallsinclHSIAutomatedManual	2026-07-11	Normal	87956.999998
+VRInboundCallsinclHSIAutomatedManual	2026-07-18	Normal	85507.999997
+VRInboundCallsinclHSIAutomatedManual	2026-07-25	Normal	85832.000002
+VRInboundCallsinclHSIAutomatedManual	2026-07-31	Monthly Normal	null
+VRInboundCallsinclHSIAutomatedManual	2026-08-01	Normal	null
+VRInboundCallsinclHSIAutomatedManual	2026-08-08	Normal	80952.209303
+VRInboundCallsinclHSIAutomatedManual	2026-08-15	Normal	82525.638503
+VRInboundCallsinclHSIAutomatedManual	2026-08-22	Normal	84156.194003
+VRInboundCallsinclHSIAutomatedManual	2026-08-29	Normal	85330.265902
+VRInboundCallsinclHSIAutomatedManual	2026-08-31	Monthly Normal	null
+VRInboundCallsinclHSIAutomatedManual	2026-09-05	Normal	60012.420097
+VRInboundCallsinclHSIAutomatedManual	2026-09-12	Normal	79099.882302
+VRInboundCallsinclHSIAutomatedManual	2026-09-19	Normal	91630.9947
+VRInboundCallsinclHSIAutomatedManual	2026-09-26	Normal	82215.305298
+VRInboundCallsinclHSIAutomatedManual	2026-09-30	Monthly Normal	null
+VRInboundCallsinclHSIAutomatedManual	2026-09-30	Normal	49826.35
+VRInboundCallsinclHSIAutomatedManual	2026-09-30	QTD	309724.999997
+VRInboundCallsinclHSIAutomatedManual	2026-09-30	QTR	1005474.260105
