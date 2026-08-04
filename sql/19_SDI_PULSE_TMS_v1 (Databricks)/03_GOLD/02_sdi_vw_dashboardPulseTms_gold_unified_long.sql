@@ -17,13 +17,9 @@ STRUCTURE (CTEs currently active):
   CTE 2 — MfcChannel     : MFC spend at lob x channel_group grain (MFC_SPEND_CHANNEL)
   CTE 3 — MfcGranular    : MFC spend at finest grain (MFC_SPEND_GRANULAR)
   CTE 4 — PlatformSpend  : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
+  CTE 5 — UpvForecast    : UPV forecast channel-allocated (UPV_FORECAST)
   CTE 6 — QgpScorecard   : QGP scorecard metrics, no lob/channel_group dimension (QGP_SCORECARD)
-  Final SELECT: UNION ALL of the five CTEs above
-
-STRUCTURE (CTE commented out, not deleted — per your request):
-  CTE 5 — UpvForecast   : UPV forecast channel-allocated (UPV_FORECAST)
-  Uncomment this CTE block together with its UNION ALL line in the final SELECT to bring it
-  back. Nothing about its logic changed — same code as before, just wrapped in /* */.
+  Final SELECT: UNION ALL of all six CTEs above
 
 QGP_SCORECARD NOTE:
   Unlike every other source here, QGP has no lob or channel_group dimension — it's enterprise-
@@ -37,22 +33,25 @@ DATA SOURCE VALUES:
   'MFC_SPEND_CHANNEL'      — MFC spend at lob x channel_group; includes All Channels rollup
   'MFC_SPEND_GRANULAR'     — MFC spend at finest grain; mfc_* columns populated
   'PLATFORM_SPEND_CHANNEL' — Platform spend at lob x channel_group; POSTPAID + BROADBAND
-  'UPV_FORECAST'           — UPV forecast channel-allocated; lob = NULL (commented out)
+  'UPV_FORECAST'           — UPV forecast channel-allocated; lob = NULL
   'QGP_SCORECARD'          — QGP scorecard Actual/Target metric pairs; lob = NULL, channel_group = NULL
 
   IMPORTANT: MFC contributes two sets of rows (CHANNEL + GRANULAR).
   Always filter on data_source before summing spend to avoid double-counting.
 
-CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM):
+CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM/UPV_FORECAST):
   'All Channels' | 'Paid Search' | 'Paid Social' | 'Organic Search' |
   'Direct' | 'Programmatic' | 'Other'
   Plus, PLATFORM_SPEND_CHANNEL only: 'iSpot National TV' | 'iSpot OTT' | 'Affiliate' —
   paid-media channels with no Adobe-tracked action equivalent (no on-site attribution for
   linear/streaming TV or affiliate referrals the way there is for clickable digital channels).
-  Note: Organic Search and Direct exist in ADOBE only — spend has no concept of "organic" or
-  "direct" traffic, since both are unpaid by definition. QGP_SCORECARD rows have
-  channel_group = NULL. This asymmetry (Adobe-only vs. Platform-only groups) is expected, not
-  a join gap — see PLATFORM_SPEND_CHANNEL's own Bronze header for the full reasoning.
+  Note: Organic Search and Direct exist in ADOBE and UPV_FORECAST only — spend has no concept
+  of "organic" or "direct" traffic, since both are unpaid by definition, but UPV_FORECAST's
+  channel split is derived directly from Adobe's own prior-year channel mix, so it inherits
+  Adobe's full channel vocabulary including these two. QGP_SCORECARD rows have
+  channel_group = NULL. This asymmetry (Adobe/Forecast-only vs. Platform-only groups) is
+  expected, not a join gap — see PLATFORM_SPEND_CHANNEL's own Bronze header for the full
+  reasoning.
 
 LOB CANONICAL VALUES:
   'POSTPAID'  — MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID
@@ -65,7 +64,7 @@ METRIC_TYPE VALUES:
   'MFC_SPEND_ACTUAL'   — MFC actual spend
   'MFC_SPEND_FORECAST' — MFC forecast spend
   'PLATFORM_SPEND'     — Platform actual spend (actuals only, no forecast column in this source)
-  'UPV_FORECAST'       — UPV forecast (upvForecast | upvWebAppForecast) (commented out)
+  'UPV_FORECAST'       — UPV forecast (upvForecast | upvWebAppForecast)
                          allocation_ratio column shows channel split source
   'QGP_ACTUAL'         — QGP scorecard actual value
   'QGP_TARGET'         — QGP scorecard target/plan value
@@ -124,6 +123,11 @@ CHANGE LOG:
     flow through, since full LOB detail is this view's whole purpose. Channel_group vocabulary
     updated in header to include Platform's three unique groups (iSpot National TV, iSpot OTT,
     Affiliate) alongside the shared Adobe/MFC/Platform vocabulary.
+  - Uncommented CTE 5 (UpvForecast) and its UNION ALL line now that
+    sdi_sp_dashboardPulseTms_silver_upvForecast_weekly exists (ported from BQ). No changes to
+    the CTE body itself -- it already read from the correct table name. Header's CHANNEL GROUPS
+    note updated: UPV_FORECAST inherits Adobe's full channel vocabulary, including Direct and
+    Organic Search, since its channel split is derived from Adobe's own prior-year mix.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -311,11 +315,10 @@ PlatformSpend AS (
 ),
 
 -- =============================================================================
--- CTE 5: UPV FORECAST -- COMMENTED OUT per your request, not deleted.
---        Uncomment this block together with its UNION ALL line in the final
---        SELECT to bring it back.
+-- CTE 5: UPV FORECAST
+--        UPV forecast channel-allocated via prior-year same-quarter Adobe ratios
+--        metric_type = 'UPV_FORECAST'
 -- =============================================================================
-/*
 UpvForecast AS (
   SELECT
     'UPV_FORECAST'                                                        AS data_source,
@@ -347,7 +350,6 @@ UpvForecast AS (
     s.allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
 ),
-*/
 
 -- =============================================================================
 -- CTE 6: QGP SCORECARD
@@ -397,7 +399,7 @@ SELECT * FROM AdobeVolume
 UNION ALL SELECT * FROM MfcChannel
 UNION ALL SELECT * FROM MfcGranular
 UNION ALL SELECT * FROM PlatformSpend
--- UNION ALL SELECT * FROM UpvForecast    -- commented out, see CTE 5 note above
+UNION ALL SELECT * FROM UpvForecast
 UNION ALL SELECT * FROM QgpScorecard
 
 /*

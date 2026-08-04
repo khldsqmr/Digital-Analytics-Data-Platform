@@ -1,46 +1,54 @@
 /* =================================================================================================
-FILE:         04_sp_sdi_pulseTms_silver_upvForecast_weekly.sql
+FILE:         sdi_sp_dashboardPulseTms_silver_upvForecast_weekly.sql
 LAYER:        Stored Procedure
-DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-PROCEDURE:    sp_sdi_pulseTms_silver_upvForecast_weekly
+PROCEDURE:    sdi_sp_dashboardPulseTms_silver_upvForecast_weekly
 
 PURPOSE:
-  Creates/refreshes physical table sdi_pulseTms_silver_upvForecast_weekly.
-  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
-
+  Creates/refreshes physical table sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly.
   Produces channel-allocated UPV forecast rows by applying prior-year same-quarter
   channel mix ratios (from Adobe Silver actuals) to the Bronze all-channels forecast.
 
+  This is a direct port of the BQ version -- see CHANGE LOG below for every translation
+  decision, including the two flagged for verification against a real Databricks environment.
+
 SOURCE:
-  Bronze : sdi_pulseTms_bronze_upvForecast_weekly
+  Bronze : sdi_tbl_dashboardPulseTms_bronze_upvForecast_weekly
              - one row per week_sun_sat (Saturday or corrected quarter-end date)
-             - all-channels grain only; boundary weeks already prorated by notebook
+             - all-channels grain only; boundary weeks already prorated by the upload notebook
+               (see that notebook's date-validation step -- boundary stub weeks are entered
+               using the exact quarter-end date directly, not a natural-week Saturday, so
+               unlike platformSpend/adobeFunnel there's no natural-week rollup ambiguity here
+               and no bf-style second join is needed)
              - columns: upv_forecast, upv_webapp_forecast
 
-  Adobe Silver : sdi_pulseTms_silver_adobeFunnel_weekly
+  Adobe Silver : sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
              - allocation ratio source
              - metric_name = 'upvTotalAdobe', metric_type = 'ADOBE_VOLUME'
              - base period: prior year same quarter, complete non-stub weeks only
 
-CHANNEL ALLOCATION LOGIC:
+CHANNEL ALLOCATION LOGIC (unchanged from BQ):
   ratio per channel = SUM(upvTotalAdobe for channel X in prior year same quarter)
                     / SUM(upvTotalAdobe for All Channels in prior year same quarter)
 
   'All Channels' row always included with ratio = 1.0 (passthrough).
   If no prior year same quarter actuals exist, metric_value will be NULL.
+  Ratios are computed across ALL of Adobe's channel groups (Paid Search, Paid Social,
+  Organic Search, Direct, Programmatic, Other), not just paid ones -- this forecasts total
+  UPV volume, which Adobe tracks regardless of paid/organic/direct origin.
 
 BOUNDARY WEEK HANDLING:
-  Bronze values are already prorated by the notebook — NO × days_in_period / 7 applied here.
-  BOUNDARY_STUB rows in the calendar spine with no Bronze row get NULL metric_value.
+  Bronze values are already prorated by the upload notebook -- NO x days_in_period / 7
+  proration applied here, unlike adobeFunnel/platformSpend Silver. BOUNDARY_STUB rows in the
+  calendar spine with no matching Bronze row get NULL metric_value.
 
 METRICS (long format):
-  'upvForecast'       — maps to upvTotalAdobe
-  'upvWebAppForecast' — UPV Web + App forecast
+  'upvForecast'       -- maps to upv_forecast / upvTotalAdobe
+  'upvWebAppForecast' -- UPV Web + App forecast
 
 GRAIN:
-  One row per qgp_date × channel_group × metric_name
+  One row per qgp_date x channel_group x metric_name
 
-WoW LOGIC (same pattern as all other Silver SPs):
+WoW LOGIC (same pattern as every other Silver SP in this pipeline):
   NORMAL         : numerator = current; denominator = prior QGP value
                    (if prior was BOUNDARY_FIRST: denominator = BF + its stub)
   BOUNDARY_STUB  : numerator = NULL, denominator = NULL
@@ -49,48 +57,66 @@ WoW LOGIC (same pattern as all other Silver SPs):
 
 EXECUTION ORDER:
   Must run AFTER:
-    sp_sdi_pulseTms_silver_adobeFunnel_weekly  (allocation ratio source)
-    notebook upload                             (bronze_upvForecast_weekly)
+    sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly  (allocation ratio source)
+    upvForecast_bronze_upload.py notebook                (populates Bronze; manual/ad hoc,
+                                                            not on the weekly schedule)
 
 DOWNSTREAM:
-  vw_sdi_pulseTms_gold_unified_long — CTE 'UpvForecast', data_source = 'UPV_FORECAST'
+  sdi_vw_dashboardPulseTms_gold_unified_long -- CTE 'UpvForecast', data_source = 'UPV_FORECAST'
+
+PORTING NOTES (BQ -> Databricks), applies to this file only:
+  - OPTIONS(strict_mode=false) ... BEGIN...END -> LANGUAGE SQL AS BEGIN...END
+  - CREATE TABLE ... PARTITION BY qgp_date CLUSTER BY channel_group, metric_name
+    OPTIONS(description=...) -> CREATE TABLE ... USING DELTA
+    CLUSTER BY (qgp_date, channel_group, metric_name) COMMENT '...'
+  - SAFE_DIVIDE(a, b) -> try_divide(a, b)
+  - DATE_TRUNC(x, QUARTER) -> trunc(x, 'QUARTER')
+  - DATE_SUB(DATE_ADD(x, INTERVAL 3 MONTH), INTERVAL 1 DAY) -> date_sub(add_months(x, 3), 1)
+  - ⚠ EXTRACT(ISOYEAR FROM x) -> EXTRACT(YEAROFWEEK FROM x). Spark SQL's YEAROFWEEK extract
+    field is the ISO-8601 week-year, the direct equivalent of BQ's ISOYEAR -- confident in
+    this translation but, consistent with how every other extract-field substitution has been
+    flagged throughout this port, worth a quick confirmation against a real Databricks run
+    before trusting it blindly.
+  - ⚠ cal.qgp_quarter_num -> EXTRACT(QUARTER FROM cal.qgp_date), computed directly rather than
+    assumed to exist as a named column on the calendar view. I don't have confirmed evidence
+    sdi_vw_dashboardPulseTms_dim_qgp_calendar exposes a qgp_quarter_num column the way the BQ
+    calendar apparently did -- computing it from qgp_date is deterministic and gives the
+    identical result either way, so this substitution is safe regardless of whether that
+    column turns out to actually exist.
+  - `` `project.dataset.table` `` backtick-qualified BQ table refs -> unquoted
+    catalog.schema.table Databricks refs throughout.
 
 CHANGE LOG:
-  - Initial version.
+  - Ported from BQ (04_sp_sdi_pulseTms_silver_upvForecast_weekly.sql). Business logic
+    (channel allocation via prior-year ratios, boundary handling, WoW/YoY) preserved exactly --
+    see PORTING NOTES above for the handful of syntax/schema substitutions.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_sdi_pulseTms_silver_upvForecast_weekly`()
-OPTIONS (strict_mode = false)
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly()
+LANGUAGE SQL
+AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_upvForecast_weekly`
-  PARTITION BY qgp_date
-  CLUSTER BY channel_group, metric_name
-  OPTIONS (
-    description = 'PulseTMS Silver — UPV forecast long format with channel allocation and WoW. '
-                  'One row per qgp_date x channel_group x metric_name. '
-                  'Channel split derived from prior year same quarter Adobe actuals ratios. '
-                  'Includes allocation_ratio column for Tableau inspection. '
-                  'metric_name: upvForecast | upvWebAppForecast. metric_type: UPV_FORECAST. '
-                  'Partitioned by qgp_date, clustered by channel_group, metric_name. '
-                  'Refreshed weekly via sp_sdi_pulseTms_silver_upvForecast_weekly.'
-  )
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
+  USING DELTA
+  CLUSTER BY (qgp_date, channel_group, metric_name)
+  COMMENT 'PulseTMS Silver — UPV forecast long format with channel allocation and WoW/YoY. One row per qgp_date x channel_group x metric_name. Channel split derived from prior year same quarter Adobe actuals ratios. Includes allocation_ratio column for Tableau inspection. metric_name: upvForecast | upvWebAppForecast. metric_type: UPV_FORECAST. Clustered by qgp_date, channel_group, metric_name. Refreshed ad hoc after each quarterly Bronze upload, via sdi_sp_dashboardPulseTms_silver_upvForecast_weekly.'
   AS
   WITH
 
   -- ===========================================================================
-  -- STEP 1: Join Bronze forecast → QGP calendar
-  --         No proration — Bronze values are already boundary-aware (notebook).
-  --         BOUNDARY_STUB calendar rows with no Bronze row → NULL metric values.
+  -- STEP 1: Join Bronze forecast -> QGP calendar.
+  --         No proration -- Bronze values are already boundary-aware (notebook).
+  --         BOUNDARY_STUB calendar rows with no Bronze row -> NULL metric values.
   -- ===========================================================================
   BronzeWithCalendar AS (
     SELECT
       cal.qgp_date,
       cal.week_type,
       cal.quarter                                                         AS qgp_quarter,
-      cal.qgp_quarter_num,
+      EXTRACT(QUARTER FROM cal.qgp_date)                                  AS qgp_quarter_num,
       cal.days_in_period,
       cal.is_complete_period,
       cal.is_current_quarter,
@@ -101,18 +127,15 @@ BEGIN
       b.upv_forecast,
       b.upv_webapp_forecast
 
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` cal
-    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_upvForecast_weekly` b
+    FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
+    LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_upvForecast_weekly b
       ON b.week_sun_sat = cal.qgp_date
 
     WHERE
-      cal.qgp_date < DATE_TRUNC(CURRENT_DATE(), QUARTER)
+      cal.qgp_date < trunc(current_date(), 'QUARTER')
       OR (
-        cal.qgp_date >= DATE_TRUNC(CURRENT_DATE(), QUARTER)
-        AND cal.qgp_date <= DATE_SUB(
-              DATE_ADD(DATE_TRUNC(CURRENT_DATE(), QUARTER), INTERVAL 3 MONTH),
-              INTERVAL 1 DAY
-            )
+        cal.qgp_date >= trunc(current_date(), 'QUARTER')
+        AND cal.qgp_date <= date_sub(add_months(trunc(current_date(), 'QUARTER'), 3), 1)
       )
   ),
 
@@ -121,10 +144,10 @@ BEGIN
   -- ===========================================================================
   AdobePriorYearAllChannels AS (
     SELECT
-      EXTRACT(ISOYEAR  FROM qgp_date) AS iso_year,
-      EXTRACT(QUARTER  FROM qgp_date) AS quarter_num,
-      SUM(metric_value)               AS total_all_channels
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly`
+      EXTRACT(YEAROFWEEK FROM qgp_date) AS iso_year,
+      EXTRACT(QUARTER    FROM qgp_date) AS quarter_num,
+      SUM(metric_value)                 AS total_all_channels
+    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
     WHERE
       metric_name        = 'upvTotalAdobe'
       AND metric_type    = 'ADOBE_VOLUME'
@@ -139,11 +162,11 @@ BEGIN
   -- ===========================================================================
   AdobePriorYearByChannel AS (
     SELECT
-      EXTRACT(ISOYEAR  FROM qgp_date) AS iso_year,
-      EXTRACT(QUARTER  FROM qgp_date) AS quarter_num,
+      EXTRACT(YEAROFWEEK FROM qgp_date) AS iso_year,
+      EXTRACT(QUARTER    FROM qgp_date) AS quarter_num,
       channel_group,
-      SUM(metric_value)               AS total_channel
-    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_silver_adobeFunnel_weekly`
+      SUM(metric_value)                 AS total_channel
+    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
     WHERE
       metric_name        = 'upvTotalAdobe'
       AND metric_type    = 'ADOBE_VOLUME'
@@ -163,7 +186,7 @@ BEGIN
       ch.iso_year,
       ch.quarter_num,
       ch.channel_group,
-      SAFE_DIVIDE(ch.total_channel, ac.total_all_channels) AS allocation_ratio
+      try_divide(ch.total_channel, ac.total_all_channels) AS allocation_ratio
     FROM AdobePriorYearByChannel ch
     LEFT JOIN AdobePriorYearAllChannels ac
       ON  ac.iso_year    = ch.iso_year
@@ -180,7 +203,7 @@ BEGIN
   ),
 
   -- ===========================================================================
-  -- STEP 3: Apply ratios → channel-level forecast values
+  -- STEP 3: Apply ratios -> channel-level forecast values
   --         Join key: prior year iso_year = current iso_year - 1
   --                   prior year quarter  = current qgp_quarter_num
   -- ===========================================================================
@@ -208,7 +231,7 @@ BEGIN
 
   -- ===========================================================================
   -- STEP 4: Unpivot to long format
-  --         One row per qgp_date × channel_group × metric_name
+  --         One row per qgp_date x channel_group x metric_name
   -- ===========================================================================
   Unpivoted AS (
     SELECT
@@ -251,7 +274,7 @@ BEGIN
   ),
 
   -- ===========================================================================
-  -- STEP 6: WoW / YoY — identical pattern to silver_platformSpend_weekly
+  -- STEP 6: WoW / YoY — same pattern as every other Silver SP
   -- ===========================================================================
   WithWowYoy AS (
     SELECT
@@ -266,7 +289,7 @@ BEGIN
       u.allocation_ratio,
 
       ROUND(
-        ly_week.ly_weekly_metric_value * SAFE_DIVIDE(u.days_in_period, 7),
+        ly_week.ly_weekly_metric_value * try_divide(u.days_in_period, 7),
         2
       )                                                                   AS metric_value_ly,
 
@@ -319,7 +342,7 @@ BEGIN
       AND ly_week.channel_group   = u.channel_group
       AND ly_week.metric_name     = u.metric_name
 
-    LEFT JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_pulseTms_dim_qgp_calendar` prior_cal
+    LEFT JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar prior_cal
       ON  prior_cal.qgp_date = u.wow_prior_qgp_date
 
     LEFT JOIN MetricLookup wow_prior_stub

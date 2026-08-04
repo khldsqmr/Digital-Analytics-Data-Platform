@@ -11,6 +11,11 @@ PURPOSE:
     ADOBE                   — all UPV + cartstart + orders metrics (no LOB dimension)
     MFC_SPEND_CHANNEL       — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
     PLATFORM_SPEND_CHANNEL  — platformSpend (POSTPAID LOB only; actuals only)
+    UPV_FORECAST            — upvForecast + upvWebAppForecast, channel-allocated (no LOB
+                              dimension) -- ADDED here as an inferred completion of the
+                              pattern (every other channel-grain source live in
+                              gold_unified_long also appears here); this source never had a
+                              slot in this view before, not even commented out
     QGP_SCORECARD           — the 10 QGP Actual/Target metric pairs (Activations BOPIS, Store
                               Traffic, VR Calls/Chats, VR Postpaid Activations, 3 Digital % metrics)
 
@@ -62,6 +67,12 @@ CHANGE LOG:
   - Uncommented Platform CTE, join, and column now that sdi_sp_dashboardPulseTms_silver_
     platformSpend_weekly exists (PLATFORM_SPEND_CHANNEL now active, POSTPAID-only, matching
     MFC's own scoping in this wide view -- BROADBAND lives in gold_unified_long instead).
+  - Added a new UpvForecast CTE, join, and two columns (upvForecast, upvWebAppForecast) now
+    that sdi_sp_dashboardPulseTms_silver_upvForecast_weekly exists. This is genuinely new, not
+    an uncomment -- this source never had a slot in this view before. Added for consistency
+    with every other channel-grain source (Adobe, MFC, Platform all appear in both gold
+    views); flagged in the header as an inferred completion of that pattern rather than
+    something explicitly requested.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -169,6 +180,25 @@ Qgp AS (
 )
 
 -- ---------------------------------------------------------------------------
+-- UPV forecast — channel grain, all channels (no lob dimension to filter, unlike
+-- MFC/Platform). ADDED here as an inferred completion of the established pattern
+-- (every channel-grain source live in gold_unified_long also appears here: Adobe,
+-- MFC, Platform all do) -- this source never had a slot in this view before,
+-- not even commented out, unlike Platform's. Flagging that distinction rather
+-- than silently treating this the same as uncommenting a pre-planned CTE.
+-- ---------------------------------------------------------------------------
+,
+UpvForecast AS (
+  SELECT
+    qgp_date,
+    channel_group,
+    MAX(IF(metric_name = 'upvForecast',       metric_value, NULL)) AS upvForecast,
+    MAX(IF(metric_name = 'upvWebAppForecast', metric_value, NULL)) AS upvWebAppForecast
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
+  GROUP BY qgp_date, channel_group
+)
+
+-- ---------------------------------------------------------------------------
 -- Platform spend — POSTPAID channel grain only, matches MFC's own POSTPAID-only
 -- scoping in this wide sense-check view (full lob detail, incl. BROADBAND, lives
 -- in sdi_vw_dashboardPulseTms_gold_unified_long instead).
@@ -226,6 +256,10 @@ SELECT
   -- Platform Spend (POSTPAID, actuals only)
   p.platformSpend,
 
+  -- UPV Forecast (channel-allocated, all channels -- no lob dimension to filter)
+  uf.upvForecast,
+  uf.upvWebAppForecast,
+
   -- QGP scorecard (date-level, repeated across channel_group rows -- see QGP GRAIN NOTE)
   q.qgpActivationsBopisActual,
   q.qgpActivationsBopisTarget,
@@ -274,6 +308,9 @@ LEFT JOIN Mfc m
 LEFT JOIN Platform p
   ON  p.qgp_date      = a.qgp_date
   AND p.channel_group = a.channel_group
+LEFT JOIN UpvForecast uf
+  ON  uf.qgp_date      = a.qgp_date
+  AND uf.channel_group = a.channel_group
 LEFT JOIN Qgp q
   ON  q.qgp_date = a.qgp_date   -- date-only join; QGP has no channel_group to match on
 
