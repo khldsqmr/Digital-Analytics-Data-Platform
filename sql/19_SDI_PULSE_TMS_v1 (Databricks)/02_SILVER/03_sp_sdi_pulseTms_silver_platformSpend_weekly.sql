@@ -17,18 +17,41 @@ PURPOSE:
   source is actuals-only, no forecast column, so there's no 'platformSpend' vs
   'platformSpendForecast' split the way MFC has Actual vs Forecast.
 
-WHY THIS FILE IS SIMPLER THAN mfcSpend SILVER, DELIBERATELY:
+WHY THIS FILE IS SIMPLER THAN mfcSpend SILVER, IN ONE RESPECT:
   - Single grain (no Granular equivalent) -- Bronze has nothing deeper than lob x channel_group.
   - No Monday-anchored day-count workaround. MFC's Silver computes a local
     mfc_days_in_period because MFC's raw data is genuinely Monday-Sunday and the shared
     calendar's days_in_period is Sunday-anchored. Platform Spend's week_sun_sat is ALREADY
     Sunday-Saturday native by the time it leaves Bronze (rolled forward from the raw
-    Monday-Sunday Date column via date_add/DAYOFWEEK) -- there's no day-anchoring mismatch
-    left to work around here, so the shared calendar's days_in_period is used directly.
+    Monday-Sunday Date column via date_add/DAYOFWEEK) -- there's no day-of-week ANCHORING
+    mismatch to work around here.
   - 'All Channels' rollup per lob included, matching MFC Channel grain's own pattern (not
     explicitly requested, but added for consistency with how the wide/long Gold views already
     expect this source to behave alongside MFC -- flagging this as an inferred-from-precedent
     choice, not something separately confirmed this session).
+
+CORRECTION -- this file is NOT simpler than adobeFunnel Silver on quarter-boundary handling,
+despite an earlier version of this header claiming so:
+  Ruling out MFC's day-of-week ANCHORING mismatch (above) is a different question from whether
+  QUARTER-BOUNDARY proration is needed, and the first version of this file conflated the two --
+  concluding no proration was needed at all, which was wrong. Any source built on NATURAL
+  Sunday-Saturday week rollups (Adobe and Platform Spend both -- MFC is exempt only because its
+  upstream Gold source already pre-splits QGP_Week before MFC's own Bronze ever sees it) needs
+  the SAME quarter-boundary proration Adobe Silver already has, for the same reason: a natural
+  week straddling a quarter boundary produces exactly one Bronze row (keyed at that week's real
+  Saturday, the BOUNDARY_FIRST date), containing all 7 days including days that actually belong
+  to the prior quarter. Without proration, BOUNDARY_STUB comes back null (nothing keyed at its
+  earlier date) and BOUNDARY_FIRST silently absorbs the whole natural week's spend, overstated
+  by however many days actually belonged to the prior quarter -- confirmed as the exact bug
+  present in the first version of this file once real Gold output was checked.
+
+  FIXED, mirroring adobeFunnel Silver's exact mechanism (see that file's header for the general
+  explanation): BronzeWithCalendar now has a second LEFT JOIN (aliased bf) to Bronze, active
+  only for BOUNDARY_STUB rows, matching on bf.week_sun_sat = date_add(cal.qgp_date, 7 -
+  DAYOFWEEK(cal.qgp_date)) -- rolling the stub's own quarter-end date forward to that same
+  natural week's Saturday, landing on the identical row the main join (b) already reads for
+  BOUNDARY_FIRST. Both periods now read from that one natural-week total and take their own
+  proportional share via days_in_period / 7, same as every metric in Adobe Silver already does.
 
 WoW/YoY LOGIC (mirrors mfcSpend Silver's Channel grain specifically, including that grain's
 known quirk):
@@ -41,9 +64,9 @@ known quirk):
   Per mfcSpend Silver's own flagged open question: the Channel grain's numerator has no
   explicit `NOT is_complete_period` guard the way MFC's Granular grain does -- this file
   matches that same (Channel-grain) behavior rather than inventing a third pattern. In
-  practice this doesn't produce a different result here: Bronze already nulls spend for
-  incomplete periods via IF(cal.is_complete_period, b.spend, NULL), so metric_value itself is
-  already NULL for future weeks by the time WoW/YoY math runs.
+  practice this doesn't produce a different result here: BronzeWithCalendar's spend CASE has
+  no ELSE branch, so metric_value is already NULL for future/incomplete weeks by the time
+  WoW/YoY math runs, before any additional guard would matter.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -73,7 +96,22 @@ BEGIN
       cal.iso_year,
       channels.lob,
       channels.channel_group,
-      IF(cal.is_complete_period, b.spend, NULL)                           AS spend
+
+      -- Quarter-boundary proration, mirroring adobeFunnel Silver's exact mechanism (see that
+      -- file's header for the general explanation). Bronze's week_sun_sat is a NATURAL
+      -- Sunday-Saturday week-ending date -- for a natural week that straddles a quarter
+      -- boundary, Bronze has exactly ONE row for that whole week (keyed at the week's real
+      -- Saturday, which is the BOUNDARY_FIRST date), containing ALL 7 days' spend, including
+      -- the days that actually belong to the prior quarter. Both the BOUNDARY_STUB and
+      -- BOUNDARY_FIRST periods read from that SAME single Bronze row (via bf and b
+      -- respectively -- bf's join condition rolls the stub's own quarter-end date forward to
+      -- that same natural week's Saturday, landing on the identical row b already reads) and
+      -- each takes its own proportional share via days_in_period / 7.
+      CASE WHEN cal.week_type = 'BOUNDARY_STUB'  AND cal.is_complete_period THEN bf.spend * cal.days_in_period / 7
+           WHEN cal.week_type = 'BOUNDARY_FIRST' AND cal.is_complete_period THEN b.spend  * cal.days_in_period / 7
+           WHEN cal.is_complete_period                                     THEN b.spend
+      END                                                                 AS spend
+
     FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
     CROSS JOIN (
       SELECT DISTINCT lob, channel_group
@@ -83,6 +121,11 @@ BEGIN
       ON  b.week_sun_sat  = cal.qgp_date
       AND b.lob            = channels.lob
       AND b.channel_group  = channels.channel_group
+    LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_platformSpend_weekly bf
+      ON  cal.week_type    = 'BOUNDARY_STUB'
+      AND bf.week_sun_sat  = date_add(cal.qgp_date, 7 - EXTRACT(DAYOFWEEK FROM cal.qgp_date))
+      AND bf.lob            = channels.lob
+      AND bf.channel_group  = channels.channel_group
     WHERE
       cal.qgp_date < trunc(current_date(), 'QUARTER')
       OR (
