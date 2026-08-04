@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         01_sdi_vw_dashboardPulseTms_gold_unified_wide.sql   (Databricks port)
+FILE:         09_sdi_vw_dashboardPulseTms_gold_unified_wide.sql   (Databricks port)
 LAYER:        Gold View — Wide / Sense Check
 VIEW NAME:    sdi_vw_dashboardPulseTms_gold_unified_wide
 
@@ -8,13 +8,11 @@ PURPOSE:
   One row per qgp_date × channel_group, ordered by qgp_date DESC.
 
   Sources currently active (channel grain only):
-    ADOBE              — all UPV + cartstart + orders metrics (no LOB dimension)
-    MFC_SPEND_CHANNEL  — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
-    QGP_SCORECARD      — the 10 QGP Actual/Target metric pairs (Activations BOPIS, Store
-                         Traffic, VR Calls/Chats, VR Postpaid Activations, 3 Digital % metrics)
-
-  Source currently commented out, not deleted -- see "COMMENTED-OUT SOURCES" below:
-    PLATFORM_SPEND_CHANNEL — platformSpend (POSTPAID LOB only; actuals only)
+    ADOBE                   — all UPV + cartstart + orders metrics (no LOB dimension)
+    MFC_SPEND_CHANNEL       — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
+    PLATFORM_SPEND_CHANNEL  — platformSpend (POSTPAID LOB only; actuals only)
+    QGP_SCORECARD           — the 10 QGP Actual/Target metric pairs (Activations BOPIS, Store
+                              Traffic, VR Calls/Chats, VR Postpaid Activations, 3 Digital % metrics)
 
   NOT included: MFC_SPEND_GRANULAR (use sdi_vw_dashboardPulseTms_gold_unified_long for that)
 
@@ -28,9 +26,10 @@ QGP GRAIN NOTE (read before using the qgp* columns below):
   QGP numbers alongside Adobe/MFC for that week.
 
 LOB NOTE:
-  MFC spend columns reflect POSTPAID only (filtered in Bronze's CROSS JOIN). No LOB column is
-  surfaced here since the grain is channel_group only -- use
-  sdi_vw_dashboardPulseTms_gold_unified_long for LOB-level analysis.
+  MFC and Platform spend columns both reflect POSTPAID only (filtered in each one's own
+  Bronze). No LOB column is surfaced here since the grain is channel_group only -- use
+  sdi_vw_dashboardPulseTms_gold_unified_long for LOB-level analysis, including Platform's
+  BROADBAND rows, which this wide view deliberately excludes.
 
 GRAIN:
   qgp_date × channel_group
@@ -47,12 +46,6 @@ NOTE:
   This view is for sense-checking only — not intended as a Tableau data source.
   Use sdi_vw_dashboardPulseTms_gold_unified_long for all production reporting.
 
-COMMENTED-OUT SOURCES:
-  Platform is commented out (both its CTE and its join/columns in the final SELECT), per your
-  request to keep only Adobe, MFC, and QGP active for now. Nothing was deleted -- uncomment the
-  Platform CTE block, its LEFT JOIN, and its `p.platformSpend` column line together to bring it
-  back once you want it.
-
 PORTING NOTES (BQ -> Databricks), applies to this file only:
   - MAX(IF(cond, val, NULL))  -> unchanged; Databricks SQL supports IF() as a CASE WHEN alias
   - No date arithmetic or BQ-only functions in this file — otherwise a direct translation.
@@ -66,6 +59,9 @@ CHANGE LOG:
     and final SELECT for sense-checking conversion rates alongside volumes.
   - Added Qgp CTE (10 metric pairs, pivoted wide, qgp_date grain) and joined into final SELECT.
   - Commented out Platform CTE, join, and column -- not deleted, see COMMENTED-OUT SOURCES above.
+  - Uncommented Platform CTE, join, and column now that sdi_sp_dashboardPulseTms_silver_
+    platformSpend_weekly exists (PLATFORM_SPEND_CHANNEL now active, POSTPAID-only, matching
+    MFC's own scoping in this wide view -- BROADBAND lives in gold_unified_long instead).
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -173,11 +169,10 @@ Qgp AS (
 )
 
 -- ---------------------------------------------------------------------------
--- COMMENTED OUT per your request -- Platform spend, POSTPAID channel grain only.
--- Not deleted; uncomment this CTE together with its LEFT JOIN and p.platformSpend
--- column below to bring it back.
+-- Platform spend — POSTPAID channel grain only, matches MFC's own POSTPAID-only
+-- scoping in this wide sense-check view (full lob detail, incl. BROADBAND, lives
+-- in sdi_vw_dashboardPulseTms_gold_unified_long instead).
 -- ---------------------------------------------------------------------------
-/*
 ,
 Platform AS (
   SELECT
@@ -188,7 +183,6 @@ Platform AS (
   WHERE lob = 'POSTPAID'                    -- POSTPAID only; matches MFC channel grain
   GROUP BY qgp_date, channel_group
 )
-*/
 
 -- ---------------------------------------------------------------------------
 -- Final join — Adobe as spine, MFC + QGP joined in (Platform commented out above)
@@ -229,8 +223,8 @@ SELECT
   m.mfcSpendActual,
   m.mfcSpendForecast,
 
-  -- Platform Spend (POSTPAID, actuals only) -- COMMENTED OUT, see note above
-  -- p.platformSpend,
+  -- Platform Spend (POSTPAID, actuals only)
+  p.platformSpend,
 
   -- QGP scorecard (date-level, repeated across channel_group rows -- see QGP GRAIN NOTE)
   q.qgpActivationsBopisActual,
@@ -277,10 +271,9 @@ FROM Adobe a
 LEFT JOIN Mfc m
   ON  m.qgp_date      = a.qgp_date
   AND m.channel_group = a.channel_group
--- COMMENTED OUT per your request -- see note above the Platform CTE
--- LEFT JOIN Platform p
---   ON  p.qgp_date      = a.qgp_date
---   AND p.channel_group = a.channel_group
+LEFT JOIN Platform p
+  ON  p.qgp_date      = a.qgp_date
+  AND p.channel_group = a.channel_group
 LEFT JOIN Qgp q
   ON  q.qgp_date = a.qgp_date   -- date-only join; QGP has no channel_group to match on
 
