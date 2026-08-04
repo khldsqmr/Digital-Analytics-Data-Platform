@@ -1,7 +1,190 @@
 DESCRIBE TABLE prdrzranalytics.lab42.media_analytics_integrated_snapshot;
+output:
+col_name	data_type	comment
+view_source	string	The Lab42 Media Analytics view where the source record can be found. For the Integrated view, some records are limited from the source views to ensure deduplication of records (such as OTT is from iSpot, and the Display record is suppressed).
+Date	date	Date of the customer engagement (Impressions / Click), or matched conversion (Meta only). Most platforms report on matched conversions as per the date of the click or impression, while Meta reflects the date of the conversion, not aligned to the engagement date.
+Week_Start_Mon	date	The date of the start of the week, with a Monday through Sunday week (which aligns to media buying windows).
+Week_End_Sun	date	The date of the end of the week, with a Monday through Sunday week (which aligns to media buying windows).
+Agency	string	The name of the Agency who activated the record.
+Brand	string	The T-Mobile Brand. A high level categorization of Postpaid, Prepaid, TFB, Broadband, Financial Services, etc. Not Specified is where the details within the record do not have enough indicators to identify a Brand. Other falls outside of the primary Brand we track (organic social or other specialized services).
+LOB	string	T-Mobile Line of Business that falls under a LOB, such as Metro, T-Mobile Prepaid, Beyond the Smartphone (BTS), etc. Not Specified are missing enough indicators to assign an LOB. Other falls outside of standard LOBs.
+Account_ID	string	The unique account id as it exists on the source platform.
+Account_Name	string	The name of the account, as it exists on the source platform.
+Account_Type	string	The type of the account (Microsoft, Google, etc.). Used exclusively for Paid Search.
+Campaign_ID	string	The unique campaign ID, as it exists on the source platform. Note that campaign designation is a budgetary object related to how the activation was placed, and does not reflect the messaging campaign inside it. For most purposes, the term 'campaign' is better reflected by TMM_Campaign_Desc.
+Campaign_Name	string	The campaign name, as it exists on the source platform. Often reflecting the long-form taxonomy rich name. Note that campaign designation is a budgetary object related to how the activation was placed, and does not reflect the messaging campaign inside it. For most conversations, the term 'campaign' is better reflected by TMM_Campaign_Desc.
+Campaign_Year	string	The year of the campaign (related to campaign id, not messaging campaign), as it appears in the taxonomy.
+Placement_ID	string	Unique identifier for the placement-level entity on the source platform. Platform-specific structures (e.g., Placement, Ad Group, Ad Squad, Ad Set) are standardized into a consistent hierarchy level across Media Analytics datasets.
+Placement_Name	string	The Placement Name as it exists on the source platform. Platform-specific structures (e.g., Placement, Ad Group, Ad Squad, Ad Set) are standardized into a consistent hierarchy level across Media Analytics datasets.
+Creative_ID	string	The unique Creative ID as it exists on the source platform.
+Creative_Name	string	The Creative Name as it exists on the source platform. Often reflecting the long-form taxonomy rich name. This name does not reflect a description of the asset, as it is a container at the creative level that can support multiple assets (such as carousel). This is the level that the messaging campaign exists at, but messaging campaign is better served via TMM Campaign Desc.
+Search_Campaign_Category	string	A categorization for the Campaign as defined in Paid Search.
+Budget_Source	string	Budget Source as is provided by campaign taxonomy.
+Budgeted_Product_Line	string	Budgeted Product Line as is provided by campaign taxonomy.
+Master_Brand	string	Master Brand as is provided by campaign taxonomy.
+OEM_Funded	string	Original Equipment Manufacturer (OEM) Funded indicator as is provided by campaign taxonomy.
+Program	string	Program as is provided by campaign taxonomy.
+Sub_Program	string	Sub-Program as is provided by campaign taxonomy.
+Primary_Language	string	Primary Language as is provided by campaign taxonomy. Note that there is a better field for the messaging language, derived from creative taxonomy or other record markers. See Creative_Language.
+Channel_Abbr	string	An abbreviated code to reflect the detail-level Channel definition. Determined on taxonomy details, or other markers within the source record.
+Channel_Name	string	The detail-level channel name that reflects the media channel for the record. (Online Video, OTT, Linear TV, Paid Social - LinkedIn, Paid Social - Snapchat, etc.) Determined on taxonomy details, or other markers within the source record.
+Channel_Group_Abbr	string	An abbreviated code to reflect a channel grouping. Determined on taxonomy details, or other markers within the source record.
+Channel_Group_Name	string	The Channel Group Name to reflect the media channel, but aggregated to logic grouping (such as Paid Social, Paid Search, Display, etc.) Determined on taxonomy details, or other markers within the source record.
+Media_Tactic	string	The Media Tactic of the record. Derived from a combination from Channel assignment, and other considerations such as Agency for Display - Direct, and Display - Programmatic. Or designations of Paid Search based on the search type - such as Paid Search - Branded, Paid Search - Non-branded. Primarily used to align MA Integrated to MMM, PIE, T&L, and other media analytics resources for consistent data alignment.
+Optimization_Metric	string	The engagement metric that the ad is intended to drive (mid-funnel, SEC, etc.). As per campaign taxonomy, and may not reflect what campaign configuration option was selected on the platform when the campaign was placed.
+Buy_Type	string	The Buy Type as per placement / ad group / ad set taxonomy.
+Telco_Profile	string	Telco Profile as per campaign taxonomy. May not reflect actual campaign configuration used on the platform at time of activation.
+Buying_Platform	string	Buying Platform as per placement / ad group / ad set taxonomy.
+Data_Type	string	Data Type as per placement / ad group / ad set taxonomy.
+Enterprise_Base	string	Enterprise or Base targeting as per placement / ad group / ad set taxonomy. May not reflect actual placement configuration used on the platform at time of activation.
+Publisher	string	Publisher info as for display, placement taxonomy, iSpot TV details, or Affiliate Program. Not applicable for other channels.
+Target_Age	string	Target Age audience targeting per placement / ad group / ad set taxonomy. May not reflect actual placement configuration used on the platform at time of activation.
+Geo_Type	string	"Indicates the Geo Type, National or Local for the record. Derived from markers within the record such as campaign name, or other indicators.
+Does not reflect where the users are when engaging with ads, but what regions were targeted."
+Target_Geo	string	"Geo-based audience targeting per placement / ad group / ad set taxonomy May not reflect actual placement configuration used on the platform at time of activation.
+Does not reflect where the users are when engaging with ads, but what regions were targeted."
+Target_Occupation	string	Targeted Occupation audience targeting per placement / ad group / ad set taxonomy May not reflect actual placement configuration used on the platform at time of activation.
+Test_and_Learn	string	Indicator if the row is apart of a Test and Learn conversion lift studied as per placement / ad group / ad set taxonomy. Not well populated, not a reliable indicator for Test and Learn participation.
+Creative_Agency	string	Creative Agency as per creative / ad taxonomy.
+Creative_Agency_Ad_Number	string	Creative Agency Ad Number as per creative / ad taxonomy.
+Creative_Language	string	Creative Language as per creative / ad taxonomy, enhanced by more robust marker indicators within the creative, placement, or campaign details.
+Creative_Version	string	Creative Version as per creative / ad taxonomy.
+Duration	string	Duration of the ad (if video) as per creative / ad taxonomy.
+Media_Format	string	Media format as per creative / ad taxonomy.
+Funnel_Stage	string	The Funnel Stage the ad is intended to target. Based on sub program, optimization metric, or other indicators. For TFB, The Funnel Stage matches the Sub Program from campaign taxonomy.
+Audience	string	Audience targeting per placement / ad group / ad set taxonomy intended to define sub segments such as Military, 55+, etc.
+Audience_Descriptor	string	The targeted audience, as per placement / ad group / ad set taxonomy
+Benefitting_Segment	string	Benefitting Segment as per creative / ad taxonomy Intended to denote what lob / brand / product will benefit from the ad, regardless of what budget is came from (Master Brand or Budget Source).
+Creative_Intent	string	An indicator as to what the creative asset was to message the customer. Often populated with funnel description (Awareness, consideration, etc.) or a program indicator (BOAT, BOWLING, DINNER, etc.).
+Spend_Source	string	An indicator as to where the spend value was sourced from. Primarily used to identify which DSP provided the source data for the placement, spend data. Note that spend at a creative level is often derived from a placement-level spend, allocated to creative by weighted impressions.
+TMM_Code	string	The TMM Campaign Code, primarily derived from creative name, but supplemented by searching in other fields including the destination URL.
+TMM_Campaign_Desc	string	The Description of the TMM Messaging Campaign. The primary resource for identifying which messaging campaign the ad supports.  Sourced from the TMM source (Minitab for historic and Genie for current).
+TMM_Category	string	A categorization of the TMM Code. Sourced from the TMM source (Minitab for historic and Genie for current).
+TMM_Message	string	Categorization of TMM campaigns to designate device, service, or other intended offer designations. Sourced from the TMM source (Minitab for historic and Genie for current).
+Site_Directory	string	A grouping of Site names, to a more aggregated level. Display only. Sourced from campaign manager.
+Site_ID	string	The ID associated with the Site. Display only. Sourced from campaign manager.
+Site_Name	string	The name of the site the as appeared on. Display only. Sourced from campaign manager. Not comprehensive as some display is sourced from Omnicom direct buys, or via DSPs which may obfuscate the Site name.
+Conversions_Flag	string	An indicator if the record is expected to have Matched Conversion volumes or not. Intended to be used for filtering results when analyzing ad performance that is not expected to have matched conversions. The lack of matched conversions is due to the record source not having a data sharing agreement with T-Mobile (such as TikTok), or from a non-clickable media such as Content Syndication or OOH.
+Measurement_Metric	string	An indicator for the primary matched conversion metric to be used for performance analysis. Derived from Optimization metric from campaign taxonomy, or other markers in the record.
+MDF	string	Manufacturer Device Fund - indicates if the record has been flagged as promoting a specific manufacturer initiative, such as iPhone, Samsung, Netflix, etc. Can support multiple MDFs in a single record, separated by comma. Derived from markers in the TMM Campaign Desc, and select values from Creative or Placement.
+Partner	string	"The name of the Affiliate Partner
+Affiliate Only"
+Spend	double	The cost for the ad. May not include Fees or taxes.
+Clicks	double	The number of users who clicked on the ad (only viable for clickable media) As determined by the source platform.
+Impressions	double	The number of users who have been served an ad, and viewed it. As determined by the source platform. For Linear TV, this is the extrapolated Impression volume, and not the strict panel volume.
+Panel_Impressions	double	The number of panel members who have been served an ad, and viewed it. As determined by iSpot. Linear and Advanced TV (OTT) only.
+BizIL_Form_Fillout	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+BizIL_Prospect_Quality_Traffic	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Invoca_Order	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Invoca_Sales_Intent	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Eligibility_Check	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Eligibility_Check_Successful	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Top_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Broadband_Upper_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+BTS_Quality_Traffic	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Connect_Low_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Connect_Mid_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Connect_Prospect_Quality_Traffic	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Fiber_EC	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Fiber_SEC	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Fiber_Eligibility_Check_NotSuccessful	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Fiber_Upper_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Fiber_Web_Order	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Base_Confirmed_Form_Submit	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_EFS	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Eligibility_Check_EC_EFS	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Invoca_Combined_Conversion	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Invoca_Eligibility	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Invoca_Order	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Invoca_Sales_Opp	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Prospect_Confirmed_Form_Submit	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Quality_Traffic	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_SEC	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HINT_Web_Orders	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+HSI_Micro_Click_2_Call_Placed	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_Buying_Intent	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_Credit_Apps	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_P10M	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_PCAP	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_Prospect_Digital_GA	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_Prospect_Quality_Traffic	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Magenta_Prospect_Visits	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Base_Visits	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Cart_Start_Plus_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Cart_Start_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_HINT_EC	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_HINT_Quality_Traffic	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_HINT_SEC	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Mid_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_PEV	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Prospect_Quality_Traffic	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Prospect_Visits	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Top_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Top_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Top_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Upper_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Upper_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Upper_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Web_Order_AF	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Web_Order_All	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Web_Order_Base	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Metro_Web_Order_Prospect	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Postpaid_AAL_Cart_Start	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Postpaid_Consumer_Cart_Start_Plus	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Postpaid_Consumer_PSPV_Plus	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Postpaid_Invoca_Order	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Postpaid_Invoca_Sales_Intent	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Starlink_Form_Submit	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+Starlink_Form_Verify	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Lead_Form_Submit_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Invoca_Order	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Invoca_Sales_Intent	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Low_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Mid_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Top_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Top_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Top_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Upper_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Upper_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TBG_Upper_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TFB_HINT_Eligibility_Check	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TFB_Lead_Gen	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TFB_Quality_Traffic	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TFB_Quality_Traffic_Post_Click	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TFB_Quality_Traffic_ViewThrough	int	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Prepaid_Low_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Prepaid_Mid_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Top_Funnel_All	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Top_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Top_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Upper_Funnel_All	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Upper_Funnel_Prospect	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMO_Upper_Funnel_Base	double	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMobile_Magenta_Welcome_All	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMobile_Magenta_Welcome_Base	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMobile_Magenta_Welcome_Prospect	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMoney_Credit_Card_Upper_Funnel_Base	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMoney_Upper_Funnel_Base	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMoney_Upper_Funnel_Prospect	bigint	Web event attributed (last touch) to served advertisement from the platform. See the Site Metrics Directory SharePoint doc for metric definition details.
+TMobile_Prepaid_Order	double	null
+TMobile_Prepaid_Quality_Traffic	double	null
 
 
 SELECT Channel_Group_Name, COUNT(*) AS n_rows, SUM(Spend) AS total_spend
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
 GROUP BY Channel_Group_Name
 ORDER BY total_spend DESC;
+
+output:
+Channel_Group_Name	n_rows	total_spend
+National TV	1271262	2164514876.39283
+Paid Search	2518196	1284927693.1884744
+OTT	932646	1221799670.9317496
+Display	16066916	1083846309.371416
+Paid Social	4329265	919403725.2732141
+Online Video	1666936	688301060.8274454
+Digital Audio	419425	241126917.22348443
+UNKNOWN	178680	133791321.04989089
+Affiliate	109234	80317078.29400004
+Other	2529	1015992.0503339935
+Out of Home	106	249997.96947282553
