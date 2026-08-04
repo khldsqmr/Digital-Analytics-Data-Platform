@@ -75,45 +75,49 @@ SCHEDULING DEPENDENCY:
   wrong), not an error, but the ordering should still be enforced.
 ================================================================================================= */
 
-CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly (
-  PublishKey            DATE,
-  QuarterNum            INT,
-  YearNum               INT,
-  WeekEnding            DATE,
-  MetricID              STRING,
-  DateContext           STRING,
-  Page                  STRING,
-  Section               STRING,
-  Header                STRING,
-  MetricName            STRING,
-  MetricType            STRING,
-  DisplayMetricType     STRING,
-  MetricFormat          STRING,
-  DaysInArrears         INT,
-  CumulativeDates       STRING,
-  IsFuture              STRING,
-  MetricOrder           INT,
-  VarianceDirection     INT,
-  LevelofPrecision      INT,
-  Amount                DOUBLE,
-  DisplayAmount         STRING,
-  VariancePercentage    DOUBLE,
-  VarianceColor         INT,
-  MetricOwner           STRING,
-  DataDictionaryURL     STRING,
-  DrillDownURL1         STRING,
-  DrillDownURL2         STRING,
-  InsertDateTime        TIMESTAMP
-)
-USING DELTA
-CLUSTER BY (WeekEnding, MetricID, DateContext, MetricType)
-COMMENT 'Standalone, never-shrinking archive of the full enterprise QGP scorecard feed (qgpweeklyview), MERGE-upserted so historical weeks survive even after the rolling-retention raw source ages them out. Not scoped to PulseTMS -- full feed. PulseTMS Bronze reads from this table instead of the raw feed directly. Refreshed weekly via sdi_sp_qgpArchive_bronze_retained_weekly, must run before sdi_sp_dashboardPulseTms_bronze_qgp_weekly.';
-
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_qgpArchive_bronze_retained_weekly()
 LANGUAGE SQL
 AS
 BEGIN
+
+  -- Moved inside the procedure body (was a separate top-level statement before this file's
+  -- deployment threw PARSE_SYNTAX_ERROR "extra input 'CREATE'" -- Databricks only accepts one
+  -- top-level statement per submission, same reason the orchestration script needs one CALL
+  -- per cell/task). IF NOT EXISTS makes this a harmless no-op on every run after the first.
+  CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly (
+    PublishKey            DATE,
+    QuarterNum            INT,
+    YearNum               INT,
+    WeekEnding            DATE,
+    MetricID              STRING,
+    DateContext           STRING,
+    Page                  STRING,
+    Section               STRING,
+    Header                STRING,
+    MetricName            STRING,
+    MetricType            STRING,
+    DisplayMetricType     STRING,
+    MetricFormat          STRING,
+    DaysInArrears         INT,
+    CumulativeDates       STRING,
+    IsFuture              STRING,
+    MetricOrder           INT,
+    VarianceDirection     INT,
+    LevelofPrecision      INT,
+    Amount                DOUBLE,
+    DisplayAmount         STRING,
+    VariancePercentage    DOUBLE,
+    VarianceColor         INT,
+    MetricOwner           STRING,
+    DataDictionaryURL     STRING,
+    DrillDownURL1         STRING,
+    DrillDownURL2         STRING,
+    InsertDateTime        TIMESTAMP
+  )
+  USING DELTA
+  CLUSTER BY (WeekEnding, MetricID, DateContext, MetricType)
+  COMMENT 'Standalone, never-shrinking archive of the full enterprise QGP scorecard feed (qgpweeklyview), MERGE-upserted so historical weeks survive even after the rolling-retention raw source ages them out. Not scoped to PulseTMS -- full feed. PulseTMS Bronze reads from this table instead of the raw feed directly. Refreshed weekly via sdi_sp_qgpArchive_bronze_retained_weekly, must run before sdi_sp_dashboardPulseTms_bronze_qgp_weekly.';
 
   MERGE INTO prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly AS target
   USING (
