@@ -20,6 +20,8 @@ FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
 WHERE QGP_Week = '2025-12-31' AND LOB_Supported = 'CONSUMER POSTPAID'
 GROUP BY Quarter;
 
+output: No rows returned
+
 WITH all_weeks_with_data AS (
   SELECT DISTINCT Quarter, TRY_CAST(QGP_Week AS DATE) AS QGP_Week, UPPER(TRIM(LOB_Supported)) AS LOB_Supported
   FROM prdrzranalytics.lab42.raw_media_flowchart
@@ -34,3 +36,16 @@ LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly 
  AND a.LOB_Supported = b.LOB_Supported
 WHERE b.QGP_Week IS NULL
 ORDER BY a.QGP_Week DESC;
+output:
+QGP_Week	LOB_Supported	Quarter
+2026-01-03	TFB	Q4'25
+2026-01-03	CONSUMER POSTPAID	Q4'25
+2026-01-03	BROADBAND	Q4'25
+2025-12-27	TFB	Q4'25
+2025-12-27	CONSUMER POSTPAID	Q4'25
+2025-12-27	BROADBAND	Q4'25
+2025-12-20	TFB	Q4'25
+2025-12-20	BROADBAND	Q4'25
+2025-12-20	CONSUMER POSTPAID	Q4'25
+2020-07-04	CONSUMER POSTPAID	Q3'20
+2020-07-04	TFB	Q3'20
