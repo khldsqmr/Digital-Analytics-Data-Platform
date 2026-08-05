@@ -6,3 +6,193 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2025-12-26'
 GROUP BY Channel, WM_V_NWM, Message_Type, Message
 ORDER BY total DESC;
+
+output:
+Channel	WM_V_NWM	Message_Type	Message	total
+Paid Social	Working	Value	Postpaid Offers	929706.623046875
+Paid Search	Working	Value	SEM Postpaid (Offer)	792780.6875
+Display	Working	Value	Postpaid Offers	612585.8071289062
+OLV	Working	Value	Postpaid Offers	380739.4074707031
+Non-Working	Non-Working	Non-Working Media	Non-Working T-Mobile	326982.3359375
+TV	Working	Network	Best Network	233318.62109375
+Affiliate	Working	Value	Postpaid Offers	228467.328125
+Paid Social	Working	Network	Network	202441.390625
+Paid Social	Working	Magenta Brand	Magenta Brand	146919.5
+TV	Working	Value	55+ iPhone 16e & Best Price/Network	140109.78125
+TV	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	110413.72607421875
+Audio	Working	Value	Postpaid Offers	85957.5458984375
+OOH	Working	Network	Best Network	82004.390625
+Paid Social	Working	Magenta Brand	Friday Night 5G Lights	71707.3232421875
+Display	Working	Value	iPhone 17 On Us No Trade SREIP	63090.6015625
+TV	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	62816.55419921875
+Audio	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch SREIP	57441.87890625
+OTT	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	54922.11962890625
+Spot TV	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	52908
+Paid Search	Working	Value	SEM Postpaid (Yelp)	48832.3671875
+OTT	Working	Network	Network/T Satellite Testimonials & Family Freedom	39524.51171875
+Paid Social	Working	BTS	BTS Offers	36572.4716796875
+Paid Social	Working	Network	Network - App Download	36373.390625
+OLV	Working	Network	Testimonials: 5G Network & Family Freedom	33195.05078125
+OTT	Working	Network	Better Together	22815.23046875
+Paid Search	Working	Value	SEM Postpaid (Ad Marketplace)	21718.998046875
+OTT	Working	Value	HINT	17658.890625
+OTT	Working	Network	Network/T Satellite Testimonials & Experience Plans	14850.33984375
+Display	Working	Network	Better Together	12040.009765625
+Display	Working	Value	Walmart (Postpaid)	11413.0439453125
+Audio	Working	Magenta Brand	Friday Night 5G Lights	10190.6201171875
+Paid Search	Working	Value	SEM Postpaid (Brave)	9813.1767578125
+OLV	Working	Value	HINT	9324.2001953125
+OTT	Working	Value	Network/T Satellite Testimonials & Try T-Mobile	9168.25
+Paid Social	Working	Value	BOMBAY EXCHANGE 4/$25 Samsung GS25 On Us No trade	8571.4296875
+OLV	Working	Network	Better Together	8378.3095703125
+Display	Working	Value	HINT	8198.58984375
+Audio	Working	Network	Better Together	6250
+OLV	Working	Magenta Brand	Friday Night 5G Lights	5175.239990234375
+Display	Working	Magenta Brand	Friday Night 5G Lights	4213.47998046875
+OOH	Working	Value	Military	3948.2099609375
+OOH	Working	Network	SEC	3256.070068359375
+Paid Search	Working	Value	SEM Postpaid (Ad.Net)	1701.825927734375
+Display	Working	Value	SilentMango iPhone Hero Phase 2	535.8400268554688
+OLV	Working	Network	Network	488.80645751953125
+TV	Working	Value	iPhone 17 Pro On Us & Save up to 20%	0
+OTT	Working	Network	Best Network	0
+Display	Working	Magenta Brand	Live Nation Q4	0
+Spot TV	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+Display	Working	Network	T-Satellite & Data Launch	0
+Radio	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25 - SMRA Logo	0
+OLV	Working	Value	HVP Best Network & Samsung GS25+ & Netflix On Us	0
+Display	Working	Value	15 Minute Switch	0
+Radio	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25 - National	0
+Radio	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+Display	Working	Value	Cyber Week Apple Bundle	0
+Audio	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Paid Search	Working	BTS	SEM Postpaid BTS	0
+Spot TV	Working	Network	Network/T Satellite Testimonials & Family Freedom	0
+Paid Social	Working	Value	Hispanic Value & Brand	0
+Audio	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25	0
+OLV	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25	0
+Paid Social	Working	Value	iPhone 17 Pro On Us & Save up to 20%	0
+Cinema	Working	Network	Best Network	0
+OTT	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Radio	Working	Value	iPhone 17 On U s No Trade & 15 Min Switch NSEIP - National	0
+OTT	Working	Value	iPhone 17 On Us No Trade & Apple TV Tentpole	0
+OOH	Working	Magenta Brand	Magenta Brand	0
+OTT	Working	Magenta Brand	Magenta Status	0
+Radio	Working	Value	55+ Voice & HSI Bundle	0
+Display	Working	Value	Best Network (Apple News - Value)	0
+Audio	Working	Value	HVP Connectivity & 5 Year Guarantee 	0
+OTT	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+Print	Working	Value	iPhone 17 On US No Trade NSEIP - SMRA Logo	0
+Audio	Working	Network	Network Travelers Refresh	0
+Paid Social	Working	Value	LVGP & 15 Min Switch	0
+Paid Social	Working	Network	Network Pixel	0
+Paid Social	Working	Magenta Brand	Magenta Status	0
+Radio	Working	Value	iPhone 17 Pro On Us & Best Network	0
+Display	Working	Value	iPhone 17 Pro On Us	0
+OOH	Working	Value	Family Freedom	0
+Audio	Working	Value	HVP Streaming Bundle & Best Network	0
+OOH	Working	Value	Try T-Mobile	0
+OLV	Working	Value	HVP Samsung GS25+ & Netflix On Us	0
+Audio	Working	Magenta Brand	Magenta Brand	0
+Spot TV	Working	Network	Network/T Satellite Testimonials & Experience Plans	0
+Audio	Working	Network	Best Network	0
+OLV	Working	Network	Best Network	0
+TV	Working	Value	55+ Voice & HSI Bundle	0
+TV	Working	Value	iPhone 17 Pro On Us & Best Network	0
+Paid Social	Working	Magenta Brand	Bravo Q4'25 Custom content Lindsay	0
+Paid Social	Working	Network	T-Satellite	0
+OTT	Working	Value	55+ Voice & HSI Bundle	0
+Display	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Print	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25	0
+OLV	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+OTT	Working	Magenta Brand	ACL Fest Social	0
+OOH	Working	Value	Message TBD	0
+Display	Working	Value	Family Freedom	0
+Paid Social	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Spot TV	Working	Value	HINT	0
+Audio	Working	Value	HVP Holiday Gifting, Easier Shopping & 15 Minute Switch	0
+Audio	Working	Value	Family Freedom	0
+Print	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25 - SMRA Logo	0
+Radio	Working	Value	Essentials Military & T-Satellite	0
+OOH	Working	Network	[AREA] Best Network	0
+OTT	Working	Value	HVP Connectivity & 4/$25 5G Phones On Us	0
+Display	Working	Value	HVP Best Network & Samsung GS25+ & Netflix On Us	0
+Audio	Working	Value	HVP Best Network & Samsung GS25+ & Netflix On Us	0
+Display	Working	Value	Save up to 20%	0
+Paid Social	Working	Network	T-Satellite & Data Launch (All Trails)	0
+OOH	Working	Value	HINT	0
+Radio	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+Audio	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+DJs	Working	Network	Better Together	0
+Radio	Working	Value	iPhone 17 On Us No Trade & 15 Minute Switch NSEIP - SMRA Logo	0
+Audio	Working	Value	iPhone 17 Pro On Us & Best Network	0
+Audio	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+Cinema	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+Paid Social	Working	Value	Holiday Hero 4 iPhone 17 On Us No Trade & 4/$25	0
+TV	Working	Network	Best Network & T-Satellite	0
+DJs	Working	Network	Best Network & T-Satellite	0
+OLV	Working	Magenta Brand	Magenta Brand	0
+OOH	Working	Value	HVP Streaming	0
+OOH	Working	Value	HVP Streaming Bundle	0
+OTT	Working	Value	HVP Best Network & Samsung GS25+ & Netflix On Us	0
+Print	Working	Value	55+ iPhone 16e & Best Price/Network	0
+Print	Working	Value	HINT	0
+Spot TV	Working	Network	Better Together	0
+OOH	Working	Network	Network	0
+Print	Working	Value	55+ Voice & HSI Bundle	0
+Paid Social	Working	Magenta Brand	Magenta Brand (Hulu)	0
+OLV	Working	Network	Network Travelers Refresh	0
+Spot TV	Working	Value	SilentMango iPhone Hero Phase 2 & SuttersMill	0
+OTT	Working	Magenta Brand	Magenta Brand	0
+Print	Working	Value	HVP Connectivity & 4/$25 5G Phones On Us	0
+Radio	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+OTT	Working	Value	iPhone 17 Pro On Us & Save up to 20%	0
+Print	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+TV	Working	Magenta Brand	The Weather Channel	0
+OLV	Working	Value	iPhone 17 Pro On Us & Save up to 20%	0
+Radio	Working	Value	55+ iPhone 16e & Best Price/Network	0
+Paid Social	Working	Network	T-Satellite & Data Launch	0
+Paid Social	Working	Value	iPhone 17 Pro On Us & Best Network	0
+TV	Working	Magenta Brand	Magenta Brand	0
+Paid Social	Working	Value	15 Minute Switch	0
+Audio	Working	Value	iPhone 17 Pro On Us & Save up to 20%	0
+Paid Social	Working	Magenta Brand	ACL Fest Social	0
+OOH	Working	Value	15 Minute Switch	0
+Spot TV	Working	Value	Try T-Mobile	0
+OOH	Working	Value	HVP Connectivity	0
+Spot TV	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Radio	Working	Magenta Brand	Veterans Day Stronger Together	0
+Audio	Working	Value	HVP Holiday Streaming Bundle & 15 Minute Switch	0
+OLV	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+Display	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+OOH	Working	Network	Covering Fans Across [AREA]	0
+Display	Working	Magenta Brand	Veterans Day Stronger Together	0
+Spot TV	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+Print	Working	Value	iPhone 17 On Us	0
+TV	Working	Magenta Brand	Magenta Brand TBD (until Launch)	0
+Radio	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+Audio	Working	Value	15 Minute Switch	0
+OTT	Working	Value	iPhone 17 Pro On Us & Best Network	0
+Display	Working	Value	Essentials Military & T-Satellite	0
+Display	Working	Network	Best Network	0
+Display	Working	Value	iPhone 17 On Us No Trade	0
+OLV	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+Radio	Working	Value	Family Freedom	0
+Audio	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+OTT	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us	0
+DJs	Working	Value	HVP Connectivity	0
+OOH	Working	Network	Better Together	0
+OOH	Working	Value	Experience Plans - Save 20% & 5 yr Guarantee	0
+TV	Working	Magenta Brand	Bravo Q4'25 Custom content Lindsay	0
+OTT	Working	Value	55+ iPhone 16e & Best Price/Network	0
+Print	Working	Value	iPhone 17 On US No Trade NSEIP	0
+Paid Social	Working	Magenta Brand	Magenta Brand (Apple)	0
+OTT	Working	Value	HVP Samsung GS25+ & Netflix On Us	0
+Paid Social	Working	Value	iPhone 17 On Us No Trade & 15 Min Switch	0
+Display	Working	Magenta Brand	Magenta Brand	0
+Paid Social	Working	Network	Best Network	0
+Radio	Working	Value	BOMBAY EXCHANGE 4/$25 Samsung GS25 On Us No trade	0
+Radio	Working	Value	HVP Best Network & Samsung GS25+ & Netflix On Us	0
+Display	Working	Value	HVP Connectivity & 4/$25 Samsung GS25 On Us No trade	0
+OLV	Working	Value	4 iPhone 17 On Us No Trade & 4/$25	0
+Paid Search	Working	Value	SEM Postpaid (Ad Media)	-71.53108215332031
