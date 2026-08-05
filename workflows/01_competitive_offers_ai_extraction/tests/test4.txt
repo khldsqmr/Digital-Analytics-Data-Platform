@@ -18,6 +18,9 @@ SELECT Quarter, COUNT(*) AS rows, SUM(weekly_forecast) AS total
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
 WHERE QGP_Week = '2026-01-03' AND LOB_Supported = 'CONSUMER POSTPAID'
 GROUP BY Quarter;
+output:
+Quarter	rows	total
+Q4'25	33	4692468.108566284
 
 SELECT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date, Quarter, SUM(Spend) AS total
 FROM prdrzranalytics.lab42.raw_media_flowchart
@@ -27,7 +30,16 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'TFB'
 GROUP BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE), Quarter
 ORDER BY FileLoad_Date;
 
+output:
+FileLoad_Date	Quarter	total
+2025-07-10	Q3'20	0
+
 SELECT QGP_Week, Quarter, week_type, Spend_Forecast
 FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
 WHERE Week_Beginning_Monday = '2025-12-29'
   AND LOB_Supported = 'CONSUMER POSTPAID';
+
+output:
+QGP_Week	Quarter	week_type	Spend_Forecast
+2026-01-03	2026 Q1	BOUNDARY_FIRST	null
+2025-12-31	2025 Q4	BOUNDARY_STUB	4692468.108566284
