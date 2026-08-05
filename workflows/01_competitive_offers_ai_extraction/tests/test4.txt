@@ -92,3 +92,11 @@ UNION ALL SELECT * FROM stage3
 UNION ALL SELECT * FROM stage4
 UNION ALL SELECT * FROM stage5
 ORDER BY stage;
+
+output:
+stage	rows	total
+A. after raw CTE (all filters combined)	4868	37343306.014923096
+B. after weekly_snapshots	680	37343306.014923096
+C. latest_file_per_week selected: 2025-12-26 for Quarter=Q4'25	null	null
+D. after best CTE	0	null
+E. after final != 0 filter	0	null
