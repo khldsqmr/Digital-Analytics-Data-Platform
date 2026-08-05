@@ -81,7 +81,7 @@ BEGIN
     JOIN latest_source_file_per_week lsf
       ON ws.Quarter = lsf.Quarter AND ws.QGP_Week = lsf.QGP_Week AND ws.LOB_Supported = lsf.LOB_Supported
      AND ws.FileLoad_Date = lsf.latest_FileLoad_Date
-     AND ws.Source_File_Date = lsf.latest_Source_File_Date
+     AND ws.Source_File_Date IS NOT DISTINCT FROM lsf.latest_Source_File_Date
   ),
   rolled_up AS (
     SELECT
