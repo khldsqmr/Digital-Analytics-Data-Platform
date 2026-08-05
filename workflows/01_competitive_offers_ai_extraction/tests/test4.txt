@@ -1,28 +1,50 @@
-MFC Forecast Data — Report
-Missing Forecasts (Q1 2026 & Q3 2026)
-
-Two dates show null Forecast, and both trace back to the same source-data behavior:
-
-January 3, 2026 — no forecast under Q1 2026
-July 4, 2026 — no forecast under Q3 2026
-
-In both cases, the underlying campaigns are real and have genuine forecast dollars behind them — the source simply hasn't re-tagged them to the new quarter yet. The money is present and correctly reported under the previous quarter's quarter-end date instead:
-
-January 3's forecast ($4,692,468.11) is fully present under Q4 2025 (Dec 31, 2025)
-July 4's forecast will show under Q2 2026 (June 30, 2026) the same way, once its campaigns are re-tagged
-
-This is expected, ordinary behavior at every quarter boundary — campaigns get relabeled to the new quarter over the following weeks in the source file, at which point the forecast appears under the new quarter automatically. No data is missing or lost in either case — it's a labeling timing issue in the source, not a reporting gap.
-
-Channels/Tactics Shifting Between File Loads
-
-Individual channels and tactics do come and go week to week in the raw files. To keep reporting reliable, the pipeline always includes every channel/tactic combination ever seen for every date — even weeks with no spend for a given combination get an explicit blank row instead of disappearing. This keeps week-over-week comparisons accurate and makes any gap visible rather than silent.
-
-How Forecast Allocation Works at Quarter Boundaries
-
-For any campaign at a boundary week, the pipeline checks how many distinct quarters that campaign's raw forecast is genuinely tagged to, and handles it one of two ways:
-
-If data exists in only one quarter — say the old quarter, with nothing at all under the new quarter's tag — the entire amount is allocated to that one boundary date, unsplit. This is exactly the January and July pattern above: the full amount lands wherever the raw tag actually points, and the other side correctly shows null.
-
-If data genuinely exists in both quarters — real forecast tagged to both the old and new quarter for the same boundary week — the two amounts are first summed into one combined total. That total is then split proportionally across the two boundary dates based on how many calendar days each quarter actually covers within that natural week. For example, if 2 days of a boundary week fall in the old quarter and 5 fall in the new one, the combined total splits 2/7 and 5/7 accordingly.
-
-This means every dollar the source reports is accounted for exactly once — fully to one side when only one side has real data, or proportionally split by actual days when both genuinely do. Nothing is invented, and nothing gets spread across a boundary it was never really part of.
+WITH actual_data AS (
+  SELECT
+    CONCAT('20', SUBSTRING(Quarter, 4, 2), ' ', SUBSTRING(Quarter, 1, 2)) AS Quarter,
+    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    SUM(Spend) AS total_spend
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(QGP)) = 'ACTUAL'
+    AND TRY_CAST(QGP_Week AS DATE) IN ('2026-01-03', '2026-07-04')
+    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+  GROUP BY Quarter, TRY_CAST(QGP_Week AS DATE), TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
+),
+actual_latest AS (
+  SELECT Quarter, QGP_Week, total_spend,
+    ROW_NUMBER() OVER (PARTITION BY Quarter, QGP_Week ORDER BY FileLoad_Date DESC) AS rn
+  FROM actual_data
+),
+forecast_data AS (
+  SELECT
+    CONCAT('20', SUBSTRING(Quarter, 4, 2), ' ', SUBSTRING(Quarter, 1, 2)) AS Quarter,
+    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    SUM(Spend) AS total_spend
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
+    AND TRY_CAST(QGP_Week AS DATE) IN ('2026-01-03', '2026-07-04')
+    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+  GROUP BY Quarter, TRY_CAST(QGP_Week AS DATE), TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
+),
+forecast_latest AS (
+  SELECT Quarter, QGP_Week, total_spend,
+    ROW_NUMBER() OVER (PARTITION BY Quarter, QGP_Week ORDER BY FileLoad_Date DESC) AS rn
+  FROM forecast_data
+),
+all_combos AS (
+  SELECT Quarter, QGP_Week FROM actual_latest WHERE rn = 1
+  UNION
+  SELECT Quarter, QGP_Week FROM forecast_latest WHERE rn = 1
+)
+SELECT
+  c.Quarter,
+  c.QGP_Week,
+  a.total_spend AS Spend_Actual,
+  f.total_spend AS Spend_Forecast
+FROM all_combos c
+LEFT JOIN actual_latest a ON a.Quarter = c.Quarter AND a.QGP_Week = c.QGP_Week AND a.rn = 1
+LEFT JOIN forecast_latest f ON f.Quarter = c.Quarter AND f.QGP_Week = c.QGP_Week AND f.rn = 1
+ORDER BY c.QGP_Week DESC, c.Quarter DESC;
