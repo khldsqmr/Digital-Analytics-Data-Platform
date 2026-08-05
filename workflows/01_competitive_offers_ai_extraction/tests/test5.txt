@@ -1,1 +1,42 @@
 can you do a write up on what's happening with the missing forecast data in the MFC. what dates are missing? is it always that a file is missing or sometimes is it that the file exists but certain tactics or channels are missing?
+
+SELECT LOB_Supported, QGP_Week, Week_Beginning_Monday, week_type, Spend_Actual, Spend_Forecast
+FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
+WHERE QGP_Week BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
+ORDER BY LOB_Supported, QGP_Week DESC;
+
+SELECT
+  UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+  TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+  COUNT(*) AS raw_forecast_rows,
+  COUNT(DISTINCT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS distinct_files_ever_had_it,
+  MAX(TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS most_recent_file_with_data
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(QGP)) = 'FORECAST'
+  AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
+  AND TRY_CAST(QGP_Week AS DATE) BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
+GROUP BY UPPER(TRIM(LOB_Supported)), TRY_CAST(QGP_Week AS DATE)
+ORDER BY LOB_Supported, QGP_Week DESC;
+
+WITH latest_file_per_week AS (
+  SELECT UPPER(TRIM(LOB_Supported)) AS LOB_Supported, TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
+    MAX(TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS latest_file
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE UPPER(TRIM(QGP)) = 'FORECAST'
+    AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
+    AND TRY_CAST(QGP_Week AS DATE) BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
+  GROUP BY UPPER(TRIM(LOB_Supported)), TRY_CAST(QGP_Week AS DATE)
+)
+SELECT
+  lf.LOB_Supported, lf.QGP_Week, lf.latest_file,
+  COUNT(DISTINCT r.Channel) AS distinct_channels,
+  COUNT(DISTINCT CONCAT(r.Channel,'|',r.Tactic,'|',r.Message_Type,'|',r.Agency)) AS distinct_campaigns,
+  SUM(r.Spend) AS total_forecast
+FROM latest_file_per_week lf
+JOIN prdrzranalytics.lab42.raw_media_flowchart r
+  ON UPPER(TRIM(r.LOB_Supported)) = lf.LOB_Supported
+ AND TRY_CAST(r.QGP_Week AS DATE) = lf.QGP_Week
+ AND TRY_CAST(CAST(r.FileLoad_Date AS STRING) AS DATE) = lf.latest_file
+WHERE UPPER(TRIM(r.QGP)) = 'FORECAST'
+GROUP BY lf.LOB_Supported, lf.QGP_Week, lf.latest_file
+ORDER BY lf.LOB_Supported, lf.QGP_Week DESC;
