@@ -9,3 +9,7 @@ WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND TRY_CAST(QGP_Week AS DATE) = '2026-01-03'
   AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2025-12-26'
 GROUP BY Quarter, char_length, matches_bronze_regex;
+
+output:
+Quarter	char_length	matches_bronze_regex	rows
+Q4'25	5	true	489
