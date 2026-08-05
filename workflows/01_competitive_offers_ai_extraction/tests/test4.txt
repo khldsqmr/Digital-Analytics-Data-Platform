@@ -1,15 +1,94 @@
-SELECT
-  Quarter,
-  LENGTH(Quarter) AS char_length,
-  Quarter RLIKE "^Q[1-4]'[0-9]{2}$" AS matches_bronze_regex,
-  COUNT(*) AS rows
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
-  AND UPPER(TRIM(QGP)) = 'FORECAST'
-  AND TRY_CAST(QGP_Week AS DATE) = '2026-01-03'
-  AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2025-12-26'
-GROUP BY Quarter, char_length, matches_bronze_regex;
-
-output:
-Quarter	char_length	matches_bronze_regex	rows
-Q4'25	5	true	489
+WITH raw AS (
+  SELECT
+    Quarter,
+    TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+    COALESCE(
+      TRY_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+      DATE_ADD(TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE), 6)
+    ) AS Week_Ending_Sunday,
+    TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
+    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+    TRY_CAST(File_Date AS DATE) AS Source_File_Date,
+    CASE
+      WHEN UPPER(TRIM(LOB_Supported)) = 'HSI' THEN 'BROADBAND'
+      WHEN UPPER(TRIM(LOB_Supported)) = 'TBG' THEN 'TFB'
+      ELSE UPPER(TRIM(LOB_Supported))
+    END AS LOB_Supported,
+    Channel, Tactic, Message_Type,
+    CASE
+      WHEN LOWER(TRIM(Agency)) = 'ini' THEN 'Initiative'
+      WHEN LOWER(TRIM(Agency)) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+      WHEN Agency IS NULL THEN NULL
+      ELSE TRIM(Agency)
+    END AS Agency,
+    Spend AS Spend_Forecast
+  FROM prdrzranalytics.lab42.raw_media_flowchart
+  WHERE 1=1
+    AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
+    AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
+    AND Channel IS NOT NULL
+    AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+    AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+    AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) = '2026-01-03'
+    AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
+    AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+    AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+    AND Quarter IS NOT NULL
+    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+    AND UPPER(TRIM(QGP)) = 'FORECAST'
+    AND Spend IS NOT NULL
+),
+stage1 AS (
+  SELECT 'A. after raw CTE (all filters combined)' AS stage, COUNT(*) AS rows, SUM(Spend_Forecast) AS total FROM raw
+),
+weekly_snapshots AS (
+  SELECT
+    Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+    FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency,
+    SUM(Spend_Forecast) AS weekly_forecast
+  FROM raw
+  WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+  GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
+),
+stage2 AS (
+  SELECT 'B. after weekly_snapshots' AS stage, COUNT(*) AS rows, SUM(weekly_forecast) AS total FROM weekly_snapshots
+),
+latest_file_per_week AS (
+  SELECT Quarter, QGP_Week, LOB_Supported, MAX(FileLoad_Date) AS latest_FileLoad_Date
+  FROM weekly_snapshots
+  GROUP BY Quarter, QGP_Week, LOB_Supported
+),
+stage3 AS (
+  SELECT CONCAT('C. latest_file_per_week selected: ', CAST(latest_FileLoad_Date AS STRING), ' for Quarter=', Quarter) AS stage, NULL AS rows, NULL AS total
+  FROM latest_file_per_week
+),
+latest_source_file_per_week AS (
+  SELECT ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date,
+    MAX(ws.Source_File_Date) AS latest_Source_File_Date
+  FROM weekly_snapshots ws
+  JOIN latest_file_per_week lf
+    ON ws.Quarter = lf.Quarter AND ws.QGP_Week = lf.QGP_Week AND ws.LOB_Supported = lf.LOB_Supported
+   AND ws.FileLoad_Date = lf.latest_FileLoad_Date
+  GROUP BY ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date
+),
+best AS (
+  SELECT ws.*
+  FROM weekly_snapshots ws
+  JOIN latest_source_file_per_week lsf
+    ON ws.Quarter = lsf.Quarter AND ws.QGP_Week = lsf.QGP_Week AND ws.LOB_Supported = lsf.LOB_Supported
+   AND ws.FileLoad_Date = lsf.latest_FileLoad_Date
+   AND ws.Source_File_Date = lsf.latest_Source_File_Date
+),
+stage4 AS (
+  SELECT 'D. after best CTE' AS stage, COUNT(*) AS rows, SUM(weekly_forecast) AS total FROM best
+),
+stage5 AS (
+  SELECT 'E. after final != 0 filter' AS stage, COUNT(*) AS rows, SUM(weekly_forecast) AS total
+  FROM best WHERE weekly_forecast IS NOT NULL AND weekly_forecast != 0
+)
+SELECT * FROM stage1
+UNION ALL SELECT * FROM stage2
+UNION ALL SELECT * FROM stage3
+UNION ALL SELECT * FROM stage4
+UNION ALL SELECT * FROM stage5
+ORDER BY stage;
