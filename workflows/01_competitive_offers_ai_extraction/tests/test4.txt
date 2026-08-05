@@ -1,45 +1,28 @@
-MFC Forecast Data — Quick Summary (updated)
+MFC Forecast Data — Report
+Missing Forecasts (Q1 2026 & Q3 2026)
 
-1. Missing forecasts
-Two real gaps found, and they're different in kind:
+Two dates show null Forecast, and both trace back to the same source-data behavior:
 
-July 4, 2026 — a source data behavior, not a bug. The campaigns for that week are still tagged by the source as "Q2" even in the latest file, so their spend lands on the Q2 quarter-end date instead of Q3. The money isn't lost, just filed under the old quarter label until the source updates the tag.
-January 3, 2026 — a confirmed pipeline bug, now root-caused. A real ~$5.0M forecast exists for this week in the source, but one specific file (loaded Dec 26, 2025) has a corrupted internal date field. Because of how our matching logic compares that field, the entire file's data was being silently dropped rather than used. Fix identified; rolling it out now, and checking whether other weeks were affected the same way.
+January 3, 2026 — no forecast under Q1 2026
+July 4, 2026 — no forecast under Q3 2026
 
-Outside these two dates, forecast data is present and consistent across the full window checked.
+In both cases, the underlying campaigns are real and have genuine forecast dollars behind them — the source simply hasn't re-tagged them to the new quarter yet. The money is present and correctly reported under the previous quarter's quarter-end date instead:
 
-2. Channels/tactics shifting between file loads
-Individual channels and tactics do come and go week to week in the raw files. To keep reporting reliable despite that, the pipeline always includes every channel/tactic combination ever seen for every date — even weeks where a combination has no spend get an explicit blank row instead of disappearing entirely. This keeps week-over-week comparisons accurate and makes any gap visible instead of silent.
+January 3's forecast ($4,692,468.11) is fully present under Q4 2025 (Dec 31, 2025)
+July 4's forecast will show under Q2 2026 (June 30, 2026) the same way, once its campaigns are re-tagged
 
-3. OTT example — why our forecast showed ~$27M instead of ~$24M
-Three OTT campaigns (worth ~$2.63M) disappeared from one file, then reappeared the next week split into three new, more specific tactic names. Same real money, just renamed. Since our system tracks campaigns by their exact name, it counted both the old name (carried forward as "still active") and the new names — double-counting the same spend. Once found, we corrected it, and the forecast now reports the accurate ~$24M figure.
+This is expected, ordinary behavior at every quarter boundary — campaigns get relabeled to the new quarter over the following weeks in the source file, at which point the forecast appears under the new quarter automatically. No data is missing or lost in either case — it's a labeling timing issue in the source, not a reporting gap.
 
-SELECT Quarter, COUNT(*) AS rows, SUM(weekly_forecast) AS total
-FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
-WHERE QGP_Week = '2026-01-03' AND LOB_Supported = 'CONSUMER POSTPAID'
-GROUP BY Quarter;
-output:
-Quarter	rows	total
-Q4'25	33	4692468.108566284
+Channels/Tactics Shifting Between File Loads
 
-SELECT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date, Quarter, SUM(Spend) AS total
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE UPPER(TRIM(LOB_Supported)) = 'TFB'
-  AND UPPER(TRIM(QGP)) = 'FORECAST'
-  AND TRY_CAST(QGP_Week AS DATE) = '2020-07-04'
-GROUP BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE), Quarter
-ORDER BY FileLoad_Date;
+Individual channels and tactics do come and go week to week in the raw files. To keep reporting reliable, the pipeline always includes every channel/tactic combination ever seen for every date — even weeks with no spend for a given combination get an explicit blank row instead of disappearing. This keeps week-over-week comparisons accurate and makes any gap visible rather than silent.
 
-output:
-FileLoad_Date	Quarter	total
-2025-07-10	Q3'20	0
+How Forecast Allocation Works at Quarter Boundaries
 
-SELECT QGP_Week, Quarter, week_type, Spend_Forecast
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
-WHERE Week_Beginning_Monday = '2025-12-29'
-  AND LOB_Supported = 'CONSUMER POSTPAID';
+For any campaign at a boundary week, the pipeline checks how many distinct quarters that campaign's raw forecast is genuinely tagged to, and handles it one of two ways:
 
-output:
-QGP_Week	Quarter	week_type	Spend_Forecast
-2026-01-03	2026 Q1	BOUNDARY_FIRST	null
-2025-12-31	2025 Q4	BOUNDARY_STUB	4692468.108566284
+If data exists in only one quarter — say the old quarter, with nothing at all under the new quarter's tag — the entire amount is allocated to that one boundary date, unsplit. This is exactly the January and July pattern above: the full amount lands wherever the raw tag actually points, and the other side correctly shows null.
+
+If data genuinely exists in both quarters — real forecast tagged to both the old and new quarter for the same boundary week — the two amounts are first summed into one combined total. That total is then split proportionally across the two boundary dates based on how many calendar days each quarter actually covers within that natural week. For example, if 2 days of a boundary week fall in the old quarter and 5 fall in the new one, the combined total splits 2/7 and 5/7 accordingly.
+
+This means every dollar the source reports is accounted for exactly once — fully to one side when only one side has real data, or proportionally split by actual days when both genuinely do. Nothing is invented, and nothing gets spread across a boundary it was never really part of.
