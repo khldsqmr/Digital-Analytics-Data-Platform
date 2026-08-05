@@ -14,30 +14,20 @@ Individual channels and tactics do come and go week to week in the raw files. To
 3. OTT example — why our forecast showed ~$27M instead of ~$24M
 Three OTT campaigns (worth ~$2.63M) disappeared from one file, then reappeared the next week split into three new, more specific tactic names. Same real money, just renamed. Since our system tracks campaigns by their exact name, it counted both the old name (carried forward as "still active") and the new names — double-counting the same spend. Once found, we corrected it, and the forecast now reports the accurate ~$24M figure.
 
-
 SELECT Quarter, COUNT(*) AS rows, SUM(weekly_forecast) AS total
 FROM prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly
-WHERE QGP_Week = '2025-12-31' AND LOB_Supported = 'CONSUMER POSTPAID'
+WHERE QGP_Week = '2026-01-03' AND LOB_Supported = 'CONSUMER POSTPAID'
 GROUP BY Quarter;
 
-output: No rows returned
+SELECT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date, Quarter, SUM(Spend) AS total
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE UPPER(TRIM(LOB_Supported)) = 'TFB'
+  AND UPPER(TRIM(QGP)) = 'FORECAST'
+  AND TRY_CAST(QGP_Week AS DATE) = '2020-07-04'
+GROUP BY TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE), Quarter
+ORDER BY FileLoad_Date;
 
-WITH all_weeks_with_data AS (
-  SELECT DISTINCT Quarter, TRY_CAST(QGP_Week AS DATE) AS QGP_Week, UPPER(TRIM(LOB_Supported)) AS LOB_Supported
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(QGP)) = 'FORECAST'
-    AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
-    AND Spend IS NOT NULL
-)
-SELECT a.QGP_Week, a.LOB_Supported, a.Quarter
-FROM all_weeks_with_data a
-LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendForecastGranular_weekly b
-  ON a.QGP_Week = b.QGP_Week
- AND a.LOB_Supported = b.LOB_Supported
-WHERE b.QGP_Week IS NULL
-ORDER BY a.QGP_Week DESC;
-output:
-QGP_Week	LOB_Supported	Quarter
-2020-07-04	TFB	Q3'20
-2020-07-04	CONSUMER POSTPAID	Q3'20
-2020-07-04	TFB	Q3'20
+SELECT QGP_Week, Quarter, week_type, Spend_Forecast
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
+WHERE Week_Beginning_Monday = '2025-12-29'
+  AND LOB_Supported = 'CONSUMER POSTPAID';
