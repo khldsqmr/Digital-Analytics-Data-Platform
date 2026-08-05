@@ -1,11 +1,11 @@
-SELECT TRY_CAST(File_Date AS DATE) AS Source_File_Date, COUNT(*) AS rows, SUM(Spend) AS total
+SELECT
+  Week_Beginning_Monday, Week_Ending_Sunday,
+  TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS parsed_monday,
+  TRY_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE) AS parsed_sunday,
+  COUNT(*) AS rows
 FROM prdrzranalytics.lab42.raw_media_flowchart
 WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND UPPER(TRIM(QGP)) = 'FORECAST'
   AND TRY_CAST(QGP_Week AS DATE) = '2026-01-03'
   AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2025-12-26'
-GROUP BY TRY_CAST(File_Date AS DATE)
-ORDER BY Source_File_Date DESC;
-
-Source_File_Date	rows	total
--	489	5019450.444503784
+GROUP BY Week_Beginning_Monday, Week_Ending_Sunday, parsed_monday, parsed_sunday;
