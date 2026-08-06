@@ -26,3 +26,8 @@ GROUP BY TRY_CAST(Week_Beginning_Monday AS DATE)
 ORDER BY Week_Beginning_Monday;
 
 output: No rows returned
+
+SELECT DISTINCT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) BETWEEN '2026-07-20' AND '2026-08-10'
+ORDER BY FileLoad_Date;
