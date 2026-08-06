@@ -147,3 +147,14 @@ WHERE LOB_Supported = 'CONSUMER POSTPAID'
     OR (Message_Type = 'Network' AND Channel = 'Display' AND Tactic = 'Display')
   )
 ORDER BY Message_Type, Channel, Tactic, QGP_Week;
+output:
+Message_Type	Channel	Tactic	QGP_Week	week_type	Quarter	Spend
+Magenta Brand	Paid Social	Paid Social	2026-06-30	BOUNDARY_STUB	2026 Q2	82619.32310267857
+Magenta Brand	Paid Social	Paid Social	2026-07-04	BOUNDARY_FIRST	2026 Q3	206548.30775669642
+Magenta Brand	Paid Social	Paid Social	2026-07-04	BOUNDARY_FIRST	2026 Q3	128846.15625
+Network	Audio	Podcast	2026-06-30	BOUNDARY_STUB	2026 Q2	15994.988830566406
+Network	Audio	Podcast	2026-07-04	BOUNDARY_FIRST	2026 Q3	39987.472076416016
+Network	Audio	Streaming Radio	2026-06-30	BOUNDARY_STUB	2026 Q2	9255.307006835938
+Network	Audio	Streaming Radio	2026-07-04	BOUNDARY_FIRST	2026 Q3	23138.267517089844
+Network	Display	Display	2026-06-30	BOUNDARY_STUB	2026 Q2	28333.180524553572
+Network	Display	Display	2026-07-04	BOUNDARY_FIRST	2026 Q3	70832.95131138393
