@@ -1,50 +1,18 @@
-WITH actual_data AS (
-  SELECT
-    CONCAT('20', SUBSTRING(Quarter, 4, 2), ' ', SUBSTRING(Quarter, 1, 2)) AS Quarter,
-    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
-    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
-    SUM(Spend) AS total_spend
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
-    AND UPPER(TRIM(QGP)) = 'ACTUAL'
-    AND TRY_CAST(QGP_Week AS DATE) IN ('2026-01-03', '2026-07-04')
-    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
-  GROUP BY Quarter, TRY_CAST(QGP_Week AS DATE), TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
-),
-actual_latest AS (
-  SELECT Quarter, QGP_Week, total_spend,
-    ROW_NUMBER() OVER (PARTITION BY Quarter, QGP_Week ORDER BY FileLoad_Date DESC) AS rn
-  FROM actual_data
-),
-forecast_data AS (
-  SELECT
-    CONCAT('20', SUBSTRING(Quarter, 4, 2), ' ', SUBSTRING(Quarter, 1, 2)) AS Quarter,
-    TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
-    TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
-    SUM(Spend) AS total_spend
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
-    AND UPPER(TRIM(QGP)) = 'FORECAST'
-    AND TRY_CAST(QGP_Week AS DATE) IN ('2026-01-03', '2026-07-04')
-    AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
-  GROUP BY Quarter, TRY_CAST(QGP_Week AS DATE), TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)
-),
-forecast_latest AS (
-  SELECT Quarter, QGP_Week, total_spend,
-    ROW_NUMBER() OVER (PARTITION BY Quarter, QGP_Week ORDER BY FileLoad_Date DESC) AS rn
-  FROM forecast_data
-),
-all_combos AS (
-  SELECT Quarter, QGP_Week FROM actual_latest WHERE rn = 1
-  UNION
-  SELECT Quarter, QGP_Week FROM forecast_latest WHERE rn = 1
-)
 SELECT
-  c.Quarter,
-  c.QGP_Week,
-  a.total_spend AS Spend_Actual,
-  f.total_spend AS Spend_Forecast
-FROM all_combos c
-LEFT JOIN actual_latest a ON a.Quarter = c.Quarter AND a.QGP_Week = c.QGP_Week AND a.rn = 1
-LEFT JOIN forecast_latest f ON f.Quarter = c.Quarter AND f.QGP_Week = c.QGP_Week AND f.rn = 1
-ORDER BY c.QGP_Week DESC, c.Quarter DESC;
+  Week_Beginning_Monday,
+  SUM(COALESCE(Spend_Actual, Spend_Forecast)) AS total_spend
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
+WHERE Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
+GROUP BY Week_Beginning_Monday
+ORDER BY Week_Beginning_Monday;
+
+SELECT
+  TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
+  SUM(Spend) AS total_spend
+FROM prdrzranalytics.lab42.raw_media_flowchart
+WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-31'
+  AND Channel IS NOT NULL
+  AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+  AND TRY_CAST(Week_Beginning_Monday AS DATE) IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
+GROUP BY TRY_CAST(Week_Beginning_Monday AS DATE)
+ORDER BY Week_Beginning_Monday;
