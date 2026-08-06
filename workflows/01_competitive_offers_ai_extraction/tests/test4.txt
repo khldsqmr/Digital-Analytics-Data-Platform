@@ -184,3 +184,6 @@ Network	Audio	Streaming Radio	Q2'26	24555.54473876953
 Network	Audio	Streaming Radio	Q3'26	7838.02978515625
 Network	Display	Display	Q2'26	9225.9912109375
 Network	Display	Display	Q3'26	89940.140625
+
+
+The only difference is the way we are displaying the boundary stubs. We are summing up the partial numbers, and allocating using the numbers of days. Example: for QGP date July 4, 2026, we are allocating
