@@ -6,6 +6,14 @@ WHERE Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-
 GROUP BY Week_Beginning_Monday
 ORDER BY Week_Beginning_Monday;
 
+output:
+Week_Beginning_Monday	total_spend
+2026-06-29	24327328.964394834
+2026-07-06	30314115.139759064
+2026-07-13	36112442.15617752
+2026-07-20	31601980.880420685
+2026-07-27	31381461.276439667
+
 SELECT
   TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
   SUM(Spend) AS total_spend
@@ -16,3 +24,5 @@ WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-31'
   AND TRY_CAST(Week_Beginning_Monday AS DATE) IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
 GROUP BY TRY_CAST(Week_Beginning_Monday AS DATE)
 ORDER BY Week_Beginning_Monday;
+
+output: No rows returned
