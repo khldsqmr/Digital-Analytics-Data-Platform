@@ -174,3 +174,13 @@ WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-08-03'
   )
 GROUP BY Message_Type, Channel, Tactic, Quarter
 ORDER BY Message_Type, Channel, Tactic, Quarter;
+output:
+Message_Type	Channel	Tactic	Quarter	total_spend
+Magenta Brand	Paid Social	Paid Social	Q2'26	201802.435546875
+Magenta Brand	Paid Social	Paid Social	Q3'26	216211.3515625
+Network	Audio	Podcast	Q2'26	4221.902313232422
+Network	Audio	Podcast	Q3'26	51760.55859375
+Network	Audio	Streaming Radio	Q2'26	24555.54473876953
+Network	Audio	Streaming Radio	Q3'26	7838.02978515625
+Network	Display	Display	Q2'26	9225.9912109375
+Network	Display	Display	Q3'26	89940.140625
