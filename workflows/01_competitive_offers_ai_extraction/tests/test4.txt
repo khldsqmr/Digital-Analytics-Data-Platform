@@ -186,4 +186,10 @@ Network	Display	Display	Q2'26	9225.9912109375
 Network	Display	Display	Q3'26	89940.140625
 
 
-The only difference is the way we are displaying the boundary stubs. We are summing up the partial numbers, and allocating using the numbers of days. Example: for QGP date July 4, 2026, we are allocating
+The only difference is how each system handles the boundary week — everything else ties out exactly.
+
+For a week straddling a quarter-end (e.g., July 4, 2026), we sum the campaign's spend across both quarters and split it by the actual number of calendar days each quarter covers — not just show whichever quarter's tag is "current."
+
+Example: $X tagged to the old quarter + $Y tagged to the new quarter → summed, then split by days. If 2 days fall in the old quarter and 5 in the new, we allocate 2/7 to the quarter-end date and 5/7 to July 4th — a true, calendar-accurate share.
+
+The dashboard's boundary-week number reflects only the current quarter's tag, leaving out the prior quarter's portion — which is why it runs lower specifically on boundary weeks, while every other week matches exactly.
