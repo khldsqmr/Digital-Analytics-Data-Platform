@@ -117,3 +117,19 @@ Value	Spot TV	Spot TV	null	955316.8984375	955316.8984375	508647.296875	508648.46
 Value	TV	Addressable TV	null	422542.1875	374633.265625	380395.5	365274.125
 Value	TV	Data Driven Video - Offline	null	569378.8125	640267.955078125	775239.0056152344	711822.794921875
 Value	TV	National TV	2341092.966003418	3731775.5017089844	6108269.145751953	1464327.7231445312	1456883.9912109375
+
+
+SELECT
+  Message_Type,
+  Channel,
+  Tactic,
+  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-06-29' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `06/29/2026`,
+  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-06' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/06/2026`,
+  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-13' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/13/2026`,
+  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-20' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/20/2026`,
+  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-27' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/27/2026`
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
+WHERE LOB_Supported = 'CONSUMER POSTPAID'
+  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
+GROUP BY Message_Type, Channel, Tactic
+ORDER BY Message_Type, Channel, Tactic;
