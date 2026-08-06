@@ -133,3 +133,17 @@ WHERE LOB_Supported = 'CONSUMER POSTPAID'
   AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
 GROUP BY Message_Type, Channel, Tactic
 ORDER BY Message_Type, Channel, Tactic;
+
+
+SELECT
+  Message_Type, Channel, Tactic, QGP_Week, week_type, Quarter,
+  COALESCE(Spend_Actual, Spend_Forecast) AS Spend
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
+WHERE LOB_Supported = 'CONSUMER POSTPAID'
+  AND Week_Beginning_Monday = '2026-06-29'
+  AND (
+    (Message_Type = 'Magenta Brand' AND Channel = 'Paid Social' AND Tactic = 'Paid Social')
+    OR (Message_Type = 'Network' AND Channel = 'Audio')
+    OR (Message_Type = 'Network' AND Channel = 'Display' AND Tactic = 'Display')
+  )
+ORDER BY Message_Type, Channel, Tactic, QGP_Week;
