@@ -34,3 +34,19 @@ Week_Beginning_Monday	total_spend
 2026-07-13	24248646.863773346
 2026-07-20	19783145.137821198
 2026-07-27	21789466.85049057
+
+
+SELECT
+  Message_Type,
+  Channel,
+  Tactic,
+  SUM(CASE WHEN Week_Beginning_Monday = '2026-06-29' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `06/29/2026`,
+  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-06' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/06/2026`,
+  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-13' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/13/2026`,
+  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-20' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/20/2026`,
+  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-27' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/27/2026`
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
+WHERE LOB_Supported = 'CONSUMER POSTPAID'
+  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
+GROUP BY Message_Type, Channel, Tactic
+ORDER BY Message_Type, Channel, Tactic;
