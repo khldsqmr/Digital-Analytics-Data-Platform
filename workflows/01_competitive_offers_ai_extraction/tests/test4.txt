@@ -1,38 +1,21 @@
 SELECT
-  Week_Beginning_Monday,
-  SUM(COALESCE(Spend_Actual, Spend_Forecast)) AS total_spend
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
-WHERE Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
-GROUP BY Week_Beginning_Monday
-ORDER BY Week_Beginning_Monday;
-
-output:
-Week_Beginning_Monday	total_spend
-2026-06-29	24327328.964394834
-2026-07-06	30314115.139759064
-2026-07-13	36112442.15617752
-2026-07-20	31601980.880420685
-2026-07-27	31381461.276439667
-
-SELECT
   TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
   SUM(Spend) AS total_spend
 FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-07-31'
+WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-08-03'
+  AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
   AND Channel IS NOT NULL
   AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
   AND TRY_CAST(Week_Beginning_Monday AS DATE) IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
 GROUP BY TRY_CAST(Week_Beginning_Monday AS DATE)
 ORDER BY Week_Beginning_Monday;
 
-output: No rows returned
 
-SELECT DISTINCT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) BETWEEN '2026-07-20' AND '2026-08-10'
-ORDER BY FileLoad_Date;
-output:
-FileLoad_Date
-2026-07-22
-2026-07-24
-2026-08-03
+SELECT
+  Week_Beginning_Monday,
+  SUM(COALESCE(Spend_Actual, Spend_Forecast)) AS total_spend
+FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
+WHERE LOB_Supported = 'CONSUMER POSTPAID'
+  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
+GROUP BY Week_Beginning_Monday
+ORDER BY Week_Beginning_Monday;
