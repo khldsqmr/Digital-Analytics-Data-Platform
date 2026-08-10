@@ -1,195 +1,25 @@
+WITH Deduped AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
+      ORDER BY InsertDateTime DESC, PublishKey DESC
+    ) AS rn
+  FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+  WHERE DateContext = 'Normal'   -- confirmed true weekly grain; QTD/QTR are rollups of this
+    AND MetricID IN ('VRInboundCallsinclHSIAutomatedManual', 'VRChatsinclHSIAutomatedManual')
+)
 SELECT
-  TRY_CAST(Week_Beginning_Monday AS DATE) AS Week_Beginning_Monday,
-  SUM(Spend) AS total_spend
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-08-03'
-  AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
-  AND Channel IS NOT NULL
-  AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
-  AND TRY_CAST(Week_Beginning_Monday AS DATE) IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
-GROUP BY TRY_CAST(Week_Beginning_Monday AS DATE)
-ORDER BY Week_Beginning_Monday;
-
-output:
-Week_Beginning_Monday	total_spend
-2026-06-29	13540894.864449767
-2026-07-06	19866424.311832428
-2026-07-13	24248646.863773346
-2026-07-20	19783145.137821198
-2026-07-27	21789466.85049057
-
-SELECT
-  Week_Beginning_Monday,
-  SUM(COALESCE(Spend_Actual, Spend_Forecast)) AS total_spend
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spend_weekly
-WHERE LOB_Supported = 'CONSUMER POSTPAID'
-  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
-GROUP BY Week_Beginning_Monday
-ORDER BY Week_Beginning_Monday;
-
-output:
-Week_Beginning_Monday	total_spend
-2026-06-29	13540894.864449767
-2026-07-06	19866424.311832428
-2026-07-13	24248646.863773346
-2026-07-20	19783145.137821198
-2026-07-27	21789466.85049057
-
-
-SELECT
-  Message_Type,
-  Channel,
-  Tactic,
-  SUM(CASE WHEN Week_Beginning_Monday = '2026-06-29' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `06/29/2026`,
-  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-06' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/06/2026`,
-  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-13' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/13/2026`,
-  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-20' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/20/2026`,
-  SUM(CASE WHEN Week_Beginning_Monday = '2026-07-27' THEN COALESCE(Spend_Actual, Spend_Forecast) END) AS `07/27/2026`
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
-WHERE LOB_Supported = 'CONSUMER POSTPAID'
-  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
-GROUP BY Message_Type, Channel, Tactic
-ORDER BY Message_Type, Channel, Tactic;
-
-output:
-Message_Type	Channel	Tactic	06/29/2026	07/06/2026	07/13/2026	07/20/2026	07/27/2026
-BTS	Affiliate	Affiliate	33690.13671875	47374.90625	33476.90625	17888.90625	29141.62890625
-BTS	Display	Display	36622.21923828125	42336.01171875	39889.87109375	38921.80859375	34148.7421875
-BTS	Paid Search	Paid Search	87429.189453125	86442.8125	83965.53125	79884.78125	83612.9296875
-BTS	Paid Social	Paid Social	91002.9306640625	63848.91015625	61546.328125	61622.62109375	79457.53125
-Magenta Brand	Audio	Podcast	27596.154296875	27596.154296875	27596.154296875	27596.154296875	27596.154296875
-Magenta Brand	Audio	Streaming Radio	null	25293.615234375	null	null	null
-Magenta Brand	Display	Display	39298.768798828125	215491.07788085938	450414.1506347656	215491.07739257812	39298.768798828125
-Magenta Brand	Display	Production (Display)	1753.84619140625	1753.84619140625	1753.84619140625	1753.84619140625	1753.84619140625
-Magenta Brand	OLV	OLV	51480.7705078125	64173.078125	81096.1552734375	64173.078125	51480.7705078125
-Magenta Brand	OLV	OLV - Creator	22775.845703125	22775.845703125	22775.845703125	22775.845703125	22775.845703125
-Magenta Brand	OOH	OOH	null	19230.76953125	null	null	null
-Magenta Brand	OOH	OOH - Digital	123302.921875	123302.921875	123302.921875	123302.921875	123302.921875
-Magenta Brand	OOH	OOH - Static	246888.84375	246888.84375	246888.84375	246888.84375	246888.84375
-Magenta Brand	OTT	OTT	null	94251.015625	null	null	null
-Magenta Brand	OTT	OTT - Sponsorships and Innovations	122526.3046875	122526.3046875	122526.3046875	122526.3046875	122526.3046875
-Magenta Brand	OTT	Production (OTT)	7692.3076171875	7692.3076171875	7692.3076171875	7692.3076171875	7692.3076171875
-Magenta Brand	Paid Social	Paid Social	418013.787109375	605928.4765625	937563.28515625	628398.046875	280224.7109375
-Magenta Brand	Paid Social	Paid Social - Creator	48461.5400390625	158076.9228515625	304230.7744140625	158076.9228515625	48461.5400390625
-Magenta Brand	TV	Production (TV)	76923.076171875	76923.076171875	76923.076171875	76923.076171875	76923.076171875
-National Retail	Display	Display	786	null	null	null	null
-Network	Audio	Podcast	55982.46090698242	51760.55859375	51760.55859375	51760.55859375	51760.55859375
-Network	Audio	Streaming Radio	32393.57452392578	7838.02978515625	7838.02978515625	7838.02978515625	7838.02978515625
-Network	Cinema	Cinema	null	null	296371.3125	296371.3125	296371.3125
-Network	DJs	DJs	56044.625	56044.625	56044.625	61649.0859375	61649.0859375
-Network	Display	Display	99166.1318359375	89940.140625	89940.140625	89940.140625	89940.140625
-Network	Display	Production (Display)	2066.9677734375	null	null	null	null
-Network	OLV	OLV	5065.220184326172	null	null	52029.97265625	52029.97265625
-Network	OOH	OOH - Digital	131551.72729492188	131551.72729492188	131551.72729492188	131551.72729492188	131551.72729492188
-Network	OOH	OOH - Programmatic	194071.935546875	161093.703125	161093.703125	161093.703125	161093.703125
-Network	OOH	OOH - Static	50000	50000	50000	50000	50000
-Network	OTT	OTT	27995.7294921875	17237.08447265625	null	null	null
-Network	OTT	OTT - Live Sports	4621.52978515625	4621.52978515625	29784.24462890625	39561.60009765625	37056.80322265625
-Network	OTT	OTT - Targeted	17237.08447265625	17237.08447265625	153310.10009765625	299171.12353515625	285624.42041015625
-Network	Paid Social	Paid Social	97838.94616699219	67346.48254394531	65955.0576171875	66312.1982421875	465291.7889022827
-Network	Print	Newspaper	null	null	null	null	321724.09375
-Network	Spot TV	Spot TV	null	null	null	676178.8125	676178.8125
-Network	TV	Addressable TV	null	null	47909.3427734375	49350.0078125	63200.271484375
-Network	TV	Data Driven Video - Offline	null	null	54980.49609375	64248.6875	64333.298828125
-Network	TV	National TV	null	null	882386.1162109375	579754.9523925781	638014.2534179688
-Value	Affiliate	Affiliate	366722.484375	289070.1875	267069.1875	325093.5	444924.25
-Value	Audio	Podcast	176717.21356201172	153724.890625	153724.890625	159072.12890625	159072.125
-Value	Audio	Streaming Radio	179980.93823242188	164307.6005859375	165758.9970703125	253553.6533203125	325310.3818359375
-Value	Cinema	Cinema	null	null	171395.6484375	171396.5625	171396.640625
-Value	DJs	DJs	6142.5	6142.5	6142.5	8420.0224609375	10128.1640625
-Value	Display	Display	1468969.2082748413	1636172.8408203125	1786141.97265625	2037572.7160644531	2262030.7827148438
-Value	Display	Production (Display)	5098.3076171875	5098.3076171875	5098.3076171875	5098.3076171875	5098.3076171875
-Value	OLV	OLV	881254.7746887207	849294.3540534973	840376.5806159973	814863.9307136536	955851.4907722473
-Value	OOH	OOH - Digital	null	275000	275000	275000	274999.998046875
-Value	OOH	OOH - Programmatic	178057.94541931152	152541.6411895752	152541.6411895752	163916.9224395752	163916.9224395752
-Value	OTT	OTT	48475.89581298828	2643383.338684082	null	null	null
-Value	OTT	OTT - Live Sports	10699.6103515625	211844.9326171875	175677.58544921875	189980.9638671875	131123.5185546875
-Value	OTT	OTT - Sponsorships and Innovations	21274.051879882812	172166.8416748047	194423.67181396484	201739.0604248047	938146.0511474609
-Value	OTT	OTT - Targeted	672804.8602612298	2166653.141052246	1951128.902770996	2138341.369995117	1832099.8880004883
-Value	Paid Search	Paid Search	3175251.574157715	3218057.5219726562	2914056.1953125	2924164.174560547	3292002.89453125
-Value	Paid Social	Paid Social	1245918.1064453125	1122825.43359375	1121938.91796875	1259616.5	1719138.654296875
-Value	Paid Social	Paid Social - Creator	null	null	96923.078125	null	84000
-Value	Print	Magazine	null	null	3049.510009765625	null	3049.510009765625
-Value	Print	Newspaper	null	null	72121.9921875	null	89626.361328125
-Value	Radio	National Radio	552153.8515625	433153.8515625	433153.8515625	433153.8515625	433153.8515625
-Value	Radio	Spot Radio	null	780791.4892578125	780791.4892578125	722823.4924316406	722823.486328125
-Value	Spot TV	Spot TV	null	955316.8984375	955316.8984375	508647.296875	508648.46484375
-Value	TV	Addressable TV	null	422542.1875	374633.265625	380395.5	365274.125
-Value	TV	Data Driven Video - Offline	null	569378.8125	640267.955078125	775239.0056152344	711822.794921875
-Value	TV	National TV	2341092.966003418	3731775.5017089844	6108269.145751953	1464327.7231445312	1456883.9912109375
-
-
-SELECT
-  Message_Type,
-  Channel,
-  Tactic,
-  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-06-29' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `06/29/2026`,
-  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-06' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/06/2026`,
-  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-13' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/13/2026`,
-  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-20' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/20/2026`,
-  CONCAT('$', CAST(ROUND(SUM(CASE WHEN Week_Beginning_Monday = '2026-07-27' THEN COALESCE(Spend_Actual, Spend_Forecast) END) / 1000, 0) AS INT), 'K') AS `07/27/2026`
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
-WHERE LOB_Supported = 'CONSUMER POSTPAID'
-  AND Week_Beginning_Monday IN ('2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27')
-GROUP BY Message_Type, Channel, Tactic
-ORDER BY Message_Type, Channel, Tactic;
-
-
-SELECT
-  Message_Type, Channel, Tactic, QGP_Week, week_type, Quarter,
-  COALESCE(Spend_Actual, Spend_Forecast) AS Spend
-FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly
-WHERE LOB_Supported = 'CONSUMER POSTPAID'
-  AND Week_Beginning_Monday = '2026-06-29'
+  WeekEnding,
+  CASE WHEN MetricID = 'VRInboundCallsinclHSIAutomatedManual' THEN 'vrCalls' ELSE 'vrChats' END AS metric_name,
+  CASE WHEN MetricType = 'QGP' THEN 'TARGET' ELSE 'ACTUAL' END AS side,
+  Page,
+  Amount
+FROM Deduped
+WHERE rn = 1
   AND (
-    (Message_Type = 'Magenta Brand' AND Channel = 'Paid Social' AND Tactic = 'Paid Social')
-    OR (Message_Type = 'Network' AND Channel = 'Audio')
-    OR (Message_Type = 'Network' AND Channel = 'Display' AND Tactic = 'Display')
+    (MetricType != 'QGP' AND Page = 'Hero - Core Postpaid KP2')   -- actuals side
+    OR
+    (MetricType = 'QGP'  AND Page = 'Virtual Retail')              -- target side
   )
-ORDER BY Message_Type, Channel, Tactic, QGP_Week;
-output:
-Message_Type	Channel	Tactic	QGP_Week	week_type	Quarter	Spend
-Magenta Brand	Paid Social	Paid Social	2026-06-30	BOUNDARY_STUB	2026 Q2	82619.32310267857
-Magenta Brand	Paid Social	Paid Social	2026-07-04	BOUNDARY_FIRST	2026 Q3	206548.30775669642
-Magenta Brand	Paid Social	Paid Social	2026-07-04	BOUNDARY_FIRST	2026 Q3	128846.15625
-Network	Audio	Podcast	2026-06-30	BOUNDARY_STUB	2026 Q2	15994.988830566406
-Network	Audio	Podcast	2026-07-04	BOUNDARY_FIRST	2026 Q3	39987.472076416016
-Network	Audio	Streaming Radio	2026-06-30	BOUNDARY_STUB	2026 Q2	9255.307006835938
-Network	Audio	Streaming Radio	2026-07-04	BOUNDARY_FIRST	2026 Q3	23138.267517089844
-Network	Display	Display	2026-06-30	BOUNDARY_STUB	2026 Q2	28333.180524553572
-Network	Display	Display	2026-07-04	BOUNDARY_FIRST	2026 Q3	70832.95131138393
-
-
-SELECT
-  Message_Type, Channel, Tactic, Quarter,
-  SUM(Spend) AS total_spend
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) = '2026-08-03'
-  AND UPPER(TRIM(LOB_Supported)) = 'CONSUMER POSTPAID'
-  AND TRY_CAST(Week_Beginning_Monday AS DATE) = '2026-06-29'
-  AND (
-    (Message_Type = 'Magenta Brand' AND Channel = 'Paid Social' AND Tactic = 'Paid Social')
-    OR (Message_Type = 'Network' AND Channel = 'Audio')
-    OR (Message_Type = 'Network' AND Channel = 'Display' AND Tactic = 'Display')
-  )
-GROUP BY Message_Type, Channel, Tactic, Quarter
-ORDER BY Message_Type, Channel, Tactic, Quarter;
-output:
-Message_Type	Channel	Tactic	Quarter	total_spend
-Magenta Brand	Paid Social	Paid Social	Q2'26	201802.435546875
-Magenta Brand	Paid Social	Paid Social	Q3'26	216211.3515625
-Network	Audio	Podcast	Q2'26	4221.902313232422
-Network	Audio	Podcast	Q3'26	51760.55859375
-Network	Audio	Streaming Radio	Q2'26	24555.54473876953
-Network	Audio	Streaming Radio	Q3'26	7838.02978515625
-Network	Display	Display	Q2'26	9225.9912109375
-Network	Display	Display	Q3'26	89940.140625
-
-
-The only difference is how each system handles the boundary week — everything else ties out exactly.
-
-For a week straddling a quarter-end (e.g., July 4, 2026), we sum the campaign's spend across both quarters and split it by the actual number of calendar days each quarter covers — not just show whichever quarter's tag is "current."
-
-Example: $X tagged to the old quarter + $Y tagged to the new quarter → summed, then split by days. If 2 days fall in the old quarter and 5 in the new, we allocate 2/7 to the quarter-end date and 5/7 to July 4th — a true, calendar-accurate share.
-
-The dashboard's boundary-week number reflects only the current quarter's tag, leaving out the prior quarter's portion — which is why it runs lower specifically on boundary weeks, while every other week matches exactly.
+ORDER BY WeekEnding DESC, metric_name, side;
