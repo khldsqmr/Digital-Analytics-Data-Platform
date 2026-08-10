@@ -1,7 +1,80 @@
 DESCRIBE TABLE prd_dbi_analytics.improvado.mrt_paidsocial_pivot;
 
+col_name	data_type	comment
+lob_tactic	string	null
+channel	string	null
+account_id	string	null
+account_name	string	null
+lob	string	null
+campaign_id	string	null
+campaign_name	string	null
+date	date	null
+Base_AAL_CartStar	double	null
+Connect_ProspectQualityTraffic	double	null
+TFB_HINT_EligibilityCheck	double	null
+Fiber_SEC	double	null
+Fiber_EC	double	null
+CartStartplus	double	null
+Postpaid_CreditApp	double	null
+Postpaid_PSPV_Plus	double	null
+Postpaid_TopFunnelProspect	double	null
+SEC	double	null
+QT_BTS	double	null
+QT_HINT	double	null
+QT_TFB	double	null
+HINT_EligibilityFormSubmit	double	null
+HINT_EligibilityFormSubmit_CAPI	double	null
+HINT_WebOrders	double	null
+Metro_CartStart	double	null
+Metro_HINTQualityTraffic	double	null
+QT_Postpaid	double	null
+QT_Prepaid	double	null
+TMoney_Upper_Funnel_Base	double	null
+Lead	double	null
+Activation	double	null
+spend	double	null
+clicks	double	null
+impressions	double	null
+year	bigint	null
+quarter	string	null
+reclass	bigint	null
+ignore_tiktok	bigint	null
+week_date	date	null
+
 SELECT campaign_id, campaign_name, date, channel, lob, reclass, ignore_tiktok, spend
 FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
 WHERE ignore_tiktok = 1
 ORDER BY date DESC
 LIMIT 30;
+
+campaign_id	campaign_name	date	channel	lob	reclass	ignore_tiktok	spend
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-15	TikTok	PostPaid	1	1	17944.1
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-15	TikTok	PostPaid	1	1	20413.55
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-14	TikTok	PostPaid	1	1	20429.55
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-14	TikTok	PostPaid	1	1	24739.72
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-13	TikTok	PostPaid	1	1	20021.9
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-13	TikTok	PostPaid	1	1	23668.25
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-12	TikTok	PostPaid	1	1	23946.75
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-12	TikTok	PostPaid	1	1	20180.96
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-11	TikTok	PostPaid	1	1	20108.57
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-11	TikTok	PostPaid	1	1	23773.739999999998
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-10	TikTok	PostPaid	1	1	23869.559999999998
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-10	TikTok	PostPaid	1	1	20273.670000000002
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-09	TikTok	PostPaid	1	1	19930.24
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-09	TikTok	PostPaid	1	1	23819.39
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-08	TikTok	PostPaid	1	1	19987.329999999998
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-08	TikTok	PostPaid	1	1	23631.97
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-07	TikTok	PostPaid	1	1	20387.95
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-07	TikTok	PostPaid	1	1	24091.96
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-06	TikTok	PostPaid	1	1	20342.059999999998
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-06	TikTok	PostPaid	1	1	24081.54
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-05	TikTok	PostPaid	1	1	23975.57
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-05	TikTok	PostPaid	1	1	20211.55
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-04	TikTok	PostPaid	1	1	24230.260000000002
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-04	TikTok	PostPaid	1	1	20471.86
+1850349630100514	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_HolidaySilentMango-Pulse-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	47153.21
+1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	19985.25
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	23532.42
+1850347973554353	TMO_Enterprise_Brand_X_Brand_BrandAwa_TikTok_Q4_2025_18Plus_RF_X_DoorDashPixieDust-Pulse-V2_SOC-CMP-001	2025-12-02	TikTok	TFB	1	1	17189.22
+1850349630100514	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_HolidaySilentMango-Pulse-V2_SOC-CMP-001	2025-12-02	TikTok	PostPaid	1	1	54710.31
+1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-02	TikTok	PostPaid	1	1	2412.8
