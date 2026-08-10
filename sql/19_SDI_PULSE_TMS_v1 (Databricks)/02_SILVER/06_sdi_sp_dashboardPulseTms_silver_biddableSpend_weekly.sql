@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         06_sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly.sql
+FILE:         sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly
 
@@ -52,6 +52,20 @@ WoW/YoY LOGIC (same pattern as every other Silver SP in this pipeline):
   BOUNDARY_FIRST : numerator = current + preceding stub
                    denominator = last NORMAL week before the stub
   LY             : prior-year same ISO week weekly total x current days_in_period / 7
+
+⚠ KNOWN CAVEAT, confirmed from live Gold output (2026-08-08): Programmatic's source
+(pbi_programmatic_browsers_currentyr) only has one year of history (2026 only, confirmed via
+MIN/MAX(date) this session) -- so Programmatic's own yoy_pct is always null, as expected. But
+this ALSO silently inflates every 'All Channels' yoy_pct for any lob where Programmatic
+contributes real current-year spend: the numerator sums all 3 channel_groups, but
+metric_value_ly structurally can only ever sum Paid Search + Paid Social (Programmatic
+contributes zero to the LY side, every week, permanently, until that source accumulates a
+second year). Confirmed concretely: POSTPAID/All Channels showed yoy_pct=+231% and
+PREPAID/All Channels showed +829% off real 2026-08-08 data -- both driven by comparing a
+3-channel current total against a structurally 2-channel prior-year baseline, not real growth.
+This is correct SQL behavior (SUM() correctly skips the null), not a bug to fix here -- but
+anyone reading 'All Channels' yoy_pct off Gold should know it's currently comparing an
+incomplete baseline until Programmatic has real YoY history of its own.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
