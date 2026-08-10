@@ -487,3 +487,11 @@ BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	FIBER	Paid Search	bidda
 BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
 BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	HSI	Paid Social	biddableSpend	null	641005.8	null	null	null	null	null	null	2026-08-08
 BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+
+
+
+SELECT
+  qgp_date, lob, channel_group, metric_value, metric_value_ly, wow_pct, yoy_pct
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+WHERE qgp_date = '2026-08-08'
+ORDER BY lob, channel_group;
