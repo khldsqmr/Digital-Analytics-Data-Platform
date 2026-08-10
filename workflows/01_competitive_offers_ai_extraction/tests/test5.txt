@@ -76,3 +76,58 @@ aal	account_id	account_name	add_a_line	all_conversions	bi	bts_quality_traffic	bu
 0	1418811795	Fiber Bing	0	72.981338	0	1	0	22074199806	0	12	0	0	0	0	2	0	0	1	0	0	0	0	0	0	0	0	0	443	1	0	0	0	0	0	0	0	0	0	0	0	0	0	5	2	0	0	0	0	1.991338	0	0	0	0	0	0	0	0	0	2026-05-30	2026-06-30T03:59:28.000+00:00	51.88	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
 0	1418811795	Fiber Bing	0	65	0	0	0	22074199806	0	5	0	0	0	0	2	0	0	2	0	0	0	0	0	0	0	0	0	290	0	0	0	0	0	0	0	0	0	0	0	0	0	0	6	2	0	0	0	0	2	0	0	0	0	0	0	0	0	0	2026-05-31	2026-07-01T04:22:31.000+00:00	39.01	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
 
+
+SELECT
+  DSP,
+  COUNT(*) AS n_rows,
+  ROUND(SUM(spend), 2) AS sum_spend,
+  ROUND(SUM(budget), 2) AS sum_budget,
+  ROUND(SUM(platform_budget), 2) AS sum_platform_budget,
+  ROUND(SUM(total_costs), 2) AS sum_total_costs,
+  ROUND(SUM(advertiser_cost_usd), 2) AS sum_advertiser_cost_usd,
+  ROUND(SUM(partner_cost), 2) AS sum_partner_cost,
+  ROUND(SUM(ttd_cost_usd), 2) AS sum_ttd_cost_usd
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+GROUP BY DSP
+ORDER BY sum_spend DESC;
+
+SELECT
+  lob,
+  lob_value,
+  COUNT(*) AS n_rows,
+  ROUND(SUM(spend), 2) AS sum_spend
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+GROUP BY lob, lob_value
+ORDER BY sum_spend DESC;
+
+SELECT
+  MIN(date) AS min_date,
+  MAX(date) AS max_date,
+  COUNT(DISTINCT YEAR(date)) AS distinct_years
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+
+SELECT
+  lob, reclass, ignore_tiktok,
+  COUNT(*) AS n_rows,
+  ROUND(SUM(spend), 2) AS sum_spend
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+GROUP BY lob, reclass, ignore_tiktok
+ORDER BY sum_spend DESC;
+
+SELECT
+  channel, ignore_tiktok,
+  COUNT(*) AS n_rows,
+  ROUND(SUM(spend), 2) AS sum_spend
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+GROUP BY channel, ignore_tiktok
+ORDER BY sum_spend DESC;
+
+SELECT
+  lob, ad_platform, serving_status,
+  COUNT(*) AS n_rows,
+  ROUND(SUM(cost), 2) AS sum_cost
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+GROUP BY lob, ad_platform, serving_status
+ORDER BY sum_cost DESC;
+
+DESCRIBE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
