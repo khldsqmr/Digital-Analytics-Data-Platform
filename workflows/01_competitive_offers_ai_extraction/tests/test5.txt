@@ -90,6 +90,14 @@ SELECT
 FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 GROUP BY DSP
 ORDER BY sum_spend DESC;
+output:
+DSP	n_rows	sum_spend	sum_budget	sum_platform_budget	sum_total_costs	sum_advertiser_cost_usd	sum_partner_cost	sum_ttd_cost_usd
+The Trade Desk	469902	146697528.33	228143698129.6	82631698753	423654033.13	146697528.33	145630080.19	131326424.61
+DV360	57399	111509064.64	166010992794.64	163537257697.43	32088010.08	30461723.4	1626286.69	0
+Blis	68405	20604268.18	0	57741495687.54	0	17811814.19	0	0
+Amazon  DSP	6357	16977659.22	4670945973.44	null	16977659.22	0	0	0
+Google Ads	105	10584.68	0	null	10584.68	0	0	0
+
 
 SELECT
   lob,
@@ -99,12 +107,28 @@ SELECT
 FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 GROUP BY lob, lob_value
 ORDER BY sum_spend DESC;
+output:
+lob	lob_value	n_rows	sum_spend
+PostPaid	Postpaid	71058	73655254.17
+PostPaid	null	140575	54305731.43
+HSI	HINT	34941	39588042.03
+HSI	null	80979	37518487.01
+PrePaid	Prepaid	72248	29767875
+PrePaid	null	146181	23732579.55
+TFB	null	39308	19074107.17
+Archived	null	12969	12603075.33
+PostPaid	Postpaid,HINT	3299	4837902.5
+Archived	Postpaid	578	578416.2
+Archived	Prepaid	32	137634.66
 
 SELECT
   MIN(date) AS min_date,
   MAX(date) AS max_date,
   COUNT(DISTINCT YEAR(date)) AS distinct_years
 FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+output:
+min_date	max_date	distinct_years
+2026-01-01	2026-08-09	1
 
 SELECT
   lob, reclass, ignore_tiktok,
@@ -113,6 +137,21 @@ SELECT
 FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
 GROUP BY lob, reclass, ignore_tiktok
 ORDER BY sum_spend DESC;
+output:
+lob	reclass	ignore_tiktok	n_rows	sum_spend
+PostPaid	1	0	13625	100598751.29
+HSI	1	0	9976	79034931.77
+TFB	1	0	11780	47489188.12
+PrePaid	1	0	5476	29102483.41
+TFB	0	0	880	2280784.84
+TMoney	0	0	120	1587211.13
+PrePaid	0	0	846	802464.83
+Archived	0	0	251	787295.12
+PostPaid	1	1	31	681211.08
+HSI	0	0	387	639015.86
+PostPaid	0	0	271	545801.4
+TFB	1	1	2	19993.78
+Archived	1	0	66	4.09
 
 SELECT
   channel, ignore_tiktok,
@@ -121,6 +160,15 @@ SELECT
 FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
 GROUP BY channel, ignore_tiktok
 ORDER BY sum_spend DESC;
+output:
+channel	ignore_tiktok	n_rows	sum_spend
+Meta	0	18272	182749526.83
+Pinterest	0	7275	23604262.48
+TikTok	0	3845	22564858.18
+Snapchat	0	6850	20390632.12
+LinkedIn	0	5592	8644901.47
+X	0	1844	4913750.8
+TikTok	1	33	701204.86
 
 SELECT
   lob, ad_platform, serving_status,
@@ -129,5 +177,105 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 GROUP BY lob, ad_platform, serving_status
 ORDER BY sum_cost DESC;
+output:
+lob	ad_platform	serving_status	n_rows	sum_cost
+Postpaid	Google	null	12801	238318682.39
+HSI	Google	null	4546	165096822.29
+Metro	Google	null	10193	89230271.15
+Postpaid	Google	SERVING	3443	59713499.29
+Postpaid	Bing	null	10120	40417378.89
+TFB	Google	null	3154	34766491.83
+HSI	Bing	null	4996	23510189.36
+HSI	Google	SERVING	824	22448535.78
+Metro	Google	SERVING	1675	10286450.88
+TFB	Bing	null	2120	9624791.88
+Fiber	Google	null	2545	9146155.08
+TFB	Google	SERVING	1241	8930316.63
+Postpaid	Bing	SERVING	4051	6517651.96
+Metro	Bing	null	5512	6509803.57
+Fiber	Google	SERVING	461	3569120.82
+TFB	Bing	SERVING	1295	2171213.7
+HSI	Bing	SERVING	759	1633826.42
+Metro	Google	PENDING	138	1102915.57
+Fiber	Bing	null	2225	840009.23
+Metro	Bing	SERVING	938	591618.99
+Postpaid	Google	PENDING	64	461508.21
+Fiber	Bing	SERVING	510	343681.62
+Fiber	Google	ENDED	16	62437.41
+Metro	Google	ENDED	14	8519.1
+Postpaid	Google	ENDED	22	4707.43
 
 DESCRIBE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+output:
+col_name	data_type	comment
+aal	double	[AI-Generated] Tracks marketing campaign performance for promoting the Add A Line service to existing customers.
+account_id	string	[AI-Generated] Links campaign performance data to the specific Google Ads account managing the search advertising.
+account_name	string	[AI-Generated] Human-readable name of the Google Ads account used for organizing and reporting campaign performance.
+add_a_line	double	[AI-Generated] Marks campaigns specifically designed to promote the Add A Line service offering to customers.
+all_conversions	double	[AI-Generated] Aggregates all tracked conversion actions (purchases, sign-ups, eligibility checks) resulting from campaign interactions.
+bi	double	[AI-Generated] Marks records designated for Business Intelligence reporting and analytics consumption.
+bts_quality_traffic	double	[AI-Generated] Measures quality and engagement of traffic from BTS (Beyond the Smartphone) campaigns targeting advanced service lines.
+buying_intent	double	[AI-Generated] Captures behavioral signals suggesting purchase readiness or intent to acquire T-Mobile services from campaign engagement.
+campaign_id	string	[AI-Generated] Primary key linking all performance metrics and conversion events to a specific campaign within Google Ads 360.
+cart_start	double	[AI-Generated] Tracks the number of times users began the purchase process after engaging with campaign advertisements.
+clicks	double	[AI-Generated] Measures campaign engagement by counting user clicks on search ads, a primary performance indicator for paid search.
+connect_low_funnel_visit	double	[AI-Generated] Measures traffic volume to website from Connect service campaigns targeting lower-funnel prospect audiences.
+connect_qt	double	[AI-Generated] Aggregates or segments Connect service campaign performance data on a quarterly basis for trend analysis.
+digital_gross_add	double	[AI-Generated] Tracks the number of new customers acquired via digital marketing campaigns, a key growth metric for T-Mobile.
+fiber_activations	double	[AI-Generated] Measures completed fiber service activations driven by Google Search Ads 360 campaigns, representing customers who successfully provisioned fiber broadband service after ad engagement.
+fiber_ec	double	[AI-Generated] Represents estimated unique customer reach for fiber service campaigns, providing audience size metrics for campaign performance analysis and targeting effectiveness.
+fiber_pre_order	double	[AI-Generated] Tracks fiber service pre-orders or advance reservations generated by campaign activity, indicating customer intent to purchase fiber broadband before service availability.
+fiber_sec	double	[AI-Generated] Measures unique customers who engaged with fiber search advertisements, indicating active audience interaction and campaign resonance with target market.
+fiber_waitlist_sign_up	double	[AI-Generated] Captures fiber service waitlist registrations driven by Google Search Ads 360 campaigns, representing prospective customers expressing interest in future fiber availability.
+hint_ec	double	[AI-Generated] Represents estimated unique customer reach for home internet service campaigns, providing audience size metrics for campaign performance and targeting analysis.
+hint_invoca_calls	double	[AI-Generated] Measures phone calls to home internet service driven by campaign activity through Invoca call tracking, representing voice channel conversion activity.
+hint_offline_invoca_calls	double	[AI-Generated] Captures phone calls to home internet service attributed to offline campaign touchpoints tracked through Invoca, measuring cross-channel conversion attribution.
+hint_offline_invoca_eligibility	double	[AI-Generated] Measures eligibility verification requests for home internet service originating from offline campaign interactions tracked through Invoca platform.
+hint_offline_invoca_order	double	[AI-Generated] Tracks home internet service orders completed through offline campaign touchpoints captured by Invoca call tracking, representing voice-channel conversions.
+hint_offline_invoca_order_rt	double	[AI-Generated] Measures operational response time for processing home internet orders originating from offline Invoca interactions, supporting service quality and efficiency analysis.
+hint_offline_invoca_sales_opp	double	[AI-Generated] Captures qualified sales opportunities for home internet service generated through offline campaign interactions tracked by Invoca platform.
+hint_sec	double	[AI-Generated] Measures unique customers who engaged with home internet search advertisements, indicating active audience interaction and campaign effectiveness for HINT service.
+hint_web_orders	double	[AI-Generated] Measures home internet service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion.
+impressions	double	[AI-Generated] Measures total number of times campaign advertisements were displayed to users across Google Search Ads 360 channels, representing campaign reach and visibility.
+magenta_pqt	double	[AI-Generated] Measures qualified prospective customer traffic driven by T-Mobile Magenta brand campaigns, representing high-intent audience segments for mobile service offerings.
+ma_hint_ec_eligibility_check	double	[AI-Generated] Tracks performance of campaigns promoting HINT (Home Internet Service) eligibility checks to potential customers.
+metro_hint_qt	double	[AI-Generated] Tracks volume of Home Internet Service (HINT) prospect interactions and engagement events in metro areas, supporting measurement of broadband product line performance.
+metro_low_funnel_cs	double	[AI-Generated] Captures customers in late-stage consideration or decision phase of purchase funnel for metro market campaigns, representing near-conversion audience segments.
+metro_qt	double	[AI-Generated] Provides overall volume count of prospect engagement events across all product lines and funnel stages within metropolitan market segments.
+postpaid_cart_start	double	[AI-Generated] Measures lower-funnel engagement where prospects begin postpaid service purchase process, indicating strong purchase intent and transaction readiness.
+postpaid_pspv	double	[AI-Generated] Tracks prospect engagement with postpaid service product pages, indicating consideration-phase activity and product research behavior in digital channels.
+tfb_low_funnel	double	[AI-Generated] Aggregates bottom-of-funnel engagement metrics for T-Mobile for Business prospects, indicating high purchase intent and proximity to transaction.
+tfb_credit_check	double	[AI-Generated] Measures credit verification events for T-Mobile for Business customers, indicating transaction-stage activity where creditworthiness is being assessed.
+tfb_hint_ec	double	[AI-Generated] Tracks Home Internet Service (HINT) product engagement for T-Mobile for Business customers, measuring broadband product line performance in B2B segment.
+tfb_invoca_sales_calls	double	[AI-Generated] Tracks phone-based sales interactions for T-Mobile for Business through Invoca call tracking, measuring voice channel engagement and sales activity.
+tfb_leads	double	[AI-Generated] Aggregates lead volume for T-Mobile for Business, representing prospects captured across digital channels and qualifying for sales engagement.
+tfb_quality_traffic	double	[AI-Generated] Measures qualified prospect traffic for T-Mobile for Business, filtering for engagement events meeting quality thresholds for sales readiness.
+tmo_prepaid_low_funnel_prospect	double	[AI-Generated] Measures bottom-of-funnel engagement for T-Mobile prepaid customers, capturing high-intent prospects near purchase decision or transaction completion.
+tmo_top_funnel_prospect	double	[AI-Generated] Measures early-stage awareness and consideration-phase engagement for T-Mobile consumer prospects, indicating initial product interest and brand awareness.
+tmo_upper_funnel_prospect	double	[AI-Generated] Captures mid-stage engagement for T-Mobile consumer prospects as they progress from awareness toward consideration and product evaluation.
+total_tfb_conversions	double	[AI-Generated] Measures total conversion volume across all T-Mobile for Business funnel stages and channels, representing cumulative purchase transactions and qualified outcomes.
+connect_low_funnel_prospect	double	[AI-Generated] Tracks conversion events for Connect service targeting prospects in the lower stages of the marketing funnel.
+tfb_lead_form_submit	double	[AI-Generated] Tracks form-based lead capture for T-Mobile for Business, representing mid-funnel engagement where prospects provide contact information for sales follow-up.
+metro_upper_funnel_prospect	double	[AI-Generated] Captures mid-stage prospect engagement in metro regions as customers move from awareness toward consideration and evaluation of T-Mobile products and services.
+fiber_ec_dda	double	[AI-Generated] Tracks daily changes or adjustments to fiber estimated customer counts, enabling trend analysis and performance variance monitoring across campaign periods.
+metro_top_funnel_prospect	double	[AI-Generated] Measures early-stage awareness and consideration-phase prospect engagement in metro areas, indicating initial interest in T-Mobile offerings before deeper funnel progression.
+fiber_web_orders	double	[AI-Generated] Measures fiber service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion to purchase.
+metro_mid_funnel_prospect	double	[AI-Generated] Measures prospects in mid-stage awareness and consideration phase of purchase funnel for metro market campaigns, representing engaged but not-yet-committed audience.
+fiber_sec_dda	double	[AI-Generated] Tracks daily changes to fiber search engagement customer counts, supporting performance trend analysis and identifying fluctuations in campaign engagement patterns.
+tfb_invoca_sales_intent_dda	double	[AI-Generated] Measures phone interactions indicating sales intent for T-Mobile for Business prospects through Invoca call tracking, capturing high-intent voice engagement.
+tfb_invoca_order_dda	double	[AI-Generated] Tracks phone call interactions for T-Mobile for Business (TBG) orders through Invoca call tracking, measuring voice channel conversion and sales activity.
+postpaid_prospect_web_order	double	[AI-Generated] Tracks web-based postpaid service orders from prospects, representing conversion events where digital engagement translates to actual purchase transactions.
+postpaid_all_web_order	double	[AI-Generated] Measures postpaid service web order volume for a defined reporting period, tracking conversion performance and purchase transaction success.
+metro_prospect_web_order	double	[AI-Generated] Tracks performance of a specific campaign variant designed to drive web-based orders from prospect customers in metropolitan markets.
+date	date	null
+file_load_datetime	timestamp	null
+cost	double	null
+lob	string	null
+ad_platform	string	null
+campaign_name	string	null
+campaign_type	string	null
+advertising_channel_type	string	null
+advertising_channel_sub_type	string	null
+bidding_strategy_type	string	null
+serving_status	string	null
+gold_inserted_at	timestamp	null
