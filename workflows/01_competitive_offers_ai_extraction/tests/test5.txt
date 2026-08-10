@@ -383,3 +383,107 @@ week_sun_sat	lob	channel_group	platform	spend
 2026-08-01	TFB	Programmatic	The Trade Desk	256201.5943920001
 2026-08-01	PREPAID	Paid Social	Meta	241959.17999500004
 2026-08-01	TFB	Programmatic	DV360	434653.89341400017
+
+
+
+data_source	qgp_date	week_type	qgp_quarter	days_in_period	is_complete_period	lob	channel_group	metric_name	metric_value	metric_value_ly	wow_numerator	wow_denominator	wow_pct	yoy_numerator	yoy_denominator	yoy_pct	max_date
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	PREPAID	All Channels	biddableSpend	null	284013.66	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	POSTPAID	Paid Search	biddableSpend	null	1560012.79	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	HSI	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TFB	Paid Search	biddableSpend	null	207499.03	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	POSTPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	ARCHIVED	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TFB	Paid Social	biddableSpend	null	411500.17	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TMONEY	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	TFB	All Channels	biddableSpend	null	618999.19	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	POSTPAID	Paid Social	biddableSpend	null	804163.71	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	PREPAID	Paid Social	biddableSpend	null	284013.66	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	FIBER	Paid Search	biddableSpend	null	41201.37	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	HSI	All Channels	biddableSpend	null	1640059.05	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	ARCHIVED	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-21
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	HSI	Paid Social	biddableSpend	null	459381.33	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	PREPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	METRO	All Channels	biddableSpend	null	688675.14	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	HSI	Paid Search	biddableSpend	null	1180677.72	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	POSTPAID	All Channels	biddableSpend	null	2364176.5	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	FIBER	All Channels	biddableSpend	null	41201.37	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	ARCHIVED	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	METRO	Paid Search	biddableSpend	null	688675.14	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	HSI	Paid Social	biddableSpend	null	694318.21	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	POSTPAID	All Channels	biddableSpend	null	5507969.92	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	ARCHIVED	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	ARCHIVED	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-21
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	HSI	All Channels	biddableSpend	null	2657928.46	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	METRO	All Channels	biddableSpend	null	916628.69	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TFB	Paid Social	biddableSpend	null	1129873.08	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	ARCHIVED	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	PREPAID	All Channels	biddableSpend	null	448462.25	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	HSI	Paid Search	biddableSpend	null	1963610.25	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	METRO	Paid Search	biddableSpend	null	916628.69	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	POSTPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	PREPAID	Paid Social	biddableSpend	null	448462.25	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	POSTPAID	Paid Social	biddableSpend	null	2281971.49	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	HSI	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	POSTPAID	Paid Search	biddableSpend	null	3225998.42	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TMONEY	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	PREPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TFB	All Channels	biddableSpend	null	1597880.84	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	FIBER	Paid Search	biddableSpend	null	83054.89	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	TFB	Paid Search	biddableSpend	null	468007.76	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-26	NORMAL	2026 Q3	7	false	FIBER	All Channels	biddableSpend	null	83054.89	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	HSI	Paid Search	biddableSpend	null	1671046.26	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	FIBER	All Channels	biddableSpend	null	100764.74	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	ARCHIVED	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	POSTPAID	Paid Search	biddableSpend	null	3095306.06	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	ARCHIVED	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-21
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TFB	Paid Social	biddableSpend	null	527957.27	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	METRO	Paid Search	biddableSpend	null	1012959.82	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	PREPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	PREPAID	Paid Social	biddableSpend	null	445311.67	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	FIBER	Paid Search	biddableSpend	null	100764.74	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	PREPAID	All Channels	biddableSpend	null	445311.67	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	METRO	All Channels	biddableSpend	null	1012959.82	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	ARCHIVED	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	HSI	All Channels	biddableSpend	null	2359558.67	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	HSI	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	HSI	Paid Social	biddableSpend	null	688512.42	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	POSTPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TMONEY	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	POSTPAID	Paid Social	biddableSpend	null	1855691.22	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TFB	Paid Search	biddableSpend	null	406256.39	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TFB	All Channels	biddableSpend	null	934213.66	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-19	NORMAL	2026 Q3	7	false	POSTPAID	All Channels	biddableSpend	null	4950997.28	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	HSI	Paid Search	biddableSpend	null	1079419.84	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	METRO	All Channels	biddableSpend	null	968153.28	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	PREPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TFB	Paid Social	biddableSpend	null	204727.5	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	PREPAID	Paid Social	biddableSpend	null	438122.59	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	ARCHIVED	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-21
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	HSI	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	FIBER	All Channels	biddableSpend	null	103840.49	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	POSTPAID	Paid Search	biddableSpend	null	2784371.66	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	FIBER	Paid Search	biddableSpend	null	103840.49	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	HSI	Paid Social	biddableSpend	null	653371.51	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	POSTPAID	All Channels	biddableSpend	null	4234567.96	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	HSI	All Channels	biddableSpend	null	1732791.36	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	POSTPAID	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	METRO	Paid Search	biddableSpend	null	968153.28	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TFB	Paid Search	biddableSpend	null	292376.97	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	POSTPAID	Paid Social	biddableSpend	null	1450196.29	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TMONEY	Paid Social	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	ARCHIVED	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	TFB	All Channels	biddableSpend	null	497104.47	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	ARCHIVED	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-12	NORMAL	2026 Q3	7	false	PREPAID	All Channels	biddableSpend	null	438122.59	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	FIBER	Paid Search	biddableSpend	null	112973.69	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	TFB	Programmatic	biddableSpend	null	null	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	HSI	Paid Social	biddableSpend	null	641005.8	null	null	null	null	null	null	2026-08-08
+BIDDABLE_SPEND_CHANNEL	2026-09-05	NORMAL	2026 Q3	7	false	TMONEY	All Channels	biddableSpend	null	null	null	null	null	null	null	null	2026-02-28
