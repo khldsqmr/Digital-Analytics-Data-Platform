@@ -1,184 +1,78 @@
-can you do a write up on what's happening with the missing forecast data in the MFC. what dates are missing? is it always that a file is missing or sometimes is it that the file exists but certain tactics or channels are missing?
 
-SELECT LOB_Supported, QGP_Week, Week_Beginning_Monday, week_type, Spend_Actual, Spend_Forecast
-FROM prdrzranalytics.lab42.sdi_tbl_mfc_silver_spend_weekly
-WHERE QGP_Week BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
-ORDER BY LOB_Supported, QGP_Week DESC;
-
+So i have these 3 tables showing the snapshots from each of them, which will provide you with biddable spend. this will be different from platform spend. and will be stacked in gold eventually.
+This is for channel group programmatic:
+select * from prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr limit 20;
 output:
-LOB_Supported	QGP_Week	Week_Beginning_Monday	week_type	Spend_Actual	Spend_Forecast
-BROADBAND	2026-09-30	2026-09-28	BOUNDARY_STUB	null	3259708.7831726074
-BROADBAND	2026-09-26	2026-09-21	NORMAL	null	9467509.70098877
-BROADBAND	2026-09-19	2026-09-14	NORMAL	null	9455689.45098877
-BROADBAND	2026-09-12	2026-09-07	NORMAL	null	9405944.95098877
-BROADBAND	2026-09-05	2026-08-31	NORMAL	null	8704655.82598877
-BROADBAND	2026-08-29	2026-08-24	NORMAL	null	8794995.59161377
-BROADBAND	2026-08-22	2026-08-17	NORMAL	null	7919955.4041137695
-BROADBAND	2026-08-15	2026-08-10	NORMAL	null	7919955.5955200195
-BROADBAND	2026-08-08	2026-08-03	NORMAL	null	7949255.9158325195
-BROADBAND	2026-08-01	2026-07-27	NORMAL	null	7717627.756896973
-BROADBAND	2026-07-25	2026-07-20	NORMAL	null	7965333.905334473
-BROADBAND	2026-07-18	2026-07-13	NORMAL	9974373.165100098	8847711.0881958
-BROADBAND	2026-07-11	2026-07-06	NORMAL	9066058.695251465	8579736.476623535
-BROADBAND	2026-07-04	2026-06-29	BOUNDARY_FIRST	7387129.538425989	null
-BROADBAND	2026-06-30	2026-06-29	BOUNDARY_STUB	1807146.8872026717	2243134.470199585
-BROADBAND	2026-06-27	2026-06-22	NORMAL	10160432.148880005	10875542.926589966
-CONSUMER POSTPAID	2026-09-30	2026-09-28	BOUNDARY_STUB	null	3193777.09274292
-CONSUMER POSTPAID	2026-09-26	2026-09-21	NORMAL	null	28678783.33518982
-CONSUMER POSTPAID	2026-09-19	2026-09-14	NORMAL	null	25837988.019210815
-CONSUMER POSTPAID	2026-09-12	2026-09-07	NORMAL	null	26573652.040542603
-CONSUMER POSTPAID	2026-09-05	2026-08-31	NORMAL	null	23175206.05189514
-CONSUMER POSTPAID	2026-08-29	2026-08-24	NORMAL	null	23022137.818862915
-CONSUMER POSTPAID	2026-08-22	2026-08-17	NORMAL	null	21938342.319351196
-CONSUMER POSTPAID	2026-08-15	2026-08-10	NORMAL	null	21603086.330825806
-CONSUMER POSTPAID	2026-08-08	2026-08-03	NORMAL	null	21922958.59263611
-CONSUMER POSTPAID	2026-08-01	2026-07-27	NORMAL	null	21146380.608982086
-CONSUMER POSTPAID	2026-07-25	2026-07-20	NORMAL	null	20048235.944828033
-CONSUMER POSTPAID	2026-07-18	2026-07-13	NORMAL	23916111.738407135	24289177.787799835
-CONSUMER POSTPAID	2026-07-11	2026-07-06	NORMAL	19626702.374362946	19858743.141407013
-CONSUMER POSTPAID	2026-07-04	2026-06-29	BOUNDARY_FIRST	10676205.859158108	null
-CONSUMER POSTPAID	2026-06-30	2026-06-29	BOUNDARY_STUB	2462658.8439745223	3517296.3100509644
-CONSUMER POSTPAID	2026-06-27	2026-06-22	NORMAL	23808426.229000196	26346241.80492793
-TFB	2026-09-30	2026-09-28	BOUNDARY_STUB	null	535548.791015625
-TFB	2026-09-26	2026-09-21	NORMAL	null	1887900.9313201904
-TFB	2026-09-19	2026-09-14	NORMAL	null	2261299.442001343
-TFB	2026-09-12	2026-09-07	NORMAL	null	2261299.442001343
-TFB	2026-09-05	2026-08-31	NORMAL	null	1887900.9420013428
-TFB	2026-08-29	2026-08-24	NORMAL	null	2261299.442001343
-TFB	2026-08-22	2026-08-17	NORMAL	null	2261299.442001343
-TFB	2026-08-15	2026-08-10	NORMAL	null	2261299.442001343
-TFB	2026-08-08	2026-08-03	NORMAL	null	1498070.0943450928
-TFB	2026-08-01	2026-07-27	NORMAL	null	1498070.0943450928
-TFB	2026-07-25	2026-07-20	NORMAL	null	1498070.0943450928
-TFB	2026-07-18	2026-07-13	NORMAL	1703029.0528411865	1858872.2266540527
-TFB	2026-07-11	2026-07-06	NORMAL	1336204.672958374	1462102.09866333
-TFB	2026-07-04	2026-06-29	BOUNDARY_FIRST	1166148.246926444	null
-TFB	2026-06-30	2026-06-29	BOUNDARY_STUB	283475.031149728	302141.6428222656
-TFB	2026-06-27	2026-06-22	NORMAL	2271880.2822494507	2342939.8762435913
+DSP	date	flight_start_date	flight_end_date	account_id	campaign_id	campaign_name	campaign_type	lob	business_initiative	budget_source	budget_product_line	program	adgroup_id	adgroup_name	yt_adgroup_id	yt_adgroup_name	creative_type	insertion_order_id	placement_id	placement	bids	budget	platform_budget	clicks	click_rate	click_through_conversions	daily_cap	frequency	impressions	impressions_gcm	ivt_rate	player_views	player_25_complete	player_50_complete	player_75_complete	player_completed_views	player_errors	player_pause	player_skip	total_bid_amount_usd	total_conversions	unique_reach_total_reach	viewable_impressions	view_rate	spend	view_through_conversions	advertiser_cost_usd	partner_cost	ttd_cost_usd	total_costs	media_partner	AAL	BTS_Quality_Traffic	Connect_Prepaid_Mid_Funnel_Prospect	Connect_Prepaid_Low_Funnel_Prospect	Connect_QT	Digital_Gross_Add	Fiber_Eligibility_Check	Fiber_Successful_Eligibility_Check	Fiber_Upper_Funnel_All	Fiber_Web_Order	HINT_Base_CFS	HINT_CFS_Non_Logged_In	HINT_CFS_Logged_In	HINT_EC	HINT_Get_Started_Check_Avail	HINT_Order_Confirmation	HINT_Prospect_CFS	HINT_ProspectQualityTraffic	HINT_QualityTraffic	HINT_SEC	HINT_Waitlist	HINT_Web_Orders	HSI_Offline_Invoca_Combined_Conversion	HSI_Offline_Invoca_Eligibility	HSI_Offline_Invoca_Order	HSI_Offline_Invoca_Sale_Opp	Magenta_Buying_Intent	Magenta_Prospect_Quality_Traffic	Postpaid_Consumer_Base_AAL_Cart_Start	Postpaid_Consumer_Cart_Start_Plus	Postpaid_Consumer_PSPV_Plus	Postpaid_Consumer_Web_Order_Prospect	T_Mobile_Prepaid_Mid_Funnel_Prospect	T_Mobile_Prepaid_Low_Funnel_Prospect	T_Mobile_Top_Funnel_Base	T_Mobile_Top_Funnel_Prospect	T_Mobile_Upper_Funnel_Base	T_Mobile_Upper_Funnel_Prospect	Metro_Cart_Start_Prospect	Metro_HINT_QualityTraffic	Metro_Low_Funnel_Cart_Start_Plus	Metro_Mid_Funnel_Prospect	Metro_Top_Funnel_All	Metro_Top_Funnel_Base	Metro_Top_Funnel_Prospect	Metro_Upper_Funnel_All	Metro_Upper_Funnel_Base	Metro_Upper_Funnel_Prospect	Metro_Prospect_Quality_Traffic	Metro_Web_Order_Prospect	Offline_Conversion_Tracking_Credit_App	TFB_Credit_Check_Confirm	TFB_Digital_Conversion_Confirmation	TFB_QualityTraffic	TBG_Low_Funnel_v7	TBG_Mid_Funnel_Prospect	TBG_Top_Funnel_Prospect	TBG_Upper_Funnel_Prospect	Invoca_Offline_ConsumerPP_Order	HINT_Total_QT	HINT_Total_CFS	ISP:_Any_ISP_Site_page_Visit	ISP:_Eligibity_Check_Completed_Visit	lob_value	is_combination_campaign	WeekStart	flight_quarter_num	flight_quarter	flight_quarter_start	flight_status	MMP_Flight_ID	Budget_Code	Buy_Type	LOB_MMP	Funding_Source	BDGProdLine	Market	Funnel	Channel	message	BDGCode
+Amazon  DSP	2026-07-09	-	-	3131711026626245	581149161861042821	35336908- TMO_Postpaid_Voice_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_55Plus_US_2Q26-PrimeOrion_DSP-CMP-001_PTSS	null	PostPaid	PostPaid Voice	null	null	null	594346245125073031	442590854- Brand_AD55plus_EL_OTT_AMZ_Amazon Prime Video-Orion_PR-PG_PRO_DGPro_55Plus_X_US_X_X_3PD_AT_2Q26-AMAZON-PRIME-ORION_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PO55	null	null	null	null	null	null	0	253600	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	146	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.581149161861042821	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	591679943452475171	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-PRIME_DSP-CMP-001	null	PostPaid	Archived	null	null	null	590169240441396173	442663364- Brand_AD18to54_EL_OTT_AMZ_AmazonPrime_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-prime-2q26-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	1393418	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	1975	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.591679943452475171	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	592950970179428596	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-FAST_DSP-CMP-001	null	PostPaid	Archived	null	null	null	590751675839988882	442826106- Brand_AD18to54_EL_OTT_AMZ_AmazonPrime_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-fast-2q26-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	335950	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	810	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.592950970179428596	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	577775163409913593	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-PRIMEORION_DSP-CMP-001_PTSS	null	PostPaid	Archived	null	null	null	579497734877023916	442880409- Brand_AD18to54_EL_OTT_AMZ_Amazon Prime Video-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-prime-orion-2q26-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	1489413	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	2400	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.577775163409913593	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	577775163409913593	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-PRIMEORION_DSP-CMP-001_PTSS	null	PostPaid	Archived	null	null	null	592365548908636581	442880409- Brand_AD18to54_EL_OTT_AMZ_Amazon Prime Video-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-prime-orion-2q26-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW_2	null	null	null	null	null	null	0	1489413	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	103	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.577775163409913593	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	577775163409913593	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-PRIMEORION_DSP-CMP-001_PTSS	null	PostPaid	Archived	null	null	null	582442361010888100	447384907- Brand_AD18to54_EL_OTT_AMZ_Amazon Prime Video-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-prime-orion-2q26-postpaid-value_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	1489413	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	5765	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.577775163409913593	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	591741846025461249	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-FASTORION_DSP-CMP-001	null	PostPaid	Archived	null	null	null	592452867890624882	447535994- Brand_AD18to54_EL_OTT_AMZ_Amazon-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-fast-orion-2q26-postpaid-value-15s_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	101000	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	1349	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.591741846025461249	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	591741846025461249	35503839- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_2Q26-FASTORION_DSP-CMP-001	null	PostPaid	Archived	null	null	null	593506412879578819	447535994- Brand_AD18to54_EL_OTT_AMZ_Amazon-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-fast-orion-2q26-postpaid-value-15s_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW_2	null	null	null	null	null	null	0	101000	null	0	0	0	0	0	0	null	0	0	0	0	0	0	0	0	0	0	0	0	119	0	0	0	0	0	0	0	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.591741846025461249	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	579893159565348765	35983561- TMO_Emerging_HINT_X_ProBase_HINT_HINTAwa_X_EL_OTT_2026_RF_PR-PG_AMZ_X_US_3Q26-PRIMEORION_DSP-CMP-001_PTSS	null	HSI	HINT	null	null	null	592491392811105765	449897338- HINT_X_EL_OTT_AMZ_AmazonPrimeVideo-Orion_PR-PG_PRO_HINTPro_18to54_X_US_X_X_3PD_AT_hint-3Q26_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_THIN_17hs8h	null	null	null	null	null	null	0	1950000	null	0	0	0	0	0	1197140	null	0	0	0	0	0	0	0	0	0	0	0	0	3171	0	24433.6274	0	0	0	0	24433.6274	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	null	false	2026-07-06	null	null	-	unknown	Q3.579893159565348765	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	593453017015547571	35983561- TMO_Emerging_HINT_X_ProBase_HINT_HINTAwa_X_EL_OTT_2026_RF_PR-PG_AMZ_X_US_3Q26-FAST_DSP-CMP-001	null	HSI	HINT	null	null	null	578604110758921614	449897455- HINT_X_EL_OTT_AMZ_AMZ_PR-PG_PRO_HINTPro_18to54_X_US_X_X_3PD_AT_FAST-hint-3Q26_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_THIN	null	null	null	null	null	null	0	50000	null	0	0	0	0	0	78735	null	0	0	0	0	0	0	0	0	0	0	0	0	229	0	705.4656	0	0	0	0	705.4656	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	null	false	2026-07-06	null	null	-	unknown	Q3.593453017015547571	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	582843751087921102	35991745- TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001	null	PostPaid	Archived	null	null	null	584383895404128844	450032051- Brand_AD18to54_EL_OTTTA_AMZ_AMZ_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-fast-3q26-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	250775	null	0	0	0	0	0	270026	null	0	0	0	0	0	0	0	0	0	0	0	0	1603	0	2419.43296	0	0	0	0	2419.43296	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.582843751087921102	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	589657453498179224	35991745-  TMO_Postpaid_Value_X_PRO_Perf_AwaCons_X_EL_OTT_2026_RF_PR-PG_AMZ_18Plus_US_3Q26-PRIMEORION_DSP-CMP-001_PTSS	null	PostPaid	Archived	null	null	null	581100256388846920	450340518- Brand_AD18to54_EL_OTTTA_AMZ_AmazonPrimeVideo-Orion_PR-PG_PRO_DGPro_18to54_X_US_X_X_3PD_AT_amazon-prime-orion-3q-postpaid-value_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PONW	null	null	null	null	null	null	0	1686079	null	0	0	0	0	0	643682	null	0	0	0	0	0	0	0	0	0	0	0	0	6173	0	13137.54962	0	0	0	0	13137.54962	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.589657453498179224	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	587280022480211237	36047431- TMO_Postpaid_Voice_X_PRO_Perf_AwaCons_X_EL_OTT_2025_RF_PR-PG_AMZ_55Plus_US_3Q26-PrimeOrion_DSP-CMP-001[PTSS]	null	PostPaid	PostPaid Voice	null	null	null	588541654596299286	450942015- Brand_AD55plus_EL_OTTTA_AMZ_AmazonPrimeVideo-Orion_PR-PG_PRO_DGPro_55Plus_X_US_X_X_3PD_AT_3Q26-amazon-prime-orion_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_PO55	null	null	null	null	null	null	0	400000	null	0	0	0	0	0	247032	null	0	0	0	0	0	0	0	0	0	0	0	0	3050	0	5041.92312	0	0	0	0	5041.92312	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	Postpaid	false	2026-07-06	null	null	-	unknown	Q3.587280022480211237	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	583108766518758565	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001	null	PrePaid	Archived	null	null	null	576992597223128868	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001(F1):15s	null	null	null	null	449302948	Brand_AD18to54_EL_OTT_AMZ_AMZ_PR-PG_PRO_PPPro_18to54_X_US_X_X_3PD_AT_Amazon-FAST-3Q26_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_TPRE_17fizf	0	100000	null	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	null	0	0	0	1	0	0	2	2	0	0	0	0	0	1	0	0	0	0	4	0	0	0	0	0	0	0	0	1	0	1	3	0	4	0	34	35	13	6	0	10	0	1	7	7	4	3	0	2	0	0	0	0	0	1	0	0	2	0	0	4	0	0	0	Prepaid	false	2026-07-06	null	null	-	unknown	Q3.583108766518758565	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	583108766518758565	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001	null	PrePaid	Archived	null	null	null	587958314780893613	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001(F1):30	null	null	null	null	449302948	Brand_AD18to54_EL_OTT_AMZ_AMZ_PR-PG_PRO_PPPro_18to54_X_US_X_X_3PD_AT_Amazon-FAST-3Q26_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_TPRE_17fizf	0	100000	null	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	4	0	0	0	0	0	0	0	null	0	0	0	1	0	0	2	2	0	0	0	0	0	1	0	0	0	0	4	0	0	0	0	0	0	0	0	1	0	1	3	0	4	0	34	35	13	6	0	10	0	1	7	7	4	3	0	2	0	0	0	0	0	1	0	0	2	0	0	4	0	0	0	Prepaid	false	2026-07-06	null	null	-	unknown	Q3.583108766518758565	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	583108766518758565	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001	null	PrePaid	Archived	null	null	null	587958314780893613	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-FAST_DSP-CMP-001(F1):30	null	null	null	null	449846445	Brand_AD18to54_EL_OTT_AMZ_AMZ_PR-PG_PRO_PPPro_18to54_X_US_X_X_3PD_AT_Amazon-FAST-3Q26_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_TPRE_17fize	0	100000	null	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	26	0	0	0	0	0	0	0	null	0	0	6	0	0	0	4	1	3	0	0	0	0	1	0	0	0	0	4	1	0	0	0	0	0	0	2	1	0	3	5	0	1	0	66	46	15	7	0	7	0	0	12	3	5	5	3	0	0	0	0	0	0	2	0	1	1	2	0	4	0	0	0	Prepaid	false	2026-07-06	null	null	-	unknown	Q3.583108766518758565	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	583052082541312480	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-PRIME_DSP-CMP-001_PTSS	null	PrePaid	Archived	null	null	null	593040461783808703	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-PRIME_DSP-CMP-001_PTSS F1lus_US_3Q26-PRIME_DSP-CMP-001_PTSS F1_15	null	null	null	null	449304598	Brand_AD18to54_EL_OTT_AMZ_AmazonPrimeVideo-Orion_PR-PG_PRO_PPPro_18to49_X_US_X_X_3PD_AT_Amazon-Prime-Orion-3Q26_X_XDev_OTT_PLC_15s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_TPRE_17fj44	0	500000	null	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	16	0	0	0	0	0	0	0	null	0	0	4	0	0	0	1	1	1	0	0	0	0	2	0	0	0	0	0	1	0	0	0	0	0	0	1	2	1	1	1	0	2	0	29	16	9	7	0	4	1	0	8	2	2	4	2	1	0	0	0	0	0	0	1	1	1	0	0	0	0	0	0	Prepaid	false	2026-07-06	null	null	-	unknown	Q3.583052082541312480	null	null	null	null	null	null	null	null	null	null
+Amazon  DSP	2026-07-09	-	-	3131711026626245	583052082541312480	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-PRIME_DSP-CMP-001_PTSS	null	PrePaid	Archived	null	null	null	585268139520664075	36076040-MBTM_Prepaid_Voice_X_PRO_Perf_MetroAwa_X_EL_DOTT_2026_Reach_PR-PG_AMZ_18Plus_US_3Q26-PRIME_DSP-CMP-001_PTSS F1	null	null	null	null	449304358	Brand_AD18to54_EL_OTT_AMZ_AmazonPrimeVideo-Orion_PR-PG_PRO_PPPro_18to49_X_US_X_X_3PD_AT_Amazon-Prime-Orion-3Q26_X_XDev_OTT_PLC_30s_CPM_Nonskip_RF_AWA_CM-PLCM-001_X_0x0_X_TPRE_17fj43	0	500000	null	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	46	0	0	0	0	0	0	0	null	0	3	6	0	0	0	6	2	9	0	0	0	0	0	0	0	0	0	20	3	0	0	0	0	0	0	2	3	1	9	6	0	5	0	118	110	50	32	0	20	0	6	29	15	22	11	8	4	2	0	0	0	0	0	1	2	8	0	0	20	0	0	0	Prepaid	false	2026-07-06	null	null	-	unknown	Q3.583052082541312480	null	null	null	null	null	null	null	null	null	null
+The Trade Desk	2026-07-09	-	-	0me6z51	013l1gl	TD_Prospect_CV_BAU-Video	Standard	Archived	Archived	CV	BAU-VIDEO	null	1ixz97k	Video-Web_LAL_A18-US	null	null	null	null		null	759595	45000	null	25	0	0	0	0	57157	null	0	57873	52037	49843	48073	44562	4057	5296	225	1596.297384	1	0	0	0	280.481672	0	280.481672	280.481672	210.69771400000002	771.661058	T-Mobile	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	null	false	2026-07-06	null	null	-	unknown	Q3.013l1gl	null	null	null	null	null	null	null	null	null	null
+The Trade Desk	2026-07-09	-	-	0me6z51	mgw6ypz	TD_Prospect_CV_BAU-Display	Standard	Archived	Archived	CV	BAU-DISPLAY	null	qcpd673	Display-All_Competitors_A18-US	null	null	null	null		null	11996662	24000	null	481	0	0	0	0	565129	null	0	0	0	0	0	0	0	0	0	3763.9441770000003	12	0	0	0	518.366142	0	518.366142	518.366142	418.79064800000003	1455.5229320000003	T-Mobile	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	0	0	null	false	2026-07-06	null	null	-	unknown	Q3.mgw6ypz	null	null	null	null	null	null	null	null	null	null
 
-SELECT
-  UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
-  TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
-  COUNT(*) AS raw_forecast_rows,
-  COUNT(DISTINCT TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS distinct_files_ever_had_it,
-  MAX(TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS most_recent_file_with_data
-FROM prdrzranalytics.lab42.raw_media_flowchart
-WHERE UPPER(TRIM(QGP)) = 'FORECAST'
-  AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
-  AND TRY_CAST(QGP_Week AS DATE) BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
-GROUP BY UPPER(TRIM(LOB_Supported)), TRY_CAST(QGP_Week AS DATE)
-ORDER BY LOB_Supported, QGP_Week DESC;
 
+This is for channel group paid social:
+select * from prd_dbi_analytics.improvado.mrt_paidsocial_pivot limit 20;
 output:
-LOB_Supported	QGP_Week	raw_forecast_rows	distinct_files_ever_had_it	most_recent_file_with_data
-BROADBAND	2026-09-26	349	4	2026-08-03
-BROADBAND	2026-09-19	349	4	2026-08-03
-BROADBAND	2026-09-12	349	4	2026-08-03
-BROADBAND	2026-09-05	349	4	2026-08-03
-BROADBAND	2026-08-29	349	4	2026-08-03
-BROADBAND	2026-08-22	349	4	2026-08-03
-BROADBAND	2026-08-15	349	4	2026-08-03
-BROADBAND	2026-08-08	349	4	2026-08-03
-BROADBAND	2026-08-01	349	4	2026-08-03
-BROADBAND	2026-07-25	254	3	2026-07-24
-BROADBAND	2026-07-18	167	2	2026-07-22
-BROADBAND	2026-07-11	80	1	2026-07-11
-BROADBAND	2026-07-04	1144	13	2026-07-10
-BROADBAND	2026-06-27	1144	13	2026-07-10
-CONSUMER POSTPAID	2026-09-26	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-09-19	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-09-12	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-09-05	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-08-29	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-08-22	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-08-15	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-08-08	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-08-01	1684	4	2026-08-03
-CONSUMER POSTPAID	2026-07-25	1219	3	2026-07-24
-CONSUMER POSTPAID	2026-07-18	795	2	2026-07-22
-CONSUMER POSTPAID	2026-07-11	366	1	2026-07-11
-CONSUMER POSTPAID	2026-07-04	5977	13	2026-07-10
-CONSUMER POSTPAID	2026-06-27	5977	13	2026-07-10
-TFB	2026-09-26	181	4	2026-08-03
-TFB	2026-09-19	181	4	2026-08-03
-TFB	2026-09-12	181	4	2026-08-03
-TFB	2026-09-05	181	4	2026-08-03
-TFB	2026-08-29	181	4	2026-08-03
-TFB	2026-08-22	181	4	2026-08-03
-TFB	2026-08-15	181	4	2026-08-03
-TFB	2026-08-08	181	4	2026-08-03
-TFB	2026-08-01	181	4	2026-08-03
-TFB	2026-07-25	134	3	2026-07-24
-TFB	2026-07-18	87	2	2026-07-22
-TFB	2026-07-11	43	1	2026-07-11
-TFB	2026-07-04	775	13	2026-07-10
-TFB	2026-06-27	775	13	2026-07-10
+lob_tactic	channel	account_id	account_name	lob	campaign_id	campaign_name	date	Base_AAL_CartStar	Connect_ProspectQualityTraffic	TFB_HINT_EligibilityCheck	Fiber_SEC	Fiber_EC	CartStartplus	Postpaid_CreditApp	Postpaid_PSPV_Plus	Postpaid_TopFunnelProspect	SEC	QT_BTS	QT_HINT	QT_TFB	HINT_EligibilityFormSubmit	HINT_EligibilityFormSubmit_CAPI	HINT_WebOrders	Metro_CartStart	Metro_HINTQualityTraffic	QT_Postpaid	QT_Prepaid	TMoney_Upper_Funnel_Base	Lead	Activation	spend	clicks	impressions	year	quarter	reclass	ignore_tiktok	week_date
+HINTAwa	Pinterest	549762990402	T-Mobile - HINT	HSI	626753051196	TMO_Emerging_HINT_X_Perf_HINTAwa_PIN_Q4_2024_X_HINTProsQT_CL_Broad_SOC-CMP-001	2025-01-01	0	0	0	0	0	56	0	14	0	0	128	128	0	56	0	0	0	0	128	128	0	0	0	607.226741	138	158526	2025	Q1	1	0	2024-12-30
+HINTCons	Pinterest	549762990402	T-Mobile - HINT	HSI	626754115409	TMO_HINT_HINT_X_Perf_HINTCons_PIN_Q1_2025_21Plus_HINTProsQT_CL_BroadAndMovers_SOC-CMP-001	2025-01-01	0	0	0	0	0	2	0	0	0	0	13	13	0	2	0	0	0	0	13	13	0	0	0	804.588339	316	172032	2025	Q1	1	0	2024-12-30
+HINTConv	Pinterest	549762990402	T-Mobile - HINT	HSI	626754115590	TMO_HINT_HINT_X_Perf_HINTConv_PIN_Q1_2025_21Plus_HINTProEC_CL_Engagers_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	2	2	0	0	0	0	0	0	2	2	0	0	0	79.52294499999999	17	18159	2025	Q1	1	0	2024-12-30
+HINTCons	Pinterest	549762990402	T-Mobile - HINT	HSI	626753051120	TMO_Emerging_HINT_X_Perf_HINTCons_PIN_Q4_2024_X_HINTProsQT_CL_BroadAndMovers_SOC-CMP-001	2025-01-01	0	0	0	0	3	181	0	49	0	0	571	571	0	181	0	3	3	0	571	571	0	0	0	1039.452972	636	251774	2025	Q1	1	0	2024-12-30
+HINTAwa	Pinterest	549762990402	T-Mobile - HINT	HSI	626754114852	TMO_HINT_HINT_X_Perf_HINTAwa_PIN_Q1_2025_21Plus_Reach_CL_Broad_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	3	3	0	0	0	0	0	0	3	3	0	0	0	637.110637	200	208658	2025	Q1	1	0	2024-12-30
+HINTConv	Pinterest	549762990402	T-Mobile - HINT	HSI	626753992799	TMO_Emerging-Reclass_HINT_X_HINT_HINTConv_PIN_Q4_2024_X_HINTProEC_X_ReEngagers_SOC-CMP-001	2025-01-01	0	0	0	0	3	74	0	31	0	0	179	179	0	74	0	3	3	0	179	179	0	0	0	0	0	14	2025	Q1	0	0	2024-12-30
+PSTPAwa	X	18ce55eisob	T-Mobile - Postpaid [DI]	PostPaid	m7u6g	TMO_Postpaid_Voice_X_Perf_PSTPAwa_XCorp_Q4_2024_18Plus_REA_BL_BAU_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0.000675	2	683	2025	Q1	1	0	2024-12-30
+PSTPCons	X	18ce55eisob	T-Mobile - Postpaid [DI]	PostPaid	mbxkf	TMO_Postpaid_Voice_X_Perf_PSTPCons_XCorp_Q4_2024_18Plus_MagQT_BL_BAU-Phase2_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0.000003	1	789	2025	Q1	1	0	2024-12-30
+PSTPCons	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753140297	TMO_Postpaid_Voice_X_Perf_PSTPCons_PIN_Q4_2024_18Plus_WebTraff_CL_CPC_SOC-CMP-001	2025-01-01	0	0	0	0	0	53	0	1566	0	0	171	171	0	53	0	0	0	0	171	171	0	0	0	0	0	169	2025	Q1	1	0	2024-12-30
+PSTPCons	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753065826	TMO_Postpaid_Voice_X_Perf_PSTPCons_PIN_Q4_2024_18Plus_MagQT_CL_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	370	0	9959	0	0	1291	1291	0	370	0	0	0	0	1291	1291	0	0	0	0	0	304	2025	Q1	1	0	2024-12-30
+PSTPConv	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753065872	TMO_Postpaid_Voice_X_Perf_PSTPConv_PIN_Q4_2024_18Plus_MagQT_CL_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	145	0	3566	0	0	482	482	0	145	0	0	0	0	482	482	0	0	0	0	0	120	2025	Q1	1	0	2024-12-30
+PSTPAwa	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753140179	TMO_Postpaid_Voice_X_Perf_PSTPAwa_PIN_Q4_2024_18Plus_Compl_CL_VCR_SOC-CMP-001	2025-01-01	0	0	0	0	0	26	0	592	0	0	56	56	0	26	0	0	0	0	56	56	0	0	0	0	0	35	2025	Q1	1	0	2024-12-30
+PSTPCons	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626749972632	TMO_Postpaid_Voice_X_Perf_PSTPCons_PIN_Q4_2023_X_MagQT_CL_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	36	2025	Q1	1	0	2024-12-30
+PSTPAwa	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753065558	TMO_Postpaid_Voice_X_Perf_PSTPAwa_PIN_Q4_2024_18Plus_Aware_CL_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	148	0	4785	0	0	589	589	0	148	0	0	0	0	589	589	0	0	0	0	4	261	2025	Q1	1	0	2024-12-30
+PSTPConsConv	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626750682834	TMO_Postpaid_Voice_X_Perf_PSTPConsConv_PIN_Q1_2024_X_MagQT_CL_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	10	2025	Q1	1	0	2024-12-30
+PSTPAwa	Pinterest	549761675157	T-Mobile [Internal]	PostPaid	626753746974	TMO_Postpaid_Voice_X_Perf_PSTPAwa_PIN_Q4_2024_X_Aware_CL_Holiday-MaxWidthHeavyUp_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	24	2025	Q1	1	0	2024-12-30
+BrandUnconventional	LinkedIn	512192381	T-Mobile for Business - Paid Social	TFB	708992004	TMO_TFB_TFB_X_TFBBrand_BrandUnconventional_LinkedIn_Q4_2024_X_TFBQT_X_Business-Goes-Further_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	20	0	0	0	0	0	0	0	0	0	0	0	0	0	2025	Q1	1	0	2024-12-30
+EnterpriseLeadGen	LinkedIn	512192381	T-Mobile for Business - Paid Social	TFB	708900694	TMO_TFB_TFB_X_TFBEnt_EnterpriseLeadGen_LinkedIn_Q4_2024_18Plus_TFBLeads_X_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	7	0	0	0	0	0	0	0	0	0	0	0	0	0	2025	Q1	1	0	2024-12-30
+TFBCPLeadGen	LinkedIn	512192381	T-Mobile for Business - Paid Social	TFB	724672414	TMO_TFB_TFB_X_TFBEnt_TFBCPLeadGen_LinkedIn_Q1_2025_18Plus_WebTraff_X_ChannelPartners_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	330.91	13	2902	2025	Q1	1	0	2024-12-30
+BoostedOrganic	LinkedIn	512192381	T-Mobile for Business - Paid Social	TFB	714865244	TMO_TFB-Reclass_TFB_X_TFBBrand_BoostedOrganic_LinkedIn_Q4_2024_18Plus_PE_X_VidViews_SOC-CMP-001	2025-01-01	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	53.220000000000006	2	307	2025	Q1	0	0	2024-12-30
 
 
-WITH latest_file_per_week AS (
-  SELECT UPPER(TRIM(LOB_Supported)) AS LOB_Supported, TRY_CAST(QGP_Week AS DATE) AS QGP_Week,
-    MAX(TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE)) AS latest_file
-  FROM prdrzranalytics.lab42.raw_media_flowchart
-  WHERE UPPER(TRIM(QGP)) = 'FORECAST'
-    AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
-    AND TRY_CAST(QGP_Week AS DATE) BETWEEN DATE_SUB(CURRENT_DATE(), 42) AND DATE_ADD(CURRENT_DATE(), 56)
-  GROUP BY UPPER(TRIM(LOB_Supported)), TRY_CAST(QGP_Week AS DATE)
-)
-SELECT
-  lf.LOB_Supported, lf.QGP_Week, lf.latest_file,
-  COUNT(DISTINCT r.Channel) AS distinct_channels,
-  COUNT(DISTINCT CONCAT(r.Channel,'|',r.Tactic,'|',r.Message_Type,'|',r.Agency)) AS distinct_campaigns,
-  SUM(r.Spend) AS total_forecast
-FROM latest_file_per_week lf
-JOIN prdrzranalytics.lab42.raw_media_flowchart r
-  ON UPPER(TRIM(r.LOB_Supported)) = lf.LOB_Supported
- AND TRY_CAST(r.QGP_Week AS DATE) = lf.QGP_Week
- AND TRY_CAST(CAST(r.FileLoad_Date AS STRING) AS DATE) = lf.latest_file
-WHERE UPPER(TRIM(r.QGP)) = 'FORECAST'
-GROUP BY lf.LOB_Supported, lf.QGP_Week, lf.latest_file
-ORDER BY lf.LOB_Supported, lf.QGP_Week DESC;
+this is for channel group paid search:
+select * from prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily limit 20;
+aal	account_id	account_name	add_a_line	all_conversions	bi	bts_quality_traffic	buying_intent	campaign_id	cart_start	clicks	connect_low_funnel_visit	connect_qt	digital_gross_add	fiber_activations	fiber_ec	fiber_pre_order	fiber_sec	fiber_waitlist_sign_up	hint_ec	hint_invoca_calls	hint_offline_invoca_calls	hint_offline_invoca_eligibility	hint_offline_invoca_order	hint_offline_invoca_order_rt	hint_offline_invoca_sales_opp	hint_sec	hint_web_orders	impressions	magenta_pqt	ma_hint_ec_eligibility_check	metro_hint_qt	metro_low_funnel_cs	metro_qt	postpaid_cart_start	postpaid_pspv	tfb_low_funnel	tfb_credit_check	tfb_hint_ec	tfb_invoca_sales_calls	tfb_leads	tfb_quality_traffic	tmo_prepaid_low_funnel_prospect	tmo_top_funnel_prospect	tmo_upper_funnel_prospect	total_tfb_conversions	connect_low_funnel_prospect	tfb_lead_form_submit	metro_upper_funnel_prospect	fiber_ec_dda	metro_top_funnel_prospect	fiber_web_orders	metro_mid_funnel_prospect	fiber_sec_dda	tfb_invoca_sales_intent_dda	tfb_invoca_order_dda	postpaid_prospect_web_order	postpaid_all_web_order	metro_prospect_web_order	date	file_load_datetime	cost	lob	ad_platform	campaign_name	campaign_type	advertising_channel_type	advertising_channel_sub_type	bidding_strategy_type	serving_status	gold_inserted_at
+0	1418811795	Fiber Bing	0	133.001697	0	0	0	22074199806	0	21	0	0	0	1	3	1	1	2	0	0	0	0	0	0	0	0	0	2508	0	0	0	0	0	0	0	0	0	0	0	0	0	0	9.001066	3.999619	0	0	0	0	3.000506	0	0	0	1.000506	0	0	0	0	0	2026-05-12	2026-06-12T02:24:49.000+00:00	121.22	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	238.998972	0	1	1	22074199806	1	27	0	0	0	0	6	2	1	5	0	0	0	0	0	0	0	0	1	3598	2	2	0	0	0	1	2	0	0	0	0	0	0	0	12.999486	8.999486	0	0	0	0	6	0	0	0	1	0	0	0	0	0	2026-05-13	2026-06-13T04:15:19.000+00:00	201.09	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	856.994118	0	0	1	22074199806	0	29	0	0	0	4	9	1	4	4	0	0	0	0	0	0	0	0	0	2157	0	0	0	0	0	0	2	0	0	0	0	0	0	0	18.998508	10	0	0	0	0	8.997805	0	0	0	3.997805	0	0	0	0	0	2026-05-14	2026-06-14T04:01:38.000+00:00	216.25	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	318	0	0	2	22074199806	1	37	0	0	0	0	5	1	1	3	0	0	0	0	0	0	0	0	0	2472	2	0	0	0	0	1	2	0	0	0	0	0	0	0	21	15	0	0	0	0	5	0	0	0	1	0	0	0	0	0	2026-05-15	2026-06-15T05:04:23.000+00:00	356.1	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	73	0	0	0	22074199806	0	24	0	0	0	0	2	0	0	1	0	0	0	0	0	0	0	0	0	1348	0	0	0	0	0	0	0	0	0	0	0	0	0	0	5	3	0	0	0	0	2	0	0	0	0	0	0	0	0	0	2026-05-16	2026-06-16T03:18:18.000+00:00	110.22	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	151	0	0	0	22074199806	0	25	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	2237	0	2	0	0	0	0	0	0	0	0	0	0	0	0	12	10	0	0	0	0	0	0	0	0	0	0	0	0	0	0	2026-05-17	2026-06-17T04:08:51.000+00:00	178.78	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	308.002323	0	0	0	22074199806	1	29	0	0	0	0	6	3	1	6	0	0	0	0	0	0	0	0	1	1381	1	2	0	0	0	1	3	0	0	0	0	0	0	0	22	14	0	0	0	0	6.002323	0	0	0	1	0	0	0	0	0	2026-05-18	2026-06-18T03:49:23.000+00:00	433.19	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	223.999242	0	0	2	22074199806	0	27	0	0	0	0	6	1	1	3	0	0	0	0	0	0	0	0	0	800	1	1	0	0	0	0	0	0	0	0	0	0	0	0	11.001565	8	0	0	0	0	5.997677	0	0	0	1	0	0	0	0	0	2026-05-19	2026-06-19T04:02:33.000+00:00	366.54	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	291.99107	0	1	0	22074199806	1	24	0	0	0	1	5	0	1	1	0	0	0	0	0	0	0	0	1	1642	1	3.998665	0	0	0	1	1.998435	0	0	0	0	0	0	0	15.99687	8.998435	0	0	0	0	4	0	0	0	1	0	0	0	0	0	2026-05-20	2026-06-20T03:22:07.000+00:00	396.99	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	206	0	0	1	22074199806	1	26	0	0	0	1	2	0	1	2	0	0	0	0	0	0	0	0	0	1427	0	0	0	0	0	1	1	0	0	0	0	0	0	0	14	10	0	0	0	0	2	0	0	0	1	0	0	0	0	0	2026-05-21	2026-06-21T03:19:37.000+00:00	144.88	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	210	0	0	0	22074199806	0	30	0	0	0	0	3	2	1	4	0	0	0	0	0	0	0	0	0	1941	2	3	0	0	0	0	0	0	0	0	0	0	0	0	16	10	0	0	0	0	3	0	0	0	1	0	0	0	0	0	2026-05-22	2026-06-22T03:57:22.000+00:00	198.64	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	218.006847	0	0	0	22074199806	1	16	0	0	0	3	3	0	1	0	0	0	0	0	0	0	0	0	1	593	6	2.000224	0	0	0	1	1.000044	0	0	0	0	0	0	0	14.001573	6.001573	0	0	0	0	3.003209	0	0	0	1	0	0	0	0	0	2026-05-23	2026-06-23T04:20:54.000+00:00	187.09	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	100.001307	0	0	0	22074199806	0	13	0	0	0	0	2	1	0	1	0	0	0	0	0	0	0	0	0	266	0	1	0	0	0	0	0	0	0	0	0	0	0	0	6.000091	2.000091	0	0	0	0	2.001125	0	0	0	0	0	0	0	0	0	2026-05-24	2026-06-24T04:25:46.000+00:00	234.4	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	205	0	1	0	22074199806	2	22	0	0	0	2	6	1	3	2	0	0	0	0	0	0	0	0	0	713	1	1	0	0	0	2	2	0	0	0	0	0	0	0	9	6	0	0	0	0	5	0	0	0	2	0	0	0	0	0	2026-05-25	2026-06-25T04:21:46.000+00:00	442	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	147	0	0	0	22074199806	1	24	0	0	0	1	6	1	1	4	0	0	0	0	0	0	0	0	0	821	1	1	0	0	0	1	1	0	0	0	0	0	0	0	8	6	0	0	0	0	6	0	0	0	1	0	0	0	0	0	2026-05-26	2026-06-26T04:26:17.000+00:00	449.44	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	242.000047	0	0	0	22074199806	0	31	0	0	0	0	7	1	0	5	0	0	0	0	0	0	0	0	0	1113	1	1	0	0	0	0	0	0	0	0	0	0	1	0	14.000047	10	1	0	0	0	7	0	0	0	0	0	0	0	0	0	2026-05-27	2026-06-27T04:32:34.000+00:00	479.32	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	140	0	0	0	22074199806	0	19	0	0	0	0	3	0	0	2	0	0	0	0	0	0	0	0	0	1213	0	0	0	0	0	0	0	0	0	0	0	0	0	0	8	7	0	0	0	0	3	0	0	0	0	0	0	0	0	0	2026-05-28	2026-06-28T03:24:57.000+00:00	104.69	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	88.000552	0	0	0	22074199806	0	11	0	0	0	1	4	0	1	3	0	0	0	0	0	0	0	0	0	424	0	1	0	0	0	1	1	0	0	0	0	0	0	0	9.000064	5.000064	0	0	0	0	4.000424	0	0	0	1	0	0	0	0	0	2026-05-29	2026-06-29T03:40:03.000+00:00	71.91	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	72.981338	0	1	0	22074199806	0	12	0	0	0	0	2	0	0	1	0	0	0	0	0	0	0	0	0	443	1	0	0	0	0	0	0	0	0	0	0	0	0	0	5	2	0	0	0	0	1.991338	0	0	0	0	0	0	0	0	0	2026-05-30	2026-06-30T03:59:28.000+00:00	51.88	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
+0	1418811795	Fiber Bing	0	65	0	0	0	22074199806	0	5	0	0	0	0	2	0	0	2	0	0	0	0	0	0	0	0	0	290	0	0	0	0	0	0	0	0	0	0	0	0	0	0	6	2	0	0	0	0	2	0	0	0	0	0	0	0	0	0	2026-05-31	2026-07-01T04:22:31.000+00:00	39.01	Fiber	Bing	Fiber_Generic_Wholesale_Bing	Generic	SEARCH	null	TARGET_ROAS	SERVING	2026-08-10T15:10:53.020+00:00
 
-
-LOB_Supported	QGP_Week	latest_file	distinct_channels	distinct_campaigns	total_forecast
-BROADBAND	2026-09-26	2026-08-03	13	47	9712145.717346191
-BROADBAND	2026-09-19	2026-08-03	13	47	10020161.094299316
-BROADBAND	2026-09-12	2026-08-03	13	47	9967826.594299316
-BROADBAND	2026-09-05	2026-08-03	13	47	9265242.469299316
-BROADBAND	2026-08-29	2026-08-03	13	47	9364171.391174316
-BROADBAND	2026-08-22	2026-08-03	13	47	9043928.266174316
-BROADBAND	2026-08-15	2026-08-03	13	47	9043928.469299316
-BROADBAND	2026-08-08	2026-08-03	13	47	9074238.863830566
-BROADBAND	2026-08-01	2026-08-03	13	47	8281101.517150879
-BROADBAND	2026-07-25	2026-07-24	14	45	8589285.292297363
-BROADBAND	2026-07-18	2026-07-22	14	43	9454265.184143066
-BROADBAND	2026-07-11	2026-07-11	13	42	8966009.769836426
-BROADBAND	2026-07-04	2026-07-10	11	36	2382194.6528167725
-BROADBAND	2026-06-27	2026-07-10	11	36	11362253.570144653
-CONSUMER POSTPAID	2026-09-26	2026-08-03	16	71	30044547.764671326
-CONSUMER POSTPAID	2026-09-19	2026-08-03	16	71	27057676.400764465
-CONSUMER POSTPAID	2026-09-12	2026-08-03	16	71	27819095.903663635
-CONSUMER POSTPAID	2026-09-05	2026-08-03	16	71	24420649.247169495
-CONSUMER POSTPAID	2026-08-29	2026-08-03	16	71	24337081.039527893
-CONSUMER POSTPAID	2026-08-22	2026-08-03	16	71	23229575.840675354
-CONSUMER POSTPAID	2026-08-15	2026-08-03	16	71	22863151.627052307
-CONSUMER POSTPAID	2026-08-08	2026-08-03	16	71	23140153.6304245
-CONSUMER POSTPAID	2026-08-01	2026-08-03	16	71	22406444.864162445
-CONSUMER POSTPAID	2026-07-25	2026-07-24	16	69	21175594.37256241
-CONSUMER POSTPAID	2026-07-18	2026-07-22	16	68	25401535.21162796
-CONSUMER POSTPAID	2026-07-11	2026-07-11	16	66	20963948.090625763
-CONSUMER POSTPAID	2026-07-04	2026-07-10	14	65	3803134.945549011
-CONSUMER POSTPAID	2026-06-27	2026-07-10	14	65	27346677.057857618
-TFB	2026-09-26	2026-08-03	10	36	2066017.3433074951
-TFB	2026-09-19	2026-08-03	10	36	2439415.8454437256
-TFB	2026-09-12	2026-08-03	10	36	2439415.8454437256
-TFB	2026-09-05	2026-08-03	10	36	2066017.3454437256
-TFB	2026-08-29	2026-08-03	10	36	2439415.8454437256
-TFB	2026-08-22	2026-08-03	10	36	2439415.8454437256
-TFB	2026-08-15	2026-08-03	10	36	2439415.8454437256
-TFB	2026-08-08	2026-08-03	10	36	1676186.4977874756
-TFB	2026-08-01	2026-08-03	10	36	1676186.4977874756
-TFB	2026-07-25	2026-07-24	10	37	1667001.259262085
-TFB	2026-07-18	2026-07-22	10	36	2027803.391571045
-TFB	2026-07-11	2026-07-11	10	35	1631033.2635803223
-TFB	2026-07-04	2026-07-10	11	39	341173.1408691406
-TFB	2026-06-27	2026-07-10	11	39	2479550.1223373413
