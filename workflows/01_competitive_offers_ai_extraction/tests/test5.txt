@@ -1,80 +1,14 @@
-DESCRIBE TABLE prd_dbi_analytics.improvado.mrt_paidsocial_pivot;
-
-col_name	data_type	comment
-lob_tactic	string	null
-channel	string	null
-account_id	string	null
-account_name	string	null
-lob	string	null
-campaign_id	string	null
-campaign_name	string	null
-date	date	null
-Base_AAL_CartStar	double	null
-Connect_ProspectQualityTraffic	double	null
-TFB_HINT_EligibilityCheck	double	null
-Fiber_SEC	double	null
-Fiber_EC	double	null
-CartStartplus	double	null
-Postpaid_CreditApp	double	null
-Postpaid_PSPV_Plus	double	null
-Postpaid_TopFunnelProspect	double	null
-SEC	double	null
-QT_BTS	double	null
-QT_HINT	double	null
-QT_TFB	double	null
-HINT_EligibilityFormSubmit	double	null
-HINT_EligibilityFormSubmit_CAPI	double	null
-HINT_WebOrders	double	null
-Metro_CartStart	double	null
-Metro_HINTQualityTraffic	double	null
-QT_Postpaid	double	null
-QT_Prepaid	double	null
-TMoney_Upper_Funnel_Base	double	null
-Lead	double	null
-Activation	double	null
-spend	double	null
-clicks	double	null
-impressions	double	null
-year	bigint	null
-quarter	string	null
-reclass	bigint	null
-ignore_tiktok	bigint	null
-week_date	date	null
-
-SELECT campaign_id, campaign_name, date, channel, lob, reclass, ignore_tiktok, spend
-FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
-WHERE ignore_tiktok = 1
-ORDER BY date DESC
-LIMIT 30;
-
-campaign_id	campaign_name	date	channel	lob	reclass	ignore_tiktok	spend
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-15	TikTok	PostPaid	1	1	17944.1
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-15	TikTok	PostPaid	1	1	20413.55
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-14	TikTok	PostPaid	1	1	20429.55
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-14	TikTok	PostPaid	1	1	24739.72
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-13	TikTok	PostPaid	1	1	20021.9
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-13	TikTok	PostPaid	1	1	23668.25
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-12	TikTok	PostPaid	1	1	23946.75
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-12	TikTok	PostPaid	1	1	20180.96
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-11	TikTok	PostPaid	1	1	20108.57
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-11	TikTok	PostPaid	1	1	23773.739999999998
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-10	TikTok	PostPaid	1	1	23869.559999999998
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-10	TikTok	PostPaid	1	1	20273.670000000002
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-09	TikTok	PostPaid	1	1	19930.24
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-09	TikTok	PostPaid	1	1	23819.39
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-08	TikTok	PostPaid	1	1	19987.329999999998
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-08	TikTok	PostPaid	1	1	23631.97
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-07	TikTok	PostPaid	1	1	20387.95
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-07	TikTok	PostPaid	1	1	24091.96
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-06	TikTok	PostPaid	1	1	20342.059999999998
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-06	TikTok	PostPaid	1	1	24081.54
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-05	TikTok	PostPaid	1	1	23975.57
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-05	TikTok	PostPaid	1	1	20211.55
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-04	TikTok	PostPaid	1	1	24230.260000000002
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-04	TikTok	PostPaid	1	1	20471.86
-1850349630100514	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_HolidaySilentMango-Pulse-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	47153.21
-1850351111147586	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchSL-TopFeed-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	19985.25
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-03	TikTok	PostPaid	1	1	23532.42
-1850347973554353	TMO_Enterprise_Brand_X_Brand_BrandAwa_TikTok_Q4_2025_18Plus_RF_X_DoorDashPixieDust-Pulse-V2_SOC-CMP-001	2025-12-02	TikTok	TFB	1	1	17189.22
-1850349630100514	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_HolidaySilentMango-Pulse-V2_SOC-CMP-001	2025-12-02	TikTok	PostPaid	1	1	54710.31
-1850350926223377	TMO_Postpaid_Voice_X_Perf_PSTPAwa_TikTok_Q4_2025_18Plus_RF_BL_SuttersMill-LaunchEL-TopFeed-V2_SOC-CMP-001	2025-12-02	TikTok	PostPaid	1	1	2412.8
+qgp_date	week_type	qgp_quarter	days_in_period	is_complete_period	channel_group	upvPostpaid	upvHsi	upvByod	upvFlowTotal	upvTotalAdobe	cartstartPostpaid	cartstartHsi	cartstartByod	cartstartTotal	ordersUnassistedPostpaid	ordersUnassistedHsi	ordersUnassistedByod	ordersUnassistedTotal	ordersAssistedPostpaid	ordersAssistedHsi	ordersAssistedByod	ordersAssistedTotal	ordersTotal	mfcSpendActual	mfcSpendForecast	platformSpend	biddableSpend	upvForecast	upvWebAppForecast	qgpActivationsBopisActual	qgpActivationsBopisTarget	qgpActivationsNewAalNoAssistanceActual	qgpActivationsNewAalNoAssistanceTarget	qgpStoreTrafficActual	qgpStoreTrafficTarget	qgpVrCallsActual	qgpVrCallsTarget	qgpVrChatsActual	qgpVrChatsTarget	qgpVrPostpaidActivationsActual	qgpVrPostpaidActivationsTarget	qgpDigitalPctPhoneNewActsNoAssistPlusAssistActual	qgpDigitalPctPhoneNewActsNoAssistPlusAssistTarget	qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedActual	qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget	qgpDigitalPctNoAssistanceActivationsActual	qgpDigitalPctNoAssistanceActivationsTarget	qgpDigitalPctAssistanceActivationsActual	qgpDigitalPctAssistanceActivationsTarget	cvrUpvFlow	cvrUpvPostpaid	cvrUpvHsi	cvrUpvByod	cvrCartstartTotal	cvrCartstartPostpaid	cvrCartstartHsi	cvrCartstartByod	cvrOrdersTotal	cvrOrdersUnassistedTotal	cvrOrdersAssistedTotal	cvrOrdersUnassistedPostpaid	cvrOrdersAssistedPostpaid	cvrOrdersUnassistedHsi	cvrOrdersAssistedHsi	cvrOrdersUnassistedByod	cvrOrdersAssistedByod
+2026-09-30	BOUNDARY_STUB	2026 Q3	4	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	3193777.09274292	null	null	841159	1025241.11	null	11628.729972	null	8573.41246	null	2001315	null	49826.35	null	15204.9324	null	37861.561312	null	0.399474	null	0.309334	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-09-26	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	28678783.33518982	null	null	1793592	2395283.69	null	23626.90008	null	19833.117647	null	3557027.000002	null	82215.305298	null	29543.628002	null	65644.636743	null	0.409436	null	0.337051	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-09-19	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	25837988.019210815	null	null	1837371	2333388.59	null	23351.730059	null	15012.272121	null	3513935.000002	null	91630.9947	null	29772.771399	null	68326.074677	null	0.40325	null	0.322195	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-09-12	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	26573652.040542603	null	null	1840248	2317261.39	null	20134.299962	null	12742.739569	null	3242411.000003	null	79099.882302	null	24918.352802	null	61658.339673	null	0.419329	null	0.327414	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-09-05	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	23175206.05189514	null	null	1441203	1844249.65	null	21888.010018	null	14479.404548	null	3596782.999999	null	60012.420097	null	27260.861299	null	53397.410626	null	0.448228	null	0.339319	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-08-29	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	23022137.818862915	null	null	1447739	1875182.74	null	20825.870058	null	14252.818713	null	3510871	null	85330.265902	null	30045.566803	null	58364.617577	null	0.431639	null	0.3292	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-08-22	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	21938342.319351196	null	null	1437202	1903947.46	null	18571.149947	null	14356.026909	null	3576201.000001	null	84156.194003	null	29949.483102	null	57747.005785	null	0.42602	null	0.315946	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-08-15	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	21603086.330825806	null	null	1461580	2020521.97	null	20089.820016	null	16810.82095	null	4121040.999999	null	82525.638503	null	31416.080003	null	57491.898191	null	0.43233	null	0.324889	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-08-08	NORMAL	2026 Q3	7	false	All Channels	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	21922958.59263611	null	11950961.275293011	1433538	2012246.64	null	18849.360012	null	13855.174928	null	3578031.999997	null	80952.209303	null	32019.648703	null	57560.901755	null	0.430774	null	0.31369	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null	null
+2026-08-01	NORMAL	2026 Q3	7	true	All Channels	549665	371615	96818	773417	1881158	69433	27145	45984	142562	3246	14195	3352	20793	731	690	646	2067	22860	null	21146380.608982086	14315509.97242919	11526885.9559276	1452000	2104713.55	13853	19085.999996	12930	13791.437107	3877178	3630486.000001	89999.999999	80088.3874	22896.000001	29846.9332	69115.000003	63814.511236	0.367867	0.429329	0.487489	0.31275	0.094856	null	0.273004	null	0.41113877728505527	0.7106968168530042	0.4804846544619526	0.12518214624193674	0.18432747146752657	0.12631875778883503	0.07304602882014989	0.4749530046065814	0.029557147050038982	0.026884591365330734	0.0026725556847082494	0.005905415116480038	0.0013299009396632495	0.03819813516677206	0.0018567603568209034	0.0346216612613357	0.006672312999648825
+2026-07-25	NORMAL	2026 Q3	7	true	All Channels	545897	372846	92563	775241	1528075	66644	25193	45018	136855	3152	13416	3230	19798	844	691	743	2278	22076	null	20048235.944828033	17305370.79678016	10602744.185123976	1528078	2083304.65	13486	20710.259997	11790	15183.510909	3453957	3762242.999998	85848	80199.090797	22391.000002	30966.166602	69104.999999	64907.239831	0.358479	0.429067	0.455834	0.326513	0.092218	null	0.26626	null	0.5073317736367652	0.7041642534386081	0.48094205543824436	0.11939899979490248	0.1765322009542839	0.12208163811121878	0.06756945226715588	0.4863498374080356	0.02847630607772293	0.025537864999400188	0.002938441078322741	0.005773983004119825	0.0015460792054178718	0.03598268453999775	0.0018533120913192041	0.03489515249073604	0.00802696541814764
+2026-07-18	NORMAL	2026 Q3	7	true	All Channels	529798	360709	91755	740408	1480060	62918	21911	43982	128811	3105	11550	3225	17880	838	611	699	2148	20028	23916111.738407135	24289177.787799835	16152294.953262705	9608024.888789162	1480065	1932875.53	13965	20159.459964	12212	16239.103349	3928654	3967250	85514.999997	81711.521801	21835.999997	29073.539397	75162.000004	64856.417619	0.377235	0.426786	0.444558	0.32885	0.090605	null	0.28663	null	0.5002553950515519	0.7155487244870395	0.48717598945446294	0.12392491707274908	0.17397299867100302	0.11875847020940056	0.060744256450490565	0.4793417252465806	0.027049950837916392	0.024148847662369938	0.0029011031755464553	0.005860724276044832	0.0015817349253866568	0.03202027118813226	0.0016938862074414556	0.03514794834068988	0.007618113454307667
+2026-07-11	NORMAL	2026 Q3	7	true	All Channels	556713	339768	97414	762314	1460283	65706	22099	48031	135836	3450	11855	3352	18657	903	689	762	2354	21011	19626702.374362946	19858743.141407013	14244230.201979473	9114924.059267035	1460000	1919477.83	14600	19612.070044	13356	15117.684589	3601989	3564694	87956.999998	83960.397402	22825.000002	29424.414502	78809.000004	65316.913655	0.383299	0.420109	0.466472	0.321692	0.090195	null	0.293103	null	0.5220316883782116	0.730293553575036	0.4457061001109779	0.12778723728017588	0.17818904021177626	0.1180249069089459	0.06504144004144004	0.49306054571211533	0.027562133189210747	0.024474166813150487	0.0030879663760602586	0.0061970889848090484	0.0016220206821108902	0.0348914553460008	0.0020278543005815735	0.034409838421582115	0.007822284271254644
