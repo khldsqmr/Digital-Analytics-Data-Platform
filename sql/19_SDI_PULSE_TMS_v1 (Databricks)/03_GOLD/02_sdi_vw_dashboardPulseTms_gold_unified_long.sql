@@ -19,7 +19,10 @@ STRUCTURE (CTEs currently active):
   CTE 4 — PlatformSpend  : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
   CTE 5 — UpvForecast    : UPV forecast channel-allocated (UPV_FORECAST)
   CTE 6 — QgpScorecard   : QGP scorecard metrics, no lob/channel_group dimension (QGP_SCORECARD)
-  Final SELECT: UNION ALL of all six CTEs above
+  CTE 7 — BiddableSpend  : Programmatic+Paid Social+Paid Search combined, lob x channel_group
+                           grain (BIDDABLE_SPEND_CHANNEL) -- coexists with, not a replacement
+                           for, PLATFORM_SPEND_CHANNEL
+  Final SELECT: UNION ALL of all seven CTEs above
 
 QGP_SCORECARD NOTE:
   Unlike every other source here, QGP has no lob or channel_group dimension — it's enterprise-
@@ -33,18 +36,24 @@ DATA SOURCE VALUES:
   'MFC_SPEND_CHANNEL'      — MFC spend at lob x channel_group; includes All Channels rollup
   'MFC_SPEND_GRANULAR'     — MFC spend at finest grain; mfc_* columns populated
   'PLATFORM_SPEND_CHANNEL' — Platform spend at lob x channel_group; POSTPAID + BROADBAND
+  'BIDDABLE_SPEND_CHANNEL' — Biddable spend (Programmatic+Paid Social+Paid Search) at
+                             lob x channel_group; POSTPAID + BROADBAND. Separate, coexisting
+                             source from PLATFORM_SPEND_CHANNEL, not a replacement for it.
   'UPV_FORECAST'           — UPV forecast channel-allocated; lob = NULL
   'QGP_SCORECARD'          — QGP scorecard Actual/Target metric pairs; lob = NULL, channel_group = NULL
 
   IMPORTANT: MFC contributes two sets of rows (CHANNEL + GRANULAR).
   Always filter on data_source before summing spend to avoid double-counting.
 
-CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM/UPV_FORECAST):
+CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM/BIDDABLE/UPV_FORECAST):
   'All Channels' | 'Paid Search' | 'Paid Social' | 'Organic Search' |
   'Direct' | 'Programmatic' | 'Other'
   Plus, PLATFORM_SPEND_CHANNEL only: 'iSpot National TV' | 'iSpot OTT' | 'Affiliate' —
   paid-media channels with no Adobe-tracked action equivalent (no on-site attribution for
   linear/streaming TV or affiliate referrals the way there is for clickable digital channels).
+  BIDDABLE_SPEND_CHANNEL only ever populates 'All Channels', 'Paid Search', 'Paid Social',
+  'Programmatic' -- a subset of the shared vocabulary, not an addition to it, since that's the
+  literal scope of its three raw sources.
   Note: Organic Search and Direct exist in ADOBE and UPV_FORECAST only — spend has no concept
   of "organic" or "direct" traffic, since both are unpaid by definition, but UPV_FORECAST's
   channel split is derived directly from Adobe's own prior-year channel mix, so it inherits
@@ -54,8 +63,9 @@ CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM/UPV_FORECA
   reasoning.
 
 LOB CANONICAL VALUES:
-  'POSTPAID'  — MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID
-  'BROADBAND' — MFC: HSI / BROADBAND; Platform: BROADBAND
+  'POSTPAID'  — MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID; Biddable: POSTPAID
+  'BROADBAND' — MFC: HSI / BROADBAND; Platform: BROADBAND; Biddable: HSI (renamed in this
+                view's BiddableSpend CTE -- Silver carries the raw, un-canonicalized value)
   'TFB'       — MFC: TFB / TBG (TBG is legacy)
   NULL        — ADOBE, UPV_FORECAST, QGP_SCORECARD (no LOB dimension)
 
@@ -64,6 +74,7 @@ METRIC_TYPE VALUES:
   'MFC_SPEND_ACTUAL'   — MFC actual spend
   'MFC_SPEND_FORECAST' — MFC forecast spend
   'PLATFORM_SPEND'     — Platform actual spend (actuals only, no forecast column in this source)
+  'BIDDABLE_SPEND'     — Biddable actual spend (actuals only, no forecast column in this source)
   'UPV_FORECAST'       — UPV forecast (upvForecast | upvWebAppForecast)
                          allocation_ratio column shows channel split source
   'QGP_ACTUAL'         — QGP scorecard actual value
@@ -128,6 +139,17 @@ CHANGE LOG:
     the CTE body itself -- it already read from the correct table name. Header's CHANNEL GROUPS
     note updated: UPV_FORECAST inherits Adobe's full channel vocabulary, including Direct and
     Organic Search, since its channel split is derived from Adobe's own prior-year mix.
+  - Added CTE 7 (BiddableSpend) and its UNION ALL line now that
+    sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly exists. Appended at the end rather
+    than inserted between CTE 4 and CTE 5, to avoid renumbering CTEs 5/6. Applies the same
+    HSI -> BROADBAND rename MFC's own CTEs already do (Silver carries the raw value), filtered
+    to just the 2 raw values that map to POSTPAID/BROADBAND -- full LOB detail from Bronze
+    (Prepaid/TFB/Metro/Fiber/Archived/TMoney) intentionally excluded here, matching the same
+    POSTPAID+BROADBAND scope as PLATFORM_SPEND_CHANNEL. Coexists with, does not replace,
+    PLATFORM_SPEND_CHANNEL -- both are separate, toggle-able data_source values in Gold now.
+  - Fixed a stale header comment ("PlatformSpend and UpvForecast commented out above") left
+    over from before those two were uncommented in earlier turns -- both have been active for
+    several turns now; the comment was simply never updated to match.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -390,10 +412,59 @@ QgpScorecard AS (
     CAST(NULL AS STRING)                                                  AS mfc_agency,
     CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
+),
+
+-- =============================================================================
+-- CTE 7: BIDDABLE SPEND
+--        Programmatic + Paid Social + Paid Search combined, at lob x channel_group
+--        grain, POSTPAID + BROADBAND both present (no lob filter beyond the raw
+--        value IN check below -- HSI is renamed to BROADBAND here since Silver
+--        carries the raw, un-canonicalized value, matching how MFC does this same
+--        rename in its own CTEs above). Coexists with, does not replace,
+--        PLATFORM_SPEND_CHANNEL -- same shape, different (and separate) source.
+--        metric_type = 'BIDDABLE_SPEND'
+-- =============================================================================
+BiddableSpend AS (
+  SELECT
+    'BIDDABLE_SPEND_CHANNEL'                                              AS data_source,
+    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    s.week_type,
+    s.qgp_quarter,
+    s.days_in_period,
+    s.is_complete_period,
+    CASE s.lob
+      WHEN 'POSTPAID' THEN 'POSTPAID'
+      WHEN 'HSI'      THEN 'BROADBAND'
+      ELSE s.lob
+    END                                                                   AS lob,
+    s.channel_group,
+    s.metric_name,
+    'BIDDABLE_SPEND'                                                      AS metric_type,
+    s.metric_value,
+    s.metric_value_ly,
+    s.wow_numerator,
+    s.wow_denominator,
+    s.wow_pct,
+    s.yoy_numerator,
+    s.yoy_denominator,
+    s.yoy_pct,
+    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                                                  AS mfc_channel,
+    CAST(NULL AS STRING)                                                  AS mfc_tactic,
+    CAST(NULL AS STRING)                                                  AS mfc_message_type,
+    CAST(NULL AS STRING)                                                  AS mfc_agency,
+    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
+  WHERE s.lob IN ('POSTPAID', 'HSI')   -- the 2 raw values that canonicalize to POSTPAID/BROADBAND;
+                                         -- excludes Prepaid/TFB/Metro/Fiber/Archived/TMoney, which
+                                         -- Bronze deliberately left in for other potential consumers
 )
 
 -- =============================================================================
--- FINAL: Stack active CTEs (PlatformSpend and UpvForecast commented out above)
+-- FINAL: Stack active CTEs
 -- =============================================================================
 SELECT * FROM AdobeVolume
 UNION ALL SELECT * FROM MfcChannel
@@ -401,6 +472,7 @@ UNION ALL SELECT * FROM MfcGranular
 UNION ALL SELECT * FROM PlatformSpend
 UNION ALL SELECT * FROM UpvForecast
 UNION ALL SELECT * FROM QgpScorecard
+UNION ALL SELECT * FROM BiddableSpend
 
 /*
   =============================================================================

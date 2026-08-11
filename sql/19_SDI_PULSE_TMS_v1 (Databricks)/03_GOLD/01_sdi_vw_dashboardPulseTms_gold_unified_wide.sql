@@ -11,6 +11,9 @@ PURPOSE:
     ADOBE                   — all UPV + cartstart + orders metrics (no LOB dimension)
     MFC_SPEND_CHANNEL       — mfcSpendActual + mfcSpendForecast (POSTPAID LOB only)
     PLATFORM_SPEND_CHANNEL  — platformSpend (POSTPAID LOB only; actuals only)
+    BIDDABLE_SPEND_CHANNEL  — biddableSpend, Programmatic+Paid Social+Paid Search combined
+                              (POSTPAID LOB only; actuals only) -- coexists with, not a
+                              replacement for, PLATFORM_SPEND_CHANNEL
     UPV_FORECAST            — upvForecast + upvWebAppForecast, channel-allocated (no LOB
                               dimension) -- ADDED here as an inferred completion of the
                               pattern (every other channel-grain source live in
@@ -73,6 +76,10 @@ CHANGE LOG:
     with every other channel-grain source (Adobe, MFC, Platform all appear in both gold
     views); flagged in the header as an inferred completion of that pattern rather than
     something explicitly requested.
+  - Added a new Biddable CTE, join, and column (biddableSpend) now that
+    sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly exists. Kept POSTPAID-only, matching
+    Platform's own scoping in this wide view -- full LOB detail (incl. BROADBAND) lives in
+    gold_unified_long instead. Coexists with, does not replace, PLATFORM_SPEND_CHANNEL.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -215,6 +222,25 @@ Platform AS (
 )
 
 -- ---------------------------------------------------------------------------
+-- Biddable spend — POSTPAID channel grain only, matches MFC/Platform's own
+-- POSTPAID-only scoping in this wide sense-check view (full lob detail, incl.
+-- BROADBAND, lives in sdi_vw_dashboardPulseTms_gold_unified_long instead).
+-- Raw lob is already spelled 'POSTPAID' in Silver (no HSI->BROADBAND rename
+-- needed for this filter -- that mapping only matters for the long view's
+-- BROADBAND rows).
+-- ---------------------------------------------------------------------------
+,
+Biddable AS (
+  SELECT
+    qgp_date,
+    channel_group,
+    MAX(IF(metric_name = 'biddableSpend', metric_value, NULL)) AS biddableSpend
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+  WHERE lob = 'POSTPAID'                    -- POSTPAID only; matches MFC/Platform channel grain
+  GROUP BY qgp_date, channel_group
+)
+
+-- ---------------------------------------------------------------------------
 -- Final join — Adobe as spine, MFC + QGP joined in (Platform commented out above)
 -- ---------------------------------------------------------------------------
 SELECT
@@ -255,6 +281,9 @@ SELECT
 
   -- Platform Spend (POSTPAID, actuals only)
   p.platformSpend,
+
+  -- Biddable Spend (POSTPAID, actuals only)
+  b.biddableSpend,
 
   -- UPV Forecast (channel-allocated, all channels -- no lob dimension to filter)
   uf.upvForecast,
@@ -308,6 +337,9 @@ LEFT JOIN Mfc m
 LEFT JOIN Platform p
   ON  p.qgp_date      = a.qgp_date
   AND p.channel_group = a.channel_group
+LEFT JOIN Biddable b
+  ON  b.qgp_date      = a.qgp_date
+  AND b.channel_group = a.channel_group
 LEFT JOIN UpvForecast uf
   ON  uf.qgp_date      = a.qgp_date
   AND uf.channel_group = a.channel_group
