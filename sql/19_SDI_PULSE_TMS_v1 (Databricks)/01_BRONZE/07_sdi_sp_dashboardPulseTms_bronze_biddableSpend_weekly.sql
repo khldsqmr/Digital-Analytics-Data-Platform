@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         07_sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly.sql
+FILE:         06_sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly
 
@@ -30,7 +30,13 @@ SOURCES (channel_group is a constant per source, not a column in any of them):
                  Bronze uses the daily `date` column with the same roll-forward logic as the
                  other two sources instead, for one consistent week-ending convention across
                  all three unioned sources). Spend column: `spend`, single and unambiguous.
-                 Sub-channel: channel (Meta, Pinterest, TikTok, Snapchat, LinkedIn, X).
+                 Sub-channel: channel (Meta, Pinterest, TikTok, Snapchat, LinkedIn, X). Filtered
+                 to ignore_tiktok = 0 -- confirmed via live query that ignore_tiktok=1 rows are
+                 real, named, actively-spending TikTok campaigns (not junk/test data), always
+                 paired with reclass=1, consistent with a reclassification event elsewhere that
+                 this flag exists to prevent double-counting against. ~$701K of TikTok's $23.3M
+                 excluded on this basis. DESCRIBE TABLE had no column comments to confirm this
+                 against directly -- decision made from the confirmed row-level pattern instead.
   Paid Search  : prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
                  Already a Databricks Gold-layer table (unlike the other two, still in
                  prd_dbi_analytics.improvado) -- but still daily grain, so it's aggregated down
@@ -101,6 +107,12 @@ BEGIN
       raw.channel                                               AS platform,
       TRY_CAST(raw.spend AS DOUBLE)                              AS spend
     FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot raw
+    WHERE raw.ignore_tiktok = 0   -- excludes real, named TikTok campaigns the source itself flags to
+                                   -- exclude (confirmed live: every ignore_tiktok=1 row is a genuine,
+                                   -- actively-spending campaign, not junk/test data; always paired with
+                                   -- reclass=1, consistent with these being reclassified elsewhere and
+                                   -- flagged here to avoid double-counting). ~$701K of TikTok's $23.3M
+                                   -- excluded on this basis, confirmed via live query this session.
   ),
 
   PaidSearchMapped AS (
