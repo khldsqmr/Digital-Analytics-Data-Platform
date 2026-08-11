@@ -28,7 +28,9 @@ QGP_SCORECARD NOTE:
   Unlike every other source here, QGP has no lob or channel_group dimension — it's enterprise-
   wide KPIs (Activations BOPIS, Store Traffic, VR Calls/Chats, VR Postpaid Activations, 3
   Digital % metrics), not channel-specific spend or volume. lob and channel_group are both NULL
-  for every QGP_SCORECARD row, same treatment as ADOBE and UPV_FORECAST get for lob. metric_type
+  for every QGP_SCORECARD row -- channel_group NULL is shared with ADOBE and UPV_FORECAST, but
+  lob is not: those two now carry the static 'Postpaid + Broadband' label (see LOB CANONICAL
+  VALUES above), so QGP_SCORECARD is the only source where lob stays genuinely NULL. metric_type
   is 'QGP_ACTUAL' or 'QGP_TARGET', passed straight through from Silver.
 
 DATA SOURCE VALUES:
@@ -67,7 +69,19 @@ LOB CANONICAL VALUES:
   'BROADBAND' — MFC: HSI / BROADBAND; Platform: BROADBAND; Biddable: HSI (renamed in this
                 view's BiddableSpend CTE -- Silver carries the raw, un-canonicalized value)
   'TFB'       — MFC: TFB / TBG (TBG is legacy)
-  NULL        — ADOBE, UPV_FORECAST, QGP_SCORECARD (no LOB dimension)
+  'Postpaid + Broadband' — ADOBE and UPV_FORECAST. On ADOBE, a static label on every row, not
+                derived per metric_name or summed from anything -- upv/cartstart/orders are
+                unique-visitor/event counts, which can't be summed across a dimension without
+                double-counting. metric_name still carries the real Postpaid/Hsi/Byod/Total
+                distinction unchanged; this is a separate, coarser label sitting alongside it.
+                UPV_FORECAST inherits the same label since it forecasts upvTotalAdobe
+                specifically -- that source never had its own per-LOB breakdown to derive from,
+                the label is inherited from what it forecasts, not independently justified.
+                Deliberately mixed-case, unlike every other lob value in this pipeline, per
+                Khalid's explicit preference. TFB and Metro to follow later as Adobe starts
+                tracking them (unclear yet whether as their own values or folded into this one;
+                UPV_FORECAST would presumably follow whatever Adobe's scheme becomes).
+  NULL        — QGP_SCORECARD only (no LOB dimension)
 
 METRIC_TYPE VALUES:
   'ADOBE_VOLUME'       — raw Adobe funnel metrics (upv*, cartstart*, orders*)
@@ -87,7 +101,9 @@ COLUMN SCHEMA:
   qgp_quarter            — display string e.g. '2026 Q1'
   days_in_period         — 7 for NORMAL; <7 for BOUNDARY_STUB; remainder for BOUNDARY_FIRST
   is_complete_period     — TRUE when qgp_date <= current_date()
-  lob                    — canonical LOB (NULL for ADOBE, UPV_FORECAST, QGP_SCORECARD)
+  lob                    — canonical LOB (NULL for QGP_SCORECARD only; ADOBE and UPV_FORECAST
+                           carry the static 'Postpaid + Broadband' label -- see LOB CANONICAL
+                           VALUES above for why that's a label, not a derivation)
   channel_group          — standard channel group (NULL for QGP_SCORECARD)
   metric_name            — camelCase metric identifier
   metric_type            — see METRIC_TYPE VALUES above
@@ -161,7 +177,8 @@ WITH
 -- =============================================================================
 -- CTE 1: ADOBE VOLUME METRICS
 --        upv*, cartstart*, orders* at qgp_date x channel_group x metric_name
---        lob = NULL — Adobe has no LOB dimension
+--        lob = 'Postpaid + Broadband' — a static label on every Adobe row, not derived
+--        per metric_name. TFB and Metro to follow later as separate categories.
 --        metric_type = 'ADOBE_VOLUME'
 -- =============================================================================
 AdobeVolume AS (
@@ -172,7 +189,7 @@ AdobeVolume AS (
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    CAST(NULL AS STRING)                                                  AS lob,
+    'Postpaid + Broadband'                                                AS lob,   -- was NULL; static label per Khalid's manager, not a per-metric derivation -- Adobe's upv/cartstart/orders metrics count unique visitors/events, which can't be summed across a dimension without double-counting, so this is a single constant applied to every Adobe row, not a CASE split by metric_name. metric_name still carries the real Postpaid/Hsi/Byod/Total distinction unchanged. TFB and Metro to follow later as Adobe starts tracking them.
     s.channel_group,
     s.metric_name,
     s.metric_type,
@@ -349,7 +366,7 @@ UpvForecast AS (
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    CAST(NULL AS STRING)                                                  AS lob,
+    'Postpaid + Broadband'                                                AS lob,   -- was NULL; matches Adobe's lob treatment since this forecasts upvTotalAdobe specifically, which now carries the same label. Same caveat as Adobe: not derived from any real per-LOB breakdown (this source never had one), just inherited from what it's forecasting -- should follow Adobe's lob scheme if/when BYOD/Metro/TFB get resolved there.
     s.channel_group,
     s.metric_name,
     s.metric_type,
