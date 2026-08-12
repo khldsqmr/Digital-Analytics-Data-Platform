@@ -1,23 +1,4 @@
-//c.tms.Exit Traffic Actuals Total
-SUM(
-  IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-     AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-     AND LOWER(TRIM([Date Context])) = "normal"
-     AND LOWER(TRIM([Is Future])) = "is past"
-        AND LOWER(TRIM([Page])) = 'branded retail total'
-     AND NOT ISNULL(FLOAT([Amount]))
-  THEN FLOAT([Amount])
-  END
-)
-/
-COUNTD(
-  IF LOWER(TRIM([Metric Name1])) = "store traffic (excl store-in-store)"
-     AND LOWER(TRIM([Metric Type])) = "actuals/outlook"
-     AND LOWER(TRIM([Date Context])) = "normal"
-     AND LOWER(TRIM([Is Future])) = "is past"
-        AND LOWER(TRIM([Page])) = 'branded retail total'
-     AND NOT ISNULL(FLOAT([Amount]))
-  THEN [Qgp Date]
-  END
-)
-
+c.Adobe Channel Group
+IF [channel_group] IN ("All Channels", "Paid Search", "Paid Social", "Programmatic", "Direct", "Organic Search", "Other")
+THEN [channel_group]
+END
