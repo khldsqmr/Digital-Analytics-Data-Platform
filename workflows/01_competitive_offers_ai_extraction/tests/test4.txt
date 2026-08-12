@@ -21,8 +21,9 @@ what you'd see in the field list once created.
   a QTD tile deliberately spans *multiple* `qgp_date` rows collapsed into one number, which is
   real aggregation, not a single-row extraction. `SUM` for additive metrics, `AVG` for
   UPV-family (unique-visitor counts, which can't be summed without double-counting across
-  weeks). Don't swap those to `ATTR()` — that would break the QTD tiles, showing `*` instead of
-  a real total.
+  weeks) — **and for `storeTraffic`**, confirmed by Khalid as a second, deliberate exception to
+  the sum-everything-else rule ("Exit Traffic" in the old dashboard). Don't swap those to
+  `ATTR()` — that would break the QTD tiles, showing `*` instead of a real total.
 - **`AvT` vs `AvF`**: `AvT` (Actual vs. Target) used for QGP, matching its own "Target"
   language. `AvF` (Actual vs. Forecast) used for MFC and the Adobe/UPV Forecast cross-reference.
 - **`[channel_group] = "All Channels"`**: for any channel-grain source (Adobe, MFC, Platform,
@@ -591,12 +592,12 @@ c.Current Quarter
 
 (You already have this — reused below via `[c.Current Quarter]`.)
 
-### Worked example — SUM family (Store Traffic)
+### Worked example — SUM family (Activations BOPIS)
 
 ```
-c.Store Traffic Actuals QTD
+c.Activations BOPIS Actuals QTD
 SUM(
-  IF [metric_name] = "storeTraffic"
+  IF [metric_name] = "activationsBopis"
      AND [metric_type] = "QGP_ACTUAL"
      AND [c.Current Quarter]
      AND [qgp_date] <= [max_date]
@@ -604,9 +605,9 @@ SUM(
   END
 )
 
-c.Store Traffic Target QTD
+c.Activations BOPIS Target QTD
 SUM(
-  IF [metric_name] = "storeTraffic"
+  IF [metric_name] = "activationsBopis"
      AND [metric_type] = "QGP_TARGET"
      AND [c.Current Quarter]
      AND [qgp_date] <= [max_date]
@@ -615,7 +616,12 @@ SUM(
 )
 ```
 
-### Worked example — AVG family (UPV Total Adobe)
+### Worked example — AVG family (UPV Total Adobe, Store Traffic)
+
+**⚠ Store Traffic is averaged for QTD, same as UPV — confirmed by Khalid, not summed like
+everything else.** Originally built as a SUM example (matching the general "sum everything
+except UPV" rule); corrected once Khalid confirmed Store Traffic ("Exit Traffic" in the old
+dashboard) is a second, deliberate exception to that rule.
 
 ```
 c.UPV Total Adobe Actuals QTD
@@ -632,6 +638,26 @@ c.UPV Total Adobe Forecast QTD
 AVG(
   IF [metric_name] = "upvForecast"
      AND [data_source] = "UPV_FORECAST"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+
+c.Store Traffic Actuals QTD
+AVG(
+  IF [metric_name] = "storeTraffic"
+     AND [metric_type] = "QGP_ACTUAL"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+
+c.Store Traffic Target QTD
+AVG(
+  IF [metric_name] = "storeTraffic"
+     AND [metric_type] = "QGP_TARGET"
      AND [c.Current Quarter]
      AND [qgp_date] <= [max_date]
   THEN [metric_value]
@@ -663,7 +689,7 @@ For each row: take the matching worked example above, swap in the `metric_name` 
 |---|---|---|---|---|
 | Activations BOPIS | `activationsBopis` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
 | Activations New AAL No Assist | `activationsNewAalNoAssistance` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
-| Store Traffic | `storeTraffic` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Store Traffic ⚠ averaged, not summed | `storeTraffic` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | AVG |
 | VR Calls | `vrCalls` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
 | VR Chats | `vrChats` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
 | VR Postpaid Activations | `vrPostpaidActivations` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
