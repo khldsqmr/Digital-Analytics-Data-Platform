@@ -1,7 +1,68 @@
-SELECT
-  channel_group,
-  COUNT(*) AS n_rows,
-  SUM(spend) AS total_spend
-FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
-WHERE lob IS NULL
-GROUP BY channel_group;
+c.Store Traffic Actual
+= SUM(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Store Traffic Target
+= SUM(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+
+c.Store Traffic AvT %
+= ([c.Store Traffic Actual] - [c.Store Traffic Target]) / ABS([c.Store Traffic Target])
+
+c.Store Traffic AvT % (Pos)
+= IF [c.Store Traffic AvT %] > 0 THEN [c.Store Traffic AvT %] END
+
+c.Store Traffic AvT % (Neg)
+= IF [c.Store Traffic AvT %] < 0 THEN [c.Store Traffic AvT %] END
+
+c.UPV WoW %
+= ATTR(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [wow_pct] END)
+
+c.UPV WoW % (Pos)
+= IF [c.UPV WoW %] > 0 THEN [c.UPV WoW %] END
+
+c.UPV WoW % (Neg)
+= IF [c.UPV WoW %] < 0 THEN [c.UPV WoW %] END
+
+Adobe (data_source = 'ADOBE', metric_type = 'ADOBE_VOLUME')
+
+18 metric_names, each following the same Postpaid/Hsi/Byod/Total pattern per funnel stage:
+
+UPV	Cartstart	Orders (Unassisted)	Orders (Assisted)
+upvPostpaid	cartstartPostpaid	ordersUnassistedPostpaid	ordersAssistedPostpaid
+upvHsi	cartstartHsi	ordersUnassistedHsi	ordersAssistedHsi
+upvByod	cartstartByod	ordersUnassistedByod	ordersAssistedByod
+upvFlowTotal	cartstartTotal	ordersUnassistedTotal	ordersAssistedTotal
+upvTotalAdobe
+
+upvForecast
+
+MFC — both grains share the same 2 metric_names
+
+data_source = 'MFC_SPEND_CHANNEL' and 'MFC_SPEND_GRANULAR':
+
+mfcSpendActual
+mfcSpendForecast
+
+
+The difference between Channel and Granular isn't metric_name — it's grain. Granular adds populated mfc_channel/mfc_tactic/mfc_message_type/mfc_agency dimension columns; Channel doesn't (those are NULL there). Same two metric names either way.
+
+
+Biddable Spend (data_source = 'BIDDABLE_SPEND_CHANNEL')
+biddableSpend — single metric, actuals only, no forecast counterpart exists for this source.
+Platform Spend (data_source = 'PLATFORM_SPEND_CHANNEL')
+platformSpend — single metric, actuals only, same as above.
+QGP (data_source = 'QGP_SCORECARD', metric_type = 'QGP_ACTUAL' or 'QGP_TARGET')
+
+10 metric_names:
+
+Metric	Target side?
+activationsBopis	Yes
+activationsNewAalNoAssistance	Yes
+storeTraffic	Yes
+vrCalls	Yes
+vrChats	Yes
+vrPostpaidActivations	Yes
+digitalPctPhoneNewActsNoAssistPlusAssist	Yes
+digitalPctConsumerPostpaidActivationsTotalInclAssisted	Yes
+digitalPctNoAssistanceActivations	No — hardcoded NULL
+digitalPctAssistanceActivations	No — hardcoded NULL
