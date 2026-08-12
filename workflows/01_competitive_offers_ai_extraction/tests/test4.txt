@@ -640,7 +640,14 @@ dashboard) is a second, deliberate exception to that rule.
 
 ```
 c.UPV Total Adobe Actual Max Date
-ATTR(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [max_date] END)
+MAX(
+  IF [metric_name] = "upvTotalAdobe"
+     AND [data_source] = "ADOBE"
+     AND NOT ISNULL([metric_value])
+     AND [metric_value] <> 0
+  THEN [qgp_date]
+  END
+)
 
 c.UPV Total Adobe Actuals QTD
 AVG(
@@ -662,6 +669,28 @@ AVG(
   END
 )
 
+c.UPV Total Adobe AvF % QTD
+([c.UPV Total Adobe Actuals QTD] - [c.UPV Total Adobe Forecast QTD]) / ABS([c.UPV Total Adobe Forecast QTD])
+
+c.UPV Total Adobe AvF % QTD (Pos)
+IF [c.UPV Total Adobe AvF % QTD] > 0 THEN [c.UPV Total Adobe AvF % QTD] END
+
+c.UPV Total Adobe AvF % QTD (Neg)
+IF [c.UPV Total Adobe AvF % QTD] < 0 THEN [c.UPV Total Adobe AvF % QTD] END
+```
+
+**Why this one field changed shape, and the others didn't:** every other `Actual Max Date` helper
+in this file (VR Calls, Store Traffic, MFC) still uses `ATTR(...[max_date]...)` — extracting
+SQL's pre-computed column, which only checks for non-null. That's fine for those, since a real
+`0` is plausible data for them (spend can genuinely be `$0` some week — confirmed in this
+pipeline's own reconciliation work). For UPV specifically, a genuine `0` unique visitors in a
+week is implausible, so this field is computed directly in Tableau instead, checking
+`NOT ISNULL([metric_value]) AND [metric_value] <> 0` rather than trusting the SQL column's
+null-only definition — closing the gap where a placeholder `0` (landed before the real number
+populates) could stretch the cutoff further than actuals genuinely reach, pulling Forecast's QTD
+along with it into a comparison against fake data.
+
+```
 c.Store Traffic Actual Max Date
 ATTR(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [max_date] END)
 
