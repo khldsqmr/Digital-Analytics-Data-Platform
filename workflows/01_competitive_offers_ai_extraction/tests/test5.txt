@@ -66,3 +66,28 @@ digitalPctPhoneNewActsNoAssistPlusAssist	Yes
 digitalPctConsumerPostpaidActivationsTotalInclAssisted	Yes
 digitalPctNoAssistanceActivations	No — hardcoded NULL
 digitalPctAssistanceActivations	No — hardcoded NULL
+
+
+c.Store Traffic Actuals QTD
+= SUM(
+    IF [metric_name] = "storeTraffic"
+       AND [metric_type] = "QGP_ACTUAL"
+       AND [qgp_quarter] = [p.Quarter]
+       AND [qgp_date] <= [max_date]
+    THEN [metric_value]
+    END
+  )
+
+
+c.UPV Actuals QTD
+= AVG(
+    IF [metric_name] = "upvTotalAdobe"
+       AND [data_source] = "ADOBE"
+       AND [qgp_quarter] = [p.Quarter]
+       AND [qgp_date] <= [max_date]
+    THEN [metric_value]
+    END
+  )
+
+
+
