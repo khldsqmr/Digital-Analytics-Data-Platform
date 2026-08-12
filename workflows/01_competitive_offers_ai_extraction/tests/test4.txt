@@ -1,25 +1,693 @@
-WITH Deduped AS (
-  SELECT
-    *,
-    ROW_NUMBER() OVER (
-      PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
-      ORDER BY InsertDateTime DESC, PublishKey DESC
-    ) AS rn
-  FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
-  WHERE DateContext = 'Normal'   -- confirmed true weekly grain; QTD/QTR are rollups of this
-    AND MetricID IN ('VRInboundCallsinclHSIAutomatedManual', 'VRChatsinclHSIAutomatedManual')
+# PulseTMS `gold_unified_long` — Tableau Calculated Field Reference
+
+Every calc field below is written against `sdi_vw_dashboardPulseTms_gold_unified_long`. Copy the
+formula text directly into Tableau's calculated field editor — field names on the left match
+what you'd see in the field list once created.
+
+## Conventions used throughout
+
+- **Naming**: `c.[Metric Name] [Value Type]` — metric name first so Tableau's alphabetical field
+  list clusters everything for one metric together, matching the convention you already started.
+- **`SUM` vs `AVG`**: `SUM` for anything additive (spend, counts, activations). `AVG` only for
+  UPV-family metrics, which can't be summed without double-counting unique visitors.
+- **`ATTR` for percentages**: `wow_pct`/`yoy_pct`/`AvT%`/`AvF%` fields use `ATTR()`, not `SUM`
+  or `AVG`. Percentages can't be safely aggregated — `ATTR` returns the single value if there's
+  genuinely one underneath the filter, and shows `*` (not a wrong number) if there isn't,
+  which is your signal something's mis-filtered.
+- **`AvT` vs `AvF`**: `AvT` (Actual vs. Target) used for QGP, matching its own "Target"
+  language. `AvF` (Actual vs. Forecast) used for MFC and the Adobe/UPV Forecast cross-reference.
+- **`[channel_group] = "All Channels"`**: for any channel-grain source (Adobe, MFC, Platform,
+  Biddable) where you want one combined number rather than a per-channel breakdown, filter to
+  this instead of re-aggregating channels yourself in Tableau — it's already computed correctly
+  in SQL, with its own correct WoW/YoY.
+- **`[data_source] = "MFC_SPEND_CHANNEL"`**: always include this on MFC fields, not just
+  `metric_name`. MFC contributes two full row sets (Channel + Granular) for the same spend —
+  omitting the `data_source` filter silently doubles your numbers.
+- **⚠ Two QGP metrics have no Target, ever**: `digitalPctNoAssistanceActivations` and
+  `digitalPctAssistanceActivations` are confirmed to have zero `QGP_TARGET` rows — not missing
+  data, absent by design. Their AvT% fields are omitted below rather than built to always
+  return null.
+- **Adobe has no Target/Forecast of its own** — `metric_type = 'ADOBE_VOLUME'` is the only
+  type Adobe ever has. The one exception is `upvTotalAdobe`, which has a real forecast
+  counterpart in the separate `UPV_FORECAST` data_source — that's the one Adobe metric that
+  gets a full AvF family below; the other 17 get Actual + WoW% + YoY% only.
+- **YoY fields are given singly, not Pos/Neg split.** If you want the split, it's the identical
+  pattern as WoW's Pos/Neg fields below — swap `wow_pct` for `yoy_pct`.
+
+---
+
+## QGP (`data_source = "QGP_SCORECARD"`)
+
+### Activations BOPIS (`activationsBopis`)
+
+```
+c.Activations BOPIS Actual
+SUM(IF [metric_name] = "activationsBopis" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Activations BOPIS Target
+SUM(IF [metric_name] = "activationsBopis" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.Activations BOPIS AvT %
+([c.Activations BOPIS Actual] - [c.Activations BOPIS Target]) / ABS([c.Activations BOPIS Target])
+
+c.Activations BOPIS AvT % (Pos)
+IF [c.Activations BOPIS AvT %] > 0 THEN [c.Activations BOPIS AvT %] END
+
+c.Activations BOPIS AvT % (Neg)
+IF [c.Activations BOPIS AvT %] < 0 THEN [c.Activations BOPIS AvT %] END
+
+c.Activations BOPIS WoW %
+ATTR(IF [metric_name] = "activationsBopis" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Activations BOPIS WoW % (Pos)
+IF [c.Activations BOPIS WoW %] > 0 THEN [c.Activations BOPIS WoW %] END
+
+c.Activations BOPIS WoW % (Neg)
+IF [c.Activations BOPIS WoW %] < 0 THEN [c.Activations BOPIS WoW %] END
+
+c.Activations BOPIS YoY %
+ATTR(IF [metric_name] = "activationsBopis" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Activations New AAL No Assistance (`activationsNewAalNoAssistance`)
+
+```
+c.Activations New AAL No Assist Actual
+SUM(IF [metric_name] = "activationsNewAalNoAssistance" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Activations New AAL No Assist Target
+SUM(IF [metric_name] = "activationsNewAalNoAssistance" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.Activations New AAL No Assist AvT %
+([c.Activations New AAL No Assist Actual] - [c.Activations New AAL No Assist Target]) / ABS([c.Activations New AAL No Assist Target])
+
+c.Activations New AAL No Assist AvT % (Pos)
+IF [c.Activations New AAL No Assist AvT %] > 0 THEN [c.Activations New AAL No Assist AvT %] END
+
+c.Activations New AAL No Assist AvT % (Neg)
+IF [c.Activations New AAL No Assist AvT %] < 0 THEN [c.Activations New AAL No Assist AvT %] END
+
+c.Activations New AAL No Assist WoW %
+ATTR(IF [metric_name] = "activationsNewAalNoAssistance" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Activations New AAL No Assist WoW % (Pos)
+IF [c.Activations New AAL No Assist WoW %] > 0 THEN [c.Activations New AAL No Assist WoW %] END
+
+c.Activations New AAL No Assist WoW % (Neg)
+IF [c.Activations New AAL No Assist WoW %] < 0 THEN [c.Activations New AAL No Assist WoW %] END
+
+c.Activations New AAL No Assist YoY %
+ATTR(IF [metric_name] = "activationsNewAalNoAssistance" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Store Traffic (`storeTraffic`)
+
+```
+c.Store Traffic Actual
+SUM(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Store Traffic Target
+SUM(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.Store Traffic AvT %
+([c.Store Traffic Actual] - [c.Store Traffic Target]) / ABS([c.Store Traffic Target])
+
+c.Store Traffic AvT % (Pos)
+IF [c.Store Traffic AvT %] > 0 THEN [c.Store Traffic AvT %] END
+
+c.Store Traffic AvT % (Neg)
+IF [c.Store Traffic AvT %] < 0 THEN [c.Store Traffic AvT %] END
+
+c.Store Traffic WoW %
+ATTR(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Store Traffic WoW % (Pos)
+IF [c.Store Traffic WoW %] > 0 THEN [c.Store Traffic WoW %] END
+
+c.Store Traffic WoW % (Neg)
+IF [c.Store Traffic WoW %] < 0 THEN [c.Store Traffic WoW %] END
+
+c.Store Traffic YoY %
+ATTR(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### VR Calls (`vrCalls`)
+
+```
+c.VR Calls Actual
+SUM(IF [metric_name] = "vrCalls" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.VR Calls Target
+SUM(IF [metric_name] = "vrCalls" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.VR Calls AvT %
+([c.VR Calls Actual] - [c.VR Calls Target]) / ABS([c.VR Calls Target])
+
+c.VR Calls AvT % (Pos)
+IF [c.VR Calls AvT %] > 0 THEN [c.VR Calls AvT %] END
+
+c.VR Calls AvT % (Neg)
+IF [c.VR Calls AvT %] < 0 THEN [c.VR Calls AvT %] END
+
+c.VR Calls WoW %
+ATTR(IF [metric_name] = "vrCalls" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.VR Calls WoW % (Pos)
+IF [c.VR Calls WoW %] > 0 THEN [c.VR Calls WoW %] END
+
+c.VR Calls WoW % (Neg)
+IF [c.VR Calls WoW %] < 0 THEN [c.VR Calls WoW %] END
+
+c.VR Calls YoY %
+ATTR(IF [metric_name] = "vrCalls" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### VR Chats (`vrChats`)
+
+```
+c.VR Chats Actual
+SUM(IF [metric_name] = "vrChats" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.VR Chats Target
+SUM(IF [metric_name] = "vrChats" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.VR Chats AvT %
+([c.VR Chats Actual] - [c.VR Chats Target]) / ABS([c.VR Chats Target])
+
+c.VR Chats AvT % (Pos)
+IF [c.VR Chats AvT %] > 0 THEN [c.VR Chats AvT %] END
+
+c.VR Chats AvT % (Neg)
+IF [c.VR Chats AvT %] < 0 THEN [c.VR Chats AvT %] END
+
+c.VR Chats WoW %
+ATTR(IF [metric_name] = "vrChats" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.VR Chats WoW % (Pos)
+IF [c.VR Chats WoW %] > 0 THEN [c.VR Chats WoW %] END
+
+c.VR Chats WoW % (Neg)
+IF [c.VR Chats WoW %] < 0 THEN [c.VR Chats WoW %] END
+
+c.VR Chats YoY %
+ATTR(IF [metric_name] = "vrChats" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### VR Postpaid Activations (`vrPostpaidActivations`)
+
+```
+c.VR Postpaid Activations Actual
+SUM(IF [metric_name] = "vrPostpaidActivations" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.VR Postpaid Activations Target
+SUM(IF [metric_name] = "vrPostpaidActivations" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.VR Postpaid Activations AvT %
+([c.VR Postpaid Activations Actual] - [c.VR Postpaid Activations Target]) / ABS([c.VR Postpaid Activations Target])
+
+c.VR Postpaid Activations AvT % (Pos)
+IF [c.VR Postpaid Activations AvT %] > 0 THEN [c.VR Postpaid Activations AvT %] END
+
+c.VR Postpaid Activations AvT % (Neg)
+IF [c.VR Postpaid Activations AvT %] < 0 THEN [c.VR Postpaid Activations AvT %] END
+
+c.VR Postpaid Activations WoW %
+ATTR(IF [metric_name] = "vrPostpaidActivations" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.VR Postpaid Activations WoW % (Pos)
+IF [c.VR Postpaid Activations WoW %] > 0 THEN [c.VR Postpaid Activations WoW %] END
+
+c.VR Postpaid Activations WoW % (Neg)
+IF [c.VR Postpaid Activations WoW %] < 0 THEN [c.VR Postpaid Activations WoW %] END
+
+c.VR Postpaid Activations YoY %
+ATTR(IF [metric_name] = "vrPostpaidActivations" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Digital % Phone New Acts (No Assist + Assist) (`digitalPctPhoneNewActsNoAssistPlusAssist`)
+
+```
+c.Digital % Phone New Acts Actual
+SUM(IF [metric_name] = "digitalPctPhoneNewActsNoAssistPlusAssist" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Digital % Phone New Acts Target
+SUM(IF [metric_name] = "digitalPctPhoneNewActsNoAssistPlusAssist" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.Digital % Phone New Acts AvT %
+([c.Digital % Phone New Acts Actual] - [c.Digital % Phone New Acts Target]) / ABS([c.Digital % Phone New Acts Target])
+
+c.Digital % Phone New Acts AvT % (Pos)
+IF [c.Digital % Phone New Acts AvT %] > 0 THEN [c.Digital % Phone New Acts AvT %] END
+
+c.Digital % Phone New Acts AvT % (Neg)
+IF [c.Digital % Phone New Acts AvT %] < 0 THEN [c.Digital % Phone New Acts AvT %] END
+
+c.Digital % Phone New Acts WoW %
+ATTR(IF [metric_name] = "digitalPctPhoneNewActsNoAssistPlusAssist" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Digital % Phone New Acts WoW % (Pos)
+IF [c.Digital % Phone New Acts WoW %] > 0 THEN [c.Digital % Phone New Acts WoW %] END
+
+c.Digital % Phone New Acts WoW % (Neg)
+IF [c.Digital % Phone New Acts WoW %] < 0 THEN [c.Digital % Phone New Acts WoW %] END
+
+c.Digital % Phone New Acts YoY %
+ATTR(IF [metric_name] = "digitalPctPhoneNewActsNoAssistPlusAssist" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Digital % Consumer Postpaid Activations (Total incl. Assisted) (`digitalPctConsumerPostpaidActivationsTotalInclAssisted`)
+
+```
+c.Digital % Consumer Postpaid Acts Actual
+SUM(IF [metric_name] = "digitalPctConsumerPostpaidActivationsTotalInclAssisted" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Digital % Consumer Postpaid Acts Target
+SUM(IF [metric_name] = "digitalPctConsumerPostpaidActivationsTotalInclAssisted" AND [metric_type] = "QGP_TARGET" THEN [metric_value] END)
+
+c.Digital % Consumer Postpaid Acts AvT %
+([c.Digital % Consumer Postpaid Acts Actual] - [c.Digital % Consumer Postpaid Acts Target]) / ABS([c.Digital % Consumer Postpaid Acts Target])
+
+c.Digital % Consumer Postpaid Acts AvT % (Pos)
+IF [c.Digital % Consumer Postpaid Acts AvT %] > 0 THEN [c.Digital % Consumer Postpaid Acts AvT %] END
+
+c.Digital % Consumer Postpaid Acts AvT % (Neg)
+IF [c.Digital % Consumer Postpaid Acts AvT %] < 0 THEN [c.Digital % Consumer Postpaid Acts AvT %] END
+
+c.Digital % Consumer Postpaid Acts WoW %
+ATTR(IF [metric_name] = "digitalPctConsumerPostpaidActivationsTotalInclAssisted" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Digital % Consumer Postpaid Acts WoW % (Pos)
+IF [c.Digital % Consumer Postpaid Acts WoW %] > 0 THEN [c.Digital % Consumer Postpaid Acts WoW %] END
+
+c.Digital % Consumer Postpaid Acts WoW % (Neg)
+IF [c.Digital % Consumer Postpaid Acts WoW %] < 0 THEN [c.Digital % Consumer Postpaid Acts WoW %] END
+
+c.Digital % Consumer Postpaid Acts YoY %
+ATTR(IF [metric_name] = "digitalPctConsumerPostpaidActivationsTotalInclAssisted" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Digital % No Assistance Activations (`digitalPctNoAssistanceActivations`) — ⚠ no Target, ever
+
+```
+c.Digital % No Assistance Acts Actual
+SUM(IF [metric_name] = "digitalPctNoAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Digital % No Assistance Acts WoW %
+ATTR(IF [metric_name] = "digitalPctNoAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Digital % No Assistance Acts WoW % (Pos)
+IF [c.Digital % No Assistance Acts WoW %] > 0 THEN [c.Digital % No Assistance Acts WoW %] END
+
+c.Digital % No Assistance Acts WoW % (Neg)
+IF [c.Digital % No Assistance Acts WoW %] < 0 THEN [c.Digital % No Assistance Acts WoW %] END
+
+c.Digital % No Assistance Acts YoY %
+ATTR(IF [metric_name] = "digitalPctNoAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+### Digital % Assistance Activations (`digitalPctAssistanceActivations`) — ⚠ no Target, ever
+
+```
+c.Digital % Assistance Acts Actual
+SUM(IF [metric_name] = "digitalPctAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [metric_value] END)
+
+c.Digital % Assistance Acts WoW %
+ATTR(IF [metric_name] = "digitalPctAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [wow_pct] END)
+
+c.Digital % Assistance Acts WoW % (Pos)
+IF [c.Digital % Assistance Acts WoW %] > 0 THEN [c.Digital % Assistance Acts WoW %] END
+
+c.Digital % Assistance Acts WoW % (Neg)
+IF [c.Digital % Assistance Acts WoW %] < 0 THEN [c.Digital % Assistance Acts WoW %] END
+
+c.Digital % Assistance Acts YoY %
+ATTR(IF [metric_name] = "digitalPctAssistanceActivations" AND [metric_type] = "QGP_ACTUAL" THEN [yoy_pct] END)
+```
+
+---
+
+## Adobe (`data_source = "ADOBE"`, `metric_type = "ADOBE_VOLUME"`)
+
+Actuals-only pattern (17 metrics — everything except `upvTotalAdobe`, below):
+
+```
+c.UPV Postpaid Actual
+AVG(IF [metric_name] = "upvPostpaid" AND [data_source] = "ADOBE" THEN [metric_value] END)
+
+c.UPV Postpaid WoW %
+ATTR(IF [metric_name] = "upvPostpaid" AND [data_source] = "ADOBE" THEN [wow_pct] END)
+
+c.UPV Postpaid WoW % (Pos)
+IF [c.UPV Postpaid WoW %] > 0 THEN [c.UPV Postpaid WoW %] END
+
+c.UPV Postpaid WoW % (Neg)
+IF [c.UPV Postpaid WoW %] < 0 THEN [c.UPV Postpaid WoW %] END
+
+c.UPV Postpaid YoY %
+ATTR(IF [metric_name] = "upvPostpaid" AND [data_source] = "ADOBE" THEN [yoy_pct] END)
+```
+
+Apply that exact 5-field template to each of these, swapping only the quoted `metric_name` and
+the field-name prefix:
+
+| Field name prefix | `metric_name` | Aggregation |
+|---|---|---|
+| UPV Hsi | `upvHsi` | AVG |
+| UPV Byod | `upvByod` | AVG |
+| UPV Flow Total | `upvFlowTotal` | AVG |
+| Cartstart Postpaid | `cartstartPostpaid` | AVG |
+| Cartstart Hsi | `cartstartHsi` | AVG |
+| Cartstart Byod | `cartstartByod` | AVG |
+| Cartstart Total | `cartstartTotal` | AVG |
+| Orders Unassisted Postpaid | `ordersUnassistedPostpaid` | SUM |
+| Orders Unassisted Hsi | `ordersUnassistedHsi` | SUM |
+| Orders Unassisted Byod | `ordersUnassistedByod` | SUM |
+| Orders Unassisted Total | `ordersUnassistedTotal` | SUM |
+| Orders Assisted Postpaid | `ordersAssistedPostpaid` | SUM |
+| Orders Assisted Hsi | `ordersAssistedHsi` | SUM |
+| Orders Assisted Byod | `ordersAssistedByod` | SUM |
+| Orders Assisted Total | `ordersAssistedTotal` | SUM |
+| Orders Total | `ordersTotal` | SUM |
+
+Note the aggregation switch: UPV and Cartstart are unique-visitor-style counts (use `AVG`).
+Orders are transaction counts, genuinely additive (use `SUM`).
+
+### UPV Total Adobe (`upvTotalAdobe`) — the one Adobe metric with a real forecast counterpart
+
+This is a **cross-source** comparison — Actual comes from `ADOBE`, Forecast comes from the
+separate `UPV_FORECAST` data_source. Everything else follows the same AvF pattern as MFC below.
+
+```
+c.UPV Total Adobe Actual
+AVG(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [metric_value] END)
+
+c.UPV Total Adobe Forecast
+AVG(IF [metric_name] = "upvForecast" AND [data_source] = "UPV_FORECAST" THEN [metric_value] END)
+
+c.UPV Total Adobe AvF %
+([c.UPV Total Adobe Actual] - [c.UPV Total Adobe Forecast]) / ABS([c.UPV Total Adobe Forecast])
+
+c.UPV Total Adobe AvF % (Pos)
+IF [c.UPV Total Adobe AvF %] > 0 THEN [c.UPV Total Adobe AvF %] END
+
+c.UPV Total Adobe AvF % (Neg)
+IF [c.UPV Total Adobe AvF %] < 0 THEN [c.UPV Total Adobe AvF %] END
+
+c.UPV Total Adobe WoW %
+ATTR(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [wow_pct] END)
+
+c.UPV Total Adobe WoW % (Pos)
+IF [c.UPV Total Adobe WoW %] > 0 THEN [c.UPV Total Adobe WoW %] END
+
+c.UPV Total Adobe WoW % (Neg)
+IF [c.UPV Total Adobe WoW %] < 0 THEN [c.UPV Total Adobe WoW %] END
+
+c.UPV Total Adobe YoY %
+ATTR(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [yoy_pct] END)
+```
+
+---
+
+## MFC Spend — Channel grain (`data_source = "MFC_SPEND_CHANNEL"`)
+
+```
+c.MFC Spend Actual
+SUM(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_CHANNEL" THEN [metric_value] END)
+
+c.MFC Spend Forecast
+SUM(IF [metric_name] = "mfcSpendForecast" AND [data_source] = "MFC_SPEND_CHANNEL" THEN [metric_value] END)
+
+c.MFC Spend AvF %
+([c.MFC Spend Actual] - [c.MFC Spend Forecast]) / ABS([c.MFC Spend Forecast])
+
+c.MFC Spend AvF % (Pos)
+IF [c.MFC Spend AvF %] > 0 THEN [c.MFC Spend AvF %] END
+
+c.MFC Spend AvF % (Neg)
+IF [c.MFC Spend AvF %] < 0 THEN [c.MFC Spend AvF %] END
+
+c.MFC Spend WoW %
+ATTR(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_CHANNEL" THEN [wow_pct] END)
+
+c.MFC Spend WoW % (Pos)
+IF [c.MFC Spend WoW %] > 0 THEN [c.MFC Spend WoW %] END
+
+c.MFC Spend WoW % (Neg)
+IF [c.MFC Spend WoW %] < 0 THEN [c.MFC Spend WoW %] END
+
+c.MFC Spend YoY %
+ATTR(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_CHANNEL" THEN [yoy_pct] END)
+```
+
+## MFC Spend — Granular grain (`data_source = "MFC_SPEND_GRANULAR"`)
+
+Identical formulas, `data_source` swapped to `"MFC_SPEND_GRANULAR"`, field names suffixed
+`(Granular)` so they don't collide with the Channel-grain fields above:
+
+```
+c.MFC Spend Actual (Granular)
+SUM(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_GRANULAR" THEN [metric_value] END)
+
+c.MFC Spend Forecast (Granular)
+SUM(IF [metric_name] = "mfcSpendForecast" AND [data_source] = "MFC_SPEND_GRANULAR" THEN [metric_value] END)
+
+c.MFC Spend AvF % (Granular)
+([c.MFC Spend Actual (Granular)] - [c.MFC Spend Forecast (Granular)]) / ABS([c.MFC Spend Forecast (Granular)])
+
+c.MFC Spend AvF % (Granular, Pos)
+IF [c.MFC Spend AvF % (Granular)] > 0 THEN [c.MFC Spend AvF % (Granular)] END
+
+c.MFC Spend AvF % (Granular, Neg)
+IF [c.MFC Spend AvF % (Granular)] < 0 THEN [c.MFC Spend AvF % (Granular)] END
+
+c.MFC Spend WoW % (Granular)
+ATTR(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_GRANULAR" THEN [wow_pct] END)
+
+c.MFC Spend WoW % (Granular, Pos)
+IF [c.MFC Spend WoW % (Granular)] > 0 THEN [c.MFC Spend WoW % (Granular)] END
+
+c.MFC Spend WoW % (Granular, Neg)
+IF [c.MFC Spend WoW % (Granular)] < 0 THEN [c.MFC Spend WoW % (Granular)] END
+
+c.MFC Spend YoY % (Granular)
+ATTR(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_GRANULAR" THEN [yoy_pct] END)
+```
+
+Granular rows also carry populated `mfc_channel`/`mfc_tactic`/`mfc_message_type`/`mfc_agency`
+columns if you want to break these out further — Channel-grain rows have those as `NULL`.
+
+---
+
+## Biddable Spend (`data_source = "BIDDABLE_SPEND_CHANNEL"`) — actuals only, no forecast
+
+```
+c.Biddable Spend Actual
+SUM(IF [metric_name] = "biddableSpend" AND [data_source] = "BIDDABLE_SPEND_CHANNEL" THEN [metric_value] END)
+
+c.Biddable Spend WoW %
+ATTR(IF [metric_name] = "biddableSpend" AND [data_source] = "BIDDABLE_SPEND_CHANNEL" THEN [wow_pct] END)
+
+c.Biddable Spend WoW % (Pos)
+IF [c.Biddable Spend WoW %] > 0 THEN [c.Biddable Spend WoW %] END
+
+c.Biddable Spend WoW % (Neg)
+IF [c.Biddable Spend WoW %] < 0 THEN [c.Biddable Spend WoW %] END
+
+c.Biddable Spend YoY %
+ATTR(IF [metric_name] = "biddableSpend" AND [data_source] = "BIDDABLE_SPEND_CHANNEL" THEN [yoy_pct] END)
+```
+
+Reminder specific to this source: `lob` here is `POSTPAID` or `BROADBAND` (never combined) —
+add `AND [lob] = "POSTPAID"` (or `"BROADBAND"`) to any of the above if you want a single-LOB
+cut instead of both combined.
+
+---
+
+## Platform Spend (`data_source = "PLATFORM_SPEND_CHANNEL"`) — actuals only, no forecast
+
+```
+c.Platform Spend Actual
+SUM(IF [metric_name] = "platformSpend" AND [data_source] = "PLATFORM_SPEND_CHANNEL" THEN [metric_value] END)
+
+c.Platform Spend WoW %
+ATTR(IF [metric_name] = "platformSpend" AND [data_source] = "PLATFORM_SPEND_CHANNEL" THEN [wow_pct] END)
+
+c.Platform Spend WoW % (Pos)
+IF [c.Platform Spend WoW %] > 0 THEN [c.Platform Spend WoW %] END
+
+c.Platform Spend WoW % (Neg)
+IF [c.Platform Spend WoW %] < 0 THEN [c.Platform Spend WoW %] END
+
+c.Platform Spend YoY %
+ATTR(IF [metric_name] = "platformSpend" AND [data_source] = "PLATFORM_SPEND_CHANNEL" THEN [yoy_pct] END)
+```
+
+Same reminder as Biddable: this source carries `POSTPAID` and `BROADBAND` as separate `lob`
+values too.
+
+---
+
+## UPV Forecast (`data_source = "UPV_FORECAST"`) — standalone forecast trend
+
+These track the forecast *itself* over time (separate from the AvF comparison against Adobe
+actuals, already covered under UPV Total Adobe above).
+
+```
+c.UPV Forecast Trend
+AVG(IF [metric_name] = "upvForecast" AND [data_source] = "UPV_FORECAST" THEN [metric_value] END)
+
+c.UPV Forecast Trend WoW %
+ATTR(IF [metric_name] = "upvForecast" AND [data_source] = "UPV_FORECAST" THEN [wow_pct] END)
+
+c.UPV Forecast Trend WoW % (Pos)
+IF [c.UPV Forecast Trend WoW %] > 0 THEN [c.UPV Forecast Trend WoW %] END
+
+c.UPV Forecast Trend WoW % (Neg)
+IF [c.UPV Forecast Trend WoW %] < 0 THEN [c.UPV Forecast Trend WoW %] END
+
+c.UPV Forecast Trend YoY %
+ATTR(IF [metric_name] = "upvForecast" AND [data_source] = "UPV_FORECAST" THEN [yoy_pct] END)
+
+c.UPV WebApp Forecast Trend
+AVG(IF [metric_name] = "upvWebAppForecast" AND [data_source] = "UPV_FORECAST" THEN [metric_value] END)
+
+c.UPV WebApp Forecast Trend WoW %
+ATTR(IF [metric_name] = "upvWebAppForecast" AND [data_source] = "UPV_FORECAST" THEN [wow_pct] END)
+
+c.UPV WebApp Forecast Trend WoW % (Pos)
+IF [c.UPV WebApp Forecast Trend WoW %] > 0 THEN [c.UPV WebApp Forecast Trend WoW %] END
+
+c.UPV WebApp Forecast Trend WoW % (Neg)
+IF [c.UPV WebApp Forecast Trend WoW %] < 0 THEN [c.UPV WebApp Forecast Trend WoW %] END
+
+c.UPV WebApp Forecast Trend YoY %
+ATTR(IF [metric_name] = "upvWebAppForecast" AND [data_source] = "UPV_FORECAST" THEN [yoy_pct] END)
+```
+
+`allocation_ratio` is also available on these rows if you want to show what channel-mix ratio
+drove the allocation — it's the prior-year same-quarter Adobe ratio, not a metric_value itself.
+
+---
+
+## QTD Tiles
+
+The pattern: same filters as the weekly Actual field, plus **quarter scope** and the
+**`max_date` guardrail** — so the aggregate stops exactly at the last week with real actuals,
+not at the end of the calendar quarter (which would pull in `NULL` forecast-only future weeks).
+
+```
+c.Current Quarter
+[p.Quarter] = [qgp_quarter]
+```
+
+(You already have this — reused below via `[c.Current Quarter]`.)
+
+### Worked example — SUM family (Store Traffic)
+
+```
+c.Store Traffic Actuals QTD
+SUM(
+  IF [metric_name] = "storeTraffic"
+     AND [metric_type] = "QGP_ACTUAL"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
 )
-SELECT
-  WeekEnding,
-  CASE WHEN MetricID = 'VRInboundCallsinclHSIAutomatedManual' THEN 'vrCalls' ELSE 'vrChats' END AS metric_name,
-  CASE WHEN MetricType = 'QGP' THEN 'TARGET' ELSE 'ACTUAL' END AS side,
-  Page,
-  Amount
-FROM Deduped
-WHERE rn = 1
-  AND (
-    (MetricType != 'QGP' AND Page = 'Hero - Core Postpaid KP2')   -- actuals side
-    OR
-    (MetricType = 'QGP'  AND Page = 'Virtual Retail')              -- target side
-  )
-ORDER BY WeekEnding DESC, metric_name, side;
+
+c.Store Traffic Target QTD
+SUM(
+  IF [metric_name] = "storeTraffic"
+     AND [metric_type] = "QGP_TARGET"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+```
+
+### Worked example — AVG family (UPV Total Adobe)
+
+```
+c.UPV Total Adobe Actuals QTD
+AVG(
+  IF [metric_name] = "upvTotalAdobe"
+     AND [data_source] = "ADOBE"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+
+c.UPV Total Adobe Forecast QTD
+AVG(
+  IF [metric_name] = "upvForecast"
+     AND [data_source] = "UPV_FORECAST"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+```
+
+### Worked example — MFC (remember the `data_source` filter)
+
+```
+c.MFC Spend Actual QTD
+SUM(
+  IF [metric_name] = "mfcSpendActual"
+     AND [data_source] = "MFC_SPEND_CHANNEL"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [max_date]
+  THEN [metric_value]
+  END
+)
+```
+
+### Substitution table — apply the worked pattern above to every remaining metric
+
+For each row: take the matching worked example above, swap in the `metric_name` /
+`metric_type` / `data_source` shown, keep everything else (the `[c.Current Quarter]` and
+`[qgp_date] <= [max_date]` lines) identical.
+
+| Metric | `metric_name` | `metric_type` filter | `data_source` filter | Agg. |
+|---|---|---|---|---|
+| Activations BOPIS | `activationsBopis` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Activations New AAL No Assist | `activationsNewAalNoAssistance` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Store Traffic | `storeTraffic` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| VR Calls | `vrCalls` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| VR Chats | `vrChats` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| VR Postpaid Activations | `vrPostpaidActivations` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Digital % Phone New Acts | `digitalPctPhoneNewActsNoAssistPlusAssist` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Digital % Consumer Postpaid Acts | `digitalPctConsumerPostpaidActivationsTotalInclAssisted` | `QGP_ACTUAL` / `QGP_TARGET` | `QGP_SCORECARD` | SUM |
+| Digital % No Assistance Acts | `digitalPctNoAssistanceActivations` | `QGP_ACTUAL` only (⚠ no Target) | `QGP_SCORECARD` | SUM |
+| Digital % Assistance Acts | `digitalPctAssistanceActivations` | `QGP_ACTUAL` only (⚠ no Target) | `QGP_SCORECARD` | SUM |
+| UPV Postpaid | `upvPostpaid` | n/a | `ADOBE` | AVG |
+| UPV Hsi | `upvHsi` | n/a | `ADOBE` | AVG |
+| UPV Byod | `upvByod` | n/a | `ADOBE` | AVG |
+| UPV Flow Total | `upvFlowTotal` | n/a | `ADOBE` | AVG |
+| UPV Total Adobe | `upvTotalAdobe` | n/a | `ADOBE` | AVG |
+| Cartstart Postpaid | `cartstartPostpaid` | n/a | `ADOBE` | AVG |
+| Cartstart Hsi | `cartstartHsi` | n/a | `ADOBE` | AVG |
+| Cartstart Byod | `cartstartByod` | n/a | `ADOBE` | AVG |
+| Cartstart Total | `cartstartTotal` | n/a | `ADOBE` | AVG |
+| Orders Unassisted Postpaid | `ordersUnassistedPostpaid` | n/a | `ADOBE` | SUM |
+| Orders Unassisted Hsi | `ordersUnassistedHsi` | n/a | `ADOBE` | SUM |
+| Orders Unassisted Byod | `ordersUnassistedByod` | n/a | `ADOBE` | SUM |
+| Orders Unassisted Total | `ordersUnassistedTotal` | n/a | `ADOBE` | SUM |
+| Orders Assisted Postpaid | `ordersAssistedPostpaid` | n/a | `ADOBE` | SUM |
+| Orders Assisted Hsi | `ordersAssistedHsi` | n/a | `ADOBE` | SUM |
+| Orders Assisted Byod | `ordersAssistedByod` | n/a | `ADOBE` | SUM |
+| Orders Assisted Total | `ordersAssistedTotal` | n/a | `ADOBE` | SUM |
+| Orders Total | `ordersTotal` | n/a | `ADOBE` | SUM |
+| MFC Spend (Channel) | `mfcSpendActual` / `mfcSpendForecast` | n/a | `MFC_SPEND_CHANNEL` | SUM |
+| MFC Spend (Granular) | `mfcSpendActual` / `mfcSpendForecast` | n/a | `MFC_SPEND_GRANULAR` | SUM |
+| Biddable Spend | `biddableSpend` | n/a | `BIDDABLE_SPEND_CHANNEL` | SUM |
+| Platform Spend | `platformSpend` | n/a | `PLATFORM_SPEND_CHANNEL` | SUM |
+| UPV Forecast Trend | `upvForecast` | n/a | `UPV_FORECAST` | AVG |
+| UPV WebApp Forecast Trend | `upvWebAppForecast` | n/a | `UPV_FORECAST` | AVG |
+
+For any row with two `metric_name`s listed (the Actual/Target or Actual/Forecast pairs), build
+one QTD field per name, same as the MFC worked example — one for Actual, one for Target/Forecast
+— then an AvT%/AvF% QTD field the same way you built the weekly one, just referencing the two
+QTD fields instead of the two weekly ones.
