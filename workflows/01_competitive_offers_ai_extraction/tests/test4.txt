@@ -581,9 +581,9 @@ drove the allocation — it's the prior-year same-quarter Adobe ratio, not a met
 
 ## QTD Tiles
 
-The pattern: same filters as the weekly Actual field, plus **quarter scope** and the
-**`max_date` guardrail** — so the aggregate stops exactly at the last week with real actuals,
-not at the end of the calendar quarter (which would pull in `NULL` forecast-only future weeks).
+The pattern: same filters as the weekly Actual field, plus **quarter scope** and a **max_date
+guardrail** — so the aggregate stops exactly at the last week with real actuals, not at the end
+of the calendar quarter (which would pull in `NULL` forecast-only future weeks).
 
 ```
 c.Current Quarter
@@ -592,29 +592,44 @@ c.Current Quarter
 
 (You already have this — reused below via `[c.Current Quarter]`.)
 
-### Worked example — SUM family (Activations BOPIS)
+**⚠ For any metric with both Actual and Target/Forecast, don't use each side's own `max_date`
+— use Actual's, for both.** `max_date` on a Target row reflects the last date *Target* has a
+non-null value, which is typically the end of the quarter (targets are pre-populated for the
+whole period, unlike actuals which only exist as real data comes in). Filtering Target's QTD
+sum by its own `max_date` runs it through the full quarter while Actual correctly stops at the
+last real week — not apples-to-apples, confirmed by Khalid from real VR Calls behavior. The
+fix: extract Actual's `max_date` once into its own field, then use that same field — not the
+bare `max_date` column — as the cutoff on **both** the Actual and Target/Forecast sums.
+
+### Worked example — SUM family, with the Actual-max_date fix (VR Calls)
 
 ```
-c.Activations BOPIS Actuals QTD
+c.VR Calls Actual Max Date
+ATTR(IF [metric_name] = "vrCalls" AND [metric_type] = "QGP_ACTUAL" THEN [max_date] END)
+
+c.VR Calls Actuals QTD
 SUM(
-  IF [metric_name] = "activationsBopis"
+  IF [metric_name] = "vrCalls"
      AND [metric_type] = "QGP_ACTUAL"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.VR Calls Actual Max Date]
   THEN [metric_value]
   END
 )
 
-c.Activations BOPIS Target QTD
+c.VR Calls Target QTD
 SUM(
-  IF [metric_name] = "activationsBopis"
+  IF [metric_name] = "vrCalls"
      AND [metric_type] = "QGP_TARGET"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.VR Calls Actual Max Date]
   THEN [metric_value]
   END
 )
 ```
+
+Both QTD sums reference the same `[c.VR Calls Actual Max Date]` field — Target's sum now stops
+at the same real cutoff Actual does, instead of running to end-of-quarter on its own.
 
 ### Worked example — AVG family (UPV Total Adobe, Store Traffic)
 
@@ -624,12 +639,15 @@ except UPV" rule); corrected once Khalid confirmed Store Traffic ("Exit Traffic"
 dashboard) is a second, deliberate exception to that rule.
 
 ```
+c.UPV Total Adobe Actual Max Date
+ATTR(IF [metric_name] = "upvTotalAdobe" AND [data_source] = "ADOBE" THEN [max_date] END)
+
 c.UPV Total Adobe Actuals QTD
 AVG(
   IF [metric_name] = "upvTotalAdobe"
      AND [data_source] = "ADOBE"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.UPV Total Adobe Actual Max Date]
   THEN [metric_value]
   END
 )
@@ -639,17 +657,20 @@ AVG(
   IF [metric_name] = "upvForecast"
      AND [data_source] = "UPV_FORECAST"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.UPV Total Adobe Actual Max Date]
   THEN [metric_value]
   END
 )
+
+c.Store Traffic Actual Max Date
+ATTR(IF [metric_name] = "storeTraffic" AND [metric_type] = "QGP_ACTUAL" THEN [max_date] END)
 
 c.Store Traffic Actuals QTD
 AVG(
   IF [metric_name] = "storeTraffic"
      AND [metric_type] = "QGP_ACTUAL"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.Store Traffic Actual Max Date]
   THEN [metric_value]
   END
 )
@@ -659,25 +680,47 @@ AVG(
   IF [metric_name] = "storeTraffic"
      AND [metric_type] = "QGP_TARGET"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.Store Traffic Actual Max Date]
   THEN [metric_value]
   END
 )
 ```
 
-### Worked example — MFC (remember the `data_source` filter)
+Note `UPV Total Adobe`'s helper field pulls `max_date` from the `ADOBE` row specifically — the
+Forecast side (`UPV_FORECAST` data_source) uses that same cutoff rather than its own, for the
+identical reason as VR Calls above: a forecast is typically populated further into the future
+than actuals are, so without this fix the Forecast QTD would run past where Actual really stops.
+
+### Worked example — MFC (remember the `data_source` filter, plus the same Actual-max_date fix)
 
 ```
+c.MFC Spend Actual Max Date
+ATTR(IF [metric_name] = "mfcSpendActual" AND [data_source] = "MFC_SPEND_CHANNEL" THEN [max_date] END)
+
 c.MFC Spend Actual QTD
 SUM(
   IF [metric_name] = "mfcSpendActual"
      AND [data_source] = "MFC_SPEND_CHANNEL"
      AND [c.Current Quarter]
-     AND [qgp_date] <= [max_date]
+     AND [qgp_date] <= [c.MFC Spend Actual Max Date]
+  THEN [metric_value]
+  END
+)
+
+c.MFC Spend Forecast QTD
+SUM(
+  IF [metric_name] = "mfcSpendForecast"
+     AND [data_source] = "MFC_SPEND_CHANNEL"
+     AND [c.Current Quarter]
+     AND [qgp_date] <= [c.MFC Spend Actual Max Date]
   THEN [metric_value]
   END
 )
 ```
+
+Same fix applies at the Granular grain — build the equivalent `Actual Max Date` helper filtered
+to `[data_source] = "MFC_SPEND_GRANULAR"`, and use it as the cutoff for both that grain's
+Actual and Forecast QTD sums.
 
 ### Substitution table — apply the worked pattern above to every remaining metric
 
@@ -722,7 +765,22 @@ For each row: take the matching worked example above, swap in the `metric_name` 
 | UPV Forecast Trend | `upvForecast` | n/a | `UPV_FORECAST` | AVG |
 | UPV WebApp Forecast Trend | `upvWebAppForecast` | n/a | `UPV_FORECAST` | AVG |
 
-For any row with two `metric_name`s listed (the Actual/Target or Actual/Forecast pairs), build
-one QTD field per name, same as the MFC worked example — one for Actual, one for Target/Forecast
-— then an AvT%/AvF% QTD field the same way you built the weekly one, just referencing the two
-QTD fields instead of the two weekly ones.
+For any row with only **one** `metric_name` (Adobe's 17 actuals-only metrics, Biddable/Platform
+Spend, UPV Forecast's standalone trend) — the plain `max_date` column is correct as-is; there's
+only one side, so nothing else to reconcile it against. Just build one field per row in the
+table above, no helper needed — swap in that row's `metric_name`/filters into the same shape as
+Activations BOPIS's weekly `Actual` field earlier in this doc, wrapped in `SUM`/`AVG` per the
+table's Agg. column, with `[c.Current Quarter] AND [qgp_date] <= [max_date]` added.
+
+For any row with **two** `metric_name`s (every Actual/Target or Actual/Forecast pair — QGP's 8
+metrics with a real Target, both MFC grains) — use the 3-field recipe demonstrated by VR Calls,
+UPV Total Adobe, Store Traffic, and MFC above, **not** the simpler one-`max_date` pattern:
+1. One `Actual Max Date` helper field: `ATTR(IF <same filters as the Actual QTD field> THEN [max_date] END)`.
+2. The Actual QTD field, filtered `[qgp_date] <= [c.<Metric> Actual Max Date]` — the helper
+   field, not the bare `max_date` column.
+3. The Target/Forecast QTD field, with the **same** `<= [c.<Metric> Actual Max Date]` cutoff —
+   this is the part that's easy to skip, and skipping it is exactly the bug that prompted this
+   fix: Target/Forecast's own `max_date` typically runs to end-of-quarter, so without forcing it
+   onto Actual's cutoff, the two sides won't be apples-to-apples.
+
+Then build AvT%/AvF% QTD the same way as the weekly version, referencing the two QTD fields.
