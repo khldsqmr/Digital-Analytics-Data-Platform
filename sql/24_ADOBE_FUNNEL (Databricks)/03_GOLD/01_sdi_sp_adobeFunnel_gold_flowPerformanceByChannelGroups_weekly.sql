@@ -1,0 +1,142 @@
+/* =================================================================================================
+FILE:         01_sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly.sql
+LAYER:        Gold Table (via Stored Procedure)
+CATALOG.SCHEMA: prdrzranalytics.lab42
+TABLE:        sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
+PROCEDURE:    sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
+
+SOURCES:
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly
+
+DESTINATION:
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
+
+PURPOSE:
+  Gold table consolidating all Adobe BYOD-related metrics at ChannelGroup granularity.
+  Single source of truth for all Adobe BYOD metrics — replaces direct Silver reads
+  in downstream pulse pipelines.
+
+  Joins three Silver tables on WeekSunSat + ChannelGroup:
+    Silver flowPerformanceByChannelGroupsPlusAll        : existing flow performance (UPV, Cartstart, Orders) — unchanged
+    Silver byodFlowEntryPagesByChannelGroupsPlusAll      : BYOD funnel entry page metrics
+    Silver byodFlowOutcomesByChannelGroupsPlusAll        : BYOD funnel outcome metrics
+
+  When HSI, Metro, or other pulse pipelines are added, they read this Gold table
+  and apply their own filtering/naming in their respective Silver layers.
+
+BUSINESS GRAIN:
+  One row per:
+      WeekSunSat
+      ChannelGroup
+
+  ChannelGroup values: ALL, PAID SEARCH, ORGANIC SEARCH, DIRECT, PROGRAMMATIC, SOCIAL, OTHER
+  (7 rows per week)
+
+BUSINESS RULES:
+  - All three Silver tables share the same grain (WeekSunSat + ChannelGroup)
+    so joins are clean with no fanout risk
+  - LEFT JOIN used for the two BYOD Silver tables — preserves flow-performance rows even if
+    the BYOD funnel tables don't yet have data for a given week
+  - NULLs preserved throughout — no fake zeroes
+  - No aggregation or derivation applied — metrics passed through as-is from Silvers
+  - No ORDER BY — applied in downstream pulse Silver tables
+
+OUTPUT COLUMNS:
+  WeekSunSat, ChannelGroup
+
+  -- From Silver flowPerformanceByChannelGroupsPlusAll (existing flow performance — unchanged)
+  UpvTotalAdobe
+  UpvPostpaid, UpvHsi, UpvByod, UpvTrackedFlowSum, UpvFlowTotal
+  CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
+  OrdersTotal
+  OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
+  OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
+
+  -- From Silver byodFlowEntryPagesByChannelGroupsPlusAll
+  ByodUpvVisitors
+  ByodEntryByodPageVisitors, ByodEntryHomePageVisitors, ByodEntryDevicePageVisitors
+  ByodEntryPlansPageVisitors, ByodEntryOtherPageVisitors
+  ByodEntryStorePageVisitors, ByodEntryByodLandingPageVisitors, ByodEntryOffersSwitchVisitors
+
+  -- From Silver byodFlowOutcomesByChannelGroupsPlusAll
+  ByodVrChatVisitors, ByodCallVisitors, ByodStoreLocatorVisitors
+  ByodInternalTmoVisitors, ByodBouncersVisitors, ByodOrders
+
+DOWNSTREAM:
+  vw_sdi_pulseByod_silver_adobeFlow_weekly (BYOD medallion, separate pipeline, not yet ported)
+  Future: vw_sdi_pulseHsi_silver_adobeFlow_weekly, vw_sdi_pulseMetro_silver_adobeFlow_weekly etc.
+================================================================================================= */
+
+CREATE OR REPLACE PROCEDURE
+`prdrzranalytics.lab42.sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly`()
+LANGUAGE SQL
+MODIFIES SQL DATA
+AS
+BEGIN
+
+  CREATE OR REPLACE TABLE
+  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly`
+  AS
+
+  SELECT
+    s2.WeekSunSat,
+    s2.ChannelGroup,
+
+    -- ================================================================ FLOW PERFORMANCE (Silver flowPerformanceByChannelGroupsPlusAll — existing, unchanged)
+    s2.UpvTotalAdobe,
+
+    -- UPV flows
+    s2.UpvPostpaid,
+    s2.UpvHsi,
+    s2.UpvByod,
+    s2.UpvTrackedFlowSum,
+    s2.UpvFlowTotal,
+
+    -- Cartstart
+    s2.CartstartTotal,
+    s2.CartstartPostpaid,
+    s2.CartstartHsi,
+    s2.CartstartByod,
+    s2.CartstartTrackedFlowSum,
+
+    -- Orders
+    s2.OrdersTotal,
+    s2.OrdersUnassistedTotal,
+    s2.OrdersUnassistedPostpaid,
+    s2.OrdersUnassistedHsi,
+    s2.OrdersUnassistedByod,
+    s2.OrdersAssistedTotal,
+    s2.OrdersAssistedPostpaid,
+    s2.OrdersAssistedHsi,
+    s2.OrdersAssistedByod,
+
+    -- ================================================================ BYOD ENTRY PAGES (Silver byodFlowEntryPagesByChannelGroupsPlusAll)
+    s3.ByodUpvVisitors,
+    s3.ByodEntryByodPageVisitors,
+    s3.ByodEntryHomePageVisitors,
+    s3.ByodEntryDevicePageVisitors,
+    s3.ByodEntryPlansPageVisitors,
+    s3.ByodEntryOtherPageVisitors,
+    s3.ByodEntryStorePageVisitors,
+    s3.ByodEntryByodLandingPageVisitors,
+    s3.ByodEntryOffersSwitchVisitors,
+
+    -- ================================================================ BYOD OUTCOMES (Silver byodFlowOutcomesByChannelGroupsPlusAll)
+    s4.ByodVrChatVisitors,
+    s4.ByodCallVisitors,
+    s4.ByodStoreLocatorVisitors,
+    s4.ByodInternalTmoVisitors,
+    s4.ByodBouncersVisitors,
+    s4.ByodOrders
+
+  FROM `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly` s2
+  LEFT JOIN `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly` s3
+    ON s2.WeekSunSat   = s3.WeekSunSat
+    AND s2.ChannelGroup = s3.ChannelGroup
+  LEFT JOIN `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly` s4
+    ON s2.WeekSunSat   = s4.WeekSunSat
+    AND s2.ChannelGroup = s4.ChannelGroup;
+
+END;
