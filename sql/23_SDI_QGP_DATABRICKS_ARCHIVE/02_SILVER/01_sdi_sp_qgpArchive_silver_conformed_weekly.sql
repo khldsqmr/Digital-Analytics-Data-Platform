@@ -39,13 +39,12 @@ NORMALIZATION APPLIED:
     DIFFERENT from Bronze's PascalCase mirror, since this layer's whole purpose is to be the
     clean/conformed version, not another raw mirror.
 ================================================================================================= */
-
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_qgpArchive_silver_conformed_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
-
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_qgpArchive_silver_conformed_weekly
   USING DELTA
