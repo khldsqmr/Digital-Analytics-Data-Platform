@@ -26,3 +26,16 @@ Build ERD/architecture documentation deck
 Reconcile Biddable Spend numbers against other team's validation deck
 Build Tableau calculated-field reference (weekly + QTD, all sources)
 Verify VR Postpaid Activations metric-name casing against raw source
+
+
+Adobe Funnel Bronze — port 8 BQ views to Databricks stored procedures (UPV Funnel/Total × All Channel/LTC Groups, BYOD Entry Pages/Outcomes × All Channel/LTC Groups)
+Adobe Funnel Silver — port 3 objects (flow performance, BYOD entry pages, BYOD outcomes by channel group)
+Adobe Funnel Gold — port flowPerformanceByChannelGroups + build orchestrator
+Adobe Funnel — rename UVNB to UPV across all layers
+Adobe Funnel — standardize naming convention and target catalog (prdrzranalytics.lab42)
+Adobe Funnel — apply Databricks stored-procedure standard retroactively (drop backticks, add USING DELTA + SQL SECURITY INVOKER, swap STRING_AGG for ARRAY_JOIN/SORT_ARRAY/COLLECT_SET, Title Case channel groups)
+PulseByod Bronze — port 5 BQ views (Profound, Profound GoFish, SA360 Adgroup, GSC Query, Google Trends)
+PulseByod Silver — port 5 objects (Profound, GoFish, Adobe, Adobe BYOD Entry Pages, Adobe BYOD Outcomes)
+PulseByod Gold — port Unified Wide + Unified Long, SA360/GSC/Trends sections commented out pending source confirmation
+PulseByod — build orchestrator (chained after Adobe Funnel orchestrator)
+Follow-up — confirm SA360/GSC/Google Trends Databricks source tables, build their Silver layer, reactivate in Bronze/Gold
