@@ -1,177 +1,23 @@
-Removed backticks from all fully qualified object names.
-Added USING DELTA.
-Retained SQL SECURITY INVOKER.
-Preserved all six source tables and metric mappings.
-Preserved visitors for the five visitor metrics.
-Preserved orders specifically for ByodOrders.
-Preserved ChannelGroup = 'ALL'.
-Preserved the weekly deduplication logic.
-Replaced both STRING_AGG expressions with the proven Databricks-compatible ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(...)), ', ').
-Preserved missing values as NULL.
+-- 1. Raw QGP source — is fresh data even there yet?
+SELECT MAX(InsertDateTime) AS latest_insert, MAX(WeekEnding) AS latest_week
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE DateContext = 'Normal';
 
+-- 2. Archive Bronze — did the archive's MERGE pick it up?
+SELECT MAX(InsertDateTime) AS latest_insert, MAX(WeekEnding) AS latest_week
+FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly;
 
+-- 3. Archive Gold — matches what you already checked
+SELECT MAX(WeekEnding) AS latest_week
+FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_gold_curated_weekly
+WHERE DateContext = 'Normal';
 
-Set up Databricks architecture, naming taxonomy & deployment structure
-Port Adobe Funnel (Bronze/Silver/Gold)
-Resolve Adobe LOB categorization (Postpaid+Broadband label — BYOD/Metro/TFB pending team input)
-Port MFC Spend (Bronze/Silver/Gold — Channel & Granular grain)
-Port QGP Scorecard (Bronze/Silver/Gold — 10 metrics, fix source-side dedup logic)
-Build QGP Archive pipeline (solve rolling-retention data loss upstream)
-Build Platform Spend (Bronze/Silver/Gold)
-Build UPV Forecast (Bronze/Silver/Gold — channel-allocated via Adobe prior-year ratios)
-Build Biddable Spend (Bronze/Silver/Gold — Programmatic + Paid Social + Paid Search)
-Confirm ignore_tiktok exclusion with team (Biddable Spend)
-Wire all 6 sources into Gold Unified Views (wide + long)
-Build ERD/architecture documentation deck
-Reconcile Biddable Spend numbers against other team's validation deck
-Build Tableau calculated-field reference (weekly + QTD, all sources)
-Verify VR Postpaid Activations metric-name casing against raw source
+-- 4. PulseTMS's OWN QGP Bronze — reads FROM the archive; is it keeping up with it?
+SELECT MAX(qgp_date) AS latest_date
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly;
 
-
-Adobe Funnel Bronze — port 8 BQ views to Databricks stored procedures (UPV Funnel/Total × All Channel/LTC Groups, BYOD Entry Pages/Outcomes × All Channel/LTC Groups)
-Adobe Funnel Silver — port 3 objects (flow performance, BYOD entry pages, BYOD outcomes by channel group)
-Adobe Funnel Gold — port flowPerformanceByChannelGroups + build orchestrator
-Adobe Funnel — rename UVNB to UPV across all layers
-Adobe Funnel — standardize naming convention and target catalog (prdrzranalytics.lab42)
-Adobe Funnel — apply Databricks stored-procedure standard retroactively (drop backticks, add USING DELTA + SQL SECURITY INVOKER, swap STRING_AGG for ARRAY_JOIN/SORT_ARRAY/COLLECT_SET, Title Case channel groups)
-PulseByod Bronze — port 5 BQ views (Profound, Profound GoFish, SA360 Adgroup, GSC Query, Google Trends)
-PulseByod Silver — port 5 objects (Profound, GoFish, Adobe, Adobe BYOD Entry Pages, Adobe BYOD Outcomes)
-PulseByod Gold — port Unified Wide + Unified Long, SA360/GSC/Trends sections commented out pending source confirmation
-PulseByod — build orchestrator (chained after Adobe Funnel orchestrator)
-Follow-up — confirm SA360/GSC/Google Trends Databricks source tables, build their Silver layer, reactivate in Bronze/Gold
-
-
-
-
-Adobe Funnel Gold — sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
-Casing: PascalCase, one row per WeekSunSat + ChannelGroup
-
-Metric	Column name
-UPV total	UpvTotalAdobe
-UPV postpaid / HSI / BYOD	UpvPostpaid, UpvHsi, UpvByod
-UPV tracked flow sum / flow total	UpvTrackedFlowSum, UpvFlowTotal
-Cartstart total/postpaid/HSI/BYOD	CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
-Orders total	OrdersTotal
-Orders unassisted	OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
-Orders assisted	OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
-BYOD entry visitors	ByodUpvVisitors
-BYOD entry pages (8)	ByodEntryByodPageVisitors, ByodEntryHomePageVisitors, ByodEntryDevicePageVisitors, ByodEntryPlansPageVisitors, ByodEntryOtherPageVisitors, ByodEntryStorePageVisitors, ByodEntryByodLandingPageVisitors, ByodEntryOffersSwitchVisitors
-BYOD outcomes	ByodVrChatVisitors, ByodCallVisitors, ByodStoreLocatorVisitors, ByodInternalTmoVisitors, ByodBouncersVisitors, ByodOrders
-
-PulseByod Gold — sdi_tbl_pulseByod_gold_unified_wide / _long
-Casing: lowerCamelCase, source_asset/channel_metric pattern. Each base name below also has _wow, _ly, _wow_pct, _yoy_pct variants in Wide; in Long these are separate columns (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct) per metric_name row.
-
-Source	Column pattern	{asset} / {channel} values
-Profound (non-brand)	profoundVis_{asset}_nonbrand_visibilityScore, _executions, _mentionsCount, _shareOfVoice; profoundCit_{asset}_nonbrand_shareOfVoice	tmo, verizon, att
-GoFish (brand)	gofish_{asset}_brand_visibilityScore, _executions, _mentionsCount, _shareOfVoice	tmo, verizon, att
-Adobe	adobe_upvByod_{channel}, adobe_upvTotal_allChannels, adobe_upvFlowTotal_allChannels, adobe_pctUpvByodOfUpvFlow_allChannels, adobe_pctUpvByodOfTotal_{channel}, adobe_cartStartByod_{channel}, adobe_ordersUnassistedByod_{channel}, adobe_ordersAssistedByod_{channel}, adobe_ordersTotalByod_{channel}, adobe_ordersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_cvrByod_allChannels, adobe_cvrSite_allChannels, adobe_cvrPostpaid_allChannels, adobe_cvrHsi_allChannels	allChannels, paidSearch, organicSearch, direct, social, programmatic, other
-Adobe BYOD entry pages	adobe_byodUpvVisitors_{channel}, adobe_byodEntryByodPageVisitors_{channel}, _HomePageVisitors, _DevicePageVisitors, _PlansPageVisitors, _OtherPageVisitors, _GetStartedLandingPageVisitors, _ByodLandingPageVisitors, _OffersSwitchVisitors	same 7 channels
-Adobe BYOD outcomes	adobe_byodVrChatVisitors_{channel}, _CallVisitors, _StoreLocatorVisitors, _InternalTmoVisitors, _BouncersVisitors, adobe_byodOrders_{channel}	same 7 channels
-(commented out) SA360, GSC, Trends	sa360_tmo_{brand/nonbrand}_*, gsc_tmo_{brand/nonbrand}_*, trends_byod_index, trends_top_kw_{1-5}	tmo only
-
-
-• Adobe Funnel — port 11 Bronze/Silver objects and the Gold flow-performance object to Databricks stored procedures; build the orchestrator.
-
-• Adobe Funnel standardization — rename `UVNB` to `UPV`, standardize naming and the target catalog (`prdrzranalytics.lab42`), and apply Databricks stored-procedure standards across all layers: remove identifier backticks from SQL object definitions, add `USING DELTA` and `SQL SECURITY INVOKER`, replace `STRING_AGG` with `ARRAY_JOIN`/`SORT_ARRAY`/`COLLECT_SET`, and use Title Case channel groups.
-
-• Adobe Funnel source of truth — create `sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly` as the dashboard-ready Gold table, using PascalCase metric columns and one row per `WeekSunSat` + `ChannelGroup`.
-
-  Actual metrics included:
-  - UPV: `UpvTotalAdobe`, `UpvPostpaid`, `UpvHsi`, `UpvByod`, `UpvTrackedFlowSum`, `UpvFlowTotal`
-  - Cart Starts: `CartstartTotal`, `CartstartPostpaid`, `CartstartHsi`, `CartstartByod`, `CartstartTrackedFlowSum`
-  - Orders: `OrdersTotal`
-  - Unassisted Orders: `OrdersUnassistedTotal`, `OrdersUnassistedPostpaid`, `OrdersUnassistedHsi`, `OrdersUnassistedByod`
-  - Assisted Orders: `OrdersAssistedTotal`, `OrdersAssistedPostpaid`, `OrdersAssistedHsi`, `OrdersAssistedByod`
-  - BYOD Entry Visitors: `ByodUpvVisitors`
-  - BYOD Entry Pages: `ByodEntryByodPageVisitors`, `ByodEntryHomePageVisitors`, `ByodEntryDevicePageVisitors`, `ByodEntryPlansPageVisitors`, `ByodEntryOtherPageVisitors`, `ByodEntryStorePageVisitors`, `ByodEntryByodLandingPageVisitors`, `ByodEntryOffersSwitchVisitors`
-  - BYOD Outcomes: `ByodVrChatVisitors`, `ByodCallVisitors`, `ByodStoreLocatorVisitors`, `ByodInternalTmoVisitors`, `ByodBouncersVisitors`, `ByodOrders`
-
-• PulseByod — port 5 Bronze and 5 Silver objects; port the Gold Unified Wide and Unified Long objects; build the orchestrator chained after the Adobe Funnel orchestrator.
-
-• PulseByod source of truth — create `sdi_tbl_pulseByod_gold_unified_wide` and `sdi_tbl_pulseByod_gold_unified_long` as the dashboard-ready Gold tables, using lowerCamelCase and the `source_asset/channel_metric` naming pattern.
-
-  Table structures:
-  - Wide: one column per base metric, with corresponding `_wow`, `_ly`, `_wow_pct`, and `_yoy_pct` variants.
-  - Long: one row per `metric_name`, with values represented by `metric_value`, `metric_value_wow`, `metric_value_ly`, `wow_pct`, and `yoy_pct`.
-
-  Actual metrics included:
-  - Profound non-brand:
-    - `profoundVis_{asset}_nonbrand_visibilityScore`
-    - `profoundVis_{asset}_nonbrand_executions`
-    - `profoundVis_{asset}_nonbrand_mentionsCount`
-    - `profoundVis_{asset}_nonbrand_shareOfVoice`
-    - `profoundCit_{asset}_nonbrand_shareOfVoice`
-    - Asset values: `tmo`, `verizon`, `att`
-
-  - GoFish brand:
-    - `gofish_{asset}_brand_visibilityScore`
-    - `gofish_{asset}_brand_executions`
-    - `gofish_{asset}_brand_mentionsCount`
-    - `gofish_{asset}_brand_shareOfVoice`
-    - Asset values: `tmo`, `verizon`, `att`
-
-  - Adobe:
-    - `adobe_upvByod_{channel}`
-    - `adobe_upvTotal_allChannels`
-    - `adobe_upvFlowTotal_allChannels`
-    - `adobe_pctUpvByodOfUpvFlow_allChannels`
-    - `adobe_pctUpvByodOfTotal_{channel}`
-    - `adobe_cartStartByod_{channel}`
-    - `adobe_ordersUnassistedByod_{channel}`
-    - `adobe_ordersAssistedByod_{channel}`
-    - `adobe_ordersTotalByod_{channel}`
-    - `adobe_ordersTotal_allChannels`
-    - `adobe_pctOrdersByodOfOrdersTotal_allChannels`
-    - `adobe_cvrByod_allChannels`
-    - `adobe_cvrSite_allChannels`
-    - `adobe_cvrPostpaid_allChannels`
-    - `adobe_cvrHsi_allChannels`
-
-  - Adobe BYOD entry pages:
-    - `adobe_byodUpvVisitors_{channel}`
-    - `adobe_byodEntryByodPageVisitors_{channel}`
-    - `adobe_byodEntryHomePageVisitors_{channel}`
-    - `adobe_byodEntryDevicePageVisitors_{channel}`
-    - `adobe_byodEntryPlansPageVisitors_{channel}`
-    - `adobe_byodEntryOtherPageVisitors_{channel}`
-    - `adobe_byodEntryGetStartedLandingPageVisitors_{channel}`
-    - `adobe_byodEntryByodLandingPageVisitors_{channel}`
-    - `adobe_byodEntryOffersSwitchVisitors_{channel}`
-
-  - Adobe BYOD outcomes:
-    - `adobe_byodVrChatVisitors_{channel}`
-    - `adobe_byodCallVisitors_{channel}`
-    - `adobe_byodStoreLocatorVisitors_{channel}`
-    - `adobe_byodInternalTmoVisitors_{channel}`
-    - `adobe_byodBouncersVisitors_{channel}`
-    - `adobe_byodOrders_{channel}`
-
-  - Adobe channel values:
-    - `allChannels`
-    - `paidSearch`
-    - `organicSearch`
-    - `direct`
-    - `social`
-    - `programmatic`
-    - `other`
-
-• Follow-up — confirm the SA360, GSC, and Google Trends Databricks source tables; build their Silver objects and reactivate the currently commented Bronze/Gold sections:
-  - SA360: `sa360_tmo_{brand/nonbrand}_*`
-  - GSC: `gsc_tmo_{brand/nonbrand}_*`
-  - Google Trends: `trends_byod_index` and `trends_top_kw_{1-5}`
-
-
-
--- ================================================================ 3. pulseByod (OLD, pre-rename) — orphaned if you ran this before the rename
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profoundGofish_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_sa360Adgroup_daily;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_gscQuery_daily;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_googleTrends_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodEntryPages_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodOutcomes_weekly;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_gold_unified_wide;
-DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_pulseByod_gold_unified_long;
+-- 5. The actual Gold output you'd see on a dashboard
+SELECT MAX(qgp_date) AS latest_date,
+       MAX(CASE WHEN metric_value IS NOT NULL THEN qgp_date END) AS latest_with_data
+FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+WHERE data_source = 'QGP_SCORECARD';
