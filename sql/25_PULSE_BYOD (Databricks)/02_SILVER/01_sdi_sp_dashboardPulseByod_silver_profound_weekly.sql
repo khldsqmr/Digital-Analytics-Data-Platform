@@ -1,14 +1,14 @@
 /* =================================================================================================
-FILE:         01_sdi_sp_pulseByod_silver_profound_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_silver_profound_weekly.sql
 LAYER:        Silver View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_profound_weekly
 
 SOURCE:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profound_weekly
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly
 
 PURPOSE:
   Silver view for Profound NON-BRANDED AI visibility data.
@@ -97,7 +97,7 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_silver_profound_weekly()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profound_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -105,7 +105,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly
   USING DELTA
   AS
 
@@ -120,7 +120,7 @@ WITH vis_filtered AS (
         executions,
         mentions_count,
         share_of_voice
-    FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profound_weekly
     WHERE source_type = 'VIS'
       AND tag         = 'BYOD'
       AND asset_name IN ('T-Mobile', 'Verizon', 'AT&T')
@@ -139,7 +139,7 @@ cit_filtered AS (
             WHEN 'att.com'      THEN 'AT&T'
         END                                         AS asset_name,
         share_of_voice
-    FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profound_weekly
     WHERE source_type  = 'CIT'
       AND tag          = 'BYOD'
       AND root_domain IN ('t-mobile.com', 'verizon.com', 'att.com')

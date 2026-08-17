@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         05_sdi_sp_pulseByod_bronze_googleTrends_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_bronze_googleTrends_weekly.sql
 LAYER:        Bronze View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_bronze_googleTrends_weekly
@@ -8,7 +8,7 @@ SOURCE:
   prd_dbi_analytics.improvado.sdi_seo_googletrends_byod_weekly_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_googleTrends_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_googleTrends_weekly
 
 PURPOSE:
   Source-close Bronze view for Google Trends BYOD weekly search interest data.
@@ -61,7 +61,7 @@ Not referenced by any Silver or Gold object in this pipeline while commented out
 ================================================================================================= */
 /*
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_googleTrends_weekly()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_googleTrends_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -69,7 +69,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_googleTrends_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_googleTrends_weekly
   USING DELTA
   AS
 

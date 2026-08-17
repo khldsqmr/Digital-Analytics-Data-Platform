@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE:         00_sdi_sp_pulseByod_call_all_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_call_all_weekly.sql
 LAYER:        Orchestrator (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-PROCEDURE:    sdi_sp_pulseByod_call_all_weekly
+PROCEDURE:    sdi_sp_dashboardPulseByod_call_all_weekly
 
 PURPOSE:
   Runs the full pulseByod pipeline end to end, in dependency order:
@@ -23,36 +23,36 @@ PURPOSE:
   (no incremental/MERGE logic), so this orchestrator can simply be re-run in full each time.
 
 USAGE:
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_call_all_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_call_all_weekly();
 ================================================================================================= */
 
-CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_call_all_weekly()
-LANGUAGE SQL
-SQL SECURITY INVOKER
-MODIFIES SQL DATA
-AS
-BEGIN
+-- CREATE OR REPLACE PROCEDURE
+-- prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_call_all_weekly()
+-- LANGUAGE SQL
+-- SQL SECURITY INVOKER
+-- MODIFIES SQL DATA
+-- AS
+-- BEGIN
 
   -- ================================================================ EXTERNAL DEPENDENCY
-  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly();
+  -- CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly();
 
   -- ================================================================ BRONZE (2 active)
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_profound_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_profoundGofish_weekly();
-  -- CALL prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_sa360Adgroup_daily();     -- commented out in its own file
-  -- CALL prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_gscQuery_daily();        -- commented out in its own file
-  -- CALL prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_googleTrends_weekly();   -- commented out in its own file
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_profound_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_profoundGofish_weekly();
+  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_sa360Adgroup_daily();     -- commented out in its own file
+  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_gscQuery_daily();        -- commented out in its own file
+  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_googleTrends_weekly();   -- commented out in its own file
 
   -- ================================================================ SILVER (5 active)
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_silver_profound_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_silver_profoundGofish_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_silver_adobe_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_silver_adobeByodEntryPages_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_silver_adobeByodOutcomes_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profound_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profoundGofish_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobe_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobeByodEntryPages_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobeByodOutcomes_weekly();
 
   -- ================================================================ GOLD (2)
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_gold_unified_wide();
-  CALL prdrzranalytics.lab42.sdi_sp_pulseByod_gold_unified_long();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_gold_unified_wide();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_gold_unified_long();
 
-END;
+-- END;

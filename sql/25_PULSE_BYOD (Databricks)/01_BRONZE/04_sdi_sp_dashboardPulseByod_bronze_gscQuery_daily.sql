@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         04_sdi_sp_pulseByod_bronze_gscQuery_daily.sql
+FILE:         sdi_sp_dashboardPulseByod_bronze_gscQuery_daily.sql
 LAYER:        Bronze View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_bronze_gscQuery_daily
@@ -8,7 +8,7 @@ SOURCE:
   prd_dbi_analytics.improvado.google_search_console_query_search_type_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_gscQuery_daily
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gscQuery_daily
 
 PURPOSE:
   Source-close Bronze view for Google Search Console query-level organic search data.
@@ -61,7 +61,7 @@ Not referenced by any Silver or Gold object in this pipeline while commented out
 ================================================================================================= */
 /*
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_gscQuery_daily()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_gscQuery_daily()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -69,7 +69,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_gscQuery_daily
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gscQuery_daily
   USING DELTA
   AS
 

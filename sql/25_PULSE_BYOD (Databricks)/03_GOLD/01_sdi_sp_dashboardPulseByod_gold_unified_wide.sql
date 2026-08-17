@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE:         01_sdi_sp_pulseByod_gold_unified_wide.sql
+FILE:         sdi_sp_dashboardPulseByod_gold_unified_wide.sql
 LAYER:        Gold Table — Wide (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-TABLE:        sdi_tbl_pulseByod_gold_unified_wide
-PROCEDURE:    sdi_sp_pulseByod_gold_unified_wide
+TABLE:        sdi_tbl_dashboardPulseByod_gold_unified_wide
+PROCEDURE:    sdi_sp_dashboardPulseByod_gold_unified_wide
 
 PURPOSE:
   Gold Wide table. One row per week, all metrics from all sources as columns.
@@ -12,16 +12,16 @@ PURPOSE:
   Gold Long (used by dashboard) reads Silver directly.
 
 SOURCES (active):
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly              (p)
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly       (g)
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly                 (ab)
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodEntryPages_weekly  (aep)
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodOutcomes_weekly    (ao)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly              (p)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly       (g)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly                 (ab)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly  (aep)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly    (ao)
 
 SOURCES (commented out — pending sa360/gsc/googleTrends Silver, not yet provided):
-  sdi_tbl_pulseByod_silver_sa360_weekly       (sa)
-  sdi_tbl_pulseByod_silver_gsc_weekly         (gsc)
-  sdi_tbl_pulseByod_silver_googleTrends_weekly (t)
+  sdi_tbl_dashboardPulseByod_silver_sa360_weekly       (sa)
+  sdi_tbl_dashboardPulseByod_silver_gsc_weekly         (gsc)
+  sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly (t)
   All SA360/GSC/TRENDS columns and their FULL OUTER JOINs are commented out below.
   Uncomment once those three Silver objects are built and re-add them to the FROM/JOIN
   chain and the top-level week_sun_to_sat COALESCE.
@@ -30,7 +30,7 @@ DOWNSTREAM: none (Gold Wide is a terminal ad-hoc/export table)
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_gold_unified_wide()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_gold_unified_wide()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -38,7 +38,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_gold_unified_wide
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_wide
   USING DELTA
   AS
 
@@ -284,18 +284,18 @@ BEGIN
     ao.adobe_byodBouncersVisitors_other, ao.adobe_byodBouncersVisitors_other_wow, ao.adobe_byodBouncersVisitors_other_ly, ao.adobe_byodBouncersVisitors_other_wow_pct, ao.adobe_byodBouncersVisitors_other_yoy_pct,
     ao.adobe_byodOrders_other, ao.adobe_byodOrders_other_wow, ao.adobe_byodOrders_other_ly, ao.adobe_byodOrders_other_wow_pct, ao.adobe_byodOrders_other_yoy_pct
 
-  FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly p
-  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly g
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly p
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly g
     ON p.week_sun_to_sat = g.week_sun_to_sat
-  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly ab
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly ab
     ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat) = ab.week_sun_to_sat
-  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodEntryPages_weekly aep
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly aep
     ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, ab.week_sun_to_sat) = aep.week_sun_to_sat
-  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodOutcomes_weekly ao
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly ao
     ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat) = ao.week_sun_to_sat
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_sa360_weekly sa ON ...          -- re-add once Silver sa360 exists
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_gsc_weekly gsc ON ...            -- re-add once Silver gsc exists
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly t ON ...     -- re-add once Silver googleTrends exists
+  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_sa360_weekly sa ON ...          -- re-add once Silver sa360 exists
+  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly gsc ON ...            -- re-add once Silver gsc exists
+  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly t ON ...     -- re-add once Silver googleTrends exists
 
   ORDER BY week_sun_to_sat ASC
   ;

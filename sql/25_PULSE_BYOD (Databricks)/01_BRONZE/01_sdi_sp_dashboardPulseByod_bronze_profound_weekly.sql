@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         01_sdi_sp_pulseByod_bronze_profound_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_bronze_profound_weekly.sql
 LAYER:        Bronze View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_bronze_profound_weekly
@@ -9,7 +9,7 @@ SOURCES:
   prd_dbi_analytics.improvado.sdi_seo_profound_cit_tag_weekly_sunday_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profound_weekly
 
 PURPOSE:
   Source-close Bronze view for Profound NON-BRANDED AI visibility data.
@@ -64,7 +64,7 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_profound_weekly()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_profound_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -72,7 +72,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profound_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profound_weekly
   USING DELTA
   AS
 

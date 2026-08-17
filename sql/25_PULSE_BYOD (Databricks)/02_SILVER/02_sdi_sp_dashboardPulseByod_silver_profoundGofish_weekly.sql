@@ -1,14 +1,14 @@
 /* =================================================================================================
-FILE:         02_sdi_sp_pulseByod_silver_profoundGofish_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_silver_profoundGofish_weekly.sql
 LAYER:        Silver View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_profoundGofish_weekly
 
 SOURCE:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profoundGofish_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profoundGofish_weekly
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly
 
 PURPOSE:
   Silver view for Profound GoFish BRANDED AI visibility data.
@@ -62,7 +62,7 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_silver_profoundGofish_weekly()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profoundGofish_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -70,7 +70,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly
   USING DELTA
   AS
 
@@ -82,7 +82,7 @@ WITH filtered AS (
         executions,
         mentions_count,
         share_of_voice
-    FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_profoundGofish_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_profoundGofish_weekly
     WHERE tag        = 'BYOD'
       AND asset_name IN ('T-Mobile', 'Verizon', 'AT&T')
 ),

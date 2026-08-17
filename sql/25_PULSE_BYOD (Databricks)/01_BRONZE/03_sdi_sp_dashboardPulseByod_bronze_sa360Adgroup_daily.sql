@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         03_sdi_sp_pulseByod_bronze_sa360Adgroup_daily.sql
+FILE:         sdi_sp_dashboardPulseByod_bronze_sa360Adgroup_daily.sql
 LAYER:        Bronze View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_bronze_sa360Adgroup_daily
@@ -8,7 +8,7 @@ SOURCE:
   prd_dbi_analytics.improvado.sdi_ps_sa360_adgroup_daily_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_sa360Adgroup_daily
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_sa360Adgroup_daily
 
 PURPOSE:
   Source-close Bronze view for SA360 paid search performance at ad group level.
@@ -58,7 +58,7 @@ Not referenced by any Silver or Gold object in this pipeline while commented out
 ================================================================================================= */
 /*
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_bronze_sa360Adgroup_daily()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_sa360Adgroup_daily()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -66,7 +66,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_bronze_sa360Adgroup_daily
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_sa360Adgroup_daily
   USING DELTA
   AS
 

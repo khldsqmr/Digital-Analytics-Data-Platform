@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         06_sdi_sp_pulseByod_silver_adobe_weekly.sql
+FILE:         sdi_sp_dashboardPulseByod_silver_adobe_weekly.sql
 LAYER:        Silver View
 DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_adobe_weekly
@@ -8,7 +8,7 @@ SOURCE:
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly
 
 PURPOSE:
   Silver view for Adobe Analytics BYOD metrics.
@@ -61,7 +61,7 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_silver_adobe_weekly()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobe_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -69,7 +69,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly
   USING DELTA
   AS
 

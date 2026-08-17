@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE:         02_sdi_sp_pulseByod_gold_unified_long.sql
+FILE:         sdi_sp_dashboardPulseByod_gold_unified_long.sql
 LAYER:        Gold Table — Long (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-TABLE:        sdi_tbl_pulseByod_gold_unified_long
-PROCEDURE:    sdi_sp_pulseByod_gold_unified_long
+TABLE:        sdi_tbl_dashboardPulseByod_gold_unified_long
+PROCEDURE:    sdi_sp_dashboardPulseByod_gold_unified_long
 
 PURPOSE:
   Gold Long table for the Pulse BYOD dashboard.
@@ -21,7 +21,7 @@ DOWNSTREAM: Pulse BYOD dashboard (reads this table directly)
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_pulseByod_gold_unified_long()
+prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_gold_unified_long()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -29,7 +29,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_pulseByod_gold_unified_long
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
   USING DELTA
   AS
 
@@ -40,7 +40,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   profound_long AS (
       SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profound_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -68,7 +68,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   gofish_long AS (
       SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_profoundGofish_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -93,7 +93,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   sa360_long AS (
       SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_sa360_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_sa360_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -118,7 +118,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   gsc_long AS (
       SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_gsc_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -135,7 +135,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   trends_index_long AS (
       SELECT week_sun_to_sat, data_source, channel, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -148,16 +148,16 @@ BEGIN
   -- TRENDS: Keywords — up to 10 rows/week — COMMENTED OUT (Silver not yet built)
   -- -----------------------------------------------------------------------
   trends_keywords_long AS (
-      SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_1' AS dimension_name, trends_top_kw_1 AS dimension_value, 'trends_kw_interest' AS metric_name, trends_kw1_interest AS metric_value, CAST(NULL AS DOUBLE) AS metric_value_wow, CAST(NULL AS DOUBLE) AS metric_value_ly, CAST(NULL AS DOUBLE) AS wow_pct, CAST(NULL AS DOUBLE) AS yoy_pct FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_1', trends_top_kw_1, 'trends_kw_change', trends_kw1_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_2', trends_top_kw_2, 'trends_kw_interest', trends_kw2_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_2', trends_top_kw_2, 'trends_kw_change', trends_kw2_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_3', trends_top_kw_3, 'trends_kw_interest', trends_kw3_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_3', trends_top_kw_3, 'trends_kw_change', trends_kw3_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_4', trends_top_kw_4, 'trends_kw_interest', trends_kw4_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_4', trends_top_kw_4, 'trends_kw_change', trends_kw4_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_5', trends_top_kw_5, 'trends_kw_interest', trends_kw5_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
-      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_5', trends_top_kw_5, 'trends_kw_change', trends_kw5_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
+      SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_1' AS dimension_name, trends_top_kw_1 AS dimension_value, 'trends_kw_interest' AS metric_name, trends_kw1_interest AS metric_value, CAST(NULL AS DOUBLE) AS metric_value_wow, CAST(NULL AS DOUBLE) AS metric_value_ly, CAST(NULL AS DOUBLE) AS wow_pct, CAST(NULL AS DOUBLE) AS yoy_pct FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_1', trends_top_kw_1, 'trends_kw_change', trends_kw1_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_1), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_2', trends_top_kw_2, 'trends_kw_interest', trends_kw2_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_2', trends_top_kw_2, 'trends_kw_change', trends_kw2_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_2), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_3', trends_top_kw_3, 'trends_kw_interest', trends_kw3_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_3', trends_top_kw_3, 'trends_kw_change', trends_kw3_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_3), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_4', trends_top_kw_4, 'trends_kw_interest', trends_kw4_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_4', trends_top_kw_4, 'trends_kw_change', trends_kw4_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_4), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_5', trends_top_kw_5, 'trends_kw_interest', trends_kw5_interest, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
+      UNION ALL SELECT week_sun_to_sat, data_source, channel, max_data_date, 'KEYWORD_RANK_5', trends_top_kw_5, 'trends_kw_change', trends_kw5_change, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly WHERE NULLIF(TRIM(trends_top_kw_5), '') IS NOT NULL
   ),
   ================================================================ */
 
@@ -166,7 +166,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   adobe_long AS (
       SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobe_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -228,7 +228,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   entryPages_long AS (
       SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodEntryPages_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
@@ -304,7 +304,7 @@ BEGIN
   -- -----------------------------------------------------------------------
   outcomes_long AS (
       SELECT week_sun_to_sat, data_source, max_data_date, metric_name, metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct
-      FROM prdrzranalytics.lab42.sdi_tbl_pulseByod_silver_adobeByodOutcomes_weekly
+      FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly
       UNPIVOT (
           (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct)
           FOR metric_name IN (
