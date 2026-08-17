@@ -93,3 +93,14 @@ week_ending	metric_id	metric_type	page	amount	insert_datetime
 2026-08-15	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	null	-
 2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	null	-
 2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	null	-
+
+
+SELECT
+  WeekEnding, MetricID, MetricType, Page, Amount, InsertDateTime, PublishKey
+FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly
+WHERE UPPER(TRIM(MetricID)) IN (
+  UPPER('ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital'),
+  UPPER('ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital')
+)
+AND WeekEnding IN ('2026-08-08', '2026-08-15')
+ORDER BY WeekEnding, MetricID, Page, InsertDateTime DESC;
