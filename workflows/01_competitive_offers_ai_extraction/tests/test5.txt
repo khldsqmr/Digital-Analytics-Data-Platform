@@ -2,22 +2,36 @@
 SELECT MAX(InsertDateTime) AS latest_insert, MAX(WeekEnding) AS latest_week
 FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
 WHERE DateContext = 'Normal';
+output:
+latest_insert	latest_week
+2026-08-17T12:40:47.627+00:00	2026-09-30
 
 -- 2. Archive Bronze — did the archive's MERGE pick it up?
 SELECT MAX(InsertDateTime) AS latest_insert, MAX(WeekEnding) AS latest_week
 FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly;
+output:
+latest_insert	latest_week
+2026-08-17T12:40:47.627+00:00	2026-09-30
 
 -- 3. Archive Gold — matches what you already checked
-SELECT MAX(WeekEnding) AS latest_week
+SELECT MAX(week_ending) AS latest_week
 FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_gold_curated_weekly
-WHERE DateContext = 'Normal';
+WHERE Date_context = 'Normal';
+output:
+2026-09-30
 
 -- 4. PulseTMS's OWN QGP Bronze — reads FROM the archive; is it keeping up with it?
-SELECT MAX(qgp_date) AS latest_date
+SELECT MAX(week_ending) AS latest_date
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly;
+
+output:
+2026-09-30
 
 -- 5. The actual Gold output you'd see on a dashboard
 SELECT MAX(qgp_date) AS latest_date,
        MAX(CASE WHEN metric_value IS NOT NULL THEN qgp_date END) AS latest_with_data
 FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
 WHERE data_source = 'QGP_SCORECARD';
+output:
+latest_date	latest_with_data
+2026-09-30	2026-09-30
