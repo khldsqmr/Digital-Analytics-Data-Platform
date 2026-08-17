@@ -8,3 +8,21 @@ Preserved ChannelGroup = 'ALL'.
 Preserved the weekly deduplication logic.
 Replaced both STRING_AGG expressions with the proven Databricks-compatible ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(...)), ', ').
 Preserved missing values as NULL.
+
+
+
+Set up Databricks architecture, naming taxonomy & deployment structure
+Port Adobe Funnel (Bronze/Silver/Gold)
+Resolve Adobe LOB categorization (Postpaid+Broadband label — BYOD/Metro/TFB pending team input)
+Port MFC Spend (Bronze/Silver/Gold — Channel & Granular grain)
+Port QGP Scorecard (Bronze/Silver/Gold — 10 metrics, fix source-side dedup logic)
+Build QGP Archive pipeline (solve rolling-retention data loss upstream)
+Build Platform Spend (Bronze/Silver/Gold)
+Build UPV Forecast (Bronze/Silver/Gold — channel-allocated via Adobe prior-year ratios)
+Build Biddable Spend (Bronze/Silver/Gold — Programmatic + Paid Social + Paid Search)
+Confirm ignore_tiktok exclusion with team (Biddable Spend)
+Wire all 6 sources into Gold Unified Views (wide + long)
+Build ERD/architecture documentation deck
+Reconcile Biddable Spend numbers against other team's validation deck
+Build Tableau calculated-field reference (weekly + QTD, all sources)
+Verify VR Postpaid Activations metric-name casing against raw source
