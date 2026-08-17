@@ -70,36 +70,92 @@ Adobe BYOD outcomes	adobe_byodVrChatVisitors_{channel}, _CallVisitors, _StoreLoc
 (commented out) SA360, GSC, Trends	sa360_tmo_{brand/nonbrand}_*, gsc_tmo_{brand/nonbrand}_*, trends_byod_index, trends_top_kw_{1-5}	tmo only
 
 
-
 • Adobe Funnel — port 11 Bronze/Silver objects and the Gold flow-performance object to Databricks stored procedures; build the orchestrator.
 
-• Adobe Funnel standardization — rename UVNB to UPV, standardize naming and target catalog (prdrzranalytics.lab42), and apply Databricks stored-procedure standards across all layers: remove backticks, add USING DELTA and SQL SECURITY INVOKER, replace STRING_AGG with ARRAY_JOIN/SORT_ARRAY/COLLECT_SET, and use Title Case channel groups.
+• Adobe Funnel standardization — rename `UVNB` to `UPV`, standardize naming and the target catalog (`prdrzranalytics.lab42`), and apply Databricks stored-procedure standards across all layers: remove identifier backticks from SQL object definitions, add `USING DELTA` and `SQL SECURITY INVOKER`, replace `STRING_AGG` with `ARRAY_JOIN`/`SORT_ARRAY`/`COLLECT_SET`, and use Title Case channel groups.
 
-• Adobe Funnel source of truth — create sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly as the dashboard-ready Gold table, with one row per WeekSunSat + ChannelGroup and PascalCase metric columns:
-  - UPV: UpvTotalAdobe, UpvPostpaid, UpvHsi, UpvByod, UpvTrackedFlowSum, UpvFlowTotal
-  - Cart Starts: CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
-  - Orders: OrdersTotal
-  - Unassisted Orders: OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
-  - Assisted Orders: OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
-  - BYOD Entry Visitors: ByodUpvVisitors
-  - BYOD Entry Pages: ByodEntryByodPageVisitors, ByodEntryHomePageVisitors, ByodEntryDevicePageVisitors, ByodEntryPlansPageVisitors, ByodEntryOtherPageVisitors, ByodEntryStorePageVisitors, ByodEntryByodLandingPageVisitors, ByodEntryOffersSwitchVisitors
-  - BYOD Outcomes: ByodVrChatVisitors, ByodCallVisitors, ByodStoreLocatorVisitors, ByodInternalTmoVisitors, ByodBouncersVisitors, ByodOrders
-
-• PulseByod — port 5 Bronze and 5 Silver objects; port Gold Unified Wide/Long; build the orchestrator chained after the Adobe Funnel orchestrator.
-
-• PulseByod source of truth — create sdi_tbl_pulseByod_gold_unified_wide and sdi_tbl_pulseByod_gold_unified_long as the dashboard-ready Gold tables using lowerCamelCase and the source_asset/channel_metric naming pattern:
-  - Wide: one column per base metric, with corresponding _wow, _ly, _wow_pct, and _yoy_pct variants.
-  - Long: one row per metric_name, with values stored in metric_value, metric_value_wow, metric_value_ly, wow_pct, and yoy_pct.
+• Adobe Funnel source of truth — create `sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly` as the dashboard-ready Gold table, using PascalCase metric columns and one row per `WeekSunSat` + `ChannelGroup`.
 
   Actual metrics included:
-  - Profound non-brand: profoundVis_{asset}_nonbrand_visibilityScore, profoundVis_{asset}_nonbrand_executions, profoundVis_{asset}_nonbrand_mentionsCount, profoundVis_{asset}_nonbrand_shareOfVoice, and profoundCit_{asset}_nonbrand_shareOfVoice for tmo, verizon, and att.
-  - GoFish brand: gofish_{asset}_brand_visibilityScore, gofish_{asset}_brand_executions, gofish_{asset}_brand_mentionsCount, and gofish_{asset}_brand_shareOfVoice for tmo, verizon, and att.
-  - Adobe: adobe_upvByod_{channel}, adobe_upvTotal_allChannels, adobe_upvFlowTotal_allChannels, adobe_pctUpvByodOfUpvFlow_allChannels, adobe_pctUpvByodOfTotal_{channel}, adobe_cartStartByod_{channel}, adobe_ordersUnassistedByod_{channel}, adobe_ordersAssistedByod_{channel}, adobe_ordersTotalByod_{channel}, adobe_ordersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_cvrByod_allChannels, adobe_cvrSite_allChannels, adobe_cvrPostpaid_allChannels, and adobe_cvrHsi_allChannels.
-  - Adobe BYOD entry pages: adobe_byodUpvVisitors_{channel}, adobe_byodEntryByodPageVisitors_{channel}, adobe_byodEntryHomePageVisitors_{channel}, adobe_byodEntryDevicePageVisitors_{channel}, adobe_byodEntryPlansPageVisitors_{channel}, adobe_byodEntryOtherPageVisitors_{channel}, adobe_byodEntryGetStartedLandingPageVisitors_{channel}, adobe_byodEntryByodLandingPageVisitors_{channel}, and adobe_byodEntryOffersSwitchVisitors_{channel}.
-  - Adobe BYOD outcomes: adobe_byodVrChatVisitors_{channel}, adobe_byodCallVisitors_{channel}, adobe_byodStoreLocatorVisitors_{channel}, adobe_byodInternalTmoVisitors_{channel}, adobe_byodBouncersVisitors_{channel}, and adobe_byodOrders_{channel}.
-  - Adobe channel values: allChannels, paidSearch, organicSearch, direct, social, programmatic, and other.
+  - UPV: `UpvTotalAdobe`, `UpvPostpaid`, `UpvHsi`, `UpvByod`, `UpvTrackedFlowSum`, `UpvFlowTotal`
+  - Cart Starts: `CartstartTotal`, `CartstartPostpaid`, `CartstartHsi`, `CartstartByod`, `CartstartTrackedFlowSum`
+  - Orders: `OrdersTotal`
+  - Unassisted Orders: `OrdersUnassistedTotal`, `OrdersUnassistedPostpaid`, `OrdersUnassistedHsi`, `OrdersUnassistedByod`
+  - Assisted Orders: `OrdersAssistedTotal`, `OrdersAssistedPostpaid`, `OrdersAssistedHsi`, `OrdersAssistedByod`
+  - BYOD Entry Visitors: `ByodUpvVisitors`
+  - BYOD Entry Pages: `ByodEntryByodPageVisitors`, `ByodEntryHomePageVisitors`, `ByodEntryDevicePageVisitors`, `ByodEntryPlansPageVisitors`, `ByodEntryOtherPageVisitors`, `ByodEntryStorePageVisitors`, `ByodEntryByodLandingPageVisitors`, `ByodEntryOffersSwitchVisitors`
+  - BYOD Outcomes: `ByodVrChatVisitors`, `ByodCallVisitors`, `ByodStoreLocatorVisitors`, `ByodInternalTmoVisitors`, `ByodBouncersVisitors`, `ByodOrders`
 
-• Follow-up — confirm the SA360, GSC, and Google Trends Databricks source tables; build their Silver objects and reactivate the currently commented Gold sections:
-  - SA360: sa360_tmo_{brand/nonbrand}_*
-  - GSC: gsc_tmo_{brand/nonbrand}_*
-  - Google Trends: trends_byod_index and trends_top_kw_{1-5}
+• PulseByod — port 5 Bronze and 5 Silver objects; port the Gold Unified Wide and Unified Long objects; build the orchestrator chained after the Adobe Funnel orchestrator.
+
+• PulseByod source of truth — create `sdi_tbl_pulseByod_gold_unified_wide` and `sdi_tbl_pulseByod_gold_unified_long` as the dashboard-ready Gold tables, using lowerCamelCase and the `source_asset/channel_metric` naming pattern.
+
+  Table structures:
+  - Wide: one column per base metric, with corresponding `_wow`, `_ly`, `_wow_pct`, and `_yoy_pct` variants.
+  - Long: one row per `metric_name`, with values represented by `metric_value`, `metric_value_wow`, `metric_value_ly`, `wow_pct`, and `yoy_pct`.
+
+  Actual metrics included:
+  - Profound non-brand:
+    - `profoundVis_{asset}_nonbrand_visibilityScore`
+    - `profoundVis_{asset}_nonbrand_executions`
+    - `profoundVis_{asset}_nonbrand_mentionsCount`
+    - `profoundVis_{asset}_nonbrand_shareOfVoice`
+    - `profoundCit_{asset}_nonbrand_shareOfVoice`
+    - Asset values: `tmo`, `verizon`, `att`
+
+  - GoFish brand:
+    - `gofish_{asset}_brand_visibilityScore`
+    - `gofish_{asset}_brand_executions`
+    - `gofish_{asset}_brand_mentionsCount`
+    - `gofish_{asset}_brand_shareOfVoice`
+    - Asset values: `tmo`, `verizon`, `att`
+
+  - Adobe:
+    - `adobe_upvByod_{channel}`
+    - `adobe_upvTotal_allChannels`
+    - `adobe_upvFlowTotal_allChannels`
+    - `adobe_pctUpvByodOfUpvFlow_allChannels`
+    - `adobe_pctUpvByodOfTotal_{channel}`
+    - `adobe_cartStartByod_{channel}`
+    - `adobe_ordersUnassistedByod_{channel}`
+    - `adobe_ordersAssistedByod_{channel}`
+    - `adobe_ordersTotalByod_{channel}`
+    - `adobe_ordersTotal_allChannels`
+    - `adobe_pctOrdersByodOfOrdersTotal_allChannels`
+    - `adobe_cvrByod_allChannels`
+    - `adobe_cvrSite_allChannels`
+    - `adobe_cvrPostpaid_allChannels`
+    - `adobe_cvrHsi_allChannels`
+
+  - Adobe BYOD entry pages:
+    - `adobe_byodUpvVisitors_{channel}`
+    - `adobe_byodEntryByodPageVisitors_{channel}`
+    - `adobe_byodEntryHomePageVisitors_{channel}`
+    - `adobe_byodEntryDevicePageVisitors_{channel}`
+    - `adobe_byodEntryPlansPageVisitors_{channel}`
+    - `adobe_byodEntryOtherPageVisitors_{channel}`
+    - `adobe_byodEntryGetStartedLandingPageVisitors_{channel}`
+    - `adobe_byodEntryByodLandingPageVisitors_{channel}`
+    - `adobe_byodEntryOffersSwitchVisitors_{channel}`
+
+  - Adobe BYOD outcomes:
+    - `adobe_byodVrChatVisitors_{channel}`
+    - `adobe_byodCallVisitors_{channel}`
+    - `adobe_byodStoreLocatorVisitors_{channel}`
+    - `adobe_byodInternalTmoVisitors_{channel}`
+    - `adobe_byodBouncersVisitors_{channel}`
+    - `adobe_byodOrders_{channel}`
+
+  - Adobe channel values:
+    - `allChannels`
+    - `paidSearch`
+    - `organicSearch`
+    - `direct`
+    - `social`
+    - `programmatic`
+    - `other`
+
+• Follow-up — confirm the SA360, GSC, and Google Trends Databricks source tables; build their Silver objects and reactivate the currently commented Bronze/Gold sections:
+  - SA360: `sa360_tmo_{brand/nonbrand}_*`
+  - GSC: `gsc_tmo_{brand/nonbrand}_*`
+  - Google Trends: `trends_byod_index` and `trends_top_kw_{1-5}`
