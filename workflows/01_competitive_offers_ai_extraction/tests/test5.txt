@@ -71,3 +71,14 @@ Activation	2026-01-24	Actuals	10615
 Activation	2026-01-17	Actuals	12768
 Activation	2026-01-10	Actuals	12808
 Activation	2026-01-03	Actuals	5735
+
+
+SELECT
+  week_ending, metric_id, metric_type, page, amount, insert_datetime
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly
+WHERE UPPER(metric_id) IN (
+  UPPER('ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital'),
+  UPPER('ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital')
+)
+AND week_ending IN ('2026-08-08', '2026-08-15')
+ORDER BY week_ending, metric_id, page;
