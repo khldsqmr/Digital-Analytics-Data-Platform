@@ -39,3 +39,32 @@ PulseByod Silver — port 5 objects (Profound, GoFish, Adobe, Adobe BYOD Entry P
 PulseByod Gold — port Unified Wide + Unified Long, SA360/GSC/Trends sections commented out pending source confirmation
 PulseByod — build orchestrator (chained after Adobe Funnel orchestrator)
 Follow-up — confirm SA360/GSC/Google Trends Databricks source tables, build their Silver layer, reactivate in Bronze/Gold
+
+
+
+
+Adobe Funnel Gold — sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
+Casing: PascalCase, one row per WeekSunSat + ChannelGroup
+
+Metric	Column name
+UPV total	UpvTotalAdobe
+UPV postpaid / HSI / BYOD	UpvPostpaid, UpvHsi, UpvByod
+UPV tracked flow sum / flow total	UpvTrackedFlowSum, UpvFlowTotal
+Cartstart total/postpaid/HSI/BYOD	CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
+Orders total	OrdersTotal
+Orders unassisted	OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
+Orders assisted	OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
+BYOD entry visitors	ByodUpvVisitors
+BYOD entry pages (8)	ByodEntryByodPageVisitors, ByodEntryHomePageVisitors, ByodEntryDevicePageVisitors, ByodEntryPlansPageVisitors, ByodEntryOtherPageVisitors, ByodEntryStorePageVisitors, ByodEntryByodLandingPageVisitors, ByodEntryOffersSwitchVisitors
+BYOD outcomes	ByodVrChatVisitors, ByodCallVisitors, ByodStoreLocatorVisitors, ByodInternalTmoVisitors, ByodBouncersVisitors, ByodOrders
+
+PulseByod Gold — sdi_tbl_pulseByod_gold_unified_wide / _long
+Casing: lowerCamelCase, source_asset/channel_metric pattern. Each base name below also has _wow, _ly, _wow_pct, _yoy_pct variants in Wide; in Long these are separate columns (metric_value, metric_value_wow, metric_value_ly, wow_pct, yoy_pct) per metric_name row.
+
+Source	Column pattern	{asset} / {channel} values
+Profound (non-brand)	profoundVis_{asset}_nonbrand_visibilityScore, _executions, _mentionsCount, _shareOfVoice; profoundCit_{asset}_nonbrand_shareOfVoice	tmo, verizon, att
+GoFish (brand)	gofish_{asset}_brand_visibilityScore, _executions, _mentionsCount, _shareOfVoice	tmo, verizon, att
+Adobe	adobe_upvByod_{channel}, adobe_upvTotal_allChannels, adobe_upvFlowTotal_allChannels, adobe_pctUpvByodOfUpvFlow_allChannels, adobe_pctUpvByodOfTotal_{channel}, adobe_cartStartByod_{channel}, adobe_ordersUnassistedByod_{channel}, adobe_ordersAssistedByod_{channel}, adobe_ordersTotalByod_{channel}, adobe_ordersTotal_allChannels, adobe_pctOrdersByodOfOrdersTotal_allChannels, adobe_cvrByod_allChannels, adobe_cvrSite_allChannels, adobe_cvrPostpaid_allChannels, adobe_cvrHsi_allChannels	allChannels, paidSearch, organicSearch, direct, social, programmatic, other
+Adobe BYOD entry pages	adobe_byodUpvVisitors_{channel}, adobe_byodEntryByodPageVisitors_{channel}, _HomePageVisitors, _DevicePageVisitors, _PlansPageVisitors, _OtherPageVisitors, _GetStartedLandingPageVisitors, _ByodLandingPageVisitors, _OffersSwitchVisitors	same 7 channels
+Adobe BYOD outcomes	adobe_byodVrChatVisitors_{channel}, _CallVisitors, _StoreLocatorVisitors, _InternalTmoVisitors, _BouncersVisitors, adobe_byodOrders_{channel}	same 7 channels
+(commented out) SA360, GSC, Trends	sa360_tmo_{brand/nonbrand}_*, gsc_tmo_{brand/nonbrand}_*, trends_byod_index, trends_top_kw_{1-5}	tmo only
