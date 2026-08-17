@@ -33,13 +33,12 @@ GRAIN:
   'Normal', so it's still selected for clarity/filterability but no longer part of what makes
   a row unique).
 ================================================================================================= */
-
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_qgpArchive_gold_curated_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
-
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_qgpArchive_gold_curated_weekly
   USING DELTA
