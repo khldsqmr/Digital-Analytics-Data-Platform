@@ -7,5 +7,13 @@ WHERE UPPER(TRIM(metric_id)) IN (
 )
 AND week_ending IN ('2026-08-08', '2026-08-15')
 ORDER BY week_ending, metric_id, page;
-
-
+output:
+week_ending	metric_id	metric_type	page	amount	insert_datetime
+2026-08-08	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	3685	2026-08-17T08:39:29.340+00:00
+2026-08-08	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	3685	2026-08-17T08:39:29.340+00:00
+2026-08-08	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	11357	2026-08-17T08:39:29.960+00:00
+2026-08-08	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	11357	2026-08-17T08:39:29.960+00:00
+2026-08-15	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	4304	2026-08-17T08:39:29.340+00:00
+2026-08-15	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	4304	2026-08-17T08:39:29.340+00:00
+2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	11002	2026-08-17T08:39:29.960+00:00
+2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	11002	2026-08-17T08:39:29.960+00:00
