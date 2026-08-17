@@ -6,3 +6,68 @@ FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_gold_curated_weekly
 WHERE Date_context = 'Normal'
 GROUP BY metric_name, metric_type
 ORDER BY metric_name, metric_type;
+
+
+I wrote this query and i found this:
+SELECT
+    'Activation' AS MetricName,
+    WeekEnding,
+    MetricType,
+    SUM(Amount) AS Amount
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE MetricType IN ('QGP', 'Actuals', 'Actuals/Outlook')
+  AND
+   upper(trim(MetricID)) IN (
+        upper(trim('ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital')),
+        upper(trim('ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital'))
+      )
+  AND DateContext = 'Normal'
+  AND Page = 'Digital Transformation NEW'
+GROUP BY
+    WeekEnding,
+    MetricType
+ORDER BY WeekEnding desc;
+output:
+MetricName	WeekEnding	MetricType	Amount
+Activation	2026-09-30	Actuals	null
+Activation	2026-09-26	Actuals	null
+Activation	2026-09-19	Actuals	null
+Activation	2026-09-12	Actuals	null
+Activation	2026-09-05	Actuals	null
+Activation	2026-08-29	Actuals	null
+Activation	2026-08-22	Actuals	null
+Activation	2026-08-15	Actuals	15306
+Activation	2026-08-08	Actuals	15042
+Activation	2026-08-01	Actuals	13877
+Activation	2026-07-25	Actuals	13486
+Activation	2026-07-18	Actuals	13965
+Activation	2026-07-11	Actuals	14600
+Activation	2026-07-04	Actuals	8885
+Activation	2026-06-30	Actuals	7105
+Activation	2026-06-27	Actuals	15801
+Activation	2026-06-20	Actuals	15920
+Activation	2026-06-13	Actuals	14806
+Activation	2026-06-06	Actuals	15207
+Activation	2026-05-30	Actuals	13910
+Activation	2026-05-23	Actuals	6949
+Activation	2026-05-16	Actuals	11637
+Activation	2026-05-09	Actuals	13702
+Activation	2026-05-02	Actuals	15109
+Activation	2026-04-25	Actuals	12518
+Activation	2026-04-18	Actuals	11605
+Activation	2026-04-11	Actuals	11988
+Activation	2026-04-04	Actuals	7607
+Activation	2026-03-31	Actuals	5808
+Activation	2026-03-28	Actuals	12895
+Activation	2026-03-21	Actuals	13092
+Activation	2026-03-14	Actuals	14476
+Activation	2026-03-07	Actuals	15737
+Activation	2026-02-28	Actuals	15494
+Activation	2026-02-21	Actuals	13480
+Activation	2026-02-14	Actuals	10853
+Activation	2026-02-07	Actuals	11272
+Activation	2026-01-31	Actuals	10534
+Activation	2026-01-24	Actuals	10615
+Activation	2026-01-17	Actuals	12768
+Activation	2026-01-10	Actuals	12808
+Activation	2026-01-03	Actuals	5735
