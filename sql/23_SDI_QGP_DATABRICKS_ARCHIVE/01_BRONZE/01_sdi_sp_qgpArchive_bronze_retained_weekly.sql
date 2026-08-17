@@ -78,6 +78,7 @@ SCHEDULING DEPENDENCY:
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_qgpArchive_bronze_retained_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
 
