@@ -1,1 +1,4 @@
-[PARSE_SYNTAX_ERROR] Syntax error at or near ''profoundVis_tmo_nonbrand_visibilityScore'': extra input ''profoundVis_tmo_nonbrand_visibilityScore''. SQLSTATE: 42601
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `raw`.`__insert_date` cannot be resolved. Did you mean one of the following? [`raw`.`insert_date`, `raw`.`Filename`, `raw`.`account_name`, `raw`.`date`, `raw`.`kw1_interest`]. SQLSTATE: 42703
+== SQL (line 2352, position 18) ==
+        TRY_CAST(raw.__insert_date AS BIGINT)                     ...
+                 ^^^^^^^^^^^^^^^^^
