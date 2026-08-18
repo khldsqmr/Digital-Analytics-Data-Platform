@@ -43,8 +43,7 @@ BEGIN
   AS
 
   SELECT
-    COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat, ao.week_sun_to_sat) AS week_sun_to_sat,
-    -- COALESCE( ... , sa.week_sun_to_sat, gsc.week_sun_to_sat, ..., t.week_sun_to_sat, ...)  -- re-add sa/gsc/t once active
+    COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat, gsc.week_sun_to_sat, t.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat, ao.week_sun_to_sat) AS week_sun_to_sat,
     'WEEKLY' AS time_granularity,
 
     -- ================================================================ PROFOUND
@@ -80,7 +79,7 @@ BEGIN
     g.gofish_att_brand_mentionsCount, g.gofish_att_brand_mentionsCount_wow, g.gofish_att_brand_mentionsCount_ly, g.gofish_att_brand_mentionsCount_wow_pct, g.gofish_att_brand_mentionsCount_yoy_pct,
     g.gofish_att_brand_shareOfVoice, g.gofish_att_brand_shareOfVoice_wow, g.gofish_att_brand_shareOfVoice_ly, g.gofish_att_brand_shareOfVoice_wow_pct, g.gofish_att_brand_shareOfVoice_yoy_pct,
 
-    /* ================================================================ SA360 — COMMENTED OUT (Silver not yet built)
+    -- ================================================================ SA360
     sa.max_data_date AS sa360_max_data_date,
     sa.sa360_tmo_brand_impressions, sa.sa360_tmo_brand_impressions_wow, sa.sa360_tmo_brand_impressions_ly, sa.sa360_tmo_brand_impressions_wow_pct, sa.sa360_tmo_brand_impressions_yoy_pct,
     sa.sa360_tmo_brand_clicks, sa.sa360_tmo_brand_clicks_wow, sa.sa360_tmo_brand_clicks_ly, sa.sa360_tmo_brand_clicks_wow_pct, sa.sa360_tmo_brand_clicks_yoy_pct,
@@ -94,17 +93,15 @@ BEGIN
     sa.sa360_tmo_nonbrand_orders, sa.sa360_tmo_nonbrand_orders_wow, sa.sa360_tmo_nonbrand_orders_ly, sa.sa360_tmo_nonbrand_orders_wow_pct, sa.sa360_tmo_nonbrand_orders_yoy_pct,
     sa.sa360_tmo_nonbrand_cart_start, sa.sa360_tmo_nonbrand_cart_start_wow, sa.sa360_tmo_nonbrand_cart_start_ly, sa.sa360_tmo_nonbrand_cart_start_wow_pct, sa.sa360_tmo_nonbrand_cart_start_yoy_pct,
     sa.sa360_tmo_nonbrand_postpaid_pspv, sa.sa360_tmo_nonbrand_postpaid_pspv_wow, sa.sa360_tmo_nonbrand_postpaid_pspv_ly, sa.sa360_tmo_nonbrand_postpaid_pspv_wow_pct, sa.sa360_tmo_nonbrand_postpaid_pspv_yoy_pct,
-    ================================================================ */
 
-    /* ================================================================ GSC — COMMENTED OUT (Silver not yet built)
+    -- ================================================================ GSC
     gsc.max_data_date AS gsc_max_data_date,
     gsc.gsc_tmo_brand_impressions, gsc.gsc_tmo_brand_impressions_wow, gsc.gsc_tmo_brand_impressions_ly, gsc.gsc_tmo_brand_impressions_wow_pct, gsc.gsc_tmo_brand_impressions_yoy_pct,
     gsc.gsc_tmo_brand_clicks, gsc.gsc_tmo_brand_clicks_wow, gsc.gsc_tmo_brand_clicks_ly, gsc.gsc_tmo_brand_clicks_wow_pct, gsc.gsc_tmo_brand_clicks_yoy_pct,
     gsc.gsc_tmo_nonbrand_impressions, gsc.gsc_tmo_nonbrand_impressions_wow, gsc.gsc_tmo_nonbrand_impressions_ly, gsc.gsc_tmo_nonbrand_impressions_wow_pct, gsc.gsc_tmo_nonbrand_impressions_yoy_pct,
     gsc.gsc_tmo_nonbrand_clicks, gsc.gsc_tmo_nonbrand_clicks_wow, gsc.gsc_tmo_nonbrand_clicks_ly, gsc.gsc_tmo_nonbrand_clicks_wow_pct, gsc.gsc_tmo_nonbrand_clicks_yoy_pct,
-    ================================================================ */
 
-    /* ================================================================ TRENDS — COMMENTED OUT (Silver not yet built)
+    -- ================================================================ TRENDS
     t.max_data_date AS trends_max_data_date,
     t.trends_byod_index, t.trends_byod_index_wow, t.trends_byod_index_ly, t.trends_byod_index_wow_pct, t.trends_byod_index_yoy_pct,
     t.trends_top_kw_1, t.trends_kw1_interest, t.trends_kw1_change,
@@ -112,7 +109,6 @@ BEGIN
     t.trends_top_kw_3, t.trends_kw3_interest, t.trends_kw3_change,
     t.trends_top_kw_4, t.trends_kw4_interest, t.trends_kw4_change,
     t.trends_top_kw_5, t.trends_kw5_interest, t.trends_kw5_change,
-    ================================================================ */
 
     -- ================================================================ ADOBE — ALL CHANNELS
     ab.max_data_date AS adobe_max_data_date,
@@ -287,15 +283,18 @@ BEGIN
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly p
   FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly g
     ON p.week_sun_to_sat = g.week_sun_to_sat
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_sa360_weekly sa
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat) = sa.week_sun_to_sat
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly gsc
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat) = gsc.week_sun_to_sat
+  FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly t
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat, gsc.week_sun_to_sat) = t.week_sun_to_sat
   FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly ab
-    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat) = ab.week_sun_to_sat
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat, gsc.week_sun_to_sat, t.week_sun_to_sat) = ab.week_sun_to_sat
   FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly aep
-    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, ab.week_sun_to_sat) = aep.week_sun_to_sat
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat, gsc.week_sun_to_sat, t.week_sun_to_sat, ab.week_sun_to_sat) = aep.week_sun_to_sat
   FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly ao
-    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat) = ao.week_sun_to_sat
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_sa360_weekly sa ON ...          -- re-add once Silver sa360 exists
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly gsc ON ...            -- re-add once Silver gsc exists
-  -- FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly t ON ...     -- re-add once Silver googleTrends exists
+    ON COALESCE(p.week_sun_to_sat, g.week_sun_to_sat, sa.week_sun_to_sat, gsc.week_sun_to_sat, t.week_sun_to_sat, ab.week_sun_to_sat, aep.week_sun_to_sat) = ao.week_sun_to_sat
 
   ORDER BY week_sun_to_sat ASC
   ;

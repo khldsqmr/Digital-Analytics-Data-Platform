@@ -5,19 +5,17 @@ CATALOG.SCHEMA: prdrzranalytics.lab42
 PROCEDURE:    sdi_sp_dashboardPulseByod_call_all_weekly
 
 PURPOSE:
-  Runs the full pulseByod pipeline end to end, in dependency order:
+  Runs the full dashboardPulseByod pipeline end to end, in dependency order:
     0. adobeFunnel pipeline (external dependency — sdi_sp_adobeFunnel_call_all_weekly)
-       Three of the five active pulseByod Silver procedures (adobe, adobeByodEntryPages,
+       Three of the eight active Silver procedures (adobe, adobeByodEntryPages,
        adobeByodOutcomes) read from adobeFunnel's Silver tables, so that pipeline must be
        fresh before this one runs. Called first for that reason.
-    1. Bronze  (2 active — profound, profoundGofish. sa360Adgroup/gscQuery/googleTrends
-                are commented out in their own files pending source-table confirmation and
-                are NOT called here.)
-    2. Silver  (5 active — profound, profoundGofish, adobe, adobeByodEntryPages,
-                adobeByodOutcomes. sa360/gsc/googleTrends Silver were never provided and do
-                not exist yet.)
-    3. Gold    (2 — unified_wide, unified_long. Both read only the 5 active Silver tables;
-                sa360/gsc/googleTrends sections are commented out inside each.)
+    1. Bronze  (5 — profound, profoundGofish, sa360Adgroup, gscQuery, googleTrends. All
+                project-owned, all read raw Improvado tables directly.)
+    2. Silver  (8 active — profound, profoundGofish, sa360, gsc, googleTrends, adobe,
+                adobeByodEntryPages, adobeByodOutcomes. Every source now has a built Silver
+                object — nothing left pending.)
+    3. Gold    (2 — unified_wide, unified_long. Both include all 8 sources.)
 
   Every procedure called here does a full CREATE OR REPLACE TABLE rebuild on each run
   (no incremental/MERGE logic), so this orchestrator can simply be re-run in full each time.
@@ -37,16 +35,19 @@ USAGE:
   -- ================================================================ EXTERNAL DEPENDENCY
   -- CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly();
 
-  -- ================================================================ BRONZE (2 active)
+  -- ================================================================ BRONZE (5)
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_profound_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_profoundGofish_weekly();
-  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_sa360Adgroup_daily();     -- commented out in its own file
-  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_gscQuery_daily();        -- commented out in its own file
-  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_googleTrends_weekly();   -- commented out in its own file
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_sa360Adgroup_daily();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_gscQuery_daily();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_googleTrends_weekly();
 
-  -- ================================================================ SILVER (5 active)
+  -- ================================================================ SILVER (8)
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profound_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_profoundGofish_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_sa360_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_gsc_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_googleTrends_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobe_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobeByodEntryPages_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_silver_adobeByodOutcomes_weekly();

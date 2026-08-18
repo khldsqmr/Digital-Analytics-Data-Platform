@@ -53,13 +53,6 @@ DOWNSTREAM:
   Silver : vw_sdi_pulseByod_silver_gsc_weekly
 ================================================================================================= */
 
-/* =================================================================================================
-STATUS: COMMENTED OUT — pending confirmation of this source's physical table location in the
-Databricks Improvado catalog (prd_dbi_analytics.improvado). The SQL below is fully translated and
-ready to run once that location is confirmed — just remove the surrounding block-comment markers.
-Not referenced by any Silver or Gold object in this pipeline while commented out.
-================================================================================================= */
-/*
 CREATE OR REPLACE PROCEDURE
 prdrzranalytics.lab42.sdi_sp_dashboardPulseByod_bronze_gscQuery_daily()
 LANGUAGE SQL
@@ -156,4 +149,3 @@ WHERE rn = 1
 ;
 
 END;
-*/
