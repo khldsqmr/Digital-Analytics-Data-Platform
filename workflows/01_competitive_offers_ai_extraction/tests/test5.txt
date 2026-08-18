@@ -1,19 +1,10 @@
-SELECT
-  week_ending, metric_id, metric_type, page, amount, insert_datetime
-FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_gold_curated_weekly
-WHERE UPPER(TRIM(metric_id)) IN (
-  UPPER('ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital'),
-  UPPER('ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital')
-)
-AND week_ending IN ('2026-08-08', '2026-08-15')
-ORDER BY week_ending, metric_id, page;
-output:
-week_ending	metric_id	metric_type	page	amount	insert_datetime
-2026-08-08	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	3685	2026-08-17T08:39:29.340+00:00
-2026-08-08	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	3685	2026-08-17T08:39:29.340+00:00
-2026-08-08	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	11357	2026-08-17T08:39:29.960+00:00
-2026-08-08	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	11357	2026-08-17T08:39:29.960+00:00
-2026-08-15	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	4304	2026-08-17T08:39:29.340+00:00
-2026-08-15	ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	4304	2026-08-17T08:39:29.340+00:00
-2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW	11002	2026-08-17T08:39:29.960+00:00
-2026-08-15	ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital	Actuals	Digital Transformation NEW Outcomes 2	11002	2026-08-17T08:39:29.960+00:00
+GSC:  prdrzranalytics.lab42.sdi_tbl_gsc_bronze_queries_daily
+Google Trends:  prdrzranalytics.lab42.sdi_tbl_googletrends_bronze_byod_weekly
+
+the SA360 table should actually be this one at the ad group level: prdrzranalytics.lab42.sdi_tbl_sa360_bronze_adGroup_daily
+
+Another note: This table includes all SA360 ad group data, not just BYOD data. To filter for BYOD:
+WHERE ad_group_name LIKE '%BYOD%'
+       OR ad_group_name LIKE '%BYOP%'
+
+
