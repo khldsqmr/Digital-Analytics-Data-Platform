@@ -1,27 +1,5 @@
-SELECT
-  WeekEnding, MetricID, MetricType, Page, DisplayMetricType, IsFuture, Amount, InsertDateTime, PublishKey,
-  ROW_NUMBER() OVER (
-    PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
-    ORDER BY InsertDateTime DESC, PublishKey DESC
-  ) AS rn
-FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
-WHERE UPPER(TRIM(MetricID)) = UPPER('VRInboundCallsinclHSIAutomatedManual')
-  AND UPPER(TRIM(MetricType)) = 'QGP'
-  AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
-  AND UPPER(TRIM(DateContext)) = 'NORMAL'
-  AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
-ORDER BY WeekEnding DESC, InsertDateTime DESC;
+prd_dbi_analytics.improvado.google_search_console_query_search_type_tmo
 
-SELECT
-  WeekEnding, MetricID, MetricType, Page, DisplayMetricType, IsFuture, Amount, InsertDateTime, PublishKey,
-  ROW_NUMBER() OVER (
-    PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
-    ORDER BY InsertDateTime DESC, PublishKey DESC
-  ) AS rn
-FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
-WHERE UPPER(TRIM(MetricID)) = UPPER('VRChatsinclHSIAutomatedManual')
-  AND UPPER(TRIM(MetricType)) = 'QGP'
-  AND UPPER(TRIM(DisplayMetricType)) = 'TARGET'
-  AND UPPER(TRIM(DateContext)) = 'NORMAL'
-  AND UPPER(TRIM(Page)) = 'VIRTUAL RETAIL'
-ORDER BY WeekEnding DESC, InsertDateTime DESC;
+prd_dbi_analytics.improvado.sdi_ps_sa360_adgroup_daily_tmo
+
+prd_dbi_analytics.improvado.sdi_seo_googletrends_byod_weekly_tmo
