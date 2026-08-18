@@ -27,7 +27,7 @@ DEDUPE LOGIC:
   Latest row per grain ordered by:
     File_Load_datetime DESC
     Filename DESC
-    __insert_date DESC
+    insert_date DESC
 
 KEY MODELING NOTES:
   - account_id in the source is the pipeline name string "sdi_seo_googletrends_byod_weekly"
@@ -116,7 +116,7 @@ WITH ranked AS (
         TRY_CAST(raw.kw5_change AS DOUBLE)                          AS kw5_change,
 
         -- Audit fields (preserved for data lineage and dedup ordering)
-        TRY_CAST(raw.__insert_date AS BIGINT)                           AS insert_date,
+        TRY_CAST(raw.insert_date AS BIGINT)                           AS insert_date,
         CAST(raw.File_Load_datetime AS TIMESTAMP)                               AS file_load_datetime,
         raw.Filename                                                    AS filename,
 
@@ -128,7 +128,7 @@ WITH ranked AS (
             ORDER BY
                 CAST(raw.File_Load_datetime AS TIMESTAMP)     DESC,
                 raw.Filename                          DESC,
-                TRY_CAST(raw.__insert_date AS BIGINT) DESC
+                TRY_CAST(raw.insert_date AS BIGINT) DESC
         ) AS rn
 
     FROM prd_dbi_analytics.improvado.sdi_seo_googletrends_byod_weekly_tmo raw
