@@ -5,12 +5,12 @@
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActualsGranular_weekly()
 SQL SECURITY DEFINER
-COMMENT 'Creates/refreshes sdi_tbl_mfc_bronze_spendActualsGranular_weekly. Refreshed weekly.'
+COMMENT 'Creates/refreshes sdi_tbl_mfc_bronze_spendActualsGranular_weekly. Refreshed weekly. Uses latest-file-snapshot selection per (Quarter, QGP_Week, LOB) — no per-campaign fallback across files.'
 BEGIN
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendActualsGranular_weekly
   USING DELTA
-  COMMENT 'MFC Bronze Actuals (granular).'
+  COMMENT 'MFC Bronze Actuals (granular). For each (Quarter, QGP_Week, LOB), uses only the single most recent file that has any actual data. Includes legacy LOB codes HSI (Broadband) and TBG (TFB), normalized to canonical values.'
   AS
   WITH raw AS (
     SELECT
@@ -23,7 +23,11 @@ BEGIN
       TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
       TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
       TRY_CAST(File_Date AS DATE) AS Source_File_Date,
-      UPPER(TRIM(LOB_Supported)) AS LOB_Supported,
+      CASE
+        WHEN UPPER(TRIM(LOB_Supported)) = 'HSI' THEN 'BROADBAND'
+        WHEN UPPER(TRIM(LOB_Supported)) = 'TBG' THEN 'TFB'
+        ELSE UPPER(TRIM(LOB_Supported))
+      END AS LOB_Supported,
       Channel, Tactic, Message_Type,
       CASE
         WHEN LOWER(TRIM(Agency)) = 'ini' THEN 'Initiative'
@@ -34,15 +38,15 @@ BEGIN
       Spend AS Spend_Actual
     FROM prdrzranalytics.lab42.raw_media_flowchart
     WHERE 1=1
-      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB')
+      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
       AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
       AND Channel IS NOT NULL
       AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
       AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
       AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
       AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
-      AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-      AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      --AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+      --AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
       AND Quarter IS NOT NULL
       AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
       AND UPPER(TRIM(QGP)) = 'ACTUAL'
@@ -57,16 +61,27 @@ BEGIN
     WHERE Week_Beginning_Monday <= Week_Ending_Sunday
     GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
-  ranked AS (
-    SELECT *,
-      ROW_NUMBER() OVER (
-        PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
-        ORDER BY FileLoad_Date DESC, Source_File_Date DESC
-      ) AS rn
+  latest_file_per_week AS (
+    SELECT Quarter, QGP_Week, LOB_Supported, MAX(FileLoad_Date) AS latest_FileLoad_Date
     FROM weekly_snapshots
+    GROUP BY Quarter, QGP_Week, LOB_Supported
+  ),
+  latest_source_file_per_week AS (
+    SELECT ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date,
+      MAX(ws.Source_File_Date) AS latest_Source_File_Date
+    FROM weekly_snapshots ws
+    JOIN latest_file_per_week lf
+      ON ws.Quarter = lf.Quarter AND ws.QGP_Week = lf.QGP_Week AND ws.LOB_Supported = lf.LOB_Supported
+     AND ws.FileLoad_Date = lf.latest_FileLoad_Date
+    GROUP BY ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date
   ),
   best AS (
-    SELECT * FROM ranked WHERE rn = 1
+    SELECT ws.*
+    FROM weekly_snapshots ws
+    JOIN latest_source_file_per_week lsf
+      ON ws.Quarter = lsf.Quarter AND ws.QGP_Week = lsf.QGP_Week AND ws.LOB_Supported = lsf.LOB_Supported
+     AND ws.FileLoad_Date = lsf.latest_FileLoad_Date
+     AND ws.Source_File_Date <=> lsf.latest_Source_File_Date
   ),
   week_type AS (
     SELECT

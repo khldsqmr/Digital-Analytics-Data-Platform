@@ -1,5 +1,5 @@
 -- ============================================================
--- MFC QGP CALENDAR DIMENSION
+-- MFC QGP CALENDAR DIMENSION (unchanged)
 -- ============================================================
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_mfc_dim_qgp_calendar
@@ -82,7 +82,6 @@ enriched AS (
     WEEKOFYEAR(aq.qgp_date)                                              AS iso_week_number,
     YEAR(aq.qgp_date)                                                    AS iso_year,
 
-    -- Days in period (Monday-anchored)
     CASE aq.week_type
       WHEN 'NORMAL' THEN 7
       WHEN 'BOUNDARY_STUB' THEN
