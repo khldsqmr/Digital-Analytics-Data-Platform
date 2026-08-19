@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         06_sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly.sql   (Databricks port)
+FILE:         02_sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly.sql   (Databricks port)
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly
 
@@ -70,6 +70,7 @@ CHANGE LOG:
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_mfcSpend_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
 
