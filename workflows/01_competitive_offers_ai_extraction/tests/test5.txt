@@ -46,3 +46,15 @@ week_sun_to_sat	gsc_tmo_brand_impressions	gsc_tmo_nonbrand_impressions
 2026-05-23	8534	2084
 2026-05-16	8096	2584
 2026-05-09	8118	3164
+
+
+SELECT week_sun_to_sat, data_source, channel, metric_name, metric_value, metric_value_wow, wow_pct, max_data_date
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
+WHERE data_source = 'GSC'
+ORDER BY week_sun_to_sat DESC, metric_name
+LIMIT 20;
+
+SELECT data_source, COUNT(*) AS row_count, MAX(week_sun_to_sat) AS most_recent_week
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
+GROUP BY data_source
+ORDER BY data_source;
