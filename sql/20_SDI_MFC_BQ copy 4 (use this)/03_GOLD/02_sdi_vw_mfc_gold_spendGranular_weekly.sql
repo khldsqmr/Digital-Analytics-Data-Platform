@@ -1,17 +1,25 @@
+
+-- ============================================================
+-- GOLD 2: GRANULAR — BigQuery
+-- ============================================================
 CREATE OR REPLACE VIEW
   `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly`
 AS
 SELECT
   cur.Quarter, cur.Week_Beginning_Monday, cur.Week_Ending_Sunday, cur.QGP_Week, cur.week_type,
   cur.LOB_Supported, cur.Channel, cur.Tactic, cur.Message_Type, cur.Agency,
-  cur.Spend_Actual, cur.Spend_Forecast, cur.Spend_Final,
+  cur.Spend_Actual, cur.Spend_Forecast, cur.Spend_Status,
   GREATEST(COALESCE(cur.Actual_FileLoad_Date, DATE '1900-01-01'),
            COALESCE(cur.Forecast_FileLoad_Date, DATE '1900-01-01')) AS FileLoad_Date,
   cur.Actual_FileLoad_Date, cur.Forecast_FileLoad_Date,
-  cur.Spend_Final_FullWeek AS wow_numerator,
-  wow.Spend_Final_FullWeek AS wow_denominator,
-  cur.Spend_Final_FullWeek AS yoy_numerator,
-  yoy.Spend_Final_FullWeek AS yoy_denominator
+  cur.Spend_Actual_FullWeek AS actual_wow_numerator,
+  wow.Spend_Actual_FullWeek AS actual_wow_denominator,
+  cur.Spend_Actual_FullWeek AS actual_yoy_numerator,
+  yoy.Spend_Actual_FullWeek AS actual_yoy_denominator,
+  cur.Spend_Forecast_FullWeek AS forecast_wow_numerator,
+  wow.Spend_Forecast_FullWeek AS forecast_wow_denominator,
+  cur.Spend_Forecast_FullWeek AS forecast_yoy_numerator,
+  yoy.Spend_Forecast_FullWeek AS forecast_yoy_denominator
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_silver_spendGranular_weekly` cur
 JOIN `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_dim_qgp_calendar` cal
   ON cur.QGP_Week = cal.qgp_date

@@ -1,15 +1,15 @@
 
 -- ============================================================
--- BRONZE 4 — SPEND FORECAST, GRANULAR — BigQuery
+-- BRONZE 3 — SPEND FORECAST, NON-GRANULAR / LOB LEVEL — BigQuery
 -- ============================================================
 CREATE OR REPLACE PROCEDURE
-  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecastGranular_weekly`()
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_sp_mfc_bronze_spendForecast_weekly`()
 OPTIONS (strict_mode=false)
 BEGIN
   CREATE OR REPLACE TABLE
-    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecastGranular_weekly`
+    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_mfc_bronze_spendForecast_weekly`
   OPTIONS (
-    description = 'MFC Bronze Forecast (granular). Includes legacy LOB codes HSI (Broadband) and TBG (TFB), normalized to canonical values.'
+    description = 'MFC Bronze Forecast (non-granular / LOB level). For each (Quarter, QGP_Week, LOB), uses only the single most recent file that has any forecast data. Includes legacy LOB codes HSI (Broadband) and TBG (TFB), normalized to canonical values.'
   )
   AS
   WITH raw AS (
@@ -45,8 +45,8 @@ BEGIN
       AND SAFE_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
       AND SAFE_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
       AND SAFE_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
-      AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
-      AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      --AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+      --AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
       AND Quarter IS NOT NULL
       AND REGEXP_CONTAINS(Quarter, r"^Q[1-4]'[0-9]{2}$")
       AND UPPER(TRIM(QGP)) = 'FORECAST'
@@ -61,30 +61,50 @@ BEGIN
     WHERE Week_Beginning_Monday <= Week_Ending_Sunday
     GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, LOB_Supported, Channel, Tactic, Message_Type, Agency
   ),
-  ranked AS (
-    SELECT *,
-      ROW_NUMBER() OVER (
-        PARTITION BY Quarter, QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency
-        ORDER BY FileLoad_Date DESC, Source_File_Date DESC
-      ) AS rn
+  latest_file_per_week AS (
+    SELECT Quarter, QGP_Week, LOB_Supported, MAX(FileLoad_Date) AS latest_FileLoad_Date
     FROM weekly_snapshots
+    GROUP BY Quarter, QGP_Week, LOB_Supported
+  ),
+  latest_source_file_per_week AS (
+    SELECT ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date,
+      MAX(ws.Source_File_Date) AS latest_Source_File_Date
+    FROM weekly_snapshots ws
+    JOIN latest_file_per_week lf
+      ON ws.Quarter = lf.Quarter AND ws.QGP_Week = lf.QGP_Week AND ws.LOB_Supported = lf.LOB_Supported
+     AND ws.FileLoad_Date = lf.latest_FileLoad_Date
+    GROUP BY ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date
   ),
   best AS (
-    SELECT * FROM ranked WHERE rn = 1
+    SELECT ws.*
+    FROM weekly_snapshots ws
+    JOIN latest_source_file_per_week lsf
+      ON ws.Quarter = lsf.Quarter AND ws.QGP_Week = lsf.QGP_Week AND ws.LOB_Supported = lsf.LOB_Supported
+     AND ws.FileLoad_Date = lsf.latest_FileLoad_Date
+     AND ws.Source_File_Date IS NOT DISTINCT FROM lsf.latest_Source_File_Date
+  ),
+  rolled_up AS (
+    SELECT
+      Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported,
+      SUM(weekly_forecast) AS weekly_forecast,
+      MAX(FileLoad_Date) AS FileLoad_Date,
+      MAX(Source_File_Date) AS Source_File_Date
+    FROM best
+    GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, LOB_Supported
   ),
   week_type AS (
     SELECT
       QGP_Week,
       CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
-    FROM best
+    FROM rolled_up
     GROUP BY QGP_Week
   )
   SELECT
-    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
-    b.FileLoad_Date, b.Source_File_Date, b.LOB_Supported, b.Channel, b.Tactic, b.Message_Type, b.Agency,
-    b.weekly_forecast, w.week_type
-  FROM best b
-  JOIN week_type w ON b.QGP_Week = w.QGP_Week
-  WHERE b.weekly_forecast IS NOT NULL AND b.weekly_forecast != 0
+    r.Quarter, r.Week_Beginning_Monday, r.Week_Ending_Sunday, r.QGP_Week,
+    r.FileLoad_Date, r.Source_File_Date, r.LOB_Supported, r.weekly_forecast, w.week_type
+  FROM rolled_up r
+  JOIN week_type w ON r.QGP_Week = w.QGP_Week
+  WHERE r.weekly_forecast IS NOT NULL AND r.weekly_forecast != 0
   ;
 END;
+

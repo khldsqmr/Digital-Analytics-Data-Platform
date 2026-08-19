@@ -1,15 +1,16 @@
 /* =================================================================================================
-FILE:         03_sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly.sql   (Databricks port)
+FILE:         03_sp_sdi_pulseTms_bronze_mfcSpend_weekly.sql
 LAYER:        Stored Procedure
-PROCEDURE:    sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly
+DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
+PROCEDURE:    sp_sdi_pulseTms_bronze_mfcSpend_weekly
 
 PURPOSE:
-  Creates/refreshes physical table sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly.
-  Called as part of the weekly refresh.
+  Creates/refreshes physical table sdi_pulseTms_bronze_mfcSpend_weekly.
+  Called by 00_call_all_sp_pulseTms.sql as part of the weekly refresh.
 
   Grain: one row per qgp_week x lob x channel_group x channel x tactic x message_type x agency.
   qgp_week is the authoritative date key — all date attributes (quarter, week_type, etc.)
-  are resolved downstream by joining to sdi_vw_dashboardPulseTms_dim_qgp_calendar on qgp_week = qgp_date.
+  are resolved downstream by joining to vw_sdi_pulseTms_dim_qgp_calendar on qgp_week = qgp_date.
 
 CHANNEL GROUPS (standard vocabulary):
   'Paid Search' | 'Paid Social' | 'Programmatic' | 'Other'
@@ -33,23 +34,11 @@ FORECAST FALLBACK (week-level, all-or-nothing):
   Implemented via a window function (week_has_forecast flag) in the typed_raw CTE,
   applied in the final SELECT. Silver and Gold require no changes.
 
-PORTING NOTES (BQ -> Databricks), applies to this file only:
-  - SAFE_CAST(x AS FLOAT64)      -> TRY_CAST(x AS DOUBLE)
-  - CREATE TABLE ... PARTITION BY x CLUSTER BY y ... OPTIONS(description=...)
-                                  -> CREATE TABLE ... CLUSTER BY (x, y) COMMENT '...'
-  - OPTIONS(strict_mode=false)   -> dropped; no Databricks equivalent
-  - CREATE OR REPLACE PROCEDURE ... BEGIN...END -> LANGUAGE SQL / SQL SECURITY INVOKER
-
-  ⚠ SOURCE SCHEMA FLAG — please verify before running:
-  This procedure reads from the MFC Gold granular view
-  (prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly). Confirm the column names
-  QGP_Week, LOB_Supported, Channel, Tactic, Message_Type, Agency, spend_actual,
-  spend_forecast, FileLoad_Date match the actual Databricks Gold view exactly.
-
 CHANGE LOG:
   - Removed spend_display filter (referenced non-existent column — copy-paste bug).
   - Replaced with spend_actual / spend_forecast null+zero filter.
-  - Dropped passthrough date columns from source — QGP calendar dim is authoritative.
+  - Dropped passthrough date columns from source (quarter_raw, quarter_end_date,
+    period_start, period_end, week_type) — QGP calendar dim is authoritative for these.
   - Added TBG -> TFB LOB remap comment.
   - Updated channel group mapping: Programmatic now only includes DISPLAY and OLV.
     AUDIO, OTT, and OOH (previously partially Programmatic) now fall through to Other.
@@ -59,16 +48,17 @@ CHANGE LOG:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly()
-LANGUAGE SQL
-SQL SECURITY INVOKER
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sp_sdi_pulseTms_bronze_mfcSpend_weekly`()
+OPTIONS (strict_mode = false)
 BEGIN
 
   CREATE OR REPLACE TABLE
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly
-  USING DELTA
-  CLUSTER BY (qgp_week, lob, channel_group)
-  COMMENT 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Clustered by qgp_week, lob, channel_group. Refreshed weekly via sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB. Programmatic: DISPLAY, OLV only. AUDIO, OTT, OOH map to Other. spend_forecast: if no forecast exists anywhere in a qgp_week, filled with spend_actual for that entire week; if any forecast exists in the week, all rows including nulls are left as-is.'
+    `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_pulseTms_bronze_mfcSpend_weekly`
+  PARTITION BY qgp_week
+  CLUSTER BY lob, channel_group
+  OPTIONS (
+    description = 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Partitioned by qgp_week, clustered by lob and channel_group. Refreshed weekly via sp_sdi_pulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB. Programmatic: DISPLAY, OLV only. AUDIO, OTT, OOH map to Other. spend_forecast: if no forecast exists anywhere in a qgp_week, filled with spend_actual for that entire week; if any forecast exists in the week, all rows including nulls are left as-is.'
+  )
   AS
 
   -- Step 1: cast and clean all columns from the source, apply channel/LOB mappings,
@@ -76,7 +66,7 @@ BEGIN
   -- The flag checks the raw spend_forecast before any substitution.
   WITH typed_raw AS (
     SELECT
-      TRY_CAST(raw.QGP_Week AS DATE)                                      AS qgp_week,
+      SAFE_CAST(raw.QGP_Week AS DATE)                                     AS qgp_week,
 
       -- LOB canonical mapping
       CASE UPPER(TRIM(raw.LOB_Supported))
@@ -102,22 +92,22 @@ BEGIN
       UPPER(TRIM(raw.Message_Type))                                        AS message_type,
       UPPER(TRIM(raw.Agency))                                              AS agency,
 
-      TRY_CAST(raw.spend_actual   AS DOUBLE)                               AS spend_actual,
-      TRY_CAST(raw.spend_forecast AS DOUBLE)                               AS spend_forecast,
-      TRY_CAST(raw.FileLoad_Date  AS DATE)                                 AS file_load_date,
+      SAFE_CAST(raw.spend_actual   AS FLOAT64)                             AS spend_actual,
+      SAFE_CAST(raw.spend_forecast AS FLOAT64)                             AS spend_forecast,
+      SAFE_CAST(raw.FileLoad_Date  AS DATE)                                AS file_load_date,
 
       -- Week-level forecast flag: 1 if any row in this qgp_week has a real forecast,
       -- 0 if no row in this qgp_week has any forecast at all.
       -- Evaluated on the raw cast value before any substitution.
       MAX(
         CASE
-          WHEN TRY_CAST(raw.spend_forecast AS DOUBLE) IS NOT NULL
-           AND TRY_CAST(raw.spend_forecast AS DOUBLE) != 0
+          WHEN SAFE_CAST(raw.spend_forecast AS FLOAT64) IS NOT NULL
+           AND SAFE_CAST(raw.spend_forecast AS FLOAT64) != 0
           THEN 1 ELSE 0
         END
-      ) OVER (PARTITION BY TRY_CAST(raw.QGP_Week AS DATE))                AS week_has_forecast
+      ) OVER (PARTITION BY SAFE_CAST(raw.QGP_Week AS DATE))               AS week_has_forecast
 
-    FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly raw
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.sdi_vw_mfc_gold_spendGranular_weekly` raw
     WHERE raw.Channel IS NOT NULL
       AND UPPER(TRIM(raw.Channel)) NOT IN (
         'OTHER (DO NOT USE)',
