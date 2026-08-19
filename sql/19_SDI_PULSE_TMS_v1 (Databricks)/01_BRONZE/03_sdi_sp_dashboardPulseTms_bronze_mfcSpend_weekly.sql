@@ -20,6 +20,15 @@ LOB CANONICAL VALUES:
   'BROADBAND'  — source: 'HSI', 'BROADBAND'
   'TFB'        — source: 'TFB', 'TBG' (TBG is a legacy source code, normalized to TFB)
 
+FORECAST FALLBACK:
+  spend_forecast is filled with spend_actual via COALESCE where spend_forecast is NULL.
+  This is a data-cleaning step applied at Bronze so that Silver, Gold, and Tableau all
+  see the filled value without any changes needed downstream. The existing WHERE filter
+  (at least one of spend_actual / spend_forecast must be non-null and non-zero) still
+  applies after the COALESCE, so rows where both are null are still excluded.
+  mfcSpendActual and mfcSpendForecast remain separate independent metrics in Silver's
+  long format — this only fills the raw column value entering the pipeline.
+
 PORTING NOTES (BQ -> Databricks), applies to this file only:
   - SAFE_CAST(x AS FLOAT64)      -> TRY_CAST(x AS DOUBLE)
   - CREATE TABLE ... PARTITION BY x CLUSTER BY y ... OPTIONS(description=...)
@@ -47,6 +56,10 @@ CHANGE LOG:
   - Added TBG → TFB LOB remap comment.
   - Updated channel group mapping: Programmatic now only includes DISPLAY and OLV.
     AUDIO, OTT, and OOH (previously partially Programmatic) now fall through to Other.
+  - spend_forecast now uses COALESCE(spend_forecast, spend_actual): where spend_forecast
+    is NULL, it is filled with spend_actual for the same row grain. Applied at Bronze so
+    Silver/Gold/Tableau require no changes. mfcSpendActual and mfcSpendForecast remain
+    separate independent metrics in Silver's long format.
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -59,7 +72,7 @@ BEGIN
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly
   USING DELTA
   CLUSTER BY (qgp_week, lob, channel_group)
-  COMMENT 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Clustered by qgp_week, lob, channel_group. Refreshed weekly via sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB. Programmatic: DISPLAY, OLV only. AUDIO, OTT, OOH map to Other.'
+  COMMENT 'PulseTMS Bronze — MFC spend granular. One row per qgp_week x lob x channel_group x channel x tactic x message_type x agency. Clustered by qgp_week, lob, channel_group. Refreshed weekly via sdi_sp_dashboardPulseTms_bronze_mfcSpend_weekly. LOBs: POSTPAID, BROADBAND, TFB. Programmatic: DISPLAY, OLV only. AUDIO, OTT, OOH map to Other. spend_forecast is filled with spend_actual via COALESCE where spend_forecast is NULL.'
   AS
   SELECT
     TRY_CAST(raw.QGP_Week AS DATE)                                        AS qgp_week,
@@ -93,9 +106,16 @@ BEGIN
     UPPER(TRIM(raw.Message_Type))                                         AS message_type,
     UPPER(TRIM(raw.Agency))                                               AS agency,
 
-    TRY_CAST(raw.spend_actual   AS DOUBLE)                                AS spend_actual,
-    TRY_CAST(raw.spend_forecast AS DOUBLE)                                AS spend_forecast,
-    TRY_CAST(raw.FileLoad_Date  AS DATE)                                  AS file_load_date
+    TRY_CAST(raw.spend_actual AS DOUBLE)                                  AS spend_actual,
+
+    -- Forecast fallback: if spend_forecast is NULL, use spend_actual for the same row.
+    -- spend_actual is cast independently above — COALESCE operates on the typed values.
+    COALESCE(
+      TRY_CAST(raw.spend_forecast AS DOUBLE),
+      TRY_CAST(raw.spend_actual   AS DOUBLE)
+    )                                                                     AS spend_forecast,
+
+    TRY_CAST(raw.FileLoad_Date AS DATE)                                   AS file_load_date
 
   FROM prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly raw
   WHERE raw.Channel IS NOT NULL
@@ -108,6 +128,9 @@ BEGIN
     --AND UPPER(TRIM(raw.Message_Type)) != 'MICRO'
     -- Keep rows that have meaningful spend in at least one of actual or forecast.
     -- A row may have forecast but no actual (future weeks) or actual but no forecast (past weeks).
+    -- Note: after the COALESCE above, spend_forecast will equal spend_actual wherever the
+    -- original forecast was null — the filter below still operates on the original raw values
+    -- to avoid keeping rows where both are genuinely null or zero.
     AND (
       (raw.spend_actual   IS NOT NULL AND raw.spend_actual   != 0)
       OR (raw.spend_forecast IS NOT NULL AND raw.spend_forecast != 0)
