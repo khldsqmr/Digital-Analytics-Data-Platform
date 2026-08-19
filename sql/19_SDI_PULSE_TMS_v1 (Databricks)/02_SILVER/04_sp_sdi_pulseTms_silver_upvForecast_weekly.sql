@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         sdi_sp_dashboardPulseTms_silver_upvForecast_weekly.sql
+FILE:         03_sdi_sp_dashboardPulseTms_silver_upvForecast_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_upvForecast_weekly
 
@@ -66,6 +66,7 @@ CHANGE LOG:
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
 
