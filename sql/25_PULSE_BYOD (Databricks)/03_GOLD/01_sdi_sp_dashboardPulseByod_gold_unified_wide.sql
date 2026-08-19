@@ -14,17 +14,18 @@ PURPOSE:
 SOURCES (active):
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profound_weekly              (p)
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_profoundGofish_weekly       (g)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_sa360_weekly                (sa)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly                  (gsc)
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly         (t)
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly                 (ab)
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly  (aep)
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly    (ao)
 
-SOURCES (commented out — pending sa360/gsc/googleTrends Silver, not yet provided):
-  sdi_tbl_dashboardPulseByod_silver_sa360_weekly       (sa)
-  sdi_tbl_dashboardPulseByod_silver_gsc_weekly         (gsc)
-  sdi_tbl_dashboardPulseByod_silver_googleTrends_weekly (t)
-  All SA360/GSC/TRENDS columns and their FULL OUTER JOINs are commented out below.
-  Uncomment once those three Silver objects are built and re-add them to the FROM/JOIN
-  chain and the top-level week_sun_to_sat COALESCE.
+  All 8 sources are joined via a chain of pairwise FULL OUTER JOINs on week_sun_to_sat
+  (each subsequent join keyed on COALESCE of every prior alias's week_sun_to_sat, so a
+  week present in any one source is preserved even if absent from the others). No
+  UNPIVOT anywhere in this table, so there is no analogous null-row-dropping risk —
+  every week that exists in at least one source produces exactly one output row.
 
 DOWNSTREAM: none (Gold Wide is a terminal ad-hoc/export table)
 ================================================================================================= */
