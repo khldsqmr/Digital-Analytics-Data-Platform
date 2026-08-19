@@ -1,4 +1,11 @@
 SELECT DISTINCT site_url FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gscQuery_daily LIMIT 20;
+output:
+site_url
+sc-domain:t-mobile.com
+sc-domain:metrobyt-mobile.com
+sc-domain:fiber.t-mobile.com
 
 SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gscQuery_daily
 WHERE LOWER(TRIM(query)) LIKE '%byod%' OR LOWER(TRIM(query)) LIKE '%bring%device%' OR LOWER(TRIM(query)) LIKE '%bring%phone%';
+output:
+120348
