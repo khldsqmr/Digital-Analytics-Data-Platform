@@ -29,3 +29,20 @@ SELECT week_sun_to_sat, gsc_tmo_brand_impressions, gsc_tmo_nonbrand_impressions
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly
 ORDER BY week_sun_to_sat DESC
 LIMIT 15;
+output:
+week_sun_to_sat	gsc_tmo_brand_impressions	gsc_tmo_nonbrand_impressions
+2026-08-15	8640	2240
+2026-08-08	8600	2564
+2026-08-01	8061	2442
+2026-07-25	7780	2464
+2026-07-18	7801	2296
+2026-07-11	6859	2361
+2026-07-04	7882	2198
+2026-06-27	9999	1995
+2026-06-20	10261	2001
+2026-06-13	9519	1618
+2026-06-06	9529	1696
+2026-05-30	9057	1841
+2026-05-23	8534	2084
+2026-05-16	8096	2584
+2026-05-09	8118	3164
