@@ -53,8 +53,40 @@ FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
 WHERE data_source = 'GSC'
 ORDER BY week_sun_to_sat DESC, metric_name
 LIMIT 20;
+output:
+week_sun_to_sat	data_source	channel	metric_name	metric_value	metric_value_wow	wow_pct	max_data_date
+2026-08-15	GSC	Organic Search	gsc_tmo_brand_clicks	1178	1190	-0.010084	2026-08-15
+2026-08-15	GSC	Organic Search	gsc_tmo_brand_impressions	8640	8600	0.004651	2026-08-15
+2026-08-15	GSC	Organic Search	gsc_tmo_nonbrand_clicks	263	244	0.077869	2026-08-15
+2026-08-15	GSC	Organic Search	gsc_tmo_nonbrand_impressions	2240	2564	-0.126365	2026-08-15
+2026-08-08	GSC	Organic Search	gsc_tmo_brand_clicks	1190	1081	0.100833	2026-08-15
+2026-08-08	GSC	Organic Search	gsc_tmo_brand_impressions	8600	8061	0.066865	2026-08-15
+2026-08-08	GSC	Organic Search	gsc_tmo_nonbrand_clicks	244	186	0.311828	2026-08-15
+2026-08-08	GSC	Organic Search	gsc_tmo_nonbrand_impressions	2564	2442	0.049959	2026-08-15
+2026-08-01	GSC	Organic Search	gsc_tmo_brand_clicks	1081	1029	0.050534	2026-08-15
+2026-08-01	GSC	Organic Search	gsc_tmo_brand_impressions	8061	7780	0.036118	2026-08-15
+2026-08-01	GSC	Organic Search	gsc_tmo_nonbrand_clicks	186	175	0.062857	2026-08-15
+2026-08-01	GSC	Organic Search	gsc_tmo_nonbrand_impressions	2442	2464	-0.008929	2026-08-15
+2026-07-25	GSC	Organic Search	gsc_tmo_brand_clicks	1029	1071	-0.039216	2026-08-15
+2026-07-25	GSC	Organic Search	gsc_tmo_brand_impressions	7780	7801	-0.002692	2026-08-15
+2026-07-25	GSC	Organic Search	gsc_tmo_nonbrand_clicks	175	181	-0.033149	2026-08-15
+2026-07-25	GSC	Organic Search	gsc_tmo_nonbrand_impressions	2464	2296	0.073171	2026-08-15
+2026-07-18	GSC	Organic Search	gsc_tmo_brand_clicks	1071	1052	0.018061	2026-08-15
+2026-07-18	GSC	Organic Search	gsc_tmo_brand_impressions	7801	6859	0.137338	2026-08-15
+2026-07-18	GSC	Organic Search	gsc_tmo_nonbrand_clicks	181	169	0.071006	2026-08-15
+2026-07-18	GSC	Organic Search	gsc_tmo_nonbrand_impressions	2296	2361	-0.027531	2026-08-15
 
 SELECT data_source, COUNT(*) AS row_count, MAX(week_sun_to_sat) AS most_recent_week
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
 GROUP BY data_source
 ORDER BY data_source;
+output:
+data_source	row_count	most_recent_week
+ADOBE	7072	2026-08-15
+ADOBE_BYOD_ENTRY_PAGES	3968	2026-08-15
+ADOBE_BYOD_OUTCOMES	2652	2026-08-15
+GOFISH	252	2026-08-22
+GSC	392	2026-08-15
+PROFOUND	330	2026-08-22
+SA360	792	2026-08-22
+TRENDS	204	2026-08-08
