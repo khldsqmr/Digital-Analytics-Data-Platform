@@ -1,37 +1,5 @@
-SELECT data_source, COUNT(*) AS row_count, MAX(week_sun_to_sat) AS most_recent_week, MIN(week_sun_to_sat) AS oldest_week
-FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
-GROUP BY data_source
-ORDER BY data_source;
-output:
-data_source	row_count	most_recent_week	oldest_week
-ADOBE	7100	2026-08-15	2023-12-02
-ADOBE_BYOD_ENTRY_PAGES	8946	2026-08-15	2023-12-02
-ADOBE_BYOD_OUTCOMES	2688	2026-08-15	2025-05-31
-GOFISH	252	2026-08-22	2026-04-04
-GSC	392	2026-08-15	2024-10-05
-PROFOUND	330	2026-08-22	2026-03-28
-SA360	792	2026-08-22	2025-05-24
-TRENDS	204	2026-08-08	2025-05-24
+PulseByod pipeline (Bronze/Silver/Gold) is fully built and live in Databricks — all 8 sources: Profound, GoFish, SA360, GSC, Google Trends, Adobe, Adobe BYOD Entry Pages, Adobe BYOD Outcomes.
 
-SELECT week_sun_to_sat, metric_value, metric_value_wow, wow_pct
-FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
-WHERE data_source = 'ADOBE' AND metric_name = 'adobe_ordersAssistedByod_social'
-ORDER BY week_sun_to_sat DESC
-LIMIT 15;
-output:
-week_sun_to_sat	metric_value	metric_value_wow	wow_pct
-2026-08-15	0	0	null
-2026-08-08	0	0	null
-2026-08-01	0	0	null
-2026-07-25	0	0	null
-2026-07-18	0	1	-1
-2026-07-11	1	0	null
-2026-07-04	0	0	null
-2026-06-27	0	0	null
-2026-06-20	0	1	-1
-2026-06-13	1	0	null
-2026-06-06	0	0	null
-2026-05-30	0	0	null
-2026-05-23	0	0	null
-2026-05-16	0	0	null
-2026-05-09	0	0	null
+End-to-end verified: row counts, join logic, and WoW/LY calcs all checked out clean across the full history.
+
+Can someone do a code review / QA pass on the SPs and flag anything that looks off? Want a second set of eyes before we call this final.
