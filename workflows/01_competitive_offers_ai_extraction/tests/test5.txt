@@ -9,3 +9,14 @@ SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gsc
 WHERE LOWER(TRIM(query)) LIKE '%byod%' OR LOWER(TRIM(query)) LIKE '%bring%device%' OR LOWER(TRIM(query)) LIKE '%bring%phone%';
 output:
 120348
+
+SELECT COUNT(*) 
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_bronze_gscQuery_daily
+WHERE UPPER(TRIM(site_url)) = 'SC-DOMAIN:T-MOBILE.COM'
+  AND (
+      LOWER(TRIM(query)) LIKE '%bring%phone%'
+      OR LOWER(TRIM(query)) LIKE '%bring%device%'
+      OR LOWER(TRIM(query)) LIKE '%byod%'
+  );
+
+SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly;
