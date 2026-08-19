@@ -1,5 +1,9 @@
 PulseByod pipeline (Bronze/Silver/Gold) is fully built and live in Databricks — all 8 sources: Profound, GoFish, SA360, GSC, Google Trends, Adobe, Adobe BYOD Entry Pages, Adobe BYOD Outcomes.
 
+Gold tables:
+• prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_wide
+• prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_gold_unified_long
+
 End-to-end verified: row counts, join logic, and WoW/LY calcs all checked out clean across the full history.
 
 Can someone do a code review / QA pass on the SPs and flag anything that looks off? Want a second set of eyes before we call this final.
