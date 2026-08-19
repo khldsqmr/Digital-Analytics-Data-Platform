@@ -24,3 +24,8 @@ output:
 SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly;
 output:
 98
+
+SELECT week_sun_to_sat, gsc_tmo_brand_impressions, gsc_tmo_nonbrand_impressions
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_gsc_weekly
+ORDER BY week_sun_to_sat DESC
+LIMIT 15;
