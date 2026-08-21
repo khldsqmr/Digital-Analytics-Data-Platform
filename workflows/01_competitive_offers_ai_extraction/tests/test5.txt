@@ -1,56 +1,44 @@
-select * from prdrzranalytics.lab42.sdi_tbl_googletrends_bronze_byod_weekly;
 
-output:
-byod_index	date	date_yyyymmdd	kw1_change	kw1_interest	kw2_change	kw2_interest	kw3_change	kw3_interest	kw4_change	kw4_interest	kw5_change	kw5_interest	top_kw_1	top_kw_2	top_kw_3	top_kw_4	top_kw_5	file_load_datetime
-100	2026-08-09	20260809	0	100	null	20	-1	19	null	15	-2	10	byod	bring your device	bring your own device	verizon	verizon byod	2026-08-20T20:32:31.825+00:00
-84	2026-08-02	20260802	0	100	-6	20	null	14	null	13	1	12	byod	bring your own device	t mobile	byod tmobile	verizon byod	2026-08-20T20:32:31.825+00:00
-90	2026-07-26	20260726	0	100	-6	26	-4	11	-9	6	2	6	byod	bring your own device	verizon byod	bring your own phone	byod meaning	2026-08-20T20:32:31.825+00:00
-87	2026-07-19	20260719	0	100	3	32	7	15	4	15	null	5	byod	bring your own device	bring your own phone	verizon byod	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-80	2026-07-12	20260712	0	100	null	29	-6	11	-1	8	null	8	byod	bring your own device	verizon byod	bring your own phone	att byod	2026-08-20T20:32:31.825+00:00
-90	2026-07-05	20260705	0	100	4	17	null	15	1	9	null	5	byod	verizon byod	what is byod	bring your own phone	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-93	2026-06-28	20260628	0	100	0	28	5	13	null	8	null	6	byod	bring your own device	verizon byod	bring your own phone	byod security	2026-08-20T20:32:31.825+00:00
-85	2026-06-21	20260621	0	100	6	28	-1	8	-1	5	-5	2	byod	bring your own device	verizon byod	verizon bring your own device	byod meaning	2026-08-20T20:32:31.825+00:00
-89	2026-06-14	20260614	0	100	-11	22	null	9	2	7	null	6	byod	bring your own device	verizon byod	byod meaning	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-82	2026-06-07	20260607	0	100	null	33	null	9	3	5	null	null	byod	bring your own device	what is byod	byod meaning	null	2026-08-20T20:32:31.825+00:00
-95	2026-05-31	20260531	0	100	null	17	null	12	null	9	null	7	byod	t mobile	verizon byod	tmobile	att byod	2026-08-20T20:32:31.825+00:00
-87	2026-05-24	20260524	0	100	-6	20	null	17	null	7	2	6	byod	bring your own device	verizon	what is byod	byod meaning	2026-08-20T20:32:31.825+00:00
-78	2026-05-17	20260517	0	100	-3	26	-1	8	null	4	-3	3	byod	bring your own device	verizon byod	byod meaning	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-85	2026-05-10	20260510	0	100	6	29	2	9	null	6	null	null	byod	bring your own device	verizon byod	verizon bring your own device	null	2026-08-20T20:32:31.825+00:00
-86	2026-05-03	20260503	0	100	-2	23	null	13	1	9	-4	7	byod	bring your own device	what is byod	bring your own phone	verizon byod	2026-08-20T20:32:31.825+00:00
-87	2026-04-26	20260426	0	100	7	25	null	11	null	9	null	9	byod	bring your own device	verizon byod	byod t mobile	att byod	2026-08-20T20:32:31.825+00:00
-80	2026-04-19	20260419	0	100	-1	18	-2	6	1	5	null	null	byod	bring your own device	bring your own phone	byod meaning	null	2026-08-20T20:32:31.825+00:00
-82	2026-04-12	20260412	0	100	-4	19	null	9	2	8	null	5	byod	bring your own device	verizon byod	bring your own phone	att byod	2026-08-20T20:32:31.825+00:00
-81	2026-04-05	20260405	0	100	null	23	null	6	-2	5	1	4	byod	bring your own device	bring your own phone	byod t mobile	byod meaning	2026-08-20T20:32:31.825+00:00
-76	2026-03-29	20260329	0	100	-2	8	null	7	null	7	null	5	byod	verizon byod	byod t mobile	att byod	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-80	2026-03-22	20260322	0	100	null	21	-2	10	1	7	null	null	byod	bring your own device	verizon byod	byod meaning	null	2026-08-20T20:32:31.825+00:00
-89	2026-03-15	20260315	0	100	3	12	null	6	null	6	null	null	byod	verizon byod	byod meaning	verizon bring your own device	null	2026-08-20T20:32:31.825+00:00
-91	2026-03-08	20260308	0	100	-2	9	3	7	null	null	null	null	byod	verizon byod	att byod	null	null	2026-08-20T20:32:31.825+00:00
-86	2026-03-01	20260301	0	100	null	24	null	11	2	7	null	4	byod	bring your own device	verizon byod	verizon bring your own device	att byod	2026-08-20T20:32:31.825+00:00
-90	2026-02-22	20260222	0	100	null	7	null	5	-1	5	null	null	byod	tmobile	verizon bring your own device	byod meaning	null	2026-08-20T20:32:31.825+00:00
-74	2026-02-15	20260215	0	100	0	18	null	8	0	8	1	6	byod	bring your own device	t mobile	verizon byod	byod meaning	2026-08-20T20:32:31.825+00:00
-70	2026-02-08	20260208	0	100	1	18	null	8	0	5	null	null	byod	bring your own device	verizon byod	byod meaning	null	2026-08-20T20:32:31.825+00:00
-79	2026-02-01	20260201	0	100	null	17	-2	5	null	3	0	2	byod	bring your own device	byod meaning	what kind of cyber threat looks like malware but is more about tricking you into thinking your device is infected, even when it’s not, so that you’ll panic.	what is a credential stuffing attack?	2026-08-20T20:32:31.825+00:00
-78	2026-01-25	20260125	0	100	1	7	-1	7	null	6	null	2	byod	byod meaning	verizon byod	slam method	what is a credential stuffing attack?	2026-08-20T20:32:31.825+00:00
-78	2026-01-18	20260118	0	100	0	16	-2	8	-2	6	2	5	byod	what is byod	verizon byod	byod meaning	what do vishing and smishing refer to?	2026-08-20T20:32:31.825+00:00
-81	2026-01-11	20260111	0	100	null	16	null	10	3	8	null	7	byod	what is byod	verizon byod	byod meaning	verizon bring your own device	2026-08-20T20:32:31.825+00:00
-80	2026-01-04	20260104	0	100	null	19	null	10	null	10	null	7	byod	bring your own device	slam method	yikes acronym	byod t mobile	2026-08-20T20:32:31.825+00:00
-64	2025-12-28	20251228	0	100	1	4	null	null	null	null	null	null	byod	byod meaning	null	null	null	2026-08-20T20:32:31.825+00:00
-65	2025-12-21	20251221	0	100	null	24	-1	13	null	11	null	3	byod	bring your own device	verizon byod	t mobile	byod meaning	2026-08-20T20:32:31.825+00:00
-62	2025-12-14	20251214	0	100	null	14	null	null	null	null	null	null	byod	verizon byod	null	null	null	2026-08-20T20:32:31.825+00:00
-71	2025-12-07	20251207	0	100	-3	21	-3	5	-2	4	null	null	byod	bring your own device	verizon bring your own device	byod meaning	null	2026-08-20T20:32:31.825+00:00
-73	2025-11-30	20251130	0	100	null	24	null	8	0	6	null	5	byod	bring your own device	verizon bring your own device	byod meaning	att byod	2026-08-20T20:32:31.825+00:00
-71	2025-11-23	20251123	0	100	null	10	2	6	null	null	null	null	byod	byod tmobile	byod meaning	null	null	2026-08-20T20:32:31.825+00:00
-84	2025-11-16	20251116	0	100	null	8	1	7	null	5	0	4	byod	verizon byod	bring your own phone	verizon bring your own device	byod meaning	2026-08-20T20:32:31.825+00:00
-72	2025-11-09	20251109	0	100	null	7	null	6	-1	4	null	null	byod	byod tmobile	bring your own phone	byod meaning	null	2026-08-20T20:32:31.825+00:00
-69	2025-11-02	20251102	0	100	null	8	null	6	null	5	1	5	byod	tmobile	verizon bring your own device	byod t mobile	byod meaning	2026-08-20T20:32:31.825+00:00
-63	2025-10-26	20251026	0	100	null	16	2	10	-2	9	null	4	byod	verizon	bring your own phone	verizon byod	byod meaning	2026-08-20T20:32:31.825+00:00
-70	2025-10-19	20251019	0	100	null	17	null	11	-2	8	null	7	byod	bring your own device	verizon byod	bring your own phone	att byod	2026-08-20T20:32:31.825+00:00
-72	2025-10-12	20251012	0	100	4	10	-2	4	null	null	null	null	byod	bring your own phone	verizon bring your own device	null	null	2026-08-20T20:32:31.825+00:00
-66	2025-10-05	20251005	0	100	3	8	null	6	3	6	2	6	byod	att byod	bring your own phone	verizon bring your own device	byod meaning	2026-08-20T20:32:31.825+00:00
-74	2025-09-28	20250928	0	100	null	16	4	10	-1	5	0	4	byod	bring your own device	verizon byod	att byod	byod meaning	2026-08-20T20:32:31.825+00:00
-84	2025-09-21	20250921	0	100	2	7	-6	6	null	6	1	5	byod	verizon bring your own device	verizon byod	att byod	bring your own phone	2026-08-20T20:32:31.825+00:00
-76	2025-09-14	20250914	0	100	null	17	1	12	3	5	2	5	byod	bring your own device	verizon byod	verizon bring your own device	byod meaning	2026-08-20T20:32:31.825+00:00
-70	2025-09-07	20250907	0	100	null	11	null	11	null	8	1	7	byod	verizon byod	byod tmobile	att byod	bring your own phone	2026-08-20T20:32:31.825+00:00
-71	2025-08-31	20250831	0	100	-1	6	1	5	null	null	null	null	byod	bring your own phone	byod meaning	null	null	2026-08-20T20:32:31.825+00:00
-72	2025-08-24	20250824	0	100	-1	10	null	7	null	5	-4	4	byod	verizon byod	bring your own phone	att byod	byod meaning	2026-08-20T20:32:31.825+00:00
-77	2025-08-17	20250817	null	100	null	11	null	8	null	7	null	4	byod	verizon byod	byod meaning	byod t mobile	verizon bring your own device	2026-08-20T20:32:31.825+00:00
+
+
+WITH ranked AS (
+  SELECT
+    src.byod_index,
+    TO_DATE(src.date_yyyymmdd, 'yyyyMMdd') AS date,
+    src.date_yyyymmdd,
+    src.kw1_change,
+    src.kw1_interest,
+    src.kw2_change,
+    src.kw2_interest,
+    src.kw3_change,
+    src.kw3_interest,
+    src.kw4_change,
+    src.kw4_interest,
+    src.kw5_change,
+    src.kw5_interest,
+    src.top_kw_1,
+    src.top_kw_2,
+    src.top_kw_3,
+    src.top_kw_4,
+    src.top_kw_5,
+    src.File_Load_datetime AS file_load_datetime,
+    ROW_NUMBER() OVER (
+      PARTITION BY src.date_yyyymmdd
+      ORDER BY src.File_Load_datetime DESC
+    ) AS rn
+  FROM prdrzranalytics.lab42.sdi_tbl_googleTrends_raw_byod_weekly src
+  WHERE TRY_TO_DATE(src.date_yyyymmdd, 'yyyyMMdd') IS NOT NULL
+)
+SELECT
+  byod_index,
+  date,
+  date_yyyymmdd,
+  kw1_change, kw1_interest,
+  kw2_change, kw2_interest,
+  kw3_change, kw3_interest,
+  kw4_change, kw4_interest,
+  kw5_change, kw5_interest,
+  top_kw_1, top_kw_2, top_kw_3, top_kw_4, top_kw_5,
+  file_load_datetime
+FROM ranked
+WHERE rn = 1;
