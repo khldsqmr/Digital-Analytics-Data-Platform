@@ -18,7 +18,8 @@ BUSINESS GRAIN:
   One row per week_sun_to_sat
 
 WEEK CONVERSION:
-  Bronze event_date_sun is the Sunday start of the week. week_sun_to_sat = DATE_ADD(event_date_sun, 6)
+  Bronze date is the Sunday start of the week (assumed - not independently confirmed against
+  the new raw source). week_sun_to_sat = DATE_ADD(date, 6)
 
 METRICS:
   trends_byod_index          — market-level relative interest 0-100. Gets full WoW/LY/pct
@@ -69,7 +70,7 @@ BEGIN
 
   WITH base AS (
       SELECT
-          DATE_ADD(event_date_sun, 6) AS week_sun_to_sat,
+          DATE_ADD(date, 6) AS week_sun_to_sat,
           byod_index,
           top_kw_1, kw1_interest, kw1_change,
           top_kw_2, kw2_interest, kw2_change,
