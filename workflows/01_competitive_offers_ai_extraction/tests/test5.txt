@@ -1,1 +1,12 @@
-There's no standalone "digital % of voice activations" row.
+SELECT
+  WeekEnding, MetricName, MetricType, Page, DisplayMetricType, IsFuture, Amount, InsertDateTime, PublishKey,
+  ROW_NUMBER() OVER (
+    PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
+    ORDER BY InsertDateTime DESC, PublishKey DESC
+  ) AS rn
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
+  AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
+  AND UPPER(TRIM(DateContext)) = 'NORMAL'
+  AND UPPER(TRIM(Page)) = 'BRANDED RETAIL TOTAL'
+ORDER BY WeekEnding DESC, InsertDateTime DESC;
