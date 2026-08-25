@@ -1,3 +1,107 @@
+UPV
+UPV Forecast
+UPV Flow
+UPV Flow (Postpaid)
+UPV Flow (HSI)
+UPV Flow (BYOD)
+Add to Cart
+CartStart (Postpaid)
+CartStart (HSI)
+CartStart (BYOD)
+Orders Unassisted
+Orders Unassisted (Postpaid)
+Orders Unassisted (HSI)
+Orders Unassisted (BYOD)
+Orders Assisted
+Orders Assisted (Postpaid)
+Orders Assisted (HSI)
+Orders Assisted (BYOD)
+MFC Spend Actual
+MFC Spend Actual (Postpaid)
+MFC Spend Actual (Broadband)
+MFC Spend Actual (Total)
+MFC Spend Forecast
+MFC Spend Forecast (Postpaid)
+MFC Spend Forecast (Broadband)
+MFC Spend Forecast (Total)
+Platform Spend (Postpaid)
+Platform Spend (Broadband)
+Platform Spend (Total)
+Biddable Spend (Postpaid)
+Biddable Spend (Broadband)
+Biddable Spend (Total)
+
+IF [p.cb.primary metric] = 'UPV'
+THEN SUM(IF [Metric Name] = 'upvTotalAdobe' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'UPV Forecast'
+THEN SUM(IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'UPV Flow'
+THEN SUM(IF [Metric Name] = 'upvFlowTotal' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'UPV Flow (Postpaid)'
+THEN SUM(IF [Metric Name] = 'upvPostpaid' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'UPV Flow (HSI)'
+THEN SUM(IF [Metric Name] = 'upvHsi' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'UPV Flow (BYOD)'
+THEN SUM(IF [Metric Name] = 'upvByod' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Add to Cart'
+THEN SUM(IF [Metric Name] = 'cartstartTotal' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'CartStart (Postpaid)'
+THEN SUM(IF [Metric Name] = 'cartstartPostpaid' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'CartStart (HSI)'
+THEN SUM(IF [Metric Name] = 'cartstartHsi' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'CartStart (BYOD)'
+THEN SUM(IF [Metric Name] = 'cartstartByod' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Unassisted'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedTotal' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Unassisted (Postpaid)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedPostpaid' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Unassisted (HSI)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedHsi' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Unassisted (BYOD)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedByod' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Assisted'
+THEN SUM(IF [Metric Name] = 'ordersAssistedTotal' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Assisted (Postpaid)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedPostpaid' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Assisted (HSI)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedHsi' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Orders Assisted (BYOD)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedByod' AND [Data Source] = 'ADOBE' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Actual'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Actual (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Actual (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Actual (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Forecast'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Forecast (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Forecast (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'MFC Spend Forecast (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Platform Spend (Postpaid)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Platform Spend (Broadband)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Platform Spend (Total)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Biddable Spend (Postpaid)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Biddable Spend (Broadband)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.cb.primary metric] = 'Biddable Spend (Total)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSE NULL
+END
+
+
+
+
+
 //c.tms.cb.Metric Label
 IF [Data Source] = 'ADOBE' THEN
   CASE [Metric Name]
@@ -20,7 +124,6 @@ IF [Data Source] = 'ADOBE' THEN
     WHEN 'ordersAssistedByod'        THEN 'Orders Assisted (BYOD)'
     ELSE NULL
   END
-
 ELSEIF [Data Source] = 'MFC_SPEND_CHANNEL' THEN
   IF [Metric Name] = 'mfcSpendActual' THEN
     IF [Lob] = 'POSTPAID'      THEN 'MFC Spend Actual (Postpaid)'
@@ -34,7 +137,6 @@ ELSEIF [Data Source] = 'MFC_SPEND_CHANNEL' THEN
     END
   ELSE NULL
   END
-
 ELSEIF [Data Source] = 'PLATFORM_SPEND_CHANNEL' THEN
   IF [Metric Name] = 'platformSpend' THEN
     IF [Lob] = 'POSTPAID'      THEN 'Platform Spend (Postpaid)'
@@ -43,5 +145,63 @@ ELSEIF [Data Source] = 'PLATFORM_SPEND_CHANNEL' THEN
     END
   ELSE NULL
   END
-
+ELSEIF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' THEN
+  IF [Metric Name] = 'biddableSpend' THEN
+    IF [Lob] = 'POSTPAID'      THEN 'Biddable Spend (Postpaid)'
+    ELSEIF [Lob] = 'BROADBAND' THEN 'Biddable Spend (Broadband)'
+    ELSE NULL
+    END
+  ELSE NULL
+  END
+ELSEIF [Data Source] = 'QGP_SCORECARD' THEN
+  IF [Metric Name] = 'storeTraffic' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'Exit Traffic Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'Exit Traffic Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'vrCalls' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'VR Calls Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'VR Calls Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'vrChats' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'VR Chats Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'VR Chats Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'vrPostpaidActivations' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'VR Postpaid Activations Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'VR Postpaid Activations Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'activationsBopis' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'Activations BOPIS Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'Activations BOPIS Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'activationsNewAalNoAssistance' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'Activations New AAL No Assist Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'Activations New AAL No Assist Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'Digital % Phone New Acts Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'Digital % Phone New Acts Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' THEN
+    IF [Metric Type] = 'QGP_ACTUAL'      THEN 'Digital % Consumer Postpaid Acts Actuals'
+    ELSEIF [Metric Type] = 'QGP_TARGET'  THEN 'Digital % Consumer Postpaid Acts Forecast'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'digitalPctNoAssistanceActivations' THEN
+    IF [Metric Type] = 'QGP_ACTUAL' THEN 'Digital % No Assistance Acts Actuals'
+    ELSE NULL
+    END
+  ELSEIF [Metric Name] = 'digitalPctAssistanceActivations' THEN
+    IF [Metric Type] = 'QGP_ACTUAL' THEN 'Digital % Assistance Acts Actuals'
+    ELSE NULL
+    END
+  ELSE NULL
+  END
 END
