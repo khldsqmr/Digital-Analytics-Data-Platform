@@ -1,12 +1,515 @@
-SELECT
-  WeekEnding, MetricName, MetricType, Page, DisplayMetricType, IsFuture, Amount, InsertDateTime, PublishKey,
-  ROW_NUMBER() OVER (
-    PARTITION BY WeekEnding, MetricID, DateContext, MetricType, Page
-    ORDER BY InsertDateTime DESC, PublishKey DESC
-  ) AS rn
-FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
-WHERE LOWER(TRIM(MetricName)) = 'store traffic (excl store-in-store)'
-  AND UPPER(TRIM(MetricType)) = 'ACTUALS/OUTLOOK'
-  AND UPPER(TRIM(DateContext)) = 'NORMAL'
-  AND UPPER(TRIM(Page)) = 'BRANDED RETAIL TOTAL'
-ORDER BY WeekEnding DESC, InsertDateTime DESC;
+Pulse 1.2 — Metric Appendix						
+Complete reference for every metric in Pulse. The 'How It Is Built' column documents the full Adobe Analytics segment stacking logic, including all universal filters, prospect qualifiers, and flow-specific segments layered together to produce each number. Rows marked † are flow sub-components that sum to their parent metric (cart flows and orders flows can be summed; UPV flows cannot).						
+Funnel Stage	Metric Name	Flow / Scope	Data Source & Table	VP-Ready One-Liner	How It Is Built — Full Technical Detail (Segment Stacking Logic)	Key Exclusions Applied
+  TOP FUNNEL — MEDIA SPEND						
+Top Funnel	MFC Spend — Postpaid	Postpaid LOB	"Media Flow Chart (MFC)
+Databricks:
+prdrzranalytics.lab42.raw_media_flowchart
+Owner: Amy Pritchett / Will Butler"	Total dollars invested in Postpaid media each week, as tracked and finalized by LOB teams in the Media Flow Chart.	"Source: Media Flow Chart (MFC) — T-Mobile's centralized media spend source of truth, stored in Databricks.
+
+How it's built:
+  • LOB teams contribute Postpaid spend data each Thursday. QA and finalization by 3 PM PT each Friday.
+  • Will Butler's team performs a twice-weekly update for mid-week corrections.
+  • Aggregates weekly spend across all buying channels and platforms at the Postpaid LOB level.
+  • MFC Tactic filter = global selector affecting all spend rows.
+  • MFC Channel filter applies to MFC Spend only — does not affect any other metric.
+
+Forecasted Spend$: Planned/budgeted amount from MFC.
+Act vs Fcst Δ%: (Actuals − Forecast) / Forecast.
+QTD Sum: Running total of weekly actuals from Q2 start."	Excludes Message_Type = MICRO and Message values 'SEM Postpaid/Micro' and 'Micro Postpaid Offers' until channel mapping is finalized.
+Top Funnel	MFC Spend — Broadband	Broadband / HSI LOB	"Media Flow Chart (MFC)
+Databricks:
+prdrzranalytics.lab42.raw_media_flowchart
+Owner: Amy Pritchett / Will Butler"	Total dollars invested in Broadband (Home Internet) media each week, as tracked and finalized in the Media Flow Chart.	"Source and build logic identical to MFC Spend — Postpaid, filtered to the Broadband LOB.
+
+  • Same LOB contribution, QA, and refresh cadence as Postpaid spend.
+  • Aggregates weekly spend across all channels for the Broadband / Home Internet (HSI) line of business.
+
+Forecasted Spend$: Planned/budgeted Broadband amount.
+Act vs Fcst Δ%: (Actuals − Forecast) / Forecast."	Same MICRO message type exclusions as Postpaid MFC Spend.
+  TOP FUNNEL — UPV (UNIQUE PROSPECT VISITORS)						
+Top Funnel	UPV Actuals (Overall)	All Flows Combined	"Adobe Analytics → Databricks
+prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+Owner: Khalid / Ben"	Count of distinct website visitors who landed on T-Mobile.com and engaged beyond their first page — the broadest measure of qualified prospect traffic entering the funnel.	"Metric: Unique Visitors, counted at VISIT level in Adobe Analytics.
+
+Segment stack (applied in this order):
+  [Layer 1 — Universal, always on]
+  • DDM – Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB)
+
+  [Layer 2 — Prospect qualifiers]
+  • Exclude TMO Mobile Network Carrier: removes VISITS where Mobile Carrier Network = T-Mobile
+  • [sdi] Exclude Authenticated or Network Authenticated VISITS: removes sessions where User State = Authenticated or Network Authenticated, or any LOA token (LOA0.5–LOA3) is present
+  • [sdi] Exclude Visit Login Page: removes VISITS where Page URL - Full (v103) contains associated_billing_accounts, t-mobile.com/guest-pay, or account.t-mobile.com/signin/v2/
+  • [DA] Exclude Single Page Visits: removes VISITS where Single Page Visits exists — enforces the 'Non-Bounced' qualifier
+
+  [No flow filter — broadest universe across all product areas]
+
+IMPORTANT — Why flows don't sum to this total:
+Adobe deduplicates Unique Visitors at the scope of the metric. A visitor browsing both Postpaid and HSI pages counts as 1 UV in UPV Actuals, but also as 1 UV in both UPV Postpaid Flow AND UPV HSI Flow. Summing the flow columns re-introduces those duplicates.
+
+WoW%: (Current week − Prior week) / Prior week.
+Avg of QTD: Running average of weekly actuals from Q2 start.
+Refresh: Weekly, each time the UPV forecast notebook is run."	Excludes: T-Mobile network visitors, all authenticated/LOA sessions, login and guest-pay page visits, single-page bounces, native app traffic, TFB pages.
+Top Funnel	UPV Forecasts	All Flows	"MFC WoW Spend% indexed to Adobe base
+prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+
+Owner: Khalid / Ben"	A modeled weekly estimate of expected UPV, used to benchmark whether actual traffic is tracking ahead or behind plan.	"Interim forecast model — not a statistical model.
+
+How it's built:
+  • Takes the WoW % change in MFC Spend vs the same week in the prior quarter.
+  • Compounds that change as an index applied to a prior-quarter UPV anchor value.
+  • This is a proxy until UPV is fully landed in a permanent source table, at which point a historically-derived model will replace it.
+
+Act vs Fcst Δ%: (Actuals − Forecast) / Forecast.
+Act vs Fcst Δ (absolute): Actuals minus Forecast in raw visitor count.
+Refresh: Weekly, same notebook run as UPV Actuals."	Spend-indexed proxy — treat variance directionally. Model will be replaced once UPV lands in a permanent table.
+Top Funnel	UPV — Postpaid Flow †	Postpaid	"Adobe Analytics → Databricks
+prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+
+"	Distinct non-bounced visitors who browsed the core Postpaid phone/plan shopping experience, with HSI pages excluded.	"Metric: Unique Visitors, VISIT level.
+
+Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers: Exclude TMO Mobile Network Carrier + [sdi] Exclude Authenticated + [sdi] Exclude Visit Login Page + [DA] Exclude Single Page Visits
+  [Layer 3 — Flow filter: [sdi] Postpaid Flow (Exclude HSI + BYOD)]
+  HIT-level exclusion. Removes any hit matching HSI identifiers:
+    • Page Name contains 'TLife App | Shop : HINT', 'TMO | HINT', or 'TMO:UNO | HINT'
+    • Page URL contains www.t-mobile.com/isp, es.t-mobile.com/home-internet, www.t-mobile.com/home-internet, or www.t-mobile.com/stores/bd/home-internet
+    • Site Name = TMO AND Site Section (v1) = HINT
+    • Page Name contains 'TLife App | Shop' AND Product Type (v100) = ISP
+    • Page Name contains 'TMO | Shop' AND Product Type (v100) = ISP
+  Remaining hits scope the visit to the Postpaid phone/plan experience.
+
+  Note: BYOD SIM pages are not excluded at the UPV level — they are excluded at cart and orders level only.
+  † Cannot be summed with HSI and BYOD flows to equal UPV Actuals.
+
+CVR denominator: Used as denominator for Cart Postpaid CVR% and Orders Postpaid CVR%."	Excludes all HSI page hits (HINT page names, /isp/ and /home-internet/ URLs, Site Section = HINT, Product Type = ISP). All Layer 2 prospect filters also applied.
+Top Funnel	UPV — HSI Flow †	Home Internet (HSI)	"Adobe Analytics → Databricks
+(same view as UPV Actuals)"	Distinct non-bounced visitors who browsed T-Mobile Home Internet pages — the prospect audience for the internet service offering.	"Metric: Unique Visitors, VISIT level.
+
+Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers (same as UPV Actuals)
+  [Layer 3 — Flow filter: [DA] HSI Any HSI Site Page – Hits]
+  HIT-level inclusion. Includes visits where any hit matched HSI page identifiers:
+    • Page Name contains 'TLife App | Shop : HINT', 'TMO | HINT', or 'TMO:UNO | HINT'
+    • Page URL contains www.t-mobile.com/isp, es.t-mobile.com/home-internet, www.t-mobile.com/home-internet, or www.t-mobile.com/stores/bd/home-internet
+    • Site Name = TMO AND Site Section (v1) = HINT
+    • Page Name contains 'TLife App | Shop' AND Product Type (v100) = ISP
+    • Page Name contains 'TMO | Shop' AND Product Type (v100) = ISP
+
+  † Cannot be summed with Postpaid and BYOD flows to equal UPV Actuals.
+
+CVR denominator: Used as denominator for Cart HSI CVR% and Orders HSI CVR%."	Scoped to visits containing any HSI page hit. All prospect filters applied. Not mutually exclusive from Postpaid or BYOD at visit level.
+Top Funnel	UPV — BYOD Flow †	BYOD	"Adobe Analytics → Databricks
+(same view as UPV Actuals)"	Distinct non-bounced visitors who browsed BYOD or device-switching pages — prospects exploring how to bring an existing device to T-Mobile.	"Metric: Unique Visitors, VISIT level.
+
+Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers (same as UPV Actuals)
+  [Layer 3 — Flow filter: BYOD Pages – Visits]
+  Includes visits where any page name or hit matched BYOD identifiers:
+    • Page Name = 'TMO | Shop : Browse : Bring Your Own Phone'
+    • Page Name = 'TMO | Support : Resources : Switch from Current Carrier'
+    • Page Name = 'TMO | Shop : Browse : Bring your own phone eligibility checker'
+    • Page Name contains 'TMO | Shop : switch :'
+    • Page Name = 'TMO | Marketing : Landing Page : Quick Prospect Switching'
+    • Page Name = 'TMO | Shop : Cell Phone Detail : T-Mobile® SIM Card' (HITS)
+    • Page Name = 'TLife App | Shop : Cell Phone Detail : T-Mobile® SIM Card' (HITS)
+    • Page Name = 'TLife App | Shop : Tablet Detail : Mobile Internet SIM Card' (HITS)
+    • Page Name = 'TMO | Shop : Tablet Detail : T-Mobile® Mobile Internet SIM Card' (HITS)
+
+  † Cannot be summed with Postpaid and HSI flows to equal UPV Actuals.
+
+CVR denominator: Used as denominator for Cart BYOD CVR% and Orders BYOD CVR%."	Scoped to visits containing any BYOD or SIM card page hit. All prospect filters applied. Not mutually exclusive from other flows at visit level.
+  MID FUNNEL — ACTIONS						
+Mid Funnel	VR Calls	All / Postpaid	"Quarterly Game Plan (QGP)
+Databricks:
+prdrzrlakehouse.qgp_restricted.qgpweeklyview
+Owner: Preeti Laharwani / Bharat Kavuru"	Phone calls placed by customers clicking a T-Mobile.com phone number to get live sales help — a direct signal of high purchase intent.	"Source: QGP operational data — entirely separate from Adobe Analytics. No Adobe segment filtering applies.
+
+How it's built:
+  • Counts customer calls handled by T-Mobile's Virtual Retail (VR) sales teams.
+  • Triggered when a customer clicks a phone number on T-Mobile.com to get assistance purchasing a device or plan.
+  • QGP provides both weekly actuals and a weekly forecast (VR Calls QGP).
+
+Act vs Fcst Δ%: (Actuals − QGP Forecast) / QGP Forecast.
+QTD Sum: Running total from Q2 start.
+Refresh: Daily at 9 AM PT."	No Adobe segment filtering. QGP operational data only.
+Mid Funnel	VR Chats	All / Postpaid	"Quarterly Game Plan (QGP)
+Databricks:
+prdrzrlakehouse.qgp_restricted.qgpweeklyview
+Owner: Preeti Laharwani / Bharat Kavuru"	Chat conversations initiated by customers on T-Mobile.com with Virtual Retail sales agents — indicating purchase-ready engagement.	"Source: QGP operational data — no Adobe segment filtering.
+
+How it's built:
+  • Counts customer chat conversations handled by T-Mobile's VR sales teams.
+  • Triggered when a customer clicks to chat on T-Mobile.com to get help purchasing a device or plan.
+  • QGP provides both actuals and a weekly forecast.
+
+Act vs Fcst Δ%: (Actuals − QGP Forecast) / QGP Forecast.
+Refresh: Daily at 9 AM PT."	No Adobe segment filtering. QGP operational data only.
+Mid Funnel	Exit Traffic (Door Swings)	Retail	"Quarterly Game Plan (QGP)
+Databricks:
+prdrzrlakehouse.qgp_restricted.qgpweeklyview
+Owner: Preeti Laharwani / Bharat Kavuru"	Total customer entries/exits at T-Mobile retail stores each week, measured by door-swing sensors — a proxy for offline foot traffic driven by digital awareness.	"Source: QGP operational data sourced from retail door-swing sensor hardware — no Adobe segment filtering.
+
+How it's built:
+  • Counts physical customer exits from T-Mobile retail store locations.
+  • Data is sourced from door-swing sensor readings at store entrances/exits, reported through QGP.
+  • QGP provides both actuals and a weekly forecast.
+
+Act vs Fcst Δ%: (Actuals − QGP Forecast) / QGP Forecast.
+Refresh: Daily at 9 AM PT."	Retail sensor data — no Adobe filtering. Counts all store visits regardless of purchase outcome.
+Mid Funnel	Eligibility Checks Completed 	Home Internet (HSI)	"Adobe Analytics → Databricks (PENDING — not yet in the pipeline)
+
+Destination: prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+
+Owner: khalid.qamar1 (pipeline)"	"Prospects who ran a T-Mobile Home Internet availability check and got a result back — the first
+hard signal of HSI purchase intent, ahead of any cart activity."	"Metric: Eligibility Checks Completed, counted as occurrences (hits) in Adobe Analytics.
+Segment stack:
+
+  [Layers 1–2] Universal + Prospect (same as UPV Actuals)
+  [Layer 3 — [DA] HSI Eligibility Check Completed]
+  HIT-level inclusion. Includes HITS where BOTH are true:
+    1. Tool Name (v11) = 'HINT Availability Search' OR Tool Name (v11) = '#'
+    2. Tool Result (v96) contains 'ISP:TMO|Eligibility:'
+
+"	"All Layer 1 universal and Layer 2 prospect filters applied. Counted as occurrences: a visit
+running several availability checks contributes several, so this does not compare like-for-like
+with the visit-level UPV and cart metrics. NOT the QGP 'Eligibility Check' metric
+"
+Mid Funnel	Add to Cart (Overall)	Postpaid + HSI + BYOD	"Adobe Analytics → Databricks
+prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+"	Total visits in which a prospect added any T-Mobile product to cart — the strongest digital signal of purchase intent before checkout.	"Derived total: Add to Cart = Cart Postpaid Flow + Cart HSI Flow + Cart BYOD Flow.
+Cart flows CAN be summed — each uses mutually exclusive product-type and page-scope filtering.
+
+Base metric: Count of VISITS where a prospect performs a cart start action (scAdd or scOpen) on a recognized cart page.
+
+Segment stack shared across all cart flows:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers: Exclude TMO Mobile Network Carrier + [sdi] Exclude Authenticated + [sdi] Exclude Visit Login Page + [DA] Exclude Single Page Visits
+  [Layer 3 — [sdi] cart start]
+  Requires a hit where scOpen OR scAdd exists AND page is a recognized cart page:
+    • www.t-mobile.com/shopping-cart | www.t-mobile.com/cart | es.t-mobile.com/cart | es.t-mobile.com/shopping-cart
+    • Page Name = 'TMO:UNO | Shop : Cart' | 'TMO | Shop : Cart' | 'TLife App | Shop : Cart : Active Cart' | 'TMO | Shop : Cart : Active Cart'
+    • Page Name = 'TMO | Shop : Switch : Checkout Review' AND Cart Views (scView) exists AND Product Name (v35) = 'BYOS SIM or eSIM'
+
+  [Layer 4 — Flow-specific filters] Applied differently per flow — see Cart flow rows below.
+
+CVR%: Add to Cart / UPV Actuals.
+Refresh: Daily at 9 AM PT."	All prospect filters applied. Flow-specific exclusions detailed in each sub-flow row below.
+Mid Funnel	Cart — Postpaid Flow †	Postpaid	"Adobe Analytics → Databricks
+(same table as Add to Cart)"	Visits in which a prospect started or added to a cart on the Postpaid phone/plan path, with all HSI and BYOD cart activity removed.	"Segment stack:
+  [Layers 1–3] Universal + Prospect + [sdi] cart start (same as Add to Cart overall)
+  [Layer 4 — [sdi] Exclude HSI OR BYOD Cart Start]
+  Removes two categories of cart activity from the Postpaid count:
+
+  HSI cart exclusions:
+    • Cart pages where Product Type (v100) = ISP
+    • Flow Name (v154) = 'AAL Intent' (HSI checkout initiation)
+    • URLs containing .t-mobile.com/home-internet/eligibility/base or /commerce/checkout/hint-order
+
+  BYOD cart exclusions:
+    • Cart pages where Product Type (v100) = SIMCARDS
+    • 'TMO | Shop : Switch : Checkout Review' AND Cart Views (scView) exists AND Product Name (v35) = 'BYOS SIM or eSIM'
+    • Flow Name (v154) starts with 'DEFERRED Intent', 'Prospect Activation', or 'Activation Intent'
+
+  Existing customer signal exclusions (additional scrub beyond Layer 2):
+    • Mobile Carrier Network = T-Mobile | Encrypted MSISDN (v121) exists
+    • Tracking Code (v0) contains '_TMT_', '_C_', or '_CUST_'
+    • Successful Logins (e4) exists | Page contains web2go | Site Section = ma
+    • Page URL (c3) contains my.t-mobile.com (excluding login page)
+    • Site Name contains Sprint | Customer Indicators (v155) contains m:1 or b:1
+
+CVR%: Cart Postpaid Flow / UPV Postpaid Flow.
+† Sums with Cart HSI + Cart BYOD = Add to Cart total."	Removes HSI and BYOD cart actions. Additional existing-customer signal scrub beyond standard prospect filters (MSISDN, tracking codes, Sprint site, Customer Indicators).
+Mid Funnel	Cart — HSI Flow †	Home Internet (HSI)	"Adobe Analytics → Databricks
+(same table as Add to Cart)"	Visits in which a prospect engaged with the Home Internet cart — indicating intent to purchase T-Mobile's internet service.	"Segment stack:
+  [Layers 1–2] Universal + Prospect
+  [Layer 3 — [DA] HSI Prospect Cart Visits]
+  Includes HITS where ALL three conditions are true:
+  1. Cart page is an HSI cart identifier:
+    • Page URL (v6) contains .t-mobile.com/buy/cart or .t-mobile.com/cart
+    • Page Name contains 'TMO | HINT : Shop : Active Cart' or 'TMO | Shop : Cart : Active Cart'
+  2. Product Type (v100) = ISP
+  3. Visit includes an active HSI prospect flow signal (any of):
+    • Flow Name (v154) = 'AAL Intent'
+    • Page URL contains .t-mobile.com/home-internet/eligibility/base
+    • Page URL contains .t-mobile.com/commerce/checkout/hint-order
+
+CVR%: Cart HSI Flow / UPV HSI Flow.
+† Part of Add to Cart total."	Requires ISP product type AND active HSI prospect flow signal. Will not fire for general HSI browsing without checkout intent.
+Mid Funnel	Cart — BYOD Flow †	BYOD	"Adobe Analytics → Databricks
+(same table as Add to Cart)"		"Segment stack:
+  [Layers 1–2] Universal + Prospect
+  [Layer 3 — [sdi] postpaid prospect byod cart start hit]
+  Includes HITS where ALL three conditions are true:
+  1. Cart start event: scOpen OR scAdd on a recognized cart page
+  2. Product scope — either:
+    • Product Type (v100) = SIMCARDS
+    • Page Name = 'TMO | Shop : Switch : Checkout Review' AND Cart Views (scView) exists AND Product Name (v35) = 'BYOS SIM or eSIM'
+  3. Flow Name (v154) = active prospect activation intent (any of):
+    • Starts with 'DEFERRED Intent'
+    • = 'Prospect Activation Intent'
+    • = 'Intención de activación de prospecto Intent'
+    • = 'Activación de prospecto Intent'
+    • Starts with 'Prospect Activation'
+    • Starts with 'Activation Intent'
+
+CVR%: Cart BYOD Flow / UPV BYOD Flow.
+† Part of Add to Cart total."	Scoped to SIM card product type with active prospect activation flow. Excludes Postpaid device and HSI cart actions.
+  BOTTOM FUNNEL — ORDERS (UNASSISTED)						
+Bottom Funnel	Orders (Unassisted)	Postpaid + HSI + BYOD	"AdobAdobe Analytics → Databricks
+prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long
+"	Total orders completed entirely online with no T-Mobile employee involvement — the purest measure of self-serve digital conversion.	"Derived total: Orders (Unassisted) = Orders Postpaid Flow + Orders HSI Flow + Orders BYOD Flow.
+Orders flows CAN be summed — each uses mutually exclusive product/flow filtering.
+
+Unassisted flag: Sourced directly from Adobe Analytics via [DA] Unassisted Proxy (No In-Store or Screen Share) — NOT a join against QGP.
+
+[DA] Unassisted Proxy — Visit-level segment:
+Excludes VISITS where any in-store or screen-share signal is present:
+  In-store signals:
+    • Modal Name (v82) contains 'Buy online while in store is available :'
+    • Shipping Method (v27) contains 'while in store' or 'Comprar por Internet desde una tienda'
+    • Tracking Code - Visit Level Expiration (v45) = MGPO_RS_P_PPMGNWLRSU_9FED46B36BD7D485135485
+    • Shipping Methods Displayed (v9) contains 'online while in store'
+  Screen-share signals:
+    • Alert Message (v94) = 'Message: Screen share in progress'
+    • Page Name = 'TLife App | Support : Screen Share : Share This Code' AND Action Name = 'Button Click : Allow'
+    • Page URL (v6) contains 'assist.t-mobile'
+
+CVR%: Orders (Unassisted) / UPV Actuals.
+Refresh: Daily at 9 AM PT."	Removes in-store-assisted orders (modal, shipping method, tracking code), screen-share sessions, and Android native app ghost order hits (no Order ID).
+Bottom Funnel	Orders — Postpaid Flow †	Postpaid	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	Orders completed on the Postpaid phone/plan path with no employee assistance — the core digital new-customer acquisition conversion.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Unassisted Proxy] Removes in-store and screen-share sessions (full logic in Orders Unassisted row)
+  [Layer 4 — [sdi] postpaid prospect orders visits]
+  Includes VISITS containing a hit where:
+    • Orders exists on a recognized Postpaid order confirmation page:
+      – 'TMO:UNO | Shop : Checkout : Submit Order Confirmation'
+      – 'TMO | Shop : Checkout : Submit Order Confirmation'
+      – 'TLife App | Shop : Checkout : Order Confirmation'
+      – Page URL (c3) = www.t-mobile.com/checkout/finish or es.t-mobile.com/checkout/finish
+      – Page URL (v6) = www.t-mobile.com/shop/checkout/confirmation or es.t-mobile.com/shop/checkout/confirmation
+    AND Flow Name (v154) = activation intent via [sdi] Activation Intent:
+      • Flow Name = 'ACTIVATION Intent' | 'DEFERRED Intent' | 'Prospect Activation Intent' | 'Activación de prospecto Intent'
+  [Layer 5 — [sdi] Postpaid (Exclude HSI BYOD Orders)]
+  Strips HSI and BYOD orders from the Postpaid count:
+    • HSI: Site = TLife App or TMO AND Flow = ACTIVATION/Prospect Activation Intent AND Product Type = ISP AND Orders exists
+    • BYOD SIM: confirmation page with Orders AND Product Name = 'BYOS SIM or eSIM', 'SIM Card', 'Tarjeta SIM', 'Mobile Internet SIM Card', or 'Tarjeta SIM para Internet móvil' AND Flow = activation intent
+  [Layer 6 — Android ghost hit exclusion]
+  Removes HITS where OS = Google Android AND Order ID (v14) does not exist AND Page Layout State (v86) = Native App
+
+CVR%: Orders Postpaid Flow / UPV Postpaid Flow.
+† Sums with Orders HSI + Orders BYOD = Orders (Unassisted) total."	Excludes HSI and BYOD orders, in-store/screen-share sessions, all prospect filters, and Android native app ghost hits (missing Order ID).
+Bottom Funnel	Orders — HSI Flow †	Home Internet (HSI)	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	Home Internet orders completed fully online by a prospect — confirming a new HSI subscriber acquired through the digital channel.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Unassisted Proxy] Removes in-store and screen-share sessions
+  [Layer 4 — [DA] HSI Prospect Orders]
+  Includes HITS where ALL four conditions are true simultaneously:
+    • Site Name (v18) = TLife App OR TMO
+    • Flow Name (v154) = 'ACTIVATION Intent' OR 'Prospect Activation Intent' OR 'Intención de activación de prospecto Intent' (via [sdi] Activation Intent)
+    • Product Type (v100) = ISP
+    • Orders exists
+
+CVR%: Orders HSI Flow / UPV HSI Flow.
+† Part of Orders (Unassisted) total."	Requires ISP product type AND HSI activation flow — will not count Postpaid or BYOD orders. Unassisted proxy also applied.
+Bottom Funnel	Orders — BYOD Flow †	BYOD	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	SIM card/eSIM activations completed fully online by prospects bringing their own device to T-Mobile.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Unassisted Proxy] Removes in-store and screen-share sessions
+  [Layer 4 — [sdi] Postpaid Prospect BYOD Order Hit]
+  Includes HITS where ALL conditions are true:
+    • Orders exists on a recognized order confirmation page (same confirmation page list as Postpaid orders)
+    • Product Name (v35) = any of: 'BYOS SIM or eSIM', 'SIM Card', 'Tarjeta SIM', 'Mobile Internet SIM Card', 'Tarjeta SIM para Internet móvil'
+    • Flow Name (v154) = activation intent (DEFERRED Intent, Prospect Activation Intent, Activación de prospecto Intent, Prospect Activation, Activation Intent — via [sdi] Activation Intent)
+  [Layer 5 — Android ghost hit exclusion]
+  Removes HITS where OS = Google Android AND Order ID (v14) does not exist AND Page Layout State (v86) = Native App
+
+CVR%: Orders BYOD Flow / UPV BYOD Flow.
+† Part of Orders (Unassisted) total."	Scoped to SIM/eSIM product names with activation intent. Android ghost hit exclusion applied. Unassisted proxy also applied.
+  BOTTOM FUNNEL — ORDERS (ASSISTED)						
+Bottom Funnel	Orders (Assisted)	Postpaid + HSI + BYOD	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	Total orders completed with T-Mobile in-store staff or screen-share agent assistance — measuring the digital-to-assisted channel conversion where an employee helped close the sale.	"Derived total: Orders (Assisted) = Orders Assisted Postpaid Flow + Orders Assisted HSI Flow + Orders Assisted BYOD Flow.
+Assisted flows CAN be summed — same mutually exclusive product/flow scoping as unassisted flows.
+
+Assisted flag: Sourced directly from Adobe Analytics via [DA] Assisted Proxy (In-Store or Screen Share) — the mirror of the Unassisted Proxy.
+
+[DA] Assisted Proxy — Visit-level segment:
+INCLUDES VISITS where any in-store or screen-share signal is present (the exact same signals that the Unassisted Proxy excludes):
+  In-store signals:
+    • Modal Name (v82) contains 'Buy online while in store is available :'
+    • Shipping Method (v27) contains 'while in store' or 'Comprar por Internet desde una tienda'
+    • Tracking Code - Visit Level Expiration (v45) = MGPO_RS_P_PPMGNWLRSU_9FED46B36BD7D485135485
+    • Shipping Methods Displayed (v9) contains 'online while in store'
+  Screen-share signals:
+    • Alert Message (v94) = 'Message: Screen share in progress'
+    • Page Name = 'TLife App | Support : Screen Share : Share This Code' AND Action Name = 'Button Click : Allow'
+    • Page URL (v6) contains 'assist.t-mobile'
+
+CVR%: Orders (Assisted) / UPV Actuals.
+Refresh: Daily at 9 AM PT."	Scoped exclusively to sessions with confirmed in-store or screen-share assist signals. Universal and prospect filters still applied.
+Bottom Funnel	Orders Assisted — Postpaid Flow †	Postpaid	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	Postpaid orders completed with in-store or screen-share employee assistance — showing how much of Postpaid conversion volume flows through the assisted digital channel.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Assisted Proxy (In-Store or Screen Share) – Visit]
+  Retains only VISITS with in-store or screen-share signals (full signal list in Orders Assisted row above)
+  [Layer 4 — [sdi] postpaid prospect orders visits]
+  Includes VISITS containing a hit where:
+    • Orders exists on a recognized Postpaid order confirmation page (same list as Orders Unassisted Postpaid)
+    • Flow Name (v154) = activation intent via [sdi] Activation Intent:
+      • Flow Name = 'ACTIVATION Intent' | 'DEFERRED Intent' | 'Prospect Activation Intent' | 'Activación de prospecto Intent'
+  [Layer 5 — [sdi] Postpaid (Exclude HSI BYOD Orders)]
+  Strips HSI and BYOD orders from the Postpaid count (same logic as Orders Unassisted Postpaid):
+    • Removes ISP product type orders in activation flows
+    • Removes SIM/BYOD product name orders in activation flows
+  [Layer 6 — Android ghost hit exclusion]
+  Removes HITS where OS = Google Android AND Order ID (v14) does not exist AND Page Layout State = Native App
+
+CVR%: Orders Assisted Postpaid Flow / UPV Postpaid Flow.
+† Sums with Orders Assisted HSI + Orders Assisted BYOD = Orders (Assisted) total."	Excludes HSI and BYOD orders and Android ghost hits. REQUIRES assisted proxy signal — unassisted sessions are excluded from this metric.
+Bottom Funnel	Orders Assisted — HSI Flow †	Home Internet (HSI)	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	Home Internet orders completed with in-store or screen-share employee assistance — confirming HSI conversions driven through the assisted digital channel.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Assisted Proxy (In-Store or Screen Share) – Visit]
+  Retains only VISITS with in-store or screen-share signals
+  [Layer 4 — [DA] HSI Prospect Orders]
+  Includes HITS where ALL four conditions are true simultaneously:
+    • Site Name (v18) = TLife App OR TMO
+    • Flow Name (v154) = 'ACTIVATION Intent' OR 'Prospect Activation Intent' OR 'Intención de activación de prospecto Intent'
+    • Product Type (v100) = ISP
+    • Orders exists
+
+CVR%: Orders Assisted HSI Flow / UPV HSI Flow.
+† Part of Orders (Assisted) total."	Requires ISP product type AND HSI activation flow. REQUIRES assisted proxy signal — unassisted sessions excluded.
+Bottom Funnel	Orders Assisted — BYOD Flow †	BYOD	"Adobe Analytics → Databricks
+(same table as Orders Unassisted)"	BYOD/SIM activations completed with in-store or screen-share employee assistance — showing assisted conversion on the device-switching path.	"Segment stack:
+  [Layer 1] Universal filters
+  [Layer 2] Prospect qualifiers
+  [Layer 3 — [DA] Assisted Proxy (In-Store or Screen Share) – Visit]
+  Retains only VISITS with in-store or screen-share signals
+  [Layer 4 — [sdi] Postpaid Prospect BYOD Order Hit]
+  Includes HITS where ALL conditions are true:
+    • Orders exists on a recognized order confirmation page
+    • Product Name (v35) = any of: 'BYOS SIM or eSIM', 'SIM Card', 'Tarjeta SIM', 'Mobile Internet SIM Card', 'Tarjeta SIM para Internet móvil'
+    • Flow Name (v154) = activation intent (DEFERRED Intent, Prospect Activation Intent, Activación de prospecto Intent, Prospect Activation, Activation Intent)
+  [Layer 5 — Android ghost hit exclusion]
+  Removes HITS where OS = Google Android AND Order ID (v14) does not exist AND Page Layout State = Native App
+
+CVR%: Orders Assisted BYOD Flow / UPV BYOD Flow.
+† Part of Orders (Assisted) total."	Scoped to SIM/eSIM product names with activation intent. Android ghost hit exclusion applied. REQUIRES assisted proxy signal.
+  BOTTOM FUNNEL — NEW BANS & VR CONVERSIONS						
+Bottom Funnel	New BANs — Digital Unassisted	Consumer Postpaid	"Quarterly Game Plan (QGP)
+Databricks:
+prdrzrlakehouse.qgp_restricted.qgpweeklyview
+Owner: Preeti Laharwani / Bharat Kavuru
+Forecast: Sheenu Thakran's team"	New billing accounts activated through digital self-serve — operational confirmation that a digital order resulted in a new T-Mobile Postpaid line being turned on.	"Source: QGP operational data — no Adobe segment filtering.
+
+How it's built:
+  • Metric: Consumer Postpaid Digital No Assistance New BAN activations.
+  • A BAN (Billing Account Number) = a unique T-Mobile customer account ID. A 'New BAN' = a brand-new account.
+  • Downstream operational confirmation that a completed digital order translated into an active line.
+  • QGP provides actuals and a weekly forecast (Sheenu Thakran's team).
+
+Act vs Fcst Δ%: (Actuals − QGP Forecast) / QGP Forecast.
+% of Consumer: New BANs Dig. Unassist ÷ total Consumer Postpaid new BANs (digital + assisted combined).
+Refresh: Daily at 9 AM PT."	QGP operational metric — no Adobe filtering. Counts Digital No Assistance (self-serve) activations only.
+Bottom Funnel	VR New BANs	Consumer Postpaid	"Quarterly Game Plan (QGP)
+Databricks:
+prdrzrlakehouse.qgp_restricted.qgpweeklyview
+Owner: Preeti Laharwani / Bharat Kavuru"	New billing accounts activated with help from a T-Mobile Virtual Retail agent — measuring the conversion output of the assisted digital channel.	"Source: QGP operational data — no Adobe segment filtering.
+
+How it's built:
+  • Metric: Consumer Postpaid Digital Assistance New BAN activations.
+  • Counts activations handled by VR sales teams initiated when a customer engaged via chat on T-Mobile.com.
+  • QGP provides actuals and a weekly forecast.
+
+Act vs Fcst Δ%: (Actuals − QGP Forecast) / QGP Forecast.
+Note: VR New BANs typically far exceed Digital Unassisted BANs — VR-assisted journeys have a higher close rate. Strong positive variance reflects VR outperformance, not a data error.
+Refresh: Daily at 9 AM PT.
+"	QGP operational metric — no Adobe filtering. Counts only VR-assisted (chat/call) activations.
+Bottom Funnel	Digital % of Phone New Account Activations — Total (No Assistance + Assistance)	Consumer Postpaid — Phone, New Accounts	"Quarterly Game Plan (QGP)
+Databricks: prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly
+
+Owner: Preeti Laharwani / Bharat Kavuru"	"The share of all new Consumer Postpaid phone accounts activated through digital — self-serve and
+rep-assisted combined. The headline digital-penetration number, and the only one of the three
+carrying a QGP target."	"Source: QGP operational data — no Adobe segment filtering. The ratio arrives pre-calculated from
+QGP; Tableau only sums it. 
+
+How it's built:
+  • Numerator: digital new-account phone activations, No Assistance + Assistance, TM1-mapped.
+  • Denominator: all Consumer Postpaid new-account phone activations, every sales channel,
+    excl. National Retail Indirect (~145.9K, WE 8/15/26).
+  • Equals No Assistance % + Assistance % exactly — both share this denominator.
+
+Act vs QGP Δ%: (Actuals − Target) / Target. Future weeks carry an Outlook equal to the Target.
+Refresh: Daily at 9 AM PT.
+"	"No Adobe segment filtering. QGP operational data only. Denominator excludes National Retail
+Indirect. New-account phone activations only — excludes AALs, upgrades, BTS, Broadband, Fiber.
+A ratio: do not sum across weeks."
+Bottom Funnel	Digital % of Phone New Account Activations — No Assistance	Consumer Postpaid — Phone, New Accounts	"Quarterly Game Plan (QGP)
+Databricks: prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly
+
+Owner: Preeti Laharwani / Bharat Kavuru"	The share of new Consumer Postpaid phone accounts customers activated digitally.	"Source: QGP operational data — no Adobe segment filtering. The ratio arrives pre-calculated from
+QGP; Tableau only sums it. 
+
+How it's built:
+  • Numerator: ConsumerPostpaidNewPhoneBANActivationsTM1MappedDigital — new-account phone
+    activations with no rep involvement. Splits into BOPIS + Non-BOPIS
+    (4,304 + 11,002 = 15,306, WE 8/15/26).
+  • Denominator: same as the Total row (~145.9K).
+  • WE 8/15/26: 15,306 / 145,900 = 10.5%.
+
+No QGP target or Outlook — actuals only. Refresh: Daily at 9 AM PT.
+"	"No Adobe segment filtering. QGP operational data only. BOPIS counts as No Assistance here — the
+opposite of how Adobe's [DA] Unassisted Proxy treats in-store signals in the Orders rows.
+New-account phone activations only. Blank on future weeks."
+Bottom Funnel	Digital % of Phone New Account Activations — Assistance	Consumer Postpaid — Phone, New Accounts	"Quarterly Game Plan (QGP)
+Databricks: prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly
+
+Owner: Preeti Laharwani / Bharat Kavuru"	The share of new Consumer Postpaid phone accounts activated in digital with a rep assisting .	"Source: QGP operational data — no Adobe segment filtering. The ratio arrives pre-calculated from
+QGP; Tableau only sums it. 
+
+How it's built:
+  • Numerator: ConsumerPostpaidNewPhoneBANAssistedActivationsTM1MappedDigital — new-account
+    phone activations transacted in digital with rep assistance, TM1-mapped
+    (45,332, WE 8/15/26).
+  • Denominator: same as the Total row (~145.9K).
+  • WE 8/15/26: 45,332 / 145,900 = 31.1%.
+No QGP target or Outlook — actuals only. Refresh: Daily at 9 AM PT.
+"	"No Adobe segment filtering. QGP operational data only. Counts activations, not Adobe orders —
+will not reconcile to Orders (Assisted). New-account phone activations only. Blank on future
+weeks."
+  GLOSSARY — KEY TERMS, DIMENSIONS & CONCEPTS						
+Glossary	Postpaid	Product / LOB	—	T-Mobile's core consumer wireless service (pay monthly after usage). In Pulse: visitors and transactions on phone/plan/device pages — excluding HSI, BYOD, T-Mobile for Business, and B2B. Defined as Site Name (v18) = TMO, with TFB/b2b/Atwork/business/t-priority paths removed.	—	—
+Glossary	HSI / Home Internet (HINT)	Product / LOB	—	T-Mobile's Home Internet service. 'HINT' is the Adobe Site Section tag. Identified by /isp or /home-internet URL patterns, page names containing 'HINT', Site Section = HINT, or Product Type (v100) = ISP.	—	—
+Glossary	BYOD (Bring Your Own Device)	Product / LOB	—	The path for customers switching to T-Mobile with an existing device. Identified by Bring Your Own Phone pages, SIM card detail pages, carrier-switching pages, and the 'TMO | Shop : switch :' page name pattern.	—	—
+Glossary	Prospect	Audience	—	A visitor who is NOT a current T-Mobile customer. Defined by absence of: Authenticated/Network Authenticated User State, LOA tokens (LOA0.5–LOA3), T-Mobile mobile carrier network signal, and login/account management page visits.	—	—
+Glossary	Non-Bounced	Adobe Concept	—	A visit where the visitor viewed more than one page. Enforced by [DA] Exclude Single Page Visits, which removes sessions where 'Single Page Visits exists' in Adobe.	—	—
+Glossary	Unique Visitors (UV)	Adobe Concept	—	Adobe's deduplicated count of distinct individuals (browser/device cookies). Deduplication happens at the scope of the metric — so a visitor browsing both Postpaid and HSI pages counts as 1 UV in UPV Actuals, but also as 1 UV in both UPV Postpaid Flow and UPV HSI Flow. This is why UPV flows cannot be summed.	—	—
+Glossary	VISIT (Visit-Level Scope)	Adobe Concept	—	A single continuous session — starts on arrival, ends after 30 min of inactivity or at midnight. Visit-level segments evaluate the full session: if any hit meets the criteria, the whole visit is included or excluded.	—	—
+Glossary	HIT (Hit-Level Scope)	Adobe Concept	—	A single page view, link click, or event within a visit. Hit-level segments filter on individual actions. Flow segments use hit-level logic to detect whether any page in a visit touched the relevant product area.	—	—
+Glossary	[sdi] Activation Intent	Adobe Segment	—	A hit-level segment introduced in the updated funnel setup that consolidates all prospect activation flow signals into a single reusable segment. Includes HITS where Flow Name (v154) = 'ACTIVATION Intent', 'DEFERRED Intent', 'Prospect Activation Intent', or 'Activación de prospecto Intent'. Used as the intent qualifier in Orders Postpaid, Orders HSI, Orders BYOD, and their Assisted equivalents — replacing inline Flow Name logic from earlier configurations.	—	—
+Glossary	Flow Name (v154)	Adobe Dimension	—	Adobe eVar capturing purchase intent flow. Key values in Pulse: 'ACTIVATION Intent', 'DEFERRED Intent', 'Prospect Activation Intent', 'Activación de prospecto Intent' (new prospect flows); 'AAL Intent' (HSI checkout). Critical for separating new prospect purchase flows from upgrade or existing-customer flows.	—	—
+Glossary	Product Type (v100)	Adobe Dimension	—	Adobe eVar tagging each hit by product type. Key values: ISP = HSI/Home Internet; SIMCARDS = SIM card/BYOD activation products. Used to isolate HSI and BYOD flows in cart and orders metrics.	—	—
+Glossary	scOpen / scAdd (Cart Events)	Adobe Event	—	Adobe Analytics shopping cart events. scOpen = cart opened; scAdd = product added to cart. Together form the 'cart start' signal for all Add to Cart metrics. Both require the hit to occur on a recognized cart page URL or page name.	—	—
+Glossary	BAN (Billing Account Number)	T-Mobile Operational	—	Unique ID for a T-Mobile customer account. A 'New BAN' = a brand new account activation. New BAN metrics confirm a completed digital order translated into an active line.	—	—
+Glossary	VR (Virtual Retail)	T-Mobile Operational	—	T-Mobile's human sales agents who assist customers via live chat and phone from T-Mobile.com. Sits between fully self-serve (Unassisted) and in-store purchase paths.	—	—
+Glossary	MFC (Media Flow Chart)	Data Source	—	T-Mobile's centralized media spend source of truth in Databricks. LOB teams update Thursday; finalized by 3 PM PT Friday. Will Butler's team does twice-weekly updates.	—	—
+Glossary	QGP (Quarterly Game Plan)	Data Source	—	T-Mobile's internal system tracking weekly performance vs quarterly targets. Provides actuals and forecasts for VR Calls, VR Chats, Door Swings, New BANs, and VR New BANs. Daily refresh at 9 AM PT.	—	—
+Glossary	Unassisted	Purchase Path	—	Order completed with zero T-Mobile employee involvement. In Pulse, the unassisted flag comes from Adobe Analytics ([DA] Unassisted Proxy segment) — not a QGP join. Removes in-store modal signals, screen-share indicators, and specific shipping method/tracking code tags.	—	—
+Glossary	Assisted	Purchase Path	—	Order completed WITH T-Mobile in-store staff or screen-share agent involvement. In Pulse, the assisted flag comes from [DA] Assisted Proxy (In-Store or Screen Share) — the mirror of the Unassisted Proxy. Captures the same signals (in-store modal, screen-share page, shipping method, tracking code) but includes these sessions instead of excluding them. Unassisted + Assisted orders together represent total digital prospect orders.	—	—
+Glossary	Act vs Fcst Δ%	Dashboard Metric	—	(Actuals − Forecast) / Forecast. ▲ = actuals beat forecast; ▼ = underperformance. Used across MFC Spend, UPV, VR Calls/Chats, Exit Traffic, and New BANs.	—	—
+Glossary	CVR% (Conversion Rate)	Dashboard Metric	—	How effectively traffic converts to the next funnel stage. Cart CVR% = Cart Flow / UPV Flow (matched by product). Orders CVR% = Orders Flow / UPV Flow (matched by product). Each flow's CVR uses the corresponding UPV flow as its denominator.	—	—
+Glossary	WoW% (Week-over-Week)	Dashboard Metric	—	(Current Week − Prior Week) / Prior Week. Tracks weekly directional momentum on UPV Actuals, UPV flows, and Cart/Orders flows.	—	—
+Glossary	QTD (Quarter-to-Date)	Dashboard Metric	—	Cumulative total or average from Q2 start to the most recent data date. Used for Spend, UPV, and conversion metrics to provide running quarter context alongside weekly point-in-time values.	—	—
+Glossary	TFB (T-Mobile for Business)	Exclusion	—	T-Mobile's business/enterprise product line. Excluded from all Pulse metrics via [sdi] Postpaid (Exclude TFB): Site Name = TFB/b2b/Atwork, or URL contains /business or /t-priority.	—	—
+Glossary	LOA (Level of Assurance)	Exclusion	—	Authentication confidence levels LOA0.5 (network device token) through LOA3 (high security ID). All authenticated sessions — any LOA level — are excluded from Pulse to maintain prospect-only scope.	—	—
+Glossary	Android Ghost Hit	Data Quality	—	A false order confirmation event that fires on native Android app views without an associated Order ID. Excluded via: OS = Google Android AND Order ID (v14) does not exist AND Page Layout State (v86) = Native App. Applied to all Orders Postpaid, HSI, and BYOD flows — both Unassisted and Assisted.	—	—
