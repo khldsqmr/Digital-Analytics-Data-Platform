@@ -92,3 +92,158 @@ THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platfo
 
 ELSE NULL
 END
+
+//c.qgp.primary metric label
+Exit Traffic Actuals
+Exit Traffic Forecast
+VR Calls Actuals
+VR Calls Forecast
+VR Chats Actuals
+VR Chats Forecast
+VR Postpaid Activations Actuals
+VR Postpaid Activations Forecast
+Activations BOPIS Actuals
+Activations BOPIS Forecast
+Activations New AAL No Assist Actuals
+Activations New AAL No Assist Forecast
+Digital % Phone New Acts Actuals
+Digital % Phone New Acts Forecast
+Digital % Consumer Postpaid Acts Actuals
+Digital % Consumer Postpaid Acts Forecast
+Digital % No Assistance Acts Actuals
+Digital % Assistance Acts Actuals
+MFC Spend Actual
+MFC Spend Actual (Postpaid)
+MFC Spend Actual (Broadband)
+MFC Spend Actual (Total)
+MFC Spend Forecast
+MFC Spend Forecast (Postpaid)
+MFC Spend Forecast (Broadband)
+MFC Spend Forecast (Total)
+Biddable Spend (Postpaid)
+Biddable Spend (Broadband)
+Biddable Spend (Total)
+
+//c.qgp.primary metric
+IF [p.qgp.primary metric] = 'Exit Traffic Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Exit Traffic Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Calls Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Calls Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Chats Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Chats Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Postpaid Activations Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'VR Postpaid Activations Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Activations BOPIS Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Activations BOPIS Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Activations New AAL No Assist Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Activations New AAL No Assist Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % Phone New Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % Phone New Acts Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % Consumer Postpaid Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % Consumer Postpaid Acts Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % No Assistance Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctNoAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Digital % Assistance Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Actual'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Actual (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Actual (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Actual (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Forecast'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Forecast (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Forecast (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'MFC Spend Forecast (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Biddable Spend (Postpaid)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Biddable Spend (Broadband)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.primary metric] = 'Biddable Spend (Total)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSE NULL
+END
+
+//c.qgp.secondary metric
+IF [p.qgp.secondary metric] = 'Exit Traffic Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Exit Traffic Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Calls Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Calls Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Chats Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Chats Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Postpaid Activations Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'VR Postpaid Activations Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Activations BOPIS Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Activations BOPIS Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Activations New AAL No Assist Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Activations New AAL No Assist Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % Phone New Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % Phone New Acts Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % Consumer Postpaid Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % Consumer Postpaid Acts Forecast'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % No Assistance Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctNoAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Digital % Assistance Acts Actuals'
+THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Postpaid)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Broadband)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Total)'
+THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSE NULL
+END
