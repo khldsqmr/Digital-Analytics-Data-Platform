@@ -21,3 +21,74 @@ CASE [p.qgp.Primary Metric QGP]
   WHEN 'Platform Spend (Total)'        THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') AND [Channel Group] = 'All Channels' THEN [Metric Value] END)
   ELSE NULL
 END
+
+
+//c.tms.cb.Primary Metric
+IF [p.tms.cb.Primary Metric] = 'UPV'
+THEN SUM(IF [Metric Name] = 'upvTotalAdobe' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'UPV Forecast'
+THEN SUM(IF [Data Source] = 'UPV_FORECAST' AND [Metric Name] = 'upvForecast' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'UPV Flow'
+THEN SUM(IF [Metric Name] = 'upvFlowTotal' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'UPV Flow (Postpaid)'
+THEN SUM(IF [Metric Name] = 'upvPostpaid' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'UPV Flow (HSI)'
+THEN SUM(IF [Metric Name] = 'upvHsi' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'UPV Flow (BYOD)'
+THEN SUM(IF [Metric Name] = 'upvByod' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Add to Cart'
+THEN SUM(IF [Metric Name] = 'cartstartTotal' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'CartStart (Postpaid)'
+THEN SUM(IF [Metric Name] = 'cartstartPostpaid' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'CartStart (HSI)'
+THEN SUM(IF [Metric Name] = 'cartstartHsi' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'CartStart (BYOD)'
+THEN SUM(IF [Metric Name] = 'cartstartByod' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Unassisted'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedTotal' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Unassisted (Postpaid)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedPostpaid' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Unassisted (HSI)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedHsi' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Unassisted (BYOD)'
+THEN SUM(IF [Metric Name] = 'ordersUnassistedByod' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Assisted'
+THEN SUM(IF [Metric Name] = 'ordersAssistedTotal' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Assisted (Postpaid)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedPostpaid' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Assisted (HSI)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedHsi' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Orders Assisted (BYOD)'
+THEN SUM(IF [Metric Name] = 'ordersAssistedByod' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Actual'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Actual (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Actual (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Actual (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Forecast'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Forecast (Postpaid)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Forecast (Broadband)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Forecast (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Platform Spend (Postpaid)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Platform Spend (Broadband)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Platform Spend (Total)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Actual (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'MFC Spend Forecast (Total)'
+THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+ELSEIF [p.tms.cb.Primary Metric] = 'Platform Spend (Total)'
+THEN SUM(IF [Data Source] = 'PLATFORM_SPEND_CHANNEL' AND [Metric Name] = 'platformSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
+
+ELSE NULL
+END
