@@ -5,7 +5,7 @@ DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_adobeByodOutcomes_weekly
 
 SOURCE:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly
 
 DESTINATION:
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodOutcomes_weekly
@@ -79,7 +79,7 @@ WITH base AS (
     ByodInternalTmoVisitors,
     ByodBouncersVisitors,
     ByodOrders
-  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly
 ),
 
 -- -----------------------------------------------------------------------

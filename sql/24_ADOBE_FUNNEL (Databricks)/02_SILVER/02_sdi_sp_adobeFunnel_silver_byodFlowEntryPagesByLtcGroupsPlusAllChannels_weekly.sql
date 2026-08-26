@@ -1,16 +1,16 @@
 /* =================================================================================================
-FILE:         02_sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly.sql
+FILE:         02_sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly.sql
 LAYER:        Silver Table (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-TABLE:        sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
-PROCEDURE:    sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
+TABLE:        sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
+PROCEDURE:    sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
 
 SOURCES:
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
 
 PURPOSE:
   Silver table for BYOD funnel entry page metrics by ChannelGroup plus ALL.
@@ -35,7 +35,7 @@ BUSINESS GRAIN:
       ChannelGroup
 
 BUSINESS RULES:
-  - ALL row comes from Bronze byodFlowEntryPagesByAllChannel (ChannelGroup = 'ALL')
+  - ALL row comes from Bronze byodFlowEntryPagesByAllChannel (ChannelGroup = 'All Channels')
   - Channel group rows come from Bronze byodFlowEntryPagesByLtcGroups (ChannelGroup IN
     PAID SEARCH, ORGANIC SEARCH, DIRECT, PROGRAMMATIC, SOCIAL, OTHER)
   - ReportingGrain is fixed as 'CHANNEL_GROUP' for all rows
@@ -48,14 +48,16 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
+  USING DELTA
   AS
 
   SELECT
@@ -71,7 +73,7 @@ BEGIN
     ByodEntryStorePageVisitors,
     ByodEntryByodLandingPageVisitors,
     ByodEntryOffersSwitchVisitors
-  FROM `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly`
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly
 
   UNION ALL
 
@@ -88,6 +90,6 @@ BEGIN
     ByodEntryStorePageVisitors,
     ByodEntryByodLandingPageVisitors,
     ByodEntryOffersSwitchVisitors
-  FROM `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly`;
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly;
 
 END;

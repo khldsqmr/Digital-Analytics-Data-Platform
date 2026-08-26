@@ -5,7 +5,7 @@ DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_adobeByodEntryPages_weekly
 
 SOURCE:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
 
 DESTINATION:
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobeByodEntryPages_weekly
@@ -93,7 +93,7 @@ WITH base AS (
     ByodEntryStorePageVisitors as ByodEntryGetStartedLandingPageVisitors,          -- NEW
     ByodEntryByodLandingPageVisitors,    -- NEW
     ByodEntryOffersSwitchVisitors        -- NEW
-  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
 ),
 
 pivoted AS (

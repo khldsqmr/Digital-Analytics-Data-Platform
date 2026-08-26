@@ -21,6 +21,8 @@ SOURCES:
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
+  prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo
+  prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo
 
 DESTINATION:
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
@@ -35,6 +37,12 @@ PURPOSE:
 
   UpvFlowTotal is sourced directly from the Adobe all-flow total visitors table.
   It is the canonical sum of all LOB flows and is not calculated from UpvPostpaid + UpvHsi + UpvByod.
+
+  EcCompleted and EcSuccessful are Adobe Experience Cloud metrics, added after the UPV
+  and Cartstart metrics (before Orders). EcCompleted is sourced from the ec_completed
+  page_events tables; EcSuccessful is sourced from the ec_successful_visits visits
+  tables. Both are independent of the UPV/Cartstart/Orders funnel metrics above — not derived
+  from them.
 
 BUSINESS GRAIN:
   One row per:
@@ -57,14 +65,16 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+  USING DELTA
   AS
 
 WITH RawUnion AS (
@@ -81,7 +91,7 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
 
   UNION ALL
 
@@ -97,7 +107,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
 
   UNION ALL
 
@@ -113,7 +123,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
 
   UNION ALL
 
@@ -131,7 +141,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
 
   UNION ALL
 
@@ -147,7 +157,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
 
   UNION ALL
 
@@ -163,7 +173,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
 
   UNION ALL
 
@@ -179,7 +189,39 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
+
+  UNION ALL
+
+  -- EC Completed
+  SELECT
+    DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
+    'ALL_CHANNELS',
+    CAST(NULL AS STRING),
+    CAST(NULL AS STRING),
+    'EcCompleted',
+    TRY_CAST(page_events AS DOUBLE),
+    'sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo',
+    __insert_date,
+    File_Load_datetime,
+    Filename
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo
+
+  UNION ALL
+
+  -- EC Successful Visits
+  SELECT
+    DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
+    'ALL_CHANNELS',
+    CAST(NULL AS STRING),
+    CAST(NULL AS STRING),
+    'EcSuccessful',
+    TRY_CAST(visits AS DOUBLE),
+    'sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo',
+    __insert_date,
+    File_Load_datetime,
+    Filename
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo
 
   UNION ALL
 
@@ -195,7 +237,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo
 
   UNION ALL
 
@@ -211,7 +253,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo
 
   UNION ALL
 
@@ -227,7 +269,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo
 
   UNION ALL
 
@@ -243,7 +285,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
 
   UNION ALL
 
@@ -259,7 +301,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
 
   UNION ALL
 
@@ -275,7 +317,7 @@ WITH RawUnion AS (
     __insert_date,
     File_Load_datetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
 ),
 
 Deduped AS (
@@ -313,6 +355,10 @@ SELECT
   MAX(IF(MetricName = 'CartstartHsi',              MetricValue, NULL)) AS CartstartHsi,
   MAX(IF(MetricName = 'CartstartByod',             MetricValue, NULL)) AS CartstartByod,
 
+  -- Adobe Experience Cloud (EC) — added after UPV and Cartstart metrics
+  MAX(IF(MetricName = 'EcCompleted',             MetricValue, NULL)) AS EcCompleted,
+  MAX(IF(MetricName = 'EcSuccessful',      MetricValue, NULL)) AS EcSuccessful,
+
   -- Orders Unassisted
   MAX(IF(MetricName = 'OrdersUnassistedPostpaid',  MetricValue, NULL)) AS OrdersUnassistedPostpaid,
   MAX(IF(MetricName = 'OrdersUnassistedHsi',       MetricValue, NULL)) AS OrdersUnassistedHsi,
@@ -323,9 +369,9 @@ SELECT
   MAX(IF(MetricName = 'OrdersAssistedHsi',         MetricValue, NULL)) AS OrdersAssistedHsi,
   MAX(IF(MetricName = 'OrdersAssistedByod',        MetricValue, NULL)) AS OrdersAssistedByod,
 
-  STRING_AGG(DISTINCT SourceTable, ', ' ORDER BY SourceTable) AS SourceTablesUsed,
+  ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(SourceTable)), ', ') AS SourceTablesUsed,
   MAX(FileLoadDatetime) AS MaxFileLoadDatetime,
-  STRING_AGG(DISTINCT Filename, ', ' ORDER BY Filename) AS FilenamesUsed
+  ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(Filename)), ', ') AS FilenamesUsed
 
 FROM Deduped
 GROUP BY

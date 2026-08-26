@@ -5,7 +5,7 @@ DATASET:      prj-dbi-prd-1.ds_dbi_digitalmedia_automation
 VIEW NAME:    vw_sdi_pulseByod_silver_adobe_weekly
 
 SOURCE:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly
 
 DESTINATION:
   prdrzranalytics.lab42.sdi_tbl_dashboardPulseByod_silver_adobe_weekly
@@ -93,7 +93,7 @@ WITH base AS (
         UpvHsi,
         OrdersUnassistedPostpaid + OrdersAssistedPostpaid              AS ordersTotalPostpaid,
         OrdersUnassistedHsi      + OrdersAssistedHsi                   AS ordersTotalHsi
-    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly
 ),
 
 -- -----------------------------------------------------------------------

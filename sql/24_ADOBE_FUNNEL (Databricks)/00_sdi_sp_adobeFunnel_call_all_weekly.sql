@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         00_sdi_sp_adobeFunnel_call_all_weekly.sql
+FILE:         sdi_sp_adobeFunnel_call_all_weekly.sql
 LAYER:        Orchestrator (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
 PROCEDURE:    sdi_sp_adobeFunnel_call_all_weekly
@@ -15,32 +15,33 @@ PURPOSE:
   (no incremental/MERGE logic), so this orchestrator can simply be re-run in full each time.
 
 USAGE:
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly`();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly();
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_call_all_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   -- ================================================================ BRONZE (8)
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByLtcGroups_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByChannelGroups_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByAllChannel_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly`();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByLtcGroups_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByLtcGroups_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly();
 
   -- ================================================================ SILVER (3 of 4 — Silver 01 not yet built, see KNOWN GAP / PURPOSE above)
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly`();
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly`();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly();
 
   -- ================================================================ GOLD (1)
-  CALL `prdrzranalytics.lab42.sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly`();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly();
 
 END;

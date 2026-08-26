@@ -6,9 +6,9 @@ TABLE:        sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
 PROCEDURE:    sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
 
 SOURCES:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly
 
 DESTINATION:
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
@@ -19,9 +19,9 @@ PURPOSE:
   in downstream pulse pipelines.
 
   Joins three Silver tables on WeekSunSat + ChannelGroup:
-    Silver flowPerformanceByChannelGroupsPlusAll        : existing flow performance (UPV, Cartstart, Orders) — unchanged
-    Silver byodFlowEntryPagesByChannelGroupsPlusAll      : BYOD funnel entry page metrics
-    Silver byodFlowOutcomesByChannelGroupsPlusAll        : BYOD funnel outcome metrics
+    Silver flowPerformanceByLtcGroupsPlusAllChannels        : existing flow performance (UPV, Cartstart, Orders) — unchanged
+    Silver byodFlowEntryPagesByLtcGroupsPlusAllChannels      : BYOD funnel entry page metrics
+    Silver byodFlowOutcomesByLtcGroupsPlusAllChannels        : BYOD funnel outcome metrics
 
   When HSI, Metro, or other pulse pipelines are added, they read this Gold table
   and apply their own filtering/naming in their respective Silver layers.
@@ -46,21 +46,22 @@ BUSINESS RULES:
 OUTPUT COLUMNS:
   WeekSunSat, ChannelGroup
 
-  -- From Silver flowPerformanceByChannelGroupsPlusAll (existing flow performance — unchanged)
+  -- From Silver flowPerformanceByLtcGroupsPlusAllChannels (existing flow performance — unchanged)
   UpvTotalAdobe
   UpvPostpaid, UpvHsi, UpvByod, UpvTrackedFlowSum, UpvFlowTotal
   CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
+  EcCompleted, EcSuccessful
   OrdersTotal
   OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
   OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
 
-  -- From Silver byodFlowEntryPagesByChannelGroupsPlusAll
+  -- From Silver byodFlowEntryPagesByLtcGroupsPlusAllChannels
   ByodUpvVisitors
   ByodEntryByodPageVisitors, ByodEntryHomePageVisitors, ByodEntryDevicePageVisitors
   ByodEntryPlansPageVisitors, ByodEntryOtherPageVisitors
   ByodEntryStorePageVisitors, ByodEntryByodLandingPageVisitors, ByodEntryOffersSwitchVisitors
 
-  -- From Silver byodFlowOutcomesByChannelGroupsPlusAll
+  -- From Silver byodFlowOutcomesByLtcGroupsPlusAllChannels
   ByodVrChatVisitors, ByodCallVisitors, ByodStoreLocatorVisitors
   ByodInternalTmoVisitors, ByodBouncersVisitors, ByodOrders
 
@@ -70,21 +71,23 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
+  USING DELTA
   AS
 
   SELECT
     s2.WeekSunSat,
     s2.ChannelGroup,
 
-    -- ================================================================ FLOW PERFORMANCE (Silver flowPerformanceByChannelGroupsPlusAll — existing, unchanged)
+    -- ================================================================ FLOW PERFORMANCE (Silver flowPerformanceByLtcGroupsPlusAllChannels — existing, unchanged)
     s2.UpvTotalAdobe,
 
     -- UPV flows
@@ -101,6 +104,10 @@ BEGIN
     s2.CartstartByod,
     s2.CartstartTrackedFlowSum,
 
+    -- Adobe Experience Cloud (EC) — added after UPV and Cartstart metrics
+    s2.EcCompleted,
+    s2.EcSuccessful,
+
     -- Orders
     s2.OrdersTotal,
     s2.OrdersUnassistedTotal,
@@ -112,7 +119,7 @@ BEGIN
     s2.OrdersAssistedHsi,
     s2.OrdersAssistedByod,
 
-    -- ================================================================ BYOD ENTRY PAGES (Silver byodFlowEntryPagesByChannelGroupsPlusAll)
+    -- ================================================================ BYOD ENTRY PAGES (Silver byodFlowEntryPagesByLtcGroupsPlusAllChannels)
     s3.ByodUpvVisitors,
     s3.ByodEntryByodPageVisitors,
     s3.ByodEntryHomePageVisitors,
@@ -123,7 +130,7 @@ BEGIN
     s3.ByodEntryByodLandingPageVisitors,
     s3.ByodEntryOffersSwitchVisitors,
 
-    -- ================================================================ BYOD OUTCOMES (Silver byodFlowOutcomesByChannelGroupsPlusAll)
+    -- ================================================================ BYOD OUTCOMES (Silver byodFlowOutcomesByLtcGroupsPlusAllChannels)
     s4.ByodVrChatVisitors,
     s4.ByodCallVisitors,
     s4.ByodStoreLocatorVisitors,
@@ -131,11 +138,11 @@ BEGIN
     s4.ByodBouncersVisitors,
     s4.ByodOrders
 
-  FROM `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByChannelGroupsPlusAll_weekly` s2
-  LEFT JOIN `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByChannelGroupsPlusAll_weekly` s3
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly s2
+  LEFT JOIN prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowEntryPagesByLtcGroupsPlusAllChannels_weekly s3
     ON s2.WeekSunSat   = s3.WeekSunSat
     AND s2.ChannelGroup = s3.ChannelGroup
-  LEFT JOIN `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByChannelGroupsPlusAll_weekly` s4
+  LEFT JOIN prdrzranalytics.lab42.sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly s4
     ON s2.WeekSunSat   = s4.WeekSunSat
     AND s2.ChannelGroup = s4.ChannelGroup;
 

@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE: 04_sdi_tbl_adobeFunnel_bronze_upvTotalByChannelGroups_weekly.sql
+FILE: 04_sdi_sp_adobeFunnel_bronze_upvTotalByLtcGroups_weekly.sql
 LAYER: Bronze Table (via Stored Procedure)
 DATASET: prdrzranalytics.lab42
-TABLE: sdi_tbl_adobeFunnel_bronze_upvTotalByChannelGroups_weekly
-PROCEDURE: sdi_sp_adobeFunnel_bronze_upvTotalByChannelGroups_weekly
+TABLE: sdi_tbl_adobeFunnel_bronze_upvTotalByLtcGroups_weekly
+PROCEDURE: sdi_sp_adobeFunnel_bronze_upvTotalByLtcGroups_weekly
 
 SOURCES:
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo
@@ -14,7 +14,7 @@ SOURCES:
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByChannelGroups_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByLtcGroups_weekly
 
 PURPOSE:
   Canonical Bronze weekly Adobe total UPV source at LTC_GROUPS granularity.
@@ -42,14 +42,16 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByChannelGroups_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByLtcGroups_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByChannelGroups_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByLtcGroups_weekly
+  USING DELTA
   AS
 
 WITH RawUnion AS (
@@ -58,13 +60,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'DIRECT' AS LtcGroup,
+    'Direct' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
@@ -72,13 +74,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'ORGANIC SEARCH' AS LtcGroup,
+    'Organic Search' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
@@ -86,13 +88,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'OTHER' AS LtcGroup,
+    'Other' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
@@ -100,13 +102,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'PAID SEARCH' AS LtcGroup,
+    'Paid Search' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
@@ -114,13 +116,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'PROGRAMMATIC' AS LtcGroup,
+    'Programmatic' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
@@ -128,13 +130,13 @@ WITH RawUnion AS (
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
     'LTC_GROUPS' AS DataGranularity,
     CAST(NULL AS STRING) AS LastTouchChannel,
-    'SOCIAL' AS LtcGroup,
+    'Paid Social' AS LtcGroup,
     TRY_CAST(visitors AS DOUBLE) AS UpvTotalAdobe,
     'sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo' AS SourceTable,
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo
 ),
 
 Deduped AS (

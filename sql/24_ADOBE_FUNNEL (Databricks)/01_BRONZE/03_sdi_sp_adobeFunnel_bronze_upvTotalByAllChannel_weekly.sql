@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE: 03_sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly.sql
+FILE: 03_sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly.sql
 LAYER: Bronze Table (via Stored Procedure)
 DATASET: prdrzranalytics.lab42
 TABLE: sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
@@ -26,14 +26,16 @@ KEY DEDUPE RULE:
       __insert_date DESC
 ================================================================================================= */
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+  USING DELTA
   AS
 WITH RawBase AS (
   SELECT
@@ -46,7 +48,7 @@ WITH RawBase AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo
 ),
 Deduped AS (
   SELECT *

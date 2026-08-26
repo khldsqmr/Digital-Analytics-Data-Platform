@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         08_sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly.sql
+FILE:         08_sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly.sql
 LAYER:        Bronze Table (via Stored Procedure)
 DATASET:      prdrzranalytics.lab42
 TABLE:         sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly
