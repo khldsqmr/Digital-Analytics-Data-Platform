@@ -27,13 +27,13 @@ AS
 BEGIN
 
   -- ================================================================ BRONZE (8)
-  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannels_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByLtcGroups_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannels_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByLtcGroups_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByLtcGroups_weekly();
-  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByAllChannel_weekly();
+  CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByAllChannels_weekly();
   CALL prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly();
 
   -- ================================================================ SILVER (3 of 4 — Silver 01 not yet built, see KNOWN GAP / PURPOSE above)
