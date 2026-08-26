@@ -4,6 +4,19 @@ ORDER BY run_date DESC
 LIMIT 30;
 
 
+SELECT *
+FROM prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcFailedTables_daily
+WHERE run_date = CURRENT_DATE()
+ORDER BY batch_number, bq_table;
+
+SELECT
+    bq_table,
+    uc_table
+FROM prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcFailedTables_daily
+WHERE run_date = CURRENT_DATE()
+ORDER BY bq_table;
+
+
 WITH ranked_runs AS (
 
     SELECT
@@ -53,3 +66,26 @@ ORDER BY
 
 
     
+
+
+    prd_dbi_analytics.improvado.bq_uc_pipeline_run_log
+                    ↓
+       Gold Run Details View
+                    ↓
+          ┌─────────┴─────────┐
+          ↓                   ↓
+Gold Health Summary    Gold Failed Tables
+          ↓                   ↓
+          └─────────┬─────────┘
+                    ↓
+            Alert Notebook
+                    ↓
+             Run existed?
+              /       \
+            No         Yes
+            ↓           ↓
+          FAIL      failures?
+                     /     \
+                   Yes      No
+                    ↓        ↓
+                  FAIL     SUCCESS
