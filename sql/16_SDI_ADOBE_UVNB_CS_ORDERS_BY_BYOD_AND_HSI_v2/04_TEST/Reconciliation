@@ -1,0 +1,564 @@
+/* =================================================================================================
+PURPOSE:
+  Reconcile Bronze ALL_CHANNELS view to Silver ChannelPlusAll view where Channel = ALL.
+
+EXPECTED RESULT:
+  All diff columns should be 0.
+================================================================================================= */
+
+SELECT
+  COALESCE(b.WeekSunSat, s.WeekSunSat) AS WeekSunSat,
+
+  b.UvnbPostpaid AS BronzeUvnbPostpaid,
+  s.UvnbPostpaid AS SilverUvnbPostpaid,
+  s.UvnbPostpaid - b.UvnbPostpaid AS DiffUvnbPostpaid,
+
+  b.UvnbHsi AS BronzeUvnbHsi,
+  s.UvnbHsi AS SilverUvnbHsi,
+  s.UvnbHsi - b.UvnbHsi AS DiffUvnbHsi,
+
+  b.UvnbByod AS BronzeUvnbByod,
+  s.UvnbByod AS SilverUvnbByod,
+  s.UvnbByod - b.UvnbByod AS DiffUvnbByod,
+
+  b.CartstartPostpaid AS BronzeCartstartPostpaid,
+  s.CartstartPostpaid AS SilverCartstartPostpaid,
+  s.CartstartPostpaid - b.CartstartPostpaid AS DiffCartstartPostpaid,
+
+  b.CartstartHsi AS BronzeCartstartHsi,
+  s.CartstartHsi AS SilverCartstartHsi,
+  s.CartstartHsi - b.CartstartHsi AS DiffCartstartHsi,
+
+  b.CartstartByod AS BronzeCartstartByod,
+  s.CartstartByod AS SilverCartstartByod,
+  s.CartstartByod - b.CartstartByod AS DiffCartstartByod,
+
+  b.OrdersPostpaid AS BronzeOrdersPostpaid,
+  s.OrdersPostpaid AS SilverOrdersPostpaid,
+  s.OrdersPostpaid - b.OrdersPostpaid AS DiffOrdersPostpaid,
+
+  b.OrdersHsi AS BronzeOrdersHsi,
+  s.OrdersHsi AS SilverOrdersHsi,
+  s.OrdersHsi - b.OrdersHsi AS DiffOrdersHsi,
+
+  b.OrdersByod AS BronzeOrdersByod,
+  s.OrdersByod AS SilverOrdersByod,
+  s.OrdersByod - b.OrdersByod AS DiffOrdersByod
+
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly` b
+
+FULL OUTER JOIN (
+  SELECT *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelPlusAll_Weekly`
+  WHERE Channel = 'ALL'
+) s
+ON b.WeekSunSat = s.WeekSunSat
+
+ORDER BY
+  WeekSunSat DESC;
+
+
+/* =================================================================================================
+PURPOSE:
+  Reconcile Bronze ALL_CHANNELS view to Silver ChannelGroupsPlusAll view where ChannelGroup = ALL.
+
+EXPECTED RESULT:
+  All diff columns should be 0.
+================================================================================================= */
+
+SELECT
+  COALESCE(b.WeekSunSat, s.WeekSunSat) AS WeekSunSat,
+
+  b.UvnbPostpaid AS BronzeUvnbPostpaid,
+  s.UvnbPostpaid AS SilverUvnbPostpaid,
+  s.UvnbPostpaid - b.UvnbPostpaid AS DiffUvnbPostpaid,
+
+  b.UvnbHsi AS BronzeUvnbHsi,
+  s.UvnbHsi AS SilverUvnbHsi,
+  s.UvnbHsi - b.UvnbHsi AS DiffUvnbHsi,
+
+  b.UvnbByod AS BronzeUvnbByod,
+  s.UvnbByod AS SilverUvnbByod,
+  s.UvnbByod - b.UvnbByod AS DiffUvnbByod,
+
+  b.CartstartPostpaid AS BronzeCartstartPostpaid,
+  s.CartstartPostpaid AS SilverCartstartPostpaid,
+  s.CartstartPostpaid - b.CartstartPostpaid AS DiffCartstartPostpaid,
+
+  b.CartstartHsi AS BronzeCartstartHsi,
+  s.CartstartHsi AS SilverCartstartHsi,
+  s.CartstartHsi - b.CartstartHsi AS DiffCartstartHsi,
+
+  b.CartstartByod AS BronzeCartstartByod,
+  s.CartstartByod AS SilverCartstartByod,
+  s.CartstartByod - b.CartstartByod AS DiffCartstartByod,
+
+  b.OrdersPostpaid AS BronzeOrdersPostpaid,
+  s.OrdersPostpaid AS SilverOrdersPostpaid,
+  s.OrdersPostpaid - b.OrdersPostpaid AS DiffOrdersPostpaid,
+
+  b.OrdersHsi AS BronzeOrdersHsi,
+  s.OrdersHsi AS SilverOrdersHsi,
+  s.OrdersHsi - b.OrdersHsi AS DiffOrdersHsi,
+
+  b.OrdersByod AS BronzeOrdersByod,
+  s.OrdersByod AS SilverOrdersByod,
+  s.OrdersByod - b.OrdersByod AS DiffOrdersByod
+
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly` b
+
+FULL OUTER JOIN (
+  SELECT *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelGroupsPlusAll_Weekly`
+  WHERE ChannelGroup = 'ALL'
+) s
+ON b.WeekSunSat = s.WeekSunSat
+
+ORDER BY
+  WeekSunSat DESC;
+
+
+/* =================================================================================================
+PURPOSE:
+  Reconcile Bronze LAST_TOUCH_CHANNEL view to Silver ChannelPlusAll view.
+
+EXPECTED RESULT:
+  All diff columns should be 0.
+================================================================================================= */
+
+SELECT
+  COALESCE(b.WeekSunSat, s.WeekSunSat) AS WeekSunSat,
+  COALESCE(b.LastTouchChannel, s.Channel) AS Channel,
+
+  b.UvnbPostpaid AS BronzeUvnbPostpaid,
+  s.UvnbPostpaid AS SilverUvnbPostpaid,
+  s.UvnbPostpaid - b.UvnbPostpaid AS DiffUvnbPostpaid,
+
+  b.CartstartPostpaid AS BronzeCartstartPostpaid,
+  s.CartstartPostpaid AS SilverCartstartPostpaid,
+  s.CartstartPostpaid - b.CartstartPostpaid AS DiffCartstartPostpaid,
+
+  b.OrdersPostpaid AS BronzeOrdersPostpaid,
+  s.OrdersPostpaid AS SilverOrdersPostpaid,
+  s.OrdersPostpaid - b.OrdersPostpaid AS DiffOrdersPostpaid,
+
+  b.UvnbHsi AS BronzeUvnbHsi,
+  s.UvnbHsi AS SilverUvnbHsi,
+  s.UvnbHsi - b.UvnbHsi AS DiffUvnbHsi,
+
+  b.CartstartHsi AS BronzeCartstartHsi,
+  s.CartstartHsi AS SilverCartstartHsi,
+  s.CartstartHsi - b.CartstartHsi AS DiffCartstartHsi,
+
+  b.OrdersHsi AS BronzeOrdersHsi,
+  s.OrdersHsi AS SilverOrdersHsi,
+  s.OrdersHsi - b.OrdersHsi AS DiffOrdersHsi,
+
+  b.UvnbByod AS BronzeUvnbByod,
+  s.UvnbByod AS SilverUvnbByod,
+  s.UvnbByod - b.UvnbByod AS DiffUvnbByod,
+
+  b.CartstartByod AS BronzeCartstartByod,
+  s.CartstartByod AS SilverCartstartByod,
+  s.CartstartByod - b.CartstartByod AS DiffCartstartByod,
+
+  b.OrdersByod AS BronzeOrdersByod,
+  s.OrdersByod AS SilverOrdersByod,
+  s.OrdersByod - b.OrdersByod AS DiffOrdersByod
+
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtc_Weekly` b
+
+FULL OUTER JOIN (
+  SELECT *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelPlusAll_Weekly`
+  WHERE Channel <> 'ALL'
+) s
+ON b.WeekSunSat = s.WeekSunSat
+AND b.LastTouchChannel = s.Channel
+
+ORDER BY
+  WeekSunSat DESC,
+  Channel;
+
+
+/* =================================================================================================
+PURPOSE:
+  Reconcile Bronze LTC_GROUPS view to Silver ChannelGroupsPlusAll view.
+
+EXPECTED RESULT:
+  All diff columns should be 0.
+================================================================================================= */
+
+SELECT
+  COALESCE(b.WeekSunSat, s.WeekSunSat) AS WeekSunSat,
+  COALESCE(b.LtcGroup, s.ChannelGroup) AS ChannelGroup,
+
+  b.UvnbPostpaid AS BronzeUvnbPostpaid,
+  s.UvnbPostpaid AS SilverUvnbPostpaid,
+  s.UvnbPostpaid - b.UvnbPostpaid AS DiffUvnbPostpaid,
+
+  b.CartstartPostpaid AS BronzeCartstartPostpaid,
+  s.CartstartPostpaid AS SilverCartstartPostpaid,
+  s.CartstartPostpaid - b.CartstartPostpaid AS DiffCartstartPostpaid,
+
+  b.OrdersPostpaid AS BronzeOrdersPostpaid,
+  s.OrdersPostpaid AS SilverOrdersPostpaid,
+  s.OrdersPostpaid - b.OrdersPostpaid AS DiffOrdersPostpaid,
+
+  b.UvnbHsi AS BronzeUvnbHsi,
+  s.UvnbHsi AS SilverUvnbHsi,
+  s.UvnbHsi - b.UvnbHsi AS DiffUvnbHsi,
+
+  b.CartstartHsi AS BronzeCartstartHsi,
+  s.CartstartHsi AS SilverCartstartHsi,
+  s.CartstartHsi - b.CartstartHsi AS DiffCartstartHsi,
+
+  b.OrdersHsi AS BronzeOrdersHsi,
+  s.OrdersHsi AS SilverOrdersHsi,
+  s.OrdersHsi - b.OrdersHsi AS DiffOrdersHsi,
+
+  b.UvnbByod AS BronzeUvnbByod,
+  s.UvnbByod AS SilverUvnbByod,
+  s.UvnbByod - b.UvnbByod AS DiffUvnbByod,
+
+  b.CartstartByod AS BronzeCartstartByod,
+  s.CartstartByod AS SilverCartstartByod,
+  s.CartstartByod - b.CartstartByod AS DiffCartstartByod,
+
+  b.OrdersByod AS BronzeOrdersByod,
+  s.OrdersByod AS SilverOrdersByod,
+  s.OrdersByod - b.OrdersByod AS DiffOrdersByod
+
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtcGroups_Weekly` b
+
+FULL OUTER JOIN (
+  SELECT *
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelGroupsPlusAll_Weekly`
+  WHERE ChannelGroup <> 'ALL'
+) s
+ON b.WeekSunSat = s.WeekSunSat
+AND b.LtcGroup = s.ChannelGroup
+
+ORDER BY
+  WeekSunSat DESC,
+  ChannelGroup;
+
+/* =================================================================================================
+PURPOSE:
+  Return only mismatches between Bronze LTC_GROUPS and Silver ChannelGroupsPlusAll.
+
+EXPECTED RESULT:
+  Ideally returns 0 rows.
+================================================================================================= */
+
+WITH Recon AS (
+  SELECT
+    COALESCE(b.WeekSunSat, s.WeekSunSat) AS WeekSunSat,
+    COALESCE(b.LtcGroup, s.ChannelGroup) AS ChannelGroup,
+
+    s.UvnbPostpaid - b.UvnbPostpaid AS DiffUvnbPostpaid,
+    s.UvnbHsi - b.UvnbHsi AS DiffUvnbHsi,
+    s.UvnbByod - b.UvnbByod AS DiffUvnbByod,
+
+    s.CartstartPostpaid - b.CartstartPostpaid AS DiffCartstartPostpaid,
+    s.CartstartHsi - b.CartstartHsi AS DiffCartstartHsi,
+    s.CartstartByod - b.CartstartByod AS DiffCartstartByod,
+
+    s.OrdersPostpaid - b.OrdersPostpaid AS DiffOrdersPostpaid,
+    s.OrdersHsi - b.OrdersHsi AS DiffOrdersHsi,
+    s.OrdersByod - b.OrdersByod AS DiffOrdersByod
+
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbCartstartOrdersByLtcGroups_Weekly` b
+
+  FULL OUTER JOIN (
+    SELECT *
+    FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_silver_uvnbCartstartOrdersByChannelGroupsPlusAll_Weekly`
+    WHERE ChannelGroup <> 'ALL'
+  ) s
+  ON b.WeekSunSat = s.WeekSunSat
+  AND b.LtcGroup = s.ChannelGroup
+)
+
+SELECT *
+FROM Recon
+WHERE
+  COALESCE(DiffUvnbPostpaid, 0) <> 0
+  OR COALESCE(DiffUvnbHsi, 0) <> 0
+  OR COALESCE(DiffUvnbByod, 0) <> 0
+  OR COALESCE(DiffCartstartPostpaid, 0) <> 0
+  OR COALESCE(DiffCartstartHsi, 0) <> 0
+  OR COALESCE(DiffCartstartByod, 0) <> 0
+  OR COALESCE(DiffOrdersPostpaid, 0) <> 0
+  OR COALESCE(DiffOrdersHsi, 0) <> 0
+  OR COALESCE(DiffOrdersByod, 0) <> 0
+
+ORDER BY
+  WeekSunSat DESC,
+  ChannelGroup;
+
+
+/* =================================================================================================
+PURPOSE:
+  Validate directly from RAW Adobe LTC_GROUPS tables whether BYOD values are greater than Postpaid.
+
+CHECKS:
+  - CartstartByod > CartstartPostpaid
+  - OrdersByod > OrdersPostpaid
+  - UvnbByod > UvnbPostpaid
+
+NOTES:
+  - Uses same WeekSunSat logic.
+  - Uses same dedupe ordering:
+      File_Load_datetime DESC
+      Filename DESC
+      __insert_date DESC
+================================================================================================= */
+
+WITH RawUnion AS (
+
+  /* =========================
+     DIRECT
+  ========================= */
+
+  SELECT
+    DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY) AS WeekSunSat,
+    'DIRECT' AS ChannelGroup,
+    'UvnbPostpaid' AS MetricName,
+    SAFE_CAST(visitors AS FLOAT64) AS MetricValue,
+    File_Load_datetime AS FileLoadDatetime,
+    Filename,
+    __insert_date AS InsertDate,
+    'sdi_raw_adobe_pp_uvnb_direct_uvnb_postpaid_flow_visitors_weekly_tmo' AS SourceTable
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'DIRECT', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_direct_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'DIRECT', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_direct_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'DIRECT', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_direct_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'DIRECT', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_direct_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'DIRECT', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_direct_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_byod_order_weekly_tmo`
+
+
+  /* =========================
+     ORGANIC SEARCH
+  ========================= */
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'UvnbPostpaid', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_postpaid_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'ORGANIC SEARCH', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_organic_search_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_byod_order_weekly_tmo`
+
+
+  /* =========================
+     OTHER
+  ========================= */
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'UvnbPostpaid', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_uvnb_postpaid_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'OTHER', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_other_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_byod_order_weekly_tmo`
+
+
+  /* =========================
+     PAID SEARCH
+  ========================= */
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'UvnbPostpaid', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_postpaid_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PAID SEARCH', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_paid_search_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_byod_order_weekly_tmo`
+
+
+  /* =========================
+     PROGRAMMATIC
+  ========================= */
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'UvnbPostpaid', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_postpaid_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'PROGRAMMATIC', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_programmatic_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_byod_order_weekly_tmo`
+
+
+  /* =========================
+     SOCIAL
+  ========================= */
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'UvnbPostpaid', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_uvnb_postpaid_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_uvnb_postpaid_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'UvnbByod', SAFE_CAST(visitors AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_uvnb_byod_flow_visitors_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_uvnb_byod_flow_visitors_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'CartstartPostpaid', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_postpaid_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_postpaid_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'CartstartByod', SAFE_CAST(visits AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_byod_cartstart_visits_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_byod_cartstart_visits_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'OrdersPostpaid', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_postpaid_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_postpaid_order_weekly_tmo`
+
+  UNION ALL
+  SELECT DATE_ADD(PARSE_DATE('%Y%m%d', date_yyyymmdd), INTERVAL 6 DAY), 'SOCIAL', 'OrdersByod', SAFE_CAST(orders AS FLOAT64), File_Load_datetime, Filename, __insert_date, 'sdi_raw_adobe_pp_uvnb_social_byod_order_weekly_tmo'
+  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_byod_order_weekly_tmo`
+),
+
+RawDeduped AS (
+  SELECT *
+  FROM RawUnion
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY
+      WeekSunSat,
+      ChannelGroup,
+      MetricName,
+      SourceTable
+    ORDER BY
+      FileLoadDatetime DESC,
+      Filename DESC,
+      InsertDate DESC
+  ) = 1
+),
+
+RawPivoted AS (
+  SELECT
+    WeekSunSat,
+    ChannelGroup,
+
+    MAX(IF(MetricName = 'UvnbPostpaid', MetricValue, NULL)) AS UvnbPostpaid,
+    MAX(IF(MetricName = 'UvnbByod', MetricValue, NULL)) AS UvnbByod,
+
+    MAX(IF(MetricName = 'CartstartPostpaid', MetricValue, NULL)) AS CartstartPostpaid,
+    MAX(IF(MetricName = 'CartstartByod', MetricValue, NULL)) AS CartstartByod,
+
+    MAX(IF(MetricName = 'OrdersPostpaid', MetricValue, NULL)) AS OrdersPostpaid,
+    MAX(IF(MetricName = 'OrdersByod', MetricValue, NULL)) AS OrdersByod
+
+  FROM RawDeduped
+  GROUP BY
+    WeekSunSat,
+    ChannelGroup
+)
+
+SELECT
+  WeekSunSat,
+  ChannelGroup,
+
+  UvnbPostpaid,
+  UvnbByod,
+  UvnbByod - UvnbPostpaid AS DiffUvnbByodMinusPostpaid,
+
+  CartstartPostpaid,
+  CartstartByod,
+  CartstartByod - CartstartPostpaid AS DiffCartstartByodMinusPostpaid,
+
+  OrdersPostpaid,
+  OrdersByod,
+  OrdersByod - OrdersPostpaid AS DiffOrdersByodMinusPostpaid,
+
+  CASE WHEN UvnbByod > UvnbPostpaid THEN 1 ELSE 0 END AS IsUvnbByodGreaterThanPostpaid,
+  CASE WHEN CartstartByod > CartstartPostpaid THEN 1 ELSE 0 END AS IsCartstartByodGreaterThanPostpaid,
+  CASE WHEN OrdersByod > OrdersPostpaid THEN 1 ELSE 0 END AS IsOrdersByodGreaterThanPostpaid
+
+FROM RawPivoted
+WHERE
+  UvnbByod > UvnbPostpaid
+  OR CartstartByod > CartstartPostpaid
+  OR OrdersByod > OrdersPostpaid
+
+ORDER BY
+  WeekSunSat DESC,
+  ChannelGroup;
