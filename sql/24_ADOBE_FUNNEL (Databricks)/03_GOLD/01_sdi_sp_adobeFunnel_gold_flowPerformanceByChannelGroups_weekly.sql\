@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         01_sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly.sql
+FILE:         sdi_sp_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly.sql
 LAYER:        Gold Table (via Stored Procedure)
 CATALOG.SCHEMA: prdrzranalytics.lab42
 TABLE:        sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly
@@ -50,7 +50,7 @@ OUTPUT COLUMNS:
   UpvTotalAdobe
   UpvPostpaid, UpvHsi, UpvByod, UpvTrackedFlowSum, UpvFlowTotal
   CartstartTotal, CartstartPostpaid, CartstartHsi, CartstartByod, CartstartTrackedFlowSum
-  EcCompleted, EcSuccessful
+  EcCompleted, EcSuccessful  -- COMMENTED OUT for now, not yet in Silver (raw EC tables not active)
   OrdersTotal
   OrdersUnassistedTotal, OrdersUnassistedPostpaid, OrdersUnassistedHsi, OrdersUnassistedByod
   OrdersAssistedTotal, OrdersAssistedPostpaid, OrdersAssistedHsi, OrdersAssistedByod
@@ -104,9 +104,10 @@ BEGIN
     s2.CartstartByod,
     s2.CartstartTrackedFlowSum,
 
-    -- Adobe Experience Cloud (EC) — added after UPV and Cartstart metrics
-    s2.EcCompleted,
-    s2.EcSuccessful,
+    -- Adobe Experience Cloud (EC) — COMMENTED OUT: not yet in Silver (Bronze's EC raw
+    -- source tables are not active in Databricks). Uncomment once Silver produces these again.
+    -- s2.EcCompleted,
+    -- s2.EcSuccessful,
 
     -- Orders
     s2.OrdersTotal,

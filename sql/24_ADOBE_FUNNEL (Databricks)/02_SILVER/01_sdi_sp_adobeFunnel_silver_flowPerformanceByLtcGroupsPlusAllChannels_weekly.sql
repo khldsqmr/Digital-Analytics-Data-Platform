@@ -28,9 +28,10 @@ BUSINESS RULES:
   - UpvTotalAdobe comes from the total UPV stream (Bronze upvTotalByAllChannel / upvTotalByLtcGroups).
   - UpvPostpaid / UpvHsi / UpvByod come from flow-specific tables.
   - UpvFlowTotal comes from the Adobe flow total source table — not computed from LOB flows.
-  - EcCompleted / EcSuccessful are Adobe Experience Cloud metrics, passed through
+  - EcCompleted / EcSuccessful are Adobe Experience Cloud metrics — COMMENTED OUT for now
+    (Bronze's EC raw source tables are not yet active in Databricks). Will pass through
     directly after the UPV and Cartstart metrics (before Orders) — no derivation, independent
-    of the UPV/Cartstart/Orders funnel.
+    of the UPV/Cartstart/Orders funnel — once reactivated.
   - CartstartTotal is Postpaid + HSI + BYOD. No COALESCE.
   - OrdersUnassistedTotal is Postpaid + HSI + BYOD unassisted. No COALESCE.
   - OrdersAssistedTotal is Postpaid + HSI + BYOD assisted. No COALESCE.
@@ -52,8 +53,8 @@ OUTPUT COLUMNS:
   - CartstartHsi
   - CartstartByod
   - CartstartTrackedFlowSum
-  - EcCompleted
-  - EcSuccessful
+  - EcCompleted        -- COMMENTED OUT for now, not yet in the Silver table (see BUSINESS RULES above)
+  - EcSuccessful        -- COMMENTED OUT for now, not yet in the Silver table (see BUSINESS RULES above)
   - OrdersTotal
   - OrdersUnassistedTotal
   - OrdersUnassistedPostpaid
@@ -95,8 +96,8 @@ BEGIN
       CartstartPostpaid,
       CartstartHsi,
       CartstartByod,
-      EcCompleted,
-      EcSuccessful,
+      -- EcCompleted,       -- COMMENTED OUT: Bronze doesn't produce this column while EC is inactive
+      -- EcSuccessful,      -- COMMENTED OUT: Bronze doesn't produce this column while EC is inactive
       OrdersUnassistedPostpaid,
       OrdersUnassistedHsi,
       OrdersUnassistedByod,
@@ -119,8 +120,8 @@ BEGIN
       CartstartPostpaid,
       CartstartHsi,
       CartstartByod,
-      EcCompleted,
-      EcSuccessful,
+      -- EcCompleted,       -- COMMENTED OUT: Bronze doesn't produce this column while EC is inactive
+      -- EcSuccessful,      -- COMMENTED OUT: Bronze doesn't produce this column while EC is inactive
       OrdersUnassistedPostpaid,
       OrdersUnassistedHsi,
       OrdersUnassistedByod,
@@ -174,9 +175,10 @@ BEGIN
     f.CartstartByod,
     f.CartstartPostpaid + f.CartstartHsi + f.CartstartByod                                     AS CartstartTrackedFlowSum,
 
-    -- Adobe Experience Cloud (EC) — added after UPV and Cartstart metrics, passthrough only
-    f.EcCompleted,
-    f.EcSuccessful,
+    -- Adobe Experience Cloud (EC) — COMMENTED OUT: raw source tables not yet active in
+    -- Databricks. Uncomment once Bronze produces EcCompleted/EcSuccessful again.
+    -- f.EcCompleted,
+    -- f.EcSuccessful,
 
     -- Orders grand total (unassisted + assisted)
     (f.OrdersUnassistedPostpaid + f.OrdersUnassistedHsi + f.OrdersUnassistedByod)

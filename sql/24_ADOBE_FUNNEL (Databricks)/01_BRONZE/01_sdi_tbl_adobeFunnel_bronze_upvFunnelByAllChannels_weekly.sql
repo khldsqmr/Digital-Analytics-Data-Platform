@@ -191,6 +191,13 @@ WITH RawUnion AS (
     Filename
   FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
 
+  /* ------------------------------------------------------------------------------------------
+  EC (Experience Cloud) — COMMENTED OUT: raw source tables not yet active in Databricks.
+  Uncomment this block and the EcCompleted/EcSuccessful pivot columns below once
+  sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo and
+  sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo are confirmed live.
+  ------------------------------------------------------------------------------------------
+
   UNION ALL
 
   -- EC Completed
@@ -222,6 +229,7 @@ WITH RawUnion AS (
     File_Load_datetime,
     Filename
   FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo
+  ------------------------------------------------------------------------------------------ */
 
   UNION ALL
 
@@ -355,9 +363,10 @@ SELECT
   MAX(IF(MetricName = 'CartstartHsi',              MetricValue, NULL)) AS CartstartHsi,
   MAX(IF(MetricName = 'CartstartByod',             MetricValue, NULL)) AS CartstartByod,
 
-  -- Adobe Experience Cloud (EC) — added after UPV and Cartstart metrics
-  MAX(IF(MetricName = 'EcCompleted',             MetricValue, NULL)) AS EcCompleted,
-  MAX(IF(MetricName = 'EcSuccessful',      MetricValue, NULL)) AS EcSuccessful,
+  -- Adobe Experience Cloud (EC) — COMMENTED OUT: raw source tables not yet active in
+  -- Databricks. Uncomment once the ec_completed / ec_successful_visits raw tables are live.
+  -- MAX(IF(MetricName = 'EcCompleted',             MetricValue, NULL)) AS EcCompleted,
+  -- MAX(IF(MetricName = 'EcSuccessful',      MetricValue, NULL)) AS EcSuccessful,
 
   -- Orders Unassisted
   MAX(IF(MetricName = 'OrdersUnassistedPostpaid',  MetricValue, NULL)) AS OrdersUnassistedPostpaid,
