@@ -1,60 +1,28 @@
-IF [p.qgp.secondary metric] = 'Exit Traffic Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Exit Traffic Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'storeTraffic' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Calls Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Calls Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrCalls' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Chats Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Chats Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrChats' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Postpaid Activations Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'VR Postpaid Activations Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'vrPostpaidActivations' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Activations BOPIS Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Activations BOPIS Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsBopis' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Activations New AAL No Assist Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Activations New AAL No Assist Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'activationsNewAalNoAssistance' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % Phone New Acts Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % Phone New Acts Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctPhoneNewActsNoAssistPlusAssist' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % Consumer Postpaid Acts Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % Consumer Postpaid Acts Forecast'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' AND [Metric Type] = 'QGP_TARGET' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % No Assistance Acts Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctNoAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Digital % Assistance Acts Actuals'
-THEN SUM(IF [Data Source] = 'QGP_SCORECARD' AND [Metric Name] = 'digitalPctAssistanceActivations' AND [Metric Type] = 'QGP_ACTUAL' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Postpaid)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Broadband)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Actual (Total)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendActual' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Postpaid)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Broadband)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'MFC Spend Forecast (Total)'
-THEN SUM(IF [Data Source] = 'MFC_SPEND_CHANNEL' AND [Metric Name] = 'mfcSpendForecast' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Postpaid)'
-THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'POSTPAID' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Broadband)'
-THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] = 'BROADBAND' THEN [Metric Value] END)
-ELSEIF [p.qgp.secondary metric] = 'Biddable Spend (Total)'
-THEN SUM(IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL' AND [Metric Name] = 'biddableSpend' AND [Lob] IN ('POSTPAID', 'BROADBAND') THEN [Metric Value] END)
-ELSE NULL
-END
+  SELECT 'all_ec_completed'              AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'paid_search_ec_completed'      AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_paid_search_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'organic_search_ec_completed'   AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_organic_search_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'direct_ec_completed'           AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_direct_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'programmatic_ec_completed'     AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_programmatic_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'social_ec_completed'           AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_social_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'other_ec_completed'            AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_other_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'all_ec_successful_visits'              AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'paid_search_ec_successful_visits'      AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_paid_search_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'organic_search_ec_successful_visits'   AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_organic_search_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'direct_ec_successful_visits'           AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_direct_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'programmatic_ec_successful_visits'     AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_programmatic_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'social_ec_successful_visits'           AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_social_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'other_ec_successful_visits'            AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_other_ec_successful_visits_weekly_tmo`
+),
