@@ -1,8 +1,8 @@
 /* =================================================================================================
-FILE: 06_vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly.sql
+FILE: 06_vw_sdi_adobe_bronze_uvnbTotalByLtcGroups_Weekly.sql
 LAYER: Bronze View
 DATASET: prj-dbi-prd-1.ds_dbi_digitalmedia_automation
-VIEW: vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly
+VIEW: vw_sdi_adobe_bronze_uvnbTotalByLtcGroups_Weekly
 
 SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo
@@ -13,7 +13,7 @@ SOURCES:
   prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo
 
 DESTINATION:
-  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly
+  prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByLtcGroups_Weekly
 
 PURPOSE:
   Canonical Bronze weekly Adobe total UVNB source at LTC_GROUPS granularity.
@@ -24,7 +24,8 @@ BUSINESS GRAIN:
       LtcGroup
 
 BUSINESS RULES:
-  - WeekSunSat is derived from date_yyyymmdd by adding 6 days because raw date_yyyymmdd is week-starting Sunday.
+  - WeekSunSat is derived from date_yyyymmdd by adding 6 days because raw date_yyyymmdd
+    is week-starting Sunday.
   - DataGranularity is fixed as LTC_GROUPS.
   - LtcGroup is derived from the raw table family.
   - UvnbTotalAdobe is sourced directly from group-level uvnb_visitors raw tables.
@@ -41,7 +42,7 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-`prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByChannelGroups_Weekly`
+  `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_adobe_bronze_uvnbTotalByLtcGroups_Weekly`
 AS
 
 WITH RawUnion AS (
@@ -56,7 +57,8 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_direct_uvnb_visitors_weekly_tmo`
 
   UNION ALL
 
@@ -70,7 +72,8 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_organic_search_uvnb_visitors_weekly_tmo`
 
   UNION ALL
 
@@ -84,7 +87,8 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_other_uvnb_visitors_weekly_tmo`
 
   UNION ALL
 
@@ -98,7 +102,8 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_paid_search_uvnb_visitors_weekly_tmo`
 
   UNION ALL
 
@@ -112,7 +117,8 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_programmatic_uvnb_visitors_weekly_tmo`
 
   UNION ALL
 
@@ -126,12 +132,16 @@ WITH RawUnion AS (
     __insert_date AS InsertDate,
     File_Load_datetime AS FileLoadDatetime,
     Filename
-  FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo`
+  FROM
+    `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_uvnb_social_uvnb_visitors_weekly_tmo`
 ),
 
 Deduped AS (
-  SELECT *
-  FROM RawUnion
+
+  SELECT
+    *
+  FROM
+    RawUnion
   QUALIFY ROW_NUMBER() OVER (
     PARTITION BY
       WeekSunSat,
@@ -154,4 +164,5 @@ SELECT
   SourceTable AS SourceTablesUsed,
   FileLoadDatetime AS MaxFileLoadDatetime,
   Filename AS FilenamesUsed
-FROM Deduped;
+FROM
+  Deduped;
