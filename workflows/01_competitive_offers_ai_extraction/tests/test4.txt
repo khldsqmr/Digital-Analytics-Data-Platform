@@ -25,3 +25,16 @@
   SELECT 'social_ec_successful_visits'           AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_social_ec_successful_visits_weekly_tmo`
   UNION ALL
   SELECT 'other_ec_successful_visits'            AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_other_ec_successful_visits_weekly_tmo`
+
+
+
+Got this from Jordan. Qamar, Khalid can we set up alerting to see if our table copies are failing?
+
+Neha's bronze tables are listed here, as well as updating information:
+Inventory of copied tables:
+SELECT * FROM prd_dbi_analytics.improvado.bq_pipeline_table_catalog
+
+Run log table capturing every pipeline execution:
+select job_run_ts, run_type, date_from, date_to, bq_table, uc_table, bq_rows, loaded_rows
+from prd_dbi_analytics.improvado.bq_uc_pipeline_run_log
+where date(job_run_ts) = '2026-06-23';
