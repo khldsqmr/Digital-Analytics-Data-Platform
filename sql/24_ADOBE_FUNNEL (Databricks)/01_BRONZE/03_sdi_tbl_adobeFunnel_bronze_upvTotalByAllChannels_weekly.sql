@@ -1,13 +1,13 @@
 /* =================================================================================================
-FILE: 03_sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly.sql
+FILE: 03_sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly.sql
 LAYER: Bronze Table (via Stored Procedure)
 DATASET: prdrzranalytics.lab42
-TABLE: sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
-PROCEDURE: sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+TABLE: sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly
+PROCEDURE: sdi_sp_adobeFunnel_bronze_upvTotalByAllChannels_weekly
 SOURCE:
   prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly
 PURPOSE:
   Canonical Bronze weekly Adobe total UPV source at ALL_CHANNELS granularity.
 BUSINESS GRAIN:
@@ -26,7 +26,7 @@ KEY DEDUPE RULE:
       __insert_date DESC
 ================================================================================================= */
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannel_weekly()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvTotalByAllChannels_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -34,7 +34,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly
   USING DELTA
   AS
 WITH RawBase AS (

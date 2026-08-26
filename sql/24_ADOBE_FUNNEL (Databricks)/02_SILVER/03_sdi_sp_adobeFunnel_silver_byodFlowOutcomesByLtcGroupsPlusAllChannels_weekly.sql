@@ -6,7 +6,7 @@ TABLE:        sdi_tbl_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChann
 PROCEDURE:    sdi_sp_adobeFunnel_silver_byodFlowOutcomesByLtcGroupsPlusAllChannels_weekly
 
 SOURCES:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByAllChannels_weekly
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByLtcGroups_weekly
 
 DESTINATION:
@@ -66,7 +66,7 @@ BEGIN
     ByodInternalTmoVisitors,
     ByodBouncersVisitors,
     ByodOrders
-  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByAllChannel_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowOutcomesByAllChannels_weekly
 
   UNION ALL
 

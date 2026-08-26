@@ -6,9 +6,9 @@ TABLE:        sdi_tbl_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChanne
 PROCEDURE:    sdi_sp_adobeFunnel_silver_flowPerformanceByLtcGroupsPlusAllChannels_weekly
 
 SOURCES:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByLtcGroups_weekly
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly
   prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByLtcGroups_weekly
 
 DESTINATION:
@@ -103,7 +103,7 @@ BEGIN
       OrdersAssistedPostpaid,
       OrdersAssistedHsi,
       OrdersAssistedByod
-    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
 
     UNION ALL
 
@@ -137,7 +137,7 @@ BEGIN
       'CHANNEL_GROUP' AS ReportingGrain,
       'All Channels' AS ChannelGroup,
       UpvTotalAdobe
-    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannel_weekly
+    FROM prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvTotalByAllChannels_weekly
 
     UNION ALL
 

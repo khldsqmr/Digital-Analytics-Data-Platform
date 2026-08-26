@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE:         05_sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly.sql
+FILE:         05_sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly.sql
 LAYER:        Bronze Table (via Stored Procedure)
 DATASET:      prdrzranalytics.lab42
-TABLE:         sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly
-PROCEDURE:         sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly
+TABLE:         sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly
+PROCEDURE:         sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly
 
 SOURCES (9 tables — ALL channel):
   prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_uvnb_visitors_weekly_tmo
@@ -21,7 +21,7 @@ SOURCES (9 tables — ALL channel):
   -- Old Other = ByodEntryStorePageVisitors + ByodEntryByodLandingPageVisitors + ByodEntryOffersSwitchVisitors + ByodEntryOtherPageVisitors (otherpage2)
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly
 
 PURPOSE:
   Bronze view for BYOD funnel entry page visitor metrics at ALL_CHANNELS granularity.
@@ -45,7 +45,7 @@ BUSINESS GRAIN:
 
 BUSINESS RULES:
   - WeekSunSat is derived from date_yyyymmdd by adding 6 days (raw is week-starting Sunday)
-  - ChannelGroup is fixed as 'ALL'
+  - ChannelGroup is fixed as 'All Channels'
   - All metrics are visitor counts (TRY_CAST(visitors AS DOUBLE))
   - Missing metric values remain NULL — no fake zeroes
   - MetricName / MetricValue used internally only, not exposed in final output
@@ -69,14 +69,16 @@ DOWNSTREAM:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-`prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly`()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 MODIFIES SQL DATA
 AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  `prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannel_weekly`
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_byodFlowEntryPagesByAllChannels_weekly
+  USING DELTA
   AS
 
 WITH RawUnion AS (
@@ -84,62 +86,62 @@ WITH RawUnion AS (
   -- BYOD UPV Visitors (total unique non-bounced BYOD visitors)
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6) AS WeekSunSat,
-    'ALL'                                                           AS ChannelGroup,
+    'All Channels'                                                           AS ChannelGroup,
     'ByodUpvVisitors'                                              AS MetricName,
     TRY_CAST(visitors AS DOUBLE)                                  AS MetricValue,
     'sdi_raw_adobe_byod_flow_all_byod_uvnb_visitors_weekly_tmo'     AS SourceTable,
     __insert_date                                                   AS InsertDate,
     File_Load_datetime                                              AS FileLoadDatetime,
     Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_uvnb_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_uvnb_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: BYOD Page
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryByodPageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_byodpage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_byodpage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_byodpage_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: Homepage
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryHomePageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_homepage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_homepage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_homepage_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: Device Page
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryDevicePageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_devicepage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_devicepage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_devicepage_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: Plans Page
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryPlansPageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_planspage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_planspage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_planspage_visitors_weekly_tmo
 
   UNION ALL
 
@@ -150,48 +152,48 @@ WITH RawUnion AS (
   --             + ByodEntryOffersSwitchVisitors + ByodEntryOtherPageVisitors (otherpage2)
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryOtherPageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_otherpage2_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_otherpage2_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_otherpage2_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: Store Page (NEW)
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryStorePageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_storepage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_storepage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_storepage_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: BYOD Landing Page (NEW)
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryByodLandingPageVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_byodlandingpage_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_byodlandingpage_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_byodlandingpage_visitors_weekly_tmo
 
   UNION ALL
 
   -- Entry: Offers / Switch Page (NEW)
   SELECT
     DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
-    'ALL',
+    'All Channels',
     'ByodEntryOffersSwitchVisitors',
     TRY_CAST(visitors AS DOUBLE),
     'sdi_raw_adobe_byod_flow_all_byod_entry_offersswitch_visitors_weekly_tmo',
     __insert_date, File_Load_datetime, Filename
-  FROM `prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_offersswitch_visitors_weekly_tmo`
+  FROM prd_dbi_analytics.improvado.sdi_raw_adobe_byod_flow_all_byod_entry_offersswitch_visitors_weekly_tmo
 
 ),
 
@@ -226,9 +228,9 @@ SELECT
   MAX(IF(MetricName = 'ByodEntryByodLandingPageVisitors',MetricValue, NULL)) AS ByodEntryByodLandingPageVisitors,  -- NEW
   MAX(IF(MetricName = 'ByodEntryOffersSwitchVisitors',   MetricValue, NULL)) AS ByodEntryOffersSwitchVisitors,     -- NEW
 
-  STRING_AGG(DISTINCT SourceTable, ', ' ORDER BY SourceTable) AS SourceTablesUsed,
+  ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(SourceTable)), ', ') AS SourceTablesUsed,
   MAX(FileLoadDatetime)                                        AS MaxFileLoadDatetime,
-  STRING_AGG(DISTINCT Filename, ', ' ORDER BY Filename)        AS FilenamesUsed
+  ARRAY_JOIN(SORT_ARRAY(COLLECT_SET(Filename)), ', ')        AS FilenamesUsed
 
 FROM Deduped
 GROUP BY

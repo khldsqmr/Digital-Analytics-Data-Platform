@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE: 01_sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly.sql
+FILE: 01_sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly.sql
 LAYER: Bronze Table (via Stored Procedure)
 DATASET: prdrzranalytics.lab42
-TABLE: sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
-PROCEDURE: sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+TABLE: sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
+PROCEDURE: sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
 
 RENAMED FROM: vw_sdi_adobe_bronze_uvnbCartstartOrdersByAll_Weekly
 
@@ -25,7 +25,7 @@ SOURCES:
   prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo
 
 DESTINATION:
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
 
 PURPOSE:
   Canonical Bronze weekly Adobe UPV, Cartstart, and Orders source mart at ALL_CHANNELS granularity.
@@ -65,7 +65,7 @@ KEY DEDUPE RULE:
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannel_weekly()
+prdrzranalytics.lab42.sdi_sp_adobeFunnel_bronze_upvFunnelByAllChannels_weekly()
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
@@ -73,7 +73,7 @@ AS
 BEGIN
 
   CREATE OR REPLACE TABLE
-  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannel_weekly
+  prdrzranalytics.lab42.sdi_tbl_adobeFunnel_bronze_upvFunnelByAllChannels_weekly
   USING DELTA
   AS
 
