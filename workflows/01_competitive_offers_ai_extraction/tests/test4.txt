@@ -1,6 +1,27 @@
-[TABLE_OR_VIEW_NOT_FOUND] The table or view `prd_dbi_analytics`.`improvado`.`sdi_raw_adobe_pp_ec_direct_ec_completed_weekly_tmo` cannot be found. Verify the spelling and correctness of the schema and catalog.
-If you did not qualify the name with a schema, verify the current_schema() output, or qualify the name with the correct schema and catalog.
-To tolerate the error on drop use DROP VIEW IF EXISTS or DROP TABLE IF EXISTS. SQLSTATE: 42P01
-== SQL (line 1272, position 266) ==
-...le_Load_datetime, Filename FROM prd_dbi_analytics.improvado.sdi_raw_adobe_pp_ec_direct_ec_completed_weekly_tmo
-                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  SELECT 'all_ec_completed'              AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_all_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'paid_search_ec_completed'      AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_paid_search_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'organic_search_ec_completed'   AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_organic_search_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'direct_ec_completed'           AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_direct_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'programmatic_ec_completed'     AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_programmatic_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'social_ec_completed'           AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_social_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'other_ec_completed'            AS suffix, date_yyyymmdd, CAST(page_events AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_other_ec_completed_weekly_tmo`
+  UNION ALL
+  SELECT 'all_ec_successful_visits'              AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_all_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'paid_search_ec_successful_visits'      AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_paid_search_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'organic_search_ec_successful_visits'   AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_organic_search_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'direct_ec_successful_visits'           AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_direct_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'programmatic_ec_successful_visits'     AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_programmatic_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'social_ec_successful_visits'           AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_social_ec_successful_visits_weekly_tmo`
+  UNION ALL
+  SELECT 'other_ec_successful_visits'            AS suffix, date_yyyymmdd, CAST(visits AS FLOAT64) AS metric_value, File_Load_datetime FROM `prj-dbi-prd-1.ds_dbi_improvado_master.sdi_raw_adobe_pp_ec_other_ec_successful_visits_weekly_tmo`
