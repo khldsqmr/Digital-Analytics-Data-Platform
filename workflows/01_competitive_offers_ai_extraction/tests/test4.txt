@@ -1,7 +1,10 @@
-MAIS platform spend (mais_platform_spend_branded/_nonbranded): Root cause found, media_analytics_integrated_summary isn't sending the branded/nonbranded sub-channel split our view expects, it's only ever sent flat PAID SEARCH for as far back as our data goes (Jan 2023). Looping in Will Judy (Will Butler's team) to confirm whether that granularity ever existed upstream and how we can get it, or whether the fix belongs on our side.
-
-
-SUM(CASE WHEN channel_raw = 'PAID SEARCH BRANDED'          THEN mais_platform_spend END) AS mais_platform_spend_branded,
-SUM(CASE WHEN channel_raw = 'PAID SEARCH NON-BRANDED'      THEN mais_platform_spend END) AS mais_platform_spend_nonbranded,
-SUM(CASE WHEN channel_raw = 'PAID SEARCH PLAS'              THEN mais_platform_spend END) AS mais_platform_spend_pla,
-SUM(CASE WHEN channel_raw = 'PAID SEARCH PERFORMANCE MAX'   THEN mais_platform_spend END) AS mais_platform_spend_pmax
+I did find this case statement in one of the notebooks.....
+case
+  when upper(stg.Campaign_Category) = 'DISCOVERY' then 'Programmatic Display'
+  when charindex('BRAND', upper(stg.Campaign_Name)) > 0 then 'Branded Paid Search'
+  else 'Non-Branded Paid Search'
+end as Media_Tactic
+ 
+Discovery campaigns (Campaign_Category = 'Discovery') are not in the search split. They are labeled Programmatic Display.
+If the campaign name contains the substring BRAND (case-insensitive), the row is Branded Paid Search.
+Every other SA360 row is Non-Branded Paid Search.
