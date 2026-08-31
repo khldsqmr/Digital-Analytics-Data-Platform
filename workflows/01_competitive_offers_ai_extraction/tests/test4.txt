@@ -4,11 +4,95 @@ FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Perf_d
 WHERE event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
 GROUP BY event_date ORDER BY event_date;
 
+output"
+event_date	rowss	clicks
+2026-08-01	138	401042.0
+2026-08-02	136	406180.0
+2026-08-03	133	471941.0
+2026-08-04	134	453657.0
+2026-08-05	130	442792.0
+2026-08-06	128	425923.0
+2026-08-07	127	408574.0
+2026-08-08	128	376343.0
+2026-08-09	128	365332.0
+2026-08-10	128	408562.0
+2026-08-11	130	421561.0
+2026-08-12	128	411536.0
+2026-08-13	126	404027.0
+2026-08-14	127	417896.0
+2026-08-15	126	380637.0
+2026-08-16	125	386757.0
+2026-08-17	127	433883.0
+2026-08-18	127	415709.0
+2026-08-19	122	377343.0
+2026-08-20	123	351102.0
+2026-08-21	124	340514.0
+2026-08-22	123	328292.0
+2026-08-23	122	318473.0
+2026-08-24	123	354612.0
+2026-08-25	120	348312.0
+2026-08-26	119	329040.0
+2026-08-27	121	282070.0
+2026-08-28	120	270573.0
+2026-08-29	119	258808.0
+2026-08-30	119	248218.0
+2026-08-31	56	1527.0
+
 
 -- 2. See what account_name / status values actually exist in Entity
 SELECT DISTINCT account_name, status
 FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_sa360Entity_daily`
 ORDER BY 1, 2;
+
+account_name	status
+BTS Bing	ENABLED
+BTS Bing	PAUSED
+BTS Bing	REMOVED
+BTS Google	ENABLED
+BTS Google	PAUSED
+BTS Google	REMOVED
+Brand/Network Bing	ENABLED
+Brand/Network Bing	PAUSED
+Brand/Network Bing	REMOVED
+Broadband Bing	PAUSED
+Broadband Bing	REMOVED
+Broadband Google	ENABLED
+Broadband Google	PAUSED
+Broadband Google	REMOVED
+Connect Bing	ENABLED
+Connect Bing	PAUSED
+Connect Google	ENABLED
+Connect Google	PAUSED
+Connect Google	REMOVED
+Fiber Bing	PAUSED
+Fiber Google	ENABLED
+Fiber Google	PAUSED
+Metro Bing	ENABLED
+Metro Bing	PAUSED
+Metro Bing	REMOVED
+Metro Google	ENABLED
+Metro Google	PAUSED
+Metro Google	REMOVED
+Metro HSI Bing	PAUSED
+Metro HSI Google	PAUSED
+Postpaid Bing	ENABLED
+Postpaid Bing	PAUSED
+Postpaid Bing	REMOVED
+Postpaid Google	ENABLED
+Postpaid Google	PAUSED
+Postpaid Google	REMOVED
+T-Mobile Bing Brand	PAUSED
+TFB Bing	ENABLED
+TFB Bing	PAUSED
+TFB Bing	REMOVED
+TFB Google	ENABLED
+TFB Google	PAUSED
+TMO Prepaid Bing	PAUSED
+TMO Prepaid Google	ENABLED
+TMO Prepaid Google	PAUSED
+TMO Prepaid Google	REMOVED
+adMarketplace - HSI	PAUSED
+adMarketplace - Postpaid	ENABLED
 
 -- 3. Check the join match rate between Perf and Entity
 SELECT
@@ -21,3 +105,7 @@ LEFT JOIN (
   QUALIFY ROW_NUMBER() OVER (PARTITION BY account_id, campaign_id ORDER BY file_load_datetime DESC, filename DESC) = 1
 ) ent
 ON perf.account_id = ent.account_id AND perf.campaign_id = ent.campaign_id;
+
+output:
+perf_rows	matched_rows
+76318	76318
