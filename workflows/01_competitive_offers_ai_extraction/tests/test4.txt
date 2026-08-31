@@ -8,3 +8,16 @@ end as Media_Tactic
 Discovery campaigns (Campaign_Category = 'Discovery') are not in the search split. They are labeled Programmatic Display.
 If the campaign name contains the substring BRAND (case-insensitive), the row is Branded Paid Search.
 Every other SA360 row is Non-Branded Paid Search.
+
+
+SELECT
+  TMM_Category,
+  CASE WHEN CONTAINS_SUBSTR(UPPER(TMM_Campaign_Desc), 'BRAND') THEN 'Matches BRAND substring' ELSE 'No match' END AS substring_test,
+  COUNT(*) AS rows,
+  SUM(Spend) AS spend
+FROM `prj-dbi-prd-1.ds_dbi_marketing.media_analytics_integrated_summary`
+WHERE UPPER(TRIM(LOB)) = 'POSTPAID'
+  AND UPPER(TRIM(Channel)) = 'PAID SEARCH'
+  AND Date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+GROUP BY TMM_Category, substring_test
+ORDER BY spend DESC;
