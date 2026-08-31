@@ -1,4 +1,17 @@
-and as already mentioned, it has been updated in the the "new"/current LOB Media Performance Hubs as:
-ELSEIF [Channel Group Name] = 'Paid Search' THEN
-    IF [Media Tactic] = 'Branded Paid Search' THEN 'Branded Paid Search'
-    ELSE 'Non-Branded Paid Search' END
+SELECT table_catalog, table_schema, table_name, column_name
+FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.COLUMNS`
+WHERE LOWER(column_name) LIKE '%tactic%'
+ORDER BY table_schema, table_name;
+
+SELECT table_catalog, table_schema, table_name, table_type
+FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.TABLES`
+WHERE LOWER(table_name) LIKE '%hub%'
+   OR LOWER(table_name) LIKE '%media_performance%'
+   OR LOWER(table_name) LIKE '%performance_hub%'
+ORDER BY table_schema, table_name;
+
+SELECT table_catalog, table_schema, table_name, table_type
+FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.TABLES`
+WHERE table_type IN ('EXTERNAL', 'VIEW')
+  AND (LOWER(table_name) LIKE '%databricks%' OR LOWER(table_name) LIKE '%tactic%' OR LOWER(table_name) LIKE '%hub%')
+ORDER BY table_schema, table_name;
