@@ -21,3 +21,13 @@ WHERE UPPER(TRIM(LOB)) = 'POSTPAID'
   AND Date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
 GROUP BY TMM_Category, substring_test
 ORDER BY spend DESC;
+
+
+TMM_Category	substring_test	rowss	spend
+UNKNOWN	No match	170	9390285.798875289
+Brand	No match	477	9131565.7535423879
+Value	No match	2564	8911359.497498326
+Demand Gen	No match	2473	5202148.5003866907
+Network	No match	170	1144112.9365350679
+Brand	Matches BRAND substring	85	28279.580006808043
+Demand Gen	Matches BRAND substring	1	0.0
