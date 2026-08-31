@@ -212,3 +212,55 @@ WHERE UPPER(TRIM(LOB)) = 'POSTPAID'
 GROUP BY Brand, TMM_Category, TMM_Campaign_Desc
 ORDER BY spend DESC
 LIMIT 50;
+output:
+Brand	TMM_Category	TMM_Campaign_Desc	rowss	spend
+T-Mobile	UNKNOWN	UNKNOWN	85	9094785.7729607318
+T-Mobile	Brand	Evergreen Network Messaging	85	8302791.8360335175
+T-Mobile	Demand Gen	Postpaid Evergreen	85	4349499.6977093518
+T-Mobile	Value	Evergreen Postpaid Free Affordables - Up to $300.99 off Android Smartphones w/ New Voice Line	72	1512827.1301513985
+T-Mobile	Value	2026 Q3 Postpaid Freedom Explorer Prospect Acquisition	20	1345487.1331769023
+T-Mobile	Network	Evergreen Postpaid Paid Search RedShell	85	1059957.0559940934
+T-Mobile	Value	Evergreen Postpaid iPhone 17 Paid Search	85	628649.57347317971
+T-Mobile	Value	2026 Q3 Postpaid iPhone 17 Pro on Us No Trade Hero Offer	47	624335.27587606013
+T-Mobile	Value	2025 HSI Bundle 55+	85	557368.31340808794
+T-Mobile	Value	2026 Q3 Postpaid iPhone 17 on Us No Trade Hero Offer	55	497935.03563905507
+T-Mobile	Brand	2020 Coverage Map	85	479140.66728724877
+T-Mobile	Value	2026 Q2 Postpaid iPhone 17 Pro on Us No Trade on More	47	381344.2029416319
+T-Mobile	Value	2026 Q2 Postpaid iPhone 17 Pro on Us Hero Offer	58	318315.677845696
+T-Mobile	Value	2026 Q2 Postpaid iPhone 17 on Us with Trade-In on More	34	302037.77759980038
+Beyond the Smartphone	UNKNOWN	UNKNOWN	85	295500.025914565
+T-Mobile	Value	2026 Q2 Postpaid 4 iPhone 17 on Us + 4/$25 Hero Offer	21	233823.05326478183
+T-Mobile	Value	2026 Q2 Postpaid 15 Min Switch and BYOD Keep and Switch	43	213979.019146204
+T-Mobile	Brand	Evergreen Postpaid Shop iPhone 17	85	212261.22033452988
+T-Mobile	Value	2026 Q1-Q2 Postpaid Switch and Save Campaign - Harris X Savings Claim	30	204276.89680889063
+T-Mobile	Value	2025 Q4 Postpaid SuttersMill	85	199979.63219947927
+T-Mobile	Value	2026 Q2 Postpaid AT&T Price Increase Switcher	26	199551.88287085295
+T-Mobile	Demand Gen	2024 Q4 iPhone 16 Demand Gen	85	193150.9153956573
+T-Mobile	Value	2026 Q3 Postpaid 250 Reasons Demand Gen Campaign	44	170244.08930648118
+T-Mobile	Demand Gen	Samsung Evergreen	85	164404.22856948012
+T-Mobile	Value	2026 Q3 Postpaid Samsung Galaxy S26+ On Us No Trade on Beyond	55	155257.39984015282
+T-Mobile	Value	Evergreen Postpaid BYOD Paid Search	85	135638.85420100577
+Beyond the Smartphone	Demand Gen	Apple-Watch Evergreen	85	132471.23294551019
+T-Mobile	Value	2026 Q2 Postpaid Samsung Galaxy S26 On Us ($900) w/ New Line on Experience More	43	128831.86966374516
+Beyond the Smartphone	Value	Evergreen BTS iPad	85	128384.079620542
+T-Mobile	Value	2026 Q2 Postpaid iPhone 17 on Us No Trade Required 15 Min Switch Hero Offer	17	118338.25825621188
+Beyond the Smartphone	Brand	Evergreen Network Messaging	85	112768.28712087311
+Beyond the Smartphone	Value	Evergreen BTS Hotspot	85	105398.53662810475
+T-Mobile	Demand Gen	Motorola Evergreen	85	102987.31955122016
+T-Mobile	Value	Evergreen Postpaid Student Perks Segment Launch	27	97318.49456253089
+T-Mobile	Value	2026 Q3 Postpaid Samsung Galaxy H8 On Us w/ Trade on Beyond	35	87084.443100173026
+T-Mobile	Network	2025 Q4 T-Satellite Data Launch	85	84155.880540974438
+Beyond the Smartphone	Value	2026 Q1 Postpaid Apple Watch SE3 on Us or S11 $300 Off	85	79995.700178841129
+T-Mobile	Value	2026 Q3 Postpaid Google Pixel 11 Series NPI $1300 Off	14	64767.296531932428
+T-Mobile	Value	2025 Postpaid Experience Plans Plans + Price Guarantee	85	60610.302158074453
+T-Mobile	Value	Evergreen Shopping for Samsung Galaxy S25	85	39946.810111090541
+T-Mobile	Value	2026 Q2/Q3 Postpaid Moto Razr On Us No Trade on Experience More	85	39515.470354961231
+Beyond the Smartphone	Value	2026 Q1 Postpaid BTS iPad $99 Digital Exclusive	85	37767.11050376296
+T-Mobile	Value	2026 Q2/Q3 Postpaid $1300 Off Moto Razr Fold No Trade on Experience Beyond	76	36998.7019546926
+T-Mobile	Demand Gen	Evergreen Metro Shop iPhone 16	84	35134.189968824387
+T-Mobile	Value	2026 Q3 Postpaid BYOD 720 Port-In Credit (PIC) on 30 Essential Savers Rate Plan	20	30557.778828466311
+T-Mobile	Demand Gen	Shopping Galaxy A54	85	30027.459983080626
+T-Mobile	Brand	2026 Q1 Super Bowl 60 Postpaid Brand	85	28279.580006808043
+T-Mobile	Demand Gen	Shopping Motorola Razr 5G	85	28079.380006581545
+T-Mobile	Demand Gen	Revvl Evergreen	85	26812.494208933786
+T-Mobile	Value	2026 Q1 Postpaid Google Pixel 10A NPI On Us w/ New Line	85	26251.829618823132
