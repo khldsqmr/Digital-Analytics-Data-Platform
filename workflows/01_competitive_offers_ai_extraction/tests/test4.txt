@@ -264,3 +264,8 @@ T-Mobile	Brand	2026 Q1 Super Bowl 60 Postpaid Brand	85	28279.580006808043
 T-Mobile	Demand Gen	Shopping Motorola Razr 5G	85	28079.380006581545
 T-Mobile	Demand Gen	Revvl Evergreen	85	26812.494208933786
 T-Mobile	Value	2026 Q1 Postpaid Google Pixel 10A NPI On Us w/ New Line	85	26251.829618823132
+
+
+Metric names are:
+mais_platform_spend_branded
+mais_platform_spend_nonbranded
