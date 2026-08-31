@@ -1,17 +1,109 @@
-SELECT table_catalog, table_schema, table_name, column_name
-FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.COLUMNS`
-WHERE LOWER(column_name) LIKE '%tactic%'
-ORDER BY table_schema, table_name;
-
-SELECT table_catalog, table_schema, table_name, table_type
-FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.TABLES`
-WHERE LOWER(table_name) LIKE '%hub%'
-   OR LOWER(table_name) LIKE '%media_performance%'
-   OR LOWER(table_name) LIKE '%performance_hub%'
-ORDER BY table_schema, table_name;
-
-SELECT table_catalog, table_schema, table_name, table_type
-FROM `prj-dbi-prd-1.region-us.INFORMATION_SCHEMA.TABLES`
-WHERE table_type IN ('EXTERNAL', 'VIEW')
-  AND (LOWER(table_name) LIKE '%databricks%' OR LOWER(table_name) LIKE '%tactic%' OR LOWER(table_name) LIKE '%hub%')
-ORDER BY table_schema, table_name;
+table_catalog	table_schema	table_name	column_name
+prj-dbi-prd-1	ds_dbi_dataprep	ma_mfc_raw_new	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	dim_taxonomy_keypair_package	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	media_analytics_flowchart	MFC_Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	media_analytics_flowchart	MMM_Media_Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	mfc_grained_view	tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	mfc_inputs_table	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	mfc_inputs_view	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	mfc_inputs_view_qc	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_mfc_bronze_spendActualsGranular_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_mfc_bronze_spendForecastGranular_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_mfc_bronze_spendForecastsGranular_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_mfc_silver_spendGranular_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_pulseTms_bronze_mfcSpend_weekly	tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_pulseTms_silver_mfcSpend_weekly	tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_mfc_gold_spendGranularReAllocatedByQgp_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_mfc_gold_spendGranular_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_pulseMFC_bronze_channelMapping_wide	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_pulseMFC_bronze_spendDetail_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_pulseMFC_gold_spendDetail_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	sdi_vw_pulseMFC_silver_spendDetail_weekly	Tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	tactic_channel_reference	tactic
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_daily	TACTIC_LEVEL_1
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_daily	TACTIC_LEVEL_2
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_daily	TACTIC_LEVEL_3
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_weekly	TACTIC_LEVEL_1
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_weekly	TACTIC_LEVEL_2
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_gold_entryPages_weekly	TACTIC_LEVEL_3
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_silver_entryPagesSession_daily	TACTIC_LEVEL_1
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_silver_entryPagesSession_daily	TACTIC_LEVEL_2
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_clickstream_silver_entryPagesSession_daily	TACTIC_LEVEL_3
+prj-dbi-prd-1	ds_dbi_digitalmedia_automation	vw_sdi_pulseTms_gold_unified_long	mfc_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_bing_all_campaigns	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_bing_campaigns	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_keywords_floodlights	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_sa360_campaigns	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_sa360_floodlight_campaign	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_sa360_floodlight_pivot	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsearch_sa360_keywords	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocail_linkedin	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocail_linkedin	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_campaign_perfomance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_conversions	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_conversions_performance	lob_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_linkedin	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_linkedin	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_linkedin_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_linkedin_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_meta	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_meta	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_meta_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_meta_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pinterest	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pinterest	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pinterest_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pinterest_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pivot	lob_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_pivot	LOBFunnelTactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_qa_innovid_vs_performance_model	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_reddit_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_reddit_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_snapchat	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_snapchat	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_snapchat_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_snapchat_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_tiktok	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_tiktok	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_tiktok_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_twitter	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_twitter	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_twitter_campaign_performance	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_paidsocial_twitter_conversions2	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_partnerize_traffic_bonus	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_sa360_all_campaigns	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_sa360_tactic_audience	tactic
+prj-dbi-prd-1	ds_dbi_improvado	int_steering_tiktok_geo	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_paidsocial_general	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_paidsocial_general	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_paidsocial_pivot	lob_tactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_paidsocial_pivot	LOBFunnelTactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_paidsocial_pivot_view	lob_tactic
+prj-dbi-prd-1	ds_dbi_improvado	mrt_partnerize_traffic_bonus	tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_facebook_action_type	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_facebook_ads_creative_platform	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_facebook_ads_placements	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_facebook_entity_campaigns	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_facebook_geo_by_ads	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_linkedin_ads_creatives	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_mapping_lob_tactic	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_pinterest_ads_campaigns	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_pinterest_ads_promoted_pins	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_pinterest_campaign_entity	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_reddit_campaigns_entity	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_snapchat_ads	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_snapchat_ads_demographic	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_snapchat_ads_entity_campaigns	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_snapchat_ads_region	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_tiktok_ads_ads	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_tiktok_ads_ads_geo	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_tiktok_ads_campaigns_entity	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_twitter_entity_campaigns	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_twitter_promoted_tweets	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado	stg_twitter_promoted_tweets_geo	all_lob_funnel_tactic
+prj-dbi-prd-1	ds_dbi_improvado_master	lob_tactic_tmo	lob_specific_tactic
+prj-dbi-prd-1	ds_dbi_marketing	ma_mfc_raw	Tactic
+prj-dbi-prd-1	ds_dbi_ris_bronze	stg_ma_mfc_raw	Tactic
+prj-dbi-prd-1	ds_dbi_ris_silver	ma_mfc_raw	Tactic
+prj-dbi-prd-1	ds_dbi_td3	td3_h_10919402_55plusupsell	tactic
