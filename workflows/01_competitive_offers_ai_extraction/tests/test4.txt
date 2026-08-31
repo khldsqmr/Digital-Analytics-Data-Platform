@@ -198,19 +198,17 @@ output:
 Channel	Channel_Type	Channel_Type_Group	rowss	spend
 Paid Search	Paid Search	Paid Search	5940	33807752.066844583
 
-
+-- Check remaining candidate columns for a hidden brand/nonbrand/PLA/PMax signal
 SELECT
-    event_date,
-    lob,
-    channel,
-    SUM(mais_platform_spend)                                     AS mais_platform_spend,  -- now populated for ALL channels including PAID SEARCH
-    -- NOTE: sub-channel breakdown (branded/nonbranded/pla/pmax) is not available
-    -- in this source's Channel field; these remain NULL until/unless a source
-    -- column with that granularity is identified
-    SUM(CASE WHEN channel_raw = 'PAID SEARCH BRANDED' THEN mais_platform_spend END)     AS mais_platform_spend_branded,
-    SUM(CASE WHEN channel_raw = 'PAID SEARCH NON-BRANDED' THEN mais_platform_spend END) AS mais_platform_spend_nonbranded,
-    SUM(CASE WHEN channel_raw = 'PAID SEARCH PLAS' THEN mais_platform_spend END)        AS mais_platform_spend_pla,
-    SUM(CASE WHEN channel_raw = 'PAID SEARCH PERFORMANCE MAX' THEN mais_platform_spend END) AS mais_platform_spend_pmax
-FROM mapped
-GROUP BY 1, 2, 3;
-
+  Brand,
+  TMM_Category,
+  TMM_Campaign_Desc,
+  COUNT(*) AS rows,
+  SUM(Spend) AS spend
+FROM `prj-dbi-prd-1.ds_dbi_marketing.media_analytics_integrated_summary`
+WHERE UPPER(TRIM(LOB)) = 'POSTPAID'
+  AND UPPER(TRIM(Channel)) = 'PAID SEARCH'
+  AND Date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+GROUP BY Brand, TMM_Category, TMM_Campaign_Desc
+ORDER BY spend DESC
+LIMIT 50;
