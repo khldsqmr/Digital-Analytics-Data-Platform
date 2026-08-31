@@ -194,6 +194,9 @@ WHERE UPPER(TRIM(LOB)) = 'POSTPAID'
   AND Date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
 GROUP BY Channel, Channel_Type, Channel_Type_Group
 ORDER BY spend DESC;
+output:
+Channel	Channel_Type	Channel_Type_Group	rowss	spend
+Paid Search	Paid Search	Paid Search	5940	33807752.066844583
 
 
 SELECT
