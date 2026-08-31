@@ -95,3 +95,20 @@ event_date	lob	channel	mais_platform_spend	mais_platform_spend_branded	mais_plat
 2026-08-23	POSTPAID	PAID SEARCH					
 2026-08-24	POSTPAID	PAID SEARCH					
 2026-08-25	POSTPAID	PAID SEARCH					
+
+
+-- Check whether the sub-channel breakdown existed historically, or ever
+SELECT
+  DATE_TRUNC(event_date, MONTH) AS month,
+  channel,
+  COUNT(*) AS rows,
+  SUM(mais_platform_spend) AS spend
+FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.vw_sdi_tsd_bronze_maisSpend_daily`
+WHERE lob = 'POSTPAID'
+  AND channel LIKE '%PAID SEARCH%'
+GROUP BY month, channel
+ORDER BY month, channel;
+
+SELECT column_name, data_type
+FROM `prj-dbi-prd-1.ds_dbi_marketing.INFORMATION_SCHEMA.COLUMNS`
+WHERE table_name = 'media_analytics_integrated_summary';
