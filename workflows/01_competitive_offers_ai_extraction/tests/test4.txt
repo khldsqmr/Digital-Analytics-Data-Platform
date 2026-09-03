@@ -17,6 +17,10 @@ Analysis > Create Calculated Field. Metric Item Label and Glossary Item Label, e
 Create the Metric Items and Glossary Items parameters
 Right-click in the Data pane > Create Parameter. Data type: String. Under 'List', click 'Add from Field' and pick Metric Item Label for the first parameter, Glossary Item Label for the second. Tableau populates each list with the distinct non-null values — 28 entries for Metric Items, 25 for Glossary Items. Sort is alphabetical by default; there's no native way to force apx_sort_order here (flagged below).
 3
+
+IF [Toggle] THEN [p.apx.Metric Label New] ELSE [p.apx.Glossary Label New] END
+
+
 Make Toggle a Boolean parameter with custom labels
 Create a third parameter, Toggle, as Boolean, shown as a list. Tableau gives you two rows, True and False — in the 'Display As' column, rename True to 'Metric' and False to 'Glossary'. Show it as radio buttons. This single Boolean parameter is both your visible toggle control AND the trigger Dynamic Zone Visibility needs (that feature requires a Boolean field or parameter — a plain string toggle wouldn't qualify directly).
 4
