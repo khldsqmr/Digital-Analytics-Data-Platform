@@ -1,25 +1,5 @@
-Metric Item Label
-
-IF [apx_record_type] = "Metric" THEN [apx_label] END
-
-Glossary Item Label
-
-IF [apx_record_type] = "Glossary" THEN [apx_label] END
-
-Create the two calculated fields above
-Analysis > Create Calculated Field. Metric Item Label and Glossary Item Label, exactly as written above. These exist purely to give each parameter a clean, pre-filtered field to pull its list from.
-2
-Create the Metric Items and Glossary Items parameters
-Right-click in the Data pane > Create Parameter. Data type: String. Under 'List', click 'Add from Field' and pick Metric Item Label for the first parameter, Glossary Item Label for the second. Tableau populates each list with the distinct non-null values — 28 entries for Metric Items, 25 for Glossary Items. Sort is alphabetical by default; there's no native way to force apx_sort_order here (flagged below).
-3
-Make Toggle a Boolean parameter with custom labels
-Create a third parameter, Toggle, as Boolean, shown as a list. Tableau gives you two rows, True and False — in the 'Display As' column, rename True to 'Metric' and False to 'Glossary'. Show it as radio buttons. This single Boolean parameter is both your visible toggle control AND the trigger Dynamic Zone Visibility needs (that feature requires a Boolean field or parameter — a plain string toggle wouldn't qualify directly).
-4
-Show/hide each item parameter with Dynamic Zone Visibility
-Put the Metric Items parameter control and the Glossary Items parameter control in their own floating zones, stacked on top of each other. Select the Metric Items zone, open the Layout pane, check 'Control visibility using value', and pick Toggle (visible when True). Do the same for the Glossary Items zone, but visible when False. No buttons or actions needed — this is a native Tableau feature (2022.3+), and it's a cleaner fit here than the show/hide-button workaround.
-5
-Create a calculated field that picks whichever one is active
-Selected Appendix Item: IF [Toggle] THEN [Metric Items] ELSE [Glossary Items] END. This is what actually ties the toggle state to whichever of the two parameters the person is currently using — without it, your detail sheets have no single field to filter on.
-6
-Filter every detail sheet on that field
-On Details, Definitions, How It's Built, Key Exclusions, and the Source box: create one small calculated field, Is Selected Row: [apx_label] = [Selected Appendix Item], drag it to the Filters shelf on each sheet, and set it to True. All five sheets now update together whenever either parameter changes.
+//cf_glossary_labels_only
+IF [Apx Row Type] = "glossary_header"
+THEN [Apx Label]
+ELSE NULL
+END
