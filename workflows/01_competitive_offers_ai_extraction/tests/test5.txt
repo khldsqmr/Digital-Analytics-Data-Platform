@@ -1,24 +1,12 @@
-1
-Add two parameters: Toggle and Selected Item
-Toggle is a string parameter with a list of two values, 'Metric' and 'Glossary', shown as radio buttons (matches your mockup exactly). Selected Item is a string parameter with no fixed list — it's write-only from your side, its value gets set by a click rather than typed in. Everything else in the dashboard runs off these two.
-2
-Build a hidden 'list' worksheet as the dropdown's contents
-A plain single-column text table: apx_id on Detail (or Tooltip), apx_label as the visible text, filtered to apx_row_type IN ('metric_header','glossary_header') AND apx_record_type = [Toggle], sorted by apx_sort_order. No headers, no gridlines, tight row height. This sheet IS the dropdown — Tableau's native parameter-with-dynamic-value-list feature can't filter its own list by another parameter's value, so a filtered worksheet standing in for the list is the standard workaround, not a hack you're inventing.
-3
-Wire a Parameter Action from that list to Selected Item
-Dashboard menu > Actions > Add Action > Change Parameter. Source sheet = your list worksheet. Target parameter = Selected Item. Source field = apx_id (use the ID, not apx_label — labels are for display, but a stray future label collision between a Metric and Glossary row would silently break the join if you drive off text instead of the key). Run on Select. This click-to-set mechanism is what replaces the cascading-dropdown behavior Tableau doesn't natively support.
-4
-Filter every detail sheet on apx_id = [Selected Item]
-Details, Definitions, How It's Built, Key Exclusions, and the Source/Table/Owner/Refresh box all get the same filter: apx_id = [Selected Item]. This is the one condition that ties the whole right-hand side of the dashboard to whatever was last clicked in the list — no other filter or action is needed on those sheets.
-5
-Style the list to look like a real dropdown
-Put the list worksheet in a floating container, hidden by default. Build a small text box or shape showing [Selected Item] with a dropdown-chevron icon next to it, and give it a 'Show/Hide Container' button action targeting the floating list. Match the border color (#D4D4D4-ish) and padding to your existing UI so it reads as a native control rather than an obviously custom one — this exact look is a documented pattern in the Tableau community, not something you'd be figuring out from scratch.
-6
-Handle the toggle-switch edge case
-When someone flips Metric to Glossary, Selected Item may still hold an apx_id that doesn't exist in the new list, and your detail sheets will just go blank. Fix it either of two ways: add a second parameter action that runs when the Toggle control itself changes and resets Selected Item to the first row's apx_id for that record_type, or add an IFNULL/CASE calculated field on the detail sheets that shows 'Select an item above' placeholder text when nothing matches, so an empty state reads as intentional rather than broken.
-That's the build order — Parameter Actions (step 3) is the actual mechanism that replaces what looks like a missing Tableau feature; everything else is wiring and polish around it.
+-- Full appendix side, one row per apx_id (not per bullet)
+SELECT DISTINCT
+  apx_id, apx_record_type, apx_source_table, apx_parent_id,
+  apx_funnel_stage_label, apx_sort_order
+FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_appendix_long
+ORDER BY apx_sort_order;
 
-Two things worth flagging on top of the steps:
-
-Drive off apx_id, display apx_label. I called this out in step 3, but it matters enough to repeat: your Gold view already carries apx_id through untouched from Bronze, so there's no reason to key any of this off the label text. It also means renaming a metric later (a very likely thing to happen as this appendix keeps evolving) won't break the dashboard's filtering — only the display text changes.
-This same list-sheet-as-dropdown pattern is reusable. Once you've built it once for this appendix, the exact same recipe (filtered list sheet → parameter action → floating container → show/hide button) works for any other "pick one thing, see its details" panel you build elsewhere in PulseTMS — it's not a one-off hack specific to this screen.
+-- Full gold_unified_long side
+SELECT DISTINCT data_source, metric_name
+FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+WHERE metric_name IS NOT NULL
+ORDER BY data_source, metric_name;
