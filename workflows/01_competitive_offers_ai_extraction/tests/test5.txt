@@ -5,8 +5,133 @@ SELECT DISTINCT
 FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_appendix_long
 ORDER BY apx_sort_order;
 
+output:
+apx_id	apx_record_type	apx_source_table	apx_parent_id	apx_funnel_stage_label	apx_sort_order
+mfc_spend_postpaid	Metric	prdrzranalytics.lab42.raw_media_flowchart	null	Top Funnel	1
+mfc_spend_postpaid	null	null	null	Glossary	1
+mfc_spend_broadband	Metric	prdrzranalytics.lab42.raw_media_flowchart	null	Top Funnel	2
+mfc_spend_broadband	null	null	null	Glossary	2
+UPV_actuals_overall	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	null	Top Funnel	3
+UPV_actuals_overall	null	null	null	Glossary	3
+UPV_forecasts	Metric	prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly	null	Top Funnel	4
+UPV_forecasts	null	null	null	Glossary	4
+UPV_postpaid_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	UPV_actuals_overall	Top Funnel	5
+UPV_postpaid_flow	null	null	null	Glossary	5
+UPV_hsi_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	UPV_actuals_overall	Top Funnel	6
+UPV_hsi_flow	null	null	null	Glossary	6
+UPV_byod_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	UPV_actuals_overall	Top Funnel	7
+UPV_byod_flow	null	null	null	Glossary	7
+vr_calls	Metric	prdrzrlakehouse.qgp_restricted.qgpweeklyview	null	Mid Funnel	8
+vr_calls	null	null	null	Glossary	8
+vr_chats	Metric	prdrzrlakehouse.qgp_restricted.qgpweeklyview	null	Mid Funnel	9
+vr_chats	null	null	null	Glossary	9
+exit_traffic_door_swings	Metric	prdrzrlakehouse.qgp_restricted.qgpweeklyview	null	Top Funnel	10
+exit_traffic_door_swings	null	null	null	Glossary	10
+add_to_cart_overall	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	null	Mid Funnel	11
+add_to_cart_overall	null	null	null	Glossary	11
+cart_postpaid_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	add_to_cart_overall	Mid Funnel	12
+cart_postpaid_flow	null	null	null	Glossary	12
+cart_hsi_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	add_to_cart_overall	Mid Funnel	13
+cart_hsi_flow	null	null	null	Glossary	13
+cart_byod_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	add_to_cart_overall	Mid Funnel	14
+cart_byod_flow	null	null	null	Glossary	14
+orders_unassisted_overall	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_overall	Bottom Funnel	15
+orders_unassisted_overall	null	null	null	Glossary	15
+orders_unassisted_postpaid_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_unassisted_overall	Bottom Funnel	16
+orders_unassisted_postpaid_flow	null	null	null	Glossary	16
+orders_unassisted_hsi_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_unassisted_overall	Bottom Funnel	17
+orders_unassisted_hsi_flow	null	null	null	Glossary	17
+orders_unassisted_byod_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_unassisted_overall	Bottom Funnel	18
+orders_unassisted_byod_flow	null	null	null	Glossary	18
+orders_assisted_overall	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_overall	Bottom Funnel	19
+orders_assisted_overall	null	null	null	Glossary	19
+orders_assisted_postpaid_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_assisted_overall	Bottom Funnel	20
+orders_assisted_postpaid_flow	null	null	null	Glossary	20
+orders_assisted_hsi_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_assisted_overall	Bottom Funnel	21
+orders_assisted_hsi_flow	null	null	null	Glossary	21
+orders_assisted_byod_flow	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	orders_assisted_overall	Bottom Funnel	22
+orders_assisted_byod_flow	null	null	null	Glossary	22
+new_bans_digital_unassisted	Metric	prdrzrlakehouse.qgp_restricted.qgpweeklyview	null	Bottom Funnel	23
+new_bans_digital_unassisted	null	null	null	Glossary	23
+vr_new_bans	Metric	prdrzrlakehouse.qgp_restricted.qgpweeklyview	null	Bottom Funnel	24
+vr_new_bans	null	null	null	Glossary	24
+gloss_postpaid	Glossary	null	null	Glossary	25
+gloss_hsi	Glossary	null	null	Glossary	26
+gloss_byod	Glossary	null	null	Glossary	27
+gloss_prospect	Glossary	null	null	Glossary	28
+gloss_non_bounced	Glossary	null	null	Glossary	29
+gloss_uv	Glossary	null	null	Glossary	30
+gloss_visit	Glossary	null	null	Glossary	31
+gloss_hit	Glossary	null	null	Glossary	32
+gloss_activation_intent	Glossary	null	null	Glossary	33
+gloss_flow_name	Glossary	null	null	Glossary	34
+gloss_product_type	Glossary	null	null	Glossary	35
+gloss_cart_events	Glossary	null	null	Glossary	36
+gloss_ban	Glossary	null	null	Glossary	37
+gloss_vr	Glossary	null	null	Glossary	38
+gloss_mfc	Glossary	null	null	Glossary	39
+gloss_qgp	Glossary	null	null	Glossary	40
+gloss_unassisted	Glossary	null	null	Glossary	41
+gloss_assisted	Glossary	null	null	Glossary	42
+gloss_act_vs_fcst	Glossary	null	null	Glossary	43
+gloss_cvr	Glossary	null	null	Glossary	44
+gloss_wow	Glossary	null	null	Glossary	45
+gloss_qtd	Glossary	null	null	Glossary	46
+gloss_tfb	Glossary	null	null	Glossary	47
+gloss_loa	Glossary	null	null	Glossary	48
+gloss_android_ghost	Glossary	null	null	Glossary	49
+hsi_eligibility_checks_completed	Metric	PENDING - not yet built (planned destination: sdi_vw_dashboardPulseTms_gold_unified_long)	null	Mid Funnel	50
+hsi_eligibility_checks_completed	null	null	null	Glossary	50
+digital_pct_phone_new_accounts_total	Metric	prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly	null	Bottom Funnel	51
+digital_pct_phone_new_accounts_total	null	null	null	Glossary	51
+digital_pct_phone_new_accounts_no_assistance	Metric	prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly	null	Bottom Funnel	52
+digital_pct_phone_new_accounts_no_assistance	null	null	null	Glossary	52
+digital_pct_phone_new_accounts_assistance	Metric	prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly	null	Bottom Funnel	53
+digital_pct_phone_new_accounts_assistance	null	null	null	Glossary	53
+orders_overall	Metric	prdrzranalytics.lab42.sdi_tbl_adobeFunnel_gold_flowPerformanceByChannelGroups_weekly	null	Bottom Funnel	54
+orders_overall	null	null	null	Glossary	54
+
 -- Full gold_unified_long side
 SELECT DISTINCT data_source, metric_name
 FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
 WHERE metric_name IS NOT NULL
 ORDER BY data_source, metric_name;
+
+output:
+data_source	metric_name
+ADOBE	cartstartByod
+ADOBE	cartstartHsi
+ADOBE	cartstartPostpaid
+ADOBE	cartstartTotal
+ADOBE	ordersAssistedByod
+ADOBE	ordersAssistedHsi
+ADOBE	ordersAssistedPostpaid
+ADOBE	ordersAssistedTotal
+ADOBE	ordersTotal
+ADOBE	ordersUnassistedByod
+ADOBE	ordersUnassistedHsi
+ADOBE	ordersUnassistedPostpaid
+ADOBE	ordersUnassistedTotal
+ADOBE	upvByod
+ADOBE	upvFlowTotal
+ADOBE	upvHsi
+ADOBE	upvPostpaid
+ADOBE	upvTotalAdobe
+BIDDABLE_SPEND_CHANNEL	biddableSpend
+MFC_SPEND_CHANNEL	mfcSpendActual
+MFC_SPEND_CHANNEL	mfcSpendForecast
+MFC_SPEND_GRANULAR	mfcSpendActual
+MFC_SPEND_GRANULAR	mfcSpendForecast
+PLATFORM_SPEND_CHANNEL	platformSpend
+QGP_SCORECARD	activationsBopis
+QGP_SCORECARD	activationsNewAalNoAssistance
+QGP_SCORECARD	digitalPctAssistanceActivations
+QGP_SCORECARD	digitalPctConsumerPostpaidActivationsTotalInclAssisted
+QGP_SCORECARD	digitalPctNoAssistanceActivations
+QGP_SCORECARD	digitalPctPhoneNewActsNoAssistPlusAssist
+QGP_SCORECARD	storeTraffic
+QGP_SCORECARD	vrCalls
+QGP_SCORECARD	vrChats
+QGP_SCORECARD	vrPostpaidActivations
+UPV_FORECAST	upvForecast
+UPV_FORECAST	upvWebAppForecast
