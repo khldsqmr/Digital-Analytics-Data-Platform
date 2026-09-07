@@ -17,6 +17,13 @@ GRAIN:
   describes the same underlying spend at two different fact-table grains.
 
 WILDCARD DESIGN (this is the part that matters most):
+  gul_lob always matches against gold_unified_long's DISPLAY lob column (the one named plain
+  "lob"), never its true_lob column. true_lob was added to gold_unified_long later, purely as a
+  more literal, per-metric LOB signal for that view's own consumers - it plays no role in this
+  bridge's join at all. A source's gul_lob value here is unaffected by whatever true_lob turns
+  out to be for that source, including cases (like QGP_SCORECARD) where true_lob genuinely
+  varies by metric_name while gul_lob stays a single wildcard NULL for the whole family.
+
   gul_lob is nullable. NULL means wildcard - match every lob value on the gold_unified_long
   side, not just a literal NULL. This is deliberate: whether a marketing-channel dimension or a
   LOB varies for a given metric is a property of the metric's definition, not something the
@@ -94,7 +101,12 @@ SELECT * FROM VALUES
   ('upvHsi',              'ADOBE',        'upvHsi',        CAST(NULL AS STRING)),
   ('upvByod',             'ADOBE',        'upvByod',       CAST(NULL AS STRING)),
 
-  -- QGP Scorecard (no lob dimension on this source at all - always NULL)
+  -- QGP Scorecard (gul_lob left NULL = wildcard, deliberately, not because the source lacks a
+  -- lob value: gold_unified_long's QGP_SCORECARD.lob is now 'Postpaid + Broadband' on every row
+  -- and its true_lob varies per metric_name, see that view's own header for the full mapping.
+  -- NULL here still wildcards correctly against either column's current or future values -- this
+  -- bridge only ever matches on the display lob column, never true_lob, so nothing here needed
+  -- to change when that view's QGP lob value changed from a literal NULL to a real label.)
   ('vrCalls',            'QGP_SCORECARD', 'vrCalls',      CAST(NULL AS STRING)),
   ('vrChats',             'QGP_SCORECARD', 'vrChats',      CAST(NULL AS STRING)),
   ('storeTraffic',        'QGP_SCORECARD', 'storeTraffic', CAST(NULL AS STRING)),
@@ -120,7 +132,7 @@ SELECT * FROM VALUES
   -- Orders (Overall) - new apx_id, maps to the already-computed ordersTotal metric
   ('ordersTotal',         'ADOBE', 'ordersTotal', CAST(NULL AS STRING)),
 
-  -- New BANs & VR Conversions (QGP_SCORECARD, lob always NULL)
+  -- New BANs & VR Conversions (QGP_SCORECARD, gul_lob NULL = wildcard, see note above)
   -- NOTE: activationsBopis, not activationsNewAalNoAssistance - see CONTENT NOTES above
   ('activationsBopis',        'QGP_SCORECARD', 'activationsBopis',        CAST(NULL AS STRING)),
   ('vrPostpaidActivations',   'QGP_SCORECARD', 'vrPostpaidActivations',   CAST(NULL AS STRING)),
