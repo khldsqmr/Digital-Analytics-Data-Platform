@@ -1,117 +1,125 @@
 # PulseTMS appendix panel - Tableau build guide
 
-Single data source, six visible worksheets, two helper worksheets, five to eight calculated fields depending on how much cosmetic polish you want. Everything filters off one Gold view: `sdi_vw_dashboardPulseTms_gold_appendix_long`.
+Single data source, six visible worksheets, ten calculated fields, two content parameters. Everything filters off one Gold view: `sdi_vw_dashboardPulseTms_gold_appendix_long`.
 
-Naming convention used throughout: every calculated field is prefixed `apx.` (dot, matching how you asked for it), so they sort together at the top of the Analysis pane, separate from raw `apx_*` database columns (underscore prefix, no dot). Parameters are prefixed `p_`.
+Naming convention throughout: every parameter is prefixed `p.apx.`, every calculated field is prefixed `c.apx.`. Both sort together at the top of their respective panes and are visually distinct at a glance, a `p.apx.` name is always an input you set from a control, a `c.apx.` name is always a formula derived from one or more fields. Raw database columns keep their existing `apx_` (underscore, no dot) prefix unchanged, that distinguishes "came from Bronze/Silver/Gold SQL" from "built inside this workbook."
+
+No helper worksheets in this version, an earlier draft used two throwaway sheets to populate the parameter dropdowns. That step turned out to be unnecessary: Tableau's parameter editor can source its value list straight from a calculated field, no worksheet required. Built in properly below.
 
 ---
 
 ## 0. Prerequisites
 
-- All five appendix SQL files deployed in order (Bronze → Silver → Gold appendix → Bridge → Annotated view). Only the Gold appendix view matters for this guide.
-- Confirm the row count once connected: `SELECT COUNT(*) FROM gold_appendix_long` should return the sum of every metric's BUILD rows + EXCLUSION rows, plus 25 (one per Glossary row). If that number looks wildly off, stop and check Silver before building anything in Tableau.
+- All five appendix SQL files deployed in order (Bronze, Silver, Gold appendix, Bridge, Annotated view). Only the Gold appendix view matters for this guide.
+- Confirm the row count once connected: `SELECT COUNT(*) FROM gold_appendix_long` should return the sum of every metric's BUILD rows plus EXCLUSION rows, plus 25 (one per Glossary row). If that number looks wildly off, stop and check Silver before building anything in Tableau.
 - Live connection recommended over an extract, given the tiny row count, changes to the appendix content show up immediately without a re-extract.
 
 ---
 
 ## 1. Connect the data source
 
-1. New Data Source → Databricks connector.
+1. New Data Source, Databricks connector.
 2. Point it at `sdi_vw_dashboardPulseTms_gold_appendix_long`. Do not join anything else to it, this view is deliberately self-sufficient (denormalized wide fields riding on every long row) so no second table is needed.
 3. Rename the data source to `PulseTMS Appendix` in the Data pane, so it's unambiguous from your main fact-table connection.
 
 ---
 
-## 2. Parameters
+## 2. Calculated fields
 
-### p_content_type
+Build all ten before touching parameters or worksheets, the parameters in Step 3 depend on the first two, and several worksheets in Step 4 depend on the rest.
+
+| Name | Formula | Purpose |
+|---|---|---|
+| `c.apx.Metric Names Only` | `IF [apx_record_type] = "Metric" THEN [apx_display_name] END` | Source field for `p.apx.Metric Name`'s dynamic value list, returns NULL on Glossary rows so only the 29 metric names populate. |
+| `c.apx.Glossary Terms Only` | `IF [apx_record_type] = "Glossary" THEN [apx_display_name] END` | Source field for `p.apx.Glossary Term`'s dynamic value list, same logic, 25 glossary terms. |
+| `c.apx.Active Selection` | `IF [p.apx.Content Type] = "Metric" THEN [p.apx.Metric Name] ELSE [p.apx.Glossary Term] END` | Unifies whichever parameter is currently in play into one filter value every content worksheet uses. |
+| `c.apx.Is Metric Mode` | `[p.apx.Content Type] = "Metric"` | Boolean driving which parameter control is visible, and which sections show at all. |
+| `c.apx.Is Glossary Mode` | `NOT [c.apx.Is Metric Mode]` | Inverse of the above, used to show the Glossary-side parameter control when the toggle isn't on Metric. |
+| `c.apx.Seq0 Filter` | `[apx_section_seq] = 0 AND ([apx_section_type] = "BUILD" OR [apx_section_type] = "GLOSSARY_DEFINITION")` | The single-row-per-item slice Sections 1, 2a, 2b, 2c all filter on. |
+| `c.apx.Show Warning` | `NOT ISNULL([apx_warning_message])` | True only for the roughly 11 metrics that actually have a warning. |
+| `c.apx.Show Warning Zone` | `[c.apx.Is Metric Mode] AND [c.apx.Show Warning]` | Combined condition for the warning container's visibility, metric mode AND has a warning. Tableau zone visibility accepts one boolean, this is where the two conditions get combined into it. |
+| `c.apx.Section Label Display` | `IFNULL([apx_section_label], "")` | Prevents a literal "Null" from rendering on the handful of BUILD rows that have no bracketed label (e.g. `eligibilityChecksCompleted`'s opening definition line). |
+| `c.apx.Source Block` | `"Source: " + [apx_data_source_label] + CHAR(10) + "Table: " + IFNULL([apx_source_table], "Not yet live") + CHAR(10) + "Owner: " + [apx_source_owner] + CHAR(10) + "Refresh: " + [apx_refresh_cadence]` | One multi-line Text mark for the whole Source block, instead of four separate worksheets. |
+| `c.apx.Funnel Badge Label` *(optional, cosmetic)* | `CASE [apx_funnel_stage_label] WHEN "Top Funnel" THEN "TOP FUNNEL" WHEN "Mid Funnel" THEN "MID FUNNEL" WHEN "Bottom Funnel" THEN "BOTTOM FUNNEL" END` | Matches the reference mockup's badge text. Skip if you'd rather just color-code `apx_funnel_stage_label` directly and let the field's own value be the label. |
+
+That's eleven rows above (ten required, one optional), the count in the intro refers to the required set.
+
+---
+
+## 3. Parameters
+
+### p.apx.Content Type
 - Data type: String
 - List of values (typed manually): `Metric`, `Glossary`
 - Current value: `Metric`
 - Display as: Radio buttons, when you add the parameter control to the dashboard later
 
-### Two helper worksheets (not placed on the dashboard, just used to populate the two list parameters below)
-
-**Helper - Metric Names**
-- Filters: `apx_record_type` = `Metric`, `apx_section_seq` = `0`, `apx_section_type` = `BUILD`
-- Rows: `apx_display_name`
-- This gives you exactly 29 distinct values, no duplicates from the multiple BUILD/EXCLUSION rows per metric.
-
-**Helper - Glossary Terms**
-- Filters: `apx_record_type` = `Glossary`
-- Rows: `apx_display_name`
-- 25 distinct values.
-
-Keep both sheets in the workbook (don't delete after use), a List parameter populated via "Add values from field" re-reads its source sheet if you ever refresh the list, deleting the sheet breaks that link silently.
-
-### p_metric_name
-- Data type: String, List
-- Add values from field → `Helper - Metric Names` → `apx_display_name`
+### p.apx.Metric Name
+- Data type: String
+- List tab, "Add values from" the field `c.apx.Metric Names Only`, defined as:
+  ```
+  IF [apx_record_type] = "Metric" THEN [apx_display_name] END
+  ```
+  Returns NULL on every Glossary row, so only the 29 metric names populate the list.
+- Check "When workbook opens" (this is what makes it a Dynamic Parameter, Tableau re-queries the field's distinct values automatically every time the workbook is opened, instead of freezing a one-time snapshot). Tableau drops the NULL entry from a field-sourced list automatically, no manual cleanup needed.
 - Display as: Dropdown (single value list)
 
-### p_glossary_term
-- Same, sourced from `Helper - Glossary Terms`.
+### p.apx.Glossary Term
+- Data type: String
+- List tab, "Add values from" the field `c.apx.Glossary Terms Only`, defined as:
+  ```
+  IF [apx_record_type] = "Glossary" THEN [apx_display_name] END
+  ```
+  Same logic, inverted, returns NULL on every Metric row so only the 25 glossary terms populate.
+- Same "When workbook opens" setting and display as Step above.
 
----
+**What this buys you over a static list**: when someone adds a new metric or glossary term to Bronze next quarter, both dropdowns pick it up the next time the workbook is opened, no manual re-sync step, no forgetting to refresh a parameter before a stakeholder opens the dashboard.
 
-## 3. Calculated fields
-
-Create all of these before building the worksheets, several worksheets reference more than one.
-
-| Name | Formula | Purpose |
-|---|---|---|
-| `apx.Active Selection` | `IF [p_content_type] = "Metric" THEN [p_metric_name] ELSE [p_glossary_term] END` | Unifies whichever parameter is currently in play into one filter value every content worksheet uses. |
-| `apx.Is Metric Mode` | `[p_content_type] = "Metric"` | Boolean driving which parameter control is visible, and which sections show at all. |
-| `apx.Seq0 Filter` | `[apx_section_seq] = 0 AND ([apx_section_type] = "BUILD" OR [apx_section_type] = "GLOSSARY_DEFINITION")` | The single-row-per-item slice Sections 1, 2a, 2b, 2c all filter on. |
-| `apx.Show Warning` | `NOT ISNULL([apx_warning_message])` | True only for the ~11 metrics that actually have a warning. |
-| `apx.Show Warning Zone` | `[apx.Is Metric Mode] AND [apx.Show Warning]` | Combined condition for the warning container's visibility (metric mode AND has a warning). |
-| `apx.Section Label Display` | `IFNULL([apx_section_label], "")` | Prevents a literal "Null" from rendering on the handful of BUILD rows that have no bracketed label (e.g. `eligibilityChecksCompleted`'s opening definition line). |
-| `apx.Source Block` | `"Source: " + [apx_data_source_label] + CHAR(10) + "Table: " + IFNULL([apx_source_table], "Not yet live") + CHAR(10) + "Owner: " + [apx_source_owner] + CHAR(10) + "Refresh: " + [apx_refresh_cadence]` | One multi-line Text mark for the whole Source block, instead of four separate worksheets. |
-| `apx.Funnel Badge Label` *(optional, cosmetic)* | `CASE [apx_funnel_stage_label] WHEN "Top Funnel" THEN "▲ TOP FUNNEL" WHEN "Mid Funnel" THEN "◆ MID FUNNEL" WHEN "Bottom Funnel" THEN "▼ BOTTOM FUNNEL" END` | Matches the reference mockup's badge styling. Skip if you'd rather just color-code `apx_funnel_stage_label` directly. |
+**What this does not do**: there is no way to make `p.apx.Content Type`'s selection change which values `p.apx.Metric Name` or `p.apx.Glossary Term` contain. A Tableau parameter's value list binds to one field, fixed (or dynamically re-queried from that one field), never a branching expression conditioned on another parameter. That's why two separate parameters exist instead of one, the toggle controls which one is visible (via Dynamic Zone Visibility using `c.apx.Is Metric Mode` / `c.apx.Is Glossary Mode`, see Step 5), not which values either one holds.
 
 ---
 
 ## 4. Worksheets
 
-Every worksheet below uses the `PulseTMS Appendix` data source and filters on `[apx_display_name] = [apx.Active Selection]` in addition to whatever's listed. Put that filter on first each time, it's the one thing every sheet shares.
+Every worksheet below uses the `PulseTMS Appendix` data source and filters on `[apx_display_name] = [c.apx.Active Selection]` in addition to whatever's listed. Put that filter on first each time, it's the one thing every sheet shares.
 
 ### WS - Badge (Section 1, box 1 of 3)
-- Filters: `apx.Seq0 Filter` = True
-- Marks: Text = `apx.Funnel Badge Label` (or `apx_funnel_stage_label` if you skipped the cosmetic calc)
-- Color: `apx_funnel_stage_label`, categorical - assign your own colors per value in the legend editor (three values: Top/Mid/Bottom Funnel). Glossary rows have no funnel stage; give the fourth (null) legend entry a neutral gray so it doesn't error out when a Glossary item is selected.
-- Format: bold, centered, background matches the color assigned (Format → Shading, tied to the same field).
+- Filters: `c.apx.Seq0 Filter` = True
+- Marks: Text = `c.apx.Funnel Badge Label` (or `apx_funnel_stage_label` if you skipped the cosmetic calc)
+- Color: `apx_funnel_stage_label`, categorical, assign your own colors per value in the legend editor (three values: Top/Mid/Bottom Funnel). Glossary rows have no funnel stage; give the fourth (null) legend entry a neutral gray so it doesn't error out when a Glossary item is selected.
+- Format: bold, centered, background matches the color assigned (Format, Shading, tied to the same field).
 
 ### WS - Name (Section 1, box 2 of 3)
-- Filters: `apx.Seq0 Filter` = True
+- Filters: `c.apx.Seq0 Filter` = True
 - Marks: Text = `apx_display_name`
 - Format: bold, 15px, left-aligned.
 
 ### WS - Scope (Section 1, box 3 of 3)
-- Filters: `apx.Seq0 Filter` = True
+- Filters: `c.apx.Seq0 Filter` = True
 - Marks: Text = `apx_flow_scope` (Metric rows only, this is blank for Glossary, which is fine, the box just shows empty)
-- Format: `--text-secondary`-equivalent gray, 13px, right-aligned.
+- Format: muted gray, 13px, right-aligned.
 
-Place these three side by side in a horizontal floating container, this recreates the "badge | name | scope" row from Section 1.
+Place these three side by side in a horizontal floating container, this recreates the badge, name, scope row from Section 1.
 
 ### WS - Definition (Section 2a)
-- Filters: `apx.Seq0 Filter` = True
+- Filters: `c.apx.Seq0 Filter` = True
 - Marks: Text = `apx_definition_text` (already unified in Gold, `IFNULL(apx_vp_one_liner, apx_section_detail)`, no Tableau-side calc needed here)
 
 ### WS - Warning (Section 2b)
-- Filters: `apx.Seq0 Filter` = True
+- Filters: `c.apx.Seq0 Filter` = True
 - Marks: Text = `apx_warning_message`
-- This sheet is the trigger for `apx.Show Warning Zone` at the dashboard level (below), the filter alone doesn't collapse the container's space, zone visibility does that.
+- This sheet is the trigger for `c.apx.Show Warning Zone` at the dashboard level (below), the filter alone doesn't collapse the container's space, zone visibility does that.
 
 ### WS - Source (Section 2c)
-- Filters: `apx.Seq0 Filter` = True
-- Marks: Text = `apx.Source Block`
+- Filters: `c.apx.Seq0 Filter` = True
+- Marks: Text = `c.apx.Source Block`
 - Format: enable text wrap, left-aligned, monospace optional for the table-name line if you want it visually distinct.
 
 ### WS - Build (Section 3)
 - Filters: `apx_section_type` = `BUILD` (no `Seq0` restriction here, you want every row)
-- Rows: `apx_section_seq` (place it, then right-click the field header on the canvas → uncheck "Show Header", it still controls row order even hidden), then `apx.Section Label Display`
+- Rows: `apx_section_seq` (place it, then right-click the field header on the canvas, uncheck "Show Header", it still controls row order even hidden), then `c.apx.Section Label Display`
 - Marks: Text = `apx_section_detail`
-- Format: bold the label column, regular weight on detail, enable "Wrap Text" on the detail column and set a fixed width (Format → Column widths), thin top border between rows (Format → Borders). Test this sheet specifically against `ordersUnassistedPostpaid`, it has the longest detail strings (300+ characters) and is the real stress case for wrapping.
+- Format: bold the label column, regular weight on detail, enable "Wrap Text" on the detail column and set a fixed width (Format, Column widths), thin top border between rows (Format, Borders). Test this sheet specifically against `ordersUnassistedPostpaid`, it has the longest detail strings (300+ characters) and is the real stress case for wrapping.
 
 ### WS - Exclusions (Section 4)
 - Identical to WS - Build in every respect except the filter: `apx_section_type` = `EXCLUSION` instead of `BUILD`.
@@ -121,19 +129,20 @@ Place these three side by side in a horizontal floating container, this recreate
 ## 5. Dashboard assembly
 
 1. New dashboard, floating layout (not tiled, you need overlapping containers for the parameter-control swap).
-2. Add the `p_content_type` parameter control (radio buttons) top-left, always visible, no zone visibility needed on this one.
-3. Add the `p_metric_name` parameter control in its own floating container, top-right. Select that container → in the Layout pane on the left, check "Control visibility using value" → choose `apx.Is Metric Mode`.
-4. Add the `p_glossary_term` parameter control in a second floating container, same position (overlapping the one above). Same visibility control, but wire it to the *inverse* - either a separate `apx.Is Glossary Mode` calc (`NOT [apx.Is Metric Mode]`) or just use the "Show container when false" option if your Tableau version exposes one; check the Layout pane's exact wording, it varies slightly by version.
+2. Add the `p.apx.Content Type` parameter control (radio buttons) top-left, always visible, no zone visibility needed on this one.
+3. Add the `p.apx.Metric Name` parameter control in its own floating container, top-right. Select that container, in the Layout pane on the left, check "Control visibility using value", choose `c.apx.Is Metric Mode`.
+4. Add the `p.apx.Glossary Term` parameter control in a second floating container, same position (overlapping the one above). Same visibility control, wired to `c.apx.Is Glossary Mode` instead.
 5. Place WS - Badge, WS - Name, WS - Scope side by side in a horizontal container, this is Section 1.
 6. Place WS - Definition below it, this is Section 2a, no zone visibility needed, it's always relevant regardless of mode.
-7. Place WS - Warning in its own floating container below that. Select the container → "Control visibility using value" → `apx.Show Warning Zone`.
-8. Place WS - Source in its own container. Zone visibility → `apx.Is Metric Mode` (hide entirely in Glossary mode, since Glossary rows carry no source metadata).
-9. Place WS - Build and WS - Exclusions similarly, each in its own container, each zone-visibility-gated on `apx.Is Metric Mode`.
+7. Place WS - Warning in its own floating container below that. Select the container, "Control visibility using value", `c.apx.Show Warning Zone`.
+8. Place WS - Source in its own container. Zone visibility, `c.apx.Is Metric Mode` (hide entirely in Glossary mode, since Glossary rows carry no source metadata).
+9. Place WS - Build and WS - Exclusions similarly, each in its own container, each zone-visibility-gated on `c.apx.Is Metric Mode`.
 
 ---
 
 ## 6. QA checklist before you call this done
 
+- [ ] Close and reopen the workbook, confirm both dropdowns still show the full 29 / 25 item lists (validates the Dynamic Parameter refresh actually fired).
 - [ ] Toggle to Glossary, confirm the dropdown swaps and Sections 2b/2c/3/4 genuinely disappear (not just render blank, actual layout collapse).
 - [ ] Select `Eligibility Checks Completed`, confirm the warning box shows the PENDING message.
 - [ ] Select `UPV Actuals (Overall)`, confirm the warning box shows the non-summable-flows message and Section 3 shows exactly 9 rows.
