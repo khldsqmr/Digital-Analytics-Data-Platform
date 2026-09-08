@@ -1,1 +1,14 @@
-Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task. Can you let me know where the webhook URL is stored (e.g. Databricks secret scope/key), so I can reference it without hardcoding it?
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task. 
+ 
+Can you let me know where the webhook URL is stored (e.g. Databricks secret scope/key), so I can reference it without hardcoding it?
+ 
+Qamar, Khalid
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task.   Can you let me know where the webhook URL is stored (e.g. Datab…
+I understand you’re referring to monitoring. Could you provide more details about it? Are we creating notebooks specifically for monitoring? Ideally, we should use Databricks provided alerts or notification settings. Additionally, notebooks are intended for data analytics, so using them for monitoring would increase costs.
+ 
+Our monitoring notebook runs queries to identify table-level issues and generates a summary of the affected tables. We are working to send these alerts to a Teams channel for easier monitoring and investigation. So there isn't any new notebook being created for this. 
+ 
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines. 
+ 
+Labs are created for analytical purposes in a sandbox environment that doesn’t support external configuration or notifications for jobs.
+ 
