@@ -1,1 +1,7 @@
 SELECT COUNT(*) FROM sdi_vw_dashboardPulseTms_gold_unified_long WHERE data_source = 'QGP_SCORECARD'
+
+
+SELECT lob, COUNT(*) 
+FROM sdi_vw_dashboardPulseTms_gold_unified_long 
+WHERE data_source = 'QGP_SCORECARD' 
+GROUP BY lob
