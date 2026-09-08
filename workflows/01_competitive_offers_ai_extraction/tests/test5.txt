@@ -1,1 +1,12 @@
-Do you know if Lab42_SDITeamsAlert is still using the old Teams Incoming Webhook/Office 365 Connector? Microsoft retired those in May 2026, so we may need to recreate it using the Teams Workflows webhook and update the Databricks notification destination URL.
+Hi Naren, it’s working now — thanks! The only thing is the current Teams alert is the default Databricks format, so it’s a bit verbose. Would it be possible to customize it to show just the key details like run date, issue type, affected table(s), and a link to the monitoring dashboard?
+
+For example:
+
+BQ → UC Pipeline Alert
+Status: Failed
+Run Date: 2026-09-08
+Issue: Schema Change
+Affected Table: mrt_paidsocial_pivot
+Dashboard: [Monitoring Dashboard]
+
+Something along these lines would make the alert much easier to read quickly.
