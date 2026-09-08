@@ -1,223 +1,484 @@
 /* =================================================================================================
-FILE:         03_sdi_vw_dashboardPulseTms_gold_unified_long.sql   (Databricks port)
+FILE:         03_sdi_vw_dashboardPulseTms_gold_unified_long.sql
+PLATFORM:     Databricks
 LAYER:        Gold View
 VIEW NAME:    sdi_vw_dashboardPulseTms_gold_unified_long
 
 PURPOSE:
-  Final unified Gold view for the PulseTMS pipeline.
-  Single Tableau data source for all PulseTMS reporting.
+  Final unified long-format Gold view for the PulseTMS pipeline.
 
-  Pure pass-through view - zero computation here.
-  All heavy processing (proration, WoW/YoY, CVR, channel allocation, metric definitions) lives
-  in Silver SPs. This view simply assembles Silver outputs via named CTEs and stacks them with
-  UNION ALL.
+  This view provides a single Tableau data source for PulseTMS reporting by assembling the
+  supported Silver outputs into a common schema and stacking them with UNION ALL.
 
-STRUCTURE (CTEs currently active):
-  CTE 1 - AdobeVolume    : Adobe funnel volume metrics + inline CVR columns (ADOBE_VOLUME)
-  CTE 2 - MfcChannel     : MFC spend at lob x channel_group grain (MFC_SPEND_CHANNEL)
-  CTE 3 - MfcGranular    : MFC spend at finest grain (MFC_SPEND_GRANULAR)
-  CTE 4 - PlatformSpend  : Platform spend at lob x channel_group grain (PLATFORM_SPEND_CHANNEL)
-  CTE 5 - UpvForecast    : UPV forecast channel-allocated (UPV_FORECAST)
-  CTE 6 - QgpScorecard   : QGP scorecard metrics, no channel_group dimension (QGP_SCORECARD)
-  CTE 7 - BiddableSpend  : Programmatic+Paid Social+Paid Search combined, lob x channel_group
-                           grain (BIDDABLE_SPEND_CHANNEL) -- coexists with, not a replacement
-                           for, PLATFORM_SPEND_CHANNEL
-  Final SELECT: UNION ALL of all seven CTEs above
+  This is a lightweight conformance and assembly layer. Metric-level processing such as
+  proration, WoW/YoY calculations, CVR calculations, channel allocation, and source-specific
+  aggregations is performed upstream in the Silver layer.
+
+  This view performs only the conformance logic required to combine those outputs, including:
+    - Standardizing source identifiers.
+    - Canonicalizing selected LOB values.
+    - Assigning standardized metric_type values where required.
+    - Deriving the true_lob classification.
+    - Adding typed NULL placeholders for source-specific columns.
+    - Stacking all sources into one positional schema.
+
+STRUCTURE:
+  CTE 1 - AdobeVolume:
+          Adobe funnel volume metrics and pre-computed CVR fields.
+          data_source = 'ADOBE'
+
+  CTE 2 - MfcChannel:
+          MFC actual and forecast spend at LOB x channel_group grain.
+          data_source = 'MFC_SPEND_CHANNEL'
+
+  CTE 3 - MfcGranular:
+          MFC actual and forecast spend at the finest available MFC grain.
+          data_source = 'MFC_SPEND_GRANULAR'
+
+  CTE 4 - PlatformSpend:
+          Platform spend at LOB x channel_group grain.
+          data_source = 'PLATFORM_SPEND_CHANNEL'
+
+  CTE 5 - UpvForecast:
+          Channel-allocated UPV forecast.
+          data_source = 'UPV_FORECAST'
+
+  CTE 6 - QgpScorecard:
+          QGP scorecard Actual and Target rows.
+          data_source = 'QGP_SCORECARD'
+
+  CTE 7 - BiddableSpend:
+          Combined Programmatic, Paid Social, and Paid Search spend at
+          LOB x channel_group grain.
+          data_source = 'BIDDABLE_SPEND_CHANNEL'
+
+  Final SELECT:
+          UNION ALL of the seven CTEs above.
 
 QGP_SCORECARD NOTE:
-  Unlike every other source here, QGP has no channel_group dimension - it's enterprise-wide
-  KPIs (Activations BOPIS, Store Traffic, VR Calls/Chats, VR Postpaid Activations, 3 Digital %
-  metrics), not channel-specific spend or volume. channel_group is NULL for every QGP_SCORECARD
-  row, shared with ADOBE and UPV_FORECAST. lob (the display value) is 'Postpaid + Broadband' on
-  QGP_SCORECARD as of this version -- see LOB / TRUE_LOB SPLIT below for why this changed from a
-  literal NULL, and for true_lob's per-metric mapping, which is where QGP's real LOB story
-  actually lives now. metric_type is 'QGP_ACTUAL' or 'QGP_TARGET', passed straight through from
-  Silver.
+  QGP_SCORECARD does not contain a channel_group dimension. Therefore, channel_group is NULL
+  for every QGP_SCORECARD row.
 
-DATA SOURCE VALUES:
-  'ADOBE'                  - Adobe volume + CVR rows
-  'MFC_SPEND_CHANNEL'      - MFC spend at lob x channel_group; includes All Channels rollup
-  'MFC_SPEND_GRANULAR'     - MFC spend at finest grain; mfc_* columns populated
-  'PLATFORM_SPEND_CHANNEL' - Platform spend at lob x channel_group; POSTPAID + BROADBAND
-  'BIDDABLE_SPEND_CHANNEL' - Biddable spend (Programmatic+Paid Social+Paid Search) at
-                             lob x channel_group; POSTPAID + BROADBAND. Separate, coexisting
-                             source from PLATFORM_SPEND_CHANNEL, not a replacement for it.
-  'UPV_FORECAST'           - UPV forecast channel-allocated
-  'QGP_SCORECARD'          - QGP scorecard Actual/Target metric pairs; channel_group = NULL
+  This behavior is specific to QGP_SCORECARD. Adobe and UPV Forecast contain channel-level
+  rows and populate channel_group.
 
-  IMPORTANT: MFC contributes two sets of rows (CHANNEL + GRANULAR).
-  Always filter on data_source before summing spend to avoid double-counting.
+  QGP_SCORECARD contains the following 10 business metrics:
+    - Activations BOPIS
+    - Activations New/AAL No Assistance
+    - Store Traffic
+    - VR Calls
+    - VR Chats
+    - VR Postpaid Activations
+    - Digital % Phone New Acts No Assist Plus Assist
+    - Digital % Consumer Postpaid Activations Total Including Assisted
+    - Digital % No Assistance Activations
+    - Digital % Assistance Activations
 
-CHANNEL GROUPS (standard vocabulary, shared across ADOBE/MFC/PLATFORM/BIDDABLE/UPV_FORECAST):
-  'All Channels' | 'Paid Search' | 'Paid Social' | 'Organic Search' |
-  'Direct' | 'Programmatic' | 'Other'
-  Plus, PLATFORM_SPEND_CHANNEL only: 'iSpot National TV' | 'iSpot OTT' | 'Affiliate' -
-  paid-media channels with no Adobe-tracked action equivalent (no on-site attribution for
-  linear/streaming TV or affiliate referrals the way there is for clickable digital channels).
-  BIDDABLE_SPEND_CHANNEL only ever populates 'All Channels', 'Paid Search', 'Paid Social',
-  'Programmatic' -- a subset of the shared vocabulary, not an addition to it, since that's the
-  literal scope of its three raw sources.
-  Note: Organic Search and Direct exist in ADOBE and UPV_FORECAST only - spend has no concept
-  of "organic" or "direct" traffic, since both are unpaid by definition, but UPV_FORECAST's
-  channel split is derived directly from Adobe's own prior-year channel mix, so it inherits
-  Adobe's full channel vocabulary including these two. QGP_SCORECARD rows have
-  channel_group = NULL. This asymmetry (Adobe/Forecast-only vs. Platform-only groups) is
-  expected, not a join gap - see PLATFORM_SPEND_CHANNEL's own Bronze header for the full
-  reasoning.
+  The QGP Silver source provides Actual and Target records through metric_type values of
+  'QGP_ACTUAL' and 'QGP_TARGET'.
 
-LOB / TRUE_LOB SPLIT (read this before using either column):
-  Two separate LOB columns exist on every row, because they answer two different questions:
+  The display lob value is 'Postpaid + Broadband' for all QGP_SCORECARD rows. The true_lob
+  value is derived separately by metric_name and may be NULL where a literal LOB scope does
+  not exist or has not been confirmed.
 
-    lob       - the DISPLAY / business-facing value. What a LOB filter or dropdown on the
-                dashboard should show. Allowed to be a broadcast label rather than a literal
-                filterable dimension where the underlying source has no real per-LOB split
-                (ADOBE, UPV_FORECAST) -- see CANONICAL LOB VALUES below.
-    true_lob  - the LITERAL value that actually exists as a real, independently-filterable
-                dimension in that source's own data. NULL wherever no such literal value
-                exists or is confirmed yet. This is the column to trust for anything that
-                needs to know "is this row genuinely scoped to one LOB or not" -- lob alone
-                cannot answer that for ADOBE/UPV_FORECAST/QGP_SCORECARD.
+DATA_SOURCE VALUES:
+  'ADOBE'
+      Adobe volume and CVR rows.
 
-  CANONICAL LOB VALUES (the lob column):
-    'POSTPAID'  - MFC: CONSUMER POSTPAID / POSTPAID; Platform: POSTPAID; Biddable: POSTPAID
-    'BROADBAND' - MFC: HSI / BROADBAND; Platform: BROADBAND; Biddable: HSI (renamed in this
-                  view's BiddableSpend CTE -- Silver carries the raw, un-canonicalized value)
-    'TFB'       - MFC: TFB / TBG (TBG is legacy)
-    'Postpaid + Broadband' - ADOBE, UPV_FORECAST, and (as of this version) QGP_SCORECARD. On
-                  ADOBE, a static label on every row, not derived per metric_name or summed
-                  from anything -- upv/cartstart/orders are unique-visitor/event counts, which
-                  can't be summed across a dimension without double-counting. metric_name still
-                  carries the real Postpaid/Hsi/Byod/Total distinction unchanged; this is a
-                  separate, coarser label sitting alongside it. UPV_FORECAST inherits the same
-                  label since it forecasts upvTotalAdobe specifically. QGP_SCORECARD's lob was
-                  changed from a literal NULL to this same label in this version, per Khalid's
-                  confirmation -- see CHANGE LOG. Deliberately mixed-case, unlike every other
-                  lob value in this pipeline, per Khalid's explicit preference. TFB and Metro
-                  to follow later as Adobe starts tracking them (unclear yet whether as their
-                  own values or folded into this one; UPV_FORECAST and QGP_SCORECARD would
-                  presumably follow whatever Adobe's scheme becomes).
+  'MFC_SPEND_CHANNEL'
+      MFC spend at LOB x channel_group grain, including the All Channels rollup.
 
-  TRUE_LOB VALUES (the true_lob column):
-    ADOBE       - NULL for every row, pending. Khalid has confirmed at least one component
-                  (Eligibility Checks Completed -> Broadband) but the full upv*/cartstart*/
-                  orders* -> Postpaid vs Broadband vs Byod mapping is not yet finalized, so
-                  nothing is guessed here. Once confirmed, this should become a real per-
-                  metric_name CASE the same shape as QGP_SCORECARD's below, not a broadcast
-                  label -- Adobe's metric_name already distinguishes Postpaid/Hsi/Byod
-                  component metrics, which is exactly what true_lob should reflect.
-    UPV_FORECAST - NULL for every row, mirrors ADOBE's unresolved state since it forecasts
-                  upvTotalAdobe specifically and should inherit whatever ADOBE's true_lob
-                  mapping becomes once that's finalized.
-    MFC_SPEND_CHANNEL / GRANULAR, PLATFORM_SPEND_CHANNEL, BIDDABLE_SPEND_CHANNEL - identical
-                  to that row's own lob value. These sources already carry a real, independently
-                  filterable LOB dimension, so display and true agree completely; true_lob is a
-                  direct copy, not a separate derivation.
-    QGP_SCORECARD - real per-metric_name mapping, since the 10 QGP metrics genuinely differ in
-                  LOB scope even though they share one display lob label:
-                    activationsBopis                                       -> 'POSTPAID'
-                    activationsNewAalNoAssistance                          -> 'POSTPAID'
-                    vrPostpaidActivations                                  -> 'POSTPAID'
-                    digitalPctPhoneNewActsNoAssistPlusAssist               -> 'POSTPAID'
-                    digitalPctConsumerPostpaidActivationsTotalInclAssisted -> 'POSTPAID'
-                    digitalPctNoAssistanceActivations                      -> 'POSTPAID'
-                    digitalPctAssistanceActivations                        -> 'POSTPAID'
-                    storeTraffic                                           -> NULL (retail-wide,
-                                                                              no LOB concept at all)
-                    vrCalls                                                -> NULL (UNCONFIRMED --
-                                                                              appendix scope text
-                                                                              reads "All / Postpaid",
-                                                                              ambiguous, not guessed)
-                    vrChats                                                -> NULL (same as vrCalls)
+  'MFC_SPEND_GRANULAR'
+      MFC spend at the finest available grain. The mfc_* columns are populated.
 
-  NULL (both lob and true_lob) never happens now for QGP_SCORECARD's lob column specifically
-  (see CHANGE LOG) -- but true_lob is still frequently and legitimately NULL across multiple
-  sources, per the mapping above. Don't treat a NULL true_lob as a bug; check this section
-  first.
+  'PLATFORM_SPEND_CHANNEL'
+      Platform spend at LOB x channel_group grain.
+
+  'BIDDABLE_SPEND_CHANNEL'
+      Combined Programmatic, Paid Social, and Paid Search spend at
+      LOB x channel_group grain.
+
+      This source coexists with PLATFORM_SPEND_CHANNEL and does not replace it.
+
+  'UPV_FORECAST'
+      Channel-allocated UPV forecast.
+
+  'QGP_SCORECARD'
+      QGP scorecard Actual and Target rows. channel_group is NULL.
+
+IMPORTANT:
+  MFC contributes two separate row sets:
+    - MFC_SPEND_CHANNEL
+    - MFC_SPEND_GRANULAR
+
+  Always filter data_source to the intended MFC grain before aggregating spend. Summing both
+  MFC data sources together will double-count the same business spend at different grains.
+
+CHANNEL_GROUP VALUES:
+  Common channel vocabulary used where applicable:
+
+    'All Channels'
+    'Paid Search'
+    'Paid Social'
+    'Organic Search'
+    'Direct'
+    'Programmatic'
+    'Other'
+
+  PLATFORM_SPEND_CHANNEL may additionally contain:
+
+    'iSpot National TV'
+    'iSpot OTT'
+    'Affiliate'
+
+  These are paid-media channels that do not have an equivalent Adobe on-site action
+  attribution category.
+
+  BIDDABLE_SPEND_CHANNEL is limited to the scope of its three component sources and is
+  expected to populate only:
+
+    'All Channels'
+    'Paid Search'
+    'Paid Social'
+    'Programmatic'
+
+  Organic Search and Direct are expected in ADOBE and UPV_FORECAST, but not in spend sources.
+  These channels represent unpaid traffic. UPV_FORECAST inherits Adobe's channel vocabulary
+  because its allocation is based on the prior-year Adobe channel mix.
+
+  QGP_SCORECARD always has channel_group = NULL because QGP does not contain a channel
+  dimension.
+
+  Differences in channel availability by data_source are expected and should not be treated
+  as missing joins or incomplete data.
+
+LOB / TRUE_LOB SPLIT:
+  Two LOB columns are provided because they answer different reporting questions.
+
+  lob:
+    Business-facing display value intended for dashboard filters, labels, and presentation.
+
+    For sources without a literal row-level LOB dimension, lob may contain a broadcast display
+    label. Therefore, lob alone must not be used to determine whether a row is genuinely scoped
+    to one independently filterable LOB.
+
+  true_lob:
+    Literal or confirmed LOB classification for the row.
+
+    Use true_lob when logic needs to determine whether a row genuinely belongs to a specific
+    LOB. true_lob is NULL when:
+      - The source does not contain a literal LOB dimension.
+      - The metric has no applicable LOB concept.
+      - The metric-to-LOB mapping has not yet been confirmed.
+
+CANONICAL LOB VALUES:
+  The following canonical values are used in the lob column:
+
+  'POSTPAID'
+      MFC raw values:
+        - CONSUMER POSTPAID
+        - POSTPAID
+
+      Platform:
+        - POSTPAID
+
+      Biddable raw value:
+        - POSTPAID
+
+  'BROADBAND'
+      MFC raw values:
+        - HSI
+        - BROADBAND
+
+      Platform:
+        - BROADBAND
+
+      Biddable raw value:
+        - HSI
+
+  'TFB'
+      MFC raw values:
+        - TFB
+        - TBG
+
+      TBG is treated as a legacy representation of TFB.
+
+  'Postpaid + Broadband'
+      Used as the display lob for:
+        - ADOBE
+        - UPV_FORECAST
+        - QGP_SCORECARD
+
+      The mixed-case format is intentional and should remain unchanged unless the dashboard
+      display standard is formally updated.
+
+ADOBE LOB BEHAVIOR:
+  Every ADOBE row receives:
+
+    lob      = 'Postpaid + Broadband'
+    true_lob = NULL
+
+  The lob value is a static reporting label. It is not derived from metric_name and does not
+  imply that Adobe values can be summed across Postpaid and Broadband.
+
+  Adobe upv, cartstart, and orders metrics represent visitor or event-based measures that may
+  overlap across classifications. metric_name continues to preserve the detailed Postpaid,
+  HSI, BYOD, and Total distinctions provided by the Silver source.
+
+  Although at least one component mapping has been identified, the complete metric_name to
+  true_lob mapping is not yet finalized. Therefore, this view deliberately avoids assigning
+  partial or assumed Adobe true_lob values.
+
+UPV_FORECAST LOB BEHAVIOR:
+  Every UPV_FORECAST row receives:
+
+    lob      = 'Postpaid + Broadband'
+    true_lob = NULL
+
+  UPV_FORECAST forecasts upvTotalAdobe and follows the current Adobe display treatment.
+  Its true_lob should remain NULL until the corresponding Adobe LOB treatment is finalized.
+
+MFC / PLATFORM / BIDDABLE LOB BEHAVIOR:
+  The following sources contain a real row-level LOB dimension:
+
+    - MFC_SPEND_CHANNEL
+    - MFC_SPEND_GRANULAR
+    - PLATFORM_SPEND_CHANNEL
+    - BIDDABLE_SPEND_CHANNEL
+
+  For these sources:
+
+    true_lob = lob
+
+  The same canonicalization is applied to both columns where source values require
+  standardization.
+
+QGP_SCORECARD TRUE_LOB MAPPING:
+  QGP_SCORECARD uses a common display value:
+
+    lob = 'Postpaid + Broadband'
+
+  true_lob is assigned by metric_name as follows:
+
+    activationsBopis
+      -> 'POSTPAID'
+
+    activationsNewAalNoAssistance
+      -> 'POSTPAID'
+
+    vrPostpaidActivations
+      -> 'POSTPAID'
+
+    digitalPctPhoneNewActsNoAssistPlusAssist
+      -> 'POSTPAID'
+
+    digitalPctConsumerPostpaidActivationsTotalInclAssisted
+      -> 'POSTPAID'
+
+    digitalPctNoAssistanceActivations
+      -> 'POSTPAID'
+
+    digitalPctAssistanceActivations
+      -> 'POSTPAID'
+
+    storeTraffic
+      -> NULL
+         Store Traffic is retail-wide and does not have a literal LOB classification.
+
+    vrCalls
+      -> NULL
+         The available scope description is ambiguous and does not support a confirmed
+         literal LOB classification.
+
+    vrChats
+      -> NULL
+         The available scope description is ambiguous and does not support a confirmed
+         literal LOB classification.
+
+  Any unrecognized QGP metric_name also receives true_lob = NULL by default.
+
+NULL HANDLING:
+  A NULL true_lob value is valid and expected for multiple sources and metrics. It must not
+  automatically be treated as a data-quality issue.
+
+  QGP_SCORECARD no longer has a NULL lob value. Its display lob is now
+  'Postpaid + Broadband'. However, true_lob remains NULL for QGP metrics without a confirmed
+  or applicable literal LOB classification.
 
 METRIC_TYPE VALUES:
-  'ADOBE_VOLUME'       - raw Adobe funnel metrics (upv*, cartstart*, orders*)
-  'MFC_SPEND_ACTUAL'   - MFC actual spend
-  'MFC_SPEND_FORECAST' - MFC forecast spend
-  'PLATFORM_SPEND'     - Platform actual spend (actuals only, no forecast column in this source)
-  'BIDDABLE_SPEND'     - Biddable actual spend (actuals only, no forecast column in this source)
-  'UPV_FORECAST'       - UPV forecast (upvForecast | upvWebAppForecast)
-                         allocation_ratio column shows channel split source
-  'QGP_ACTUAL'         - QGP scorecard actual value
-  'QGP_TARGET'         - QGP scorecard target/plan value
+  'ADOBE_VOLUME'
+      Raw Adobe funnel metrics, including upv*, cartstart*, and orders*.
+
+  'MFC_SPEND_ACTUAL'
+      MFC actual spend.
+
+  'MFC_SPEND_FORECAST'
+      MFC forecast spend.
+
+  'PLATFORM_SPEND'
+      Platform actual spend. This source does not include a forecast metric.
+
+  'BIDDABLE_SPEND'
+      Biddable actual spend. This source does not include a forecast metric.
+
+  'UPV_FORECAST'
+      UPV forecast rows, including upvForecast and upvWebAppForecast where supplied by Silver.
+      allocation_ratio identifies the channel allocation share.
+
+  'QGP_ACTUAL'
+      QGP scorecard actual value.
+
+  'QGP_TARGET'
+      QGP scorecard target or plan value.
 
 COLUMN SCHEMA:
-  data_source            - source and grain identifier
-  qgp_date               - QGP period-end date (Saturday or quarter-end non-Saturday)
-  week_type              - 'NORMAL' | 'BOUNDARY_STUB' | 'BOUNDARY_FIRST'
-  qgp_quarter            - display string e.g. '2026 Q1'
-  days_in_period         - 7 for NORMAL; <7 for BOUNDARY_STUB; remainder for BOUNDARY_FIRST
-  is_complete_period     - TRUE when qgp_date <= current_date()
-  lob                    - display/business-facing LOB label -- see LOB / TRUE_LOB SPLIT above
-  true_lob               - literal, independently-filterable LOB value, NULL where none is
-                           confirmed yet -- see LOB / TRUE_LOB SPLIT above. NEW in this version.
-  channel_group          - standard channel group (NULL for QGP_SCORECARD)
-  metric_name            - camelCase metric identifier
-  metric_type            - see METRIC_TYPE VALUES above
-  metric_value            - volume/spend/forecast/actual/target value
-  metric_value_ly        - prior year value
-  wow_numerator          - NULL for BOUNDARY_STUB rows
-  wow_denominator        - NULL for BOUNDARY_STUB rows
-  wow_pct                - NULL for BOUNDARY_STUB or zero denominator
-  yoy_numerator          - NULL for BOUNDARY_STUB rows
-  yoy_denominator        - NULL for BOUNDARY_STUB rows
-  yoy_pct                - NULL for BOUNDARY_STUB or zero denominator
-  max_date               - most recent qgp_date with non-NULL metric_value
-  adobe_cvr_value        - pre-computed weekly CVR; ADOBE only; NULL elsewhere
-  adobe_cvr_numerator    - CVR numerator; ADOBE only; NULL elsewhere
-  adobe_cvr_denominator  - CVR denominator; ADOBE only; NULL elsewhere
-  mfc_channel            - MFC_SPEND_GRANULAR only; NULL elsewhere
-  mfc_tactic             - MFC_SPEND_GRANULAR only; NULL elsewhere
-  mfc_message_type       - MFC_SPEND_GRANULAR only; NULL elsewhere
-  mfc_agency             - MFC_SPEND_GRANULAR only; NULL elsewhere
-  allocation_ratio       - UPV_FORECAST only; channel share from prior year same quarter
-                           NULL for all other data_source values
+  data_source
+      Source and grain identifier.
+
+  qgp_date
+      QGP reporting period-end date. Typically Saturday, or a quarter-boundary date for
+      boundary periods.
+
+  week_type
+      Expected values:
+        - 'NORMAL'
+        - 'BOUNDARY_STUB'
+        - 'BOUNDARY_FIRST'
+
+  qgp_quarter
+      Display quarter, such as '2026 Q1'.
+
+  days_in_period
+      Number of days represented by the row:
+        - 7 for NORMAL
+        - Less than 7 for BOUNDARY_STUB
+        - Remaining days for BOUNDARY_FIRST
+
+  is_complete_period
+      Indicates whether the reporting period is complete according to the upstream Silver
+      processing.
+
+  lob
+      Business-facing display LOB. See LOB / TRUE_LOB SPLIT.
+
+  true_lob
+      Literal or confirmed row-level LOB classification. NULL where no literal classification
+      exists or where the mapping has not been confirmed.
+
+  channel_group
+      Standardized channel group where applicable. NULL for QGP_SCORECARD.
+
+  metric_name
+      Camel-case metric identifier.
+
+  metric_type
+      Standardized metric category.
+
+  metric_value
+      Current-period volume, spend, forecast, actual, or target value.
+
+  metric_value_ly
+      Prior-year value where available.
+
+  wow_numerator
+      Week-over-week numerator. NULL for BOUNDARY_STUB rows.
+
+  wow_denominator
+      Week-over-week denominator. NULL for BOUNDARY_STUB rows.
+
+  wow_pct
+      Week-over-week percentage. NULL for BOUNDARY_STUB rows or when the denominator is zero.
+
+  yoy_numerator
+      Year-over-year numerator. NULL for BOUNDARY_STUB rows.
+
+  yoy_denominator
+      Year-over-year denominator. NULL for BOUNDARY_STUB rows.
+
+  yoy_pct
+      Year-over-year percentage. NULL for BOUNDARY_STUB rows or when the denominator is zero.
+
+  max_date
+      Most recent qgp_date with a non-NULL metric_value, as calculated by the Silver source.
+
+  adobe_cvr_value
+      Pre-computed Adobe CVR. Populated for ADOBE rows only.
+
+  adobe_cvr_numerator
+      Adobe CVR numerator. Populated for ADOBE rows only.
+
+  adobe_cvr_denominator
+      Adobe CVR denominator. Populated for ADOBE rows only.
+
+  mfc_channel
+      Detailed MFC channel. Populated for MFC_SPEND_GRANULAR rows only.
+
+  mfc_tactic
+      Detailed MFC tactic. Populated for MFC_SPEND_GRANULAR rows only.
+
+  mfc_message_type
+      Detailed MFC message type. Populated for MFC_SPEND_GRANULAR rows only.
+
+  mfc_agency
+      Detailed MFC agency. Populated for MFC_SPEND_GRANULAR rows only.
+
+  allocation_ratio
+      UPV forecast channel-allocation ratio based on the prior-year same-quarter Adobe channel
+      mix. Populated for UPV_FORECAST rows only.
 
 DOWNSTREAM:
-  Tableau - direct connection to this view.
-  sdi_vw_dashboardPulseTms_gold_metricAnnotated_long - joins this view against the appendix
-  bridge table for Genie/agentic-SQL consumption; unaffected by this version's changes, the
-  bridge joins on data_source/metric_name/lob (the display column), not true_lob.
+  Tableau:
+    Direct connection to this unified view.
+
+  sdi_vw_dashboardPulseTms_gold_metricAnnotated_long:
+    Consumes this view and joins it to the appendix bridge for Genie and agentic-SQL use.
+
+    The bridge join uses the display lob column rather than true_lob. No structural join change
+    is required for the addition of true_lob. However, downstream results may reflect the
+    updated QGP_SCORECARD lob value because this unified view now supplies
+    'Postpaid + Broadband' instead of NULL for those rows.
 
 FUTURE SOURCES:
-  Add a new named CTE above the final SELECT following the template at the bottom,
-  then add one UNION ALL line. No other schema changes needed for existing Tableau calculations.
+  To add another source:
+    1. Add a named CTE before the final SELECT.
+    2. Return the same columns in the same order and with compatible data types.
+    3. Add one UNION ALL line to the final SELECT.
+    4. Set true_lob equal to canonical lob only when the new source has a real row-level LOB
+       dimension.
+    5. Otherwise, set true_lob to a typed NULL until a valid mapping is available.
 
-PORTING NOTES (BQ -> Databricks), applies to this file only:
-  - FLOAT64 -> DOUBLE. Everything else in this view is CAST/CASE/UNION ALL with no BQ-only
-    syntax, so it's otherwise a direct translation.
+PORTING NOTES:
+  BigQuery to Databricks type conversion used in this view:
 
-CHANGE LOG:
-  - Added CTE 5 UpvForecast: UPV forecast channel-allocated (data_source = 'UPV_FORECAST').
-  - Added allocation_ratio column to schema (NULL for all non-UPV_FORECAST rows).
-  - Added CTE 6 QgpScorecard: QGP scorecard Actual/Target pairs (data_source = 'QGP_SCORECARD').
-  - Uncommented CTE 4 (PlatformSpend) and CTE 5 (UpvForecast) once their Silver procedures
-    existed. No lob filter in this view (unlike gold_unified_wide's Platform CTE, which is
-    POSTPAID-only) -- both POSTPAID and BROADBAND flow through, since full LOB detail is this
-    view's whole purpose.
-  - Added CTE 7 (BiddableSpend) once its Silver procedure existed. Applies the same
-    HSI -> BROADBAND rename MFC's own CTEs already do, filtered to just the 2 raw values that
-    map to POSTPAID/BROADBAND.
-  - Added true_lob column to every CTE (new in this version). ADOBE and UPV_FORECAST set it to
-    NULL pending Khalid's confirmation of the full per-metric LOB mapping (Eligibility Checks
-    Completed -> Broadband is confirmed, the rest is not, so nothing is guessed). MFC_SPEND_
-    CHANNEL/GRANULAR, PLATFORM_SPEND_CHANNEL, and BIDDABLE_SPEND_CHANNEL set true_lob equal to
-    their own lob value (display and true already agree, real dimension either way).
-    QGP_SCORECARD gets a real per-metric_name CASE -- see LOB / TRUE_LOB SPLIT above for the
-    full mapping and the two metrics (vrCalls, vrChats) left NULL/unconfirmed rather than
-    guessed.
-  - CHANGED (non-additive): QgpScorecard's lob column changed from a literal NULL to
-    'Postpaid + Broadband', per Khalid's explicit confirmation this session. This is a real
-    value change on live, already-queried rows, not a new column -- flagged here because,
-    unlike every other change in this file, it can silently break any existing Tableau calc or
-    filter that tested ISNULL([Lob]) to identify QGP rows specifically. Confirm no such logic
-    exists before this ships; see the true_lob design discussion for the full reasoning.
-  - Fixed a stale header comment ("PlatformSpend and UpvForecast commented out above") left
-    over from before those two were uncommented in earlier turns.
+    FLOAT64 -> DOUBLE
+
+  The remaining logic uses Databricks-compatible CAST, CASE, CTE, and UNION ALL syntax.
+
+IMPLEMENTATION HISTORY:
+  - Added UPV_FORECAST as a unified source.
+  - Added allocation_ratio to the common schema.
+  - Added QGP_SCORECARD Actual and Target rows.
+  - Enabled PLATFORM_SPEND_CHANNEL and UPV_FORECAST after their Silver processes became
+    available.
+  - Added BIDDABLE_SPEND_CHANNEL as a separate source that coexists with Platform spend.
+  - Added true_lob to distinguish display LOB values from literal row-level LOB scope.
+  - Added canonical LOB handling for MFC and Biddable source values.
+  - Updated QGP_SCORECARD lob from NULL to 'Postpaid + Broadband'.
+  - Added metric-level QGP true_lob classification.
+  - Retained NULL true_lob for Adobe, UPV Forecast, and unresolved or non-LOB QGP metrics.
+
+DEPLOYMENT CONSIDERATION:
+  The QGP_SCORECARD lob change is a value-level behavioral change:
+
+    Previous value: NULL
+    Current value:  'Postpaid + Broadband'
+
+  Before deployment, review downstream Tableau calculations and filters for logic that uses
+  ISNULL([lob]) to identify QGP rows. QGP rows should be identified using:
+
+    data_source = 'QGP_SCORECARD'
+
+  rather than relying on a NULL lob value.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -227,23 +488,28 @@ AS
 WITH
 
 -- =============================================================================
--- CTE 1: ADOBE VOLUME METRICS
---        upv*, cartstart*, orders* at qgp_date x channel_group x metric_name
---        lob = 'Postpaid + Broadband' - a static label on every Adobe row, not derived
---        per metric_name. true_lob = NULL, pending Khalid's confirmation of the full
---        per-metric_name LOB mapping -- see LOB / TRUE_LOB SPLIT in the file header.
---        metric_type = 'ADOBE_VOLUME'
+-- CTE 1: ADOBE VOLUME
+--
+-- Grain:
+--   qgp_date x channel_group x metric_name
+--
+-- LOB treatment:
+--   lob      = 'Postpaid + Broadband'
+--   true_lob = NULL until the complete Adobe metric-to-LOB mapping is finalized
+--
+-- metric_type:
+--   'ADOBE_VOLUME'
 -- =============================================================================
 AdobeVolume AS (
   SELECT
-    'ADOBE'                                                               AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    'ADOBE'                                      AS data_source,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    'Postpaid + Broadband'                                                AS lob,
-    CAST(NULL AS STRING)                                                  AS true_lob,   -- pending confirmation, see file header
+    'Postpaid + Broadband'                       AS lob,
+    CAST(NULL AS STRING)                         AS true_lob,
     s.channel_group,
     s.metric_name,
     s.metric_type,
@@ -255,35 +521,40 @@ AdobeVolume AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
+    CAST(s.max_date AS DATE)                     AS max_date,
     s.adobe_cvr_value,
     s.adobe_cvr_numerator,
     s.adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(NULL AS STRING)                         AS mfc_channel,
+    CAST(NULL AS STRING)                         AS mfc_tactic,
+    CAST(NULL AS STRING)                         AS mfc_message_type,
+    CAST(NULL AS STRING)                         AS mfc_agency,
+    CAST(NULL AS DOUBLE)                         AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
   WHERE s.metric_type = 'ADOBE_VOLUME'
 ),
 
 -- =============================================================================
--- CTE 2: MFC SPEND - CHANNEL GRAIN
---        mfcSpendActual + mfcSpendForecast at lob x channel_group
---        Includes All Channels rollup per lob
---        true_lob mirrors lob exactly -- this source already has a real, independently
---        filterable LOB dimension, so display and true agree.
---        metric_type = 'MFC_SPEND_ACTUAL' or 'MFC_SPEND_FORECAST'
+-- CTE 2: MFC SPEND, CHANNEL GRAIN
+--
+-- Contains MFC actual and forecast spend at LOB x channel_group grain,
+-- including the All Channels rollup.
+--
+-- Both lob and true_lob use the same canonicalized row-level MFC LOB.
+--
+-- metric_type:
+--   'MFC_SPEND_ACTUAL'
+--   'MFC_SPEND_FORECAST'
 -- =============================================================================
 MfcChannel AS (
   SELECT
     s.data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
+
     CASE s.lob_mfc
       WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
       WHEN 'POSTPAID'          THEN 'POSTPAID'
@@ -292,22 +563,28 @@ MfcChannel AS (
       WHEN 'TBG'               THEN 'TFB'
       WHEN 'TFB'               THEN 'TFB'
       ELSE s.lob_mfc
-    END                                                                   AS lob,
-    CASE s.lob_mfc                                                                       -- true_lob: identical mapping to lob, duplicated
-      WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'                                           -- because Spark SQL can't reference an
-      WHEN 'POSTPAID'          THEN 'POSTPAID'                                           -- earlier SELECT-list alias by name
+    END                                           AS lob,
+
+    -- Duplicated because a SELECT-list alias cannot be reused by another
+    -- expression in the same SELECT list.
+    CASE s.lob_mfc
+      WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+      WHEN 'POSTPAID'          THEN 'POSTPAID'
       WHEN 'HSI'               THEN 'BROADBAND'
       WHEN 'BROADBAND'         THEN 'BROADBAND'
       WHEN 'TBG'               THEN 'TFB'
       WHEN 'TFB'               THEN 'TFB'
       ELSE s.lob_mfc
-    END                                                                   AS true_lob,
+    END                                           AS true_lob,
+
     s.channel_group,
     s.metric_name,
+
     CASE s.metric_name
       WHEN 'mfcSpendActual'   THEN 'MFC_SPEND_ACTUAL'
       WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
-    END                                                                   AS metric_type,
+    END                                           AS metric_type,
+
     s.metric_value,
     s.metric_value_ly,
     s.wow_numerator,
@@ -316,34 +593,40 @@ MfcChannel AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(s.max_date AS DATE)                     AS max_date,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                         AS mfc_channel,
+    CAST(NULL AS STRING)                         AS mfc_tactic,
+    CAST(NULL AS STRING)                         AS mfc_message_type,
+    CAST(NULL AS STRING)                         AS mfc_agency,
+    CAST(NULL AS DOUBLE)                         AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
   WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 ),
 
 -- =============================================================================
--- CTE 3: MFC SPEND - GRANULAR GRAIN
---        mfcSpendActual + mfcSpendForecast at finest grain
---        mfc_* dimension columns populated
---        true_lob mirrors lob exactly, same reasoning as MfcChannel above.
---        metric_type = 'MFC_SPEND_ACTUAL' or 'MFC_SPEND_FORECAST'
+-- CTE 3: MFC SPEND, GRANULAR GRAIN
+--
+-- Contains MFC actual and forecast spend at the finest available MFC grain.
+-- The mfc_* dimension columns are populated.
+--
+-- Both lob and true_lob use the same canonicalized row-level MFC LOB.
+--
+-- metric_type:
+--   'MFC_SPEND_ACTUAL'
+--   'MFC_SPEND_FORECAST'
 -- =============================================================================
 MfcGranular AS (
   SELECT
     s.data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
+
     CASE s.lob_mfc
       WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
       WHEN 'POSTPAID'          THEN 'POSTPAID'
@@ -352,8 +635,11 @@ MfcGranular AS (
       WHEN 'TBG'               THEN 'TFB'
       WHEN 'TFB'               THEN 'TFB'
       ELSE s.lob_mfc
-    END                                                                   AS lob,
-    CASE s.lob_mfc                                                                       -- true_lob: identical mapping to lob, duplicated
+    END                                           AS lob,
+
+    -- Duplicated because a SELECT-list alias cannot be reused by another
+    -- expression in the same SELECT list.
+    CASE s.lob_mfc
       WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
       WHEN 'POSTPAID'          THEN 'POSTPAID'
       WHEN 'HSI'               THEN 'BROADBAND'
@@ -361,13 +647,16 @@ MfcGranular AS (
       WHEN 'TBG'               THEN 'TFB'
       WHEN 'TFB'               THEN 'TFB'
       ELSE s.lob_mfc
-    END                                                                   AS true_lob,
+    END                                           AS true_lob,
+
     s.channel_group,
     s.metric_name,
+
     CASE s.metric_name
       WHEN 'mfcSpendActual'   THEN 'MFC_SPEND_ACTUAL'
       WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
-    END                                                                   AS metric_type,
+    END                                           AS metric_type,
+
     s.metric_value,
     s.metric_value_ly,
     s.wow_numerator,
@@ -376,40 +665,45 @@ MfcGranular AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    s.channel                                                             AS mfc_channel,
-    s.tactic                                                              AS mfc_tactic,
-    s.message_type                                                        AS mfc_message_type,
-    s.agency                                                              AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(s.max_date AS DATE)                     AS max_date,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
+    s.channel                                    AS mfc_channel,
+    s.tactic                                     AS mfc_tactic,
+    s.message_type                               AS mfc_message_type,
+    s.agency                                     AS mfc_agency,
+    CAST(NULL AS DOUBLE)                         AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
   WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 ),
 
 -- =============================================================================
 -- CTE 4: PLATFORM SPEND
---        Platform (paid media) spend at lob x channel_group grain, POSTPAID +
---        BROADBAND both present (no lob filter here -- that's what distinguishes
---        this view from gold_unified_wide, which is POSTPAID-only for Platform).
---        true_lob mirrors lob exactly -- real dimension either way.
---        metric_type = 'PLATFORM_SPEND'
+--
+-- Platform paid-media spend at LOB x channel_group grain.
+-- Both POSTPAID and BROADBAND are retained in this long-format view.
+--
+-- No additional LOB filter is applied here.
+--
+-- true_lob mirrors lob because Platform contains a real row-level LOB dimension.
+--
+-- metric_type:
+--   'PLATFORM_SPEND'
 -- =============================================================================
 PlatformSpend AS (
   SELECT
-    'PLATFORM_SPEND_CHANNEL'                                              AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    'PLATFORM_SPEND_CHANNEL'                     AS data_source,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
     s.lob,
-    s.lob                                                                 AS true_lob,   -- identical to lob, real dimension
+    s.lob                                        AS true_lob,
     s.channel_group,
     s.metric_name,
-    'PLATFORM_SPEND'                                                      AS metric_type,
+    'PLATFORM_SPEND'                             AS metric_type,
     s.metric_value,
     s.metric_value_ly,
     s.wow_numerator,
@@ -418,36 +712,44 @@ PlatformSpend AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(s.max_date AS DATE)                     AS max_date,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                         AS mfc_channel,
+    CAST(NULL AS STRING)                         AS mfc_tactic,
+    CAST(NULL AS STRING)                         AS mfc_message_type,
+    CAST(NULL AS STRING)                         AS mfc_agency,
+    CAST(NULL AS DOUBLE)                         AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
 ),
 
 -- =============================================================================
 -- CTE 5: UPV FORECAST
---        UPV forecast channel-allocated via prior-year same-quarter Adobe ratios
---        lob = 'Postpaid + Broadband', matching Adobe's lob treatment since this
---        forecasts upvTotalAdobe specifically. true_lob = NULL, mirroring ADOBE's own
---        unresolved state -- see LOB / TRUE_LOB SPLIT in the file header.
---        metric_type = 'UPV_FORECAST'
+--
+-- UPV forecast allocated by channel using the prior-year same-quarter Adobe
+-- channel mix.
+--
+-- LOB treatment:
+--   lob      = 'Postpaid + Broadband'
+--   true_lob = NULL
+--
+-- true_lob remains NULL because this source forecasts upvTotalAdobe and follows
+-- Adobe's unresolved literal LOB treatment.
+--
+-- metric_type:
+--   Passed through from Silver. Expected value is 'UPV_FORECAST'.
 -- =============================================================================
 UpvForecast AS (
   SELECT
-    'UPV_FORECAST'                                                        AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    'UPV_FORECAST'                               AS data_source,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    'Postpaid + Broadband'                                                AS lob,
-    CAST(NULL AS STRING)                                                  AS true_lob,   -- mirrors ADOBE's unresolved state, see file header
+    'Postpaid + Broadband'                       AS lob,
+    CAST(NULL AS STRING)                         AS true_lob,
     s.channel_group,
     s.metric_name,
     s.metric_type,
@@ -459,56 +761,89 @@ UpvForecast AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
+    CAST(s.max_date AS DATE)                     AS max_date,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                         AS mfc_channel,
+    CAST(NULL AS STRING)                         AS mfc_tactic,
+    CAST(NULL AS STRING)                         AS mfc_message_type,
+    CAST(NULL AS STRING)                         AS mfc_agency,
     s.allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
 ),
 
 -- =============================================================================
 -- CTE 6: QGP SCORECARD
---        10 Actual/Target metric pairs (Activations BOPIS, Activations New+AAL No
---        Assistance, Store Traffic, VR Calls, VR Chats, VR Postpaid Activations,
---        3 Digital % metrics) at qgp_date x metric_name x metric_type
---        channel_group = NULL - no dimension on this source, see QGP_SCORECARD NOTE
---        in the file header.
---        lob = 'Postpaid + Broadband' -- CHANGED this version from a literal NULL, per
---        Khalid's confirmation. This is the one NON-ADDITIVE change in this file -- see
---        CHANGE LOG for the full reasoning and the check to run before deploying.
---        true_lob = real per-metric_name mapping -- see LOB / TRUE_LOB SPLIT in the
---        file header for the full table and reasoning behind each value, including the
---        two (vrCalls, vrChats) deliberately left NULL/unconfirmed.
---        metric_type = 'QGP_ACTUAL' or 'QGP_TARGET', passed through from Silver
+--
+-- Contains 10 QGP business metrics with Actual and Target records where supplied
+-- by the Silver source.
+--
+-- Grain:
+--   qgp_date x metric_name x metric_type
+--
+-- channel_group:
+--   NULL because QGP does not contain a channel dimension.
+--
+-- LOB treatment:
+--   lob      = 'Postpaid + Broadband'
+--   true_lob = Derived by metric_name.
+--
+-- true_lob remains NULL for retail-wide, ambiguous, or unrecognized metrics.
+--
+-- metric_type:
+--   'QGP_ACTUAL'
+--   'QGP_TARGET'
 -- =============================================================================
 QgpScorecard AS (
   SELECT
-    'QGP_SCORECARD'                                                       AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    'QGP_SCORECARD'                              AS data_source,
+    CAST(s.qgp_date AS DATE)                     AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-    'Postpaid + Broadband'                                                AS lob,          -- CHANGED from CAST(NULL AS STRING), see file header CHANGE LOG
+    'Postpaid + Broadband'                       AS lob,
+
     CASE s.metric_name
-      WHEN 'activationsBopis'                                       THEN 'POSTPAID'
-      WHEN 'activationsNewAalNoAssistance'                          THEN 'POSTPAID'
-      WHEN 'vrPostpaidActivations'                                  THEN 'POSTPAID'
-      WHEN 'digitalPctPhoneNewActsNoAssistPlusAssist'               THEN 'POSTPAID'
-      WHEN 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' THEN 'POSTPAID'
-      WHEN 'digitalPctNoAssistanceActivations'                      THEN 'POSTPAID'
-      WHEN 'digitalPctAssistanceActivations'                        THEN 'POSTPAID'
-      WHEN 'storeTraffic'                                           THEN CAST(NULL AS STRING)  -- retail-wide, no LOB concept at all
-      WHEN 'vrCalls'                                                THEN CAST(NULL AS STRING)  -- UNCONFIRMED: appendix scope text reads "All / Postpaid", ambiguous
-      WHEN 'vrChats'                                                THEN CAST(NULL AS STRING)  -- UNCONFIRMED: same as vrCalls
+      WHEN 'activationsBopis'
+        THEN 'POSTPAID'
+
+      WHEN 'activationsNewAalNoAssistance'
+        THEN 'POSTPAID'
+
+      WHEN 'vrPostpaidActivations'
+        THEN 'POSTPAID'
+
+      WHEN 'digitalPctPhoneNewActsNoAssistPlusAssist'
+        THEN 'POSTPAID'
+
+      WHEN 'digitalPctConsumerPostpaidActivationsTotalInclAssisted'
+        THEN 'POSTPAID'
+
+      WHEN 'digitalPctNoAssistanceActivations'
+        THEN 'POSTPAID'
+
+      WHEN 'digitalPctAssistanceActivations'
+        THEN 'POSTPAID'
+
+      -- Retail-wide metric with no literal LOB dimension.
+      WHEN 'storeTraffic'
+        THEN CAST(NULL AS STRING)
+
+      -- Scope remains unconfirmed because the available definition is ambiguous.
+      WHEN 'vrCalls'
+        THEN CAST(NULL AS STRING)
+
+      -- Scope remains unconfirmed because the available definition is ambiguous.
+      WHEN 'vrChats'
+        THEN CAST(NULL AS STRING)
+
+      -- Prevent an unrecognized metric from being assigned an assumed LOB.
       ELSE CAST(NULL AS STRING)
-    END                                                                   AS true_lob,
-    CAST(NULL AS STRING)                                                  AS channel_group,
+    END                                           AS true_lob,
+
+    CAST(NULL AS STRING)                         AS channel_group,
     s.metric_name,
     s.metric_type,
     s.metric_value,
@@ -519,50 +854,61 @@ QgpScorecard AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(s.max_date AS DATE)                     AS max_date,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                         AS mfc_channel,
+    CAST(NULL AS STRING)                         AS mfc_tactic,
+    CAST(NULL AS STRING)                         AS mfc_message_type,
+    CAST(NULL AS STRING)                         AS mfc_agency,
+    CAST(NULL AS DOUBLE)                         AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
 ),
 
 -- =============================================================================
 -- CTE 7: BIDDABLE SPEND
---        Programmatic + Paid Social + Paid Search combined, at lob x channel_group
---        grain, POSTPAID + BROADBAND both present (no lob filter beyond the raw
---        value IN check below -- HSI is renamed to BROADBAND here since Silver
---        carries the raw, un-canonicalized value, matching how MFC does this same
---        rename in its own CTEs above). Coexists with, does not replace,
---        PLATFORM_SPEND_CHANNEL -- same shape, different (and separate) source.
---        true_lob mirrors lob exactly -- real dimension either way.
---        metric_type = 'BIDDABLE_SPEND'
+--
+-- Combines Programmatic, Paid Social, and Paid Search spend at
+-- LOB x channel_group grain.
+--
+-- This source coexists with PLATFORM_SPEND_CHANNEL and does not replace it.
+--
+-- The Silver source contains raw LOB values. This CTE retains only:
+--   POSTPAID -> POSTPAID
+--   HSI      -> BROADBAND
+--
+-- Both lob and true_lob use the same canonicalized row-level LOB.
+--
+-- metric_type:
+--   'BIDDABLE_SPEND'
 -- =============================================================================
 BiddableSpend AS (
   SELECT
-    'BIDDABLE_SPEND_CHANNEL'                                              AS data_source,
-    CAST(s.qgp_date AS DATE)                                              AS qgp_date,
+    'BIDDABLE_SPEND_CHANNEL'                    AS data_source,
+    CAST(s.qgp_date AS DATE)                    AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
+
     CASE s.lob
       WHEN 'POSTPAID' THEN 'POSTPAID'
       WHEN 'HSI'      THEN 'BROADBAND'
       ELSE s.lob
-    END                                                                   AS lob,
-    CASE s.lob                                                                          -- true_lob: identical mapping to lob, duplicated
+    END                                          AS lob,
+
+    -- Duplicated because a SELECT-list alias cannot be reused by another
+    -- expression in the same SELECT list.
+    CASE s.lob
       WHEN 'POSTPAID' THEN 'POSTPAID'
       WHEN 'HSI'      THEN 'BROADBAND'
       ELSE s.lob
-    END                                                                   AS true_lob,
+    END                                          AS true_lob,
+
     s.channel_group,
     s.metric_name,
-    'BIDDABLE_SPEND'                                                      AS metric_type,
+    'BIDDABLE_SPEND'                            AS metric_type,
     s.metric_value,
     s.metric_value_ly,
     s.wow_numerator,
@@ -571,56 +917,93 @@ BiddableSpend AS (
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-    CAST(s.max_date AS DATE)                                              AS max_date,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                                                  AS adobe_cvr_denominator,
-    CAST(NULL AS STRING)                                                  AS mfc_channel,
-    CAST(NULL AS STRING)                                                  AS mfc_tactic,
-    CAST(NULL AS STRING)                                                  AS mfc_message_type,
-    CAST(NULL AS STRING)                                                  AS mfc_agency,
-    CAST(NULL AS DOUBLE)                                                  AS allocation_ratio
+    CAST(s.max_date AS DATE)                    AS max_date,
+    CAST(NULL AS DOUBLE)                        AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE)                        AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE)                        AS adobe_cvr_denominator,
+    CAST(NULL AS STRING)                        AS mfc_channel,
+    CAST(NULL AS STRING)                        AS mfc_tactic,
+    CAST(NULL AS STRING)                        AS mfc_message_type,
+    CAST(NULL AS STRING)                        AS mfc_agency,
+    CAST(NULL AS DOUBLE)                        AS allocation_ratio
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
-  WHERE s.lob IN ('POSTPAID', 'HSI')   -- the 2 raw values that canonicalize to POSTPAID/BROADBAND;
-                                         -- excludes Prepaid/TFB/Metro/Fiber/Archived/TMoney, which
-                                         -- Bronze deliberately left in for other potential consumers
-)
+  WHERE s.lob IN ('POSTPAID', 'HSI')
+    -- Other raw LOB values are intentionally excluded from this PulseTMS view.
+),
 
 -- =============================================================================
--- FINAL: Stack active CTEs
--- Column position must match exactly across all 7 CTEs for UNION ALL to align
--- correctly -- Spark SQL matches by position, not name. true_lob sits between
--- lob and channel_group in every CTE above.
+-- FINAL UNIFIED DATASET
+--
+-- IMPORTANT:
+--   UNION ALL aligns columns by position, not by alias.
+--
+--   Every CTE must return the same 29 columns in the same order and with
+--   compatible data types.
+--
+--   true_lob must remain between lob and channel_group.
 -- =============================================================================
-SELECT * FROM AdobeVolume
-UNION ALL SELECT * FROM MfcChannel
-UNION ALL SELECT * FROM MfcGranular
-UNION ALL SELECT * FROM PlatformSpend
-UNION ALL SELECT * FROM UpvForecast
-UNION ALL SELECT * FROM QgpScorecard
-UNION ALL SELECT * FROM BiddableSpend
+UnifiedPulseTms AS (
+  SELECT * FROM AdobeVolume
+
+  UNION ALL
+
+  SELECT * FROM MfcChannel
+
+  UNION ALL
+
+  SELECT * FROM MfcGranular
+
+  UNION ALL
+
+  SELECT * FROM PlatformSpend
+
+  UNION ALL
+
+  SELECT * FROM UpvForecast
+
+  UNION ALL
+
+  SELECT * FROM QgpScorecard
+
+  UNION ALL
+
+  SELECT * FROM BiddableSpend
+)
+
+SELECT *
+FROM UnifiedPulseTms
+;
 
 /*
   =============================================================================
-  FUTURE SOURCES - add a new named CTE above following this template,
-  then add one UNION ALL line in the final SELECT above. true_lob is included
-  in the template -- set it equal to lob if the new source has a real per-row LOB
-  dimension, or NULL if it doesn't (or isn't confirmed yet), following the same
-  reasoning as every CTE above.
+  FUTURE SOURCE TEMPLATE
+
+  Add the new source as a CTE before UnifiedPulseTms, then add it to the
+  UnifiedPulseTms UNION ALL block.
+
+  The new CTE must return the same columns in the same order.
+
+  true_lob guidance:
+    - Use the canonicalized row-level LOB when the source contains a real,
+      independently filterable LOB dimension.
+    - Use a confirmed metric-level derivation when LOB depends on metric_name.
+    - Use CAST(NULL AS STRING) when the source has no literal LOB dimension or
+      the mapping has not been confirmed.
   =============================================================================
+
   NewSource AS (
     SELECT
-      '<SOURCE_NAME>'           AS data_source,
-      CAST(s.qgp_date AS DATE)  AS qgp_date,
+      '<SOURCE_NAME>'                             AS data_source,
+      CAST(s.qgp_date AS DATE)                    AS qgp_date,
       s.week_type,
       s.qgp_quarter,
       s.days_in_period,
       s.is_complete_period,
-      s.lob,
-      <true_lob expression>     AS true_lob,
+      <lob_expression>                            AS lob,
+      <true_lob_expression>                       AS true_lob,
       s.channel_group,
       s.metric_name,
-      '<METRIC_TYPE>'           AS metric_type,
+      '<METRIC_TYPE>'                             AS metric_type,
       s.metric_value,
       s.metric_value_ly,
       s.wow_numerator,
@@ -629,17 +1012,23 @@ UNION ALL SELECT * FROM BiddableSpend
       s.yoy_numerator,
       s.yoy_denominator,
       s.yoy_pct,
-      CAST(s.max_date AS DATE)  AS max_date,
-      CAST(NULL AS DOUBLE)      AS adobe_cvr_value,
-      CAST(NULL AS DOUBLE)      AS adobe_cvr_numerator,
-      CAST(NULL AS DOUBLE)      AS adobe_cvr_denominator,
-      CAST(NULL AS STRING)      AS mfc_channel,
-      CAST(NULL AS STRING)      AS mfc_tactic,
-      CAST(NULL AS STRING)      AS mfc_message_type,
-      CAST(NULL AS STRING)      AS mfc_agency,
-      CAST(NULL AS DOUBLE)      AS allocation_ratio
+      CAST(s.max_date AS DATE)                    AS max_date,
+      CAST(NULL AS DOUBLE)                        AS adobe_cvr_value,
+      CAST(NULL AS DOUBLE)                        AS adobe_cvr_numerator,
+      CAST(NULL AS DOUBLE)                        AS adobe_cvr_denominator,
+      CAST(NULL AS STRING)                        AS mfc_channel,
+      CAST(NULL AS STRING)                        AS mfc_tactic,
+      CAST(NULL AS STRING)                        AS mfc_message_type,
+      CAST(NULL AS STRING)                        AS mfc_agency,
+      CAST(NULL AS DOUBLE)                        AS allocation_ratio
     FROM prdrzranalytics.lab42.<silver_table> s
   )
+
+  Then add:
+
+    UNION ALL
+    SELECT * FROM NewSource
+
+  to the UnifiedPulseTms CTE.
   =============================================================================
 */
-;
