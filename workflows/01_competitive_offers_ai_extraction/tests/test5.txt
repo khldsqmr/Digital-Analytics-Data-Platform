@@ -10,3 +10,7 @@ Affected Table: mrt_paidsocial_pivot
 Dashboard: [Monitoring Dashboard]
 
 Something along these lines would make the alert much easier to read quickly.
+
+
+
+Got it, thanks. So the formatting is controlled by Databricks when it posts to the webhook. In that case, would it be possible to customize the Teams Workflow behind the webhook to transform the incoming payload into a shorter message? If not, I can handle the custom alert directly from the monitoring notebook.
