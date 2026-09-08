@@ -1,1 +1,357 @@
-Wanted to clarify one thing — earlier you mentioned that custom formatting would require us to construct the request body, which implied we could send a custom payload to the Teams webhook. Later you mentioned custom notifications aren’t supported in Labs. Those two points seem contradictory
+
+5 new notifications
+New activities
+Has context menu
+Chat
+
+
+
+
+Unread
+Channels
+Chats
+
+Unread messageLast messageGroup chatMeeting chatChatPersonal at mentionEveryone at mentionImportantUrgentDraftDraftMutedMeeting in progressMeet now in progressYou can't send messages because you are not a member of the chat.You cannot send messages to this botPrivateSharedHas context menuChannel at mentionTeam at mentionPersonal at mentionUnreadUnreadMeeting in progressUnreadChannelTeamHas pinned messagesSee moreCommunityTemporarily shownHas context menuBadged chatBadged chats
+Has context menu
+
+Divi, Naren
+Garcia, Briana
+Judas, Brandon
+, +2
+
+
+Chat
+
+Shared
++2
+
+Has context menu
+
+Meet now
+
+
+5
+
+
+
+Message List
+Press Ctrl+F to find in this chat
+Hi  Divi,   Naren , the Databricks job fail... by Qamar, Khalid
+5:04 PM
+Qamar, Khalid
+
+Hi Divi, Naren, the Databricks job failure notification is working via email, but I’m NOT receiving the MS Teams alert from Lab42_SDITeamsAlert. 
+
+ 
+
+Could you please check whether the Teams notification destination/webhook is still valid and configured correctly?
+
+Begin quote, Qamar, Khalid, 9/8/2026 5:04 P... by Divi, Naren
+Divi, Naren
+5:16 PM
+
+Qamar, Khalid
+9/8/2026 5:04 PM
+Hi Divi, Naren, the Databricks job failure notification is working via email, but I’m NOT receiving the MS Teams alert from Lab42_SDITeamsAlert. Could you please check whether the Teams notification
+I used this link can you confirm 
+
+ 
+
+https://teams.microsoft.com/l/channel/19%3A0zwI8NanqSS9KtNFlKFLqL5g9SE5PvfJpyIK8uez4v81%40thread.tacv2/SDI%20Alerts?groupId=55ef5445-0e59-4643-94c9-7a5966ed4e15&tenantId=be0f980b-dd99-4b19-bd7b-bc71a09b026c
+
+ 
+
+Begin quote, Qamar, Khalid, 9/8/2026 5:04 P... by Divi, Naren
+Divi, Naren
+5:22 PM
+
+Qamar, Khalid
+9/8/2026 5:04 PM
+Hi Divi, Naren, the Databricks job failure notification is working via email, but I’m NOT receiving the MS Teams alert from Lab42_SDITeamsAlert. Could you please check whether the Teams notification
+Qamar, Khalid updated below please verify
+SDI Alerts
+
+Hi Divi,   Naren , I found the Teams chann... by Qamar, Khalid
+5:42 PM
+Qamar, Khalid
+
+Hi Divi, Naren, I found the Teams channel and tested posting there successfully. 
+
+ 
+
+The Databricks job is failing as expected and I’m receiving the failure email, but NO alert is getting posted to this Teams channel. 
+
+ 
+
+Could you please check if the Lab42_SDITeamsAlert webhook/destination is still active and pointing to this channel?
+
+Begin quote, Qamar, Khalid, 9/8/2026 5:42 P... by Divi, Naren
+Divi, Naren
+5:43 PM
+
+Qamar, Khalid
+9/8/2026 5:42 PM
+Hi Divi, Naren, I found the Teams channel and tested posting there successfully. The Databricks job is failing as expected and I’m receiving the failure email, but NO alert is getting posted to thi…
+can you share the link yes it is still active
+
+Do you know if Lab42_SDITeamsAlert is sti... by Qamar, Khalid
+5:45 PM
+Qamar, Khalid
+
+Do you know if Lab42_SDITeamsAlert is still using the old Teams Incoming Webhook/Office 365 Connector? 
+
+ 
+
+Microsoft retired those in May 2026, so we may need to recreate it using the Teams Workflows webhook and update the Databricks notification destination URL.
+
+Begin quote, Divi, Naren, 9/8/2026 5:43 PM,... by Qamar, Khalid
+5:45 PM
+Qamar, Khalid
+
+Divi, Naren
+9/8/2026 5:43 PM
+can you share the link yes it is still active
+Link to?
+
+ok I see it incoming webhook is missing can... by Divi, Naren
+Divi, Naren
+5:48 PM
+
+ok I see it incoming webhook is missing can you test again I did update please test
+
+ 
+
+image
+
+Hi Divi,   Naren , it’s working now, thank... by Qamar, Khalid
+6:02 PM
+Qamar, Khalid
+
+Hi Divi, Naren, it’s working now, thanks! 
+
+ 
+
+The only thing is the current Teams alert is the default Databricks format, so it’s a bit messy. Would it be possible to customize it to show just the key details like run date, issue type / affected tables, and a link to the monitoring dashboard?
+
+ 
+
+For example:
+
+ 
+
+BQ → UC Pipeline Alert
+Status: Failed
+Run Date: 2026-09-08
+Issue: Schema Change
+Dashboard: [Monitoring Dashboard Link] 
+
+ 
+
+Something along these lines would make the alert much easier to read quickly.
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:02 P... by Divi, Naren
+Divi, Naren
+6:05 PM
+
+Qamar, Khalid
+9/8/2026 6:02 PM
+Hi Divi, Naren, it’s working now, thanks! The only thing is the current Teams alert is the default Databricks format, so it’s a bit messy. Would it be possible to customize it to show just the key…
+we can only configure notification destination for provided webhook
+Got it, thanks. So the formatting is contro... by Qamar, Khalid
+6:07 PM
+Qamar, Khalid
+
+Got it, thanks. So the formatting is controlled by Databricks when it posts to the webhook. 
+
+ 
+
+In that case, would it be possible to customize the Teams Workflow behind the webhook to transform the incoming payload into a shorter message? 
+
+ 
+
+If not, I can handle the custom alert directly from the monitoring databricks notebook.
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:07 P... by Divi, Naren
+Divi, Naren
+6:08 PM
+
+Qamar, Khalid
+9/8/2026 6:07 PM
+Got it, thanks. So the formatting is controlled by Databricks when it posts to the webhook. In that case, would it be possible to customize the Teams Workflow behind the webhook to transform the in…
+databricks doesn’t handle formatting you need to construct request body
+Got it. In that case, I can construct the r... by Qamar, Khalid
+6:10 PM
+Qamar, Khalid
+
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task. 
+
+ 
+
+Can you let me know where the webhook URL is stored (e.g. Databricks secret scope/key), so I can reference it without hardcoding it?
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:10 P... by Divi, Naren
+Divi, Naren
+6:14 PM
+
+Qamar, Khalid
+9/8/2026 6:10 PM
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task. Can you let me know where the webhook URL is stored (e.g. Datab…
+I understand you’re referring to monitoring. Could you provide more details about it? Are we creating notebooks specifically for monitoring? Ideally, we should use Databricks provided alerts or notification settings. Additionally, notebooks are intended for data analytics, so using them for monitoring would increase costs.
+Our monitoring notebook runs queries to ide... by Qamar, Khalid
+6:17 PM
+Qamar, Khalid
+
+Our monitoring notebook runs queries to identify table-level issues and generates a summary of the affected tables. We are working to send these alerts to a Teams channel for easier monitoring and investigation. So there isn't any new notebook being created for this. 
+
+This notebook is being scheduled which even... by Qamar, Khalid
+6:19 PM
+Qamar, Khalid
+
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines. 
+
+Labs are created for analytical purposes in... by Divi, Naren
+Divi, Naren
+6:19 PM
+
+Labs are created for analytical purposes in a sandbox environment that doesn’t support external configuration or notifications for jobs.
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:19 P... by Divi, Naren
+Divi, Naren
+6:21 PM
+
+Qamar, Khalid
+9/8/2026 6:19 PM
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines.
+ya you need to rely on pipeline or job notifications that can be configured on failures
+Begin quote, Divi, Naren, 9/8/2026 6:21 PM,... by Qamar, Khalid
+6:21 PM
+Qamar, Khalid
+
+Divi, Naren
+9/8/2026 6:21 PM
+ya you need to rely on pipeline or job notifications that can be configured on failures
+That's what is being used.
+
+
+👍
+1 Like reaction.
+
+No new notebook is being created for this. ... by Qamar, Khalid
+6:23 PM
+Qamar, Khalid
+
+No new notebook is being created for this. I just want you to showcase the notebook output as the payload for the teams channel alert. The current alert being generated is too vague and not very informational.
+
+ok by Divi, Naren
+Divi, Naren
+6:23 PM
+
+ok
+Sounds good. Since we want to construct the... by Qamar, Khalid
+6:26 PM
+Qamar, Khalid
+
+Sounds good. Since we want to construct the Teams payload using the monitoring output, can you please provide us with the webhook endpoint URL so we can send the custom alert from the existing monitoring flow?
+
+You cannot send that custom alert. Instead,... by Divi, Naren
+Divi, Naren
+6:28 PM
+
+You cannot send that custom alert. Instead, you need to rely on Databricks-supported alerts, which is a limitation.
+If the Teams alert does not show any detail... by Qamar, Khalid
+6:35 PM
+Qamar, Khalid
+
+If the Teams alert does not show any details, it may not be very useful. 
+
+ 
+
+Our notebook already creates this output, so we would like to show at least a summary of it in the alert.
+
+image
+
+ 
+
+Unfortunately, that’s a limitation of this ... by Divi, Naren
+Divi, Naren
+6:37 PM
+
+Unfortunately, that’s a limitation of this sandbox workspace.
+
+Got it. Since the Teams webhook is already ... by Qamar, Khalid
+6:42 PM
+Qamar, Khalid
+
+Got it. Since the Teams webhook is already using a template as shown below, would it be possible to format the incoming Databricks payload within that workflow and post a shorter alert to the channel?
+
+ 
+
+image
+
+ 
+
+Ideally we’d show just the job status, run date, and monitoring dashboard link. If the incoming payload also exposes any of our monitoring details, we could include those as well.
+
+ 
+
+Can you check what fields are available in the payload being received by the workflow?
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:42 P... by Divi, Naren
+Divi, Naren
+6:43 PM
+
+Qamar, Khalid
+9/8/2026 6:42 PM
+Got it. Since the Teams webhook is already using a template as shown below, would it be possible to format the incoming Databricks payload within that workflow and post a shorter alert to the channel…
+In Databricks, a Notification Destination is a configuration that tells Databricks where to send alerts/notifications when certain events happen.
+Common destinations include:
+Email — send notifications to one or more email addresses
+Microsoft Teams — send messages to a Teams channel/webhook
+Slack — send notifications to Slack
+Webhooks — send an HTTP request to another application/service
+Other supported notification integrations depending on your Databricks environment
+we have configured teams it doesn’t have an... by Divi, Naren
+Divi, Naren
+6:44 PM
+
+we have configured teams it doesn’t have any other options
+I’ll schedule some time with you tomorrow t... by Qamar, Khalid
+6:46 PM
+Qamar, Khalid
+
+I’ll schedule some time with you tomorrow to go over this. Thanks for your help 🙂
+
+Begin quote, Qamar, Khalid, 9/8/2026 6:46 P... by Divi, Naren
+Divi, Naren
+6:54 PM
+
+Qamar, Khalid
+9/8/2026 6:46 PM
+I’ll schedule some time with you tomorrow to go over this. Thanks for your help 🙂
+I’m not sure what I’m missing here, as Databricks job notifications are only supported, as clarified above, and we cannot accommodate any custom notifications if that’s what you’d like to discuss.
+Begin quote, Divi, Naren, 9/8/2026 6:08 PM,... by Qamar, Khalid
+7:06 PM
+Qamar, Khalid
+
+Divi, Naren
+9/8/2026 6:08 PM
+databricks doesn’t handle formatting you need to construct request body
+Wanted to discuss this about custom formatting requiring us to construct the request body. 
+
+My understanding was that this meant we could send a custom payload to the Teams webhook. 
+
+Later you mentioned custom notifications aren’t supported in Labs.
+
+has context menu
+Judas, Brandon is out of office and may not respond
+
+
+
+👍
+
+❤️
+
+😆
+
+😮
+
