@@ -3,7 +3,9 @@
 # ==================================================================================================
 # NOTEBOOK:       sdi_nb_pipelineMonitoring_bqUcHealthCheck_daily
 # NOTEBOOK TYPE:  Databricks Python Notebook
-# PURPOSE:        Monitor daily BigQuery to Unity Catalog pipeline health
+#
+# PURPOSE:
+#   Monitor daily BigQuery -> Unity Catalog pipeline health.
 #
 # CATALOG.SCHEMA:
 #   prdrzranalytics.lab42
@@ -13,7 +15,7 @@
 #   sdi_vw_pipelineMonitoring_gold_bqUcHealthSummary_daily
 #   sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily
 #
-# INCLUDED ISSUE CATEGORIES:
+# ISSUE CATEGORIES:
 #   1. Failed Table
 #   2. Unknown Status
 #   3. Row-Count Mismatch
@@ -21,15 +23,15 @@
 #   5. Skipped Table
 #
 # EXECUTION BEHAVIOR:
-#   - Determines the latest available pipeline run date from the data.
-#   - Retrieves the health summary for the latest run date.
-#   - Retrieves tables requiring attention.
-#   - Excludes healthy tables from detailed reporting.
-#   - Allows a table to appear under multiple issue categories.
+#   - Determines the latest available pipeline run date.
+#   - Retrieves the health summary for that date.
+#   - Retrieves all table issues for that date.
+#   - Excludes healthy tables from detailed issue reporting.
+#   - Allows one table to appear under multiple issue categories.
 #   - Completes successfully when no issues are detected.
-#   - Raises an exception when one or more issues are detected.
-#   - Allows Databricks retries and Microsoft Teams failure
-#     notifications to operate correctly.
+#   - Raises RuntimeError when one or more issues are detected.
+#   - The RuntimeError causes the Databricks Workflow task to fail.
+#   - Databricks Workflow failure notification sends the MS Teams alert.
 #
 # DATABRICKS JOB:
 #   sdi_job_pipelineMonitoring_bqUcHealthCheck_daily
@@ -68,8 +70,10 @@ TABLE_ISSUES_VIEW = (
 # --------------------------------------------------------------------------------------------------
 # Published monitoring dashboard
 #
-# The base URL is used without a fixed date filter so the alert does not
-# open the dashboard on an outdated monitoring date.
+# IMPORTANT:
+#   Store this as a normal URL.
+#   Do NOT use Markdown syntax such as:
+#       [https://...](https://...)
 # --------------------------------------------------------------------------------------------------
 
 PIPELINE_DASHBOARD_URL = (
@@ -95,15 +99,15 @@ ISSUE_DISPLAY_ORDER = [
 # --------------------------------------------------------------------------------------------------
 # Alert-message configuration
 #
-# This is a local Python constant, not a Databricks task parameter.
-# It limits the number of table names included in the exception message.
+# Limits the number of table names included in the RuntimeError message.
+# This is a local Python constant and not a Databricks job parameter.
 # --------------------------------------------------------------------------------------------------
 
 MAX_TABLES_IN_MESSAGE = 20
 
 
 # --------------------------------------------------------------------------------------------------
-# Validate the required configuration
+# Validate configuration
 # --------------------------------------------------------------------------------------------------
 
 required_configuration = {
@@ -115,41 +119,67 @@ required_configuration = {
 
 
 for configuration_name, configuration_value in required_configuration.items():
-    if not configuration_value or not configuration_value.strip():
+
+    if (
+        configuration_value is None
+        or not str(configuration_value).strip()
+    ):
         raise ValueError(
             "PIPELINE MONITORING CONFIGURATION ERROR: "
             f"{configuration_name} is blank."
         )
 
 
+if not isinstance(MAX_TABLES_IN_MESSAGE, int):
+    raise TypeError(
+        "PIPELINE MONITORING CONFIGURATION ERROR: "
+        "MAX_TABLES_IN_MESSAGE must be an integer."
+    )
+
+
+if MAX_TABLES_IN_MESSAGE <= 0:
+    raise ValueError(
+        "PIPELINE MONITORING CONFIGURATION ERROR: "
+        "MAX_TABLES_IN_MESSAGE must be greater than zero."
+    )
+
+
 # --------------------------------------------------------------------------------------------------
 # Print initialization information
 # --------------------------------------------------------------------------------------------------
 
-print("=" * 100)
+separator = "=" * 100
+
+
+print(separator)
 print("SDI BQ -> UC PIPELINE MONITORING")
-print("=" * 100)
+print(separator)
 
 print(f"Run details view      : {RUN_DETAILS_VIEW}")
 print(f"Health summary view   : {HEALTH_SUMMARY_VIEW}")
 print(f"Table issues view     : {TABLE_ISSUES_VIEW}")
 print(f"Monitoring dashboard : {PIPELINE_DASHBOARD_URL}")
 
-print("\nDetermining the latest available pipeline run date...")
+print("\nDetermining latest available pipeline run date...")
 
 
 # --------------------------------------------------------------------------------------------------
 # Determine the latest pipeline run date.
 #
-# Ordering the records ensures that latest_job_run_ts belongs to the
-# selected latest_run_date.
+# Sorting by:
+#   1. run_date
+#   2. job_run_ts
+#   3. job_end_ts
+#
+# ensures the timestamp displayed belongs to the latest available execution.
 # --------------------------------------------------------------------------------------------------
 
 latest_run_df = spark.sql(
     f"""
     SELECT
         run_date AS latest_run_date,
-        job_run_ts AS latest_job_run_ts
+        job_run_ts AS latest_job_run_ts,
+        job_end_ts AS latest_job_end_ts
     FROM {RUN_DETAILS_VIEW}
     WHERE run_date IS NOT NULL
     ORDER BY
@@ -164,6 +194,10 @@ latest_run_df = spark.sql(
 latest_run_row = latest_run_df.first()
 
 
+# --------------------------------------------------------------------------------------------------
+# Validate that pipeline execution data exists.
+# --------------------------------------------------------------------------------------------------
+
 if latest_run_row is None:
     raise RuntimeError(
         "PIPELINE MONITORING ERROR: "
@@ -173,6 +207,7 @@ if latest_run_row is None:
 
 latest_run_date = latest_run_row["latest_run_date"]
 latest_job_run_ts = latest_run_row["latest_job_run_ts"]
+latest_job_end_ts = latest_run_row["latest_job_end_ts"]
 
 
 if latest_run_date is None:
@@ -182,25 +217,42 @@ if latest_run_date is None:
     )
 
 
-print(f"\nLatest pipeline date             : {latest_run_date}")
-print(f"Latest individual execution time: {latest_job_run_ts}")
+# Convert to YYYY-MM-DD text for use in SQL filters and messages.
+latest_run_date_sql = str(latest_run_date)
+
+
+# --------------------------------------------------------------------------------------------------
+# Print selected monitoring date
+# --------------------------------------------------------------------------------------------------
+
+print(f"\nLatest pipeline date      : {latest_run_date}")
+print(f"Latest execution start    : {latest_job_run_ts}")
+print(f"Latest execution end      : {latest_job_end_ts}")
 
 print(
     "\nMonitoring will evaluate the latest execution "
     f"of every table for {latest_run_date}."
 )
 
-print("=" * 100)
+print(separator)
+
+
+
+
+
+
+
 
 
 %python
 
-# ================================================================
+# ==================================================================================================
 # CELL 2
+#
 # PURPOSE:
-#   Retrieve and display the pipeline health summary for the
-#   latest available pipeline run date.
-# ================================================================
+#   Retrieve and display the pipeline health summary for the latest
+#   available pipeline run date determined in Cell 1.
+# ==================================================================================================
 
 
 print("=" * 100)
@@ -209,6 +261,10 @@ print("=" * 100)
 
 print(f"Monitoring run date: {latest_run_date}")
 
+
+# --------------------------------------------------------------------------------------------------
+# Retrieve the health summary.
+# --------------------------------------------------------------------------------------------------
 
 health_df = spark.sql(
     f"""
@@ -230,13 +286,17 @@ health_df = spark.sql(
         last_jobEnd_ts,
         total_elapsed_minutes
     FROM {HEALTH_SUMMARY_VIEW}
-    WHERE run_date = DATE('{latest_run_date}')
+    WHERE run_date = DATE('{latest_run_date_sql}')
     """
 )
 
 
 health_rows = health_df.collect()
 
+
+# --------------------------------------------------------------------------------------------------
+# Validate summary results.
+# --------------------------------------------------------------------------------------------------
 
 if len(health_rows) == 0:
     raise RuntimeError(
@@ -256,6 +316,10 @@ if len(health_rows) > 1:
 
 health = health_rows[0]
 
+
+# --------------------------------------------------------------------------------------------------
+# Print pipeline health metrics.
+# --------------------------------------------------------------------------------------------------
 
 print("\nPipeline health metrics:")
 print("-" * 100)
@@ -338,14 +402,24 @@ print(
 print("-" * 100)
 
 
+# --------------------------------------------------------------------------------------------------
 # Display the health summary as a Databricks result table.
+# --------------------------------------------------------------------------------------------------
+
 display(health_df)
+
+
+
+
+
+
 
 
 %python
 
-# ================================================================
+# ==================================================================================================
 # CELL 3
+#
 # PURPOSE:
 #   Retrieve all table issues for the latest pipeline run date.
 #
@@ -357,9 +431,10 @@ display(health_df)
 #   - Skipped Table
 #
 # IMPORTANT:
-#   - Healthy tables are excluded by the underlying view.
-#   - A table can appear under multiple issue categories.
-# ================================================================
+#   - Healthy tables are excluded by the underlying table-issues view.
+#   - One table can appear under multiple issue categories.
+#   - Any returned issue record causes the monitoring result to FAIL.
+# ==================================================================================================
 
 
 print("=" * 100)
@@ -368,6 +443,10 @@ print("=" * 100)
 
 print(f"Checking table issues for: {latest_run_date}")
 
+
+# --------------------------------------------------------------------------------------------------
+# Retrieve issue records.
+# --------------------------------------------------------------------------------------------------
 
 issues_df = spark.sql(
     f"""
@@ -395,7 +474,7 @@ issues_df = spark.sql(
         cols_changed,
         has_schemaChange
     FROM {TABLE_ISSUES_VIEW}
-    WHERE run_date = DATE('{latest_run_date}')
+    WHERE run_date = DATE('{latest_run_date_sql}')
     ORDER BY
         CASE issue_type
             WHEN 'Failed Table' THEN 1
@@ -415,25 +494,60 @@ issues_df = spark.sql(
 # --------------------------------------------------------------------------------------------------
 # Collect issue records.
 #
-# Only exception records are returned because healthy tables are excluded
-# by the table-issues view.
+# Because TABLE_ISSUES_VIEW contains only exception records, any row returned
+# here means that pipeline attention is required.
 # --------------------------------------------------------------------------------------------------
 
 issue_rows = issues_df.collect()
+
 issue_record_count = len(issue_rows)
+
+has_issues = issue_record_count > 0
 
 
 # --------------------------------------------------------------------------------------------------
-# Create a distinct list of affected BQ tables.
+# Create normalized table/issue combinations.
 #
-# A table with multiple issues is counted only once in affected_table_count.
+# Prefer BQ table name.
+# Fall back to UC table name if BQ table name is unavailable.
+# --------------------------------------------------------------------------------------------------
+
+normalized_issue_records = []
+
+
+for row in issue_rows:
+
+    issue_type = (
+        row["issue_type"]
+        if row["issue_type"] is not None
+        else "Uncategorized Issue"
+    )
+
+    table_name = (
+        row["bq_table"]
+        if row["bq_table"] is not None
+        else row["uc_table"]
+    )
+
+    if table_name is None:
+        table_name = "UNKNOWN_TABLE"
+
+    normalized_issue_records.append(
+        (
+            issue_type,
+            table_name
+        )
+    )
+
+
+# --------------------------------------------------------------------------------------------------
+# Distinct affected tables.
 # --------------------------------------------------------------------------------------------------
 
 affected_table_names = list(
     dict.fromkeys(
-        row["bq_table"]
-        for row in issue_rows
-        if row["bq_table"] is not None
+        table_name
+        for _, table_name in normalized_issue_records
     )
 )
 
@@ -441,20 +555,20 @@ affected_table_count = len(affected_table_names)
 
 
 # --------------------------------------------------------------------------------------------------
-# Create distinct issue-type and BQ-table combinations.
+# Distinct issue-type / table combinations.
 #
-# A table with multiple issues contributes one combination per issue.
+# Example:
+#   table_a -> Schema Change
+#   table_a -> Row-Count Mismatch
+#
+# counts as:
+#   1 affected table
+#   2 table-issue combinations
 # --------------------------------------------------------------------------------------------------
 
 issue_combinations = list(
     dict.fromkeys(
-        (
-            row["issue_type"],
-            row["bq_table"]
-        )
-        for row in issue_rows
-        if row["issue_type"] is not None
-        and row["bq_table"] is not None
+        normalized_issue_records
     )
 )
 
@@ -462,7 +576,7 @@ issue_combination_count = len(issue_combinations)
 
 
 # --------------------------------------------------------------------------------------------------
-# Count distinct affected tables by issue category.
+# Count distinct tables within each issue category.
 # --------------------------------------------------------------------------------------------------
 
 issue_counts = {
@@ -472,13 +586,33 @@ issue_counts = {
 
 
 for issue_type, table_name in issue_combinations:
-    issue_counts[issue_type] = (
-        issue_counts.get(issue_type, 0) + 1
-    )
+
+    if issue_type not in issue_counts:
+        issue_counts[issue_type] = 0
+
+    issue_counts[issue_type] += 1
 
 
 # --------------------------------------------------------------------------------------------------
-# Print the issue summary.
+# Preserve the standard order first, followed by any unexpected issue types.
+# --------------------------------------------------------------------------------------------------
+
+unexpected_issue_types = sorted(
+    issue_type
+    for issue_type in issue_counts
+    if issue_type not in ISSUE_DISPLAY_ORDER
+    and issue_counts.get(issue_type, 0) > 0
+)
+
+
+issue_types_for_output = (
+    ISSUE_DISPLAY_ORDER
+    + unexpected_issue_types
+)
+
+
+# --------------------------------------------------------------------------------------------------
+# Print issue summary.
 # --------------------------------------------------------------------------------------------------
 
 print(
@@ -497,7 +631,12 @@ print(
 )
 
 
-if affected_table_count == 0:
+# --------------------------------------------------------------------------------------------------
+# No issues.
+# --------------------------------------------------------------------------------------------------
+
+if not has_issues:
+
     print("\nSUCCESS")
 
     print(
@@ -505,177 +644,108 @@ if affected_table_count == 0:
         "for the latest pipeline date."
     )
 
+
+# --------------------------------------------------------------------------------------------------
+# Issues detected.
+# --------------------------------------------------------------------------------------------------
+
 else:
+
     print("\nTABLE ISSUES DETECTED")
     print("-" * 100)
 
-    for issue_type in ISSUE_DISPLAY_ORDER:
+
+    for issue_type in issue_types_for_output:
+
         issue_count = issue_counts.get(
             issue_type,
             0
         )
 
         if issue_count > 0:
+
             print(
                 f"{issue_type:<22}: "
                 f"{issue_count}"
             )
 
+
+    print("-" * 100)
+
+    print("\nAffected tables:")
+
+
+    for table_number, table_name in enumerate(
+        affected_table_names,
+        start=1
+    ):
+
+        print(
+            f"{table_number:>2}. {table_name}"
+        )
+
+
     print("-" * 100)
 
 
-    for index, row in enumerate(
-        issue_rows,
-        start=1
-    ):
-        print(f"\nIssue #{index}")
+# --------------------------------------------------------------------------------------------------
+# Display all detailed issue records.
+# --------------------------------------------------------------------------------------------------
 
-        print(
-            f"Issue type       : "
-            f"{row['issue_type']}"
-        )
-
-        print(
-            f"BQ table         : "
-            f"{row['bq_table']}"
-        )
-
-        print(
-            f"UC table         : "
-            f"{row['uc_table']}"
-        )
-
-        print(
-            f"Batch number     : "
-            f"{row['batch_number']}"
-        )
-
-        print(
-            f"Load type        : "
-            f"{row['load_type']}"
-        )
-
-        print(
-            f"Run type         : "
-            f"{row['run_type']}"
-        )
-
-        print(
-            f"Execution status : "
-            f"{row['status']}"
-        )
-
-        print(
-            f"Raw status       : "
-            f"{row['status_raw']}"
-        )
-
-        print(
-            f"Job run time     : "
-            f"{row['job_run_ts']}"
-        )
-
-        print(
-            f"Job end time     : "
-            f"{row['job_end_ts']}"
-        )
-
-        print(
-            f"BQ rows          : "
-            f"{row['bq_rows']}"
-        )
-
-        print(
-            f"Loaded rows      : "
-            f"{row['loaded_rows']}"
-        )
-
-        print(
-            f"Row difference   : "
-            f"{row['row_count_difference']}"
-        )
-
-        print(
-            f"Elapsed seconds  : "
-            f"{row['elapsed_sec']}"
-        )
-
-        print(
-            f"Error message    : "
-            f"{row['error_message']}"
-        )
-
-        print(
-            f"Columns added    : "
-            f"{row['cols_added']}"
-        )
-
-        print(
-            f"Columns removed  : "
-            f"{row['cols_removed']}"
-        )
-
-        print(
-            f"Columns changed  : "
-            f"{row['cols_changed']}"
-        )
-
-        print("-" * 100)
-
-
-# Display all issue records as a Databricks result table.
 display(issues_df)
+
+
+
+
+
 
 
 %python
 
-# ================================================================
+# ==================================================================================================
 # CELL 4
+#
 # PURPOSE:
-#   Produce the final pipeline monitoring result.
+#   Produce the final BQ -> UC pipeline monitoring result.
 #
 # SUCCESS:
-#   - No table issues are detected.
-#   - The cell finishes normally.
-#   - The Databricks task is marked successful.
+#   - No table issues exist.
+#   - Notebook completes normally.
+#   - Databricks Workflow task is marked SUCCESS.
 #
 # FAILURE:
-#   - One or more table issues are detected.
-#   - The cell raises an exception.
-#   - The Databricks task is marked failed.
-#   - The configured Lab42 Teams notification is triggered.
+#   - One or more issue records exist.
+#   - A concise monitoring error message is created.
+#   - RuntimeError is intentionally raised.
+#   - Databricks Workflow task is marked FAILED.
+#   - Databricks sends the configured Microsoft Teams failure notification.
 #
-# REQUIRED VARIABLES FROM PREVIOUS CELLS:
-#   latest_run_date
-#   affected_table_names
-#   affected_table_count
-#   issue_combination_count
-#   issue_counts
-#   ISSUE_DISPLAY_ORDER
-#   TABLE_ISSUES_VIEW
-#   PIPELINE_DASHBOARD_URL
-#   MAX_TABLES_IN_MESSAGE
+# REQUIRED DATABRICKS NOTIFICATION DESTINATION:
+#   Lab42_SDITeamsAlert
 #
 # PARAMETERS:
 #   None
-# ================================================================
+# ==================================================================================================
 
 
 separator = "=" * 100
 sub_separator = "-" * 100
 
 
-# ---------------------------------------------------------------
-# Validate required variables from previous cells.
-# ---------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# Validate variables produced by previous cells.
+# --------------------------------------------------------------------------------------------------
 
 required_variables = {
     "latest_run_date": latest_run_date,
+    "latest_run_date_sql": latest_run_date_sql,
+    "has_issues": has_issues,
+    "issue_record_count": issue_record_count,
     "affected_table_names": affected_table_names,
     "affected_table_count": affected_table_count,
     "issue_combination_count": issue_combination_count,
     "issue_counts": issue_counts,
-    "ISSUE_DISPLAY_ORDER": ISSUE_DISPLAY_ORDER,
+    "issue_types_for_output": issue_types_for_output,
     "TABLE_ISSUES_VIEW": TABLE_ISSUES_VIEW,
     "PIPELINE_DASHBOARD_URL": PIPELINE_DASHBOARD_URL,
     "MAX_TABLES_IN_MESSAGE": MAX_TABLES_IN_MESSAGE
@@ -683,55 +753,46 @@ required_variables = {
 
 
 for variable_name, variable_value in required_variables.items():
+
     if variable_value is None:
+
         raise RuntimeError(
             "PIPELINE MONITORING CONFIGURATION ERROR: "
             f"{variable_name} is not defined correctly."
         )
 
 
-if not str(PIPELINE_DASHBOARD_URL).strip():
-    raise RuntimeError(
-        "PIPELINE MONITORING CONFIGURATION ERROR: "
-        "PIPELINE_DASHBOARD_URL is blank."
-    )
-
-
-if not isinstance(MAX_TABLES_IN_MESSAGE, int):
-    raise TypeError(
-        "PIPELINE MONITORING CONFIGURATION ERROR: "
-        "MAX_TABLES_IN_MESSAGE must be an integer."
-    )
-
-
-if MAX_TABLES_IN_MESSAGE <= 0:
-    raise ValueError(
-        "PIPELINE MONITORING CONFIGURATION ERROR: "
-        "MAX_TABLES_IN_MESSAGE must be greater than zero."
-    )
-
-
-# ---------------------------------------------------------------
-# Print the monitoring result header.
-# ---------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# Print result header.
+# --------------------------------------------------------------------------------------------------
 
 print(separator)
 print("BQ -> UC PIPELINE MONITORING RESULT")
 print(separator)
 
 
-# ---------------------------------------------------------------
-# Successful monitoring result.
-# ---------------------------------------------------------------
+# ==================================================================================================
+# PASS
+# ==================================================================================================
 
-if affected_table_count == 0:
+if not has_issues:
 
     print("Status                   : PASS")
     print(f"Run date                 : {latest_run_date}")
+    print("Issue records            : 0")
     print("Affected table count     : 0")
     print("Table-issue combinations : 0")
-    print(f"Monitoring view          : {TABLE_ISSUES_VIEW}")
-    print(f"Monitoring dashboard     : {PIPELINE_DASHBOARD_URL}")
+
+    print(
+        f"Monitoring view          : "
+        f"{TABLE_ISSUES_VIEW}"
+    )
+
+    print(
+        f"Monitoring dashboard     : "
+        f"{PIPELINE_DASHBOARD_URL}"
+    )
+
 
     print(sub_separator)
     print("RESULT")
@@ -745,13 +806,14 @@ if affected_table_count == 0:
     print(separator)
 
     print(
-        "SDI BQ -> UC pipeline monitoring completed successfully."
+        "SDI BQ -> UC pipeline monitoring "
+        "completed successfully."
     )
 
 
-# ---------------------------------------------------------------
-# Monitoring result requiring attention.
-# ---------------------------------------------------------------
+# ==================================================================================================
+# FAIL
+# ==================================================================================================
 
 else:
 
@@ -768,8 +830,13 @@ else:
     )
 
 
+    # ----------------------------------------------------------------------------------------------
+    # Print overall failure status.
+    # ----------------------------------------------------------------------------------------------
+
     print("Status                   : FAIL")
     print(f"Run date                 : {latest_run_date}")
+    print(f"Issue records            : {issue_record_count}")
     print(f"Affected table count     : {affected_table_count}")
 
     print(
@@ -777,19 +844,27 @@ else:
         f"{issue_combination_count}"
     )
 
-    print(f"Monitoring view          : {TABLE_ISSUES_VIEW}")
-    print(f"Monitoring dashboard     : {PIPELINE_DASHBOARD_URL}")
+    print(
+        f"Monitoring view          : "
+        f"{TABLE_ISSUES_VIEW}"
+    )
+
+    print(
+        f"Monitoring dashboard     : "
+        f"{PIPELINE_DASHBOARD_URL}"
+    )
 
 
-    # -----------------------------------------------------------
-    # Print issue counts.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Print issue summary.
+    # ----------------------------------------------------------------------------------------------
 
     print(sub_separator)
     print("ISSUE SUMMARY")
     print(sub_separator)
 
-    for issue_type in ISSUE_DISPLAY_ORDER:
+
+    for issue_type in issue_types_for_output:
 
         issue_count = issue_counts.get(
             issue_type,
@@ -804,13 +879,14 @@ else:
             )
 
 
-    # -----------------------------------------------------------
-    # Print affected BQ table names.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Print affected table names.
+    # ----------------------------------------------------------------------------------------------
 
     print(sub_separator)
-    print("AFFECTED BQ TABLES")
+    print("AFFECTED TABLES")
     print(sub_separator)
+
 
     for table_number, table_name in enumerate(
         affected_table_names,
@@ -822,13 +898,14 @@ else:
         )
 
 
-    # -----------------------------------------------------------
-    # Print the monitoring result.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Print overall monitoring result.
+    # ----------------------------------------------------------------------------------------------
 
     print(sub_separator)
     print("RESULT")
     print(sub_separator)
+
 
     print(
         f"{issue_combination_count} {issue_label} "
@@ -836,22 +913,21 @@ else:
         f"{affected_table_count} {table_label}."
     )
 
+
     print(
         f"Review {TABLE_ISSUES_VIEW} "
         "for detailed issue information."
     )
 
 
-    # -----------------------------------------------------------
-    # Limit the table names included in the failure message.
-    #
-    # MAX_TABLES_IN_MESSAGE is a local Python constant defined
-    # in Cell 1. It is not a notebook or job parameter.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Limit table names included in the Workflow exception.
+    # ----------------------------------------------------------------------------------------------
 
     alert_table_names = affected_table_names[
         :MAX_TABLES_IN_MESSAGE
     ]
+
 
     table_list_text = ", ".join(
         str(table_name)
@@ -882,13 +958,14 @@ else:
         table_list_text = "Table names unavailable"
 
 
-    # -----------------------------------------------------------
-    # Create the issue summary for the failure message.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Build issue summary text.
+    # ----------------------------------------------------------------------------------------------
 
     issue_summary_parts = []
 
-    for issue_type in ISSUE_DISPLAY_ORDER:
+
+    for issue_type in issue_types_for_output:
 
         issue_count = issue_counts.get(
             issue_type,
@@ -911,12 +988,13 @@ else:
         issue_summary_text = "Issue details unavailable"
 
 
-    # -----------------------------------------------------------
-    # Build the final Workflow failure message.
+    # ----------------------------------------------------------------------------------------------
+    # Build final Workflow failure message.
     #
-    # Use PIPELINE_DASHBOARD_URL directly. Do not create or use
-    # dashboard_url_for_alert.
-    # -----------------------------------------------------------
+    # IMPORTANT:
+    #   Keep this relatively concise because it becomes part of the Databricks
+    #   task failure information.
+    # ----------------------------------------------------------------------------------------------
 
     error_message = (
         "BQ -> UC PIPELINE ALERT | "
@@ -931,63 +1009,44 @@ else:
     )
 
 
-    # -----------------------------------------------------------
-    # Confirm the dashboard URL is present in the final message.
-    # -----------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
+    # Validate dashboard URL is included in the failure information.
+    # ----------------------------------------------------------------------------------------------
 
-    if str(PIPELINE_DASHBOARD_URL) not in error_message:
+    if PIPELINE_DASHBOARD_URL not in error_message:
 
         raise RuntimeError(
             "PIPELINE MONITORING CONFIGURATION ERROR: "
-            "The dashboard URL was not included in the "
-            "Workflow alert message."
+            "Monitoring dashboard URL is missing from "
+            "the Workflow failure message."
         )
 
 
+    # ----------------------------------------------------------------------------------------------
+    # Print the exact failure information that will appear in the task output.
+    # ----------------------------------------------------------------------------------------------
+
     print(sub_separator)
-    print("WORKFLOW ALERT MESSAGE")
+    print("WORKFLOW FAILURE MESSAGE")
     print(sub_separator)
 
     print(error_message)
+
     print(separator)
 
 
-    # -----------------------------------------------------------
-    # Intentionally fail the Databricks Workflow task.
+    # ==============================================================================================
+    # INTENTIONAL WORKFLOW FAILURE
     #
-    # This activates the configured retry and Microsoft Teams
-    # failure notification.
-    # -----------------------------------------------------------
+    # DO NOT REMOVE THIS.
+    #
+    # This is what marks the Databricks task FAILED.
+    # The configured Microsoft Teams failure notification is then triggered.
+    # ==============================================================================================
 
     raise RuntimeError(error_message)
 
 
-facing this error :
 
-====================================================================================================
-BQ -> UC PIPELINE MONITORING RESULT
-====================================================================================================
-Status                   : FAIL
-Run date                 : 2026-09-08
-Affected table count     : 1
-Table-issue combinations : 1
-Monitoring view          : prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily
-Monitoring dashboard     : https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188
-----------------------------------------------------------------------------------------------------
-ISSUE SUMMARY
-----------------------------------------------------------------------------------------------------
-Schema Change         : 1
-----------------------------------------------------------------------------------------------------
-AFFECTED BQ TABLES
-----------------------------------------------------------------------------------------------------
- 1. mrt_paidsocial_pivot
-----------------------------------------------------------------------------------------------------
-RESULT
-----------------------------------------------------------------------------------------------------
-1 issue detected across 1 table.
-Review prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily for detailed issue information.
-----------------------------------------------------------------------------------------------------
-WORKFLOW ALERT MESSAGE
-----------------------------------------------------------------------------------------------------
-BQ -> UC PIPELINE ALERT | Status: FAIL | Run Date: 2026-09-08 | Affected Tables: 1 | Table-Issue Combinations: 1 | Issue Summary: Schema Change: 1 | Tables: mrt_paidsocial_pivot | Dashboard: https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188 | Details View: prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily
-====================================================================================================
+
+
