@@ -1,1 +1,33 @@
-Since we want to construct the Teams payload using the monitoring output, do we have access to the webhook endpoint URL so we can send the custom alert from the existing monitoring flow?
+Our monitoring notebook runs queries to identify table-level issues and generates a summary of the affected tables. We are working to send these alerts to a Teams channel for easier monitoring and investigation. So there isn't any new notebook being created for this. 
+ 
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines. 
+ 
+Labs are created for analytical purposes in a sandbox environment that doesn’t support external configuration or notifications for jobs.
+ 
+Qamar, Khalid
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines.
+
+ya you need to rely on pipeline or job notifications that can be configured on failures
+ 
+Divi, Naren
+ya you need to rely on pipeline or job notifications that can be configured on failures
+That's what is being used.
+ 
+No new notebook is being created for this. I just want you to showcase the notebook output as the payload for the teams channel alert. The current alert being generated is too vague and not very informational.
+ 
+ok
+ 
+Sounds good. Since we want to construct the Teams payload using the monitoring output, can you please provide us with the webhook endpoint URL so we can send the custom alert from the existing monitoring flow?
+ 
+You cannot send that custom alert. Instead, you need to rely on Databricks-supported alerts, which is a limitation.
+ 
+If the Teams alert does not show any details, it may not be very useful. 
+ 
+Our notebook already creates this output, so we would like to show at least a summary of it in the alert.
+ 
+ 
+ 
+ 
+ 
+Unfortunately, that’s a limitation of this sandbox workspace.
+ 
