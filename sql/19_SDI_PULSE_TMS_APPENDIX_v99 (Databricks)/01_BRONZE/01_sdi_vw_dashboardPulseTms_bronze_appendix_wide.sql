@@ -78,11 +78,31 @@ CHANGE LOG:
     "[No Flow Filter]" / "Broadest universe across all product areas." like every other block.
   - eligibilityChecksCompleted intentionally carries no apx_data_source_label pointer beyond
     "PENDING" -- this metric has no live data_source/metric_name in gold_unified_long yet.
-  - Refresh-cadence text for the 16 Adobe-sourced rows is carried through as "Daily at 9 AM PT"
-    from the source doc, which is QGP's cadence -- a dashboard screenshot Khalid provided shows
-    "Daily at 7 AM PST" for upvTotalAdobe specifically, suggesting this needs correcting before
-    it ships; flagged inline on each affected row rather than silently changed, since the correct
-    real-world cadence hasn't been confirmed yet.
+  - RESOLVED this version: Adobe's real refresh cadence confirmed by Khalid as "Weekly, twice
+    on Monday (morning and afternoon), via the Databricks-scheduled job for the PulseTMS
+    architecture," replacing two different placeholder texts across the 17 Adobe-sourced rows
+    (four rows previously said "Weekly, each time the UPV forecast notebook is run," which was
+    actually describing UPV Forecast's cadence, not Adobe Actuals' own; the other thirteen
+    inherited a QGP-style "Daily at 9 AM PT" caveat that never applied to Adobe at all). Also
+    fixed three QGP-sourced rows (vrCalls, vrChats, storeTraffic) that had picked up the same
+    stray "see notes on this doc's Adobe-cadence text" caveat despite having nothing to do
+    with Adobe, they now read a plain "Daily at 9 AM PT" like every other QGP row.
+    upvForecast gets its own distinct text: "Updated when new forecasts are available,
+    typically on a quarterly planning cycle."
+  - REFINED this version: Adobe's refresh text now names the specific scheduled job rather than
+    the pipeline generically, "...via the Databricks-scheduled job for the Adobe Funnel
+    architecture" (was "...for the PulseTMS architecture"). Applied to all 17 Adobe-sourced
+    rows' apx_refresh_cadence plus the 3 rows carrying an inline Refresh build block
+    (upvTotalAdobe, ordersUnassistedTotal, ordersAssistedTotal).
+  - CORRECTED this version: all 8 QGP-sourced rows (vrCalls, vrChats, storeTraffic,
+    activationsBopis, vrPostpaidActivations, and the 3 digitalPct rows) previously said
+    "Daily at 9 AM PT" - genuinely wrong, not just imprecise. Confirmed correct cadence:
+    "Weekly, via the Databricks-scheduled job for the QGP Archive architecture." Applied to
+    both apx_refresh_cadence and each row's inline Refresh build block.
+  - Considered, then deferred this session: pointing the 17 Adobe-sourced rows' apx_source_table
+    at a new physical Gold table instead of gold_unified_long. Khalid's call: stay on the view
+    for now, a physical Adobe-specific Gold table is a real transition to make later, not yet -
+    apx_source_table for these 17 rows is unchanged, still gold_unified_long.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
@@ -161,7 +181,7 @@ Broadest universe across all product areas.
 Running average of weekly actuals from Q2 start.
 
 [Refresh]
-Weekly, each time the UPV forecast notebook is run.', '[T-Mobile Network Visitors]
+Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', '[T-Mobile Network Visitors]
 Visitors on the T-Mobile cellular network.
 
 [Authenticated/LOA Sessions]
@@ -177,7 +197,7 @@ Sessions with only one page view.
 iOS/Android T-Life, MyT-Mobile, Metro app sessions.
 
 [TFB Pages]
-b2b, Atwork, /business, /t-priority URL paths.', 'Weekly, each time the UPV forecast notebook is run', NULL, NULL, array('prospect', 'nonBounced', 'uniqueVisitors', 'visit', 'hit', 'tfb', 'loa'), 3
+b2b, Atwork, /business, /t-priority URL paths.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('prospect', 'nonBounced', 'uniqueVisitors', 'visit', 'hit', 'tfb', 'loa'), 3
  UNION ALL
   SELECT 'upvForecast', 'Metric', 'Top Funnel', 'UPV', 'UPV Forecasts', 'All Flows', FALSE, NULL, NULL, 'Silver procedure: sdi_sp_dashboardPulseTms_silver_upvForecast_weekly', 'prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly', 'Khalid / Ben', 'A quarterly-uploaded weekly estimate of expected UPV, used to benchmark whether actual traffic is tracking ahead or behind plan.', NULL, '[Bronze Upload]
 Populated via a manual CSV upload through a Databricks notebook (upvForecast_bronze_upload.py), ad hoc, no fixed schedule, until the forecasting team has a proper feed.
@@ -190,7 +210,7 @@ All Channels receives the full Bronze value (allocation_ratio = 1.0), passthroug
 
 [Act vs Fcst (Absolute)]
 Actuals minus Forecast in raw visitor count.', '[Channel Allocation Status]
-Channel-level allocation is not yet live - only the All Channels rollup carries a value today.', 'Manual / ad hoc - after each quarterly CSV upload', NULL, NULL, array('mfc'), 4
+Channel-level allocation is not yet live - only the All Channels rollup carries a value today.', 'Updated when new forecasts are available, typically on a quarterly planning cycle.', NULL, NULL, array('mfc'), 4
  UNION ALL
   SELECT 'upvPostpaid', 'Metric', 'Top Funnel', 'UPV', 'UPV - Postpaid Flow', 'Postpaid', TRUE, 'upvTotalAdobe', FALSE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Distinct non-bounced visitors who browsed the core Postpaid phone/plan shopping experience, with HSI pages excluded.', 'Cannot be summed with the HSI and BYOD flows to equal UPV Actuals (Overall) - see that row''s warning for why.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -218,7 +238,7 @@ Used as denominator for Cart Postpaid CVR% and Orders Postpaid CVR%.', '[HSI Pag
 Excludes all HSI page hits (HINT page names, /isp/ and /home-internet/ URLs, Site Section = HINT, Product Type = ISP).
 
 [Prospect Filters]
-All prospect qualifier filters (Layers 1-4) also applied.', 'Weekly, each time the UPV forecast notebook is run', NULL, NULL, array('prospect', 'nonBounced', 'hsi', 'productType'), 5
+All prospect qualifier filters (Layers 1-4) also applied.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('prospect', 'nonBounced', 'hsi', 'productType'), 5
  UNION ALL
   SELECT 'upvHsi', 'Metric', 'Top Funnel', 'UPV', 'UPV - HSI Flow', 'Home Internet (HSI)', TRUE, 'upvTotalAdobe', FALSE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Distinct non-bounced visitors who browsed T-Mobile Home Internet pages - the prospect audience for the internet service offering.', 'Cannot be summed with the Postpaid and BYOD flows to equal UPV Actuals (Overall) - see that row''s warning for why.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -246,7 +266,7 @@ Scoped to visits containing any HSI page hit.
 All prospect filters (Layers 1-4) applied.
 
 [Overlap Note]
-Not mutually exclusive from Postpaid or BYOD at visit level.', 'Weekly, each time the UPV forecast notebook is run', NULL, NULL, array('prospect', 'nonBounced', 'hsi', 'productType'), 6
+Not mutually exclusive from Postpaid or BYOD at visit level.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('prospect', 'nonBounced', 'hsi', 'productType'), 6
  UNION ALL
   SELECT 'upvByod', 'Metric', 'Top Funnel', 'UPV', 'UPV - BYOD Flow', 'BYOD', TRUE, 'upvTotalAdobe', FALSE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Distinct non-bounced visitors who browsed BYOD or device-switching pages - prospects exploring how to bring an existing device to T-Mobile.', 'Cannot be summed with the Postpaid and HSI flows to equal UPV Actuals (Overall) - see that row''s warning for why.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -274,7 +294,7 @@ Scoped to visits containing any BYOD or SIM card page hit.
 All prospect filters (Layers 1-4) applied.
 
 [Overlap Note]
-Not mutually exclusive from other flows at visit level.', 'Weekly, each time the UPV forecast notebook is run', NULL, NULL, array('prospect', 'nonBounced', 'byod'), 7
+Not mutually exclusive from other flows at visit level.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('prospect', 'nonBounced', 'byod'), 7
  UNION ALL
   SELECT 'vrCalls', 'Metric', 'Mid Funnel', 'Actions', 'VR Calls', 'All / Postpaid', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP)', 'prdrzrlakehouse.qgp_restricted.qgpweeklyview', 'Preeti Laharwani / Bharat Kavuru', 'Phone calls placed by customers clicking a T-Mobile.com phone number to get live sales help - a direct signal of high purchase intent.', NULL, '[Source]
 QGP operational data - entirely separate from Adobe Analytics. No Adobe segment filtering applies.
@@ -295,8 +315,8 @@ QGP provides both weekly actuals and a weekly forecast (VR Calls QGP).
 Running total from Q2 start.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
-No Adobe segment filtering. QGP operational data only.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('qgp', 'vr'), 8
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
+No Adobe segment filtering. QGP operational data only.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp', 'vr'), 8
  UNION ALL
   SELECT 'vrChats', 'Metric', 'Mid Funnel', 'Actions', 'VR Chats', 'All / Postpaid', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP)', 'prdrzrlakehouse.qgp_restricted.qgpweeklyview', 'Preeti Laharwani / Bharat Kavuru', 'Chat conversations initiated by customers on T-Mobile.com with Virtual Retail sales agents - indicating purchase-ready engagement.', NULL, '[Source]
 QGP operational data - no Adobe segment filtering.
@@ -314,8 +334,8 @@ QGP provides both actuals and a weekly forecast.
 (Actuals - QGP Forecast) / QGP Forecast.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
-No Adobe segment filtering. QGP operational data only.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('qgp', 'vr'), 9
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
+No Adobe segment filtering. QGP operational data only.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp', 'vr'), 9
  UNION ALL
   SELECT 'storeTraffic', 'Metric', 'Mid Funnel', 'Actions', 'Exit Traffic (Door Swings)', 'Retail', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP)', 'prdrzrlakehouse.qgp_restricted.qgpweeklyview', 'Preeti Laharwani / Bharat Kavuru', 'Total customer entries/exits at T-Mobile retail stores each week, measured by door-swing sensors - a proxy for offline foot traffic driven by digital awareness.', NULL, '[Source]
 QGP operational data sourced from retail door-swing sensor hardware - no Adobe segment filtering.
@@ -333,11 +353,11 @@ QGP provides both actuals and a weekly forecast.
 (Actuals - QGP Forecast) / QGP Forecast.
 
 [Refresh]
-Daily at 9 AM PT.', '[Sensor Scope]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[Sensor Scope]
 Retail sensor data - no Adobe filtering.
 
 [Outcome Scope]
-Counts all store visits regardless of purchase outcome.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('qgp'), 10
+Counts all store visits regardless of purchase outcome.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp'), 10
  UNION ALL
   SELECT 'eligibilityChecksCompleted', 'Metric', 'Mid Funnel', 'Actions', 'Eligibility Checks Completed', 'Home Internet (HSI)', FALSE, NULL, NULL, 'Adobe Analytics -> Databricks (PENDING - not yet in the pipeline)', NULL, 'khalid.qamar1 (pipeline)', 'Prospects who ran a T-Mobile Home Internet availability check and got a result back - the first hard signal of HSI purchase intent, ahead of any cart activity.', 'PENDING - not yet live in gold_unified_long. This card documents the intended design only; no data currently backs it.', '[Status]
 PENDING - this metric is not yet live anywhere in gold_unified_long. No data_source/metric_name exists for it today.
@@ -389,7 +409,7 @@ Add to Cart / UPV Actuals.', '[Prospect Filters]
 All prospect filters applied.
 
 [Flow Exclusions]
-Flow-specific exclusions detailed in each sub-flow row.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('prospect', 'scOpenScAdd', 'cvr'), 12
+Flow-specific exclusions detailed in each sub-flow row.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('prospect', 'scOpenScAdd', 'cvr'), 12
  UNION ALL
   SELECT 'cartstartPostpaid', 'Metric', 'Mid Funnel', 'Actions', 'Cart - Postpaid Flow', 'Postpaid', TRUE, 'cartstartTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Visits in which a prospect started or added to a cart on the Postpaid phone/plan path, with all HSI and BYOD cart activity removed.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -426,7 +446,7 @@ Sums with Cart HSI + Cart BYOD = Add to Cart total.', '[HSI/BYOD Removal]
 Removes HSI and BYOD cart actions.
 
 [Existing Customer Scrub]
-Additional existing-customer signal scrub beyond standard prospect filters (MSISDN, tracking codes, Sprint site, Customer Indicators).', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('flowName', 'productType', 'scOpenScAdd', 'cvr'), 13
+Additional existing-customer signal scrub beyond standard prospect filters (MSISDN, tracking codes, Sprint site, Customer Indicators).', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('flowName', 'productType', 'scOpenScAdd', 'cvr'), 13
  UNION ALL
   SELECT 'cartstartHsi', 'Metric', 'Mid Funnel', 'Actions', 'Cart - HSI Flow', 'Home Internet (HSI)', TRUE, 'cartstartTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Visits in which a prospect engaged with the Home Internet cart - indicating intent to purchase T-Mobile''s internet service.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -454,7 +474,7 @@ Part of Add to Cart total.', '[Scope Requirement]
 Requires ISP product type AND active HSI prospect flow signal.
 
 [Fire Condition]
-Will not fire for general HSI browsing without checkout intent.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('hsi', 'flowName', 'productType', 'cvr'), 14
+Will not fire for general HSI browsing without checkout intent.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('hsi', 'flowName', 'productType', 'cvr'), 14
  UNION ALL
   SELECT 'cartstartByod', 'Metric', 'Mid Funnel', 'Actions', 'Cart - BYOD Flow', 'BYOD', TRUE, 'cartstartTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Visits in which a prospect started a cart on the BYOD/SIM path - bringing an existing device to T-Mobile.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -482,7 +502,7 @@ Part of Add to Cart total.', '[Product Scope]
 Scoped to SIM card product type with active prospect activation flow.
 
 [Exclusion Scope]
-Excludes Postpaid device and HSI cart actions.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('byod', 'flowName', 'productType', 'scOpenScAdd', 'cvr'), 15
+Excludes Postpaid device and HSI cart actions.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('byod', 'flowName', 'productType', 'scOpenScAdd', 'cvr'), 15
  UNION ALL
   SELECT 'ordersUnassistedTotal', 'Metric', 'Bottom Funnel', 'Orders (Unassisted)', 'Orders (Unassisted)', 'Postpaid + HSI + BYOD', TRUE, 'ordersTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Total orders completed entirely online with no T-Mobile employee involvement - the purest measure of self-serve digital conversion.', NULL, '[Derived Total]
 Orders (Unassisted) = Orders Unassisted - Postpaid Flow + Orders Unassisted - HSI Flow + Orders Unassisted - BYOD Flow. Orders flows CAN be summed - each uses mutually exclusive product/flow filtering.
@@ -503,14 +523,14 @@ Unassisted Proxy EXCLUDES visits where any in-store or screen-share signal above
 Orders (Unassisted) / UPV Actuals.
 
 [Refresh]
-Daily at 9 AM PT.', '[In-Store Orders]
+Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', '[In-Store Orders]
 Removes in-store-assisted orders (modal, shipping method, tracking code).
 
 [Screen-Share Sessions]
 Removes screen-share sessions.
 
 [Android Ghost Hits]
-Removes Android native app ghost order hits (no Order ID).', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('unassisted', 'androidGhostHit', 'cvr'), 16
+Removes Android native app ghost order hits (no Order ID).', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('unassisted', 'androidGhostHit', 'cvr'), 16
  UNION ALL
   SELECT 'ordersUnassistedPostpaid', 'Metric', 'Bottom Funnel', 'Orders (Unassisted)', 'Orders Unassisted - Postpaid Flow', 'Postpaid', TRUE, 'ordersUnassistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Orders completed on the Postpaid phone/plan path with no employee assistance - the core digital new-customer acquisition conversion.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -553,7 +573,7 @@ Excludes in-store/screen-share sessions.
 All prospect filters applied.
 
 [Android Ghost Hits]
-Excludes Android native app ghost hits (missing Order ID).', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('sdiActivationIntent', 'flowName', 'productType', 'androidGhostHit', 'cvr'), 17
+Excludes Android native app ghost hits (missing Order ID).', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('sdiActivationIntent', 'flowName', 'productType', 'androidGhostHit', 'cvr'), 17
  UNION ALL
   SELECT 'ordersUnassistedHsi', 'Metric', 'Bottom Funnel', 'Orders (Unassisted)', 'Orders Unassisted - HSI Flow', 'Home Internet (HSI)', TRUE, 'ordersUnassistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Home Internet orders completed fully online by a prospect - confirming a new HSI subscriber acquired through the digital channel.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -584,7 +604,7 @@ Part of Orders (Unassisted) total.', '[Scope Requirement]
 Requires ISP product type AND HSI activation flow - will not count Postpaid or BYOD orders.
 
 [Proxy Applied]
-Unassisted proxy also applied.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('hsi', 'sdiActivationIntent', 'flowName', 'productType', 'cvr'), 18
+Unassisted proxy also applied.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('hsi', 'sdiActivationIntent', 'flowName', 'productType', 'cvr'), 18
  UNION ALL
   SELECT 'ordersUnassistedByod', 'Metric', 'Bottom Funnel', 'Orders (Unassisted)', 'Orders Unassisted - BYOD Flow', 'BYOD', TRUE, 'ordersUnassistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'SIM card/eSIM activations completed fully online by prospects bringing their own device to T-Mobile.', NULL, '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -621,7 +641,7 @@ Scoped to SIM/eSIM product names with activation intent.
 Android ghost hit exclusion applied.
 
 [Proxy Applied]
-Unassisted proxy also applied.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('byod', 'sdiActivationIntent', 'flowName', 'androidGhostHit', 'cvr'), 19
+Unassisted proxy also applied.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('byod', 'sdiActivationIntent', 'flowName', 'androidGhostHit', 'cvr'), 19
  UNION ALL
   SELECT 'ordersAssistedTotal', 'Metric', 'Bottom Funnel', 'Orders (Assisted)', 'Orders (Assisted)', 'Postpaid + HSI + BYOD', TRUE, 'ordersTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Total orders completed with T-Mobile in-store staff or screen-share agent assistance - measuring the digital-to-assisted channel conversion where an employee helped close the sale.', NULL, '[Derived Total]
 Orders (Assisted) = Orders Assisted - Postpaid Flow + Orders Assisted - HSI Flow + Orders Assisted - BYOD Flow. Assisted flows CAN be summed - same mutually exclusive product/flow scoping as unassisted flows.
@@ -642,11 +662,11 @@ Assisted Proxy INCLUDES visits where any in-store or screen-share signal above i
 Orders (Assisted) / UPV Actuals.
 
 [Refresh]
-Daily at 9 AM PT.', '[Scope]
+Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', '[Scope]
 Scoped exclusively to sessions with confirmed in-store or screen-share assist signals.
 
 [Prospect Filters]
-Universal and prospect filters still applied.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('assisted', 'cvr'), 20
+Universal and prospect filters still applied.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('assisted', 'cvr'), 20
  UNION ALL
   SELECT 'ordersAssistedPostpaid', 'Metric', 'Bottom Funnel', 'Orders (Assisted)', 'Orders Assisted - Postpaid Flow', 'Postpaid', TRUE, 'ordersAssistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Postpaid orders completed with in-store or screen-share employee assistance - showing how much of Postpaid conversion volume flows through the assisted digital channel.', 'REQUIRES the assisted proxy signal (in-store or screen-share). Unassisted sessions are excluded entirely from this metric, not merely deprioritized.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -686,7 +706,7 @@ Excludes HSI and BYOD orders.
 Excludes Android ghost hits.
 
 [Proxy Requirement]
-REQUIRES assisted proxy signal - unassisted sessions are excluded from this metric.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('assisted', 'sdiActivationIntent', 'flowName', 'androidGhostHit', 'cvr'), 21
+REQUIRES assisted proxy signal - unassisted sessions are excluded from this metric.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('assisted', 'sdiActivationIntent', 'flowName', 'androidGhostHit', 'cvr'), 21
  UNION ALL
   SELECT 'ordersAssistedHsi', 'Metric', 'Bottom Funnel', 'Orders (Assisted)', 'Orders Assisted - HSI Flow', 'Home Internet (HSI)', TRUE, 'ordersAssistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Home Internet orders completed with in-store or screen-share employee assistance - confirming HSI conversions driven through the assisted digital channel.', 'REQUIRES the assisted proxy signal (in-store or screen-share). Unassisted sessions are excluded entirely from this metric, not merely deprioritized.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -717,7 +737,7 @@ Part of Orders (Assisted) total.', '[Scope Requirement]
 Requires ISP product type AND HSI activation flow.
 
 [Proxy Requirement]
-REQUIRES assisted proxy signal - unassisted sessions excluded.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('hsi', 'assisted', 'flowName', 'productType', 'cvr'), 22
+REQUIRES assisted proxy signal - unassisted sessions excluded.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('hsi', 'assisted', 'flowName', 'productType', 'cvr'), 22
  UNION ALL
   SELECT 'ordersAssistedByod', 'Metric', 'Bottom Funnel', 'Orders (Assisted)', 'Orders Assisted - BYOD Flow', 'BYOD', TRUE, 'ordersAssistedTotal', TRUE, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'BYOD/SIM activations completed with in-store or screen-share employee assistance - showing assisted conversion on the device-switching path.', 'REQUIRES the assisted proxy signal (in-store or screen-share). Unassisted sessions are excluded entirely from this metric, not merely deprioritized.', '[Universal Filters]
 DDM - Exclude Data Issue + [DA] Web Visits + [sdi] Postpaid (Exclude TFB).
@@ -754,7 +774,7 @@ Scoped to SIM/eSIM product names with activation intent.
 Android ghost hit exclusion applied.
 
 [Proxy Requirement]
-REQUIRES assisted proxy signal.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('byod', 'assisted', 'flowName', 'androidGhostHit', 'cvr'), 23
+REQUIRES assisted proxy signal.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('byod', 'assisted', 'flowName', 'androidGhostHit', 'cvr'), 23
  UNION ALL
   SELECT 'ordersTotal', 'Metric', 'Bottom Funnel', 'Orders', 'Orders (Overall)', 'Postpaid + HSI + BYOD, Unassisted + Assisted', FALSE, NULL, NULL, 'Adobe Analytics -> Databricks', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long', 'Khalid / Ben', 'Total completed digital prospect orders across every purchase path, self-serve and employee-assisted combined - the single top-line conversion number for the funnel.', NULL, '[Derived Total]
 Orders (Overall) = Orders (Unassisted) + Orders (Assisted). Corresponds directly to metric_name = ordersTotal in gold_unified_long, already computed there as ordersUnassistedTotal + ordersAssistedTotal.
@@ -767,7 +787,7 @@ Orders (Overall) / UPV Actuals.', '[Composite Scope]
 Sums Orders (Unassisted) and Orders (Assisted) - see each row''s own exclusions.
 
 [Independent Logic]
-No independent filtering logic beyond what those two already apply.', 'Daily at 9 AM PT (source cadence, see notes on this doc''s Adobe-cadence text vs deployed Silver schedule)', NULL, NULL, array('unassisted', 'assisted', 'cvr'), 24
+No independent filtering logic beyond what those two already apply.', 'Weekly, twice on Monday (morning and afternoon), via the Databricks-scheduled job for the Adobe Funnel architecture.', NULL, NULL, array('unassisted', 'assisted', 'cvr'), 24
  UNION ALL
   SELECT 'activationsBopis', 'Metric', 'Bottom Funnel', 'New BANs & VR Conversions', 'New BANs - Digital Unassisted', 'Consumer Postpaid', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP)', 'prdrzrlakehouse.qgp_restricted.qgpweeklyview', 'Preeti Laharwani / Bharat Kavuru; Forecast: Sheenu Thakran''s team', 'New billing accounts activated through digital self-serve - operational confirmation that a digital order resulted in a new T-Mobile Postpaid line being turned on.', NULL, '[Source]
 QGP operational data - no Adobe segment filtering.
@@ -791,11 +811,11 @@ QGP provides actuals and a weekly forecast (Sheenu Thakran''s team).
 New BANs Dig. Unassist / total Consumer Postpaid new BANs (digital + assisted combined).
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
 QGP operational metric - no Adobe filtering.
 
 [Scope]
-Counts Digital No Assistance (self-serve) activations only.', 'Daily at 9 AM PT', NULL, NULL, array('qgp', 'ban'), 25
+Counts Digital No Assistance (self-serve) activations only.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp', 'ban'), 25
  UNION ALL
   SELECT 'vrPostpaidActivations', 'Metric', 'Bottom Funnel', 'New BANs & VR Conversions', 'VR New BANs', 'Consumer Postpaid', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP)', 'prdrzrlakehouse.qgp_restricted.qgpweeklyview', 'Preeti Laharwani / Bharat Kavuru', 'New billing accounts activated with help from a T-Mobile Virtual Retail agent - measuring the conversion output of the assisted digital channel.', 'VR New BANs typically far exceed Digital Unassisted BANs. This reflects VR channel outperformance, not a data quality issue.', '[Source]
 QGP operational data - no Adobe segment filtering.
@@ -816,11 +836,11 @@ QGP provides actuals and a weekly forecast.
 VR New BANs typically far exceed Digital Unassisted BANs - VR-assisted journeys have a higher close rate. Strong positive variance reflects VR outperformance, not a data error.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
 QGP operational metric - no Adobe filtering.
 
 [Scope]
-Counts only VR-assisted (chat/call) activations.', 'Daily at 9 AM PT', NULL, NULL, array('qgp', 'ban', 'vr'), 26
+Counts only VR-assisted (chat/call) activations.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp', 'ban', 'vr'), 26
  UNION ALL
   SELECT 'digitalPctConsumerPostpaidActivationsTotalInclAssisted', 'Metric', 'Bottom Funnel', 'New BANs & VR Conversions', 'Digital % of Phone New Account Activations - Total (No Assistance + Assistance)', 'Consumer Postpaid - Phone, New Accounts', FALSE, NULL, NULL, 'Quarterly Game Plan (QGP), curated via QGP Archive Gold', 'prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly', 'Preeti Laharwani / Bharat Kavuru', 'The share of all new Consumer Postpaid phone accounts activated through digital - self-serve and rep-assisted combined. The headline digital-penetration number, and the only one of the three carrying a QGP target.', NULL, '[Source]
 QGP operational data, curated through the QGP Archive pipeline - no Adobe segment filtering. The ratio arrives pre-calculated from QGP; this table only carries it through.
@@ -838,7 +858,7 @@ Equals No Assistance % + Assistance % exactly - both share this denominator.
 (Actuals - Target) / Target. Future weeks carry an Outlook equal to the Target.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
 No Adobe segment filtering. QGP operational data only.
 
 [Denominator Scope]
@@ -848,7 +868,7 @@ Denominator excludes National Retail Indirect.
 New-account phone activations only - excludes AALs, upgrades, BTS, Broadband, Fiber.
 
 [Ratio Caveat]
-A ratio - do not sum across weeks.', 'Daily at 9 AM PT', NULL, NULL, array('qgp'), 27
+A ratio - do not sum across weeks.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp'), 27
  UNION ALL
   SELECT 'digitalPctNoAssistanceActivations', 'Metric', 'Bottom Funnel', 'New BANs & VR Conversions', 'Digital % of Phone New Account Activations - No Assistance', 'Consumer Postpaid - Phone, New Accounts', TRUE, 'digitalPctConsumerPostpaidActivationsTotalInclAssisted', TRUE, 'Quarterly Game Plan (QGP), curated via QGP Archive Gold', 'prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly', 'Preeti Laharwani / Bharat Kavuru', 'The share of new Consumer Postpaid phone accounts customers activated digitally with no rep involvement.', 'BOPIS counts as No Assistance here - the opposite of how [DA] Unassisted Proxy treats in-store signals elsewhere on this dashboard. No QGP target exists for this metric.', '[Source]
 QGP operational data, curated via QGP Archive - no Adobe segment filtering. The ratio arrives pre-calculated from QGP.
@@ -866,7 +886,7 @@ WE 8/15/26: 15,306 / 145,900 = 10.5%.
 No QGP target or Outlook - actuals only.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
 No Adobe segment filtering. QGP operational data only.
 
 [BOPIS Treatment]
@@ -876,7 +896,7 @@ BOPIS counts as No Assistance here - the opposite of how Adobe''s [DA] Unassiste
 New-account phone activations only.
 
 [Future Weeks]
-Blank on future weeks.', 'Daily at 9 AM PT', NULL, NULL, array('qgp'), 28
+Blank on future weeks.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp'), 28
  UNION ALL
   SELECT 'digitalPctAssistanceActivations', 'Metric', 'Bottom Funnel', 'New BANs & VR Conversions', 'Digital % of Phone New Account Activations - Assistance', 'Consumer Postpaid - Phone, New Accounts', TRUE, 'digitalPctConsumerPostpaidActivationsTotalInclAssisted', TRUE, 'Quarterly Game Plan (QGP), curated via QGP Archive Gold', 'prdrzranalytics.lab42.sdi_tbl_qgparchive_gold_curated_weekly', 'Preeti Laharwani / Bharat Kavuru', 'The share of new Consumer Postpaid phone accounts activated in digital with a rep assisting.', 'No QGP target exists for this metric - actuals only, blank on future weeks.', '[Source]
 QGP operational data, curated via QGP Archive - no Adobe segment filtering. The ratio arrives pre-calculated from QGP.
@@ -894,7 +914,7 @@ WE 8/15/26: 45,332 / 145,900 = 31.1%.
 No QGP target or Outlook - actuals only.
 
 [Refresh]
-Daily at 9 AM PT.', '[No Adobe Filtering]
+Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', '[No Adobe Filtering]
 No Adobe segment filtering. QGP operational data only.
 
 [Reconciliation Note]
@@ -904,7 +924,7 @@ Counts activations, not Adobe orders - will not reconcile to Orders (Assisted).
 New-account phone activations only.
 
 [Future Weeks]
-Blank on future weeks.', 'Daily at 9 AM PT', NULL, NULL, array('qgp'), 29
+Blank on future weeks.', 'Weekly, via the Databricks-scheduled job for the QGP Archive architecture.', NULL, NULL, array('qgp'), 29
  UNION ALL
   SELECT 'postpaid', 'Glossary', NULL, 'Product / LOB', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Postpaid', 'T-Mobile''s core consumer wireless service (pay monthly after usage). In Pulse: visitors and transactions on phone/plan/device pages - excluding HSI, BYOD, T-Mobile for Business, and B2B. Defined as Site Name (v18) = TMO, with TFB/b2b/Atwork/business/t-priority paths removed.', CAST(array() AS ARRAY<STRING>), 30
  UNION ALL
