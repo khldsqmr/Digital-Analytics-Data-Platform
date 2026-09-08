@@ -1,1 +1,3 @@
-earlier you mentioned that for custom formatting we’d need to construct the request body. My understanding was that this meant we could send a custom payload to the Teams webhook.
+Wanted to discuss this about custom formatting requiring us to construct the request body. 
+
+My understanding was that this meant we could send a custom payload to the Teams webhook. And later you said that 
