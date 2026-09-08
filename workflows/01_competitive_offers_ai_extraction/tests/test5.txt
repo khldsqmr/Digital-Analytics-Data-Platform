@@ -1,3 +1,61 @@
-That makes sense. Since we already have the monitoring notebook scheduled and it’s generating the exact issue details we need, would you be okay with us sending a concise custom payload from that existing flow rather than relying on the default Databricks Teams card?
+Hi Divi, Naren, it’s working now, thanks! 
+ 
+The only thing is the current Teams alert is the default Databricks format, so it’s a bit messy. Would it be possible to customize it to show just the key details like run date, issue type / affected tables, and a link to the monitoring dashboard?
+ 
+For example:
+ 
+BQ → UC Pipeline Alert
 
-Something like: run date, issue type, affected table(s), and the monitoring dashboard link. It would make the alert much more actionable without creating any additional notebook.
+Status: Failed
+
+Run Date: 2026-09-08
+
+Issue: Schema Change
+
+Dashboard: [Monitoring Dashboard Link] 
+ 
+Something along these lines would make the alert much easier to read quickly.
+ 
+Qamar, Khalid
+Hi Divi, Naren, it’s working now, thanks!   The only thing is the current Teams alert is the default Databricks format, so it’s a bit messy. Would it be possible to customize it to show just the key…
+
+we can only configure notification destination for provided webhook
+ 
+Got it, thanks. So the formatting is controlled by Databricks when it posts to the webhook. 
+ 
+In that case, would it be possible to customize the Teams Workflow behind the webhook to transform the incoming payload into a shorter message? 
+ 
+If not, I can handle the custom alert directly from the monitoring databricks notebook.
+ 
+Qamar, Khalid
+Got it, thanks. So the formatting is controlled by Databricks when it posts to the webhook.   In that case, would it be possible to customize the Teams Workflow behind the webhook to transform the in…
+
+databricks doesn’t handle formatting you need to construct request body
+ 
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task. 
+ 
+Can you let me know where the webhook URL is stored (e.g. Databricks secret scope/key), so I can reference it without hardcoding it?
+ 
+Qamar, Khalid
+Got it. In that case, I can construct the request body in the monitoring notebook and send it to the webhook before failing the task.   Can you let me know where the webhook URL is stored (e.g. Datab…
+I understand you’re referring to monitoring. Could you provide more details about it? Are we creating notebooks specifically for monitoring? Ideally, we should use Databricks provided alerts or notification settings. Additionally, notebooks are intended for data analytics, so using them for monitoring would increase costs.
+ 
+Our monitoring notebook runs queries to identify table-level issues and generates a summary of the affected tables. We are working to send these alerts to a Teams channel for easier monitoring and investigation. So there isn't any new notebook being created for this. 
+ 
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines. 
+ 
+Labs are created for analytical purposes in a sandbox environment that doesn’t support external configuration or notifications for jobs.
+ 
+Qamar, Khalid
+This notebook is being scheduled which eventually would send notification to the team channels using the Databricks Jobs & Pipelines.
+
+ya you need to rely on pipeline or job notifications that can be configured on failures
+ 
+Divi, Naren
+ya you need to rely on pipeline or job notifications that can be configured on failures
+That's what is being used.
+ 
+No new notebook is being created for this. I just want you to showcase the notebook output as the payload for the teams channel alert. The current alert being generated is too vague and not very informational.
+ 
+ok
+ 
