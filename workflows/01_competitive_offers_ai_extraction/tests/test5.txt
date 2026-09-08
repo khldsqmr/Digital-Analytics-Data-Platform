@@ -1,3 +1,1 @@
-Wanted to discuss this about custom formatting requiring us to construct the request body. 
-
-My understanding was that this meant we could send a custom payload to the Teams webhook. And later you said that 
+Wanted to clarify one thing — earlier you mentioned that custom formatting would require us to construct the request body, which implied we could send a custom payload to the Teams webhook. Later you mentioned custom notifications aren’t supported in Labs. Those two points seem contradictory
