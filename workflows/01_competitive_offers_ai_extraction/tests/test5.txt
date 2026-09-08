@@ -1,1 +1,1 @@
-the Databricks job failure notification is working via email, but I’m not receiving the MS Teams alert from Lab42_SDITeamsAlert. Could you please check whether the Teams notification destination/webhook is still valid and configured correctly?
+Hey, I found the Teams channel and tested posting there successfully. The Databricks job is failing as expected and I’m receiving the failure email, but no alert is getting posted to this Teams channel. Could you please check if the Lab42_SDITeamsAlert webhook/destination is still active and pointing to this channel?
