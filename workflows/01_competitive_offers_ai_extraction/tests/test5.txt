@@ -1,1 +1,1 @@
-Hey, I found the Teams channel and tested posting there successfully. The Databricks job is failing as expected and I’m receiving the failure email, but no alert is getting posted to this Teams channel. Could you please check if the Lab42_SDITeamsAlert webhook/destination is still active and pointing to this channel?
+Do you know if Lab42_SDITeamsAlert is still using the old Teams Incoming Webhook/Office 365 Connector? Microsoft retired those in May 2026, so we may need to recreate it using the Teams Workflows webhook and update the Databricks notification destination URL.
