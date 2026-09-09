@@ -1,10 +1,14 @@
-BQ → UC Pipeline Alert - {{ALERT_STATUS}}
+SELECT
+    CASE
+        WHEN alert_trigger = 1
+        THEN CONCAT(
+            monitoring_status,
+            ' | Run Date: ', CAST(run_date AS STRING),
+            ' | Affected Tables: ', CAST(affected_table_count AS STRING),
+            ' | Issues: ', COALESCE(issue_summary, 'N/A'),
+            ' | Tables: ', COALESCE(affected_tables, 'N/A')
+        )
+        ELSE NULL
+    END AS alert_message
 
-
-BQ → UC Pipeline Monitoring
-
-{{QUERY_RESULT_VALUE}}
-
-Dashboard:
-https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188
-
+FROM prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
