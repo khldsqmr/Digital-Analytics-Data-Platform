@@ -1,10 +1,13 @@
 BQ → UC Pipeline Monitoring
 
 {{#QUERY_RESULT_ROWS}}
-Status: {{monitoring_status}}
-Run Date: {{run_date}}
-Affected Tables: {{affected_table_count}}
-Issues: {{issue_summary}}
-Tables: {{affected_tables}}
-Dashboard: {{monitoring_dashboard_url}}
+<br>Status: {{monitoring_status}}
+<br>Run Date: {{run_date}}
+<br>Affected Tables: {{affected_table_count}}
+<br>Issues: {{issue_summary}}
+<br>Tables: {{affected_tables}}
+<br>Dashboard: {{monitoring_dashboard_url}}
 {{/QUERY_RESULT_ROWS}}
+
+
+BQ → UC Pipeline Alert - {{ALERT_STATUS}}
