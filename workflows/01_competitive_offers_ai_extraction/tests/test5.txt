@@ -1,5 +1,12 @@
-Built as a separate stack alongside the main pipeline, not stacked into gold_unified_long, since it's a dimension/reference table (one row per metric definition) not a fact table (one row per week). Five objects:
+Currently deployed and running in the dashboard, this is the live appendix architecture.
 
-Bronze (bronze_appendix_wide): 54 hardcoded rows, 29 Metric + 25 Glossary, one row per apx_id
-Silver (silver_appendix_long): unpivots each metric's build logic and exclusions into one row per atomic fact (one filter, one formula, one exclusion clause each), not bundled paragraphs
-Gold appendix (gold_appendix_long): adds apx_display_name, apx_warning_message, apx_definition_text, apx_funnel_stage_key, the single denormalized table the whole Tableau panel runs off
+Appendix architecture, built as a separate stack alongside the main pipeline, not stacked into gold_unified_long, since it's a dimension/reference table (one row per metric definition) not a fact table (one row per week). Three objects, developed with the unified metric_name convention (camelCase, matching gold_unified_long exactly) so the content stays AI-crawlable and joinable later, not a separate naming scheme of its own:
+
+Bronze — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_bronze_appendix_wide: 54 hardcoded rows, 29 Metric + 25 Glossary, one row per apx_id
+Silver — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_silver_appendix_long: unpivots each metric's build logic and exclusions into one row per atomic fact (one filter, one formula, one exclusion clause each), not bundled paragraphs
+Gold appendix — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_appendix_long: adds apx_display_name, apx_warning_message, apx_definition_text, apx_funnel_stage_key, the single denormalized table the whole Tableau panel runs off
+
+Future development, not yet wired into anything, built earlier but held for later:
+
+Bridge table — prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_gold_appendixMetricBridge_weekly: maps apx_id to (data_source, metric_name, lob) in gold_unified_long, wildcarded on lob where a metric's definition doesn't vary by LOB
+Annotated view — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_metricAnnotated_long: pre-joins gold_unified_long against the bridge and appendix Bronze, intended for an agentic Genie/SQL-querying LLM, not for Tableau
