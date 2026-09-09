@@ -1,3 +1,43 @@
+WITH alert_data AS (
+
+    SELECT
+        *,
+
+        CONCAT_WS(
+            ' + ',
+
+            CASE
+                WHEN failed_table_count > 0
+                THEN 'Failed Tables'
+            END,
+
+            CASE
+                WHEN skipped_table_count > 0
+                THEN 'Skipped Tables'
+            END,
+
+            CASE
+                WHEN row_count_mismatch_count > 0
+                THEN 'Row-Count Mismatch'
+            END,
+
+            CASE
+                WHEN unknown_status_count > 0
+                THEN 'Unknown Status'
+            END,
+
+            CASE
+                WHEN schema_change_count > 0
+                THEN 'Schema Changes'
+            END
+
+        ) AS overall_status
+
+    FROM
+        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily
+
+)
+
 SELECT
 
     CASE
@@ -7,6 +47,17 @@ SELECT
         THEN CONCAT_WS(
 
             CHR(10),
+
+            --------------------------------------------------------
+            -- Overall Status
+            --------------------------------------------------------
+
+            CONCAT(
+                'Overall Status: ',
+                overall_status
+            ),
+
+            '',
 
             --------------------------------------------------------
             -- Run Information
@@ -91,7 +142,7 @@ SELECT
             END,
 
             --------------------------------------------------------
-            -- Schema Change
+            -- Schema Changes
             --------------------------------------------------------
 
             CASE
@@ -118,5 +169,14 @@ SELECT
 
     END AS alert_message
 
-FROM
-    prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
+FROM alert_data;
+
+
+
+
+BQ → UC Pipeline Monitoring Alert
+
+
+{{QUERY_RESULT_VALUE}}
+
+[Dashboard](https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188)
