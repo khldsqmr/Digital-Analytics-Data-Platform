@@ -34,13 +34,20 @@ SINGLE-TABLE DASHBOARD USAGE:
   appendix panel - no second wide view needed. Every worksheet points at this same table, only
   the row filter differs:
     - Item selector dropdown: filter on apx_record_type = [p_content_type], show apx_display_name
-    - Section 1 (Details), 2a (Definition), 2b (Warning), 2c (Source info): filter to
-      apx_section_seq = 0 AND apx_section_type IN ('BUILD', 'GLOSSARY_DEFINITION') - this
-      predicate lands on exactly one row per apx_id (a Metric's first build paragraph for
-      Metric rows, the only row for Glossary rows), which is where every Section 1/2b/2c field
-      already lives. Section 2a's definition text is IFNULL(apx_vp_one_liner, apx_section_detail)
-      on that same row - Metric rows carry it in apx_vp_one_liner, Glossary rows carry it in
-      apx_section_detail (their glossary definition, already placed there in Silver).
+    - Section 1 (Details), 2a (Definition), 2b (Warning): filter to apx_section_seq = 0 AND
+      apx_section_type IN ('BUILD', 'GLOSSARY_DEFINITION') - this predicate lands on exactly
+      one row per apx_id (a Metric's first build paragraph for Metric rows, the only row for
+      Glossary rows), which is where every Section 1/2b field already lives. Section 2a's
+      definition text is IFNULL(apx_vp_one_liner, apx_section_detail) on that same row - Metric
+      rows carry it in apx_vp_one_liner, Glossary rows carry it in apx_section_detail (their
+      glossary definition, already placed there in Silver).
+    - Section 2c (Source info): filter to apx_section_type = 'SOURCE', ordered by
+      apx_section_seq - always exactly four rows (Source, Table, Owner, Refresh) for a Metric
+      apx_id, zero rows for a Glossary one (Glossary carries no source metadata). Same
+      row-based Rows-shelf pattern as Sections 3 and 4 below, not a single concatenated field -
+      this changed from an earlier version that used one calculated field to build a four-line
+      Text mark; Silver now unpivots those four columns directly instead, see that view's own
+      CHANGE LOG.
     - Section 3 (How it's built): filter to apx_section_type = 'BUILD', no seq restriction,
       ordered by apx_section_seq - naturally empty for Glossary rows (they have none), correct
       behavior, not a bug to hide separately.
@@ -52,6 +59,10 @@ CHANGE LOG:
   - apx_warning_message now carried through from Bronze (Section 2b source field).
   - Ported from the team's "Pulse 1.2 - Metric Appendix" spreadsheet, this session, alongside
     Bronze/Silver.
+  - Documentation updated to reflect Silver's new SOURCE section rows (no SQL change needed
+    here, this view already passes through everything Silver produces via SELECT s.*) - Section
+    2c moved from the apx_section_seq = 0 BUILD-row slice to its own apx_section_type = 'SOURCE'
+    filter, matching the same row-based pattern Sections 3 and 4 already use.
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
