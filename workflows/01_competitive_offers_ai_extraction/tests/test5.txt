@@ -3,6 +3,10 @@ WITH alert_data AS (
     SELECT
         *,
 
+        ------------------------------------------------------------
+        -- Build the overall status dynamically based on
+        -- whichever issue types are present
+        ------------------------------------------------------------
         CONCAT_WS(
             ' + ',
 
@@ -35,7 +39,6 @@ WITH alert_data AS (
 
     FROM
         prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily
-
 )
 
 SELECT
@@ -51,10 +54,10 @@ SELECT
             --------------------------------------------------------
             -- Overall Status
             --------------------------------------------------------
-
             CONCAT(
-                'Overall Status: ',
-                overall_status
+                '**Overall Status: ',
+                overall_status,
+                '**'
             ),
 
             '',
@@ -62,7 +65,6 @@ SELECT
             --------------------------------------------------------
             -- Run Information
             --------------------------------------------------------
-
             CONCAT(
                 'Run Date: ',
                 CAST(run_date AS STRING)
@@ -88,7 +90,6 @@ SELECT
             --------------------------------------------------------
             -- Failed Tables
             --------------------------------------------------------
-
             CASE
                 WHEN failed_table_count > 0
                 THEN CONCAT(
@@ -102,7 +103,6 @@ SELECT
             --------------------------------------------------------
             -- Skipped Tables
             --------------------------------------------------------
-
             CASE
                 WHEN skipped_table_count > 0
                 THEN CONCAT(
@@ -116,7 +116,6 @@ SELECT
             --------------------------------------------------------
             -- Row-Count Mismatch
             --------------------------------------------------------
-
             CASE
                 WHEN row_count_mismatch_count > 0
                 THEN CONCAT(
@@ -130,7 +129,6 @@ SELECT
             --------------------------------------------------------
             -- Unknown Status
             --------------------------------------------------------
-
             CASE
                 WHEN unknown_status_count > 0
                 THEN CONCAT(
@@ -144,7 +142,6 @@ SELECT
             --------------------------------------------------------
             -- Schema Changes
             --------------------------------------------------------
-
             CASE
                 WHEN schema_change_count > 0
                 THEN CONCAT(
@@ -153,15 +150,7 @@ SELECT
                     '): ',
                     schema_change_tables
                 )
-            END,
-
-            '',
-
-            --------------------------------------------------------
-            -- Dashboard
-            --------------------------------------------------------
-
-            'Dashboard: https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188'
+            END
 
         )
 
@@ -170,13 +159,3 @@ SELECT
     END AS alert_message
 
 FROM alert_data;
-
-
-
-
-BQ → UC Pipeline Monitoring Alert
-
-
-{{QUERY_RESULT_VALUE}}
-
-[Dashboard](https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188)
