@@ -1,14 +1,1 @@
-SELECT
-    CASE
-        WHEN alert_trigger = 1
-        THEN CONCAT(
-            monitoring_status,
-            ' | Run Date: ', CAST(run_date AS STRING),
-            ' | Affected Tables: ', CAST(affected_table_count AS STRING),
-            ' | Issues: ', COALESCE(issue_summary, 'N/A'),
-            ' | Tables: ', COALESCE(affected_tables, 'N/A')
-        )
-        ELSE NULL
-    END AS alert_message
-
-FROM prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
+The original query result (pre-aggregated) will not be shown in an alert custom body (with parameters QUERY_RESULT_VALUE) when there is an aggregation on an alert.
