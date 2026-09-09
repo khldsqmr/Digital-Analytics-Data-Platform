@@ -1,99 +1,30 @@
-Skip to main contentSkip to Ask Learn chat experience
-Microsoft Ignite
-November 17–20, 2026
+SELECT
+    run_date,
+    alert_trigger,
+    monitoring_status,
+    total_tables,
+    successful_tables,
+    affected_table_count,
+    failed_table_count,
+    unknown_status_count,
+    row_count_mismatch_count,
+    schema_change_count,
+    skipped_table_count,
+    issue_summary,
+    affected_tables,
+    monitoring_dashboard_url,
 
-Learn
-Sign in
-Azure
-Search
-Find by title
-Azure Databricks Documentation
-Overview
-Alerts overview
-Create an alert
-Manage alerts
-Choose a SQL warehouse
-Alert query patterns
-Legacy alerts
-Update to the latest Databricks SQL API version
-LearnAzure Databricks documentationSQL
-Databricks SQL alerts
+    CASE
+        WHEN alert_trigger = 1
+        THEN CONCAT(
+            monitoring_status,
+            ' | Run Date: ', CAST(run_date AS STRING),
+            ' | Affected Tables: ', CAST(affected_table_count AS STRING),
+            ' | Issues: ', COALESCE(issue_summary, 'N/A'),
+            ' | Tables: ', COALESCE(affected_tables, 'N/A')
+        )
+        ELSE NULL
+    END AS alert_message
 
-Summarize this article for me
-Databricks SQL alerts run queries on a schedule and notify you when a condition that you define is met against the query result. When you schedule an alert, its associated query runs and the condition is evaluated. You can also view an alert history to review the results of past evaluations.
-
-To learn how to work with legacy alerts instead, see What are legacy alerts?.
-
-What you can do with alerts
-Alerts let you monitor any SQL query result on a schedule. Use them to track business KPIs, monitor data quality, watch cost trends, and catch operational issues across your Azure Databricks workloads. Common patterns across Azure Databricks include:
-
-Monitor business metrics in metric views: Reference a Unity Catalog metric view by its fully qualified name in the alert query to monitor governed business metrics. See Alert on metric views.
-Detect data quality issues and anomalies: Pair alerts with Unity Catalog data quality monitors and anomaly detection so an unexpected metric, distribution shift, or profile change sends a notification. See Alerts for anomaly detection and Profile alerts.
-Track usage and cost: Build alerts on system tables for serverless billing or ingestion to catch unexpected spend. See Monitor the cost of serverless compute and Monitor managed ingestion pipeline cost.
-Watch SQL warehouse and query health: Alert on warehouse events or query history to catch slow queries, failed sessions, or capacity issues. See Example queries for monitoring SQL warehouse activity and Warehouse events system table reference.
-Audit access and security events: Alert on audit log queries to flag unusual workspace activity. See Monitor Genie Agents usage with audit logs and alerts.
-Catch failures in agents: Alert on agent quality metrics so failures and emerging issues surface during development and operation. See Agent development lifecycle.
-Run an alert as a task in Lakeflow Jobs: Add an alert as a task so condition checks run on a pipeline trigger and downstream tasks can branch on the result. See SQL alert task for jobs.
-Get started with alerts
-The following pages cover the most common alert tasks, from authoring a new alert to ongoing management:
-
-Topic	Description
-Create an alert	Walk through the alert editor end-to-end. Includes advanced settings and notification template customization.
-Manage alerts	Find alerts on the listing page, share them, transfer ownership, and track changes with Azure Databricks Git folders.
-Run alerts as tasks in Lakeflow Jobs	Add a Databricks SQL alert as a task in a job so condition checks run on a pipeline trigger and downstream tasks can branch on the result.
-Alert query patterns	SQL patterns for aggregations, multicolumn conditions, and metric views.
-Differences from legacy alerts
-The latest version of Databricks SQL alerts behaves differently from legacy alerts in a few key ways:
-
-Query reuse: An existing saved SQL query cannot be reused when creating an alert. Each alert owns its query definition, which can be authored directly in the new alert editor.
-Alert status values: Alert states are simplified and alerts no longer support the UNKNOWN status from legacy alerts. Evaluations resolve to OK, TRIGGERED, or ERROR.
-You can continue to use both the latest alerts and legacy alerts side by side while you transition.
-
-Additional resources
-Documentation
-
-Create an alert - Azure Databricks - Databricks SQL
-
-Create a Databricks SQL alert, review its evaluation details, and customize advanced settings and notification templates.
-
-SQL alert task for jobs - Azure Databricks
-
-Configure a SQL alert task in a Lakeflow Job to evaluate a Databricks SQL alert and integrate condition-based monitoring into a workflow.
-
-What are legacy alerts? - Azure Databricks - Databricks SQL
-
-Use legacy Databricks SQL alerts to periodically run queries, evaluate defined conditions, and send notifications if a condition is met.
-
-Show 5 more
-Training
-
-Module
-
-Configure alerts and responses - Training
-
-In this module, you learn how Azure Monitoring alerts proactively notify you when Azure Monitor data indicates there might be a problem with your infrastructure or applications before the problem becomes one for your users.
-
-Certification
-
-Microsoft Certified: Azure Database Administrator Associate - Certifications
-
-Administer an SQL Server database infrastructure for cloud, on-premises and hybrid relational databases using the Microsoft PaaS relational database offerings.
-
-Last updated on 07/28/2026
-In this article
-What you can do with alerts
-Get started with alerts
-Differences from legacy alerts
-Was this page helpful?
-
-
-
-AI Disclaimer
-Previous Versions
-Blog
-Contribute
-Privacy
-Consumer Health Privacy
-Terms of Use
-Trademarks
-© Microsoft 2026
+FROM
+    prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
