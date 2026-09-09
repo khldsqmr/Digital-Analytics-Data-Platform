@@ -1,161 +1,19 @@
-WITH alert_data AS (
+So far we’ve:
 
-    SELECT
-        *,
+Kept the existing monitoring views for run details, health summary, and table-level issues.
+Created a new consolidated view: sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily.
+Created a Databricks SQL Alert: sdi_alert_pipelineMonitoring_bqUcHealthCheck_daily.
+Configured the alert to trigger when FIRST_ROW(alert_message) IS NOT NULL.
+Connected it to Lab42_SDITeamsAlert.
+Built the Teams message dynamically in the alert query, showing run date, table counts, issue types, affected tables, and dashboard link.
+Confirmed the Teams alert is working.
 
-        ------------------------------------------------------------
-        -- Build the overall status dynamically based on
-        -- whichever issue types are present
-        ------------------------------------------------------------
-        CONCAT_WS(
-            ' + ',
+Current flow:
 
-            CASE
-                WHEN failed_table_count > 0
-                THEN 'Failed Tables'
-            END,
+Monitoring Views
+→ Alert Summary View
+→ SQL Alert
+→ Lab42_SDITeamsAlert
+→ Teams
 
-            CASE
-                WHEN skipped_table_count > 0
-                THEN 'Skipped Tables'
-            END,
-
-            CASE
-                WHEN row_count_mismatch_count > 0
-                THEN 'Row-Count Mismatch'
-            END,
-
-            CASE
-                WHEN unknown_status_count > 0
-                THEN 'Unknown Status'
-            END,
-
-            CASE
-                WHEN schema_change_count > 0
-                THEN 'Schema Changes'
-            END
-
-        ) AS overall_status
-
-    FROM
-        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily
-)
-
-SELECT
-
-    CASE
-
-        WHEN alert_trigger = 1
-
-        THEN CONCAT_WS(
-
-            CHR(10),
-
-            --------------------------------------------------------
-            -- Overall Status
-            --------------------------------------------------------
-            CONCAT(
-                '**Overall Status: ',
-                overall_status,
-                '**'
-            ),
-
-            '',
-
-            --------------------------------------------------------
-            -- Run Information
-            --------------------------------------------------------
-            CONCAT(
-                'Run Date: ',
-                CAST(run_date AS STRING)
-            ),
-
-            CONCAT(
-                'Tables Checked: ',
-                CAST(total_tables AS STRING)
-            ),
-
-            CONCAT(
-                'Successful Tables: ',
-                CAST(successful_tables AS STRING)
-            ),
-
-            CONCAT(
-                'Affected Tables: ',
-                CAST(affected_table_count AS STRING)
-            ),
-
-            '',
-
-            --------------------------------------------------------
-            -- Failed Tables
-            --------------------------------------------------------
-            CASE
-                WHEN failed_table_count > 0
-                THEN CONCAT(
-                    '🔴 Failed Tables (',
-                    CAST(failed_table_count AS STRING),
-                    '): ',
-                    failed_tables
-                )
-            END,
-
-            --------------------------------------------------------
-            -- Skipped Tables
-            --------------------------------------------------------
-            CASE
-                WHEN skipped_table_count > 0
-                THEN CONCAT(
-                    '🔴 Skipped Tables (',
-                    CAST(skipped_table_count AS STRING),
-                    '): ',
-                    skipped_tables
-                )
-            END,
-
-            --------------------------------------------------------
-            -- Row-Count Mismatch
-            --------------------------------------------------------
-            CASE
-                WHEN row_count_mismatch_count > 0
-                THEN CONCAT(
-                    '🟠 Row-Count Mismatch (',
-                    CAST(row_count_mismatch_count AS STRING),
-                    '): ',
-                    row_count_mismatch_tables
-                )
-            END,
-
-            --------------------------------------------------------
-            -- Unknown Status
-            --------------------------------------------------------
-            CASE
-                WHEN unknown_status_count > 0
-                THEN CONCAT(
-                    '🟠 Unknown Status (',
-                    CAST(unknown_status_count AS STRING),
-                    '): ',
-                    unknown_status_tables
-                )
-            END,
-
-            --------------------------------------------------------
-            -- Schema Changes
-            --------------------------------------------------------
-            CASE
-                WHEN schema_change_count > 0
-                THEN CONCAT(
-                    '🟡 Schema Changes (',
-                    CAST(schema_change_count AS STRING),
-                    '): ',
-                    schema_change_tables
-                )
-            END
-
-        )
-
-        ELSE NULL
-
-    END AS alert_message
-
-FROM alert_data;
+Next step: schedule the SQL Alert and then decide whether to retire the old notebook/job.
