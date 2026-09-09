@@ -1,259 +1,122 @@
-CREATE OR REPLACE VIEW
-prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily
-AS
-
-WITH latest_run AS (
-
-    ------------------------------------------------------------
-    -- 1. Identify the latest available BQ → UC pipeline run
-    ------------------------------------------------------------
-    SELECT
-        run_date
-    FROM
-        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcRunDetails_daily
-    WHERE
-        run_date IS NOT NULL
-    ORDER BY
-        run_date DESC,
-        job_run_ts DESC NULLS LAST,
-        job_end_ts DESC NULLS LAST
-    LIMIT 1
-
-),
-
-health AS (
-
-    ------------------------------------------------------------
-    -- 2. Get overall pipeline health for the latest run
-    ------------------------------------------------------------
-    SELECT
-        h.run_date,
-        MAX(h.total_tables) AS total_tables,
-        MAX(h.successful_tables) AS successful_tables
-
-    FROM
-        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcHealthSummary_daily h
-
-    INNER JOIN latest_run l
-        ON h.run_date = l.run_date
-
-    GROUP BY
-        h.run_date
-
-),
-
-issues AS (
-
-    ------------------------------------------------------------
-    -- 3. Get all table-level issues for the latest run
-    ------------------------------------------------------------
-    SELECT
-        i.*
-    FROM
-        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily i
-
-    INNER JOIN latest_run l
-        ON i.run_date = l.run_date
-
-),
-
-issue_rollup AS (
-
-    ------------------------------------------------------------
-    -- 4. Aggregate issue counts + affected tables
-    ------------------------------------------------------------
-    SELECT
-
-        COUNT(*) AS issue_record_count,
-
-        COUNT(DISTINCT bq_table)
-            AS affected_table_count,
-
-        --------------------------------------------------------
-        -- Issue Counts
-        --------------------------------------------------------
-
-        COUNT(
-            DISTINCT CASE
-                WHEN issue_type = 'Failed Table'
-                THEN bq_table
-            END
-        ) AS failed_table_count,
-
-        COUNT(
-            DISTINCT CASE
-                WHEN issue_type = 'Skipped Table'
-                THEN bq_table
-            END
-        ) AS skipped_table_count,
-
-        COUNT(
-            DISTINCT CASE
-                WHEN issue_type = 'Unknown Status'
-                THEN bq_table
-            END
-        ) AS unknown_status_count,
-
-        COUNT(
-            DISTINCT CASE
-                WHEN issue_type = 'Row-Count Mismatch'
-                THEN bq_table
-            END
-        ) AS row_count_mismatch_count,
-
-        COUNT(
-            DISTINCT CASE
-                WHEN issue_type = 'Schema Change'
-                THEN bq_table
-            END
-        ) AS schema_change_count,
-
-        --------------------------------------------------------
-        -- Failed Tables
-        --------------------------------------------------------
-
-        CONCAT_WS(
-            ', ',
-            SORT_ARRAY(
-                COLLECT_SET(
-                    CASE
-                        WHEN issue_type = 'Failed Table'
-                        THEN bq_table
-                    END
-                )
-            )
-        ) AS failed_tables,
-
-        --------------------------------------------------------
-        -- Skipped Tables
-        --------------------------------------------------------
-
-        CONCAT_WS(
-            ', ',
-            SORT_ARRAY(
-                COLLECT_SET(
-                    CASE
-                        WHEN issue_type = 'Skipped Table'
-                        THEN bq_table
-                    END
-                )
-            )
-        ) AS skipped_tables,
-
-        --------------------------------------------------------
-        -- Unknown Status Tables
-        --------------------------------------------------------
-
-        CONCAT_WS(
-            ', ',
-            SORT_ARRAY(
-                COLLECT_SET(
-                    CASE
-                        WHEN issue_type = 'Unknown Status'
-                        THEN bq_table
-                    END
-                )
-            )
-        ) AS unknown_status_tables,
-
-        --------------------------------------------------------
-        -- Row-Count Mismatch Tables
-        --------------------------------------------------------
-
-        CONCAT_WS(
-            ', ',
-            SORT_ARRAY(
-                COLLECT_SET(
-                    CASE
-                        WHEN issue_type = 'Row-Count Mismatch'
-                        THEN bq_table
-                    END
-                )
-            )
-        ) AS row_count_mismatch_tables,
-
-        --------------------------------------------------------
-        -- Schema Change Tables
-        --------------------------------------------------------
-
-        CONCAT_WS(
-            ', ',
-            SORT_ARRAY(
-                COLLECT_SET(
-                    CASE
-                        WHEN issue_type = 'Schema Change'
-                        THEN bq_table
-                    END
-                )
-            )
-        ) AS schema_change_tables
-
-    FROM issues
-
-)
-
-------------------------------------------------------------
--- 5. Final monitoring output
-------------------------------------------------------------
 SELECT
 
-    l.run_date,
-
-    ------------------------------------------------------------
-    -- Alert Trigger
-    ------------------------------------------------------------
-
     CASE
-        WHEN COALESCE(i.issue_record_count, 0) > 0
-        THEN 1
-        ELSE 0
-    END AS alert_trigger,
 
-    ------------------------------------------------------------
-    -- Overall Counts
-    ------------------------------------------------------------
+        WHEN alert_trigger = 1
 
-    COALESCE(h.total_tables, 0)
-        AS total_tables,
+        THEN CONCAT_WS(
 
-    COALESCE(h.successful_tables, 0)
-        AS successful_tables,
+            CHR(10),
 
-    COALESCE(i.affected_table_count, 0)
-        AS affected_table_count,
+            --------------------------------------------------------
+            -- Run Information
+            --------------------------------------------------------
 
-    ------------------------------------------------------------
-    -- Issue Counts
-    ------------------------------------------------------------
+            CONCAT(
+                'Run Date: ',
+                CAST(run_date AS STRING)
+            ),
 
-    COALESCE(i.failed_table_count, 0)
-        AS failed_table_count,
+            CONCAT(
+                'Tables Checked: ',
+                CAST(total_tables AS STRING)
+            ),
 
-    COALESCE(i.skipped_table_count, 0)
-        AS skipped_table_count,
+            CONCAT(
+                'Successful Tables: ',
+                CAST(successful_tables AS STRING)
+            ),
 
-    COALESCE(i.unknown_status_count, 0)
-        AS unknown_status_count,
+            CONCAT(
+                'Affected Tables: ',
+                CAST(affected_table_count AS STRING)
+            ),
 
-    COALESCE(i.row_count_mismatch_count, 0)
-        AS row_count_mismatch_count,
+            '',
 
-    COALESCE(i.schema_change_count, 0)
-        AS schema_change_count,
+            --------------------------------------------------------
+            -- Failed Tables
+            --------------------------------------------------------
 
-    ------------------------------------------------------------
-    -- Issue Table Lists
-    ------------------------------------------------------------
+            CASE
+                WHEN failed_table_count > 0
+                THEN CONCAT(
+                    '🔴 Failed Tables (',
+                    CAST(failed_table_count AS STRING),
+                    '): ',
+                    failed_tables
+                )
+            END,
 
-    i.failed_tables,
-    i.skipped_tables,
-    i.unknown_status_tables,
-    i.row_count_mismatch_tables,
-    i.schema_change_tables
+            --------------------------------------------------------
+            -- Skipped Tables
+            --------------------------------------------------------
 
-FROM latest_run l
+            CASE
+                WHEN skipped_table_count > 0
+                THEN CONCAT(
+                    '🔴 Skipped Tables (',
+                    CAST(skipped_table_count AS STRING),
+                    '): ',
+                    skipped_tables
+                )
+            END,
 
-LEFT JOIN health h
-    ON h.run_date = l.run_date
+            --------------------------------------------------------
+            -- Row-Count Mismatch
+            --------------------------------------------------------
 
-CROSS JOIN issue_rollup i;
+            CASE
+                WHEN row_count_mismatch_count > 0
+                THEN CONCAT(
+                    '🟠 Row-Count Mismatch (',
+                    CAST(row_count_mismatch_count AS STRING),
+                    '): ',
+                    row_count_mismatch_tables
+                )
+            END,
+
+            --------------------------------------------------------
+            -- Unknown Status
+            --------------------------------------------------------
+
+            CASE
+                WHEN unknown_status_count > 0
+                THEN CONCAT(
+                    '🟠 Unknown Status (',
+                    CAST(unknown_status_count AS STRING),
+                    '): ',
+                    unknown_status_tables
+                )
+            END,
+
+            --------------------------------------------------------
+            -- Schema Change
+            --------------------------------------------------------
+
+            CASE
+                WHEN schema_change_count > 0
+                THEN CONCAT(
+                    '🟡 Schema Changes (',
+                    CAST(schema_change_count AS STRING),
+                    '): ',
+                    schema_change_tables
+                )
+            END,
+
+            '',
+
+            --------------------------------------------------------
+            -- Dashboard
+            --------------------------------------------------------
+
+            'Dashboard: https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188'
+
+        )
+
+        ELSE NULL
+
+    END AS alert_message
+
+FROM
+    prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
