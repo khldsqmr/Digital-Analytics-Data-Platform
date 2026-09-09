@@ -1,19 +1,5 @@
-So far we’ve:
+Built as a separate stack alongside the main pipeline, not stacked into gold_unified_long, since it's a dimension/reference table (one row per metric definition) not a fact table (one row per week). Five objects:
 
-Kept the existing monitoring views for run details, health summary, and table-level issues.
-Created a new consolidated view: sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily.
-Created a Databricks SQL Alert: sdi_alert_pipelineMonitoring_bqUcHealthCheck_daily.
-Configured the alert to trigger when FIRST_ROW(alert_message) IS NOT NULL.
-Connected it to Lab42_SDITeamsAlert.
-Built the Teams message dynamically in the alert query, showing run date, table counts, issue types, affected tables, and dashboard link.
-Confirmed the Teams alert is working.
-
-Current flow:
-
-Monitoring Views
-→ Alert Summary View
-→ SQL Alert
-→ Lab42_SDITeamsAlert
-→ Teams
-
-Next step: schedule the SQL Alert and then decide whether to retire the old notebook/job.
+Bronze (bronze_appendix_wide): 54 hardcoded rows, 29 Metric + 25 Glossary, one row per apx_id
+Silver (silver_appendix_long): unpivots each metric's build logic and exclusions into one row per atomic fact (one filter, one formula, one exclusion clause each), not bundled paragraphs
+Gold appendix (gold_appendix_long): adds apx_display_name, apx_warning_message, apx_definition_text, apx_funnel_stage_key, the single denormalized table the whole Tableau panel runs off
