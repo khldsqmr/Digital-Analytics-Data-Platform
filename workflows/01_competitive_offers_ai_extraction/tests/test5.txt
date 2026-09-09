@@ -1,1 +1,204 @@
-found a possible Databricks-supported approach using a SQL Alert with a custom notification template, so I’ll check whether that’s supported in Lab42 and use that if available.
+CREATE OR REPLACE VIEW
+prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily
+AS
+
+WITH latest_run AS (
+
+    SELECT
+        run_date,
+        job_run_ts,
+        job_end_ts
+    FROM
+        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcRunDetails_daily
+    WHERE
+        run_date IS NOT NULL
+    ORDER BY
+        run_date DESC,
+        job_run_ts DESC NULLS LAST,
+        job_end_ts DESC NULLS LAST
+    LIMIT 1
+
+),
+
+health AS (
+
+    SELECT
+        h.*
+    FROM
+        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcHealthSummary_daily h
+
+    INNER JOIN latest_run l
+        ON h.run_date = l.run_date
+
+),
+
+issues AS (
+
+    SELECT
+        i.*
+    FROM
+        prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcTableIssues_daily i
+
+    INNER JOIN latest_run l
+        ON i.run_date = l.run_date
+
+),
+
+issue_rollup AS (
+
+    SELECT
+
+        COUNT(*) AS issue_count,
+
+        COUNT(DISTINCT bq_table)
+            AS affected_table_count,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN issue_type = 'Failed Table'
+                THEN bq_table
+            END
+        ) AS failed_table_count,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN issue_type = 'Unknown Status'
+                THEN bq_table
+            END
+        ) AS unknown_status_count,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN issue_type = 'Row-Count Mismatch'
+                THEN bq_table
+            END
+        ) AS row_count_mismatch_count,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN issue_type = 'Schema Change'
+                THEN bq_table
+            END
+        ) AS schema_change_count,
+
+        COUNT(
+            DISTINCT CASE
+                WHEN issue_type = 'Skipped Table'
+                THEN bq_table
+            END
+        ) AS skipped_table_count,
+
+        CONCAT_WS(
+            ', ',
+            SLICE(
+                SORT_ARRAY(
+                    COLLECT_SET(bq_table)
+                ),
+                1,
+                20
+            )
+        ) AS affected_tables
+
+    FROM issues
+
+)
+
+SELECT
+
+    l.run_date,
+
+    CASE
+        WHEN COALESCE(i.issue_count, 0) > 0
+        THEN 1
+        ELSE 0
+    END AS alert_trigger,
+
+    CASE
+        WHEN COALESCE(i.issue_count, 0) > 0
+        THEN 'FAILED'
+        ELSE 'HEALTHY'
+    END AS monitoring_status,
+
+    h.total_tables,
+    h.successful_tables,
+
+    COALESCE(i.affected_table_count, 0)
+        AS affected_table_count,
+
+    COALESCE(i.failed_table_count, 0)
+        AS failed_table_count,
+
+    COALESCE(i.unknown_status_count, 0)
+        AS unknown_status_count,
+
+    COALESCE(i.row_count_mismatch_count, 0)
+        AS row_count_mismatch_count,
+
+    COALESCE(i.schema_change_count, 0)
+        AS schema_change_count,
+
+    COALESCE(i.skipped_table_count, 0)
+        AS skipped_table_count,
+
+    CONCAT_WS(
+        ' | ',
+
+        CASE
+            WHEN i.failed_table_count > 0
+            THEN CONCAT(
+                'Failed: ',
+                i.failed_table_count
+            )
+        END,
+
+        CASE
+            WHEN i.unknown_status_count > 0
+            THEN CONCAT(
+                'Unknown Status: ',
+                i.unknown_status_count
+            )
+        END,
+
+        CASE
+            WHEN i.row_count_mismatch_count > 0
+            THEN CONCAT(
+                'Row-Count Mismatch: ',
+                i.row_count_mismatch_count
+            )
+        END,
+
+        CASE
+            WHEN i.schema_change_count > 0
+            THEN CONCAT(
+                'Schema Change: ',
+                i.schema_change_count
+            )
+        END,
+
+        CASE
+            WHEN i.skipped_table_count > 0
+            THEN CONCAT(
+                'Skipped: ',
+                i.skipped_table_count
+            )
+        END
+
+    ) AS issue_summary,
+
+    CASE
+        WHEN COALESCE(i.affected_table_count, 0) = 0
+        THEN 'None'
+        ELSE i.affected_tables
+    END AS affected_tables,
+
+    'https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188'
+        AS monitoring_dashboard_url
+
+FROM latest_run l
+
+LEFT JOIN health h
+    ON h.run_date = l.run_date
+
+CROSS JOIN issue_rollup i;
+
+
