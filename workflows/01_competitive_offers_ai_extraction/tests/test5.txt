@@ -1,36 +1,15 @@
-SELECT *
-FROM prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
+BQ → UC Pipeline Alert - {{ALERT_STATUS}}
 
-run_date	alert_trigger	monitoring_status	total_tables	successful_tables	affected_table_count	failed_table_count	unknown_status_count	row_count_mismatch_count	schema_change_count	skipped_table_count	issue_summary	affected_tables	monitoring_dashboard_url
-2026-09-09	0	HEALTHY	324	324	0	0	0	0	0	0		None	https://adb-3157519905744188.8.azuredatabricks.net/dashboardsv3/01f1a173c1941a8781307551adc9950e/published?o=3157519905744188
 
-sdi_alert_pipelineMonitoring_bqUcHealthCheck_daily
+BQ → UC Pipeline Monitoring
 
-SELECT
-    run_date,
-    alert_trigger,
-    monitoring_status,
-    total_tables,
-    successful_tables,
-    affected_table_count,
-    failed_table_count,
-    unknown_status_count,
-    row_count_mismatch_count,
-    schema_change_count,
-    skipped_table_count,
-    issue_summary,
-    affected_tables,
-    monitoring_dashboard_url
+{{#QUERY_RESULT_ROWS}}
+Status: {{monitoring_status}}
+Run Date: {{run_date}}
+Affected Tables: {{affected_table_count}}
+Issues: {{issue_summary}}
+Tables: {{affected_tables}}
 
-FROM
-    prdrzranalytics.lab42.sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily;
-
-Value:
-First value of alert_trigger
-
-Condition:
->
-
-Threshold:
-0
+Dashboard: {{monitoring_dashboard_url}}
+{{/QUERY_RESULT_ROWS}}
 
