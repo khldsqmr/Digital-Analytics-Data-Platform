@@ -8173,3 +8173,69 @@ TMO_Enterprise_Brand_X_Brand_BrandAwa_Tiktok_Q3_2026_18Plus_Reach_BL_Membershipm
 TMO_Postpaid_Voice_X_Perf_PSTPCons_TikTok_Q3_2026_18Plus_PEV_CL_Search_SOC-CMP-001	1868265153219778	7762.999999999999	7
 
 
+-- #########################################################################################################################################################
+-- #########################################################################################################################################################
+-- #########################################################################################################################################################
+
+-- Meta: full diff between Integrated Snapshot and Bronze's raw source, one settled week
+WITH integrated AS (
+  SELECT Campaign_ID, Campaign_Name, SUM(Spend) AS spend
+  FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+  WHERE Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram')
+    AND Date BETWEEN '2026-08-02' AND '2026-08-08'
+  GROUP BY Campaign_ID, Campaign_Name
+),
+bronze_raw AS (
+  SELECT campaign_id, SUM(spend) AS spend
+  FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+  WHERE channel = 'Meta'
+    AND date BETWEEN '2026-08-02' AND '2026-08-08'
+  GROUP BY campaign_id
+)
+SELECT
+  COALESCE(i.Campaign_ID, b.campaign_id) AS campaign_id,
+  i.Campaign_Name,
+  i.spend AS integrated_spend,
+  b.spend AS bronze_spend,
+  CASE
+    WHEN b.campaign_id IS NULL THEN 'integrated_only'
+    WHEN i.Campaign_ID IS NULL THEN 'bronze_only'
+    ELSE 'in_both'
+  END AS status
+FROM integrated i
+FULL OUTER JOIN bronze_raw b ON i.Campaign_ID = b.campaign_id
+ORDER BY COALESCE(i.spend, b.spend, 0) DESC;
+
+-- Same diff, rolled up to totals per status — this is the number that matters
+WITH integrated AS (
+  SELECT Campaign_ID, SUM(Spend) AS spend
+  FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+  WHERE Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram')
+    AND Date BETWEEN '2026-08-02' AND '2026-08-08'
+  GROUP BY Campaign_ID
+),
+bronze_raw AS (
+  SELECT campaign_id, SUM(spend) AS spend
+  FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+  WHERE channel = 'Meta'
+    AND date BETWEEN '2026-08-02' AND '2026-08-08'
+  GROUP BY campaign_id
+),
+diffed AS (
+  SELECT
+    COALESCE(i.campaign_id, b.campaign_id) AS campaign_id,
+    i.spend AS integrated_spend,
+    b.spend AS bronze_spend,
+    CASE WHEN b.campaign_id IS NULL THEN 'integrated_only'
+         WHEN i.campaign_id IS NULL THEN 'bronze_only'
+         ELSE 'in_both' END AS status
+  FROM integrated i
+  FULL OUTER JOIN bronze_raw b ON i.campaign_id = b.campaign_id
+)
+SELECT status, COUNT(*) AS campaigns,
+       SUM(COALESCE(integrated_spend,0)) AS integrated_total,
+       SUM(COALESCE(bronze_spend,0)) AS bronze_total
+FROM diffed
+GROUP BY status;
+
+
