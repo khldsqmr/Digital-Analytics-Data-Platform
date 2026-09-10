@@ -4962,3 +4962,32 @@ week_sun_sat	channel_group	platform	bronze_spend
 2024-06-22	Paid Search	Bing	742164.3899999999
 2024-06-15	Paid Search	Google	4302506.657013001
 2024-06-15	Paid Search	Bing	527635.9600000002
+
+
+
+-- Programmatic, date-aligned to Bronze's week convention
+SELECT Week_End_Sat,
+       Channel_Group_Name,
+       CASE WHEN Platform IN ('AMZ','AMAZON') THEN 'Amazon DSP' ELSE Platform END AS platform_norm,
+       SUM(Spend) AS display_spend
+FROM prdrzranalytics.lab42.media_analytics_display
+WHERE Media_Tactic LIKE 'Programmatic%'
+GROUP BY Week_End_Sat, Channel_Group_Name, platform_norm
+ORDER BY Week_End_Sat DESC;
+
+-- Paid Search, with the engine breakdown via Account_Type
+SELECT Week_End_Sat, Account_Type, SUM(Spend) AS integrated_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Search'
+GROUP BY Week_End_Sat, Account_Type
+ORDER BY Week_End_Sat DESC;
+
+-- Paid Social, Facebook + Instagram collapsed to match Bronze's single "Meta" platform
+SELECT Week_End_Sat,
+       CASE WHEN Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram') THEN 'Meta'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '') END AS platform_norm,
+       SUM(Spend) AS integrated_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+GROUP BY Week_End_Sat, platform_norm
+ORDER BY Week_End_Sat DESC;
