@@ -726,3 +726,21 @@ Week_Start_Mon	Channel_Group_Name	integrated_spend
 2020-05-04	Paid Social	76396.748046875
 2020-04-27	Paid Social	31851.345581054688
 
+
+
+-- 5. Weekly Programmatic-only spend from media_analytics_display (true biddable subset)
+SELECT Week_Start_Mon,
+       CASE WHEN Media_Tactic LIKE 'Programmatic%' THEN 'Programmatic' ELSE 'Direct/Other' END AS biddable_flag,
+       Channel_Group_Name, Platform,
+       SUM(Spend) AS total_spend
+FROM prdrzranalytics.lab42.media_analytics_display
+WHERE Media_Tactic LIKE 'Programmatic%'
+GROUP BY Week_Start_Mon, biddable_flag, Channel_Group_Name, Platform
+ORDER BY Week_Start_Mon DESC;
+
+-- 6. Existing Biddable Spend Bronze, weekly totals by channel, for comparison against 4 and 5
+SELECT week_start, channel, platform, SUM(spend) AS bronze_spend
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
+GROUP BY week_start, channel, platform
+ORDER BY week_start DESC;
+
