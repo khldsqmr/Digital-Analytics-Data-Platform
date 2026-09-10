@@ -8394,3 +8394,29 @@ Date	integrated_daily_spend
 2026-08-06	46255.160003000005
 2026-08-07	53165.61999999999
 2026-08-08	51038.040022
+
+-- ########################################################################################################################################################
+-- ########################################################################################################################################################
+-- ########################################################################################################################################################
+
+-- What does reclass actually do? Distribution and spend by value, for the same week
+SELECT reclass, COUNT(*) AS rows, SUM(spend) AS total_spend
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+WHERE channel = 'Meta'
+  AND date BETWEEN '2026-08-02' AND '2026-08-08'
+GROUP BY reclass
+ORDER BY reclass;
+
+-- Does this campaign's "missing" spend show up reallocated to a different
+-- campaign_id under the same account — i.e. is reclass=1 a relabeling, not a loss?
+SELECT campaign_id, campaign_name, date, SUM(spend) AS spend, MAX(reclass) AS reclass_flag
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+WHERE channel = 'Meta'
+  AND account_id = (
+    SELECT DISTINCT account_id FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+    WHERE campaign_id = '120247498195740089' LIMIT 1
+  )
+  AND date BETWEEN '2026-08-02' AND '2026-08-08'
+  AND campaign_name LIKE '%HINTConv%'
+GROUP BY campaign_id, campaign_name, date
+ORDER BY date, spend DESC;
