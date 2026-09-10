@@ -8205,6 +8205,81 @@ SELECT
 FROM integrated i
 FULL OUTER JOIN bronze_raw b ON i.Campaign_ID = b.campaign_id
 ORDER BY COALESCE(i.spend, b.spend, 0) DESC;
+output:
+campaign_id	Campaign_Name	integrated_spend	bronze_spend	status
+120247432061760089	TMO_HINT_HINT_X_Perf_HINTCons_Meta_Q3_2026_18Plus_HINTEC_X_ASC_SOC-CMP-001	431899.9999849999	431900	in_both
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	291904.79998799996	189804.85999800003	in_both
+120251953675430608	TMO_Postpaid_Voice_X_Perf_PSTPCons_Meta_Q3_2026_18to54FRMIL55Plus_PSPV_CL_BAU_SOC-CMP-001	223931.54003799983	223931.539999	in_both
+120251952786450608	TMO_Postpaid_Voice_X_Perf_PSTPCons_Meta_Q3_2026_18Plus_CA_CL_ASC-Omni_SOC-CMP-001	148593.84002500007	148593.840002	in_both
+120251958292570608	TMO_Postpaid_Voice_X_Perf_PSTPConv_Meta_Q3_2026_18to5455Plus_CA_CL_OmniCA_SOC-CMP-001	141866.22000500004	141866.220001	in_both
+120254073507140583	MBTM_Prepaid_Voice_X_Perf_MetroCons_Meta_Q3_2026_18Plus_LowFunnel_CL_ASC-CartStart-Cell1_SOC-CMP-001	106023.26999599999	106023.27	in_both
+120251059446370039	TMO_HINT_FIBER_X_Perf_FIBERCons_Meta_Q3_2026_18Plus_FIBEREC_CL_ASC - BAU_SOC-CMP-001	93044.05002600001	93044.05	in_both
+120251959954460608	TMO_Postpaid_Voice_X_Perf_PSTPConv_Meta_Q3_2026_18to5455Plus_CA_CL_WebOrder_SOC-CMP-001	87185.55002300002	87185.549998	in_both
+120251511517750325	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_VidViews_BL_Lollapalooza-Prospect-Creator-Auction-VideoViews_SOC-CMP-001_P3JKFZ8	82295.550004	null	integrated_only
+120250631801560663	TMO_TFB_TFB_X_SMB_BIZINTERNET_Meta_Q3_2026_X_FormSubmit_X_SOC-CMP-001	75078.260001	75078.26	in_both
+120254073764810583	MBTM_Prepaid_Voice_X_Perf_MetroCons_Meta_Q3_2026_18Plus_LowFunnel_CL_ASC-WebOrders-Cell2_SOC-CMP-001	73012.48999799998	73012.48999799999	in_both
+120251381807540663	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_VidViews_BL_Lollapalooza-Prospect-Brand-Auction-VideoViews_SOC-CMP-001_P3JKFZ7	61027.36000299998	null	integrated_only
+120254258285550210	TMO_Postpaid_Voice_X_Perf_PSTPAwa_Meta_Q3_2026_18Plus_Aware_BL_StudentPerks-TrendingReels_SOC-CMP-001	58202.85000099999	58202.85	in_both
+120248644261710516	TMO_HINT_HINTMicro_MicroConv_Perf_MicroConv_Meta_Q3_2026_X_Leads_Micro-C2C_SOC-CMP-001	55746.66999999999	null	integrated_only
+120243965681130662	TMO_Enterprise_Network_X_TMOSwitchingApp_NetAwa_Meta_Q3_2026_18Plus_REA_BL_Awa_SOC-CMP-001	52355.45000400001	52355.450001000005	in_both
+120247429744960089	TMO_HINT_HINT_X_Perf_HINTAwa_Meta_Q3_2026_18Plus_Reach_X_BAU_SOC-CMP-001	51687.98998699999	51687.990001	in_both
+120246325440010510	TMO_Postpaid_BTS_X_Perf_BTSConsConv_Meta_Q3_2026_18Plus_BTSQT_CL_BAU_SOC-CMP-001	44320.17001799999	42697.60999899999	in_both
+120251950847910608	TMO_Postpaid_Voice_X_Perf_PSTPAwa_Meta_Q3_2026_18PlusFRMIL_REA_CL_BAU_SOC-CMP-001	40323.98996200001	40323.98999899999	in_both
+120252704343510210	TMO_Enterprise_Network_X_Perf_NetAwa_Meta_Q3_2026_18Plus_Aware_BL_NationalParks_SOC-CMP-001	34560.25002299998	34560.249999	in_both
+120251512594870325	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_VidViews_BL_LollapaloozaSegmentTest-Prospect-Creator-Auction-VideoViews_SOC-CMP-001_P3JKFZ8	33231.69	null	integrated_only
+120244560721130449	TMO_PostPaid_PPMicro_MicroConv_Perf_MicroConv_Meta_Q3_2026_X_Leads_Micro-Leads_SOC-CMP-001	32335.110000999994	null	integrated_only
+120250022339480663	TMO_TFB_TFB_X_SMB_SMBDemand_Meta_Q3_2026_X_Reach_X_Reach_SOC-CMP-001	26904.62002000001	26904.620000000003	in_both
+120250021512300663	TMO_TFB_TFB_X_SMB_SMBDemand_Meta_Q3_2026_X_TBGMFP_X_MidFunnel_SOC-CMP-001	22682.030024999996	22682.03	in_both
+120251384140030663	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_WebTraff_BL_Lollapalooza-Prospect-Brand-Auction-Traffic_SOC-CMP-001_P3JKFZ7	21149.389999	null	integrated_only
+120251059695270039	TMO_HINT_FIBER_X_Perf_FIBERCons_Meta_Q3_2026_18Plus_FIBEREC_CL_High Intent Audience - BAU_SOC-CMP-001	21006.859987	21006.860001	in_both
+120231044570280562	ASW-LL_MM_FB_UPP_LAL	20994.390012000033	null	integrated_only
+120240904896830666	BTA 2026	20309.729998	null	integrated_only
+120246333875120510	TMO_Enterprise_Brand_X_Brand_BrandAwa_Meta_Q3_2026_18Plus_TMOUpperFunnelBase_CLBL_Membershipmonth_SOC-CMP-001	19759.690002000003	19759.690002	in_both
+120254258056120210	TMO_Postpaid_Voice_X_Perf_PSTPAwa_Meta_Q3_2026_18Plus_Aware_BL_StudentPerks_SOC-CMP-001	18691.390004999997	18691.39	in_both
+120246332739150510	TMO_Enterprise_Brand_X_Brand_BrandAwa_Meta_Q3_2026_18Plus_AdRecall_BL_Membershipmonth_SOC-CMP-001	18387.110012	18387.109999	in_both
+120251059331840039	TMO_HINT_Fiber_X_Perf_FiberAwa_Meta_Q3_2026_18Plus_Reach_CL_Awareness - BAU_SOC-CMP-001	15764.430034000005	15764.430005000002	in_both
+120247668483470177	MBTM_Local_Voice_X_Perf_MetroCons_Meta_Q3_2026_18Plus_UpperFunnel_CL_Grow_SOC-CMP-001	15341.640004000004	15341.640000000001	in_both
+120250021724320663	TMO_TFB_TFB_X_SMB_SMBDemand_Meta_Q3_2026_X_TBGMFP_X_ASC_SOC-CMP-001	13901.860009000002	13901.859998	in_both
+120251562153610325	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_WebTraff_BL_Lollapalooza-Prospect-Creator-Auction-Traffic_SOC-CMP-001_P3JKFZ8	13452.9	null	integrated_only
+120231040820410562	ASW-LL_MM_FB_UPP_TRAF_MEDICAID/SNAP_US	13362.790021000006	null	integrated_only
+120254459428510210	TMO_Enterprise_Network_X_Perf_PSTPAwa_Meta_Q3_2026_18Plus_WebTraff_BL_250Reasons_SOC-CMP-001	13029.280011	13029.279999999999	in_both
+120247665230210177	MBTM_Local_Voice_X_Perf_MetroCons_Meta_Q3_2026_18Plus_LowFunnel_CL_Defend_SOC-CMP-001	11823.510008000005	11823.509999999998	in_both
+120247665006700177	MBTM_Local_Voice_X_Perf_MetroCons_Meta_Q3_2026_18Plus_LowFunnel_CL_Compete_SOC-CMP-001	10269.129987	10269.129999	in_both
+120242087308460562	ASW-LL_MM_FB_UPP_TRAF_LIFELINE_US	6102.280008999998	null	integrated_only
+120244560721140449	TMO_PostPaid_PPMicro_MicroConv_Perf_MicroConv_Meta_Q3_2026_X_Leads_Micro-BASE-Leads_SOC-CMP-001	5774.139999000001	null	integrated_only
+120245797332710449	TMO_PostPaid_PPMicro_MicroConv_Perf_MicroConv_Meta_Q3_2026_X_Leads_Micro-BASE-C2C_SOC-CMP-001	5685.01	null	integrated_only
+120231040889260562	ASW-LL_MM_FB_LOW_RTG	4158.009997999999	null	integrated_only
+120248366607420297	TMO_TFB_Brand_X_TFBBrand_BoostedOrganic_Meta_Q3_2026_18Plus_PE_X_BoostedOrganic-Base-TFB-Auction-Engagement_SOC-CMP-001_P3J6N2H	2891.809999	null	integrated_only
+120250022736460663	TMO_TFB_TFB_X_TFBBase_TargetBase_Meta_Q3_2026_X_TFBLeads_X_SMB-Base_SOC-CMP-001	2282.6299999999997	2282.6299999999997	in_both
+120251317511860663	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_REA_BL_Lollapalooza-Prospect-Brand-Auction-Reach_SOC-CMP-001_P3JKFZ7	1254.1	null	integrated_only
+120229028070400562	ASW-LL_MM_FB_TRAFFIC_BROAD	1114.3499899999997	null	integrated_only
+120237042855670562	ASW-LL_MM_FB_UPP_LAL_CA	511.21	null	integrated_only
+120237041994510562	ASW-LL_MM_FB_UPP_TRAF_CA	243.68	null	integrated_only
+120251368648170164	Paid post NYC - Yankees RR - 9542 Roosevelt Ave	203.68	null	integrated_only
+120253262893960231	Instagram post: 📣 Join Vermont Relay at the 2026...	175	null	integrated_only
+120253262693150231	Instagram post: Which relay services work best...	174.98999999999998	null	integrated_only
+120253263069070231	Instagram post: What types of virtual meetings...	174.95	null	integrated_only
+120253261371710231	"Post: ""RCC can make many virtual events more accessible..."""	174.94	null	integrated_only
+120253261810070231	"Post: ""📣 Join Vermont Relay at the 2026 DAVC Conference!..."""	174.92000199999998	null	integrated_only
+120253262997130231	Instagram post: Need live, high-quality captions...	174.920001	null	integrated_only
+120253262527320231	"Post: ""Have you been advertising the use of 7-1-1 on..."""	174.9	null	integrated_only
+120253262648230231	Instagram post: 5 ways STS empowers callers who...	174.85	null	integrated_only
+120253260942000231	[7/28/2026] Promoting Vermont Relay	174.790001	null	integrated_only
+120253198198370231	[7/24/2026] Promoting Vermont Relay	139.98000000000002	null	integrated_only
+120251391483820164	Paid post CHI - 2002	128.85	null	integrated_only
+120250235107200095	"Instagram post: 5 reasons to love TTY.
+
+1.	TTY..."	14.33	null	integrated_only
+120250235025930095	"Post: ""Cinco razones para que TTY sea parte de tu vida"""	14.2	null	integrated_only
+120247361136970077	"Post: ""“Why Use STS?”  """	3.62	null	integrated_only
+120247361088960077	[8/7/2026] Promoting West Virginia Relay	3.59	null	integrated_only
+120250230261910600	Instagram post: How to use Speech-to-Speech...	3.55	null	integrated_only
+120250230289140600	[8/7/2026] Promoting Wyoming Relay	3.5300000000000002	null	integrated_only
+120251562176070325	TMO_Sponsorship_Sponsor_X_Spon_Lolla_Instagram_Q3_2026_18Plus_WebTraff_BL_Lollapalooza-SegmentTest-Prospect-Creator-Auction-Traffic_SOC-CMP-001_P3JKFZ8	0.34	null	integrated_only
+120245414080230510	TMO_Enterprise_Brand_X_Brand_BrandAwa_Meta_Q3_2026_18Plus_TMOUpperFunnelBase_CLBL_Umbro_SOC-CMP-001	0	null	in_both
+120254007380110210	TMO_Postpaid_Voice_X_Perf_PSTPAwa_Meta_Q3_2026_18Plus_REA_BL_MagentaNights-July22-Teaser_SOC-CMP-001	0	0	in_both
+120245414080250510	TMO_Enterprise_Brand_X_Brand_BrandAwa_Meta_Q3_2026_18Plus_AdRecall_BL_Umbro_SOC-CMP-00	0	null	in_both
+120254086949680210	TMO_Postpaid_Voice_X_Perf_PSTPAwa_Meta_Q3_2026_18Plus_RF_BL_M4-July22_SOC-CMP-001	0	0	in_both
 
 -- Same diff, rolled up to totals per status — this is the number that matters
 WITH integrated AS (
@@ -8238,4 +8313,8 @@ SELECT status, COUNT(*) AS campaigns,
 FROM diffed
 GROUP BY status;
 
+output:
+status	campaigns	integrated_total	bronze_total
+in_both	33	2163834.9001839994	2060112.3999990001
+integrated_only	38	383730.10003699997	0
 
