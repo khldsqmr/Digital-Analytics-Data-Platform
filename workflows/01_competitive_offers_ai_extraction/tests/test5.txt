@@ -1,28 +1,19 @@
-Currently deployed and running in the dashboard, this is the live appendix architecture.
+So far we’ve:
 
-Appendix architecture, built as a separate stack alongside the main pipeline, not stacked into gold_unified_long, since it's a dimension/reference table (one row per metric definition) not a fact table (one row per week). Three objects, developed with the unified metric_name convention (camelCase, matching gold_unified_long exactly) so the content stays AI-crawlable and joinable later, not a separate naming scheme of its own:
+Kept the existing monitoring views for run details, health summary, and table-level issues.
+Created a new consolidated view: sdi_vw_pipelineMonitoring_gold_bqUcAlertSummary_daily.
+Created a Databricks SQL Alert: sdi_alert_pipelineMonitoring_bqUcHealthCheck_daily.
+Configured the alert to trigger when FIRST_ROW(alert_message) IS NOT NULL.
+Connected it to Lab42_SDITeamsAlert.
+Built the Teams message dynamically in the alert query, showing run date, table counts, issue types, affected tables, and dashboard link.
+Confirmed the Teams alert is working.
 
-Bronze — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_bronze_appendix_wide: 54 hardcoded rows, 29 Metric + 25 Glossary, one row per apx_id
-Silver — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_silver_appendix_long: unpivots each metric's build logic and exclusions into one row per atomic fact (one filter, one formula, one exclusion clause each), not bundled paragraphs
-Gold appendix — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_appendix_long: adds apx_display_name, apx_warning_message, apx_definition_text, apx_funnel_stage_key, the single denormalized table the whole Tableau panel runs off
+Current flow:
 
-Future development, not yet wired into anything, built earlier but held for later:
+Monitoring Views
+→ Alert Summary View
+→ SQL Alert
+→ Lab42_SDITeamsAlert
+→ Teams
 
-Bridge table — prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_gold_appendixMetricBridge_weekly: maps apx_id to (data_source, metric_name, lob) in gold_unified_long, wildcarded on lob where a metric's definition doesn't vary by LOB
-Annotated view — prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_metricAnnotated_long: pre-joins gold_unified_long against the bridge and appendix Bronze, intended for an agentic Genie/SQL-querying LLM, not for Tableau
-
-
-
-
-The three raw sources unioned together in sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly:
-
-Channel	Table	Grain	Spend column	Sub-channel
-Programmatic	prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr	Daily	spend	DSP (Amazon DSP, The Trade Desk, DV360, Blis, Google Ads)
-Paid Social	prd_dbi_analytics.improvado.mrt_paidsocial_pivot	Daily	spend	channel (Meta, Pinterest, TikTok, Snapchat, LinkedIn, X)
-Paid Search	prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily	Daily	cost (not spend, different column name than the other two)	ad_platform (Google, Bing)
-
-A few things worth remembering about each, since they came up as real findings during the build:
-
-Programmatic's table name suggests current-year-only retention, and that was confirmed, min/max date both fall in 2026, one distinct year. No history to pull from this source specifically if YoY is ever needed for it.
-Paid Social is the one with the ignore_tiktok filter we just discussed, WHERE ignore_tiktok = 0, excluding real campaigns already reclassified elsewhere to avoid double-counting, about $701K of $23.3M TikTok spend.
-Paid Search is the odd one out structurally, it's already a Databricks Gold-layer table (the other two are still sitting in prd_dbi_analytics.improvado), and its spend column is named cost, not spend
+Next step: schedule the SQL Alert and then decide whether to retire the old notebook/job.
