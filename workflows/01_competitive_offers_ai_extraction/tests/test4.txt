@@ -7866,3 +7866,45 @@ week_end_sat	platform_norm	integrated_spend
 2020-05-16	Snapchat	80299.26441955566
 2020-05-09	Snapchat	76417.9453125
 2020-05-02	Snapchat	20938.222534179688
+
+-- ####################################################################################################################################################################
+-- ####################################################################################################################################################################
+-- ####################################################################################################################################################################
+
+
+-- Integrated Snapshot, Meta, monthly
+SELECT date_trunc('month', Date) AS month, SUM(Spend) AS integrated_meta_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+  AND Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram')
+GROUP BY month
+ORDER BY month DESC;
+
+-- Bronze, Meta, monthly (approximated via each week's Saturday-ending date —
+-- imprecise for weeks that straddle a month boundary, but good enough to test the hypothesis)
+SELECT date_trunc('month', week_sun_sat) AS month, SUM(spend) AS bronze_meta_spend
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
+WHERE channel_group = 'Paid Social' AND platform = 'Meta'
+GROUP BY month
+ORDER BY month DESC;
+
+DESCRIBE TABLE prd_dbi_analytics.improvado.mrt_paidsocial_pivot;
+
+-- Integrated Snapshot's TikTok campaigns for that week
+SELECT Campaign_Name, Campaign_ID, SUM(Spend) AS spend, COUNT(*) AS rows
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Name = 'Paid Social - TikTok'
+  AND Date BETWEEN '2026-08-02' AND '2026-08-08'
+GROUP BY Campaign_Name, Campaign_ID
+ORDER BY spend DESC;
+
+-- Bronze's raw TikTok campaigns for the same week — adjust column names once
+-- the DESCRIBE above comes back; campaign/date/spend column names are placeholders
+SELECT campaign_name, campaign_id, SUM(spend) AS spend, COUNT(*) AS rows
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+WHERE channel = 'TikTok'
+  AND date BETWEEN '2026-08-02' AND '2026-08-08'
+GROUP BY campaign_name, campaign_id
+ORDER BY spend DESC;
+
+
