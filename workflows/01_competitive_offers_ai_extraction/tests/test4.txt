@@ -8318,3 +8318,53 @@ status	campaigns	integrated_total	bronze_total
 in_both	33	2163834.9001839994	2060112.3999990001
 integrated_only	38	383730.10003699997	0
 
+-- ######################################################################################################################################################
+-- ######################################################################################################################################################
+-- ######################################################################################################################################################
+
+-- Categorize the "integrated_only" (missing-from-Bronze) campaigns and sum by bucket
+SELECT
+  CASE
+    WHEN Campaign_Name LIKE 'ASW%' THEN 'Assurance Wireless (different program)'
+    WHEN Campaign_Name LIKE '%BoostedOrganic%' OR Campaign_Name LIKE 'Instagram post%'
+         OR Campaign_Name LIKE 'Paid post%' OR Campaign_Name LIKE '[%/%] Promoting%' THEN 'Boosted organic / small local posts'
+    WHEN Campaign_Name LIKE '%Micro%' THEN 'Micro-conversion (TFB)'
+    WHEN Campaign_Name LIKE '%Lolla%' THEN 'Lollapalooza sponsorship'
+    ELSE 'Uncategorized — needs review'
+  END AS category,
+  COUNT(*) AS campaigns,
+  SUM(Spend) AS total_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram')
+  AND Date BETWEEN '2026-08-02' AND '2026-08-08'
+  AND Campaign_ID NOT IN (
+    SELECT DISTINCT campaign_id FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+    WHERE channel = 'Meta' AND date BETWEEN '2026-08-02' AND '2026-08-08'
+  )
+GROUP BY category
+ORDER BY total_spend DESC;
+
+-- Is Assurance Wireless present ANYWHERE in Bronze's Meta source, on any date?
+-- If this returns zero rows, its absence is a structural/account-onboarding decision,
+-- not a data-quality bug — a scope question for the team, not a pipeline fix.
+SELECT DISTINCT account_name, account_id
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+WHERE channel = 'Meta'
+  AND (account_name LIKE '%Assurance%' OR campaign_name LIKE 'ASW%')
+LIMIT 20;
+
+-- Drill into the one large in-both mismatch, day by day, to see which day(s) diverge
+-- and whether Bronze's reclass/ignore flags are involved
+SELECT date, SUM(spend) AS bronze_daily_spend, MAX(reclass) AS reclass_flag
+FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+WHERE campaign_id = '120247498195740089'
+  AND date BETWEEN '2026-08-02' AND '2026-08-08'
+GROUP BY date
+ORDER BY date;
+
+SELECT Date, SUM(Spend) AS integrated_daily_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Campaign_ID = '120247498195740089'
+  AND Date BETWEEN '2026-08-02' AND '2026-08-08'
+GROUP BY Date
+ORDER BY Date;
