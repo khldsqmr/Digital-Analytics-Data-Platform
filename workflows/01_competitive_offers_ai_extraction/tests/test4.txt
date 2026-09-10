@@ -8407,6 +8407,10 @@ WHERE channel = 'Meta'
 GROUP BY reclass
 ORDER BY reclass;
 
+output:
+reclass	rows	total_spend
+1	203	2060112.3999990006
+
 -- Does this campaign's "missing" spend show up reallocated to a different
 -- campaign_id under the same account — i.e. is reclass=1 a relabeling, not a loss?
 SELECT campaign_id, campaign_name, date, SUM(spend) AS spend, MAX(reclass) AS reclass_flag
@@ -8420,3 +8424,13 @@ WHERE channel = 'Meta'
   AND campaign_name LIKE '%HINTConv%'
 GROUP BY campaign_id, campaign_name, date
 ORDER BY date, spend DESC;
+
+output:
+campaign_id	campaign_name	date	spend	reclass_flag
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-02	30404.43999799999	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-03	29286.319998	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-04	26907.530000000006	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-05	6312.139998999999	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-06	28390.59000100001	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-07	33073.020001000004	1
+120247498195740089	TMO_HINT_HINT_X_Perf_HINTConv_Meta_Q3_2026_18Plus_HINTEC_X_BAU_SOC-CMP-001	2026-08-08	35430.820001	1
