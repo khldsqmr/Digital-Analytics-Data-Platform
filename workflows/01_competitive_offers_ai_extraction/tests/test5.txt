@@ -1,3 +1,11 @@
-prdrzranalytics.lab42.media_analytics_display
+-- Table 1: media_analytics_display
+DESCRIBE TABLE prdrzranalytics.lab42.media_analytics_display;
 
-prdrzranalytics.lab42.media_analytics_integrated_snapshot
+SELECT * FROM prdrzranalytics.lab42.media_analytics_display
+LIMIT 20;
+
+-- Table 2: media_analytics_integrated_snapshot
+DESCRIBE TABLE prdrzranalytics.lab42.media_analytics_integrated_snapshot;
+
+SELECT * FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+LIMIT 20;
