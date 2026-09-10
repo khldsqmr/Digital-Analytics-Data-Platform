@@ -8343,6 +8343,13 @@ WHERE Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram')
   )
 GROUP BY category
 ORDER BY total_spend DESC;
+output:
+category	campaigns	total_spend
+Lollapalooza sponsorship	158	212411.330006
+Micro-conversion (TFB)	145	99540.93
+Assurance Wireless (different program)	1936	46486.71003000011
+Uncategorized — needs review	83	20852.31
+Boosted organic / small local posts	114	4438.820001000001
 
 -- Is Assurance Wireless present ANYWHERE in Bronze's Meta source, on any date?
 -- If this returns zero rows, its absence is a structural/account-onboarding decision,
@@ -8352,6 +8359,7 @@ FROM prd_dbi_analytics.improvado.mrt_paidsocial_pivot
 WHERE channel = 'Meta'
   AND (account_name LIKE '%Assurance%' OR campaign_name LIKE 'ASW%')
 LIMIT 20;
+output: No rows returned
 
 -- Drill into the one large in-both mismatch, day by day, to see which day(s) diverge
 -- and whether Bronze's reclass/ignore flags are involved
@@ -8361,6 +8369,15 @@ WHERE campaign_id = '120247498195740089'
   AND date BETWEEN '2026-08-02' AND '2026-08-08'
 GROUP BY date
 ORDER BY date;
+output:
+date	bronze_daily_spend	reclass_flag
+2026-08-02	30404.43999799999	1
+2026-08-03	29286.319998	1
+2026-08-04	26907.530000000006	1
+2026-08-05	6312.139998999999	1
+2026-08-06	28390.59000100001	1
+2026-08-07	33073.020001000004	1
+2026-08-08	35430.820001	1
 
 SELECT Date, SUM(Spend) AS integrated_daily_spend
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
@@ -8368,3 +8385,12 @@ WHERE Campaign_ID = '120247498195740089'
   AND Date BETWEEN '2026-08-02' AND '2026-08-08'
 GROUP BY Date
 ORDER BY Date;
+output:
+Date	integrated_daily_spend
+2026-08-02	45029.679971000005
+2026-08-03	41989.920016000004
+2026-08-04	43964.639978
+2026-08-05	10461.739998000003
+2026-08-06	46255.160003000005
+2026-08-07	53165.61999999999
+2026-08-08	51038.040022
