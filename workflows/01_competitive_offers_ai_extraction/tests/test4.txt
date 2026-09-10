@@ -4965,29 +4965,23 @@ week_sun_sat	channel_group	platform	bronze_spend
 
 
 
--- Programmatic, date-aligned to Bronze's week convention
-SELECT Week_End_Sat,
-       Channel_Group_Name,
-       CASE WHEN Platform IN ('AMZ','AMAZON') THEN 'Amazon DSP' ELSE Platform END AS platform_norm,
-       SUM(Spend) AS display_spend
-FROM prdrzranalytics.lab42.media_analytics_display
-WHERE Media_Tactic LIKE 'Programmatic%'
-GROUP BY Week_End_Sat, Channel_Group_Name, platform_norm
-ORDER BY Week_End_Sat DESC;
-
--- Paid Search, with the engine breakdown via Account_Type
-SELECT Week_End_Sat, Account_Type, SUM(Spend) AS integrated_spend
+-- Paid Search, engine breakdown via Account_Type, week derived to match Bronze's Sun-Sat convention
+SELECT
+    date_add(Date, pmod(7 - dayofweek(Date), 7)) AS week_end_sat,
+    Account_Type,
+    SUM(Spend) AS integrated_spend
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
 WHERE Channel_Group_Name = 'Paid Search'
-GROUP BY Week_End_Sat, Account_Type
-ORDER BY Week_End_Sat DESC;
+GROUP BY week_end_sat, Account_Type
+ORDER BY week_end_sat DESC;
 
--- Paid Social, Facebook + Instagram collapsed to match Bronze's single "Meta" platform
-SELECT Week_End_Sat,
-       CASE WHEN Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram') THEN 'Meta'
-            ELSE REPLACE(Channel_Name, 'Paid Social - ', '') END AS platform_norm,
-       SUM(Spend) AS integrated_spend
+-- Paid Social, Facebook + Instagram collapsed to match Bronze's single "Meta" platform, same derived week
+SELECT
+    date_add(Date, pmod(7 - dayofweek(Date), 7)) AS week_end_sat,
+    CASE WHEN Channel_Name IN ('Paid Social - Facebook','Paid Social - Instagram') THEN 'Meta'
+         ELSE REPLACE(Channel_Name, 'Paid Social - ', '') END AS platform_norm,
+    SUM(Spend) AS integrated_spend
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
 WHERE Channel_Group_Name = 'Paid Social'
-GROUP BY Week_End_Sat, platform_norm
-ORDER BY Week_End_Sat DESC;
+GROUP BY week_end_sat, platform_norm
+ORDER BY week_end_sat DESC;
