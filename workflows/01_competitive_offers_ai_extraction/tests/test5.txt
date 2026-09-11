@@ -1372,7 +1372,9 @@ SELECT
     END) AS prior_week_spend
 FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 TIMESTAMP AS OF '2026-09-07T12:00:00Z';
-
+output:
+channel	latest_date_available	prior_week_days_present	prior_week_spend
+Programmatic	2026-09-05	7	8347754.294289
 
 -- 2. PAID SEARCH
 SELECT
@@ -1389,7 +1391,9 @@ SELECT
     END) AS prior_week_spend
 FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 TIMESTAMP AS OF '2026-09-07T12:00:00Z';
-
+output:
+channel	latest_date_available	prior_week_days_present	prior_week_spend
+Paid Search	2026-09-05	7	4993222.755729999
 
 -- 3. PAID SOCIAL
 SELECT
@@ -1407,3 +1411,6 @@ SELECT
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
 TIMESTAMP AS OF '2026-09-07T12:00:00Z'
 WHERE Channel_Group_Name = 'Paid Social';
+output:
+channel	latest_date_available	prior_week_days_present	prior_week_spend
+Paid Social	2026-09-03	5	3049496.988268019
