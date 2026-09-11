@@ -2550,3 +2550,418 @@ Date	tue_10am_spend	final_spend	tue_pct_of_final	thu_6am_spend	thu_pct_of_final	
 2026-08-28	514379.71	575754.62	89.34	569139.04	98.85	61374.92	6615.58
 2026-08-29	497747.12	571257.09	87.13	564745	98.86	73509.97	6512.09
 
+
+
+-- ============================================================
+-- CORE BIDDABLE PAID SOCIAL
+-- MULTI-WEEK PLATFORM READINESS
+--
+-- Existing scope:
+-- Meta
+-- TikTok
+-- Snapchat
+-- Pinterest
+-- LinkedIn
+-- X / Twitter
+--
+-- Tests Tuesday 10 AM ET and Thursday 6 AM ET
+-- against today's settled value.
+-- ============================================================
+
+WITH final_data AS (
+
+    SELECT
+        DATE '2026-08-15' AS week_end,
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END AS platform,
+
+        COUNT(DISTINCT Date) AS final_days,
+        SUM(Spend) AS final_spend
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-09' AND '2026-08-15'
+
+    GROUP BY 1,2
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-08-22',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-16' AND '2026-08-22'
+
+    GROUP BY 1,2
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-08-29',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-23' AND '2026-08-29'
+
+    GROUP BY 1,2
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-09-05',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-30' AND '2026-09-05'
+
+    GROUP BY 1,2
+),
+
+
+snapshots AS (
+
+-- ============================================================
+-- WEEK ENDING AUG 15
+-- ============================================================
+
+    SELECT
+        DATE '2026-08-15' AS week_end,
+        'Tue 10 AM ET' AS checkpoint,
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END AS platform,
+
+        COUNT(DISTINCT Date) AS snapshot_days,
+        SUM(Spend) AS snapshot_spend
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-08-18T14:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-09' AND '2026-08-15'
+
+    GROUP BY 1,2,3
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-08-15',
+        'Thu 6 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-08-20T10:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-09' AND '2026-08-15'
+
+    GROUP BY 1,2,3
+
+
+-- ============================================================
+-- WEEK ENDING AUG 22
+-- ============================================================
+
+    UNION ALL
+
+    SELECT
+        DATE '2026-08-22',
+        'Tue 10 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-08-25T14:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-16' AND '2026-08-22'
+
+    GROUP BY 1,2,3
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-08-22',
+        'Thu 6 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-08-27T10:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-16' AND '2026-08-22'
+
+    GROUP BY 1,2,3
+
+
+-- ============================================================
+-- WEEK ENDING AUG 29
+-- ============================================================
+
+    UNION ALL
+
+    SELECT
+        DATE '2026-08-29',
+        'Tue 10 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-01T14:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-23' AND '2026-08-29'
+
+    GROUP BY 1,2,3
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-08-29',
+        'Thu 6 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-03T10:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-23' AND '2026-08-29'
+
+    GROUP BY 1,2,3
+
+
+-- ============================================================
+-- WEEK ENDING SEP 5
+-- ============================================================
+
+    UNION ALL
+
+    SELECT
+        DATE '2026-09-05',
+        'Tue 10 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-08T14:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-30' AND '2026-09-05'
+
+    GROUP BY 1,2,3
+
+
+    UNION ALL
+
+
+    SELECT
+        DATE '2026-09-05',
+        'Thu 6 AM ET',
+
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            WHEN Channel_Name = 'Paid Social - Twitter'
+                THEN 'X / Twitter'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END,
+
+        COUNT(DISTINCT Date),
+        SUM(Spend)
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-10T10:00:00Z'
+
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-30' AND '2026-09-05'
+
+    GROUP BY 1,2,3
+)
+
+SELECT
+    s.week_end,
+    s.checkpoint,
+    s.platform,
+
+    s.snapshot_days,
+    f.final_days,
+
+    ROUND(s.snapshot_spend,2) AS snapshot_spend,
+    ROUND(f.final_spend,2) AS final_spend,
+
+    ROUND(
+        100 * s.snapshot_spend / NULLIF(f.final_spend,0),
+        2
+    ) AS pct_of_final,
+
+    CASE
+        WHEN s.snapshot_days = f.final_days
+         AND s.snapshot_spend / NULLIF(f.final_spend,0) >= 0.99
+        THEN 'READY'
+        ELSE 'NOT READY'
+    END AS status
+
+FROM snapshots s
+
+INNER JOIN final_data f
+    ON s.week_end = f.week_end
+   AND s.platform = f.platform
+
+WHERE s.platform IN (
+    'Meta',
+    'TikTok',
+    'Snapchat',
+    'Pinterest',
+    'LinkedIn',
+    'X / Twitter'
+)
+
+ORDER BY
+    s.week_end,
+    CASE s.checkpoint
+        WHEN 'Tue 10 AM ET' THEN 1
+        WHEN 'Thu 6 AM ET' THEN 2
+    END,
+    s.platform;
