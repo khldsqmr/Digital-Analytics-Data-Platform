@@ -1343,3 +1343,67 @@ media_analytics_meta	2026-09-08	3104477	0
 media_analytics_pinterest	2026-09-08	568548	0
 media_analytics_tiktok	2026-09-08	269928	0
 
+
+
+
+
+
+
+
+-- =========================================================
+-- HISTORICAL READINESS TEST
+-- Monday Sep 7, 2026 @ 8:00 AM ET = 12:00 UTC
+-- Prior reporting week = Aug 30 through Sep 5
+-- =========================================================
+
+
+-- 1. PROGRAMMATIC
+SELECT
+    'Programmatic' AS channel,
+    MAX(date) AS latest_date_available,
+    COUNT(DISTINCT CASE
+        WHEN date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN date
+    END) AS prior_week_days_present,
+    SUM(CASE
+        WHEN date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN spend
+        ELSE 0
+    END) AS prior_week_spend
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+TIMESTAMP AS OF '2026-09-07T12:00:00Z';
+
+
+-- 2. PAID SEARCH
+SELECT
+    'Paid Search' AS channel,
+    MAX(date) AS latest_date_available,
+    COUNT(DISTINCT CASE
+        WHEN date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN date
+    END) AS prior_week_days_present,
+    SUM(CASE
+        WHEN date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN cost
+        ELSE 0
+    END) AS prior_week_spend
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+TIMESTAMP AS OF '2026-09-07T12:00:00Z';
+
+
+-- 3. PAID SOCIAL
+SELECT
+    'Paid Social' AS channel,
+    MAX(Date) AS latest_date_available,
+    COUNT(DISTINCT CASE
+        WHEN Date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN Date
+    END) AS prior_week_days_present,
+    SUM(CASE
+        WHEN Date BETWEEN '2026-08-30' AND '2026-09-05'
+        THEN Spend
+        ELSE 0
+    END) AS prior_week_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+TIMESTAMP AS OF '2026-09-07T12:00:00Z'
+WHERE Channel_Group_Name = 'Paid Social';
