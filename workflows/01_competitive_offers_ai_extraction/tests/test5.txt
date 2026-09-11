@@ -1651,3 +1651,99 @@ Tue 8 AM ET	2026-09-03	5	3049496.988268019	4509328.535227995	67.63	NOT READY
 Tue 10 AM ET	2026-09-03	5	3049496.988268019	4509328.535227995	67.63	NOT READY
 Tue 12 PM ET	2026-09-03	5	3049496.988268019	4509328.535227995	67.63	NOT READY
 
+
+
+
+WITH final_value AS (
+    SELECT SUM(Spend) AS final_spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Date BETWEEN '2026-08-30' AND '2026-09-05'
+),
+
+snapshots AS (
+
+    SELECT
+        'Tue 2 PM ET' AS checkpoint,
+        MAX(Date) AS latest_date,
+        COUNT(DISTINCT CASE
+            WHEN Date BETWEEN '2026-08-30' AND '2026-09-05'
+            THEN Date END) AS days_present,
+        SUM(CASE
+            WHEN Date BETWEEN '2026-08-30' AND '2026-09-05'
+            THEN Spend ELSE 0 END) AS snapshot_spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-08T18:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+
+    UNION ALL
+
+    SELECT
+        'Tue 4 PM ET',
+        MAX(Date),
+        COUNT(DISTINCT CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Date END),
+        SUM(CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Spend ELSE 0 END)
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-08T20:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+
+    UNION ALL
+
+    SELECT
+        'Tue 6 PM ET',
+        MAX(Date),
+        COUNT(DISTINCT CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Date END),
+        SUM(CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Spend ELSE 0 END)
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-08T22:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+
+    UNION ALL
+
+    SELECT
+        'Wed 8 AM ET',
+        MAX(Date),
+        COUNT(DISTINCT CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Date END),
+        SUM(CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Spend ELSE 0 END)
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-09T12:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+
+    UNION ALL
+
+    SELECT
+        'Wed 10 AM ET',
+        MAX(Date),
+        COUNT(DISTINCT CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Date END),
+        SUM(CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Spend ELSE 0 END)
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-09T14:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+
+    UNION ALL
+
+    SELECT
+        'Wed 12 PM ET',
+        MAX(Date),
+        COUNT(DISTINCT CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Date END),
+        SUM(CASE WHEN Date BETWEEN '2026-08-30' AND '2026-09-05' THEN Spend ELSE 0 END)
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-09T16:00:00Z'
+    WHERE Channel_Group_Name = 'Paid Social'
+)
+
+SELECT
+    checkpoint,
+    latest_date,
+    days_present,
+    snapshot_spend,
+    final_spend,
+    ROUND(100 * snapshot_spend / final_spend, 2) AS pct_of_final,
+    CASE
+        WHEN days_present = 7
+         AND snapshot_spend / final_spend >= 0.99
+        THEN 'READY'
+        ELSE 'NOT READY'
+    END AS readiness_status
+FROM snapshots
+CROSS JOIN final_value;
