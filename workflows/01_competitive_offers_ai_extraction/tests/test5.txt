@@ -3012,3 +3012,17 @@ week_end	checkpoint	platform	snapshot_days	final_days	snapshot_spend	final_spend
 2026-09-05	Thu 6 AM ET	Snapchat	7	7	367921.42	367921.42	100	READY
 2026-09-05	Thu 6 AM ET	TikTok	7	7	519994.86	519994.86	100	READY
 2026-09-05	Thu 6 AM ET	X / Twitter	7	7	99550.65	99550.65	100	READY
+
+
+You can send it like this:
+
+Paid Search — Monday-ready | Stable | Safe to use
+Prior-week data is essentially complete by Monday morning with very minimal movement afterward.
+Programmatic — Monday-ready after 10 AM | Stable | Safe to use
+Data was only ~86% complete at 8 AM, but reached 99.95% by Monday 10 AM ET and remained stable afterward.
+Paid Social — Mixed readiness | Platform-dependent | Needs safeguards
+TikTok, Snapchat and Pinterest: consistently ready by Tuesday 10 AM.
+LinkedIn: generally Tuesday-ready, but one week completed later on Thursday.
+X/Twitter: can lag and may need until Thursday.
+Meta: most variable; some weeks still had backfill later in the week, so this needs the strongest readiness check.
+The Sep 5 week was an exception where all Social platforms were delayed until Thursday.
