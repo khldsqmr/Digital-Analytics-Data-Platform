@@ -422,3 +422,247 @@ media_analytics_meta	2023-05-23	2023-05-22	2023-05-28	InHouse	Beyond the Smartph
 media_analytics_meta	2023-04-07	2023-04-03	2023-04-09	InHouse	T-Mobile	POSTPAID	723916171888324	T-Mobile | Enterprise | Performance [DI]	UNKNOWN	23853602546930607	TMO_Postpaid_Voice_X_Perf_PSTPCons_Meta_Q2_2023_18to54FRMIL55Plus_MagQT_CL-2MES_BAU-Cell1_SOC-CMP-001	2023	23853603220970607	Postpaid_Perf_PSTPCons_Meta_2023_AllMetaIGFSR_SL_PRO_PSTPPro_18to54_X_US_SWR_2PD_VBLAL_Switchers_SOC-SET-001	23853603221070607	TMO_Postpaid_X_DA_2023Q1DA1027SL_23IP14ALMX_iPhone14_AppleTV_Feb-V2_AppleTV_Apple_SL_SOC-VID_MP4_11s_11+916_LEARN_X_SOC-CRTV-002	UNKNOWN	POSTPAID	VOICE	TMO	X	PERF	PSTPCONS	SL	SOCFB	Paid Social - Facebook	SOC	Paid Social	InHouse Meta Paid Social	MAGQT	ALLMETAIGFSR	18TO54FRMIL55PLUS	META	2PD	PRO	Meta	18TO54	National	US	X	CL-2MES	DA	2023Q1DA1027SL	SL	FEB-V2	X	SOC-VID	Consideration	GENERAL	SWITCHERS	X	APPLETV	FACEBOOK	23IP14ALMX	2023 iPhone 14 Pro On Us w/AAL & Trade on Max ($1000)	Demand Gen	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	TRUE	QT	UNKNOWN	UNKNOWN	11.15	3	945	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
 media_analytics_meta	2023-07-10	2023-07-10	2023-07-16	Assurance	Assurance	ASSURANCE	1139891156392677	Mighty Hive | 2020 | Assurance Wireless | NA	UNKNOWN	23853877537520561	MM_ASW _NonCA_RTG_Conversions_Instagram	UNKNOWN	23853877537790561	NonCA_RTG_SiteVisitors_EN_Conversions_Instagram	23853877537710561	NonCA_RTG_SiteVisitors_Static_FreeUnltdTMO_HandPhoneBlue_V1_Instagram	UNKNOWN	ASSURANCE	VOICE	TMO	X	ASSURANACE	ASSURANCE	UNKNOWN	SOCIN	Paid Social - Instagram	SOC	Paid Social	Assurance Paid Social	UNKNOWN	UNKNOWN	X	META	UNKNOWN	UNKNOWN	Meta	UNKNOWN	National	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	Not Specified	UNKNOWN	X	X	Not Specified	GENERAL	UNKNOWN	UNKNOWN	UNKNOWN	INSTAGRAM	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	TRUE	QT	UNKNOWN	UNKNOWN	37.17	2	4563	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
 media_analytics_meta	2023-04-23	2023-04-17	2023-04-23	InHouse	T-Mobile for Business	TFB	839017023338732	T-Mobile | Business [DI]	UNKNOWN	23854240807250662	TMO_TFB_Voice_X_MicroSMB_SMBAwa_Meta_Q2_2023_X_TFBQT_CL_X_SOC-CMP-001	2023	23854240807600662	TFB_MicroSMB_SMBCWC_Meta_2023_FBIGFeed_EL_PRO_TFBPro_18Plus_X_US_X_2PD_LAL_CWCWebVisit90d3LAL_SOC-SET-001	23854240807370662	TMO_TFB_SMB_DRM_X_TFBCONFDNC_CwC_CwCBusinessInternet_v1_X_X_EL_SOC-IMG_HTML_X_X_LEARN_X_SOC-CRTV-002_fbig-22-q3-CWCBusinessInternet-SMB	UNKNOWN	TFB	VOICE	TMO	X	MICROSMB	SMBAWA	EL	SOCFB	Paid Social - Facebook	SOC	Paid Social	InHouse Meta Paid Social	TFBQT	FBIGFEED	X	META	2PD	PRO	Meta	18PLUS	National	US	X	CL	DRM	X	EL	V1	X	SOC-IMG	SMBAWA	GENERAL	CWCWEBVISIT90D3LAL	SMB	X	FACEBOOK	TFBCONFDNC	TFB Connect with Confidence (SMB)	Brand	UNKNOWN	UNKNOWN	UNKNOWN	UNKNOWN	TRUE	QT	UNKNOWN	UNKNOWN	13.92	14	2318	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	6	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+
+
+
+
+
+
+
+
+-- PROGRAMMATIC
+DESCRIBE TABLE prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+
+-- PAID SEARCH
+DESCRIBE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+
+-- PAID SOCIAL
+DESCRIBE TABLE prdrzranalytics.lab42.media_analytics_integrated_snapshot;
+
+
+
+WITH params AS (
+    SELECT
+        date_sub(next_day(current_date(), 'SUN'), 8) AS prior_week_end,
+        date_sub(next_day(current_date(), 'SUN'), 14) AS prior_week_start
+)
+
+SELECT
+    p.prior_week_start,
+    p.prior_week_end,
+
+    MAX(s.Date) AS latest_date_available,
+
+    DATEDIFF(
+        current_date(),
+        MAX(s.Date)
+    ) AS data_lag_days,
+
+    COUNT(DISTINCT CASE
+        WHEN s.Date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN s.Date
+    END) AS prior_week_days_present,
+
+    SUM(CASE
+        WHEN s.Date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN s.Spend
+        ELSE 0
+    END) AS prior_week_spend,
+
+    CASE
+        WHEN COUNT(DISTINCT CASE
+                 WHEN s.Date BETWEEN p.prior_week_start AND p.prior_week_end
+                 THEN s.Date
+             END) = 7
+        THEN 'PASS - all 7 days available'
+        ELSE 'CHECK - prior week incomplete'
+    END AS availability_status
+
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot s
+CROSS JOIN params p
+
+WHERE s.Channel_Group_Name = 'Paid Social'
+
+GROUP BY
+    p.prior_week_start,
+    p.prior_week_end;
+
+
+
+
+
+
+WITH params AS (
+    SELECT
+        date_sub(next_day(current_date(), 'SUN'), 8) AS prior_week_end,
+        date_sub(next_day(current_date(), 'SUN'), 14) AS prior_week_start
+)
+
+SELECT
+    p.prior_week_start,
+    p.prior_week_end,
+
+    MAX(src.date) AS latest_date_available,
+
+    DATEDIFF(
+        current_date(),
+        MAX(src.date)
+    ) AS data_lag_days,
+
+    COUNT(DISTINCT CASE
+        WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN src.date
+    END) AS prior_week_days_present,
+
+    SUM(CASE
+        WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN src.spend
+        ELSE 0
+    END) AS prior_week_spend,
+
+    CASE
+        WHEN COUNT(DISTINCT CASE
+                 WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+                 THEN src.date
+             END) = 7
+        THEN 'PASS - all 7 days available'
+        ELSE 'CHECK - prior week incomplete'
+    END AS availability_status
+
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr src
+CROSS JOIN params p
+
+GROUP BY
+    p.prior_week_start,
+    p.prior_week_end;
+
+
+
+
+WITH params AS (
+    SELECT
+        date_sub(next_day(current_date(), 'SUN'), 8) AS prior_week_end,
+        date_sub(next_day(current_date(), 'SUN'), 14) AS prior_week_start
+)
+
+SELECT
+    p.prior_week_start,
+    p.prior_week_end,
+
+    MAX(src.date) AS latest_date_available,
+
+    DATEDIFF(
+        current_date(),
+        MAX(src.date)
+    ) AS data_lag_days,
+
+    COUNT(DISTINCT CASE
+        WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN src.date
+    END) AS prior_week_days_present,
+
+    SUM(CASE
+        WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN src.cost
+        ELSE 0
+    END) AS prior_week_cost,
+
+    CASE
+        WHEN COUNT(DISTINCT CASE
+                 WHEN src.date BETWEEN p.prior_week_start AND p.prior_week_end
+                 THEN src.date
+             END) = 7
+        THEN 'PASS - all 7 days available'
+        ELSE 'CHECK - prior week incomplete'
+    END AS availability_status
+
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily src
+CROSS JOIN params p
+
+GROUP BY
+    p.prior_week_start,
+    p.prior_week_end;
+
+
+
+WITH params AS (
+    SELECT
+        date_sub(next_day(current_date(), 'SUN'), 8) AS prior_week_end,
+        date_sub(next_day(current_date(), 'SUN'), 14) AS prior_week_start
+),
+
+social AS (
+    SELECT
+        CASE
+            WHEN Channel_Name IN (
+                'Paid Social - Facebook',
+                'Paid Social - Instagram'
+            ) THEN 'Meta'
+            ELSE REPLACE(Channel_Name, 'Paid Social - ', '')
+        END AS platform,
+
+        Date,
+        Spend
+
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    WHERE Channel_Group_Name = 'Paid Social'
+)
+
+SELECT
+    platform,
+
+    MAX(Date) AS latest_date_available,
+
+    COUNT(DISTINCT CASE
+        WHEN Date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN Date
+    END) AS days_present_prior_week,
+
+    SUM(CASE
+        WHEN Date BETWEEN p.prior_week_start AND p.prior_week_end
+        THEN Spend
+        ELSE 0
+    END) AS prior_week_spend,
+
+    CASE
+        WHEN COUNT(DISTINCT CASE
+                 WHEN Date BETWEEN p.prior_week_start AND p.prior_week_end
+                 THEN Date
+             END) = 7
+        THEN 'PASS'
+        ELSE 'CHECK'
+    END AS status
+
+FROM social
+CROSS JOIN params p
+
+GROUP BY platform
+ORDER BY platform;
+
+
+
+DESCRIBE HISTORY
+prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+
+DESCRIBE HISTORY
+prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+
+DESCRIBE HISTORY
+prdrzranalytics.lab42.media_analytics_integrated_snapshot;
+
+SELECT
+    view_source,
+    MAX(Date) AS latest_date_available,
+    COUNT(*) AS rows_on_latest_date,
+    SUM(
+        CASE
+            WHEN Date = current_date() - INTERVAL 1 DAY
+            THEN Spend
+            ELSE 0
+        END
+    ) AS yesterday_spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+GROUP BY view_source
+ORDER BY latest_date_available, view_source;
+
