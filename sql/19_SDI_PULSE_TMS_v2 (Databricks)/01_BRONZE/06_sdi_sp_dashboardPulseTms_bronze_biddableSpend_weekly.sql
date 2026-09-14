@@ -206,27 +206,40 @@ BEGIN
      =============================================================================================== */
 
   PaidSocialMapped AS (
-
     SELECT
       date_add(
-        raw.Date,
-        7 - EXTRACT(DAYOFWEEK FROM raw.Date)
-      )                                                        AS week_sun_sat,
+        CAST(raw.Date AS DATE),
+        7 - EXTRACT(DAYOFWEEK FROM CAST(raw.Date AS DATE))
+      ) AS week_sun_sat,
 
-      UPPER(TRIM(raw.Brand))                                   AS lob,
+      /*
+        IMPORTANT:
+        Use Integrated LOB, NOT Brand.
 
-      'Paid Social'                                            AS channel_group,
+        Brand examples:
+          T-Mobile
+          T-Mobile Home Internet
+          T-Mobile Fiber
+          Beyond the Smartphone
+
+        LOB examples:
+          POSTPAID
+          BROADBAND
+          PREPAID
+          TFB
+
+        PulseTMS currently consumes POSTPAID + BROADBAND.
+      */
+      UPPER(TRIM(raw.LOB)) AS lob,
+
+      'Paid Social' AS channel_group,
 
       CASE
-
         WHEN raw.Channel_Name IN (
           'Paid Social - Facebook',
           'Paid Social - Instagram'
         )
           THEN 'Meta'
-
-        WHEN raw.Channel_Name = 'Paid Social - Twitter'
-          THEN 'X'
 
         WHEN raw.Channel_Name = 'Paid Social - TikTok'
           THEN 'TikTok'
@@ -240,30 +253,33 @@ BEGIN
         WHEN raw.Channel_Name = 'Paid Social - LinkedIn'
           THEN 'LinkedIn'
 
+        WHEN raw.Channel_Name = 'Paid Social - Twitter'
+          THEN 'X'
+
         WHEN raw.Channel_Name = 'Paid Social - Reddit'
           THEN 'Reddit'
 
-      END                                                      AS platform,
+      END AS platform,
 
-      TRY_CAST(raw.Spend AS DOUBLE)                            AS spend
+      TRY_CAST(raw.Spend AS DOUBLE) AS spend
 
-    FROM
-      prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
 
-    WHERE
-      raw.Date IS NOT NULL
+    WHERE raw.Date IS NOT NULL
 
       AND raw.Channel_Group_Name = 'Paid Social'
 
       /*
-        Preserve the existing/core Biddable Paid Social universe.
+        Keep only the approved/core Biddable Paid Social platform universe.
 
-        Do NOT automatically include:
+        The following Integrated categories remain intentionally excluded:
           Indirect
           Nextdoor
           General MFC
           Creator
           Digital Sponsorship
+
+        They should only be added after explicit business-scope approval.
       */
       AND raw.Channel_Name IN (
         'Paid Social - Facebook',
