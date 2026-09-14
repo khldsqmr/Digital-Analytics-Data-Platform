@@ -5,9 +5,10 @@ PROCEDURE:    sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly
 
 PURPOSE:
   Creates/refreshes:
+
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
 
-  Combines the approved primary sources for the three Biddable media channels:
+  Combines the primary sources for the three Biddable media channel groups:
 
     Programmatic
       -> prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
@@ -18,133 +19,260 @@ PURPOSE:
     Paid Search
       -> prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 
-  Bronze remains an unfiltered LOB landing layer within the APPROVED Biddable
-  channel/platform scope.
 
-  LOB semantic canonicalization is intentionally deferred to Silver.
+ARCHITECTURE:
+  Bronze contains ATOMIC Biddable spend only:
 
-IMPORTANT PAID SOCIAL CHANGE:
-  The previous source:
+    week_sun_sat
+      x lob
+      x channel_group
+      x platform
 
-    prd_dbi_analytics.improvado.mrt_paidsocial_pivot
+  Examples:
 
-  has been replaced with:
+    Paid Search
+      Google
+      Bing
+
+    Paid Social
+      Facebook
+      Instagram
+      TikTok
+      Snapchat
+      Pinterest
+      LinkedIn
+      Twitter
+      Reddit
+      Indirect
+      Nextdoor
+      General MFC
+      Creator
+      Digital Sponsorship
+      etc.
+
+    Programmatic
+      Amazon DSP
+      The Trade Desk
+      DV360
+      Blis
+      Google Ads
+      etc.
+
+
+IMPORTANT:
+  Bronze DOES NOT create duplicate aggregate rows such as:
+
+    All Biddable
+    Paid Search Total
+    Paid Social Total
+    Programmatic Total
+
+  Those are reporting selections and will be derived downstream.
+
+  This prevents spend from being double-counted when platform-level rows and
+  channel-level totals coexist.
+
+
+PAID SOCIAL:
+  Paid Social is sourced from:
 
     prdrzranalytics.lab42.media_analytics_integrated_snapshot
 
-  because reconciliation showed Integrated has materially broader campaign/spend
-  coverage, especially for Meta and TikTok.
+  ALL rows with:
 
-PAID SOCIAL SCOPE:
-  media_analytics_integrated_snapshot contains more than the existing Biddable
-  Paid Social universe.
+    Channel_Group_Name = 'Paid Social'
 
-  This Bronze therefore intentionally includes ONLY the current approved/core
-  Biddable Paid Social platforms:
+  are retained.
 
-    Meta
-    Pinterest
+  There is intentionally NO whitelist on Channel_Name.
+
+  Known examples include:
+
+    Paid Social - Facebook
+    Paid Social - Instagram
+    Paid Social - TikTok
+    Paid Social - Snapchat
+    Paid Social - Pinterest
+    Paid Social - LinkedIn
+    Paid Social - Twitter
+    Paid Social - Reddit
+    Paid Social - Indirect
+    Paid Social - Nextdoor
+    Paid Social - General MFC
+    Paid Social - Creator
+    Paid Social - Digital Sponsorship
+
+  The "Paid Social - " prefix is removed so platform contains clean reporting
+  labels such as:
+
+    Facebook
+    Instagram
     TikTok
-    Snapchat
-    LinkedIn
-    X
-    Reddit
-
-  The following Integrated-only categories are NOT included automatically:
-
-    General MFC
     Indirect
-    Nextdoor
-    Creator
-    Digital Sponsorship
+    General MFC
 
-  Those should only be added after their reporting scope is explicitly approved.
+  Any future Paid Social Channel_Name will automatically flow through Bronze
+  instead of being silently excluded.
 
-META:
-  Facebook and Instagram rows are consolidated to platform = 'Meta'.
 
-X:
-  Integrated's "Paid Social - Twitter" is standardized to platform = 'X'.
+PAID SOCIAL LOB:
+  IMPORTANT:
+
+    Integrated Snapshot LOB is used.
+
+    raw.LOB
+
+  NOT:
+
+    raw.Brand
+
+  Brand contains business labels such as:
+
+    T-Mobile
+    T-Mobile Home Internet
+    T-Mobile Fiber
+    Beyond the Smartphone
+
+  LOB contains the reporting classification required by PulseTMS:
+
+    POSTPAID
+    BROADBAND
+    PREPAID
+    TFB
+    etc.
+
 
 LOB:
+  Bronze remains an unfiltered LOB landing layer.
+
   Programmatic:
     raw.lob
 
   Paid Search:
     raw.lob
 
-  Paid Social Integrated:
-    raw.Brand
+  Paid Social:
+    raw.LOB
 
-  Brand is intentionally used instead of Integrated's LOB because Brand represents
-  the higher-level Postpaid / Broadband / Prepaid / TFB-style classification needed
-  by PulseTMS.
+  Bronze only performs UPPER/TRIM normalization.
 
-  Bronze only applies UPPER/TRIM normalization.
+  Cross-source semantic canonicalization remains in Silver, for example:
 
-  Examples therefore may include:
-    POSTPAID
-    HSI
-    BROADBAND
-    PREPAID
-    TFB
-    etc.
+    HSI -> BROADBAND
+    CONSUMER POSTPAID -> POSTPAID
 
-  HSI and BROADBAND are canonicalized together in Silver.
+
+PROGRAMMATIC PLATFORM NORMALIZATION:
+  Known DSP values are standardized for Tableau/reporting consistency:
+
+    Amazon / Amazon DSP
+      -> Amazon DSP
+
+    The Trade Desk / TTD
+      -> The Trade Desk
+
+    DV360 / DBM / Display & Video 360
+      -> DV360
+
+    Blis
+      -> Blis
+
+    Google / Google Ads
+      -> Google Ads
+
+  Any future/unmapped DSP is retained using its source value.
+
+
+PAID SEARCH PLATFORM NORMALIZATION:
+  Known search platforms are standardized:
+
+    Google / Google Ads
+      -> Google
+
+    Bing / Microsoft / Microsoft Ads
+      -> Bing
+
+  Any future/unmapped platform is retained using its source value.
+
 
 WEEK:
-  All three sources are normalized from daily grain to Sunday-Saturday reporting weeks:
+  All sources are normalized from daily grain to the PulseTMS
+  Sunday-Saturday reporting week:
 
     week_sun_sat =
       date_add(date, 7 - dayofweek(date))
 
-GRAIN:
-  week_sun_sat
-    x lob
-    x channel_group
-    x platform
 
-PLATFORM:
-  Programmatic -> DSP
-  Paid Social  -> mapped Channel_Name
-  Paid Search  -> ad_platform
+GRAIN:
+  One row per:
+
+    week_sun_sat
+      x lob
+      x channel_group
+      x platform
+
+
+NOTE ON TOTALS:
+  Do NOT create:
+
+    Paid Search Total
+    Paid Social Total
+    Programmatic Total
+    All Biddable
+
+  in Bronze.
+
+  These will be calculated from the atomic platform rows downstream.
+
 
 NOTE ON READINESS:
-  This table being populated for a Saturday does NOT itself mean that every source
+  A populated Saturday does not necessarily mean every advertising platform
   has fully settled.
 
-  Source-readiness monitoring remains separate from calendar completeness.
-
   Current observed pattern:
-    Paid Search   -> Monday morning
-    Programmatic  -> approximately Monday 10 AM ET
-    Paid Social   -> platform-dependent and subject to later backfill
 
-  Therefore Silver's is_complete_period remains a QGP/calendar completeness flag,
-  not a source-settlement SLA flag.
+    Paid Search
+      -> generally Monday morning
+
+    Programmatic
+      -> approximately Monday 10 AM ET
+
+    Paid Social
+      -> platform-dependent and subject to later backfill
+
+  Calendar completeness and source-settlement readiness remain separate concepts.
 ================================================================================================= */
+
 
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly()
+
 LANGUAGE SQL
+
 AS
+
 BEGIN
+
 
   CREATE OR REPLACE TABLE
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
 
+
   USING DELTA
+
 
   CLUSTER BY (
     week_sun_sat,
     lob,
-    channel_group
+    channel_group,
+    platform
   )
+
 
   COMMENT '
     PulseTMS Bronze — Biddable Spend.
 
-    Approved primary sources:
+    Primary sources:
       Programmatic = Improvado Programmatic
       Paid Social  = Media Analytics Integrated Snapshot
       Paid Search  = SA360 Gold
@@ -152,177 +280,319 @@ BEGIN
     Grain:
       week_sun_sat x lob x channel_group x platform
 
-    Bronze retains source-native high-level LOB values after casing/whitespace
-    normalization. Cross-source semantic canonicalization such as HSI -> BROADBAND
-    occurs in Silver.
+    Bronze stores atomic platform-level spend only.
 
-    Paid Social is intentionally restricted to the approved/core Biddable platform
-    universe. Integrated-only categories such as Indirect, Nextdoor, General MFC,
-    Creator, and Digital Sponsorship are not automatically included.
+    No Paid Search Total, Paid Social Total, Programmatic Total,
+    or All Biddable rows are generated here.
+
+    Paid Social retains all Channel_Name values underneath
+    Channel_Group_Name = Paid Social. The "Paid Social - " prefix is
+    removed to create clean platform labels.
+
+    Integrated Snapshot LOB is used for Paid Social, not Brand.
+
+    LOB semantic canonicalization such as HSI -> BROADBAND occurs in Silver.
 
     Refreshed by:
       sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly
   '
 
+
   AS
+
 
   WITH
 
+
   /* ===============================================================================================
      PROGRAMMATIC
+
+     Grain before final aggregation:
+       day x source LOB x DSP
+
+     Known DSP values are standardized while unknown/future DSPs are retained.
      =============================================================================================== */
 
   ProgrammaticMapped AS (
 
     SELECT
+
       date_add(
-        raw.date,
-        7 - EXTRACT(DAYOFWEEK FROM raw.date)
-      )                                                        AS week_sun_sat,
+        CAST(raw.date AS DATE),
+        7 - EXTRACT(
+          DAYOFWEEK FROM CAST(raw.date AS DATE)
+        )
+      ) AS week_sun_sat,
 
-      UPPER(TRIM(raw.lob))                                     AS lob,
 
-      'Programmatic'                                           AS channel_group,
+      UPPER(
+        TRIM(raw.lob)
+      ) AS lob,
 
-      TRIM(raw.DSP)                                            AS platform,
 
-      TRY_CAST(raw.spend AS DOUBLE)                            AS spend
+      'Programmatic' AS channel_group,
+
+
+      CASE
+
+        WHEN UPPER(TRIM(raw.DSP)) IN (
+          'AMAZON',
+          'AMAZON DSP'
+        )
+          THEN 'Amazon DSP'
+
+
+        WHEN UPPER(TRIM(raw.DSP)) IN (
+          'THE TRADE DESK',
+          'TTD'
+        )
+          THEN 'The Trade Desk'
+
+
+        WHEN UPPER(TRIM(raw.DSP)) IN (
+          'DV360',
+          'DBM',
+          'DISPLAY & VIDEO 360'
+        )
+          THEN 'DV360'
+
+
+        WHEN UPPER(TRIM(raw.DSP)) = 'BLIS'
+          THEN 'Blis'
+
+
+        WHEN UPPER(TRIM(raw.DSP)) IN (
+          'GOOGLE',
+          'GOOGLE ADS'
+        )
+          THEN 'Google Ads'
+
+
+        /*
+          Preserve future/unmapped DSPs rather than silently dropping them.
+        */
+        WHEN NULLIF(TRIM(raw.DSP), '') IS NOT NULL
+          THEN TRIM(raw.DSP)
+
+
+        ELSE 'Unknown'
+
+      END AS platform,
+
+
+      TRY_CAST(
+        raw.spend AS DOUBLE
+      ) AS spend
+
 
     FROM
       prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr raw
 
-    WHERE raw.date IS NOT NULL
+
+    WHERE
+      raw.date IS NOT NULL
+
   ),
+
 
 
   /* ===============================================================================================
      PAID SOCIAL
+
      SOURCE:
-       media_analytics_integrated_snapshot
+       prdrzranalytics.lab42.media_analytics_integrated_snapshot
 
      IMPORTANT:
-       Brand is used as the high-level LOB.
-       Channel_Name is used to identify the approved Biddable platform universe.
+       - Use raw.LOB, NOT raw.Brand.
+       - Include ALL Paid Social Channel_Name values.
+       - Do NOT whitelist individual social platforms.
+       - Strip "Paid Social - " from Channel_Name for clean Tableau labels.
+
+     Examples:
+
+       Paid Social - Facebook
+         -> Facebook
+
+       Paid Social - Instagram
+         -> Instagram
+
+       Paid Social - Indirect
+         -> Indirect
+
+       Paid Social - General MFC
+         -> General MFC
+
+       Any future Paid Social category automatically flows through.
      =============================================================================================== */
 
   PaidSocialMapped AS (
+
     SELECT
+
       date_add(
         CAST(raw.Date AS DATE),
-        7 - EXTRACT(DAYOFWEEK FROM CAST(raw.Date AS DATE))
+        7 - EXTRACT(
+          DAYOFWEEK FROM CAST(raw.Date AS DATE)
+        )
       ) AS week_sun_sat,
 
+
       /*
-        IMPORTANT:
-        Use Integrated LOB, NOT Brand.
+        Integrated Snapshot LOB is the correct reporting classification.
 
-        Brand examples:
-          T-Mobile
-          T-Mobile Home Internet
-          T-Mobile Fiber
-          Beyond the Smartphone
-
-        LOB examples:
+        Examples:
           POSTPAID
           BROADBAND
           PREPAID
           TFB
-
-        PulseTMS currently consumes POSTPAID + BROADBAND.
       */
-      UPPER(TRIM(raw.LOB)) AS lob,
+      UPPER(
+        TRIM(raw.LOB)
+      ) AS lob,
+
 
       'Paid Social' AS channel_group,
 
+
       CASE
-        WHEN raw.Channel_Name IN (
-          'Paid Social - Facebook',
-          'Paid Social - Instagram'
-        )
-          THEN 'Meta'
 
-        WHEN raw.Channel_Name = 'Paid Social - TikTok'
-          THEN 'TikTok'
+        WHEN NULLIF(TRIM(raw.Channel_Name), '') IS NULL
+          THEN 'Unknown'
 
-        WHEN raw.Channel_Name = 'Paid Social - Snapchat'
-          THEN 'Snapchat'
 
-        WHEN raw.Channel_Name = 'Paid Social - Pinterest'
-          THEN 'Pinterest'
+        /*
+          Strip the common source prefix.
 
-        WHEN raw.Channel_Name = 'Paid Social - LinkedIn'
-          THEN 'LinkedIn'
+          Examples:
+            Paid Social - Facebook
+              -> Facebook
 
-        WHEN raw.Channel_Name = 'Paid Social - Twitter'
-          THEN 'X'
+            Paid Social - Nextdoor
+              -> Nextdoor
+        */
+        WHEN TRIM(raw.Channel_Name) LIKE 'Paid Social - %'
+          THEN TRIM(
+            REGEXP_REPLACE(
+              TRIM(raw.Channel_Name),
+              '^Paid Social - ',
+              ''
+            )
+          )
 
-        WHEN raw.Channel_Name = 'Paid Social - Reddit'
-          THEN 'Reddit'
+
+        /*
+          Defensive fallback if Integrated introduces a Paid Social
+          Channel_Name without the standard prefix.
+        */
+        ELSE TRIM(raw.Channel_Name)
 
       END AS platform,
 
-      TRY_CAST(raw.Spend AS DOUBLE) AS spend
 
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
+      TRY_CAST(
+        raw.Spend AS DOUBLE
+      ) AS spend
 
-    WHERE raw.Date IS NOT NULL
 
-      AND raw.Channel_Group_Name = 'Paid Social'
+    FROM
+      prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
 
-      /*
-        Keep only the approved/core Biddable Paid Social platform universe.
 
-        The following Integrated categories remain intentionally excluded:
-          Indirect
-          Nextdoor
-          General MFC
-          Creator
-          Digital Sponsorship
+    WHERE
+      raw.Date IS NOT NULL
 
-        They should only be added after explicit business-scope approval.
-      */
-      AND raw.Channel_Name IN (
-        'Paid Social - Facebook',
-        'Paid Social - Instagram',
-        'Paid Social - TikTok',
-        'Paid Social - Snapchat',
-        'Paid Social - Pinterest',
-        'Paid Social - LinkedIn',
-        'Paid Social - Twitter',
-        'Paid Social - Reddit'
-      )
+      AND TRIM(raw.Channel_Group_Name) = 'Paid Social'
+
   ),
+
 
 
   /* ===============================================================================================
      PAID SEARCH
+
+     Known search-engine/platform names are standardized while future/unmapped
+     values are retained.
+
+     Expected current reporting labels:
+
+       Google
+       Bing
      =============================================================================================== */
 
   PaidSearchMapped AS (
 
     SELECT
+
       date_add(
-        raw.date,
-        7 - EXTRACT(DAYOFWEEK FROM raw.date)
-      )                                                        AS week_sun_sat,
+        CAST(raw.date AS DATE),
+        7 - EXTRACT(
+          DAYOFWEEK FROM CAST(raw.date AS DATE)
+        )
+      ) AS week_sun_sat,
 
-      UPPER(TRIM(raw.lob))                                     AS lob,
 
-      'Paid Search'                                            AS channel_group,
+      UPPER(
+        TRIM(raw.lob)
+      ) AS lob,
 
-      TRIM(raw.ad_platform)                                    AS platform,
 
-      TRY_CAST(raw.cost AS DOUBLE)                             AS spend
+      'Paid Search' AS channel_group,
+
+
+      CASE
+
+        WHEN UPPER(TRIM(raw.ad_platform)) IN (
+          'GOOGLE',
+          'GOOGLE ADS',
+          'GOOGLE_ADS'
+        )
+          THEN 'Google'
+
+
+        WHEN UPPER(TRIM(raw.ad_platform)) IN (
+          'BING',
+          'MICROSOFT',
+          'MICROSOFT ADS',
+          'MICROSOFT_ADS'
+        )
+          THEN 'Bing'
+
+
+        /*
+          Preserve future/unmapped search platforms.
+        */
+        WHEN NULLIF(TRIM(raw.ad_platform), '') IS NOT NULL
+          THEN TRIM(raw.ad_platform)
+
+
+        ELSE 'Unknown'
+
+      END AS platform,
+
+
+      TRY_CAST(
+        raw.cost AS DOUBLE
+      ) AS spend
+
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily raw
 
-    WHERE raw.date IS NOT NULL
+
+    WHERE
+      raw.date IS NOT NULL
+
   ),
 
 
+
   /* ===============================================================================================
-     UNION
+     UNION ALL THREE BIDDABLE SOURCES
+
+     IMPORTANT:
+       These remain atomic platform rows.
+
+       There are NO synthetic total rows here.
      =============================================================================================== */
 
   AllSources AS (
@@ -333,9 +603,12 @@ BEGIN
       channel_group,
       platform,
       spend
+
     FROM ProgrammaticMapped
 
+
     UNION ALL
+
 
     SELECT
       week_sun_sat,
@@ -343,9 +616,12 @@ BEGIN
       channel_group,
       platform,
       spend
+
     FROM PaidSocialMapped
 
+
     UNION ALL
+
 
     SELECT
       week_sun_sat,
@@ -353,29 +629,62 @@ BEGIN
       channel_group,
       platform,
       spend
+
     FROM PaidSearchMapped
+
   )
+
 
 
   /* ===============================================================================================
      FINAL BRONZE
+
+     GRAIN:
+       week_sun_sat
+         x lob
+         x channel_group
+         x platform
      =============================================================================================== */
 
   SELECT
+
     week_sun_sat,
+
     lob,
+
     channel_group,
+
     platform,
 
-    SUM(spend) AS spend
+    SUM(
+      COALESCE(spend, 0)
+    ) AS spend
+
 
   FROM AllSources
 
+
+  WHERE
+    week_sun_sat IS NOT NULL
+
+    AND lob IS NOT NULL
+
+    AND channel_group IS NOT NULL
+
+    AND platform IS NOT NULL
+
+
   GROUP BY
+
     week_sun_sat,
+
     lob,
+
     channel_group,
+
     platform
+
   ;
+
 
 END;
