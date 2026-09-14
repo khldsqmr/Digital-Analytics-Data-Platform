@@ -1,4 +1,5 @@
 // c.Show Channel Group by Spend Source
+
 IF CONTAINS(UPPER([p.tms.Spend Source]), "MFC") THEN
 
     [Channel Group] IN (
@@ -18,6 +19,14 @@ ELSEIF CONTAINS(UPPER([p.tms.Spend Source]), "PLATFORM") THEN
         "Affiliate",
         "iSpot National TV",
         "iSpot OTT"
+    )
+
+ELSEIF CONTAINS(UPPER([p.tms.Spend Source]), "BIDDABLE") THEN
+
+    [Channel Group] IN (
+        "Paid Search",
+        "Programmatic",
+        "Paid Social"
     )
 
 ELSE
