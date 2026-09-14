@@ -82,3 +82,11 @@ ELSEIF [p.tms.Spend Source] = 'Biddable Spend PP+BB ($)' THEN
     )
 
 END
+
+
+
+
+
+Biddable Postpaid ($)
+Biddable Broadband ($)
+Biddable Spend PP+BB ($)
