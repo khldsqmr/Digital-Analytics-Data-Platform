@@ -1,15 +1,25 @@
-SELECT
-    lob,
-    channel_group,
-    SUM(metric_value) AS spend
-FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
-WHERE data_source = 'BIDDABLE_SPEND_CHANNEL'
-  AND metric_name = 'biddableSpend'
-  AND qgp_date >= date_sub(current_date(), 35)
-  AND lob IN ('POSTPAID', 'BROADBAND')
-GROUP BY
-    lob,
-    channel_group
-ORDER BY
-    lob,
-    channel_group;
+// c.Show Channel Group by Spend Source
+IF CONTAINS(UPPER([p.tms.Spend Source]), "MFC") THEN
+
+    [Channel Group] IN (
+        "Paid Search",
+        "Programmatic",
+        "Other",
+        "Paid Social"
+    )
+
+ELSEIF CONTAINS(UPPER([p.tms.Spend Source]), "PLATFORM") THEN
+
+    [Channel Group] IN (
+        "Other",
+        "Paid Search",
+        "Programmatic",
+        "Paid Social",
+        "Affiliate",
+        "iSpot National TV",
+        "iSpot OTT"
+    )
+
+ELSE
+    FALSE
+END
