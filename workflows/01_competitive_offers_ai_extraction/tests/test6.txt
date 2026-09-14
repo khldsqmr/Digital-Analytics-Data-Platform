@@ -1,4 +1,5 @@
-//c.SpendActualsByChannel
+// c.SpendActualsByChannel
+
 IF [p.tms.Spend Source] = 'MFC Postpaid ($)' THEN
     SUM(
         IF [Data Source] = 'MFC_SPEND_CHANNEL'
@@ -48,6 +49,33 @@ ELSEIF [p.tms.Spend Source] = 'Platform Spend PP+BB ($)' THEN
     SUM(
         IF [Data Source] = 'PLATFORM_SPEND_CHANNEL'
            AND [Metric Name] = 'platformSpend'
+           AND [Lob] IN ('POSTPAID', 'BROADBAND')
+        THEN [Metric Value]
+        END
+    )
+
+ELSEIF [p.tms.Spend Source] = 'Biddable Postpaid ($)' THEN
+    SUM(
+        IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+           AND [Metric Name] = 'biddableSpend'
+           AND [Lob] = 'POSTPAID'
+        THEN [Metric Value]
+        END
+    )
+
+ELSEIF [p.tms.Spend Source] = 'Biddable Broadband ($)' THEN
+    SUM(
+        IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+           AND [Metric Name] = 'biddableSpend'
+           AND [Lob] = 'BROADBAND'
+        THEN [Metric Value]
+        END
+    )
+
+ELSEIF [p.tms.Spend Source] = 'Biddable Spend PP+BB ($)' THEN
+    SUM(
+        IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+           AND [Metric Name] = 'biddableSpend'
            AND [Lob] IN ('POSTPAID', 'BROADBAND')
         THEN [Metric Value]
         END
