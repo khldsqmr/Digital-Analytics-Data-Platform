@@ -55,7 +55,10 @@ KEY MODELING NOTES:
     by definition; classification label is applied in Silver for consistency
   - No BYOD tag filtering applied here — pushed to Silver
   - visibility_score : proportion of AI executions that mention this asset (VIS only)
-  - share_of_voice   : asset/domain mentions / total mentions across all assets for this tag
+  - share_of_voice   : VIS leg = asset mentions / total mentions across all assets for this tag,
+                        sourced from raw.share_of_voice.
+                        CIT leg = sourced from raw.citation_share (raw field renamed at source;
+                        output column name kept as share_of_voice so Silver/Gold are unaffected)
   - executions       : total AI queries executed for this tag this week (VIS only; NULL for CIT)
   - mentions_count   : number of times this asset was mentioned across all executions (VIS only; NULL for CIT)
 
@@ -161,7 +164,7 @@ WITH ranked AS (
         -- executions, mentions_count, visibility_score not available in CIT source
         CAST(NULL AS DOUBLE)                                           AS executions,
         CAST(NULL AS DOUBLE)                                           AS mentions_count,
-        TRY_CAST(raw.share_of_voice AS DOUBLE)                        AS share_of_voice,
+        TRY_CAST(raw.citation_share AS DOUBLE)                        AS share_of_voice,
         CAST(NULL AS DOUBLE)                                           AS visibility_score,
 
         -- Audit fields
