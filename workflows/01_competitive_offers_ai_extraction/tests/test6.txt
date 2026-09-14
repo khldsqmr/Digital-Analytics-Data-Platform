@@ -19,49 +19,47 @@ END
 [Channel Group] = [p.tms.Biddable Channel]
 
 
-//c.Biddable Spend Actual
+// c.Bidd Spend Actual
+
 SUM(
     IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
        AND [Metric Name] = 'biddableSpend'
-       AND [c.Biddable LOB Match]
-       AND [c.Biddable Channel Match]
+       AND [c.Bidd LOB Match]
+       AND [c.Bidd Channel Match]
     THEN [Metric Value]
     END
 )
 
-// c.Biddable WoW Den
+// c.Bidd WoW Den
 
 SUM(
     IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
        AND [Metric Name] = 'biddableSpend'
-       AND [c.Biddable LOB Match]
-       AND [c.Biddable Channel Match]
+       AND [c.Bidd LOB Match]
+       AND [c.Bidd Channel Match]
     THEN [Wow Denominator]
     END
 )
 
-
-// c.Biddable WoW Num
+// c.Bidd WoW Num
 
 SUM(
     IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
        AND [Metric Name] = 'biddableSpend'
-       AND [c.Biddable LOB Match]
-       AND [c.Biddable Channel Match]
+       AND [c.Bidd LOB Match]
+       AND [c.Bidd Channel Match]
     THEN [Wow Numerator]
     END
 )
 
-// c.Biddable Spend WoW %
+// c.Bidd WoW %
 
-IF ISNULL([c.Biddable WoW Den])
-   OR [c.Biddable WoW Den] = 0
+IF ISNULL([c.Bidd WoW Den])
+   OR [c.Bidd WoW Den] = 0
 THEN
     NULL
 ELSE
-    [c.Biddable WoW Num]
-    /
-    ABS([c.Biddable WoW Den])
+    ([c.Bidd WoW Num] / [c.Bidd WoW Den]) - 1
 END
 
 // c.Biddable WoW Pos
