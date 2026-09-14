@@ -1,103 +1,14 @@
 SELECT
-  raw.Brand,
-  raw.LOB,
-  raw.Channel_Name,
-  COUNT(*) AS row_count,
-  COUNT(DISTINCT raw.Date) AS days_present,
-  MIN(raw.Date) AS min_date,
-  MAX(raw.Date) AS max_date,
-  SUM(raw.Spend) AS spend
-
-FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
-
-WHERE raw.Channel_Group_Name = 'Paid Social'
-  AND raw.Date >= date_sub(current_date(), 35)
-
+    lob,
+    channel_group,
+    SUM(metric_value) AS spend
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+WHERE metric_name = 'biddableSpend'
+  AND qgp_date >= date_sub(current_date(), 35)
+  AND lob IN ('POSTPAID', 'BROADBAND')
 GROUP BY
-  raw.Brand,
-  raw.LOB,
-  raw.Channel_Name
-
+    lob,
+    channel_group
 ORDER BY
-  spend DESC;
-
-output:
-Brand	LOB	Channel_Name	row_count	days_present	min_date	max_date	spend
-T-Mobile	POSTPAID	Paid Social - Facebook	15136	30	2026-08-10	2026-09-08	2844946.1181180007
-T-Mobile	POSTPAID	Paid Social - Instagram	8419	30	2026-08-10	2026-09-08	2466037.462556999
-T-Mobile Home Internet	BROADBAND	Paid Social - Facebook	2556	30	2026-08-10	2026-09-08	2276608.8263590005
-T-Mobile	POSTPAID	Paid Social - TikTok	6815	30	2026-08-10	2026-09-08	1837501.2305545453
-T-Mobile	POSTPAID	Paid Social - Snapchat	805	29	2026-08-10	2026-09-07	844176.3038113117
-Metro by T-Mobile	PREPAID	Paid Social - Facebook	3064	30	2026-08-10	2026-09-08	801936.318942
-T-Mobile	POSTPAID	Paid Social - Pinterest	8717	30	2026-08-10	2026-09-08	746218.2268397864
-T-Mobile for Business	TFB	Paid Social - LinkedIn	3804	29	2026-08-10	2026-09-07	627573.32005414
-T-Mobile	POSTPAID	Paid Social - Indirect	704	30	2026-08-10	2026-09-08	560828.4088966246
-T-Mobile Fiber	BROADBAND	Paid Social - Facebook	1991	30	2026-08-10	2026-09-08	529963.45831
-T-Mobile	POSTPAID	Paid Social - General MFC	102	30	2026-08-10	2026-09-08	523865.3742357
-Metro by T-Mobile	PREPAID	Paid Social - Indirect	132	30	2026-08-10	2026-09-08	489347.83896775014
-T-Mobile Home Internet	BROADBAND	Paid Social - Instagram	1501	30	2026-08-10	2026-09-08	444296.263805
-T-Mobile Home Internet	BROADBAND	Paid Social - Nextdoor	62	30	2026-08-10	2026-09-08	428261.4752687
-T-Mobile	POSTPAID	Paid Social - Nextdoor	91	30	2026-08-10	2026-09-08	360869.56567732
-T-Mobile Home Internet	BROADBAND	Paid Social - Pinterest	2483	30	2026-08-10	2026-09-08	314184.2503642645
-T-Mobile	POSTPAID	Paid Social - Twitter	9958	28	2026-08-10	2026-09-06	305235.4933820001
-T-Mobile for Business	TFB	Paid Social - Facebook	1403	30	2026-08-10	2026-09-08	303774.925111
-Assurance	ASSURANCE	Paid Social - Facebook	8325	30	2026-08-10	2026-09-08	277946.75463700003
-T-Mobile Home Internet	BROADBAND	Paid Social - Snapchat	805	29	2026-08-10	2026-09-07	277430.19044598006
-Beyond the Smartphone	POSTPAID	Paid Social - Facebook	776	30	2026-08-10	2026-09-08	170840.42109800002
-Metro by T-Mobile	PREPAID	Paid Social - Snapchat	735	29	2026-08-10	2026-09-07	145011.04922283208
-Beyond the Smartphone	POSTPAID	Paid Social - Snapchat	254	29	2026-08-10	2026-09-07	141963.3694176674
-T-Mobile Fiber	BROADBAND	Paid Social - Pinterest	621	30	2026-08-10	2026-09-08	117025.12962979823
-Metro by T-Mobile	PREPAID	Paid Social - Instagram	1494	30	2026-08-10	2026-09-08	116984.53114400001
-T-Mobile Home Internet	BROADBAND	Paid Social - TikTok	514	30	2026-08-10	2026-09-08	111593.55996827222
-T-Mobile Fiber	BROADBAND	Paid Social - Instagram	929	30	2026-08-10	2026-09-08	103712.71176600001
-Not Specified	Not Specified	Paid Social - Nextdoor	1	1	2026-09-07	2026-09-07	100000
-Beyond the Smartphone	POSTPAID	Paid Social - Instagram	424	30	2026-08-10	2026-09-08	85717.73891
-Not Specified	Not Specified	Paid Social - General MFC	16	8	2026-09-01	2026-09-08	78133.33333336002
-Metro by T-Mobile	PREPAID	Paid Social - TikTok	737	30	2026-08-10	2026-09-08	76168.1399641037
-Metro by T-Mobile	PREPAID	Paid Social - Pinterest	450	30	2026-08-10	2026-09-08	64671.36025071144
-T-Mobile for Business	TFB	Paid Social - Instagram	830	30	2026-08-10	2026-09-08	55750.23502
-Metro by T-Mobile	PREPAID	Paid Social - Nextdoor	60	30	2026-08-10	2026-09-08	42852.78279580001
-T-Mobile Home Internet	BROADBAND	Paid Social - Indirect	120	30	2026-08-10	2026-09-08	35326.08756973332
-Assurance	ASSURANCE	Paid Social - Instagram	2635	30	2026-08-10	2026-09-08	22783.495462000003
-Not Specified	Not Specified	Paid Social - LinkedIn	1953	29	2026-08-10	2026-09-07	12528.530870515388
-TMO Accessibility	Other	Paid Social - Facebook	380	29	2026-08-10	2026-09-08	3222.1716770000007
-TMO Accessibility	Other	Paid Social - Instagram	169	29	2026-08-10	2026-09-08	1416.8583259999996
-Not Specified	Not Specified	Paid Social - Facebook	7	2	2026-09-03	2026-09-08	0.13
-Not Specified	Not Specified	Paid Social - Instagram	2	1	2026-09-03	2026-09-03	0.01
-Beyond the Smartphone	POSTPAID	Paid Social - TikTok	8	6	2026-08-10	2026-09-04	0
-T-Mobile for Business	TFB	Paid Social - TikTok	1	1	2026-08-24	2026-08-24	0
-Corp_Exec	Other	Paid Social - LinkedIn	28	18	2026-08-10	2026-09-07	0
-T-Money	FINANCIAL SERVICES	Paid Social - TikTok	78	25	2026-08-10	2026-09-07	0
-
-SELECT
-  UPPER(TRIM(raw.Brand)) AS brand,
-  UPPER(TRIM(raw.LOB)) AS lob,
-  COUNT(*) AS row_count,
-  SUM(raw.Spend) AS spend
-
-FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
-
-WHERE raw.Channel_Group_Name = 'Paid Social'
-  AND raw.Date >= date_sub(current_date(), 35)
-
-GROUP BY
-  UPPER(TRIM(raw.Brand)),
-  UPPER(TRIM(raw.LOB))
-
-ORDER BY
-  spend DESC;
-
-output:
-brand	lob	row_count	spend
-T-MOBILE	POSTPAID	50747	10489678.184072252
-T-MOBILE HOME INTERNET	BROADBAND	8041	3887700.6537809554
-METRO BY T-MOBILE	PREPAID	6672	1736972.021287198
-T-MOBILE FOR BUSINESS	TFB	6038	987098.4801851398
-T-MOBILE FIBER	BROADBAND	3541	750701.2997057987
-BEYOND THE SMARTPHONE	POSTPAID	1462	398521.5294256673
-ASSURANCE	ASSURANCE	10960	300730.25009899813
-NOT SPECIFIED	NOT SPECIFIED	1979	190662.0042038754
-TMO ACCESSIBILITY	OTHER	549	4639.030003
-CORP_EXEC	OTHER	28	0
-T-MONEY	FINANCIAL SERVICES	78	0
-
+    lob,
+    channel_group;
