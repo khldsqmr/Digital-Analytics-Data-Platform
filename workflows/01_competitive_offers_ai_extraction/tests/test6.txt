@@ -1,1 +1,73 @@
-Biddable Spend includes Paid Search, Paid Social, and Programmatic. Paid Search is typically complete by Mon 8 AM ET, Programmatic by Mon 10 AM ET, while Paid Social varies by platform: TikTok/Snapchat/Pinterest by Tue, LinkedIn/X by Thu, and Meta may continue to backfill. Forecast available for All Channels only.
+All Channels
+
+Paid Search - All
+Paid Search - Google
+Paid Search - Bing
+
+Paid Social - All
+Paid Social - Facebook
+Paid Social - Instagram
+Paid Social - TikTok
+Paid Social - Snapchat
+Paid Social - Pinterest
+Paid Social - LinkedIn
+Paid Social - Twitter
+Paid Social - Reddit
+Paid Social - Indirect
+Paid Social - Nextdoor
+Paid Social - General MFC
+Paid Social - Creator
+Paid Social - Digital Sponsorship
+
+Programmatic - All
+Programmatic - Amazon DSP
+Programmatic - The Trade Desk
+Programmatic - DV360
+Programmatic - Blis
+Programmatic - Google Ads
+
+
+// c.Bidd Channel Match
+
+IF [p.tms.Bidd Channel] = 'All Channels' THEN
+
+    [Channel Group] IN (
+        'Paid Search',
+        'Paid Social',
+        'Programmatic'
+    )
+
+ELSEIF [p.tms.Bidd Channel] = 'Paid Search - All' THEN
+
+    [Channel Group] = 'Paid Search'
+
+ELSEIF [p.tms.Bidd Channel] = 'Paid Social - All' THEN
+
+    [Channel Group] = 'Paid Social'
+
+ELSEIF [p.tms.Bidd Channel] = 'Programmatic - All' THEN
+
+    [Channel Group] = 'Programmatic'
+
+ELSEIF STARTSWITH([p.tms.Bidd Channel], 'Paid Search - ') THEN
+
+    [Channel Group] = 'Paid Search'
+    AND [Platform] =
+        REPLACE([p.tms.Bidd Channel], 'Paid Search - ', '')
+
+ELSEIF STARTSWITH([p.tms.Bidd Channel], 'Paid Social - ') THEN
+
+    [Channel Group] = 'Paid Social'
+    AND [Platform] =
+        REPLACE([p.tms.Bidd Channel], 'Paid Social - ', '')
+
+ELSEIF STARTSWITH([p.tms.Bidd Channel], 'Programmatic - ') THEN
+
+    [Channel Group] = 'Programmatic'
+    AND [Platform] =
+        REPLACE([p.tms.Bidd Channel], 'Programmatic - ', '')
+
+ELSE
+    FALSE
+END
+
