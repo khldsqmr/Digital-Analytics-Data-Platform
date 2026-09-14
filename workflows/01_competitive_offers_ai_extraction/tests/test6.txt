@@ -1,34 +1,82 @@
-// c.Show Channel Group by Spend Source
+//c.Biddable LOB Match
+IF [p.tms.Biddable LOB] = 'Postpaid' THEN
 
-IF CONTAINS(UPPER([p.tms.Spend Source]), "MFC") THEN
+    [Lob] = 'POSTPAID'
 
-    [Channel Group] IN (
-        "Paid Search",
-        "Programmatic",
-        "Other",
-        "Paid Social"
-    )
+ELSEIF [p.tms.Biddable LOB] = 'Broadband' THEN
 
-ELSEIF CONTAINS(UPPER([p.tms.Spend Source]), "PLATFORM") THEN
+    [Lob] = 'BROADBAND'
 
-    [Channel Group] IN (
-        "Other",
-        "Paid Search",
-        "Programmatic",
-        "Paid Social",
-        "Affiliate",
-        "iSpot National TV",
-        "iSpot OTT"
-    )
+ELSEIF [p.tms.Biddable LOB] = 'Postpaid + Broadband' THEN
 
-ELSEIF CONTAINS(UPPER([p.tms.Spend Source]), "BIDDABLE") THEN
-
-    [Channel Group] IN (
-        "Paid Search",
-        "Programmatic",
-        "Paid Social"
-    )
+    [Lob] IN ('POSTPAID', 'BROADBAND')
 
 ELSE
     FALSE
 END
+
+//c.Biddable Channel Match
+[Channel Group] = [p.tms.Biddable Channel]
+
+
+//c.Biddable Spend Actual
+SUM(
+    IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+       AND [Metric Name] = 'biddableSpend'
+       AND [c.Biddable LOB Match]
+       AND [c.Biddable Channel Match]
+    THEN [Metric Value]
+    END
+)
+
+// c.Biddable WoW Den
+
+SUM(
+    IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+       AND [Metric Name] = 'biddableSpend'
+       AND [c.Biddable LOB Match]
+       AND [c.Biddable Channel Match]
+    THEN [Wow Denominator]
+    END
+)
+
+
+// c.Biddable WoW Num
+
+SUM(
+    IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+       AND [Metric Name] = 'biddableSpend'
+       AND [c.Biddable LOB Match]
+       AND [c.Biddable Channel Match]
+    THEN [Wow Numerator]
+    END
+)
+
+// c.Biddable Spend WoW %
+
+IF ISNULL([c.Biddable WoW Den])
+   OR [c.Biddable WoW Den] = 0
+THEN
+    NULL
+ELSE
+    [c.Biddable WoW Num]
+    /
+    ABS([c.Biddable WoW Den])
+END
+
+// c.Biddable WoW Pos
+
+IF [c.Biddable Spend WoW %] >= 0 THEN
+    [c.Biddable Spend WoW %]
+END
+
+// c.Biddable WoW Neg
+
+IF [c.Biddable Spend WoW %] < 0 THEN
+    [c.Biddable Spend WoW %]
+END
+
+
+
+
+
