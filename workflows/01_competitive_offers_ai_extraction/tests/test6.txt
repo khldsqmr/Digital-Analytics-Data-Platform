@@ -48,3 +48,10 @@ job_run_ts	run_date	bq_table	status	cols_added	cols_removed	cols_changed	schema_
 
 
 The mrt_paidsocial_pivot table has been flagged for a schema change daily since Sep 1, mainly because Base_AAL_CartStar and Postpaid_TopFunnelProspect keep showing under cols_removed. That’s how the source bq_uc_pipeline_run_log is currently recording it, and our monitoring view is just reflecting those values rather than generating the schema-change status itself.
+
+
+The `mrt_paidsocial_pivot` table has been flagged for a schema change daily since Sep 1, mainly because `Base_AAL_CartStar` and `Postpaid_TopFunnelProspect` are repeatedly showing under `cols_removed`. Our monitoring view (`sdi_vw_pipelineMonitoring_gold_bqUcRunDetails_daily`) is just reflecting what's already recorded in the source run log (`prd_dbi_analytics.improvado.bq_uc_pipeline_run_log`), so the repeated schema-change status is coming from upstream rather than our monitoring view.
+
+
+
+
