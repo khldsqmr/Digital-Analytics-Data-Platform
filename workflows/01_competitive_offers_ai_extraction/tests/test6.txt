@@ -1,3 +1,18 @@
-Built the Biddable Spend pipeline using Programmatic from prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr, Paid Social from prdrzranalytics.lab42.media_analytics_integrated_snapshot, and Paid Search from prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily, landing into sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly.
-Fixed Paid Social to use raw.LOB and expanded Bronze to retain all Paid Social subchannels/platforms at week × LOB × channel_group × platform; Silver totals now reconcile for Postpaid/Broadband.
-Kept sdi_vw_dashboardPulseTms_gold_unified_long at its existing grain; next step is to generate Silver labels like Paid Social - All, Paid Social - Facebook, Programmatic - DV360, etc. for the Tableau selector.
+SELECT
+    TRY_CAST(job_run_ts AS TIMESTAMP) AS job_run_ts,
+    CAST(TRY_CAST(job_run_ts AS TIMESTAMP) AS DATE) AS run_date,
+    bq_table,
+    status,
+    cols_added,
+    cols_removed,
+    cols_changed,
+    CASE
+        WHEN cols_added IS NOT NULL
+          OR cols_removed IS NOT NULL
+          OR cols_changed IS NOT NULL
+        THEN 'Schema Change'
+        ELSE 'No Schema Change'
+    END AS schema_change_status
+FROM prd_dbi_analytics.improvado.bq_uc_pipeline_run_log
+WHERE LOWER(bq_table) LIKE '%mrt%social%'
+ORDER BY TRY_CAST(job_run_ts AS TIMESTAMP) DESC;
