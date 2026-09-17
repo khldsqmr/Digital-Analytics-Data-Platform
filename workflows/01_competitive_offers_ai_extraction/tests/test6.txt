@@ -1,18 +1,47 @@
-SELECT
-    TRY_CAST(job_run_ts AS TIMESTAMP) AS job_run_ts,
-    CAST(TRY_CAST(job_run_ts AS TIMESTAMP) AS DATE) AS run_date,
-    bq_table,
-    status,
-    cols_added,
-    cols_removed,
-    cols_changed,
-    CASE
-        WHEN cols_added IS NOT NULL
-          OR cols_removed IS NOT NULL
-          OR cols_changed IS NOT NULL
-        THEN 'Schema Change'
-        ELSE 'No Schema Change'
-    END AS schema_change_status
-FROM prd_dbi_analytics.improvado.bq_uc_pipeline_run_log
-WHERE LOWER(bq_table) LIKE '%mrt%social%'
-ORDER BY TRY_CAST(job_run_ts AS TIMESTAMP) DESC;
+job_run_ts	run_date	bq_table	status	cols_added	cols_removed	cols_changed	schema_change_status
+2026-09-16T13:21:47.000+00:00	2026-09-16	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-15T13:21:43.000+00:00	2026-09-15	mrt_paidsocial_pivot	✅ Success	Metro_PSPV_Plus (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-14T13:21:11.000+00:00	2026-09-14	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-13T13:20:17.000+00:00	2026-09-13	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-12T13:21:00.000+00:00	2026-09-12	mrt_paidsocial_pivot	✅ Success	TMobile_UpperFunnel_Base (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-11T13:20:33.000+00:00	2026-09-11	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-10T13:21:12.000+00:00	2026-09-10	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-09T13:22:01.000+00:00	2026-09-09	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-08T13:21:15.000+00:00	2026-09-08	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-07T13:20:36.000+00:00	2026-09-07	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-06T13:20:31.000+00:00	2026-09-06	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-05T13:21:01.000+00:00	2026-09-05	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-04T13:23:01.000+00:00	2026-09-04	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-03T13:20:48.000+00:00	2026-09-03	mrt_paidsocial_pivot	✅ Success	Postpaid_TopFunnel (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
+2026-09-02T13:21:39.000+00:00	2026-09-02	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType())	null	Schema Change
+2026-09-01T13:20:50.000+00:00	2026-09-01	mrt_paidsocial_pivot	✅ Success	Base_Add_A_Line_CartStart (DoubleType()), Base_Upper_Funnel (DoubleType()), Fiber_Web_Order (DoubleType()), Metro_Web_Orders (DoubleType()), TBG_Low_Funnel_v7 (DoubleType())	Base_AAL_CartStar (DoubleType())	null	Schema Change
+2026-08-31T13:23:52.000+00:00	2026-08-31	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-30T13:20:47.000+00:00	2026-08-30	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-29T13:22:04.000+00:00	2026-08-29	mrt_paidsocial_pivot	✅ Success	Fiber_Upper_Funnel (DoubleType()), Postpaid_Web_Order (DoubleType())	null	null	Schema Change
+2026-08-28T13:18:58.000+00:00	2026-08-28	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-27T13:21:56.000+00:00	2026-08-27	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-26T13:21:41.000+00:00	2026-08-26	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-25T13:20:20.000+00:00	2026-08-25	mrt_paidsocial_pivot	✅ Success	HINT_Top_Funnel (DoubleType())	null	null	Schema Change
+2026-08-24T13:18:53.000+00:00	2026-08-24	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-23T13:18:29.000+00:00	2026-08-23	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-22T13:18:30.000+00:00	2026-08-22	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-21T13:36:46.000+00:00	2026-08-21	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-21T13:18:39.000+00:00	2026-08-21	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-20T13:37:02.000+00:00	2026-08-20	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-20T13:18:49.000+00:00	2026-08-20	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-19T13:37:07.000+00:00	2026-08-19	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-19T13:18:41.000+00:00	2026-08-19	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-18T13:58:22.000+00:00	2026-08-18	mrt_paidsocial_pivot	✅ Success	kpi (StringType()), conversions (DoubleType())	null	null	Schema Change
+2026-08-18T13:37:16.000+00:00	2026-08-18	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-18T13:18:38.000+00:00	2026-08-18	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+2026-08-17T13:18:50.000+00:00	2026-08-17	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-16T13:18:47.000+00:00	2026-08-16	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-15T13:19:10.000+00:00	2026-08-15	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-14T13:20:28.000+00:00	2026-08-14	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-13T13:18:38.000+00:00	2026-08-13	mrt_paidsocial_pivot	✅ Success	LOBFunnelTactic (StringType()), MonthNumber (LongType()), WeekNumber (LongType()), HINTWeekStartDate (DateType()), OptimizationMetric (StringType())	null	null	Schema Change
+2026-08-12T13:20:32.000+00:00	2026-08-12	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-11T13:21:22.000+00:00	2026-08-11	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-10T13:20:26.000+00:00	2026-08-10	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-09T13:20:33.000+00:00	2026-08-09	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-08T13:20:18.000+00:00	2026-08-08	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
+2026-08-07T13:20:29.000+00:00	2026-08-07	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
