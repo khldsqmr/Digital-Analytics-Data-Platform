@@ -45,3 +45,6 @@ job_run_ts	run_date	bq_table	status	cols_added	cols_removed	cols_changed	schema_
 2026-08-09T13:20:33.000+00:00	2026-08-09	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
 2026-08-08T13:20:18.000+00:00	2026-08-08	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
 2026-08-07T13:20:29.000+00:00	2026-08-07	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
+
+
+The mrt_paidsocial_pivot table has been flagged for a schema change daily since Sep 1, mainly because Base_AAL_CartStar and Postpaid_TopFunnelProspect keep showing under cols_removed. That’s how the source bq_uc_pipeline_run_log is currently recording it, and our monitoring view is just reflecting those values rather than generating the schema-change status itself.
