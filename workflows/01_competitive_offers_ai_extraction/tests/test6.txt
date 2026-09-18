@@ -1,14 +1,122 @@
-Currently, I’m planning to define Biddable Spend like this. For each source, below is the full universe available and the subset we would use:
+-- PAID SOCIAL: freshness by platform
+SELECT
+    REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
+    MAX(CAST(Date AS DATE)) AS latest_data_date,
+    DATEDIFF(current_date(), MAX(CAST(Date AS DATE))) AS days_behind,
+    SUM(TRY_CAST(Spend AS DOUBLE)) AS spend_last_35d
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+  AND Agency = 'InHouse'
+  AND UPPER(TRIM(LOB)) IN ('POSTPAID', 'BROADBAND', 'HSI')
+  AND Date >= date_sub(current_date(), 35)
+GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
+ORDER BY latest_data_date DESC, platform;
 
-Programmatic (pbi_programmatic_browsers_currentyr)
-Universe: Channel = Display, OLV, Streaming Radio, plus some NULL; DSP = Amazon DSP, Blis, DV360, The Trade Desk; LOBs include PostPaid, HSI, PrePaid, TFB, Archived.
-Our selection: Include all DSPs and all channel values, but restrict to Postpaid + HSI/Broadband only.
-Excluded: PrePaid, TFB, Archived.
-Paid Social (media_analytics_integrated_snapshot)
-Universe: Channel_Group_Name = 'Paid Social'; Channel_Name includes Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC, etc.; agencies include InHouse, Initiative, Assurance, TMO Accessibility.
-Our selection: Agency = 'InHouse' + Postpaid/Broadband only, and include all qualifying social platforms underneath that scope.
-Excluded: Initiative/Assurance/Accessibility and non-PP/BB LOBs. This means things like Indirect, Nextdoor and General MFC currently fall out because they sit under Initiative.
-Paid Search (sdi_tbl_sa360_gold_campaign_daily)
-Universe: ad_platform = Google, Bing; advertising_channel_type = SEARCH, SHOPPING, PERFORMANCE_MAX, DISCOVERY; campaign_type = Brand, Generic, Shopping, PMax, DemandGen; LOBs include Postpaid, HSI, Metro, TFB, Fiber.
-Our selection: Include Google + Bing and all campaign/channel types, restricted to Postpaid + HSI/Broadband only.
-Excluded: Metro, TFB, Fiber and other non-PP/BB LOBs.
+-- PAID SOCIAL: prior completed week completeness by platform
+
+WITH dates AS (
+    SELECT
+        date_sub(current_date(), dayofweek(current_date())) AS prior_week_end
+),
+
+base AS (
+    SELECT
+        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
+        CAST(Date AS DATE) AS dt,
+        TRY_CAST(Spend AS DOUBLE) AS spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Agency = 'InHouse'
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID', 'BROADBAND', 'HSI')
+)
+
+SELECT
+    platform,
+    COUNT(DISTINCT dt) AS days_present,
+    MIN(dt) AS first_date,
+    MAX(dt) AS latest_date,
+    SUM(spend) AS spend,
+    CASE
+        WHEN COUNT(DISTINCT dt) = 7 THEN 'COMPLETE'
+        ELSE 'INCOMPLETE'
+    END AS status
+FROM base
+CROSS JOIN dates
+WHERE dt BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
+GROUP BY platform
+ORDER BY status DESC, platform;
+
+
+-- PROGRAMMATIC: freshness by DSP
+
+SELECT
+    TRIM(DSP) AS dsp,
+    MAX(date) AS latest_data_date,
+    DATEDIFF(current_date(), MAX(date)) AS days_behind,
+    SUM(spend) AS spend_last_35d
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
+  AND date >= date_sub(current_date(), 35)
+GROUP BY TRIM(DSP)
+ORDER BY latest_data_date DESC, dsp;
+
+-- PROGRAMMATIC: prior completed week completeness by DSP
+
+WITH dates AS (
+    SELECT
+        date_sub(current_date(), dayofweek(current_date())) AS prior_week_end
+)
+
+SELECT
+    TRIM(DSP) AS dsp,
+    COUNT(DISTINCT date) AS days_present,
+    MIN(date) AS first_date,
+    MAX(date) AS latest_date,
+    SUM(spend) AS spend,
+    CASE
+        WHEN COUNT(DISTINCT date) = 7 THEN 'COMPLETE'
+        ELSE 'INCOMPLETE'
+    END AS status
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+CROSS JOIN dates
+WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
+  AND date BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
+GROUP BY TRIM(DSP)
+ORDER BY status DESC, dsp;
+
+-- PAID SEARCH: freshness by platform
+
+SELECT
+    ad_platform,
+    MAX(date) AS latest_data_date,
+    DATEDIFF(current_date(), MAX(date)) AS days_behind,
+    SUM(cost) AS spend_last_35d
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
+  AND date >= date_sub(current_date(), 35)
+GROUP BY ad_platform
+ORDER BY latest_data_date DESC, ad_platform;
+
+-- PAID SEARCH: prior completed week completeness
+
+WITH dates AS (
+    SELECT
+        date_sub(current_date(), dayofweek(current_date())) AS prior_week_end
+)
+
+SELECT
+    ad_platform,
+    COUNT(DISTINCT date) AS days_present,
+    MIN(date) AS first_date,
+    MAX(date) AS latest_date,
+    SUM(cost) AS spend,
+    CASE
+        WHEN COUNT(DISTINCT date) = 7 THEN 'COMPLETE'
+        ELSE 'INCOMPLETE'
+    END AS status
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+CROSS JOIN dates
+WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
+  AND date BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
+GROUP BY ad_platform
+ORDER BY status DESC, ad_platform;
