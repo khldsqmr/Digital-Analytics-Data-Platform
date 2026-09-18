@@ -1,3 +1,44 @@
 programmatic - is there a column in there for LOB?
 social - is there a column in there for agency? need to filter to in house 
 search - are we good here? this is our own table so we should be i would think
+
+
+-- 1. PROGRAMMATIC: confirm LOB exists + see values
+SELECT
+    lob,
+    SUM(TRY_CAST(spend AS DOUBLE)) AS spend
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+WHERE date >= date_sub(current_date(), 35)
+GROUP BY lob
+ORDER BY spend DESC;
+
+-- 2A. PAID SOCIAL: find agency-related column
+SELECT
+    column_name
+FROM prdrzranalytics.information_schema.columns
+WHERE table_schema = 'lab42'
+  AND table_name = 'media_analytics_integrated_snapshot'
+  AND LOWER(column_name) LIKE '%agency%'
+ORDER BY column_name;
+
+-- 2B. PAID SOCIAL: see agency values for Paid Social
+SELECT
+    Agency,
+    COUNT(*) AS rows,
+    SUM(TRY_CAST(Spend AS DOUBLE)) AS spend
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+  AND Date >= date_sub(current_date(), 35)
+GROUP BY Agency
+ORDER BY spend DESC;
+
+-- 3. PAID SEARCH: quick validation of LOB/platform coverage
+SELECT
+    lob,
+    ad_platform,
+    SUM(TRY_CAST(cost AS DOUBLE)) AS spend
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+WHERE date >= date_sub(current_date(), 35)
+GROUP BY lob, ad_platform
+ORDER BY lob, spend DESC;
+
