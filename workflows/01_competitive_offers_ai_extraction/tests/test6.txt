@@ -1,30 +1,10 @@
--- Example: what did Paid Social look like on Monday morning?
-SELECT
-    REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-    COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
-    MAX(CAST(Date AS DATE)) AS latest_date,
-    SUM(TRY_CAST(Spend AS DOUBLE)) AS spend
-FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-TIMESTAMP AS OF '2026-09-14 14:00:00'
-WHERE Channel_Group_Name = 'Paid Social'
-  AND Agency = 'InHouse'
-  AND UPPER(TRIM(LOB)) IN ('POSTPAID', 'BROADBAND', 'HSI')
-  AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-ORDER BY platform;
+-- PAID SOCIAL READINESS
+-- Week being tested: Sun Sep 6 - Sat Sep 12
+-- Checkpoints: Mon/Tue/Wed 10 AM ET + Thu 6 AM ET
 
-output:
-platform	days_present	latest_date	spend
-Facebook	3	2026-09-08	545453.421354
-Instagram	3	2026-09-08	204998.37875399995
-Pinterest	3	2026-09-08	138970.7885858789
-Snapchat	2	2026-09-07	84238.26974773407
-TikTok	3	2026-09-08	175644.1597739067
-Twitter	1	2026-09-06	14973.530483000002
--- Change only the TIMESTAMP AS OF for each checkpoint
-
-WITH checkpoint AS (
+WITH mon AS (
     SELECT
+        'Mon 10 AM ET' AS checkpoint,
         REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
         COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
         SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
@@ -32,9 +12,64 @@ WITH checkpoint AS (
     TIMESTAMP AS OF '2026-09-14 14:00:00'
     WHERE Channel_Group_Name = 'Paid Social'
       AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID', 'BROADBAND', 'HSI')
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
       AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
     GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
+),
+
+tue AS (
+    SELECT
+        'Tue 10 AM ET' AS checkpoint,
+        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
+        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
+        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-15 14:00:00'
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Agency = 'InHouse'
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
+      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
+    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
+),
+
+wed AS (
+    SELECT
+        'Wed 10 AM ET' AS checkpoint,
+        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
+        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
+        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-16 14:00:00'
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Agency = 'InHouse'
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
+      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
+    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
+),
+
+thu AS (
+    SELECT
+        'Thu 6 AM ET' AS checkpoint,
+        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
+        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
+        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    TIMESTAMP AS OF '2026-09-17 10:00:00'
+    WHERE Channel_Group_Name = 'Paid Social'
+      AND Agency = 'InHouse'
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
+      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
+    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
+),
+
+checkpoints AS (
+    SELECT * FROM mon
+    UNION ALL
+    SELECT * FROM tue
+    UNION ALL
+    SELECT * FROM wed
+    UNION ALL
+    SELECT * FROM thu
 ),
 
 final_spend AS (
@@ -44,34 +79,35 @@ final_spend AS (
     FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
     WHERE Channel_Group_Name = 'Paid Social'
       AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID', 'BROADBAND', 'HSI')
+      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
       AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
     GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
 )
 
 SELECT
+    c.checkpoint,
     c.platform,
     c.days_present,
     c.checkpoint_spend,
     f.final_spend,
-    c.checkpoint_spend / NULLIF(f.final_spend, 0) AS pct_of_final,
+    ROUND(
+        100 * c.checkpoint_spend / NULLIF(f.final_spend, 0),
+        1
+    ) AS pct_of_final,
     CASE
         WHEN c.days_present = 7
          AND c.checkpoint_spend / NULLIF(f.final_spend, 0) >= 0.99
-            THEN 'READY'
+        THEN 'READY'
         ELSE 'NOT READY'
     END AS readiness
-FROM checkpoint c
+FROM checkpoints c
 LEFT JOIN final_spend f
     ON c.platform = f.platform
-ORDER BY c.platform;
-
-output:
-platform	days_present	checkpoint_spend	final_spend	pct_of_final	readiness
-Facebook	3	545453.421354	1265628.1033980004	0.43097448601966765	NOT READY
-Instagram	3	204998.37875399995	489299.09673800046	0.4189633296293783	NOT READY
-Pinterest	3	138970.7885858789	218699.63884573244	0.6354413263750605	NOT READY
-Snapchat	2	84238.26974773407	307229.11961648613	0.2741871273559246	NOT READY
-TikTok	3	175644.1597739067	439259.7584101297	0.3998639902950331	NOT READY
-Twitter	1	14973.530483000002	105009.30017699985	0.1425924223641255	NOT READY
-
+ORDER BY
+    CASE c.checkpoint
+        WHEN 'Mon 10 AM ET' THEN 1
+        WHEN 'Tue 10 AM ET' THEN 2
+        WHEN 'Wed 10 AM ET' THEN 3
+        WHEN 'Thu 6 AM ET' THEN 4
+    END,
+    c.platform;
