@@ -421,3 +421,59 @@ source	latest_date	earliest_date
 Paid Social	2026-09-15	2020-11-05
 Paid Search	2026-09-16	2024-06-10
 Programmatic	2026-09-17	2026-01-01
+
+-- ##############################################################################################################################
+-- ##############################################################################################################################
+-- ##############################################################################################################################
+
+-- PROGRAMMATIC: which accounts actually feed the table?
+SELECT
+    DSP,
+    account_id,
+    lob,
+    COUNT(*) AS rows,
+    SUM(spend) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+WHERE date >= date_sub(current_date(), 35)
+GROUP BY DSP, account_id, lob
+ORDER BY DSP, spend DESC;
+
+
+
+-- SOCIAL: which InHouse accounts are actually included?
+SELECT
+    Account_ID,
+    Account_Name,
+    Account_Type,
+    LOB,
+    SUM(TRY_CAST(Spend AS DOUBLE)) AS spend,
+    MIN(CAST(Date AS DATE)) AS min_date,
+    MAX(CAST(Date AS DATE)) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+  AND Agency = 'InHouse'
+  AND Date >= date_sub(current_date(), 35)
+GROUP BY Account_ID, Account_Name, Account_Type, LOB
+ORDER BY spend DESC;
+
+-- SEARCH: which accounts are in our curated SA360 table?
+SELECT
+    account_id,
+    account_name,
+    lob,
+    ad_platform,
+    SUM(cost) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+WHERE date >= date_sub(current_date(), 35)
+GROUP BY account_id, account_name, lob, ad_platform
+ORDER BY spend DESC;
+
+DESCRIBE HISTORY prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+
+DESCRIBE HISTORY prdrzranalytics.lab42.media_analytics_integrated_snapshot;
+
+DESCRIBE HISTORY prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
