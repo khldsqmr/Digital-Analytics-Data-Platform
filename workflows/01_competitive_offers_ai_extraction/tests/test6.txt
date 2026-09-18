@@ -1,3 +1,6 @@
 Programmatic: prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr has column lob with values like PostPaid, HSI, PrePaid, TFB, Archived, so we’re good there.
 Paid Social: prdrzranalytics.lab42.media_analytics_integrated_snapshot has column Agency; values include InHouse, Initiative, Assurance, TMO Accessibility. We should filter Biddable Social to Agency = 'InHouse'.
 Paid Search: prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily has lob and ad_platform; values include Postpaid, HSI, Metro, TFB, Fiber, with platforms Google and Bing, so structurally we’re good.
+
+
+okay perfect, can you get a clear picture of how we are deriving these definitions? what filters are being applied in improvado, what accounts are included, how often its updated, what other filters are we applying after, etc
