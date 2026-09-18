@@ -1,6 +1,71 @@
-Programmatic: prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr has column lob with values like PostPaid, HSI, PrePaid, TFB, Archived, so we’re good there.
-Paid Social: prdrzranalytics.lab42.media_analytics_integrated_snapshot has column Agency; values include InHouse, Initiative, Assurance, TMO Accessibility. We should filter Biddable Social to Agency = 'InHouse'.
-Paid Search: prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily has lob and ad_platform; values include Postpaid, HSI, Metro, TFB, Fiber, with platforms Google and Bing, so structurally we’re good.
+-- 1. What kind of object is each source?
+SELECT
+    table_catalog,
+    table_schema,
+    table_name,
+    table_type
+FROM system.information_schema.tables
+WHERE (table_catalog = 'prd_dbi_analytics'
+       AND table_schema = 'improvado'
+       AND table_name = 'pbi_programmatic_browsers_currentyr')
+   OR (table_catalog = 'prdrzranalytics'
+       AND table_schema = 'lab42'
+       AND table_name IN (
+           'media_analytics_integrated_snapshot',
+           'sdi_tbl_sa360_gold_campaign_daily'
+       ));
 
 
-okay perfect, can you get a clear picture of how we are deriving these definitions? what filters are being applied in improvado, what accounts are included, how often its updated, what other filters are we applying after, etc
+SHOW CREATE TABLE prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+
+SHOW CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+
+SELECT column_name
+FROM prd_dbi_analytics.information_schema.columns
+WHERE table_schema = 'improvado'
+  AND table_name = 'pbi_programmatic_browsers_currentyr'
+  AND (
+       LOWER(column_name) LIKE '%account%'
+    OR LOWER(column_name) LIKE '%advertiser%'
+    OR LOWER(column_name) LIKE '%agency%'
+    OR LOWER(column_name) LIKE '%dsp%'
+    OR LOWER(column_name) LIKE '%lob%'
+  )
+ORDER BY column_name;
+
+SELECT column_name
+FROM prdrzranalytics.information_schema.columns
+WHERE table_schema = 'lab42'
+  AND table_name = 'media_analytics_integrated_snapshot'
+  AND (
+       LOWER(column_name) LIKE '%account%'
+    OR LOWER(column_name) LIKE '%advertiser%'
+    OR LOWER(column_name) LIKE '%agency%'
+  )
+ORDER BY column_name;
+
+SHOW CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+
+SELECT
+    'Programmatic' AS source,
+    MAX(date) AS latest_date,
+    MIN(date) AS earliest_date
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+
+UNION ALL
+
+SELECT
+    'Paid Social',
+    MAX(CAST(Date AS DATE)),
+    MIN(CAST(Date AS DATE))
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE Channel_Group_Name = 'Paid Social'
+  AND Agency = 'InHouse'
+
+UNION ALL
+
+SELECT
+    'Paid Search',
+    MAX(date),
+    MIN(date)
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
