@@ -12,6 +12,14 @@ WHERE date >= date_sub(current_date(), 35)
 GROUP BY lob
 ORDER BY spend DESC;
 
+output:
+lob	spend
+PostPaid	25197479.01324126
+HSI	9334666.135243446
+PrePaid	9209375.878453968
+Archived	2098832.693002001
+TFB	1899400.2104458592
+
 -- 2A. PAID SOCIAL: find agency-related column
 SELECT
     column_name
@@ -20,6 +28,11 @@ WHERE table_schema = 'lab42'
   AND table_name = 'media_analytics_integrated_snapshot'
   AND LOWER(column_name) LIKE '%agency%'
 ORDER BY column_name;
+output:
+column_name
+Agency
+Creative_Agency
+Creative_Agency_Ad_Number
 
 -- 2B. PAID SOCIAL: see agency values for Paid Social
 SELECT
@@ -31,6 +44,12 @@ WHERE Channel_Group_Name = 'Paid Social'
   AND Date >= date_sub(current_date(), 35)
 GROUP BY Agency
 ORDER BY spend DESC;
+output:
+Agency	rows	spend
+InHouse	84377	16046365.807764528
+Initiative	4103	3823672.4047605945
+Assurance	12417	364873.8300889987
+TMO Accessibility	437	3486.630001999999
 
 -- 3. PAID SEARCH: quick validation of LOB/platform coverage
 SELECT
@@ -41,4 +60,14 @@ FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 WHERE date >= date_sub(current_date(), 35)
 GROUP BY lob, ad_platform
 ORDER BY lob, spend DESC;
-
+output:
+lob	ad_platform	spend
+Fiber	Bing	0
+HSI	Google	0
+HSI	Bing	0
+Metro	Google	4365200.618951002
+Metro	Bing	286841.48000000004
+Postpaid	Google	18239831.62677602
+Postpaid	Bing	2461578.8799999985
+TFB	Google	1868852.4630109977
+TFB	Bing	488629.2599999999
