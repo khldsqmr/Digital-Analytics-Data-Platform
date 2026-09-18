@@ -156,3 +156,26 @@ output:
 ad_platform	days_present	first_date	latest_date	spend	status
 Bing	7	2026-09-06	2026-09-12	487556.56000000006	COMPLETE
 Google	7	2026-09-06	2026-09-12	3620847.6651999997	COMPLETE
+
+
+
+
+
+
+
+
+SELECT column_name
+FROM prdrzranalytics.information_schema.columns
+WHERE table_schema = 'lab42'
+  AND table_name = 'media_analytics_integrated_snapshot'
+  AND (
+       LOWER(column_name) LIKE '%load%'
+    OR LOWER(column_name) LIKE '%insert%'
+    OR LOWER(column_name) LIKE '%update%'
+    OR LOWER(column_name) LIKE '%refresh%'
+    OR LOWER(column_name) LIKE '%snapshot%'
+    OR LOWER(column_name) LIKE '%timestamp%'
+  )
+ORDER BY column_name;
+
+DESCRIBE HISTORY prdrzranalytics.lab42.media_analytics_integrated_snapshot;
