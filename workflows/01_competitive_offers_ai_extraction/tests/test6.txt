@@ -14,11 +14,251 @@ WHERE (table_catalog = 'prd_dbi_analytics'
            'media_analytics_integrated_snapshot',
            'sdi_tbl_sa360_gold_campaign_daily'
        ));
-
+output:
+table_catalog	table_schema	table_name	table_type
+prdrzranalytics	lab42	sdi_tbl_sa360_gold_campaign_daily	MANAGED
+prdrzranalytics	lab42	media_analytics_integrated_snapshot	MANAGED
+prd_dbi_analytics	improvado	pbi_programmatic_browsers_currentyr	MANAGED
 
 SHOW CREATE TABLE prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr;
+output:
+CREATE TABLE prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr (
+  DSP STRING COLLATE UTF8_BINARY,
+  date DATE,
+  flight_start_date DATE,
+  flight_end_date DATE,
+  account_id STRING COLLATE UTF8_BINARY,
+  campaign_id STRING COLLATE UTF8_BINARY,
+  campaign_name STRING COLLATE UTF8_BINARY,
+  campaign_type STRING COLLATE UTF8_BINARY,
+  lob STRING COLLATE UTF8_BINARY,
+  business_initiative STRING COLLATE UTF8_BINARY,
+  budget_source STRING COLLATE UTF8_BINARY,
+  budget_product_line STRING COLLATE UTF8_BINARY,
+  program STRING COLLATE UTF8_BINARY,
+  adgroup_id STRING COLLATE UTF8_BINARY,
+  adgroup_name STRING COLLATE UTF8_BINARY,
+  yt_adgroup_id STRING COLLATE UTF8_BINARY,
+  yt_adgroup_name STRING COLLATE UTF8_BINARY,
+  creative_type STRING COLLATE UTF8_BINARY,
+  insertion_order_id STRING COLLATE UTF8_BINARY,
+  placement_id STRING COLLATE UTF8_BINARY,
+  placement STRING COLLATE UTF8_BINARY,
+  bids DOUBLE,
+  budget DOUBLE,
+  platform_budget DOUBLE,
+  clicks DOUBLE,
+  click_rate BIGINT,
+  click_through_conversions DOUBLE,
+  daily_cap DOUBLE,
+  frequency DOUBLE,
+  impressions DOUBLE,
+  impressions_gcm DOUBLE,
+  ivt_rate BIGINT,
+  player_views DOUBLE,
+  player_25_complete DOUBLE,
+  player_50_complete DOUBLE,
+  player_75_complete DOUBLE,
+  player_completed_views DOUBLE,
+  player_errors DOUBLE,
+  player_pause DOUBLE,
+  player_skip DOUBLE,
+  total_bid_amount_usd DOUBLE,
+  total_conversions DOUBLE,
+  unique_reach_total_reach BIGINT,
+  viewable_impressions DOUBLE,
+  view_rate BIGINT,
+  spend DOUBLE,
+  view_through_conversions DOUBLE,
+  advertiser_cost_usd DOUBLE,
+  partner_cost DOUBLE,
+  ttd_cost_usd DOUBLE,
+  total_costs DOUBLE,
+  media_partner STRING COLLATE UTF8_BINARY,
+  AAL DOUBLE,
+  BTS_Quality_Traffic DOUBLE,
+  `Connect_Prepaid_Mid_Funnel_-_Prospect` DOUBLE,
+  `Connect_Prepaid_Low_Funnel_-_Prospect` DOUBLE,
+  Connect_QT DOUBLE,
+  Digital_Gross_Add DOUBLE,
+  `Fiber_-_Eligibility_Check` DOUBLE,
+  `Fiber_-_Successful_Eligibility_Check` DOUBLE,
+  `Fiber_Upper_Funnel_-_All` DOUBLE,
+  Fiber_Web_Order DOUBLE,
+  HINT_Base_CFS DOUBLE,
+  `HINT_CFS_-_Non_Logged_In` DOUBLE,
+  `HINT_CFS_-_Logged_In` DOUBLE,
+  HINT_EC DOUBLE,
+  HINT_Get_Started_Check_Avail DOUBLE,
+  HINT_Order_Confirmation DOUBLE,
+  HINT_Prospect_CFS DOUBLE,
+  HINT_ProspectQualityTraffic DOUBLE,
+  HINT_QualityTraffic DOUBLE,
+  HINT_SEC DOUBLE,
+  HINT_Waitlist DOUBLE,
+  HINT_Web_Orders DOUBLE,
+  HSI_Offline_Invoca_Combined_Conversion DOUBLE,
+  HSI_Offline_Invoca_Eligibility DOUBLE,
+  HSI_Offline_Invoca_Order DOUBLE,
+  HSI_Offline_Invoca_Sale_Opp DOUBLE,
+  Magenta_Buying_Intent DOUBLE,
+  Magenta_Prospect_Quality_Traffic DOUBLE,
+  Postpaid_Consumer_Base_AAL_Cart_Start DOUBLE,
+  Postpaid_Consumer_Cart_Start_Plus DOUBLE,
+  Postpaid_Consumer_PSPV_Plus DOUBLE,
+  `Postpaid_Consumer_Web_Order_-_Prospect` DOUBLE,
+  `T-Mobile_Prepaid_Mid_Funnel_-_Prospect` DOUBLE,
+  `T-Mobile_Prepaid_Low_Funnel_-_Prospect` DOUBLE,
+  `T-Mobile_Top_Funnel_-_Base` DOUBLE,
+  `T-Mobile_Top_Funnel_-_Prospect` DOUBLE,
+  `T-Mobile_Upper_Funnel_-_Base` DOUBLE,
+  `T-Mobile_Upper_Funnel_-_Prospect` DOUBLE,
+  `Metro_Cart_Start_-_Prospect` DOUBLE,
+  Metro_HINT_QualityTraffic DOUBLE,
+  `Metro_Low_Funnel_-_Cart_Start_Plus` DOUBLE,
+  `Metro_Mid_Funnel_-_Prospect` DOUBLE,
+  `Metro_Top_Funnel_-_All` DOUBLE,
+  `Metro_Top_Funnel_-_Base` DOUBLE,
+  `Metro_Top_Funnel_-_Prospect` DOUBLE,
+  `Metro_Upper_Funnel_-_All` DOUBLE,
+  `Metro_Upper_Funnel_-_Base` DOUBLE,
+  `Metro_Upper_Funnel_-_Prospect` DOUBLE,
+  Metro_Prospect_Quality_Traffic DOUBLE,
+  `Metro_Web_Order_-_Prospect` DOUBLE,
+  `Offline_Conversion_Tracking_-_Credit_App` DOUBLE,
+  TFB_Credit_Check_Confirm DOUBLE,
+  TFB_Digital_Conversion_Confirmation DOUBLE,
+  TFB_QualityTraffic DOUBLE,
+  TBG_Low_Funnel_v7 DOUBLE,
+  `TBG_Mid_Funnel_-_Prospect` DOUBLE,
+  `TBG_Top_Funnel_-_Prospect` DOUBLE,
+  `TBG_Upper_Funnel_-_Prospect` DOUBLE,
+  Invoca_Offline_ConsumerPP_Order DOUBLE,
+  HINT_Total_QT DOUBLE,
+  HINT_Total_CFS DOUBLE,
+  `ISP:_Any_ISP_Site_page_-Visit` BIGINT,
+  `ISP:_Eligibity_Check_Completed_-Visit` BIGINT,
+  lob_value STRING COLLATE UTF8_BINARY,
+  is_combination_campaign BOOLEAN,
+  WeekStart DATE,
+  flight_quarter_num BIGINT,
+  flight_quarter STRING COLLATE UTF8_BINARY,
+  flight_quarter_start DATE,
+  flight_status STRING COLLATE UTF8_BINARY,
+  MMP_Flight_ID STRING COLLATE UTF8_BINARY,
+  Budget_Code STRING COLLATE UTF8_BINARY,
+  Buy_Type STRING COLLATE UTF8_BINARY,
+  LOB_MMP STRING COLLATE UTF8_BINARY,
+  Funding_Source STRING COLLATE UTF8_BINARY,
+  BDGProdLine STRING COLLATE UTF8_BINARY,
+  Market STRING COLLATE UTF8_BINARY,
+  Funnel STRING COLLATE UTF8_BINARY,
+  Channel STRING COLLATE UTF8_BINARY,
+  message STRING COLLATE UTF8_BINARY,
+  BDGCode STRING COLLATE UTF8_BINARY)
+USING delta
+TBLPROPERTIES (
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.appendOnly' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.feature.invariants' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7',
+  'delta.parquet.compression.codec' = 'zstd')
+
 
 SHOW CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+output:
+CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily (
+  aal DOUBLE COMMENT '[AI-Generated] Tracks marketing campaign performance for promoting the Add A Line service to existing customers.',
+  account_id STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Links campaign performance data to the specific Google Ads account managing the search advertising.',
+  account_name STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Human-readable name of the Google Ads account used for organizing and reporting campaign performance.',
+  add_a_line DOUBLE COMMENT '[AI-Generated] Marks campaigns specifically designed to promote the Add A Line service offering to customers.',
+  all_conversions DOUBLE COMMENT '[AI-Generated] Aggregates all tracked conversion actions (purchases, sign-ups, eligibility checks) resulting from campaign interactions.',
+  bi DOUBLE COMMENT '[AI-Generated] Marks records designated for Business Intelligence reporting and analytics consumption.',
+  bts_quality_traffic DOUBLE COMMENT '[AI-Generated] Measures quality and engagement of traffic from BTS (Beyond the Smartphone) campaigns targeting advanced service lines.',
+  buying_intent DOUBLE COMMENT '[AI-Generated] Captures behavioral signals suggesting purchase readiness or intent to acquire T-Mobile services from campaign engagement.',
+  campaign_id STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Primary key linking all performance metrics and conversion events to a specific campaign within Google Ads 360.',
+  cart_start DOUBLE COMMENT '[AI-Generated] Tracks the number of times users began the purchase process after engaging with campaign advertisements.',
+  clicks DOUBLE COMMENT '[AI-Generated] Measures campaign engagement by counting user clicks on search ads, a primary performance indicator for paid search.',
+  connect_low_funnel_visit DOUBLE COMMENT '[AI-Generated] Measures traffic volume to website from Connect service campaigns targeting lower-funnel prospect audiences.',
+  connect_qt DOUBLE COMMENT '[AI-Generated] Aggregates or segments Connect service campaign performance data on a quarterly basis for trend analysis.',
+  digital_gross_add DOUBLE COMMENT '[AI-Generated] Tracks the number of new customers acquired via digital marketing campaigns, a key growth metric for T-Mobile.',
+  fiber_activations DOUBLE COMMENT '[AI-Generated] Measures completed fiber service activations driven by Google Search Ads 360 campaigns, representing customers who successfully provisioned fiber broadband service after ad engagement.',
+  fiber_ec DOUBLE COMMENT '[AI-Generated] Represents estimated unique customer reach for fiber service campaigns, providing audience size metrics for campaign performance analysis and targeting effectiveness.',
+  fiber_pre_order DOUBLE COMMENT '[AI-Generated] Tracks fiber service pre-orders or advance reservations generated by campaign activity, indicating customer intent to purchase fiber broadband before service availability.',
+  fiber_sec DOUBLE COMMENT '[AI-Generated] Measures unique customers who engaged with fiber search advertisements, indicating active audience interaction and campaign resonance with target market.',
+  fiber_waitlist_sign_up DOUBLE COMMENT '[AI-Generated] Captures fiber service waitlist registrations driven by Google Search Ads 360 campaigns, representing prospective customers expressing interest in future fiber availability.',
+  hint_ec DOUBLE COMMENT '[AI-Generated] Represents estimated unique customer reach for home internet service campaigns, providing audience size metrics for campaign performance and targeting analysis.',
+  hint_invoca_calls DOUBLE COMMENT '[AI-Generated] Measures phone calls to home internet service driven by campaign activity through Invoca call tracking, representing voice channel conversion activity.',
+  hint_offline_invoca_calls DOUBLE COMMENT '[AI-Generated] Captures phone calls to home internet service attributed to offline campaign touchpoints tracked through Invoca, measuring cross-channel conversion attribution.',
+  hint_offline_invoca_eligibility DOUBLE COMMENT '[AI-Generated] Measures eligibility verification requests for home internet service originating from offline campaign interactions tracked through Invoca platform.',
+  hint_offline_invoca_order DOUBLE COMMENT '[AI-Generated] Tracks home internet service orders completed through offline campaign touchpoints captured by Invoca call tracking, representing voice-channel conversions.',
+  hint_offline_invoca_order_rt DOUBLE COMMENT '[AI-Generated] Measures operational response time for processing home internet orders originating from offline Invoca interactions, supporting service quality and efficiency analysis.',
+  hint_offline_invoca_sales_opp DOUBLE COMMENT '[AI-Generated] Captures qualified sales opportunities for home internet service generated through offline campaign interactions tracked by Invoca platform.',
+  hint_sec DOUBLE COMMENT '[AI-Generated] Measures unique customers who engaged with home internet search advertisements, indicating active audience interaction and campaign effectiveness for HINT service.',
+  hint_web_orders DOUBLE COMMENT '[AI-Generated] Measures home internet service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion.',
+  impressions DOUBLE COMMENT '[AI-Generated] Measures total number of times campaign advertisements were displayed to users across Google Search Ads 360 channels, representing campaign reach and visibility.',
+  magenta_pqt DOUBLE COMMENT '[AI-Generated] Measures qualified prospective customer traffic driven by T-Mobile Magenta brand campaigns, representing high-intent audience segments for mobile service offerings.',
+  ma_hint_ec_eligibility_check DOUBLE COMMENT '[AI-Generated] Tracks performance of campaigns promoting HINT (Home Internet Service) eligibility checks to potential customers.',
+  metro_hint_qt DOUBLE COMMENT '[AI-Generated] Tracks volume of Home Internet Service (HINT) prospect interactions and engagement events in metro areas, supporting measurement of broadband product line performance.',
+  metro_low_funnel_cs DOUBLE COMMENT '[AI-Generated] Captures customers in late-stage consideration or decision phase of purchase funnel for metro market campaigns, representing near-conversion audience segments.',
+  metro_qt DOUBLE COMMENT '[AI-Generated] Provides overall volume count of prospect engagement events across all product lines and funnel stages within metropolitan market segments.',
+  postpaid_cart_start DOUBLE COMMENT '[AI-Generated] Measures lower-funnel engagement where prospects begin postpaid service purchase process, indicating strong purchase intent and transaction readiness.',
+  postpaid_pspv DOUBLE COMMENT '[AI-Generated] Tracks prospect engagement with postpaid service product pages, indicating consideration-phase activity and product research behavior in digital channels.',
+  tfb_low_funnel DOUBLE COMMENT '[AI-Generated] Aggregates bottom-of-funnel engagement metrics for T-Mobile for Business prospects, indicating high purchase intent and proximity to transaction.',
+  tfb_credit_check DOUBLE COMMENT '[AI-Generated] Measures credit verification events for T-Mobile for Business customers, indicating transaction-stage activity where creditworthiness is being assessed.',
+  tfb_hint_ec DOUBLE COMMENT '[AI-Generated] Tracks Home Internet Service (HINT) product engagement for T-Mobile for Business customers, measuring broadband product line performance in B2B segment.',
+  tfb_invoca_sales_calls DOUBLE COMMENT '[AI-Generated] Tracks phone-based sales interactions for T-Mobile for Business through Invoca call tracking, measuring voice channel engagement and sales activity.',
+  tfb_leads DOUBLE COMMENT '[AI-Generated] Aggregates lead volume for T-Mobile for Business, representing prospects captured across digital channels and qualifying for sales engagement.',
+  tfb_quality_traffic DOUBLE COMMENT '[AI-Generated] Measures qualified prospect traffic for T-Mobile for Business, filtering for engagement events meeting quality thresholds for sales readiness.',
+  tmo_prepaid_low_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures bottom-of-funnel engagement for T-Mobile prepaid customers, capturing high-intent prospects near purchase decision or transaction completion.',
+  tmo_top_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures early-stage awareness and consideration-phase engagement for T-Mobile consumer prospects, indicating initial product interest and brand awareness.',
+  tmo_upper_funnel_prospect DOUBLE COMMENT '[AI-Generated] Captures mid-stage engagement for T-Mobile consumer prospects as they progress from awareness toward consideration and product evaluation.',
+  total_tfb_conversions DOUBLE COMMENT '[AI-Generated] Measures total conversion volume across all T-Mobile for Business funnel stages and channels, representing cumulative purchase transactions and qualified outcomes.',
+  connect_low_funnel_prospect DOUBLE COMMENT '[AI-Generated] Tracks conversion events for Connect service targeting prospects in the lower stages of the marketing funnel.',
+  tfb_lead_form_submit DOUBLE COMMENT '[AI-Generated] Tracks form-based lead capture for T-Mobile for Business, representing mid-funnel engagement where prospects provide contact information for sales follow-up.',
+  metro_upper_funnel_prospect DOUBLE COMMENT '[AI-Generated] Captures mid-stage prospect engagement in metro regions as customers move from awareness toward consideration and evaluation of T-Mobile products and services.',
+  fiber_ec_dda DOUBLE COMMENT '[AI-Generated] Tracks daily changes or adjustments to fiber estimated customer counts, enabling trend analysis and performance variance monitoring across campaign periods.',
+  metro_top_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures early-stage awareness and consideration-phase prospect engagement in metro areas, indicating initial interest in T-Mobile offerings before deeper funnel progression.',
+  fiber_web_orders DOUBLE COMMENT '[AI-Generated] Measures fiber service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion to purchase.',
+  metro_mid_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures prospects in mid-stage awareness and consideration phase of purchase funnel for metro market campaigns, representing engaged but not-yet-committed audience.',
+  fiber_sec_dda DOUBLE COMMENT '[AI-Generated] Tracks daily changes to fiber search engagement customer counts, supporting performance trend analysis and identifying fluctuations in campaign engagement patterns.',
+  tfb_invoca_sales_intent_dda DOUBLE COMMENT '[AI-Generated] Measures phone interactions indicating sales intent for T-Mobile for Business prospects through Invoca call tracking, capturing high-intent voice engagement.',
+  tfb_invoca_order_dda DOUBLE COMMENT '[AI-Generated] Tracks phone call interactions for T-Mobile for Business (TBG) orders through Invoca call tracking, measuring voice channel conversion and sales activity.',
+  postpaid_prospect_web_order DOUBLE COMMENT '[AI-Generated] Tracks web-based postpaid service orders from prospects, representing conversion events where digital engagement translates to actual purchase transactions.',
+  postpaid_all_web_order DOUBLE COMMENT '[AI-Generated] Measures postpaid service web order volume for a defined reporting period, tracking conversion performance and purchase transaction success.',
+  metro_prospect_web_order DOUBLE COMMENT '[AI-Generated] Tracks performance of a specific campaign variant designed to drive web-based orders from prospect customers in metropolitan markets.',
+  date DATE,
+  file_load_datetime TIMESTAMP,
+  cost DOUBLE,
+  lob STRING COLLATE UTF8_BINARY,
+  ad_platform STRING COLLATE UTF8_BINARY,
+  campaign_name STRING COLLATE UTF8_BINARY,
+  campaign_type STRING COLLATE UTF8_BINARY,
+  advertising_channel_type STRING COLLATE UTF8_BINARY,
+  advertising_channel_sub_type STRING COLLATE UTF8_BINARY,
+  bidding_strategy_type STRING COLLATE UTF8_BINARY,
+  serving_status STRING COLLATE UTF8_BINARY,
+  gold_inserted_at TIMESTAMP)
+USING delta
+TBLPROPERTIES (
+  'delta.checkpoint.writeStatsAsJson' = 'false',
+  'delta.checkpoint.writeStatsAsStruct' = 'true',
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.appendOnly' = 'supported',
+  'delta.feature.changeDataFeed' = 'supported',
+  'delta.feature.checkConstraints' = 'supported',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.feature.generatedColumns' = 'supported',
+  'delta.feature.invariants' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7',
+  'delta.parquet.compression.codec' = 'zstd')
+
+
 
 SELECT column_name
 FROM prd_dbi_analytics.information_schema.columns
@@ -32,6 +272,15 @@ WHERE table_schema = 'improvado'
     OR LOWER(column_name) LIKE '%lob%'
   )
 ORDER BY column_name;
+output:
+column_name
+DSP
+LOB_MMP
+account_id
+advertiser_cost_usd
+lob
+lob_value
+
 
 SELECT column_name
 FROM prdrzranalytics.information_schema.columns
@@ -43,8 +292,106 @@ WHERE table_schema = 'lab42'
     OR LOWER(column_name) LIKE '%agency%'
   )
 ORDER BY column_name;
+output:
+column_name
+Account_ID
+Account_Name
+Account_Type
+Agency
+Creative_Agency
+Creative_Agency_Ad_Number
 
 SHOW CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+output:
+CREATE TABLE prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily (
+  aal DOUBLE COMMENT '[AI-Generated] Tracks marketing campaign performance for promoting the Add A Line service to existing customers.',
+  account_id STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Links campaign performance data to the specific Google Ads account managing the search advertising.',
+  account_name STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Human-readable name of the Google Ads account used for organizing and reporting campaign performance.',
+  add_a_line DOUBLE COMMENT '[AI-Generated] Marks campaigns specifically designed to promote the Add A Line service offering to customers.',
+  all_conversions DOUBLE COMMENT '[AI-Generated] Aggregates all tracked conversion actions (purchases, sign-ups, eligibility checks) resulting from campaign interactions.',
+  bi DOUBLE COMMENT '[AI-Generated] Marks records designated for Business Intelligence reporting and analytics consumption.',
+  bts_quality_traffic DOUBLE COMMENT '[AI-Generated] Measures quality and engagement of traffic from BTS (Beyond the Smartphone) campaigns targeting advanced service lines.',
+  buying_intent DOUBLE COMMENT '[AI-Generated] Captures behavioral signals suggesting purchase readiness or intent to acquire T-Mobile services from campaign engagement.',
+  campaign_id STRING COLLATE UTF8_BINARY COMMENT '[AI-Generated] Primary key linking all performance metrics and conversion events to a specific campaign within Google Ads 360.',
+  cart_start DOUBLE COMMENT '[AI-Generated] Tracks the number of times users began the purchase process after engaging with campaign advertisements.',
+  clicks DOUBLE COMMENT '[AI-Generated] Measures campaign engagement by counting user clicks on search ads, a primary performance indicator for paid search.',
+  connect_low_funnel_visit DOUBLE COMMENT '[AI-Generated] Measures traffic volume to website from Connect service campaigns targeting lower-funnel prospect audiences.',
+  connect_qt DOUBLE COMMENT '[AI-Generated] Aggregates or segments Connect service campaign performance data on a quarterly basis for trend analysis.',
+  digital_gross_add DOUBLE COMMENT '[AI-Generated] Tracks the number of new customers acquired via digital marketing campaigns, a key growth metric for T-Mobile.',
+  fiber_activations DOUBLE COMMENT '[AI-Generated] Measures completed fiber service activations driven by Google Search Ads 360 campaigns, representing customers who successfully provisioned fiber broadband service after ad engagement.',
+  fiber_ec DOUBLE COMMENT '[AI-Generated] Represents estimated unique customer reach for fiber service campaigns, providing audience size metrics for campaign performance analysis and targeting effectiveness.',
+  fiber_pre_order DOUBLE COMMENT '[AI-Generated] Tracks fiber service pre-orders or advance reservations generated by campaign activity, indicating customer intent to purchase fiber broadband before service availability.',
+  fiber_sec DOUBLE COMMENT '[AI-Generated] Measures unique customers who engaged with fiber search advertisements, indicating active audience interaction and campaign resonance with target market.',
+  fiber_waitlist_sign_up DOUBLE COMMENT '[AI-Generated] Captures fiber service waitlist registrations driven by Google Search Ads 360 campaigns, representing prospective customers expressing interest in future fiber availability.',
+  hint_ec DOUBLE COMMENT '[AI-Generated] Represents estimated unique customer reach for home internet service campaigns, providing audience size metrics for campaign performance and targeting analysis.',
+  hint_invoca_calls DOUBLE COMMENT '[AI-Generated] Measures phone calls to home internet service driven by campaign activity through Invoca call tracking, representing voice channel conversion activity.',
+  hint_offline_invoca_calls DOUBLE COMMENT '[AI-Generated] Captures phone calls to home internet service attributed to offline campaign touchpoints tracked through Invoca, measuring cross-channel conversion attribution.',
+  hint_offline_invoca_eligibility DOUBLE COMMENT '[AI-Generated] Measures eligibility verification requests for home internet service originating from offline campaign interactions tracked through Invoca platform.',
+  hint_offline_invoca_order DOUBLE COMMENT '[AI-Generated] Tracks home internet service orders completed through offline campaign touchpoints captured by Invoca call tracking, representing voice-channel conversions.',
+  hint_offline_invoca_order_rt DOUBLE COMMENT '[AI-Generated] Measures operational response time for processing home internet orders originating from offline Invoca interactions, supporting service quality and efficiency analysis.',
+  hint_offline_invoca_sales_opp DOUBLE COMMENT '[AI-Generated] Captures qualified sales opportunities for home internet service generated through offline campaign interactions tracked by Invoca platform.',
+  hint_sec DOUBLE COMMENT '[AI-Generated] Measures unique customers who engaged with home internet search advertisements, indicating active audience interaction and campaign effectiveness for HINT service.',
+  hint_web_orders DOUBLE COMMENT '[AI-Generated] Measures home internet service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion.',
+  impressions DOUBLE COMMENT '[AI-Generated] Measures total number of times campaign advertisements were displayed to users across Google Search Ads 360 channels, representing campaign reach and visibility.',
+  magenta_pqt DOUBLE COMMENT '[AI-Generated] Measures qualified prospective customer traffic driven by T-Mobile Magenta brand campaigns, representing high-intent audience segments for mobile service offerings.',
+  ma_hint_ec_eligibility_check DOUBLE COMMENT '[AI-Generated] Tracks performance of campaigns promoting HINT (Home Internet Service) eligibility checks to potential customers.',
+  metro_hint_qt DOUBLE COMMENT '[AI-Generated] Tracks volume of Home Internet Service (HINT) prospect interactions and engagement events in metro areas, supporting measurement of broadband product line performance.',
+  metro_low_funnel_cs DOUBLE COMMENT '[AI-Generated] Captures customers in late-stage consideration or decision phase of purchase funnel for metro market campaigns, representing near-conversion audience segments.',
+  metro_qt DOUBLE COMMENT '[AI-Generated] Provides overall volume count of prospect engagement events across all product lines and funnel stages within metropolitan market segments.',
+  postpaid_cart_start DOUBLE COMMENT '[AI-Generated] Measures lower-funnel engagement where prospects begin postpaid service purchase process, indicating strong purchase intent and transaction readiness.',
+  postpaid_pspv DOUBLE COMMENT '[AI-Generated] Tracks prospect engagement with postpaid service product pages, indicating consideration-phase activity and product research behavior in digital channels.',
+  tfb_low_funnel DOUBLE COMMENT '[AI-Generated] Aggregates bottom-of-funnel engagement metrics for T-Mobile for Business prospects, indicating high purchase intent and proximity to transaction.',
+  tfb_credit_check DOUBLE COMMENT '[AI-Generated] Measures credit verification events for T-Mobile for Business customers, indicating transaction-stage activity where creditworthiness is being assessed.',
+  tfb_hint_ec DOUBLE COMMENT '[AI-Generated] Tracks Home Internet Service (HINT) product engagement for T-Mobile for Business customers, measuring broadband product line performance in B2B segment.',
+  tfb_invoca_sales_calls DOUBLE COMMENT '[AI-Generated] Tracks phone-based sales interactions for T-Mobile for Business through Invoca call tracking, measuring voice channel engagement and sales activity.',
+  tfb_leads DOUBLE COMMENT '[AI-Generated] Aggregates lead volume for T-Mobile for Business, representing prospects captured across digital channels and qualifying for sales engagement.',
+  tfb_quality_traffic DOUBLE COMMENT '[AI-Generated] Measures qualified prospect traffic for T-Mobile for Business, filtering for engagement events meeting quality thresholds for sales readiness.',
+  tmo_prepaid_low_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures bottom-of-funnel engagement for T-Mobile prepaid customers, capturing high-intent prospects near purchase decision or transaction completion.',
+  tmo_top_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures early-stage awareness and consideration-phase engagement for T-Mobile consumer prospects, indicating initial product interest and brand awareness.',
+  tmo_upper_funnel_prospect DOUBLE COMMENT '[AI-Generated] Captures mid-stage engagement for T-Mobile consumer prospects as they progress from awareness toward consideration and product evaluation.',
+  total_tfb_conversions DOUBLE COMMENT '[AI-Generated] Measures total conversion volume across all T-Mobile for Business funnel stages and channels, representing cumulative purchase transactions and qualified outcomes.',
+  connect_low_funnel_prospect DOUBLE COMMENT '[AI-Generated] Tracks conversion events for Connect service targeting prospects in the lower stages of the marketing funnel.',
+  tfb_lead_form_submit DOUBLE COMMENT '[AI-Generated] Tracks form-based lead capture for T-Mobile for Business, representing mid-funnel engagement where prospects provide contact information for sales follow-up.',
+  metro_upper_funnel_prospect DOUBLE COMMENT '[AI-Generated] Captures mid-stage prospect engagement in metro regions as customers move from awareness toward consideration and evaluation of T-Mobile products and services.',
+  fiber_ec_dda DOUBLE COMMENT '[AI-Generated] Tracks daily changes or adjustments to fiber estimated customer counts, enabling trend analysis and performance variance monitoring across campaign periods.',
+  metro_top_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures early-stage awareness and consideration-phase prospect engagement in metro areas, indicating initial interest in T-Mobile offerings before deeper funnel progression.',
+  fiber_web_orders DOUBLE COMMENT '[AI-Generated] Measures fiber service orders completed via web channels attributed to Google Search Ads 360 campaign traffic, representing direct online conversion to purchase.',
+  metro_mid_funnel_prospect DOUBLE COMMENT '[AI-Generated] Measures prospects in mid-stage awareness and consideration phase of purchase funnel for metro market campaigns, representing engaged but not-yet-committed audience.',
+  fiber_sec_dda DOUBLE COMMENT '[AI-Generated] Tracks daily changes to fiber search engagement customer counts, supporting performance trend analysis and identifying fluctuations in campaign engagement patterns.',
+  tfb_invoca_sales_intent_dda DOUBLE COMMENT '[AI-Generated] Measures phone interactions indicating sales intent for T-Mobile for Business prospects through Invoca call tracking, capturing high-intent voice engagement.',
+  tfb_invoca_order_dda DOUBLE COMMENT '[AI-Generated] Tracks phone call interactions for T-Mobile for Business (TBG) orders through Invoca call tracking, measuring voice channel conversion and sales activity.',
+  postpaid_prospect_web_order DOUBLE COMMENT '[AI-Generated] Tracks web-based postpaid service orders from prospects, representing conversion events where digital engagement translates to actual purchase transactions.',
+  postpaid_all_web_order DOUBLE COMMENT '[AI-Generated] Measures postpaid service web order volume for a defined reporting period, tracking conversion performance and purchase transaction success.',
+  metro_prospect_web_order DOUBLE COMMENT '[AI-Generated] Tracks performance of a specific campaign variant designed to drive web-based orders from prospect customers in metropolitan markets.',
+  date DATE,
+  file_load_datetime TIMESTAMP,
+  cost DOUBLE,
+  lob STRING COLLATE UTF8_BINARY,
+  ad_platform STRING COLLATE UTF8_BINARY,
+  campaign_name STRING COLLATE UTF8_BINARY,
+  campaign_type STRING COLLATE UTF8_BINARY,
+  advertising_channel_type STRING COLLATE UTF8_BINARY,
+  advertising_channel_sub_type STRING COLLATE UTF8_BINARY,
+  bidding_strategy_type STRING COLLATE UTF8_BINARY,
+  serving_status STRING COLLATE UTF8_BINARY,
+  gold_inserted_at TIMESTAMP)
+USING delta
+TBLPROPERTIES (
+  'delta.checkpoint.writeStatsAsJson' = 'false',
+  'delta.checkpoint.writeStatsAsStruct' = 'true',
+  'delta.columnMapping.mode' = 'name',
+  'delta.enableDeletionVectors' = 'true',
+  'delta.feature.appendOnly' = 'supported',
+  'delta.feature.changeDataFeed' = 'supported',
+  'delta.feature.checkConstraints' = 'supported',
+  'delta.feature.columnMapping' = 'supported',
+  'delta.feature.deletionVectors' = 'supported',
+  'delta.feature.generatedColumns' = 'supported',
+  'delta.feature.invariants' = 'supported',
+  'delta.minReaderVersion' = '3',
+  'delta.minWriterVersion' = '7',
+  'delta.parquet.compression.codec' = 'zstd')
+
 
 SELECT
     'Programmatic' AS source,
@@ -69,3 +416,8 @@ SELECT
     MAX(date),
     MIN(date)
 FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily;
+output:
+source	latest_date	earliest_date
+Paid Social	2026-09-15	2020-11-05
+Paid Search	2026-09-16	2024-06-10
+Programmatic	2026-09-17	2026-01-01
