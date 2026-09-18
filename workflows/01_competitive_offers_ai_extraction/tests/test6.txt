@@ -11,6 +11,14 @@ WHERE Channel_Group_Name = 'Paid Social'
   AND Date >= date_sub(current_date(), 35)
 GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
 ORDER BY latest_data_date DESC, platform;
+output:
+platform	latest_data_date	days_behind	spend_last_35d
+Facebook	2026-09-15	3	6239001.169884963
+Instagram	2026-09-15	3	2744339.8221930093
+Pinterest	2026-09-15	3	1221473.0168732628
+TikTok	2026-09-15	3	1785178.1201587562
+Snapchat	2026-09-14	4	1287873.307091264
+Twitter	2026-09-13	5	387737.431173
 
 -- PAID SOCIAL: prior completed week completeness by platform
 
@@ -45,7 +53,14 @@ CROSS JOIN dates
 WHERE dt BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
 GROUP BY platform
 ORDER BY status DESC, platform;
-
+output:
+platform	days_present	first_date	latest_date	spend	status
+Facebook	7	2026-09-06	2026-09-12	1265628.103398	COMPLETE
+Instagram	7	2026-09-06	2026-09-12	489299.0967379999	COMPLETE
+Pinterest	7	2026-09-06	2026-09-12	218699.63884573244	COMPLETE
+Snapchat	7	2026-09-06	2026-09-12	307229.11961648613	COMPLETE
+TikTok	7	2026-09-06	2026-09-12	439259.7584101297	COMPLETE
+Twitter	7	2026-09-06	2026-09-12	105009.30017700001	COMPLETE
 
 -- PROGRAMMATIC: freshness by DSP
 
@@ -59,6 +74,12 @@ WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
   AND date >= date_sub(current_date(), 35)
 GROUP BY TRIM(DSP)
 ORDER BY latest_data_date DESC, dsp;
+output:
+dsp	latest_data_date	days_behind	spend_last_35d
+Amazon  DSP	2026-09-17	1	1973042.096781
+DV360	2026-09-17	1	16608186.505486008
+Blis	2026-09-16	2	674434.6509397331
+The Trade Desk	2026-09-16	2	15276481.895277992
 
 -- PROGRAMMATIC: prior completed week completeness by DSP
 
@@ -83,6 +104,13 @@ WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
   AND date BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
 GROUP BY TRIM(DSP)
 ORDER BY status DESC, dsp;
+output:
+dsp	days_present	first_date	latest_date	spend	status
+Amazon  DSP	7	2026-09-06	2026-09-12	370844.237364	COMPLETE
+Blis	7	2026-09-06	2026-09-12	145254.65062880216	COMPLETE
+DV360	7	2026-09-06	2026-09-12	3415894.499315	COMPLETE
+The Trade Desk	7	2026-09-06	2026-09-12	2742385.6925269994	COMPLETE
+
 
 -- PAID SEARCH: freshness by platform
 
@@ -96,6 +124,10 @@ WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
   AND date >= date_sub(current_date(), 35)
 GROUP BY ad_platform
 ORDER BY latest_data_date DESC, ad_platform;
+output:
+ad_platform	latest_data_date	days_behind	spend_last_35d
+Bing	2026-09-16	2	2461578.8799999985
+Google	2026-09-16	2	18239831.62677602
 
 -- PAID SEARCH: prior completed week completeness
 
@@ -120,3 +152,7 @@ WHERE UPPER(TRIM(lob)) IN ('POSTPAID', 'HSI', 'BROADBAND')
   AND date BETWEEN date_sub(prior_week_end, 6) AND prior_week_end
 GROUP BY ad_platform
 ORDER BY status DESC, ad_platform;
+output:
+ad_platform	days_present	first_date	latest_date	spend	status
+Bing	7	2026-09-06	2026-09-12	487556.56000000006	COMPLETE
+Google	7	2026-09-06	2026-09-12	3620847.6651999997	COMPLETE
