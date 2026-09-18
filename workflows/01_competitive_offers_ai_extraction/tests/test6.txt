@@ -1,58 +1,233 @@
-job_run_ts	run_date	bq_table	status	cols_added	cols_removed	cols_changed	schema_change_status
-2026-09-16T13:21:47.000+00:00	2026-09-16	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-15T13:21:43.000+00:00	2026-09-15	mrt_paidsocial_pivot	✅ Success	Metro_PSPV_Plus (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-14T13:21:11.000+00:00	2026-09-14	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-13T13:20:17.000+00:00	2026-09-13	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-12T13:21:00.000+00:00	2026-09-12	mrt_paidsocial_pivot	✅ Success	TMobile_UpperFunnel_Base (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-11T13:20:33.000+00:00	2026-09-11	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-10T13:21:12.000+00:00	2026-09-10	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-09T13:22:01.000+00:00	2026-09-09	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-08T13:21:15.000+00:00	2026-09-08	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-07T13:20:36.000+00:00	2026-09-07	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-06T13:20:31.000+00:00	2026-09-06	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-05T13:21:01.000+00:00	2026-09-05	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-04T13:23:01.000+00:00	2026-09-04	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-03T13:20:48.000+00:00	2026-09-03	mrt_paidsocial_pivot	✅ Success	Postpaid_TopFunnel (DoubleType())	Base_AAL_CartStar (DoubleType()), Postpaid_TopFunnelProspect (DoubleType())	null	Schema Change
-2026-09-02T13:21:39.000+00:00	2026-09-02	mrt_paidsocial_pivot	✅ Success	null	Base_AAL_CartStar (DoubleType())	null	Schema Change
-2026-09-01T13:20:50.000+00:00	2026-09-01	mrt_paidsocial_pivot	✅ Success	Base_Add_A_Line_CartStart (DoubleType()), Base_Upper_Funnel (DoubleType()), Fiber_Web_Order (DoubleType()), Metro_Web_Orders (DoubleType()), TBG_Low_Funnel_v7 (DoubleType())	Base_AAL_CartStar (DoubleType())	null	Schema Change
-2026-08-31T13:23:52.000+00:00	2026-08-31	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-30T13:20:47.000+00:00	2026-08-30	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-29T13:22:04.000+00:00	2026-08-29	mrt_paidsocial_pivot	✅ Success	Fiber_Upper_Funnel (DoubleType()), Postpaid_Web_Order (DoubleType())	null	null	Schema Change
-2026-08-28T13:18:58.000+00:00	2026-08-28	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-27T13:21:56.000+00:00	2026-08-27	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-26T13:21:41.000+00:00	2026-08-26	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-25T13:20:20.000+00:00	2026-08-25	mrt_paidsocial_pivot	✅ Success	HINT_Top_Funnel (DoubleType())	null	null	Schema Change
-2026-08-24T13:18:53.000+00:00	2026-08-24	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-23T13:18:29.000+00:00	2026-08-23	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-22T13:18:30.000+00:00	2026-08-22	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-21T13:36:46.000+00:00	2026-08-21	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-21T13:18:39.000+00:00	2026-08-21	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-20T13:37:02.000+00:00	2026-08-20	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-20T13:18:49.000+00:00	2026-08-20	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-19T13:37:07.000+00:00	2026-08-19	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-19T13:18:41.000+00:00	2026-08-19	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-18T13:58:22.000+00:00	2026-08-18	mrt_paidsocial_pivot	✅ Success	kpi (StringType()), conversions (DoubleType())	null	null	Schema Change
-2026-08-18T13:37:16.000+00:00	2026-08-18	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-18T13:18:38.000+00:00	2026-08-18	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-2026-08-17T13:18:50.000+00:00	2026-08-17	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-16T13:18:47.000+00:00	2026-08-16	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-15T13:19:10.000+00:00	2026-08-15	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-14T13:20:28.000+00:00	2026-08-14	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-13T13:18:38.000+00:00	2026-08-13	mrt_paidsocial_pivot	✅ Success	LOBFunnelTactic (StringType()), MonthNumber (LongType()), WeekNumber (LongType()), HINTWeekStartDate (DateType()), OptimizationMetric (StringType())	null	null	Schema Change
-2026-08-12T13:20:32.000+00:00	2026-08-12	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-11T13:21:22.000+00:00	2026-08-11	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-10T13:20:26.000+00:00	2026-08-10	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-09T13:20:33.000+00:00	2026-08-09	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-08T13:20:18.000+00:00	2026-08-08	mrt_paidsocial_pivot	✅ Success	null	null	null	No Schema Change
-2026-08-07T13:20:29.000+00:00	2026-08-07	mrt_paidsocial_pivot	❌ Failed	null	null	null	No Schema Change
-
-
-The mrt_paidsocial_pivot table has been flagged for a schema change daily since Sep 1, mainly because Base_AAL_CartStar and Postpaid_TopFunnelProspect keep showing under cols_removed. That’s how the source bq_uc_pipeline_run_log is currently recording it, and our monitoring view is just reflecting those values rather than generating the schema-change status itself.
-
-
-The `mrt_paidsocial_pivot` table has been flagged for a schema change daily since Sep 1, mainly because `Base_AAL_CartStar` and `Postpaid_TopFunnelProspect` are repeatedly showing under `cols_removed`. Our monitoring view (`sdi_vw_pipelineMonitoring_gold_bqUcRunDetails_daily`) is just reflecting what's already recorded in the source run log (`prd_dbi_analytics.improvado.bq_uc_pipeline_run_log`), so the repeated schema-change status is coming from upstream rather than our monitoring view.
-
-So either the source schema is actually changing between runs, or the upstream schema-comparison logic that populates cols_added / cols_removed needs to be adjusted so the same changes aren’t recorded repeatedly.
-
-
-
+Discuss MediaOS web dev
+September 15, 2026
+Expires in 57 days
+•0 views•SharePoint App•HD
+Transcript. Use arrow keys to navigate between transcript entries. Select an entry to navigate the media to the time of the entry.
+
+
+Search
+
+AI-generated content may be incorrect
+
+Garcia, Briana started transcription
+W
+WA HQ B1 HUDDLE 1402 | 4
+0 minutes 12 seconds0:12
+WA HQ B1 HUDDLE 1402 | 4 0 minutes 12 seconds
+Okay, great. Cool. So just to give you guys a little context, on our team, we're thinking about doing a POC to test out putting a report on like a website instead of having it in Tableau or Power BI. We want to see.
+WA HQ B1 HUDDLE 1402 | 4 0 minutes 32 seconds
+how that would look if we like just had that locally hosted and we were able to, I don't know, serve up everything on there. I don't know like how much analytics we actually want to do on there. So this is the very beginning of our process. So we wanted to chat with you and see like, how did you stand up media OS? If you could show it.
+SR
+Spohn, Ross
+0 minutes 42 seconds0:42
+Spohn, Ross 0 minutes 42 seconds
+Yeah.
+W
+WA HQ B1 HUDDLE 1402 | 4
+0 minutes 51 seconds0:51
+WA HQ B1 HUDDLE 1402 | 4 0 minutes 51 seconds
+At least today I know he hasn't seen it. I don't know if Cody's seen it, but just show us like what that looks like. And then just, yeah, how did you set it up and like, what is it missing? What do you still need to like think about in order to actually get it live for internal use?
+SR
+Spohn, Ross
+1 minute 6 seconds1:06
+Spohn, Ross 1 minute 6 seconds
+You want to be sure? Yeah, yeah, so yeah, we Media OS built it with Cloud Code, kind of an iterative process. So like we really, like, you know, we have a bunch of stuff in here now, but the first workflow was this campaign builder.
+W
+WA HQ B1 HUDDLE 1402 | 4
+1 minute 6 seconds1:06
+WA HQ B1 HUDDLE 1402 | 4 1 minute 6 seconds
+I think it is live, right?
+WA HQ B1 HUDDLE 1402 | 4 1 minute 14 seconds
+Play.
+WA HQ B1 HUDDLE 1402 | 4 1 minute 21 seconds
+Crew.
+SR
+Spohn, Ross
+1 minute 23 seconds1:23
+Spohn, Ross 1 minute 23 seconds
+Oh.
+Spohn, Ross 1 minute 24 seconds
+The computer's being a little slow.
+SR
+Spohn, Ross
+17 minutes 7 seconds17:07
+Spohn, Ross 17 minutes 7 seconds
+Yeah, I mean, that's what we're trying to, like, so this is all deterministic right now, but we do want to add agents to this eventually, and an analytics agent who query our media database. But to do that, and I mean, I would probably need more time, but so we have this thing, or I should say the AI.
+Spohn, Ross 17 minutes 26 seconds
+Enterprise AI has this thing called tag.ai, which this is like a platform we own where you can get API keys for your LLMs, register the agents. If you register an agent.
+Spohn, Ross 17 minutes 43 seconds
+And, like, it allows you to, like...
+Spohn, Ross 17 minutes 45 seconds
+It's what it gives you the API keys and there's a workflow where you can actually bring the agents into code and start building with it in client code. Another cool thing is like, say you wanted that agent to have access to Databricks, because that's an enterprise MCP server, you can have it assigned.
+Spohn, Ross 18 minutes 6 seconds
+to that agent and give it access. So like, for example, if I went in here...
+Spohn, Ross 18 minutes 12 seconds
+I think it would be this one, right? Like, I can notice MCP access and I could be like, hey, I have this agent registered on my site. I can do request MCP access and then it will let me, you know, like say.
+Spohn, Ross 18 minutes 26 seconds
+Here, data bricks, let's add it to this agent. And then when you have it deployed, it can start accessing it.
+W
+WA HQ B1 HUDDLE 1402 | 4
+18 minutes 35 seconds18:35
+WA HQ B1 HUDDLE 1402 | 4 18 minutes 35 seconds
+Got it, and do you build it off like cloud code, or like is it?
+SR
+Spohn, Ross
+18 minutes 39 seconds18:39
+Spohn, Ross 18 minutes 39 seconds
+Of.
+W
+WA HQ B1 HUDDLE 1402 | 4
+18 minutes 40 seconds18:40
+WA HQ B1 HUDDLE 1402 | 4 18 minutes 40 seconds
+like for the purpose of like agent and stuff and then like we just give like the context, the persona and like all the dot MDs and then just like publish it or like do we have to do it like on this platform?
+SR
+Spohn, Ross
+18 minutes 51 seconds18:51
+Spohn, Ross 18 minutes 51 seconds
+So what they do is they give you a skill, so going back here, and I know it's going to be hard to read, but...
+Spohn, Ross 19 minutes 1 second
+I think there's an ancient builder.
+Spohn, Ross 19 minutes 4 seconds
+Yeah, so it's hard to see, but you can see I have the skill agent builder. So like if I was building an agent in my code base, I would select this and then it would start, like it's a skill that tells it how to use the agents, get it registered, get it coded into.
+Spohn, Ross 19 minutes 25 seconds
+Whatever you're building, the enterprise choice for framework is Google ADK, Agent Development Kit. So it would be based on that. It would start helping you like, and then you would just kind of start talking to it and starting to build the agent out.
+W
+WA HQ B1 HUDDLE 1402 | 4
+19 minutes 40 seconds19:40
+WA HQ B1 HUDDLE 1402 | 4 19 minutes 40 seconds
+See.
+WA HQ B1 HUDDLE 1402 | 4 19 minutes 43 seconds
+OK, this is.
+SR
+Spohn, Ross
+19 minutes 45 seconds19:45
+Spohn, Ross 19 minutes 45 seconds
+Yeah.
+Spohn, Ross 19 minutes 47 seconds
+Uhh...
+W
+WA HQ B1 HUDDLE 1402 | 4
+19 minutes 47 seconds19:47
+WA HQ B1 HUDDLE 1402 | 4 19 minutes 47 seconds
+So we can like put visuals on top of data that's still in Databricks and it could access it that way, do you think?
+SR
+Spohn, Ross
+19 minutes 56 seconds19:56
+Spohn, Ross 19 minutes 56 seconds
+Yeah.
+Spohn, Ross 19 minutes 58 seconds
+So I don't know, because like if you're building...
+Spohn, Ross 20 minutes 2 seconds
+If you're building a dashboard, if you're coding your dashboard or something like that, you would probably need an actual API connection to populate that. I don't know if going through the MCP server and telling the agent to build it.
+Spohn, Ross 20 minutes 15 seconds
+would work. I mean, I've thought about maybe having a way that you could like...
+W
+WA HQ B1 HUDDLE 1402 | 4
+20 minutes 21 seconds20:21
+WA HQ B1 HUDDLE 1402 | 4 20 minutes 21 seconds
+OPS.
+SR
+Spohn, Ross
+20 minutes 21 seconds20:21
+Spohn, Ross 20 minutes 21 seconds
+Like have it query the database and then actually like somehow build a dashboard on the fly or something. It depends how you guys want to do it.
+Spohn, Ross 20 minutes 31 seconds
+But yeah, if you're building a dashboard, you guys are going to probably have to figure out a way how to get that data from Databricks to populate the dashboard.
+W
+WA HQ B1 HUDDLE 1402 | 4
+20 minutes 38 seconds20:38
+WA HQ B1 HUDDLE 1402 | 4 20 minutes 38 seconds
+And that would be treated. We would have to figure that out or would that be through the API section that you were walking through earlier?
+SR
+Spohn, Ross
+20 minutes 47 seconds20:47
+Spohn, Ross 20 minutes 47 seconds
+You'd have to figure, because I don't have access to the Databricks API itself. I have, I can access the MCP server, but like, yeah.
+W
+WA HQ B1 HUDDLE 1402 | 4
+20 minutes 55 seconds20:55
+WA HQ B1 HUDDLE 1402 | 4 20 minutes 55 seconds
+Right.
+WA HQ B1 HUDDLE 1402 | 4 21 minutes 3 seconds
+Cody, any questions from you?
+WA HQ B1 HUDDLE 1402 | 4 21 minutes 6 seconds
+We have the whole team help with this project, by the way.
+TC
+Thomas, Cody
+21 minutes 11 seconds21:11
+Thomas, Cody 21 minutes 11 seconds
+Yeah, I mean.
+W
+WA HQ B1 HUDDLE 1402 | 4
+21 minutes 13 seconds21:13
+WA HQ B1 HUDDLE 1402 | 4 21 minutes 13 seconds
+And it's probably really different than 10 years ago.
+TC
+Thomas, Cody
+21 minutes 17 seconds21:17
+Thomas, Cody 21 minutes 17 seconds
+I think, I think we'll definitely have to take this one step at a time, like not even talking about AI agents, but like more, more or less like what you were, what Briana, what you were looking at with the prototype sample.
+W
+WA HQ B1 HUDDLE 1402 | 4
+21 minutes 17 seconds21:17
+WA HQ B1 HUDDLE 1402 | 4 21 minutes 17 seconds
+It's not.
+SR
+Spohn, Ross
+21 minutes 24 seconds21:24
+Spohn, Ross 21 minutes 24 seconds
+Yeah.
+TC
+Thomas, Cody
+21 minutes 34 seconds21:34
+Thomas, Cody 21 minutes 34 seconds
+As long as we can get that connected with a Databricks API, I think that's a really good first phase and probably very, very doable.
+SR
+Spohn, Ross
+21 minutes 40 seconds21:40
+Spohn, Ross 21 minutes 40 seconds
+Yeah, I would agree with that. I wouldn't even think about agents until you have something stood up. Like, this is like a lot, like I've gotten pretty far with this. I don't even, I've done tests, but we don't have any agents in here yet because we're still like, we want the deterministic part like down pat before we bring an agent. So.
+W
+WA HQ B1 HUDDLE 1402 | 4
+22 minutes22:00
+WA HQ B1 HUDDLE 1402 | 4 22 minutes
+Yeah, yeah, your stuff is a little more scary, yeah, than ours.
+SR
+Spohn, Ross
+22 minutes 7 seconds22:07
+Spohn, Ross 22 minutes 7 seconds
+Butler.
+W
+WA HQ B1 HUDDLE 1402 | 4
+22 minutes 7 seconds22:07
+WA HQ B1 HUDDLE 1402 | 4 22 minutes 7 seconds
+Naming campaigns, yeah, yeah, and actually real money attached to things.
+SR
+Spohn, Ross
+22 minutes 13 seconds22:13
+Spohn, Ross 22 minutes 13 seconds
+Yeah.
+W
+WA HQ B1 HUDDLE 1402 | 4
+22 minutes 14 seconds22:14
+WA HQ B1 HUDDLE 1402 | 4 22 minutes 14 seconds
+Okay, cool. Thanks so much for going through that. I think we're going to have a lot more questions after we kind of start working through our PFCs.
+SR
+Spohn, Ross
+22 minutes 18 seconds22:18
+Spohn, Ross 22 minutes 18 seconds
+Yeah, feel free to shoot them over.
+Spohn, Ross 22 minutes 23 seconds
+That's probably the best way to, like, like I, I don't know, I, I found it easier to learn stuff and, like, as I'm doing it, and then, so yeah, feel free to ask questions. I'm, you know, always happy to help.
+W
+WA HQ B1 HUDDLE 1402 | 4
+22 minutes 35 seconds22:35
+WA HQ B1 HUDDLE 1402 | 4 22 minutes 35 seconds
+Sounds good. Ross is the best. Yeah, thanks so much. Thanks, man.
+SR
+Spohn, Ross
+22 minutes 38 seconds22:38
+Spohn, Ross 22 minutes 38 seconds
+Alright, thank you.
+
+Garcia, Briana stopped transcription
