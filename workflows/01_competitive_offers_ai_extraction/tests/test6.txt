@@ -1,113 +1,25 @@
--- PAID SOCIAL READINESS
--- Week being tested: Sun Sep 6 - Sat Sep 12
--- Checkpoints: Mon/Tue/Wed 10 AM ET + Thu 6 AM ET
-
-WITH mon AS (
-    SELECT
-        'Mon 10 AM ET' AS checkpoint,
-        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
-        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-    TIMESTAMP AS OF '2026-09-14 14:00:00'
-    WHERE Channel_Group_Name = 'Paid Social'
-      AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
-      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-),
-
-tue AS (
-    SELECT
-        'Tue 10 AM ET' AS checkpoint,
-        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
-        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-    TIMESTAMP AS OF '2026-09-15 14:00:00'
-    WHERE Channel_Group_Name = 'Paid Social'
-      AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
-      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-),
-
-wed AS (
-    SELECT
-        'Wed 10 AM ET' AS checkpoint,
-        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
-        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-    TIMESTAMP AS OF '2026-09-16 14:00:00'
-    WHERE Channel_Group_Name = 'Paid Social'
-      AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
-      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-),
-
-thu AS (
-    SELECT
-        'Thu 6 AM ET' AS checkpoint,
-        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-        COUNT(DISTINCT CAST(Date AS DATE)) AS days_present,
-        SUM(TRY_CAST(Spend AS DOUBLE)) AS checkpoint_spend
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-    TIMESTAMP AS OF '2026-09-17 10:00:00'
-    WHERE Channel_Group_Name = 'Paid Social'
-      AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
-      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-),
-
-checkpoints AS (
-    SELECT * FROM mon
-    UNION ALL
-    SELECT * FROM tue
-    UNION ALL
-    SELECT * FROM wed
-    UNION ALL
-    SELECT * FROM thu
-),
-
-final_spend AS (
-    SELECT
-        REPLACE(TRIM(Channel_Name), 'Paid Social - ', '') AS platform,
-        SUM(TRY_CAST(Spend AS DOUBLE)) AS final_spend
-    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-    WHERE Channel_Group_Name = 'Paid Social'
-      AND Agency = 'InHouse'
-      AND UPPER(TRIM(LOB)) IN ('POSTPAID','BROADBAND','HSI')
-      AND CAST(Date AS DATE) BETWEEN '2026-09-06' AND '2026-09-12'
-    GROUP BY REPLACE(TRIM(Channel_Name), 'Paid Social - ', '')
-)
-
-SELECT
-    c.checkpoint,
-    c.platform,
-    c.days_present,
-    c.checkpoint_spend,
-    f.final_spend,
-    ROUND(
-        100 * c.checkpoint_spend / NULLIF(f.final_spend, 0),
-        1
-    ) AS pct_of_final,
-    CASE
-        WHEN c.days_present = 7
-         AND c.checkpoint_spend / NULLIF(f.final_spend, 0) >= 0.99
-        THEN 'READY'
-        ELSE 'NOT READY'
-    END AS readiness
-FROM checkpoints c
-LEFT JOIN final_spend f
-    ON c.platform = f.platform
-ORDER BY
-    CASE c.checkpoint
-        WHEN 'Mon 10 AM ET' THEN 1
-        WHEN 'Tue 10 AM ET' THEN 2
-        WHEN 'Wed 10 AM ET' THEN 3
-        WHEN 'Thu 6 AM ET' THEN 4
-    END,
-    c.platform;
+checkpoint	platform	days_present	checkpoint_spend	final_spend	pct_of_final	readiness
+Mon 10 AM ET	Facebook	3	545453.421354	1265628.1033980004	43.1	NOT READY
+Mon 10 AM ET	Instagram	3	204998.37875399995	489299.09673800046	41.9	NOT READY
+Mon 10 AM ET	Pinterest	3	138970.7885858789	218699.63884573244	63.5	NOT READY
+Mon 10 AM ET	Snapchat	2	84238.26974773407	307229.11961648613	27.4	NOT READY
+Mon 10 AM ET	TikTok	3	175644.1597739067	439259.7584101297	40	NOT READY
+Mon 10 AM ET	Twitter	1	14973.530483000002	105009.30017699985	14.3	NOT READY
+Tue 10 AM ET	Facebook	7	1265617.7633659998	1265628.1033980004	100	READY
+Tue 10 AM ET	Instagram	7	489298.8367629999	489299.09673800046	100	READY
+Tue 10 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
+Tue 10 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
+Tue 10 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
+Tue 10 AM ET	Twitter	6	89995.77032000003	105009.30017699985	85.7	NOT READY
+Wed 10 AM ET	Facebook	7	1265617.7633659998	1265628.1033980004	100	READY
+Wed 10 AM ET	Instagram	7	489298.8367629999	489299.09673800046	100	READY
+Wed 10 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
+Wed 10 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
+Wed 10 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
+Wed 10 AM ET	Twitter	6	89995.77032000003	105009.30017699985	85.7	NOT READY
+Thu 6 AM ET	Facebook	7	1265628.103398	1265628.1033980004	100	READY
+Thu 6 AM ET	Instagram	7	489299.0967379999	489299.09673800046	100	READY
+Thu 6 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
+Thu 6 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
+Thu 6 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
+Thu 6 AM ET	Twitter	7	105009.30017700001	105009.30017699985	100	READY
