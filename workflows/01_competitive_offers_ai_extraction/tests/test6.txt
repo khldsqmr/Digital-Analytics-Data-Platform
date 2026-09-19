@@ -436,3 +436,138 @@ sdi_tbl_sa360_gold_campaign_daily	67	advertising_channel_sub_type	STRING
 sdi_tbl_sa360_gold_campaign_daily	68	bidding_strategy_type	STRING
 sdi_tbl_sa360_gold_campaign_daily	69	serving_status	STRING
 sdi_tbl_sa360_gold_campaign_daily	70	gold_inserted_at	TIMESTAMP
+
+
+
+DECLARE OR REPLACE VARIABLE sql_stmt STRING;
+
+SET VAR sql_stmt = (
+    SELECT CONCAT(
+        'SELECT ',
+        '''media_analytics_integrated_snapshot'' AS table_name, ',
+        
+        ARRAY_JOIN(
+            TRANSFORM(
+                ARRAY_SORT(
+                    COLLECT_LIST(
+                        NAMED_STRUCT(
+                            'ord', ordinal_position,
+                            'expr',
+                            CONCAT(
+                                'CONCAT_WS(CHR(10), ',
+                                'SORT_ARRAY(COLLECT_SET(',
+                                'COALESCE(CAST(`',
+                                REPLACE(column_name, '`', '``'),
+                                '` AS STRING), ''[NULL]'')',
+                                '))) AS `',
+                                REPLACE(column_name, '`', '``'),
+                                '`'
+                            )
+                        )
+                    )
+                ),
+                x -> x.expr
+            ),
+            ', '
+        ),
+
+        ' FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot ',
+        'WHERE Channel_Group_Name = ''Paid Social'''
+    )
+
+    FROM prdrzranalytics.information_schema.columns
+    WHERE table_schema = 'lab42'
+      AND table_name = 'media_analytics_integrated_snapshot'
+      AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
+);
+
+EXECUTE IMMEDIATE sql_stmt;
+
+
+DECLARE OR REPLACE VARIABLE sql_stmt STRING;
+
+SET VAR sql_stmt = (
+    SELECT CONCAT(
+        'SELECT ',
+        '''pbi_programmatic_browsers_currentyr'' AS table_name, ',
+
+        ARRAY_JOIN(
+            TRANSFORM(
+                ARRAY_SORT(
+                    COLLECT_LIST(
+                        NAMED_STRUCT(
+                            'ord', ordinal_position,
+                            'expr',
+                            CONCAT(
+                                'CONCAT_WS(CHR(10), ',
+                                'SORT_ARRAY(COLLECT_SET(',
+                                'COALESCE(CAST(`',
+                                REPLACE(column_name, '`', '``'),
+                                '` AS STRING), ''[NULL]'')',
+                                '))) AS `',
+                                REPLACE(column_name, '`', '``'),
+                                '`'
+                            )
+                        )
+                    )
+                ),
+                x -> x.expr
+            ),
+            ', '
+        ),
+
+        ' FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr'
+    )
+
+    FROM prd_dbi_analytics.information_schema.columns
+    WHERE table_schema = 'improvado'
+      AND table_name = 'pbi_programmatic_browsers_currentyr'
+      AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
+);
+
+EXECUTE IMMEDIATE sql_stmt;
+
+
+DECLARE OR REPLACE VARIABLE sql_stmt STRING;
+
+SET VAR sql_stmt = (
+    SELECT CONCAT(
+        'SELECT ',
+        '''sdi_tbl_sa360_gold_campaign_daily'' AS table_name, ',
+
+        ARRAY_JOIN(
+            TRANSFORM(
+                ARRAY_SORT(
+                    COLLECT_LIST(
+                        NAMED_STRUCT(
+                            'ord', ordinal_position,
+                            'expr',
+                            CONCAT(
+                                'CONCAT_WS(CHR(10), ',
+                                'SORT_ARRAY(COLLECT_SET(',
+                                'COALESCE(CAST(`',
+                                REPLACE(column_name, '`', '``'),
+                                '` AS STRING), ''[NULL]'')',
+                                '))) AS `',
+                                REPLACE(column_name, '`', '``'),
+                                '`'
+                            )
+                        )
+                    )
+                ),
+                x -> x.expr
+            ),
+            ', '
+        ),
+
+        ' FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily'
+    )
+
+    FROM prdrzranalytics.information_schema.columns
+    WHERE table_schema = 'lab42'
+      AND table_name = 'sdi_tbl_sa360_gold_campaign_daily'
+      AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
+);
+
+EXECUTE IMMEDIATE sql_stmt;
+
