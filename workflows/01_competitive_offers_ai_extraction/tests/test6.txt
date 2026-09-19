@@ -32,3 +32,36 @@ Pinterest	63.5%	100%	100%	100%	Tuesday 10 AM
 Snapchat	27.4%	100%	100%	100%	Tuesday 10 AM
 TikTok	40.0%	100%	100%	100%	Tuesday 10 AM
 Twitter	14.3%	85.7%	85.7%	100%	Thursday 6 AM
+
+
+
+SELECT
+    table_name,
+    ordinal_position,
+    column_name,
+    data_type
+FROM (
+    SELECT
+        table_name,
+        ordinal_position,
+        column_name,
+        data_type
+    FROM prd_dbi_analytics.information_schema.columns
+    WHERE table_schema = 'improvado'
+      AND table_name = 'pbi_programmatic_browsers_currentyr'
+
+    UNION ALL
+
+    SELECT
+        table_name,
+        ordinal_position,
+        column_name,
+        data_type
+    FROM prdrzranalytics.information_schema.columns
+    WHERE table_schema = 'lab42'
+      AND table_name IN (
+          'media_analytics_integrated_snapshot',
+          'sdi_tbl_sa360_gold_campaign_daily'
+      )
+)
+ORDER BY table_name, ordinal_position;
