@@ -310,3 +310,184 @@ Selected: Google + Bing, Postpaid + HSI/Broadband. All qualifying accounts and c
 Channel options: All Channels, Paid Search, Paid Social, Programmatic, plus platform views such as Paid Search - Google, Paid Social - Facebook, Programmatic - DV360.
 
 Total definition: All Channels = Programmatic + Paid Social + Paid Search for Postpaid + Broadband only.
+
+
+
+
+
+WITH SourceWeekly AS (
+
+  SELECT
+    date_add(CAST(date AS DATE), 7 - dayofweek(CAST(date AS DATE))) AS week_ending,
+
+    CASE
+      WHEN UPPER(TRIM(lob)) = 'POSTPAID'
+        THEN 'POSTPAID'
+
+      WHEN UPPER(TRIM(lob)) IN ('HSI', 'BROADBAND')
+        THEN 'BROADBAND'
+
+      WHEN UPPER(TRIM(lob)) = 'FIBER'
+        THEN 'FIBER'
+    END AS lob,
+
+    SUM(cost) AS source_spend
+
+  FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+
+  WHERE UPPER(TRIM(ad_platform)) IN (
+    'GOOGLE',
+    'GOOGLE ADS',
+    'GOOGLE_ADS',
+    'BING',
+    'MICROSOFT',
+    'MICROSOFT ADS',
+    'MICROSOFT_ADS'
+  )
+
+    AND UPPER(TRIM(lob)) IN (
+      'POSTPAID',
+      'HSI',
+      'BROADBAND',
+      'FIBER'
+    )
+
+  GROUP BY
+    date_add(CAST(date AS DATE), 7 - dayofweek(CAST(date AS DATE))),
+
+    CASE
+      WHEN UPPER(TRIM(lob)) = 'POSTPAID'
+        THEN 'POSTPAID'
+
+      WHEN UPPER(TRIM(lob)) IN ('HSI', 'BROADBAND')
+        THEN 'BROADBAND'
+
+      WHEN UPPER(TRIM(lob)) = 'FIBER'
+        THEN 'FIBER'
+    END
+),
+
+
+SourcePivot AS (
+
+  SELECT
+    week_ending,
+
+    SUM(
+      CASE
+        WHEN lob = 'POSTPAID'
+        THEN source_spend
+      END
+    ) AS source_postpaid,
+
+    SUM(
+      CASE
+        WHEN lob = 'BROADBAND'
+        THEN source_spend
+      END
+    ) AS source_broadband,
+
+    SUM(
+      CASE
+        WHEN lob = 'FIBER'
+        THEN source_spend
+      END
+    ) AS source_fiber,
+
+    SUM(source_spend) AS source_total
+
+  FROM SourceWeekly
+
+  GROUP BY week_ending
+),
+
+
+SilverPivot AS (
+
+  SELECT
+    qgp_date,
+
+    MAX(
+      CASE
+        WHEN lob = 'POSTPAID'
+        THEN metric_value
+      END
+    ) AS silver_postpaid,
+
+    MAX(
+      CASE
+        WHEN lob = 'BROADBAND'
+        THEN metric_value
+      END
+    ) AS silver_broadband,
+
+    MAX(
+      CASE
+        WHEN lob = 'FIBER'
+        THEN metric_value
+      END
+    ) AS silver_fiber,
+
+    MAX(
+      CASE
+        WHEN lob = 'ALL'
+        THEN metric_value
+      END
+    ) AS silver_total
+
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+
+  WHERE data_source = 'BIDDABLE_SPEND_CHANNEL'
+    AND metric_name = 'biddableSpend'
+    AND channel_group = 'Paid Search - All'
+    AND lob IN (
+      'POSTPAID',
+      'BROADBAND',
+      'FIBER',
+      'ALL'
+    )
+
+    /* Clean source reconciliation:
+       excludes QGP boundary-prorated rows */
+    AND week_type = 'NORMAL'
+
+  GROUP BY qgp_date
+)
+
+
+SELECT
+  s.qgp_date,
+
+  /* SOURCE */
+  src.source_postpaid,
+  src.source_broadband,
+  src.source_fiber,
+  src.source_total,
+
+  /* SILVER */
+  s.silver_postpaid,
+  s.silver_broadband,
+  s.silver_fiber,
+  s.silver_total,
+
+  /* RECONCILIATION */
+  s.silver_postpaid - src.source_postpaid AS postpaid_diff,
+  s.silver_broadband - src.source_broadband AS broadband_diff,
+  s.silver_fiber - src.source_fiber AS fiber_diff,
+  s.silver_total - src.source_total AS total_diff,
+
+  /* SILVER INTERNAL QA */
+  s.silver_total
+    - (
+        COALESCE(s.silver_postpaid, 0)
+        + COALESCE(s.silver_broadband, 0)
+        + COALESCE(s.silver_fiber, 0)
+      ) AS silver_total_component_diff
+
+FROM SilverPivot s
+
+LEFT JOIN SourcePivot src
+  ON src.week_ending = s.qgp_date
+
+ORDER BY
+  s.qgp_date DESC;
