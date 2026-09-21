@@ -9,7 +9,7 @@ PURPOSE:
 
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
 
-  Converts approved atomic Bronze Biddable Spend into the common PulseTMS long metric format.
+  Converts atomic Bronze Biddable Spend into the common PulseTMS long metric format.
 
 DATA SOURCE:
   BIDDABLE_SPEND_CHANNEL
@@ -19,79 +19,68 @@ METRIC:
 
 
 ===================================================================================================
-UPSTREAM SOURCE UNIVERSE / APPROVED SELECTION
+UPSTREAM SOURCE SELECTION
 ===================================================================================================
 
 Bronze owns raw-source selection.
 
+
 PROGRAMMATIC:
 
-  Source universe includes multiple:
-    DSPs
-    accounts
-    Channels
-    Buy Types
-    campaign types
-    LOBs
+  Source universe:
+    Multiple DSPs, accounts, Channels, Buy Types, campaign types and LOBs.
 
-  PulseTMS selection:
-    Postpaid + HSI/Broadband
+  Selected:
+    Postpaid
+    HSI / Broadband
 
-  No DSP / account / Channel / Buy_Type / campaign_type whitelist is applied.
+  No DSP / account / Channel / Buy_Type / campaign_type whitelist.
 
 
 PAID SOCIAL:
 
-  Source universe underneath Channel_Group_Name = Paid Social includes multiple:
-    agencies
-    LOBs
-    accounts
-    Channel_Name/platform values
+  Source universe:
+    Multiple Paid Social Channel_Name values, agencies, LOBs and accounts.
 
-  PulseTMS selection:
+  Selected:
     Channel_Group_Name = Paid Social
     Agency             = InHouse
-    LOB                = Postpaid/Broadband
+    LOB                = Postpaid / HSI / Broadband
 
-  Individual Channel_Name/platform values are NOT whitelisted.
+  No individual social-platform whitelist.
 
 
 PAID SEARCH:
 
-  Source universe currently contains:
+  Source universe:
     Google / Bing
-    multiple accounts
-    SEARCH / SHOPPING / PERFORMANCE_MAX / DISCOVERY
-    Brand / Generic / Shopping / PMax / DemandGen
-    multiple LOBs
+    Postpaid
+    HSI / Broadband
+    Fiber
+    Metro
+    TFB
+    SEARCH
+    SHOPPING
+    PERFORMANCE_MAX
+    DISCOVERY
+    associated campaign types / accounts
 
-  PulseTMS selection:
+  Selected:
     Google + Bing
-    Postpaid + HSI/Broadband
+    Postpaid + HSI/Broadband + Fiber
 
-  No account / campaign_type / advertising_channel_type /
-  advertising_channel_sub_type / bidding-strategy / serving-status filter is applied.
+  Bronze locally maps:
+    Fiber -> BROADBAND
+
+  Therefore Fiber contributes to Paid Search Broadband spend but is NOT
+  represented as a standalone Silver LOB.
 
 
 ===================================================================================================
-SILVER RESPONSIBILITY
-===================================================================================================
-
-Silver performs:
-
-  1. LOB canonicalization
-  2. reporting-selection construction
-  3. QGP calendar alignment
-  4. quarter-boundary proration
-  5. WoW
-  6. YoY
-
-
----------------------------------------------------------------------------------------------------
 LOB CONFORMANCE
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
-Canonicalization occurs BEFORE reporting aggregation:
+Silver canonicalizes:
 
   POSTPAID
   CONSUMER POSTPAID
@@ -101,32 +90,35 @@ Canonicalization occurs BEFORE reporting aggregation:
   BROADBAND
     -> BROADBAND
 
-Current Biddable business scope is explicitly:
+Expected final Biddable Silver LOB values:
 
   POSTPAID
   BROADBAND
 
-Other LOBs are not part of the current Biddable reporting contract.
+There is intentionally NO standalone FIBER value.
+
+When dedicated Fiber / TFB reporting is introduced in the future, the
+upstream and downstream LOB contracts can be expanded deliberately.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
 REPORTING CHANNEL_GROUP CONTRACT
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
-Bronze grain:
+Bronze contains atomic:
 
-  week_sun_sat
-    x lob
-    x channel_group
+  channel_group
     x platform
 
-Silver transforms this into Tableau-selectable channel_group labels.
+Silver creates selectable reporting representations.
+
 
 CHANNEL TOTALS:
 
   Paid Search - All
   Paid Social - All
   Programmatic - All
+
 
 PLATFORM DETAIL:
 
@@ -147,83 +139,98 @@ PLATFORM DETAIL:
   Programmatic - Blis
   etc.
 
-OVERALL TOTAL:
+
+OVERALL:
 
   All Channels
+
 
 IMPORTANT:
-  These are alternative reporting selections.
+  These channel_group values are ALTERNATIVE reporting selections.
 
-  Do NOT sum different channel_group selections together.
+  Do NOT add:
 
-For example:
+    Paid Social - All
+      +
+    Paid Social - Facebook
+      +
+    Paid Social - Instagram
 
-  Paid Social - All
+  because the platform values are already included in Paid Social - All.
 
-already represents the total of its Paid Social platform rows.
+  Similarly, All Channels already represents the total across:
 
-Similarly:
+    Programmatic
+    Paid Social
+    Paid Search
 
-  All Channels
-
-already represents Programmatic + Paid Social + Paid Search.
-
-The Tableau parameter / filter should select one reporting channel_group at a time.
+  for the selected LOB.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
+CURRENT REPORTING LOB SCOPE
+===================================================================================================
+
+  POSTPAID
+  BROADBAND
+
+The Tableau LOB selector can therefore remain:
+
+  Postpaid + Broadband
+  Postpaid
+  Broadband
+
+No Fiber parameter value is required.
+
+
+===================================================================================================
 BOUNDARY PRORATION
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
-Retains the existing PulseTMS QGP boundary logic.
+Retains the existing PulseTMS QGP quarter-boundary logic.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
 WOW / YOY
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
-Retains the existing PulseTMS calculation behavior.
+Retains the existing PulseTMS WoW / YoY calculation behavior.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
 PROGRAMMATIC YOY CAVEAT
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
 prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 is current-year-only.
 
-Therefore:
+Therefore Programmatic YoY remains NULL where prior-year Programmatic data
+does not exist.
 
-  Programmatic-related YoY remains NULL where no prior-year source data exists.
-
-  All Channels YoY may also have an incomplete prior-year comparison when the
-  current-year total includes Programmatic but the prior-year source does not.
+All Channels YoY can consequently have an incomplete LY comparison where
+the current-year total includes Programmatic and the prior year does not.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
 SOURCE READINESS
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
-is_complete_period is a calendar / QGP completeness indicator.
+is_complete_period is a calendar / QGP-period completeness flag.
 
-It MUST NOT be interpreted as proof that every raw source is fully settled.
+It MUST NOT be interpreted as confirmation that all media sources have
+completed backfill / settlement.
 
-No weekday / source-settlement filter is applied in this procedure.
-
-Operational source readiness is monitored separately.
+Source readiness is monitored separately.
 
 
----------------------------------------------------------------------------------------------------
+===================================================================================================
 OUTPUT GRAIN
----------------------------------------------------------------------------------------------------
+===================================================================================================
 
   qgp_date
     x lob
     x reporting channel_group
     x metric_name
-
-No separate platform field is required downstream because platform-level reporting
-selections are represented through channel_group.
 
 ================================================================================================= */
 
@@ -258,24 +265,35 @@ BEGIN
     data_source = BIDDABLE_SPEND_CHANNEL
     metric_name = biddableSpend
 
-    Current LOB scope:
+    Current canonical LOB scope:
       POSTPAID
       BROADBAND
 
-    Reporting channel_group selections include:
+    Paid Search Fiber is already mapped to BROADBAND in Bronze.
+
+    Reporting selections include:
+
       All Channels
+
       Paid Search - All
       Paid Search - <platform>
+
       Paid Social - All
       Paid Social - <platform>
+
       Programmatic - All
       Programmatic - <platform>
 
-    Platform remains atomic in Bronze and is represented as a
-    reporting channel_group selection in Silver.
+    Platform detail remains atomic in Bronze and is represented as
+    channel_group reporting selections in Silver.
 
-    Silver performs LOB canonicalization, QGP alignment,
-    boundary proration, WoW and YoY.
+    Silver performs:
+      LOB canonicalization
+      reporting-selection aggregation
+      QGP alignment
+      quarter-boundary proration
+      WoW
+      YoY
 
     Refreshed by:
       sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly
@@ -289,12 +307,17 @@ BEGIN
 
 
   /* ===============================================================================================
-     1. CANONICALIZE BRONZE LOB
+     1. CANONICALIZE LOB WHILE RETAINING PLATFORM
 
-     Bronze already applies the approved source-selection rules.
+     Expected incoming LOB values:
 
-     This CTE remains defensive so the Silver contract cannot accidentally expand to an
-     unsupported LOB if Bronze is changed later.
+       POSTPAID
+       CONSUMER POSTPAID
+       HSI
+       BROADBAND
+
+     Paid Search Fiber does NOT appear as FIBER here because Bronze has
+     already mapped it to BROADBAND.
      =============================================================================================== */
 
   BronzeCanonical AS (
@@ -327,10 +350,12 @@ BEGIN
 
 
       CASE
+
         WHEN NULLIF(TRIM(platform), '') IS NOT NULL
           THEN TRIM(platform)
 
         ELSE 'Unknown'
+
       END                                                       AS platform,
 
 
@@ -348,7 +373,7 @@ BEGIN
 
 
       /*
-        Defensive enforcement of current approved Biddable LOB scope.
+        Defensive enforcement of the current Biddable reporting LOB contract.
       */
       AND UPPER(TRIM(lob)) IN (
         'POSTPAID',
@@ -359,7 +384,7 @@ BEGIN
 
 
       /*
-        Defensive enforcement of the three approved Biddable source groups.
+        Defensive enforcement of the approved Biddable source groups.
       */
       AND TRIM(channel_group) IN (
         'Programmatic',
@@ -381,6 +406,7 @@ BEGIN
         )
           THEN 'POSTPAID'
 
+
         WHEN UPPER(TRIM(lob)) IN (
           'HSI',
           'BROADBAND'
@@ -394,10 +420,12 @@ BEGIN
 
 
       CASE
+
         WHEN NULLIF(TRIM(platform), '') IS NOT NULL
           THEN TRIM(platform)
 
         ELSE 'Unknown'
+
       END
 
   ),
@@ -408,11 +436,10 @@ BEGIN
      2. CHANNEL TOTAL SELECTIONS
 
      Examples:
+
        Paid Search - All
        Paid Social - All
        Programmatic - All
-
-     Derived directly from atomic Bronze rows.
      =============================================================================================== */
 
   ChannelAll AS (
@@ -423,10 +450,12 @@ BEGIN
 
       lob,
 
+
       CONCAT(
         source_channel_group,
         ' - All'
       )                                                         AS channel_group,
+
 
       SUM(spend)                                                AS spend
 
@@ -448,16 +477,20 @@ BEGIN
 
 
   /* ===============================================================================================
-     3. PLATFORM REPORTING SELECTIONS
+     3. PLATFORM-LEVEL SELECTIONS
 
      Examples:
+
        Paid Search - Google
+       Paid Search - Bing
+
        Paid Social - Facebook
+       Paid Social - Instagram
+
        Programmatic - DV360
+       Programmatic - Amazon DSP
 
-     No individual platform whitelist is applied here.
-
-     Bronze has already enforced the approved source scope.
+     No downstream platform whitelist is applied.
      =============================================================================================== */
 
   PlatformSelections AS (
@@ -468,11 +501,13 @@ BEGIN
 
       lob,
 
+
       CONCAT(
         source_channel_group,
         ' - ',
         platform
       )                                                         AS channel_group,
+
 
       SUM(spend)                                                AS spend
 
@@ -498,10 +533,20 @@ BEGIN
      4. ALL CHANNELS
 
      IMPORTANT:
-       Derived directly from BronzeCanonical.
 
-       Do NOT calculate this from ChannelAll + PlatformSelections because those represent
-       alternative reporting views of the same spend and would double count.
+       Calculate All Channels DIRECTLY from atomic BronzeCanonical.
+
+       Do NOT calculate this from ChannelAll + PlatformSelections because
+       those are alternate representations of the same spend and would
+       double count.
+
+     Current LOB universe:
+
+       POSTPAID
+       BROADBAND
+
+     Paid Search Fiber contributes to BROADBAND because it was mapped
+     upstream in Bronze.
      =============================================================================================== */
 
   AllChannels AS (
@@ -533,12 +578,11 @@ BEGIN
 
 
   /* ===============================================================================================
-     5. COMPLETE REPORTING-SELECTION SET
+     5. COMBINE REPORTING SELECTIONS
 
-     Each channel_group value represents an independently selectable reporting view.
+     Each channel_group value is independently selectable.
 
-     Never SUM across the resulting channel_group values without intentionally choosing the
-     desired level.
+     Do not aggregate across selections unless intentionally required.
      =============================================================================================== */
 
   ReportingBase AS (
@@ -580,10 +624,10 @@ BEGIN
 
 
   /* ===============================================================================================
-     6. ATTACH QGP CALENDAR + QUARTER BOUNDARY PRORATION
+     6. ATTACH QGP CALENDAR + QUARTER-BOUNDARY PRORATION
      =============================================================================================== */
 
-  BronzeWithCalendar AS (
+  WithCalendar AS (
 
     SELECT
 
@@ -597,15 +641,17 @@ BEGIN
       cal.iso_week_number,
       cal.iso_year,
 
+
       channels.lob,
+
       channels.channel_group,
 
 
       CASE
 
         /*
-          Boundary stub receives its proportional share from the
-          underlying natural Sunday-Saturday week.
+          Quarter-boundary stub receives its proportional share
+          from the underlying natural Sunday-Saturday week.
         */
         WHEN cal.week_type = 'BOUNDARY_STUB'
          AND cal.is_complete_period
@@ -613,7 +659,8 @@ BEGIN
 
 
         /*
-          Boundary-first period receives its own proportional share.
+          First period in the new quarter receives its own
+          proportional share.
         */
         WHEN cal.week_type = 'BOUNDARY_FIRST'
          AND cal.is_complete_period
@@ -621,7 +668,7 @@ BEGIN
 
 
         /*
-          Normal complete QGP week.
+          Normal complete reporting week.
         */
         WHEN cal.is_complete_period
           THEN b.spend
@@ -639,32 +686,40 @@ BEGIN
     CROSS JOIN (
 
       SELECT DISTINCT
+
         lob,
+
         channel_group
 
       FROM ReportingBase
 
       WHERE
         lob IS NOT NULL
+
         AND channel_group IS NOT NULL
 
     ) channels
 
 
+
     LEFT JOIN ReportingBase b
 
       ON  b.week_sun_sat = cal.qgp_date
-      AND b.lob           = channels.lob
+
+      AND b.lob = channels.lob
+
       AND b.channel_group = channels.channel_group
 
 
+
     /*
-      Boundary stub references the natural Sunday-Saturday week containing
-      the stub date.
+      Boundary stub points to the same underlying natural
+      Sunday-Saturday week as BOUNDARY_FIRST.
     */
     LEFT JOIN ReportingBase bf
 
-      ON  cal.week_type = 'BOUNDARY_STUB'
+      ON cal.week_type = 'BOUNDARY_STUB'
+
 
       AND bf.week_sun_sat =
           date_add(
@@ -672,26 +727,25 @@ BEGIN
             7 - dayofweek(cal.qgp_date)
           )
 
-      AND bf.lob           = channels.lob
+
+      AND bf.lob = channels.lob
+
       AND bf.channel_group = channels.channel_group
+
 
 
     WHERE
 
-      /*
-        Historical quarters.
-      */
       cal.qgp_date < trunc(current_date(), 'QUARTER')
 
 
       OR
 
 
-      /*
-        Current quarter.
-      */
       (
+
         cal.qgp_date >= trunc(current_date(), 'QUARTER')
+
 
         AND cal.qgp_date <=
             date_sub(
@@ -701,6 +755,7 @@ BEGIN
               ),
               1
             )
+
       )
 
   ),
@@ -716,28 +771,40 @@ BEGIN
     SELECT
 
       qgp_date,
+
       week_type,
+
       qgp_quarter,
+
       days_in_period,
+
       is_complete_period,
+
       wow_prior_qgp_date,
+
       boundary_stub_date,
+
       iso_week_number,
+
       iso_year,
 
       lob,
+
       channel_group,
 
+
       'biddableSpend'                                           AS metric_name,
+
 
       spend                                                     AS metric_value
 
 
-    FROM BronzeWithCalendar
+    FROM WithCalendar
 
 
     WHERE
       lob IS NOT NULL
+
       AND channel_group IS NOT NULL
 
   ),
@@ -745,7 +812,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     8. CURRENT-PERIOD LOOKUP
+     8. CURRENT PERIOD LOOKUP
      =============================================================================================== */
 
   MetricLookup AS (
@@ -753,9 +820,13 @@ BEGIN
     SELECT
 
       qgp_date,
+
       lob,
+
       channel_group,
+
       metric_name,
+
       metric_value
 
 
@@ -766,9 +837,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     9. PRIOR-YEAR NATURAL-WEEK LOOKUP
-
-     Used for YoY matching by ISO year / week.
+     9. PRIOR-YEAR NATURAL WEEK LOOKUP
      =============================================================================================== */
 
   LYWeeklyLookup AS (
@@ -776,11 +845,15 @@ BEGIN
     SELECT
 
       iso_year,
+
       iso_week_number,
 
       lob,
+
       channel_group,
+
       metric_name,
+
 
       SUM(metric_value)                                         AS ly_weekly_metric_value
 
@@ -793,10 +866,15 @@ BEGIN
 
 
     GROUP BY
+
       iso_year,
+
       iso_week_number,
+
       lob,
+
       channel_group,
+
       metric_name
 
   ),
@@ -812,20 +890,26 @@ BEGIN
     SELECT
 
       u.qgp_date,
+
       u.week_type,
+
       u.qgp_quarter,
+
       u.days_in_period,
+
       u.is_complete_period,
 
       u.lob,
+
       u.channel_group,
+
       u.metric_name,
 
       u.metric_value,
 
 
       /* -------------------------------------------------------------------------------------------
-         LY VALUE PRORATED TO CURRENT QGP-PERIOD DURATION
+         LY VALUE PRORATED TO CURRENT QGP PERIOD LENGTH
          ------------------------------------------------------------------------------------------- */
 
       ROUND(
@@ -837,9 +921,6 @@ BEGIN
 
       /* -------------------------------------------------------------------------------------------
          WOW NUMERATOR
-
-         Boundary-first is recombined with its corresponding stub so that
-         the natural reporting week is compared to the prior natural week.
          ------------------------------------------------------------------------------------------- */
 
       CASE u.week_type
@@ -941,15 +1022,18 @@ BEGIN
 
     LEFT JOIN MetricLookup wow_prior_lookup
 
-      ON  wow_prior_lookup.qgp_date      = u.wow_prior_qgp_date
-      AND wow_prior_lookup.lob           = u.lob
+      ON  wow_prior_lookup.qgp_date = u.wow_prior_qgp_date
+
+      AND wow_prior_lookup.lob = u.lob
+
       AND wow_prior_lookup.channel_group = u.channel_group
-      AND wow_prior_lookup.metric_name   = u.metric_name
+
+      AND wow_prior_lookup.metric_name = u.metric_name
 
 
 
     /* ---------------------------------------------------------------------------------------------
-       PRIOR PERIOD CALENDAR METADATA
+       PRIOR PERIOD CALENDAR
        --------------------------------------------------------------------------------------------- */
 
     LEFT JOIN
@@ -960,28 +1044,34 @@ BEGIN
 
 
     /* ---------------------------------------------------------------------------------------------
-       PRIOR PERIOD STUB
+       PRIOR PERIOD BOUNDARY STUB
        --------------------------------------------------------------------------------------------- */
 
     LEFT JOIN MetricLookup wow_prior_stub
 
-      ON  wow_prior_stub.qgp_date      = prior_cal.boundary_stub_date
-      AND wow_prior_stub.lob           = u.lob
+      ON  wow_prior_stub.qgp_date = prior_cal.boundary_stub_date
+
+      AND wow_prior_stub.lob = u.lob
+
       AND wow_prior_stub.channel_group = u.channel_group
-      AND wow_prior_stub.metric_name   = u.metric_name
+
+      AND wow_prior_stub.metric_name = u.metric_name
 
 
 
     /* ---------------------------------------------------------------------------------------------
-       CURRENT PERIOD STUB
+       CURRENT PERIOD BOUNDARY STUB
        --------------------------------------------------------------------------------------------- */
 
     LEFT JOIN MetricLookup stub_lookup
 
-      ON  stub_lookup.qgp_date      = u.boundary_stub_date
-      AND stub_lookup.lob           = u.lob
+      ON  stub_lookup.qgp_date = u.boundary_stub_date
+
+      AND stub_lookup.lob = u.lob
+
       AND stub_lookup.channel_group = u.channel_group
-      AND stub_lookup.metric_name   = u.metric_name
+
+      AND stub_lookup.metric_name = u.metric_name
 
 
 
@@ -991,11 +1081,15 @@ BEGIN
 
     LEFT JOIN LYWeeklyLookup ly_week
 
-      ON  ly_week.iso_year        = u.iso_year - 1
+      ON  ly_week.iso_year = u.iso_year - 1
+
       AND ly_week.iso_week_number = u.iso_week_number
-      AND ly_week.lob             = u.lob
-      AND ly_week.channel_group   = u.channel_group
-      AND ly_week.metric_name     = u.metric_name
+
+      AND ly_week.lob = u.lob
+
+      AND ly_week.channel_group = u.channel_group
+
+      AND ly_week.metric_name = u.metric_name
 
   )
 
@@ -1005,14 +1099,18 @@ BEGIN
      FINAL SILVER
 
      GRAIN:
+
        qgp_date
          x lob
          x reporting channel_group
          x metric_name
 
-     Current LOB contract:
+     EXPECTED LOB:
+
        POSTPAID
        BROADBAND
+
+     There is intentionally no standalone FIBER row.
      =============================================================================================== */
 
   SELECT
@@ -1030,21 +1128,15 @@ BEGIN
 
     is_complete_period,
 
-
     lob,
-
 
     channel_group,
 
-
     metric_name,
-
 
     metric_value,
 
-
     metric_value_ly,
-
 
     wow_numerator,
 
