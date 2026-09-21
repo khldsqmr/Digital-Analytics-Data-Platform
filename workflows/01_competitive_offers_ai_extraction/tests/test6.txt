@@ -288,14 +288,18 @@ END
 
 
 Biddable Spend
-Weekly paid-media spend across Programmatic, Paid Social, and Paid Search, sourced from Databricks and standardized to the PulseTMS Sunday–Saturday reporting calendar.
+Weekly spend across Programmatic, Paid Social and Paid Search, standardized to the PulseTMS Sunday–Saturday calendar. Current reporting scope is Postpaid + Broadband.
 
-Programmatic • Source: pbi_programmatic_browsers_currentyr • Universe includes Amazon DSP, Blis, DV360, The Trade Desk and all associated accounts, Channels and Buy Types • Selected: Postpaid + Broadband/HSI; no DSP/account/channel whitelist.
+Programmatic | pbi_programmatic_browsers_currentyr
+Universe: Amazon DSP, Blis, DV360, The Trade Desk; multiple accounts, Channels and Buy Types.
+Selection: Postpaid + HSI/Broadband only; all qualifying DSPs/accounts/channels retained. Current selected DSPs include Amazon DSP, Blis, DV360 and The Trade Desk.
 
-Paid Social • Source: media_analytics_integrated_snapshot • Universe includes Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC and future Paid Social platforms across multiple agencies/LOBs • Selected: Paid Social + InHouse + Postpaid/Broadband; qualifying platforms/accounts flow through dynamically.
+Paid Social | media_analytics_integrated_snapshot
+Universe: Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC and other/future Paid Social values across InHouse, Initiative, Assurance and other agencies.
+Selection: Agency = InHouse + Postpaid/Broadband. Current qualifying platforms are Facebook, Instagram, TikTok, Snapchat, Pinterest and Twitter. LinkedIn, Indirect, Nextdoor, General MFC, etc. fall outside the current selection based on Agency/LOB rules. No platform whitelist is applied.
 
-Paid Search • Source: sdi_tbl_sa360_gold_campaign_daily • Universe includes Google/Bing accounts and SEARCH, SHOPPING, PERFORMANCE_MAX, DISCOVERY plus Brand, Generic, Shopping, PMax and DemandGen campaigns • Selected: Google + Bing, Postpaid + Broadband/HSI; all qualifying accounts/campaign types retained.
+Paid Search | sdi_tbl_sa360_gold_campaign_daily
+Universe: Google/Bing accounts across SEARCH, SHOPPING, PERFORMANCE_MAX and DISCOVERY; Brand, Generic, Shopping, PMax and DemandGen campaigns; Postpaid, HSI, Metro, TFB and Fiber LOBs.
+Selection: Google + Bing, Postpaid + HSI/Broadband. All qualifying accounts and campaign/channel types remain included; Metro, TFB and Fiber are excluded.
 
-Channel selector: All Channels, Paid Search, Paid Social, Programmatic, plus available platform-level selections such as Paid Search – Google, Paid Social – Facebook, Programmatic – DV360, etc.
-
-Scope: Current Biddable reporting total = Postpaid + Broadband. Platform-level rows and channel totals are alternate reporting views and should not be summed together.
+Channel selection: All Channels, Paid Search, Paid Social, Programmatic and available platform-level views such as Paid Search – Google, Paid Social – Facebook, Programmatic – DV360, etc. Channel totals and platform views are alternate selections and should not be summed together.
