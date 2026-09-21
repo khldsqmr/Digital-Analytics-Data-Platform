@@ -822,3 +822,37 @@ qgp_date	source_postpaid	source_broadband	source_fiber	source_total	silver_postp
 2020-01-25	null	null	null	null	null	null	null	null	null	null	null	null	null
 2020-01-18	null	null	null	null	null	null	null	null	null	null	null	null	null
 2020-01-11	null	null	null	null	null	null	null	null	null	null	null	null	null
+
+
+
+SELECT
+  date_add(CAST(date AS DATE), 7 - dayofweek(CAST(date AS DATE))) AS week_ending,
+  UPPER(TRIM(lob)) AS source_lob,
+  UPPER(TRIM(ad_platform)) AS ad_platform,
+  COUNT(*) AS row_count,
+  SUM(cost) AS spend
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+WHERE CAST(date AS DATE) >= '2026-07-01'
+  AND UPPER(TRIM(ad_platform)) IN (
+    'GOOGLE',
+    'GOOGLE ADS',
+    'GOOGLE_ADS',
+    'BING',
+    'MICROSOFT',
+    'MICROSOFT ADS',
+    'MICROSOFT_ADS'
+  )
+  AND UPPER(TRIM(lob)) IN (
+    'POSTPAID',
+    'HSI',
+    'BROADBAND',
+    'FIBER'
+  )
+GROUP BY
+  date_add(CAST(date AS DATE), 7 - dayofweek(CAST(date AS DATE))),
+  UPPER(TRIM(lob)),
+  UPPER(TRIM(ad_platform))
+ORDER BY
+  week_ending DESC,
+  source_lob,
+  ad_platform;
