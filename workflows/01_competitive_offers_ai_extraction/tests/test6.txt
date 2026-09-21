@@ -285,3 +285,17 @@ THEN
     END
 
 END
+
+
+Biddable Spend
+Weekly paid-media spend across Programmatic, Paid Social, and Paid Search, sourced from Databricks and standardized to the PulseTMS Sunday–Saturday reporting calendar.
+
+Programmatic • Source: pbi_programmatic_browsers_currentyr • Universe includes Amazon DSP, Blis, DV360, The Trade Desk and all associated accounts, Channels and Buy Types • Selected: Postpaid + Broadband/HSI; no DSP/account/channel whitelist.
+
+Paid Social • Source: media_analytics_integrated_snapshot • Universe includes Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC and future Paid Social platforms across multiple agencies/LOBs • Selected: Paid Social + InHouse + Postpaid/Broadband; qualifying platforms/accounts flow through dynamically.
+
+Paid Search • Source: sdi_tbl_sa360_gold_campaign_daily • Universe includes Google/Bing accounts and SEARCH, SHOPPING, PERFORMANCE_MAX, DISCOVERY plus Brand, Generic, Shopping, PMax and DemandGen campaigns • Selected: Google + Bing, Postpaid + Broadband/HSI; all qualifying accounts/campaign types retained.
+
+Channel selector: All Channels, Paid Search, Paid Social, Programmatic, plus available platform-level selections such as Paid Search – Google, Paid Social – Facebook, Programmatic – DV360, etc.
+
+Scope: Current Biddable reporting total = Postpaid + Broadband. Platform-level rows and channel totals are alternate reporting views and should not be summed together.
