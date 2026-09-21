@@ -261,3 +261,27 @@ SET VAR category_sql = (
 
 -- Run dynamically generated query.
 EXECUTE IMMEDIATE category_sql;
+
+
+// [c.Bidd Channel Label]
+
+IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
+AND [Metric Name] = 'biddableSpend'
+THEN
+
+    CASE [Channel Group]
+
+        WHEN 'Paid Search - All'
+            THEN 'Paid Search'
+
+        WHEN 'Paid Social - All'
+            THEN 'Paid Social'
+
+        WHEN 'Programmatic - All'
+            THEN 'Programmatic'
+
+        ELSE [Channel Group]
+
+    END
+
+END
