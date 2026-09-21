@@ -11,7 +11,12 @@ PURPOSE:
     qgp_date x channel_group
 
   This view is intended for validation / sense-checking only.
-  Use sdi_vw_dashboardPulseTms_gold_unified_long for production Tableau reporting.
+
+  Use:
+    sdi_vw_dashboardPulseTms_gold_unified_long
+
+  for production Tableau reporting.
+
 
 ACTIVE CHANNEL-GRAIN SOURCES:
 
@@ -37,11 +42,13 @@ ACTIVE CHANNEL-GRAIN SOURCES:
   BIDDABLE_SPEND_CHANNEL
     - biddableSpendPostpaid
     - biddableSpendBroadband
+    - biddableSpendFiber
     - biddableSpendTotal
 
   UPV_FORECAST
     - upvForecast
     - upvWebAppForecast
+
 
 DATE-LEVEL SOURCE:
 
@@ -50,138 +57,262 @@ DATE-LEVEL SOURCE:
     - no channel_group dimension
     - joined by qgp_date and repeated across each channel row
 
+
 NOT INCLUDED:
+
   MFC_SPEND_GRANULAR
-    Use sdi_vw_dashboardPulseTms_gold_unified_long for granular MFC analysis.
+
+    Use:
+      sdi_vw_dashboardPulseTms_gold_unified_long
+
+    for granular MFC analysis.
+
 
 ---------------------------------------------------------------------------------------------------
 SPEND LOB SCOPE — IMPORTANT
 ---------------------------------------------------------------------------------------------------
 
-  Current Wide spend reporting scope is:
+Spend Total definitions are source-specific.
 
-    POSTPAID
-    BROADBAND
 
-  Therefore, for the current implementation:
+MFC:
 
-    *Total = Postpaid + Broadband
+  mfcSpendActualTotal
+    = POSTPAID + BROADBAND
 
-  This definition applies to:
+  mfcSpendForecastTotal
+    = POSTPAID + BROADBAND
 
-    mfcSpendActualTotal
-    mfcSpendForecastTotal
-    platformSpendTotal
-    biddableSpendTotal
 
-  Other source LOBs such as:
+PLATFORM:
 
-    TFB
-    PREPAID
-    METRO
-    FIBER
-    TMONEY
-    etc.
+  platformSpendTotal
+    = POSTPAID + BROADBAND
 
-  are deliberately NOT included in the current Total.
+
+BIDDABLE:
+
+  biddableSpendTotal
+    = ALL
+    = POSTPAID + BROADBAND + FIBER
+
+
+Biddable Silver already creates the synthetic:
+
+  lob = ALL
+
+Therefore the Wide Biddable Total uses the ALL row directly.
+
+Do NOT calculate:
+
+  ALL
+    +
+  POSTPAID
+    +
+  BROADBAND
+    +
+  FIBER
+
+because ALL already contains the three component LOBs.
+
+
+Other source LOBs such as:
+
+  TFB
+  PREPAID
+  METRO
+  TMONEY
+  etc.
+
+remain outside the current approved spend totals unless explicitly added.
+
 
 FUTURE LOB EXPANSION:
-  When additional LOBs such as TFB and PREPAID are formally added to PulseTMS spend reporting:
 
-    1. Add explicit Wide columns, for example:
-         mfcSpendActualTfb
-         mfcSpendActualPrepaid
-         platformSpendTfb
-         platformSpendPrepaid
-         biddableSpendTfb
-         biddableSpendPrepaid
+  When additional LOBs such as TFB or PREPAID are formally added:
 
-    2. Update the corresponding *Total calculation to explicitly include the approved LOBs.
+    1. Add explicit dedicated Wide columns.
 
-       Example future definition:
+    2. Update the appropriate source-specific Total definition.
 
-         Total =
-           Postpaid
-           + Broadband
-           + TFB
-           + Prepaid
+    3. Do NOT blindly SUM every LOB available in an upstream source.
 
-    3. Do NOT change Total to blindly SUM every LOB available in the source.
-       The Total must remain an explicitly controlled business reporting scope.
+  Each Total must remain an explicitly controlled business reporting definition.
+
 
 ---------------------------------------------------------------------------------------------------
 BIDDABLE SOURCE ARCHITECTURE
 ---------------------------------------------------------------------------------------------------
 
-  BIDDABLE_SPEND_CHANNEL is produced upstream from:
+BIDDABLE_SPEND_CHANNEL is produced upstream from:
 
-    Programmatic:
-      prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+  Programmatic:
+    prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 
-    Paid Social:
-      prdrzranalytics.lab42.media_analytics_integrated_snapshot
+  Paid Social:
+    prdrzranalytics.lab42.media_analytics_integrated_snapshot
 
-    Paid Search:
-      prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+  Paid Search:
+    prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 
-  Paid Social is limited upstream in Bronze to the approved/core Biddable platform universe.
 
-  Biddable LOB canonicalization occurs in Silver.
+Bronze handles source selection.
 
-  Therefore this Gold view expects canonical Biddable LOB values:
+Current source-specific LOB scope:
 
+  Programmatic:
     POSTPAID
-    BROADBAND
+    HSI / BROADBAND
 
-  Gold does NOT perform HSI -> BROADBAND remapping for Biddable.
+  Paid Social:
+    Paid Social
+    + Agency = InHouse
+    + POSTPAID / HSI / BROADBAND
+
+  Paid Search:
+    Google / Bing
+    + POSTPAID / HSI / BROADBAND / FIBER
+
+
+Paid Social does NOT use an individual platform whitelist.
+
+All qualifying Paid Social platforms flow through when they meet the approved:
+  channel group
+  agency
+  LOB
+
+scope.
+
+
+Biddable Silver canonicalizes:
+
+  POSTPAID / CONSUMER POSTPAID
+    -> POSTPAID
+
+  HSI / BROADBAND
+    -> BROADBAND
+
+  FIBER
+    -> FIBER
+
+
+Biddable Silver also creates:
+
+  ALL
+    = POSTPAID + BROADBAND + FIBER
+
+
+Therefore this Wide view expects Biddable LOB values:
+
+  ALL
+  POSTPAID
+  BROADBAND
+  FIBER
+
+
+Gold Wide does NOT perform HSI -> BROADBAND remapping for Biddable.
+
+
+---------------------------------------------------------------------------------------------------
+BIDDABLE CHANNEL REPORTING
+---------------------------------------------------------------------------------------------------
+
+Biddable Silver may expose:
+
+  All Channels
+
+  Paid Search - All
+  Paid Search - Google
+  Paid Search - Bing
+
+  Paid Social - All
+  Paid Social - <platform>
+
+  Programmatic - All
+  Programmatic - <platform>
+
+
+Each channel_group value is an alternative reporting selection.
+
+Examples:
+
+  Paid Search - All
+    already contains the qualifying Paid Search platforms.
+
+  All Channels
+    already contains the approved Programmatic + Paid Social + Paid Search total.
+
+Do NOT sum channel total rows together with their platform-detail rows.
+
 
 ---------------------------------------------------------------------------------------------------
 LOB HANDLING
 ---------------------------------------------------------------------------------------------------
 
-  MFC:
-    Canonicalization is applied inside MfcBase for the Wide view:
+MFC:
 
-      CONSUMER POSTPAID / POSTPAID -> POSTPAID
-      HSI / BROADBAND              -> BROADBAND
+  Canonicalization is applied inside MfcBase:
 
-  Platform:
-    Expected canonical Silver values:
-      POSTPAID
-      BROADBAND
+    CONSUMER POSTPAID / POSTPAID
+      -> POSTPAID
 
-  Biddable:
-    Canonicalized upstream in Biddable Silver:
-      POSTPAID
-      BROADBAND
+    HSI / BROADBAND
+      -> BROADBAND
+
+    TFB / TBG
+      -> TFB
+
+
+Platform:
+
+  Expected current Wide reporting values:
+
+    POSTPAID
+    BROADBAND
+
+
+Biddable:
+
+  Canonicalized upstream in Biddable Silver:
+
+    POSTPAID
+    BROADBAND
+    FIBER
+
+  Plus synthetic reporting value:
+
+    ALL = POSTPAID + BROADBAND + FIBER
+
 
 ---------------------------------------------------------------------------------------------------
 CHANNEL SPINE
 ---------------------------------------------------------------------------------------------------
 
-  Adobe is NOT used as the sole final-row spine.
+Adobe is NOT used as the sole final-row spine.
 
-  ChannelSpine is constructed from:
+ChannelSpine is constructed from:
 
-    Adobe
-    MFC
-    Platform
-    Biddable
-    UPV Forecast
+  Adobe
+  MFC
+  Platform
+  Biddable
+  UPV Forecast
 
-  This prevents a valid qgp_date x channel_group spend row from disappearing simply because
-  Adobe does not contain that same channel_group on that date.
+This prevents a valid qgp_date x channel_group spend row from disappearing
+simply because Adobe does not contain that same channel_group on that date.
+
 
 ---------------------------------------------------------------------------------------------------
 QGP GRAIN NOTE
 ---------------------------------------------------------------------------------------------------
 
-  QGP metrics do not contain channel_group.
+QGP metrics do not contain channel_group.
 
-  QGP values are joined using qgp_date only and are therefore repeated across each channel row
-  for that qgp_date.
+QGP values are joined using qgp_date only and are therefore repeated across
+each channel row for that qgp_date.
 
-  Do NOT aggregate QGP metrics across channel_group rows or they will be multiplied.
+Do NOT aggregate QGP metrics across channel_group rows or they will be multiplied.
+
 
 ---------------------------------------------------------------------------------------------------
 CALENDAR / COMPLETENESS NOTE
@@ -192,30 +323,24 @@ CALENDAR / COMPLETENESS NOTE
   days_in_period
   is_complete_period
 
-  are sourced from:
+are sourced from:
 
-    prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
 
-  is_complete_period indicates QGP/calendar completeness.
 
-  It does NOT guarantee raw-source settlement.
+is_complete_period indicates QGP/calendar completeness.
 
-  Current observed source-readiness behavior:
+It does NOT guarantee raw-source settlement.
 
-    Paid Search
-      Monday-ready
+Source settlement/readiness is monitored separately.
 
-    Programmatic
-      Approximately Monday 10 AM ET
-
-    Paid Social
-      Platform-dependent and may receive later backfill
 
 ---------------------------------------------------------------------------------------------------
 GRAIN
 ---------------------------------------------------------------------------------------------------
 
   qgp_date x channel_group
+
 
 ---------------------------------------------------------------------------------------------------
 ORDERING
@@ -225,6 +350,7 @@ ORDERING
   channel_group ASC
 
 ================================================================================================= */
+
 
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_wide
@@ -246,8 +372,7 @@ CalendarMeta AS (
     days_in_period,
     is_complete_period
 
-  FROM
-    prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
+  FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
 ),
 
 
@@ -260,7 +385,6 @@ Adobe AS (
   SELECT
     qgp_date,
     channel_group,
-
 
     /* -------------------------------------------------------------------------------------------
        UPV
@@ -561,12 +685,9 @@ Adobe AS (
       )
     ) AS cvrOrdersAssistedByod
 
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
-
-  WHERE
-    metric_type = 'ADOBE_VOLUME'
+  WHERE metric_type = 'ADOBE_VOLUME'
 
   GROUP BY
     qgp_date,
@@ -577,11 +698,7 @@ Adobe AS (
 /* ===============================================================================================
    MFC BASE
 
-   Normalize only the LOB vocabulary needed by the current Wide spend scope.
-
-   Future:
-     When TFB / PREPAID / other approved LOBs are added to the Wide view,
-     extend this canonicalization as required and add dedicated output columns.
+   Canonicalize the LOB vocabulary needed by the Wide spend view.
    =============================================================================================== */
 
 MfcBase AS (
@@ -592,7 +709,6 @@ MfcBase AS (
     metric_name,
 
     CASE
-
       WHEN UPPER(TRIM(lob_mfc)) IN (
         'POSTPAID',
         'CONSUMER POSTPAID'
@@ -612,16 +728,13 @@ MfcBase AS (
         THEN 'TFB'
 
       ELSE UPPER(TRIM(lob_mfc))
-
     END AS lob,
 
     metric_value
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
 
-  WHERE
-    data_source = 'MFC_SPEND_CHANNEL'
+  WHERE data_source = 'MFC_SPEND_CHANNEL'
 ),
 
 
@@ -630,10 +743,6 @@ MfcBase AS (
 
    Current Total:
      POSTPAID + BROADBAND
-
-   Future:
-     Explicitly add future LOB columns and expand the Total IN (...) list only
-     after those LOBs become part of the approved PulseTMS reporting total.
    =============================================================================================== */
 
 Mfc AS (
@@ -641,11 +750,6 @@ Mfc AS (
   SELECT
     qgp_date,
     channel_group,
-
-
-    /* -------------------------------------------------------------------------------------------
-       MFC ACTUAL
-       ------------------------------------------------------------------------------------------- */
 
     SUM(
       CASE
@@ -655,7 +759,6 @@ Mfc AS (
       END
     ) AS mfcSpendActualPostpaid,
 
-
     SUM(
       CASE
         WHEN lob = 'BROADBAND'
@@ -663,7 +766,6 @@ Mfc AS (
           THEN metric_value
       END
     ) AS mfcSpendActualBroadband,
-
 
     SUM(
       CASE
@@ -676,11 +778,6 @@ Mfc AS (
       END
     ) AS mfcSpendActualTotal,
 
-
-    /* -------------------------------------------------------------------------------------------
-       MFC FORECAST
-       ------------------------------------------------------------------------------------------- */
-
     SUM(
       CASE
         WHEN lob = 'POSTPAID'
@@ -689,7 +786,6 @@ Mfc AS (
       END
     ) AS mfcSpendForecastPostpaid,
 
-
     SUM(
       CASE
         WHEN lob = 'BROADBAND'
@@ -697,7 +793,6 @@ Mfc AS (
           THEN metric_value
       END
     ) AS mfcSpendForecastBroadband,
-
 
     SUM(
       CASE
@@ -710,15 +805,8 @@ Mfc AS (
       END
     ) AS mfcSpendForecastTotal
 
-
   FROM MfcBase
 
-  /*
-    Only current Wide reporting LOBs are consumed.
-
-    Future TFB / PREPAID rows should be added deliberately when corresponding
-    Wide columns and approved Total logic are implemented.
-  */
   WHERE lob IN (
     'POSTPAID',
     'BROADBAND'
@@ -740,13 +828,10 @@ PlatformBase AS (
     qgp_date,
     channel_group,
     metric_name,
-
     UPPER(TRIM(lob)) AS lob,
-
     metric_value
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly
 ),
 
 
@@ -763,7 +848,6 @@ Platform AS (
     qgp_date,
     channel_group,
 
-
     SUM(
       CASE
         WHEN lob = 'POSTPAID'
@@ -772,7 +856,6 @@ Platform AS (
       END
     ) AS platformSpendPostpaid,
 
-
     SUM(
       CASE
         WHEN lob = 'BROADBAND'
@@ -780,7 +863,6 @@ Platform AS (
           THEN metric_value
       END
     ) AS platformSpendBroadband,
-
 
     SUM(
       CASE
@@ -792,7 +874,6 @@ Platform AS (
           THEN metric_value
       END
     ) AS platformSpendTotal
-
 
   FROM PlatformBase
 
@@ -810,11 +891,20 @@ Platform AS (
 /* ===============================================================================================
    BIDDABLE BASE
 
-   Biddable Silver already canonicalizes source-level LOB values.
+   Biddable Silver already owns LOB canonicalization and reporting rollups.
 
-   Expected current relevant values:
+   Expected Silver LOB values:
+
+     ALL
      POSTPAID
      BROADBAND
+     FIBER
+
+   ALL already equals:
+
+     POSTPAID + BROADBAND + FIBER
+
+   Therefore ALL must NOT be summed together with its component LOBs.
    =============================================================================================== */
 
 BiddableBase AS (
@@ -823,30 +913,44 @@ BiddableBase AS (
     qgp_date,
     channel_group,
     metric_name,
-
     UPPER(TRIM(lob)) AS lob,
-
     metric_value
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
 
-  WHERE
-    data_source = 'BIDDABLE_SPEND_CHANNEL'
+  WHERE data_source = 'BIDDABLE_SPEND_CHANNEL'
+    AND lob IN (
+      'ALL',
+      'POSTPAID',
+      'BROADBAND',
+      'FIBER'
+    )
 ),
 
 
 /* ===============================================================================================
    BIDDABLE SPEND
 
-   Current Total:
-     POSTPAID + BROADBAND
+   Reporting columns:
 
-   Future:
-     If TFB / PREPAID / other approved LOBs become part of Biddable reporting:
-       - add explicit dedicated columns
-       - expand biddableSpendTotal explicitly
-       - do not automatically aggregate every available source LOB
+     biddableSpendPostpaid
+       -> Silver lob = POSTPAID
+
+     biddableSpendBroadband
+       -> Silver lob = BROADBAND
+
+     biddableSpendFiber
+       -> Silver lob = FIBER
+
+     biddableSpendTotal
+       -> Silver lob = ALL
+       -> POSTPAID + BROADBAND + FIBER
+
+   IMPORTANT:
+
+     Total is sourced directly from the Silver ALL row.
+
+     It is NOT recalculated by summing the three component rows here.
    =============================================================================================== */
 
 Biddable AS (
@@ -854,7 +958,6 @@ Biddable AS (
   SELECT
     qgp_date,
     channel_group,
-
 
     SUM(
       CASE
@@ -864,7 +967,6 @@ Biddable AS (
       END
     ) AS biddableSpendPostpaid,
 
-
     SUM(
       CASE
         WHEN lob = 'BROADBAND'
@@ -873,25 +975,23 @@ Biddable AS (
       END
     ) AS biddableSpendBroadband,
 
+    SUM(
+      CASE
+        WHEN lob = 'FIBER'
+         AND metric_name = 'biddableSpend'
+          THEN metric_value
+      END
+    ) AS biddableSpendFiber,
 
     SUM(
       CASE
-        WHEN lob IN (
-          'POSTPAID',
-          'BROADBAND'
-        )
+        WHEN lob = 'ALL'
          AND metric_name = 'biddableSpend'
           THEN metric_value
       END
     ) AS biddableSpendTotal
 
-
   FROM BiddableBase
-
-  WHERE lob IN (
-    'POSTPAID',
-    'BROADBAND'
-  )
 
   GROUP BY
     qgp_date,
@@ -925,9 +1025,7 @@ UpvForecast AS (
       )
     ) AS upvWebAppForecast
 
-
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
 
   GROUP BY
     qgp_date,
@@ -943,7 +1041,6 @@ Qgp AS (
 
   SELECT
     qgp_date,
-
 
     MAX(
       IF(
@@ -963,7 +1060,6 @@ Qgp AS (
       )
     ) AS qgpActivationsBopisTarget,
 
-
     MAX(
       IF(
         metric_name = 'activationsNewAalNoAssistance'
@@ -981,7 +1077,6 @@ Qgp AS (
         NULL
       )
     ) AS qgpActivationsNewAalNoAssistanceTarget,
-
 
     MAX(
       IF(
@@ -1001,7 +1096,6 @@ Qgp AS (
       )
     ) AS qgpStoreTrafficTarget,
 
-
     MAX(
       IF(
         metric_name = 'vrCalls'
@@ -1019,7 +1113,6 @@ Qgp AS (
         NULL
       )
     ) AS qgpVrCallsTarget,
-
 
     MAX(
       IF(
@@ -1039,7 +1132,6 @@ Qgp AS (
       )
     ) AS qgpVrChatsTarget,
 
-
     MAX(
       IF(
         metric_name = 'vrPostpaidActivations'
@@ -1057,7 +1149,6 @@ Qgp AS (
         NULL
       )
     ) AS qgpVrPostpaidActivationsTarget,
-
 
     MAX(
       IF(
@@ -1077,7 +1168,6 @@ Qgp AS (
       )
     ) AS qgpDigitalPctPhoneNewActsNoAssistPlusAssistTarget,
 
-
     MAX(
       IF(
         metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted'
@@ -1095,7 +1185,6 @@ Qgp AS (
         NULL
       )
     ) AS qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget,
-
 
     MAX(
       IF(
@@ -1115,7 +1204,6 @@ Qgp AS (
       )
     ) AS qgpDigitalPctNoAssistanceActivationsTarget,
 
-
     MAX(
       IF(
         metric_name = 'digitalPctAssistanceActivations'
@@ -1134,9 +1222,7 @@ Qgp AS (
       )
     ) AS qgpDigitalPctAssistanceActivationsTarget
 
-
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
 
   GROUP BY
     qgp_date
@@ -1149,6 +1235,13 @@ Qgp AS (
    One qgp_date x channel_group key-space across every channel-grain source.
 
    UNION intentionally removes duplicate keys.
+
+   Biddable may introduce platform-level channel_group values such as:
+     Paid Search - Google
+     Paid Social - Facebook
+     Programmatic - DV360
+
+   Those are intentionally retained for Wide sense-checking.
    =============================================================================================== */
 
 ChannelSpine AS (
@@ -1159,9 +1252,7 @@ ChannelSpine AS (
   FROM Adobe
   WHERE channel_group IS NOT NULL
 
-
   UNION
-
 
   SELECT
     qgp_date,
@@ -1169,9 +1260,7 @@ ChannelSpine AS (
   FROM Mfc
   WHERE channel_group IS NOT NULL
 
-
   UNION
-
 
   SELECT
     qgp_date,
@@ -1179,9 +1268,7 @@ ChannelSpine AS (
   FROM Platform
   WHERE channel_group IS NOT NULL
 
-
   UNION
-
 
   SELECT
     qgp_date,
@@ -1189,9 +1276,7 @@ ChannelSpine AS (
   FROM Biddable
   WHERE channel_group IS NOT NULL
 
-
   UNION
-
 
   SELECT
     qgp_date,
@@ -1212,12 +1297,10 @@ SELECT
      --------------------------------------------------------------------------------------------- */
 
   spine.qgp_date,
-
   cal.week_type,
   cal.qgp_quarter,
   cal.days_in_period,
   cal.is_complete_period,
-
   spine.channel_group,
 
 
@@ -1262,7 +1345,7 @@ SELECT
   /* ---------------------------------------------------------------------------------------------
      MFC ACTUAL SPEND
 
-     Total = Postpaid + Broadband only.
+     Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
   m.mfcSpendActualPostpaid,
@@ -1273,7 +1356,7 @@ SELECT
   /* ---------------------------------------------------------------------------------------------
      MFC FORECAST SPEND
 
-     Total = Postpaid + Broadband only.
+     Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
   m.mfcSpendForecastPostpaid,
@@ -1284,7 +1367,7 @@ SELECT
   /* ---------------------------------------------------------------------------------------------
      PLATFORM SPEND
 
-     Total = Postpaid + Broadband only.
+     Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
   p.platformSpendPostpaid,
@@ -1295,11 +1378,15 @@ SELECT
   /* ---------------------------------------------------------------------------------------------
      BIDDABLE SPEND
 
-     Total = Postpaid + Broadband only.
+     Total = ALL
+           = POSTPAID + BROADBAND + FIBER
+
+     Total is read directly from the Silver ALL reporting row.
      --------------------------------------------------------------------------------------------- */
 
   b.biddableSpendPostpaid,
   b.biddableSpendBroadband,
+  b.biddableSpendFiber,
   b.biddableSpendTotal,
 
 
@@ -1386,7 +1473,6 @@ FROM ChannelSpine spine
    =============================================================================================== */
 
 LEFT JOIN CalendarMeta cal
-
   ON cal.qgp_date = spine.qgp_date
 
 
@@ -1395,7 +1481,6 @@ LEFT JOIN CalendarMeta cal
    =============================================================================================== */
 
 LEFT JOIN Adobe a
-
   ON  a.qgp_date      = spine.qgp_date
   AND a.channel_group = spine.channel_group
 
@@ -1405,7 +1490,6 @@ LEFT JOIN Adobe a
    =============================================================================================== */
 
 LEFT JOIN Mfc m
-
   ON  m.qgp_date      = spine.qgp_date
   AND m.channel_group = spine.channel_group
 
@@ -1415,7 +1499,6 @@ LEFT JOIN Mfc m
    =============================================================================================== */
 
 LEFT JOIN Platform p
-
   ON  p.qgp_date      = spine.qgp_date
   AND p.channel_group = spine.channel_group
 
@@ -1425,7 +1508,6 @@ LEFT JOIN Platform p
    =============================================================================================== */
 
 LEFT JOIN Biddable b
-
   ON  b.qgp_date      = spine.qgp_date
   AND b.channel_group = spine.channel_group
 
@@ -1435,7 +1517,6 @@ LEFT JOIN Biddable b
    =============================================================================================== */
 
 LEFT JOIN UpvForecast uf
-
   ON  uf.qgp_date      = spine.qgp_date
   AND uf.channel_group = spine.channel_group
 
@@ -1447,7 +1528,6 @@ LEFT JOIN UpvForecast uf
    =============================================================================================== */
 
 LEFT JOIN Qgp q
-
   ON q.qgp_date = spine.qgp_date
 
 

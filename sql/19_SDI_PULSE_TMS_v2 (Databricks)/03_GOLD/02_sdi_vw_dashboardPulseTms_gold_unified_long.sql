@@ -19,6 +19,8 @@ PURPOSE:
     - Adobe CVR
     - UPV forecast channel allocation
     - Spend aggregation
+    - Biddable LOB reporting rollups
+    - Biddable channel/platform reporting selections
 
   are completed upstream.
 
@@ -50,73 +52,207 @@ STRUCTURE:
   UnifiedPulseTms
     UNION ALL of the seven conformed CTEs.
 
-BIDDABLE SOURCE ARCHITECTURE:
-  BIDDABLE_SPEND_CHANNEL represents:
 
-    Programmatic
-    Paid Social
-    Paid Search
+===================================================================================================
+BIDDABLE SOURCE ARCHITECTURE
+===================================================================================================
 
-  Upstream primary sources are:
+BIDDABLE_SPEND_CHANNEL represents:
 
-    Programmatic
-      prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+  Programmatic
+  Paid Social
+  Paid Search
 
-    Paid Social
-      prdrzranalytics.lab42.media_analytics_integrated_snapshot
+Upstream primary sources are:
 
-    Paid Search
-      prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+  Programmatic
+    prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 
-  Raw-source logic is intentionally NOT repeated in Gold.
+  Paid Social
+    prdrzranalytics.lab42.media_analytics_integrated_snapshot
 
-  Bronze handles source selection.
-  Silver handles:
-    - LOB canonicalization
-    - platform collapse
-    - QGP alignment
-    - proration
-    - WoW
-    - YoY
+  Paid Search
+    prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 
-BIDDABLE LOB:
-  Biddable Silver now outputs canonical values before Gold.
+Raw-source logic is intentionally NOT repeated in Gold.
 
-  Examples:
+Bronze handles:
+  - Source selection
+  - Source LOB selection
+  - Platform normalization
+  - Atomic weekly spend
 
-    POSTPAID        -> POSTPAID
+Silver handles:
+  - LOB canonicalization
+  - Biddable LOB = ALL rollup
+  - Channel-total reporting selections
+  - Platform-level reporting selections
+  - All Channels rollup
+  - QGP alignment
+  - Quarter-boundary proration
+  - WoW
+  - YoY
 
-    HSI
-    BROADBAND       -> BROADBAND
+Gold only conforms the Silver output into the common unified schema.
 
-    TBG
-    TFB             -> TFB
 
-  PulseTMS Gold currently retains only:
+---------------------------------------------------------------------------------------------------
+BIDDABLE SILVER LOB
+---------------------------------------------------------------------------------------------------
 
+Silver canonical atomic LOB values:
+
+  POSTPAID
+  BROADBAND
+  FIBER
+
+Silver also creates:
+
+  ALL
+    = POSTPAID + BROADBAND + FIBER
+
+Therefore Silver Biddable LOB values are:
+
+  ALL
+  POSTPAID
+  BROADBAND
+  FIBER
+
+Fiber currently originates from Paid Search only.
+
+Programmatic currently contributes:
+  POSTPAID
+  BROADBAND
+
+Paid Social currently contributes:
+  POSTPAID
+  BROADBAND
+
+Paid Search currently contributes:
+  POSTPAID
+  BROADBAND
+  FIBER
+
+
+---------------------------------------------------------------------------------------------------
+BIDDABLE GOLD LOB / TRUE_LOB
+---------------------------------------------------------------------------------------------------
+
+For BIDDABLE_SPEND_CHANNEL:
+
+  lob
+    = 'Biddable'
+
+  true_lob
+    = Silver Biddable reporting LOB
+
+Therefore:
+
+  lob        true_lob
+  ---------- ----------
+  Biddable   ALL
+  Biddable   POSTPAID
+  Biddable   BROADBAND
+  Biddable   FIBER
+
+Meaning:
+
+  ALL
+    = POSTPAID + BROADBAND + FIBER
+
+  POSTPAID
+    = Postpaid Biddable spend only
+
+  BROADBAND
+    = Broadband / HSI Biddable spend only
+
+  FIBER
+    = Fiber Biddable spend only
+
+IMPORTANT:
+
+  For Biddable, true_lob is a reporting-selection dimension.
+
+  ALL is synthetic and therefore differs from the ordinary literal/canonical
+  true_lob behavior used by several other data sources.
+
+  ALL, POSTPAID, BROADBAND, and FIBER are alternative reporting selections.
+
+  Do NOT aggregate:
+
+    ALL
+      +
     POSTPAID
+      +
     BROADBAND
+      +
+    FIBER
 
-  for BIDDABLE_SPEND_CHANNEL.
 
-  Gold therefore no longer needs to transform:
+---------------------------------------------------------------------------------------------------
+BIDDABLE CHANNEL_GROUP
+---------------------------------------------------------------------------------------------------
 
-    HSI -> BROADBAND
+BIDDABLE_SPEND_CHANNEL may contain:
 
-  inside the BiddableSpend CTE.
+  All Channels
 
-QGP_SCORECARD:
-  QGP_SCORECARD contains no channel_group dimension.
+  Paid Search - All
+  Paid Search - Google
+  Paid Search - Bing
 
-  channel_group is therefore NULL.
+  Paid Social - All
+  Paid Social - <platform>
 
-  Display:
-    lob = 'Postpaid + Broadband'
+  Programmatic - All
+  Programmatic - <platform>
 
-  true_lob:
-    derived by metric_name only when literal LOB classification is confirmed.
+Platform-specific values are driven by the approved upstream source universe.
 
-DATA_SOURCE VALUES:
+IMPORTANT:
+
+  Channel totals and platform selections are alternative reporting views.
+
+  For example:
+
+    Paid Search - All
+
+  already contains its qualifying platform spend.
+
+  Do NOT add:
+
+    Paid Search - All
+      +
+    Paid Search - Google
+      +
+    Paid Search - Bing
+
+Likewise:
+
+  All Channels
+
+already contains the approved Programmatic + Paid Social + Paid Search spend
+for the selected Biddable true_lob.
+
+
+===================================================================================================
+QGP_SCORECARD
+===================================================================================================
+
+QGP_SCORECARD contains no channel_group dimension.
+
+channel_group is therefore NULL.
+
+Display:
+  lob = 'Postpaid + Broadband'
+
+true_lob:
+  derived by metric_name only when literal LOB classification is confirmed.
+
+
+===================================================================================================
+DATA_SOURCE VALUES
+===================================================================================================
 
   ADOBE
   MFC_SPEND_CHANNEL
@@ -126,130 +262,235 @@ DATA_SOURCE VALUES:
   UPV_FORECAST
   QGP_SCORECARD
 
-IMPORTANT MFC NOTE:
-  MFC is represented twice:
 
-    MFC_SPEND_CHANNEL
-    MFC_SPEND_GRANULAR
+===================================================================================================
+IMPORTANT MFC NOTE
+===================================================================================================
 
-  They represent the same spend at different grains.
+MFC is represented twice:
 
-  Do NOT aggregate both together unless intentionally analyzing both grain representations.
+  MFC_SPEND_CHANNEL
+  MFC_SPEND_GRANULAR
 
-CHANNEL_GROUP VALUES:
-  Common channel groups may include:
+They represent the same spend at different grains.
 
-    All Channels
-    Paid Search
-    Paid Social
-    Organic Search
-    Direct
-    Programmatic
-    Other
+Do NOT aggregate both together unless intentionally analyzing both grain representations.
 
-  PLATFORM_SPEND_CHANNEL may additionally include:
 
-    iSpot National TV
-    iSpot OTT
-    Affiliate
+===================================================================================================
+CHANNEL_GROUP VALUES
+===================================================================================================
 
-  BIDDABLE_SPEND_CHANNEL is expected to contain only:
+Common channel groups may include:
 
-    All Channels
-    Paid Search
-    Paid Social
-    Programmatic
+  All Channels
+  Paid Search
+  Paid Social
+  Organic Search
+  Direct
+  Programmatic
+  Other
 
-  QGP_SCORECARD:
-    channel_group = NULL
+PLATFORM_SPEND_CHANNEL may additionally include:
 
-LOB / TRUE_LOB:
-  lob:
-    display/business-facing LOB.
+  iSpot National TV
+  iSpot OTT
+  Affiliate
 
-  true_lob:
-    literal or confirmed row-level LOB.
+BIDDABLE_SPEND_CHANNEL may include:
 
-  true_lob is NULL when:
-    - no literal row-level LOB exists
-    - a metric does not have a valid LOB concept
-    - mapping is not confirmed
+  All Channels
 
-CANONICAL LOB VALUES:
+  Paid Search - All
+  Paid Search - <platform>
 
-  POSTPAID
-    MFC:
-      CONSUMER POSTPAID
+  Paid Social - All
+  Paid Social - <platform>
+
+  Programmatic - All
+  Programmatic - <platform>
+
+QGP_SCORECARD:
+  channel_group = NULL
+
+
+===================================================================================================
+LOB / TRUE_LOB
+===================================================================================================
+
+lob:
+  Broad business-facing LOB / metric-family grouping used by Gold.
+
+true_lob:
+  Source-specific canonical or reporting LOB where supported.
+
+  For most sources:
+    literal or canonical row-level LOB.
+
+  For Biddable:
+    reporting LOB selection:
+      ALL
       POSTPAID
-
-    Platform:
-      POSTPAID
-
-    Biddable Silver:
-      POSTPAID
-
-
-  BROADBAND
-    MFC:
-      HSI
       BROADBAND
+      FIBER
 
-    Platform:
-      BROADBAND
-
-    Biddable Silver:
-      BROADBAND
-
-
-  TFB
-    MFC:
-      TFB
-      TBG
+true_lob is NULL when:
+  - no literal or supported reporting LOB exists
+  - a metric does not have a valid LOB concept
+  - mapping is not confirmed
 
 
-  Postpaid + Broadband
-    Display-only value used for:
-      ADOBE
-      UPV_FORECAST
-      QGP_SCORECARD
+===================================================================================================
+CANONICAL / REPORTING LOB VALUES
+===================================================================================================
 
-ADOBE LOB:
-  lob      = 'Postpaid + Broadband'
-  true_lob = NULL
+POSTPAID
 
-  Adobe source-level metrics retain their detailed Postpaid / HSI / BYOD distinctions
-  through metric_name.
+  MFC:
+    CONSUMER POSTPAID
+    POSTPAID
 
-UPV FORECAST LOB:
-  lob      = 'Postpaid + Broadband'
-  true_lob = NULL
+  Platform:
+    POSTPAID
 
-MFC / PLATFORM / BIDDABLE:
-  These contain actual row-level LOB values.
+  Biddable Silver:
+    POSTPAID
 
-  Therefore:
+  Biddable Gold:
+    lob      = Biddable
+    true_lob = POSTPAID
 
-    true_lob = canonical lob
 
-QGP TRUE_LOB:
-  POSTPAID:
+BROADBAND
 
-    activationsBopis
-    activationsNewAalNoAssistance
-    vrPostpaidActivations
-    digitalPctPhoneNewActsNoAssistPlusAssist
-    digitalPctConsumerPostpaidActivationsTotalInclAssisted
-    digitalPctNoAssistanceActivations
-    digitalPctAssistanceActivations
+  MFC:
+    HSI
+    BROADBAND
 
-  NULL:
+  Platform:
+    BROADBAND
 
-    storeTraffic
-    vrCalls
-    vrChats
-    unrecognized metrics
+  Biddable Silver:
+    HSI / BROADBAND
+      -> BROADBAND
 
-METRIC_TYPE VALUES:
+  Biddable Gold:
+    lob      = Biddable
+    true_lob = BROADBAND
+
+
+FIBER
+
+  Biddable Silver:
+    FIBER
+
+  Biddable Gold:
+    lob      = Biddable
+    true_lob = FIBER
+
+  Fiber currently originates from Paid Search only.
+
+
+ALL
+
+  Biddable only.
+
+  Synthetic reporting value:
+
+    POSTPAID + BROADBAND + FIBER
+
+  Biddable Gold:
+    lob      = Biddable
+    true_lob = ALL
+
+
+TFB
+
+  MFC:
+    TFB
+    TBG
+
+
+Postpaid + Broadband
+
+  Display-only broad value used for:
+    ADOBE
+    UPV_FORECAST
+    QGP_SCORECARD
+
+
+===================================================================================================
+ADOBE LOB
+===================================================================================================
+
+lob      = 'Postpaid + Broadband'
+true_lob = NULL
+
+Adobe source-level metrics retain their detailed Postpaid / HSI / BYOD distinctions
+through metric_name.
+
+
+===================================================================================================
+UPV FORECAST LOB
+===================================================================================================
+
+lob      = 'Postpaid + Broadband'
+true_lob = NULL
+
+
+===================================================================================================
+MFC / PLATFORM LOB
+===================================================================================================
+
+MFC and Platform Spend contain actual row-level LOB values.
+
+Therefore:
+
+  true_lob = canonical row-level LOB
+
+
+===================================================================================================
+BIDDABLE LOB
+===================================================================================================
+
+Biddable uses:
+
+  lob = 'Biddable'
+
+and:
+
+  true_lob =
+    ALL
+    POSTPAID
+    BROADBAND
+    FIBER
+
+
+===================================================================================================
+QGP TRUE_LOB
+===================================================================================================
+
+POSTPAID:
+
+  activationsBopis
+  activationsNewAalNoAssistance
+  vrPostpaidActivations
+  digitalPctPhoneNewActsNoAssistPlusAssist
+  digitalPctConsumerPostpaidActivationsTotalInclAssisted
+  digitalPctNoAssistanceActivations
+  digitalPctAssistanceActivations
+
+NULL:
+
+  storeTraffic
+  vrCalls
+  vrChats
+  unrecognized metrics
+
+
+===================================================================================================
+METRIC_TYPE VALUES
+===================================================================================================
 
   ADOBE_VOLUME
   MFC_SPEND_ACTUAL
@@ -260,61 +501,92 @@ METRIC_TYPE VALUES:
   QGP_ACTUAL
   QGP_TARGET
 
-COMMON OUTPUT SCHEMA:
-  Every CTE returns exactly 28 columns, in this order:
 
-    1.  data_source
-    2.  qgp_date
-    3.  week_type
-    4.  qgp_quarter
-    5.  days_in_period
-    6.  is_complete_period
-    7.  lob
-    8.  true_lob
-    9.  channel_group
-    10. metric_name
-    11. metric_type
-    12. metric_value
-    13. metric_value_ly
-    14. wow_numerator
-    15. wow_denominator
-    16. wow_pct
-    17. yoy_numerator
-    18. yoy_denominator
-    19. yoy_pct
-    20. max_date
-    21. adobe_cvr_value
-    22. adobe_cvr_numerator
-    23. adobe_cvr_denominator
-    24. mfc_channel
-    25. mfc_tactic
-    26. mfc_message_type
-    27. mfc_agency
-    28. allocation_ratio
+===================================================================================================
+COMMON OUTPUT SCHEMA
+===================================================================================================
 
-IMPORTANT READINESS NOTE:
-  is_complete_period is a calendar / QGP-period completeness flag.
+Every CTE returns exactly 28 columns, in this order:
 
-  It must NOT be interpreted as confirmation that every raw media source is fully settled.
+  1.  data_source
+  2.  qgp_date
+  3.  week_type
+  4.  qgp_quarter
+  5.  days_in_period
+  6.  is_complete_period
+  7.  lob
+  8.  true_lob
+  9.  channel_group
+  10. metric_name
+  11. metric_type
+  12. metric_value
+  13. metric_value_ly
+  14. wow_numerator
+  15. wow_denominator
+  16. wow_pct
+  17. yoy_numerator
+  18. yoy_denominator
+  19. yoy_pct
+  20. max_date
+  21. adobe_cvr_value
+  22. adobe_cvr_numerator
+  23. adobe_cvr_denominator
+  24. mfc_channel
+  25. mfc_tactic
+  26. mfc_message_type
+  27. mfc_agency
+  28. allocation_ratio
 
-  Source settlement/readiness is monitored separately.
 
-DOWNSTREAM:
-  Tableau:
-    Directly consumes this view.
+===================================================================================================
+IMPORTANT READINESS NOTE
+===================================================================================================
 
-  sdi_vw_dashboardPulseTms_gold_metricAnnotated_long:
-    consumes this view and joins the appendix/metric bridge.
+is_complete_period is a calendar / QGP-period completeness flag.
 
-DEPLOYMENT NOTE:
-  QGP rows should be identified by:
+It must NOT be interpreted as confirmation that every raw media source is fully settled.
 
-    data_source = 'QGP_SCORECARD'
+Source settlement/readiness is monitored separately.
 
-  and not through ISNULL(lob), because QGP now uses:
 
-    lob = 'Postpaid + Broadband'
+===================================================================================================
+DOWNSTREAM
+===================================================================================================
+
+Tableau:
+  Directly consumes this view.
+
+sdi_vw_dashboardPulseTms_gold_metricAnnotated_long:
+  consumes this view and joins the appendix/metric bridge.
+
+
+===================================================================================================
+DEPLOYMENT NOTE
+===================================================================================================
+
+QGP rows should be identified by:
+
+  data_source = 'QGP_SCORECARD'
+
+and not through ISNULL(lob), because QGP uses:
+
+  lob = 'Postpaid + Broadband'
+
+
+Biddable rows should be identified by:
+
+  data_source = 'BIDDABLE_SPEND_CHANNEL'
+
+with:
+
+  lob = 'Biddable'
+
+Biddable LOB selection should use:
+
+  true_lob
+
 ================================================================================================= */
+
 
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
@@ -331,22 +603,17 @@ AdobeVolume AS (
 
   SELECT
     'ADOBE'                                      AS data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
     'Postpaid + Broadband'                       AS lob,
-
     CAST(NULL AS STRING)                         AS true_lob,
 
     s.channel_group,
-
     s.metric_name,
-
     s.metric_type,
 
     s.metric_value,
@@ -373,11 +640,9 @@ AdobeVolume AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
 
-  WHERE
-    s.metric_type = 'ADOBE_VOLUME'
+  WHERE s.metric_type = 'ADOBE_VOLUME'
 ),
 
 
@@ -389,17 +654,13 @@ MfcChannel AS (
 
   SELECT
     s.data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
-
     CASE
-
       WHEN UPPER(TRIM(s.lob_mfc)) IN (
         'CONSUMER POSTPAID',
         'POSTPAID'
@@ -419,12 +680,9 @@ MfcChannel AS (
         THEN 'TFB'
 
       ELSE UPPER(TRIM(s.lob_mfc))
-
     END                                           AS lob,
 
-
     CASE
-
       WHEN UPPER(TRIM(s.lob_mfc)) IN (
         'CONSUMER POSTPAID',
         'POSTPAID'
@@ -444,17 +702,12 @@ MfcChannel AS (
         THEN 'TFB'
 
       ELSE UPPER(TRIM(s.lob_mfc))
-
     END                                           AS true_lob,
 
-
     s.channel_group,
-
     s.metric_name,
 
-
     CASE s.metric_name
-
       WHEN 'mfcSpendActual'
         THEN 'MFC_SPEND_ACTUAL'
 
@@ -462,9 +715,7 @@ MfcChannel AS (
         THEN 'MFC_SPEND_FORECAST'
 
       ELSE CAST(NULL AS STRING)
-
     END                                           AS metric_type,
-
 
     s.metric_value,
     s.metric_value_ly,
@@ -490,11 +741,9 @@ MfcChannel AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
 
-  WHERE
-    s.data_source = 'MFC_SPEND_CHANNEL'
+  WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 ),
 
 
@@ -506,17 +755,13 @@ MfcGranular AS (
 
   SELECT
     s.data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
-
     CASE
-
       WHEN UPPER(TRIM(s.lob_mfc)) IN (
         'CONSUMER POSTPAID',
         'POSTPAID'
@@ -536,12 +781,9 @@ MfcGranular AS (
         THEN 'TFB'
 
       ELSE UPPER(TRIM(s.lob_mfc))
-
     END                                           AS lob,
 
-
     CASE
-
       WHEN UPPER(TRIM(s.lob_mfc)) IN (
         'CONSUMER POSTPAID',
         'POSTPAID'
@@ -561,17 +803,12 @@ MfcGranular AS (
         THEN 'TFB'
 
       ELSE UPPER(TRIM(s.lob_mfc))
-
     END                                           AS true_lob,
 
-
     s.channel_group,
-
     s.metric_name,
 
-
     CASE s.metric_name
-
       WHEN 'mfcSpendActual'
         THEN 'MFC_SPEND_ACTUAL'
 
@@ -579,9 +816,7 @@ MfcGranular AS (
         THEN 'MFC_SPEND_FORECAST'
 
       ELSE CAST(NULL AS STRING)
-
     END                                           AS metric_type,
-
 
     s.metric_value,
     s.metric_value_ly,
@@ -607,11 +842,9 @@ MfcGranular AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
 
-  WHERE
-    s.data_source = 'MFC_SPEND_GRANULAR'
+  WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 ),
 
 
@@ -623,22 +856,17 @@ PlatformSpend AS (
 
   SELECT
     'PLATFORM_SPEND_CHANNEL'                     AS data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
     s.lob,
-
     s.lob                                        AS true_lob,
 
     s.channel_group,
-
     s.metric_name,
-
     'PLATFORM_SPEND'                             AS metric_type,
 
     s.metric_value,
@@ -665,8 +893,7 @@ PlatformSpend AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
 ),
 
 
@@ -678,22 +905,17 @@ UpvForecast AS (
 
   SELECT
     'UPV_FORECAST'                               AS data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
     'Postpaid + Broadband'                       AS lob,
-
     CAST(NULL AS STRING)                         AS true_lob,
 
     s.channel_group,
-
     s.metric_name,
-
     s.metric_type,
 
     s.metric_value,
@@ -720,8 +942,7 @@ UpvForecast AS (
 
     s.allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
 ),
 
 
@@ -733,9 +954,7 @@ QgpScorecard AS (
 
   SELECT
     'QGP_SCORECARD'                              AS data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
@@ -743,9 +962,7 @@ QgpScorecard AS (
 
     'Postpaid + Broadband'                       AS lob,
 
-
     CASE s.metric_name
-
       WHEN 'activationsBopis'
         THEN 'POSTPAID'
 
@@ -777,14 +994,11 @@ QgpScorecard AS (
         THEN CAST(NULL AS STRING)
 
       ELSE CAST(NULL AS STRING)
-
     END                                           AS true_lob,
-
 
     CAST(NULL AS STRING)                         AS channel_group,
 
     s.metric_name,
-
     s.metric_type,
 
     s.metric_value,
@@ -811,43 +1025,52 @@ QgpScorecard AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
 ),
 
 
 /* ===============================================================================================
    CTE 7: BIDDABLE SPEND
 
-   Silver already contains canonical LOB values.
+   Silver already owns the Biddable reporting logic.
 
-   Gold retains only:
+   Silver LOB values:
+     ALL        = POSTPAID + BROADBAND + FIBER
      POSTPAID
      BROADBAND
+     FIBER
 
-   No HSI -> BROADBAND mapping is required here anymore.
+   Gold mapping:
+     lob      = Biddable
+     true_lob = Silver reporting LOB
+
+   Silver channel_group values may include:
+     All Channels
+     Paid Search - All
+     Paid Search - <platform>
+     Paid Social - All
+     Paid Social - <platform>
+     Programmatic - All
+     Programmatic - <platform>
+
+   Gold performs no Biddable aggregation.
    =============================================================================================== */
 
 BiddableSpend AS (
 
   SELECT
     'BIDDABLE_SPEND_CHANNEL'                     AS data_source,
-
     CAST(s.qgp_date AS DATE)                     AS qgp_date,
-
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
-    s.lob                                        AS lob,
-
+    'Biddable'                                   AS lob,
     s.lob                                        AS true_lob,
 
     s.channel_group,
-
     s.metric_name,
-
     'BIDDABLE_SPEND'                             AS metric_type,
 
     s.metric_value,
@@ -874,14 +1097,14 @@ BiddableSpend AS (
 
     CAST(NULL AS DOUBLE)                         AS allocation_ratio
 
-  FROM
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
 
-  WHERE
-    s.data_source = 'BIDDABLE_SPEND_CHANNEL'
+  WHERE s.data_source = 'BIDDABLE_SPEND_CHANNEL'
     AND s.lob IN (
+      'ALL',
       'POSTPAID',
-      'BROADBAND'
+      'BROADBAND',
+      'FIBER'
     )
 ),
 
@@ -890,7 +1113,17 @@ BiddableSpend AS (
    FINAL UNIFIED DATASET
 
    IMPORTANT:
-   Each CTE above returns exactly 28 columns in the same positional order.
+   Every CTE returns exactly 28 columns in the same positional order.
+
+   UNION ALL is intentional.
+
+   MFC:
+     MFC_SPEND_CHANNEL and MFC_SPEND_GRANULAR represent the same spend at
+     different grains and should not be blindly aggregated together.
+
+   Biddable:
+     true_lob and channel_group contain alternative reporting selections
+     and should not be blindly aggregated across selections.
    =============================================================================================== */
 
 UnifiedPulseTms AS (
@@ -933,10 +1166,18 @@ FUTURE SOURCE TEMPLATE
 
 A new source must return the exact same 28 columns, in the same order.
 
+lob:
+  - broad business-facing grouping appropriate for the source
+
 true_lob:
   - canonical row-level LOB when genuinely available
   - confirmed metric-level mapping when applicable
-  - NULL when there is no literal/confirmed LOB
+  - supported source-specific reporting LOB when intentionally modeled
+  - NULL when no valid LOB concept or confirmed mapping exists
+
+If true_lob contains a synthetic reporting value such as ALL, that behavior
+must be explicitly documented for that source.
+
 =================================================================================================
 
 NewSource AS (
@@ -954,7 +1195,6 @@ NewSource AS (
 
     s.channel_group,
     s.metric_name,
-
     '<METRIC_TYPE>'                             AS metric_type,
 
     s.metric_value,

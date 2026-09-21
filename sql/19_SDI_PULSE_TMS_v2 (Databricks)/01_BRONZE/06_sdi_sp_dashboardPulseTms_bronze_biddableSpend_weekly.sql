@@ -26,7 +26,7 @@ SOURCE UNIVERSE VS PULSETMS SELECTION
 ===================================================================================================
 
 IMPORTANT:
-  "Source universe" documents the values currently observed in each upstream source.
+  "Source universe" documents values currently observed in each upstream source.
 
   "PulseTMS selection" defines the rows intentionally consumed by this pipeline.
 
@@ -170,7 +170,7 @@ PULSETMS SELECTION:
 
     Paid Social
       + InHouse
-      + Postpaid/Broadband
+      + Postpaid / Broadband
 
   IMPORTANT:
     raw.LOB is used.
@@ -212,6 +212,9 @@ OBSERVED SOURCE UNIVERSE:
     PMax
     DemandGen
 
+  serving_status:
+    Multiple historical / current statuses may exist.
+
   Accounts:
     Postpaid
     Broadband
@@ -228,30 +231,10 @@ PULSETMS SELECTION:
     Google
     Bing
 
-  INCLUDE SOURCE LOB:
+  INCLUDE LOB:
     Postpaid
     HSI / Broadband
     Fiber
-
-  CURRENT REPORTING LOB MAPPING:
-
-    Postpaid
-      -> POSTPAID
-
-    HSI / Broadband
-      -> BROADBAND
-
-    Fiber
-      -> BROADBAND
-
-  IMPORTANT:
-    Fiber is included in the Paid Search pull but currently rolls into
-    the existing BROADBAND reporting bucket.
-
-    Fiber is NOT exposed as a standalone PulseTMS LOB at this time.
-
-    This should be revisited when dedicated Fiber / TFB metrics and
-    reporting are formally introduced.
 
   RETAIN ALL QUALIFYING:
     accounts
@@ -269,10 +252,21 @@ PULSETMS SELECTION:
     filter out Discovery
     filter campaign types
 
-  EXCLUDE:
+  EXCLUDE BY LOB:
     Metro
     TFB
     other non-approved Paid Search LOBs
+
+  IMPORTANT:
+    Fiber is intentionally retained as FIBER.
+
+    Fiber is NOT mapped into BROADBAND.
+
+    Silver exposes Fiber as its own Biddable reporting LOB.
+
+    Silver also creates:
+
+      ALL = POSTPAID + BROADBAND + FIBER
 
 
 ===================================================================================================
@@ -289,9 +283,12 @@ GRAIN:
     x platform
 
 
-Bronze DOES NOT create reporting aggregate rows such as:
+Bronze DOES NOT create synthetic reporting rows such as:
+
+  LOB = ALL
 
   All Channels
+
   Paid Search - All
   Paid Social - All
   Programmatic - All
@@ -300,31 +297,52 @@ Those reporting selections are generated in Silver.
 
 
 ---------------------------------------------------------------------------------------------------
-CURRENT DOWNSTREAM LOB CONTRACT
+BRONZE LOB HANDLING
 ---------------------------------------------------------------------------------------------------
 
-The downstream Biddable reporting contract remains:
+Bronze preserves the selected source LOB after basic normalization:
+
+  UPPER(TRIM(source_lob))
+
+Expected source-normalized values may include:
 
   POSTPAID
+  CONSUMER POSTPAID
+  HSI
   BROADBAND
+  FIBER
 
-Source-specific treatment:
+Silver performs canonicalization:
+
+  POSTPAID / CONSUMER POSTPAID
+    -> POSTPAID
+
+  HSI / BROADBAND
+    -> BROADBAND
+
+  FIBER
+    -> FIBER
+
+Silver then creates:
+
+  ALL
+    = POSTPAID + BROADBAND + FIBER
+
+
+SOURCE-SPECIFIC LOB SCOPE:
 
   Programmatic:
-    Postpaid          -> POSTPAID
-    HSI/Broadband     -> canonicalized to BROADBAND in Silver
+    Postpaid
+    HSI / Broadband
 
   Paid Social:
-    Postpaid          -> POSTPAID
-    HSI/Broadband     -> canonicalized to BROADBAND in Silver
+    Postpaid
+    HSI / Broadband
 
   Paid Search:
-    Postpaid          -> POSTPAID
-    HSI/Broadband     -> BROADBAND
-    Fiber             -> BROADBAND
-
-Fiber is intentionally mapped locally inside Paid Search because standalone
-Fiber reporting is not yet part of the PulseTMS Biddable metric architecture.
+    Postpaid
+    HSI / Broadband
+    Fiber
 
 
 ---------------------------------------------------------------------------------------------------
@@ -371,6 +389,8 @@ Examples:
 
   Paid Social - General MFC
     -> General MFC
+
+Any future qualifying Paid Social Channel_Name automatically flows through.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -444,11 +464,7 @@ BEGIN
     Grain:
       week_sun_sat x lob x channel_group x platform
 
-    Current reporting LOB contract:
-      POSTPAID
-      BROADBAND
-
-    Source selection:
+    Source-specific LOB selection:
 
       Programmatic:
         Postpaid + HSI/Broadband
@@ -459,12 +475,12 @@ BEGIN
       Paid Search:
         Google/Bing + Postpaid/HSI/Broadband/Fiber
 
-    Paid Search Fiber is intentionally mapped to BROADBAND because
-    standalone Fiber reporting is not yet part of PulseTMS.
+    Fiber is retained as FIBER in Bronze.
 
-    Bronze contains atomic platform-level rows only.
+    Bronze contains atomic platform-level spend only.
 
-    Reporting totals / selections are generated in Silver.
+    LOB = ALL, All Channels, channel totals, and platform reporting
+    selections are generated in Silver.
 
     Refreshed by:
       sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly
@@ -479,19 +495,6 @@ BEGIN
 
   /* ===============================================================================================
      PROGRAMMATIC
-
-     SELECT:
-       Postpaid
-       HSI / Broadband
-
-     DO NOT FILTER:
-       DSP
-       account_id
-       Channel
-       Buy_Type
-       campaign_type
-
-     Unknown / future DSP values remain included.
      =============================================================================================== */
 
   ProgrammaticMapped AS (
@@ -505,8 +508,9 @@ BEGIN
 
 
       /*
-        Preserve source LOB here.
-        Cross-source HSI/BROADBAND canonicalization occurs in Silver.
+        Preserve source-normalized LOB.
+
+        Canonicalization occurs in Silver.
       */
       UPPER(
         TRIM(raw.lob)
@@ -552,7 +556,7 @@ BEGIN
 
 
         /*
-          Preserve future / unmapped DSPs.
+          Preserve future / unmapped qualifying DSP values.
         */
         WHEN NULLIF(TRIM(raw.DSP), '') IS NOT NULL
           THEN TRIM(raw.DSP)
@@ -576,6 +580,12 @@ BEGIN
       raw.date IS NOT NULL
 
 
+      /*
+        Approved Programmatic LOB scope.
+
+        No DSP / account / Channel / Buy_Type / campaign-type
+        filters are applied.
+      */
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
         'CONSUMER POSTPAID',
@@ -589,24 +599,6 @@ BEGIN
 
   /* ===============================================================================================
      PAID SOCIAL
-
-     SELECT:
-       Channel_Group_Name = Paid Social
-       Agency             = InHouse
-       LOB                = Postpaid / HSI / Broadband
-
-     DO NOT FILTER:
-       Channel_Name / platform
-       Account_ID
-       Account_Name
-       Account_Type
-       Campaign_ID
-       Campaign_Name
-
-     IMPORTANT:
-       Use raw.LOB, NOT raw.Brand.
-
-       Platform remains dynamic.
      =============================================================================================== */
 
   PaidSocialMapped AS (
@@ -619,6 +611,11 @@ BEGIN
       )                                                         AS week_sun_sat,
 
 
+      /*
+        Integrated Snapshot LOB is the required Biddable LOB.
+
+        raw.Brand is intentionally not used.
+      */
       UPPER(
         TRIM(raw.LOB)
       )                                                         AS lob,
@@ -633,6 +630,11 @@ BEGIN
           THEN 'Unknown'
 
 
+        /*
+          Example:
+            Paid Social - Facebook
+              -> Facebook
+        */
         WHEN UPPER(TRIM(raw.Channel_Name)) LIKE 'PAID SOCIAL - %'
           THEN TRIM(
             REGEXP_REPLACE(
@@ -643,6 +645,10 @@ BEGIN
           )
 
 
+        /*
+          Defensive fallback for a valid future Paid Social
+          channel name without the standard prefix.
+        */
         ELSE TRIM(raw.Channel_Name)
 
       END                                                       AS platform,
@@ -667,6 +673,11 @@ BEGIN
       AND UPPER(TRIM(raw.Agency)) = 'INHOUSE'
 
 
+      /*
+        Approved Paid Social LOB scope.
+
+        Fiber is not added to Paid Social.
+      */
       AND UPPER(TRIM(raw.LOB)) IN (
         'POSTPAID',
         'CONSUMER POSTPAID',
@@ -681,29 +692,18 @@ BEGIN
   /* ===============================================================================================
      PAID SEARCH
 
-     SELECT:
+     Approved platforms:
+       Google
+       Bing
 
-       Platform:
-         Google
-         Bing
-
-       Source LOB:
-         Postpaid
-         HSI / Broadband
-         Fiber
-
-     LOCAL REPORTING MAPPING:
-
+     Approved source LOBs:
        Postpaid
-         -> POSTPAID
+       HSI / Broadband
+       Fiber
 
-       HSI / Broadband / Fiber
-         -> BROADBAND
+     Fiber remains FIBER.
 
-     Fiber is therefore included in Paid Search spend without creating
-     a standalone Fiber LOB downstream.
-
-     DO NOT FILTER:
+     No filters are applied to:
        account_id
        account_name
        campaign_type
@@ -711,6 +711,9 @@ BEGIN
        advertising_channel_sub_type
        bidding_strategy_type
        serving_status
+
+     Therefore qualifying SEARCH / SHOPPING / PERFORMANCE_MAX / DISCOVERY
+     activity remains included.
 
      Metro / TFB remain excluded.
      =============================================================================================== */
@@ -726,28 +729,16 @@ BEGIN
 
 
       /*
-        Paid Search-specific LOB mapping.
+        Preserve selected source-normalized LOB.
 
-        Fiber rolls into the existing BROADBAND reporting bucket
-        until standalone Fiber reporting is formally introduced.
+        In particular:
+          Fiber -> FIBER
+
+        Silver performs canonicalization.
       */
-      CASE
-
-        WHEN UPPER(TRIM(raw.lob)) IN (
-          'POSTPAID',
-          'CONSUMER POSTPAID'
-        )
-          THEN 'POSTPAID'
-
-
-        WHEN UPPER(TRIM(raw.lob)) IN (
-          'HSI',
-          'BROADBAND',
-          'FIBER'
-        )
-          THEN 'BROADBAND'
-
-      END                                                       AS lob,
+      UPPER(
+        TRIM(raw.lob)
+      )                                                         AS lob,
 
 
       'Paid Search'                                             AS channel_group,
@@ -774,7 +765,9 @@ BEGIN
 
         /*
           Defensive fallback only.
-          WHERE below restricts this source to Google/Bing.
+
+          WHERE below restricts ingestion to the approved
+          Google / Bing platform universe.
         */
         ELSE 'Unknown'
 
@@ -795,7 +788,9 @@ BEGIN
 
 
       /*
-        Fiber is explicitly included in the Paid Search pull.
+        Approved Paid Search LOB scope.
+
+        Fiber is included and retained independently.
       */
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
@@ -807,7 +802,10 @@ BEGIN
 
 
       /*
-        Approved Paid Search platform scope.
+        Approved Paid Search platform universe.
+
+        No account / campaign / advertising-channel /
+        bidding-strategy / serving-status filtering.
       */
       AND UPPER(TRIM(raw.ad_platform)) IN (
         'GOOGLE',
@@ -824,7 +822,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     UNION APPROVED ATOMIC SOURCES
+     UNION APPROVED ATOMIC SOURCE ROWS
      =============================================================================================== */
 
   AllSources AS (
@@ -872,17 +870,21 @@ BEGIN
      FINAL BRONZE
 
      GRAIN:
+
        week_sun_sat
-         x lob
+         x source-normalized approved lob
          x channel_group
-         x platform
+         x normalized platform
 
-     Expected downstream LOB universe:
+     Possible LOB values:
+
        POSTPAID
-       HSI / BROADBAND
+       CONSUMER POSTPAID
+       HSI
+       BROADBAND
+       FIBER
 
-     No standalone FIBER is expected because Paid Search Fiber has already
-     been mapped to BROADBAND above.
+     No synthetic ALL LOB exists in Bronze.
      =============================================================================================== */
 
   SELECT
