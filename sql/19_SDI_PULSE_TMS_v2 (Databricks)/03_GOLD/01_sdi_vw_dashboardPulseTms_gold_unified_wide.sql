@@ -53,19 +53,31 @@ ACTIVE CHANNEL-GRAIN SOURCES:
 DATE-LEVEL SOURCE:
 
   QGP_SCORECARD
-    - 10 QGP Actual/Target metric pairs
+    - 12 named QGP metrics
+    - Actual/Target representation
     - no channel_group dimension
     - joined by qgp_date and repeated across each channel row
+
+  Phone activation metrics include:
+
+    activationsBopis
+      Existing combined Phone BOPIS + Non-BOPIS metric
+
+    activationsBopisOnly
+      BOPIS-only component
+
+    activationsNonBopisOnly
+      Non-BOPIS-only component
 
 
 NOT INCLUDED:
 
   MFC_SPEND_GRANULAR
 
-    Use:
-      sdi_vw_dashboardPulseTms_gold_unified_long
+  Use:
+    sdi_vw_dashboardPulseTms_gold_unified_long
 
-    for granular MFC analysis.
+  for granular MFC analysis.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -73,7 +85,6 @@ SPEND LOB SCOPE — IMPORTANT
 ---------------------------------------------------------------------------------------------------
 
 Spend Total definitions are source-specific.
-
 
 MFC:
 
@@ -96,12 +107,11 @@ BIDDABLE:
     = ALL
     = POSTPAID + BROADBAND + FIBER
 
-
-Biddable Silver already creates the synthetic:
+Biddable Silver already creates:
 
   lob = ALL
 
-Therefore the Wide Biddable Total uses the ALL row directly.
+Therefore Wide uses the existing ALL row directly.
 
 Do NOT calculate:
 
@@ -113,7 +123,7 @@ Do NOT calculate:
     +
   FIBER
 
-because ALL already contains the three component LOBs.
+because ALL already contains the component LOBs.
 
 
 Other source LOBs such as:
@@ -125,19 +135,6 @@ Other source LOBs such as:
   etc.
 
 remain outside the current approved spend totals unless explicitly added.
-
-
-FUTURE LOB EXPANSION:
-
-  When additional LOBs such as TFB or PREPAID are formally added:
-
-    1. Add explicit dedicated Wide columns.
-
-    2. Update the appropriate source-specific Total definition.
-
-    3. Do NOT blindly SUM every LOB available in an upstream source.
-
-  Each Total must remain an explicitly controlled business reporting definition.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -154,7 +151,6 @@ BIDDABLE_SPEND_CHANNEL is produced upstream from:
 
   Paid Search:
     prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
-
 
 Bronze handles source selection.
 
@@ -173,16 +169,7 @@ Current source-specific LOB scope:
     Google / Bing
     + POSTPAID / HSI / BROADBAND / FIBER
 
-
 Paid Social does NOT use an individual platform whitelist.
-
-All qualifying Paid Social platforms flow through when they meet the approved:
-  channel group
-  agency
-  LOB
-
-scope.
-
 
 Biddable Silver canonicalizes:
 
@@ -195,22 +182,17 @@ Biddable Silver canonicalizes:
   FIBER
     -> FIBER
 
-
-Biddable Silver also creates:
+and creates:
 
   ALL
     = POSTPAID + BROADBAND + FIBER
 
-
-Therefore this Wide view expects Biddable LOB values:
+Therefore Wide expects:
 
   ALL
   POSTPAID
   BROADBAND
   FIBER
-
-
-Gold Wide does NOT perform HSI -> BROADBAND remapping for Biddable.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -231,64 +213,38 @@ Biddable Silver may expose:
   Programmatic - All
   Programmatic - <platform>
 
-
 Each channel_group value is an alternative reporting selection.
 
-Examples:
-
-  Paid Search - All
-    already contains the qualifying Paid Search platforms.
-
-  All Channels
-    already contains the approved Programmatic + Paid Social + Paid Search total.
-
-Do NOT sum channel total rows together with their platform-detail rows.
+Do NOT sum channel totals together with their platform-detail rows.
 
 
 ---------------------------------------------------------------------------------------------------
-LOB HANDLING
+QGP METRIC HANDLING
 ---------------------------------------------------------------------------------------------------
 
-MFC:
+All QGP business metric construction occurs in Silver.
 
-  Canonicalization is applied inside MfcBase:
+Gold Wide only pivots Silver metric_name / metric_type rows.
 
-    CONSUMER POSTPAID / POSTPAID
-      -> POSTPAID
+Phone activation fields:
 
-    HSI / BROADBAND
-      -> BROADBAND
+  qgpActivationsBopisActual
+  qgpActivationsBopisTarget
 
-    TFB / TBG
-      -> TFB
+  qgpActivationsBopisOnlyActual
+  qgpActivationsBopisOnlyTarget
 
+  qgpActivationsNonBopisOnlyActual
+  qgpActivationsNonBopisOnlyTarget
 
-Platform:
+The existing qgpActivationsBopis fields remain unchanged.
 
-  Expected current Wide reporting values:
-
-    POSTPAID
-    BROADBAND
-
-
-Biddable:
-
-  Canonicalized upstream in Biddable Silver:
-
-    POSTPAID
-    BROADBAND
-    FIBER
-
-  Plus synthetic reporting value:
-
-    ALL = POSTPAID + BROADBAND + FIBER
+No BOPIS / Non-BOPIS derivation occurs in this Wide view.
 
 
 ---------------------------------------------------------------------------------------------------
 CHANNEL SPINE
 ---------------------------------------------------------------------------------------------------
-
-Adobe is NOT used as the sole final-row spine.
 
 ChannelSpine is constructed from:
 
@@ -298,8 +254,7 @@ ChannelSpine is constructed from:
   Biddable
   UPV Forecast
 
-This prevents a valid qgp_date x channel_group spend row from disappearing
-simply because Adobe does not contain that same channel_group on that date.
+This prevents valid spend/channel rows from disappearing when Adobe lacks the same key.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -308,8 +263,7 @@ QGP GRAIN NOTE
 
 QGP metrics do not contain channel_group.
 
-QGP values are joined using qgp_date only and are therefore repeated across
-each channel row for that qgp_date.
+QGP values are joined using qgp_date only and are repeated across each channel row.
 
 Do NOT aggregate QGP metrics across channel_group rows or they will be multiplied.
 
@@ -318,21 +272,18 @@ Do NOT aggregate QGP metrics across channel_group rows or they will be multiplie
 CALENDAR / COMPLETENESS NOTE
 ---------------------------------------------------------------------------------------------------
 
-  week_type
-  qgp_quarter
-  days_in_period
-  is_complete_period
+week_type
+qgp_quarter
+days_in_period
+is_complete_period
 
 are sourced from:
 
   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar
 
-
 is_complete_period indicates QGP/calendar completeness.
 
 It does NOT guarantee raw-source settlement.
-
-Source settlement/readiness is monitored separately.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -357,7 +308,6 @@ CREATE OR REPLACE VIEW
 AS
 
 WITH
-
 
 /* ===============================================================================================
    QGP CALENDAR METADATA
@@ -386,307 +336,50 @@ Adobe AS (
     qgp_date,
     channel_group,
 
-    /* -------------------------------------------------------------------------------------------
-       UPV
-       ------------------------------------------------------------------------------------------- */
+    MAX(IF(metric_name = 'upvPostpaid', metric_value, NULL)) AS upvPostpaid,
+    MAX(IF(metric_name = 'upvHsi', metric_value, NULL)) AS upvHsi,
+    MAX(IF(metric_name = 'upvByod', metric_value, NULL)) AS upvByod,
+    MAX(IF(metric_name = 'upvFlowTotal', metric_value, NULL)) AS upvFlowTotal,
+    MAX(IF(metric_name = 'upvTotalAdobe', metric_value, NULL)) AS upvTotalAdobe,
 
-    MAX(
-      IF(
-        metric_name = 'upvPostpaid',
-        metric_value,
-        NULL
-      )
-    ) AS upvPostpaid,
+    MAX(IF(metric_name = 'cartstartPostpaid', metric_value, NULL)) AS cartstartPostpaid,
+    MAX(IF(metric_name = 'cartstartHsi', metric_value, NULL)) AS cartstartHsi,
+    MAX(IF(metric_name = 'cartstartByod', metric_value, NULL)) AS cartstartByod,
+    MAX(IF(metric_name = 'cartstartTotal', metric_value, NULL)) AS cartstartTotal,
 
-    MAX(
-      IF(
-        metric_name = 'upvHsi',
-        metric_value,
-        NULL
-      )
-    ) AS upvHsi,
+    MAX(IF(metric_name = 'ordersUnassistedPostpaid', metric_value, NULL)) AS ordersUnassistedPostpaid,
+    MAX(IF(metric_name = 'ordersUnassistedHsi', metric_value, NULL)) AS ordersUnassistedHsi,
+    MAX(IF(metric_name = 'ordersUnassistedByod', metric_value, NULL)) AS ordersUnassistedByod,
+    MAX(IF(metric_name = 'ordersUnassistedTotal', metric_value, NULL)) AS ordersUnassistedTotal,
 
-    MAX(
-      IF(
-        metric_name = 'upvByod',
-        metric_value,
-        NULL
-      )
-    ) AS upvByod,
+    MAX(IF(metric_name = 'ordersAssistedPostpaid', metric_value, NULL)) AS ordersAssistedPostpaid,
+    MAX(IF(metric_name = 'ordersAssistedHsi', metric_value, NULL)) AS ordersAssistedHsi,
+    MAX(IF(metric_name = 'ordersAssistedByod', metric_value, NULL)) AS ordersAssistedByod,
+    MAX(IF(metric_name = 'ordersAssistedTotal', metric_value, NULL)) AS ordersAssistedTotal,
 
-    MAX(
-      IF(
-        metric_name = 'upvFlowTotal',
-        metric_value,
-        NULL
-      )
-    ) AS upvFlowTotal,
+    MAX(IF(metric_name = 'ordersTotal', metric_value, NULL)) AS ordersTotal,
 
-    MAX(
-      IF(
-        metric_name = 'upvTotalAdobe',
-        metric_value,
-        NULL
-      )
-    ) AS upvTotalAdobe,
+    MAX(IF(metric_name = 'upvFlowTotal', adobe_cvr_value, NULL)) AS cvrUpvFlow,
+    MAX(IF(metric_name = 'upvPostpaid', adobe_cvr_value, NULL)) AS cvrUpvPostpaid,
+    MAX(IF(metric_name = 'upvHsi', adobe_cvr_value, NULL)) AS cvrUpvHsi,
+    MAX(IF(metric_name = 'upvByod', adobe_cvr_value, NULL)) AS cvrUpvByod,
 
+    MAX(IF(metric_name = 'cartstartTotal', adobe_cvr_value, NULL)) AS cvrCartstartTotal,
+    MAX(IF(metric_name = 'cartstartPostpaid', adobe_cvr_value, NULL)) AS cvrCartstartPostpaid,
+    MAX(IF(metric_name = 'cartstartHsi', adobe_cvr_value, NULL)) AS cvrCartstartHsi,
+    MAX(IF(metric_name = 'cartstartByod', adobe_cvr_value, NULL)) AS cvrCartstartByod,
 
-    /* -------------------------------------------------------------------------------------------
-       CART START
-       ------------------------------------------------------------------------------------------- */
-
-    MAX(
-      IF(
-        metric_name = 'cartstartPostpaid',
-        metric_value,
-        NULL
-      )
-    ) AS cartstartPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartHsi',
-        metric_value,
-        NULL
-      )
-    ) AS cartstartHsi,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartByod',
-        metric_value,
-        NULL
-      )
-    ) AS cartstartByod,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartTotal',
-        metric_value,
-        NULL
-      )
-    ) AS cartstartTotal,
-
-
-    /* -------------------------------------------------------------------------------------------
-       ORDERS
-       ------------------------------------------------------------------------------------------- */
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedPostpaid',
-        metric_value,
-        NULL
-      )
-    ) AS ordersUnassistedPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedHsi',
-        metric_value,
-        NULL
-      )
-    ) AS ordersUnassistedHsi,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedByod',
-        metric_value,
-        NULL
-      )
-    ) AS ordersUnassistedByod,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedTotal',
-        metric_value,
-        NULL
-      )
-    ) AS ordersUnassistedTotal,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedPostpaid',
-        metric_value,
-        NULL
-      )
-    ) AS ordersAssistedPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedHsi',
-        metric_value,
-        NULL
-      )
-    ) AS ordersAssistedHsi,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedByod',
-        metric_value,
-        NULL
-      )
-    ) AS ordersAssistedByod,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedTotal',
-        metric_value,
-        NULL
-      )
-    ) AS ordersAssistedTotal,
-
-    MAX(
-      IF(
-        metric_name = 'ordersTotal',
-        metric_value,
-        NULL
-      )
-    ) AS ordersTotal,
-
-
-    /* -------------------------------------------------------------------------------------------
-       ADOBE CVR
-       ------------------------------------------------------------------------------------------- */
-
-    MAX(
-      IF(
-        metric_name = 'upvFlowTotal',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrUpvFlow,
-
-    MAX(
-      IF(
-        metric_name = 'upvPostpaid',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrUpvPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'upvHsi',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrUpvHsi,
-
-    MAX(
-      IF(
-        metric_name = 'upvByod',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrUpvByod,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartTotal',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrCartstartTotal,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartPostpaid',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrCartstartPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartHsi',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrCartstartHsi,
-
-    MAX(
-      IF(
-        metric_name = 'cartstartByod',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrCartstartByod,
-
-    MAX(
-      IF(
-        metric_name = 'ordersTotal',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersTotal,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedTotal',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersUnassistedTotal,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedTotal',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersAssistedTotal,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedPostpaid',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersUnassistedPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedPostpaid',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersAssistedPostpaid,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedHsi',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersUnassistedHsi,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedHsi',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersAssistedHsi,
-
-    MAX(
-      IF(
-        metric_name = 'ordersUnassistedByod',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersUnassistedByod,
-
-    MAX(
-      IF(
-        metric_name = 'ordersAssistedByod',
-        adobe_cvr_value,
-        NULL
-      )
-    ) AS cvrOrdersAssistedByod
+    MAX(IF(metric_name = 'ordersTotal', adobe_cvr_value, NULL)) AS cvrOrdersTotal,
+    MAX(IF(metric_name = 'ordersUnassistedTotal', adobe_cvr_value, NULL)) AS cvrOrdersUnassistedTotal,
+    MAX(IF(metric_name = 'ordersAssistedTotal', adobe_cvr_value, NULL)) AS cvrOrdersAssistedTotal,
+    MAX(IF(metric_name = 'ordersUnassistedPostpaid', adobe_cvr_value, NULL)) AS cvrOrdersUnassistedPostpaid,
+    MAX(IF(metric_name = 'ordersAssistedPostpaid', adobe_cvr_value, NULL)) AS cvrOrdersAssistedPostpaid,
+    MAX(IF(metric_name = 'ordersUnassistedHsi', adobe_cvr_value, NULL)) AS cvrOrdersUnassistedHsi,
+    MAX(IF(metric_name = 'ordersAssistedHsi', adobe_cvr_value, NULL)) AS cvrOrdersAssistedHsi,
+    MAX(IF(metric_name = 'ordersUnassistedByod', adobe_cvr_value, NULL)) AS cvrOrdersUnassistedByod,
+    MAX(IF(metric_name = 'ordersAssistedByod', adobe_cvr_value, NULL)) AS cvrOrdersAssistedByod
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
-
   WHERE metric_type = 'ADOBE_VOLUME'
 
   GROUP BY
@@ -697,8 +390,6 @@ Adobe AS (
 
 /* ===============================================================================================
    MFC BASE
-
-   Canonicalize the LOB vocabulary needed by the Wide spend view.
    =============================================================================================== */
 
 MfcBase AS (
@@ -709,31 +400,15 @@ MfcBase AS (
     metric_name,
 
     CASE
-      WHEN UPPER(TRIM(lob_mfc)) IN (
-        'POSTPAID',
-        'CONSUMER POSTPAID'
-      )
-        THEN 'POSTPAID'
-
-      WHEN UPPER(TRIM(lob_mfc)) IN (
-        'HSI',
-        'BROADBAND'
-      )
-        THEN 'BROADBAND'
-
-      WHEN UPPER(TRIM(lob_mfc)) IN (
-        'TFB',
-        'TBG'
-      )
-        THEN 'TFB'
-
+      WHEN UPPER(TRIM(lob_mfc)) IN ('POSTPAID', 'CONSUMER POSTPAID') THEN 'POSTPAID'
+      WHEN UPPER(TRIM(lob_mfc)) IN ('HSI', 'BROADBAND') THEN 'BROADBAND'
+      WHEN UPPER(TRIM(lob_mfc)) IN ('TFB', 'TBG') THEN 'TFB'
       ELSE UPPER(TRIM(lob_mfc))
     END AS lob,
 
     metric_value
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
-
   WHERE data_source = 'MFC_SPEND_CHANNEL'
 ),
 
@@ -741,8 +416,7 @@ MfcBase AS (
 /* ===============================================================================================
    MFC SPEND
 
-   Current Total:
-     POSTPAID + BROADBAND
+   Total = POSTPAID + BROADBAND
    =============================================================================================== */
 
 Mfc AS (
@@ -751,66 +425,45 @@ Mfc AS (
     qgp_date,
     channel_group,
 
-    SUM(
-      CASE
-        WHEN lob = 'POSTPAID'
-         AND metric_name = 'mfcSpendActual'
+    SUM(CASE
+          WHEN lob = 'POSTPAID'
+           AND metric_name = 'mfcSpendActual'
           THEN metric_value
-      END
-    ) AS mfcSpendActualPostpaid,
+        END) AS mfcSpendActualPostpaid,
 
-    SUM(
-      CASE
-        WHEN lob = 'BROADBAND'
-         AND metric_name = 'mfcSpendActual'
+    SUM(CASE
+          WHEN lob = 'BROADBAND'
+           AND metric_name = 'mfcSpendActual'
           THEN metric_value
-      END
-    ) AS mfcSpendActualBroadband,
+        END) AS mfcSpendActualBroadband,
 
-    SUM(
-      CASE
-        WHEN lob IN (
-          'POSTPAID',
-          'BROADBAND'
-        )
-         AND metric_name = 'mfcSpendActual'
+    SUM(CASE
+          WHEN lob IN ('POSTPAID', 'BROADBAND')
+           AND metric_name = 'mfcSpendActual'
           THEN metric_value
-      END
-    ) AS mfcSpendActualTotal,
+        END) AS mfcSpendActualTotal,
 
-    SUM(
-      CASE
-        WHEN lob = 'POSTPAID'
-         AND metric_name = 'mfcSpendForecast'
+    SUM(CASE
+          WHEN lob = 'POSTPAID'
+           AND metric_name = 'mfcSpendForecast'
           THEN metric_value
-      END
-    ) AS mfcSpendForecastPostpaid,
+        END) AS mfcSpendForecastPostpaid,
 
-    SUM(
-      CASE
-        WHEN lob = 'BROADBAND'
-         AND metric_name = 'mfcSpendForecast'
+    SUM(CASE
+          WHEN lob = 'BROADBAND'
+           AND metric_name = 'mfcSpendForecast'
           THEN metric_value
-      END
-    ) AS mfcSpendForecastBroadband,
+        END) AS mfcSpendForecastBroadband,
 
-    SUM(
-      CASE
-        WHEN lob IN (
-          'POSTPAID',
-          'BROADBAND'
-        )
-         AND metric_name = 'mfcSpendForecast'
+    SUM(CASE
+          WHEN lob IN ('POSTPAID', 'BROADBAND')
+           AND metric_name = 'mfcSpendForecast'
           THEN metric_value
-      END
-    ) AS mfcSpendForecastTotal
+        END) AS mfcSpendForecastTotal
 
   FROM MfcBase
 
-  WHERE lob IN (
-    'POSTPAID',
-    'BROADBAND'
-  )
+  WHERE lob IN ('POSTPAID', 'BROADBAND')
 
   GROUP BY
     qgp_date,
@@ -838,8 +491,7 @@ PlatformBase AS (
 /* ===============================================================================================
    PLATFORM SPEND
 
-   Current Total:
-     POSTPAID + BROADBAND
+   Total = POSTPAID + BROADBAND
    =============================================================================================== */
 
 Platform AS (
@@ -848,39 +500,27 @@ Platform AS (
     qgp_date,
     channel_group,
 
-    SUM(
-      CASE
-        WHEN lob = 'POSTPAID'
-         AND metric_name = 'platformSpend'
+    SUM(CASE
+          WHEN lob = 'POSTPAID'
+           AND metric_name = 'platformSpend'
           THEN metric_value
-      END
-    ) AS platformSpendPostpaid,
+        END) AS platformSpendPostpaid,
 
-    SUM(
-      CASE
-        WHEN lob = 'BROADBAND'
-         AND metric_name = 'platformSpend'
+    SUM(CASE
+          WHEN lob = 'BROADBAND'
+           AND metric_name = 'platformSpend'
           THEN metric_value
-      END
-    ) AS platformSpendBroadband,
+        END) AS platformSpendBroadband,
 
-    SUM(
-      CASE
-        WHEN lob IN (
-          'POSTPAID',
-          'BROADBAND'
-        )
-         AND metric_name = 'platformSpend'
+    SUM(CASE
+          WHEN lob IN ('POSTPAID', 'BROADBAND')
+           AND metric_name = 'platformSpend'
           THEN metric_value
-      END
-    ) AS platformSpendTotal
+        END) AS platformSpendTotal
 
   FROM PlatformBase
 
-  WHERE lob IN (
-    'POSTPAID',
-    'BROADBAND'
-  )
+  WHERE lob IN ('POSTPAID', 'BROADBAND')
 
   GROUP BY
     qgp_date,
@@ -891,20 +531,13 @@ Platform AS (
 /* ===============================================================================================
    BIDDABLE BASE
 
-   Biddable Silver already owns LOB canonicalization and reporting rollups.
-
-   Expected Silver LOB values:
-
+   Silver LOB values:
      ALL
      POSTPAID
      BROADBAND
      FIBER
 
-   ALL already equals:
-
-     POSTPAID + BROADBAND + FIBER
-
-   Therefore ALL must NOT be summed together with its component LOBs.
+   ALL = POSTPAID + BROADBAND + FIBER
    =============================================================================================== */
 
 BiddableBase AS (
@@ -919,38 +552,14 @@ BiddableBase AS (
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
 
   WHERE data_source = 'BIDDABLE_SPEND_CHANNEL'
-    AND lob IN (
-      'ALL',
-      'POSTPAID',
-      'BROADBAND',
-      'FIBER'
-    )
+    AND lob IN ('ALL', 'POSTPAID', 'BROADBAND', 'FIBER')
 ),
 
 
 /* ===============================================================================================
    BIDDABLE SPEND
 
-   Reporting columns:
-
-     biddableSpendPostpaid
-       -> Silver lob = POSTPAID
-
-     biddableSpendBroadband
-       -> Silver lob = BROADBAND
-
-     biddableSpendFiber
-       -> Silver lob = FIBER
-
-     biddableSpendTotal
-       -> Silver lob = ALL
-       -> POSTPAID + BROADBAND + FIBER
-
-   IMPORTANT:
-
-     Total is sourced directly from the Silver ALL row.
-
-     It is NOT recalculated by summing the three component rows here.
+   biddableSpendTotal is read directly from Silver lob = ALL.
    =============================================================================================== */
 
 Biddable AS (
@@ -959,37 +568,29 @@ Biddable AS (
     qgp_date,
     channel_group,
 
-    SUM(
-      CASE
-        WHEN lob = 'POSTPAID'
-         AND metric_name = 'biddableSpend'
+    SUM(CASE
+          WHEN lob = 'POSTPAID'
+           AND metric_name = 'biddableSpend'
           THEN metric_value
-      END
-    ) AS biddableSpendPostpaid,
+        END) AS biddableSpendPostpaid,
 
-    SUM(
-      CASE
-        WHEN lob = 'BROADBAND'
-         AND metric_name = 'biddableSpend'
+    SUM(CASE
+          WHEN lob = 'BROADBAND'
+           AND metric_name = 'biddableSpend'
           THEN metric_value
-      END
-    ) AS biddableSpendBroadband,
+        END) AS biddableSpendBroadband,
 
-    SUM(
-      CASE
-        WHEN lob = 'FIBER'
-         AND metric_name = 'biddableSpend'
+    SUM(CASE
+          WHEN lob = 'FIBER'
+           AND metric_name = 'biddableSpend'
           THEN metric_value
-      END
-    ) AS biddableSpendFiber,
+        END) AS biddableSpendFiber,
 
-    SUM(
-      CASE
-        WHEN lob = 'ALL'
-         AND metric_name = 'biddableSpend'
+    SUM(CASE
+          WHEN lob = 'ALL'
+           AND metric_name = 'biddableSpend'
           THEN metric_value
-      END
-    ) AS biddableSpendTotal
+        END) AS biddableSpendTotal
 
   FROM BiddableBase
 
@@ -1009,21 +610,8 @@ UpvForecast AS (
     qgp_date,
     channel_group,
 
-    MAX(
-      IF(
-        metric_name = 'upvForecast',
-        metric_value,
-        NULL
-      )
-    ) AS upvForecast,
-
-    MAX(
-      IF(
-        metric_name = 'upvWebAppForecast',
-        metric_value,
-        NULL
-      )
-    ) AS upvWebAppForecast
+    MAX(IF(metric_name = 'upvForecast', metric_value, NULL)) AS upvForecast,
+    MAX(IF(metric_name = 'upvWebAppForecast', metric_value, NULL)) AS upvWebAppForecast
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
 
@@ -1035,12 +623,29 @@ UpvForecast AS (
 
 /* ===============================================================================================
    QGP SCORECARD — DATE GRAIN
+
+   Silver metric rows are pivoted into Wide columns.
+
+   Existing combined Phone metric:
+     activationsBopis
+
+   New component metrics:
+     activationsBopisOnly
+     activationsNonBopisOnly
+
+   Each is exposed independently for:
+     QGP_ACTUAL
+     QGP_TARGET
    =============================================================================================== */
 
 Qgp AS (
 
   SELECT
     qgp_date,
+
+    /* -------------------------------------------------------------------------------------------
+       PHONE ACTIVATIONS — EXISTING COMBINED BOPIS + NON-BOPIS
+       ------------------------------------------------------------------------------------------- */
 
     MAX(
       IF(
@@ -1060,6 +665,57 @@ Qgp AS (
       )
     ) AS qgpActivationsBopisTarget,
 
+
+    /* -------------------------------------------------------------------------------------------
+       PHONE ACTIVATIONS — BOPIS ONLY
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'activationsBopisOnly'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpActivationsBopisOnlyActual,
+
+    MAX(
+      IF(
+        metric_name = 'activationsBopisOnly'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpActivationsBopisOnlyTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       PHONE ACTIVATIONS — NON-BOPIS ONLY
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'activationsNonBopisOnly'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpActivationsNonBopisOnlyActual,
+
+    MAX(
+      IF(
+        metric_name = 'activationsNonBopisOnly'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpActivationsNonBopisOnlyTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       NEW + AAL NO ASSISTANCE
+       ------------------------------------------------------------------------------------------- */
+
     MAX(
       IF(
         metric_name = 'activationsNewAalNoAssistance'
@@ -1077,6 +733,11 @@ Qgp AS (
         NULL
       )
     ) AS qgpActivationsNewAalNoAssistanceTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       STORE TRAFFIC
+       ------------------------------------------------------------------------------------------- */
 
     MAX(
       IF(
@@ -1096,6 +757,11 @@ Qgp AS (
       )
     ) AS qgpStoreTrafficTarget,
 
+
+    /* -------------------------------------------------------------------------------------------
+       VR CALLS
+       ------------------------------------------------------------------------------------------- */
+
     MAX(
       IF(
         metric_name = 'vrCalls'
@@ -1113,6 +779,11 @@ Qgp AS (
         NULL
       )
     ) AS qgpVrCallsTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       VR CHATS
+       ------------------------------------------------------------------------------------------- */
 
     MAX(
       IF(
@@ -1132,6 +803,11 @@ Qgp AS (
       )
     ) AS qgpVrChatsTarget,
 
+
+    /* -------------------------------------------------------------------------------------------
+       VR POSTPAID ACTIVATIONS
+       ------------------------------------------------------------------------------------------- */
+
     MAX(
       IF(
         metric_name = 'vrPostpaidActivations'
@@ -1149,6 +825,11 @@ Qgp AS (
         NULL
       )
     ) AS qgpVrPostpaidActivationsTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       DIGITAL % PHONE NEW ACTS
+       ------------------------------------------------------------------------------------------- */
 
     MAX(
       IF(
@@ -1168,6 +849,11 @@ Qgp AS (
       )
     ) AS qgpDigitalPctPhoneNewActsNoAssistPlusAssistTarget,
 
+
+    /* -------------------------------------------------------------------------------------------
+       DIGITAL % CONSUMER POSTPAID ACTIVATIONS
+       ------------------------------------------------------------------------------------------- */
+
     MAX(
       IF(
         metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted'
@@ -1186,6 +872,11 @@ Qgp AS (
       )
     ) AS qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget,
 
+
+    /* -------------------------------------------------------------------------------------------
+       DIGITAL % NO ASSISTANCE
+       ------------------------------------------------------------------------------------------- */
+
     MAX(
       IF(
         metric_name = 'digitalPctNoAssistanceActivations'
@@ -1203,6 +894,11 @@ Qgp AS (
         NULL
       )
     ) AS qgpDigitalPctNoAssistanceActivationsTarget,
+
+
+    /* -------------------------------------------------------------------------------------------
+       DIGITAL % ASSISTANCE
+       ------------------------------------------------------------------------------------------- */
 
     MAX(
       IF(
@@ -1246,41 +942,31 @@ Qgp AS (
 
 ChannelSpine AS (
 
-  SELECT
-    qgp_date,
-    channel_group
+  SELECT qgp_date, channel_group
   FROM Adobe
   WHERE channel_group IS NOT NULL
 
   UNION
 
-  SELECT
-    qgp_date,
-    channel_group
+  SELECT qgp_date, channel_group
   FROM Mfc
   WHERE channel_group IS NOT NULL
 
   UNION
 
-  SELECT
-    qgp_date,
-    channel_group
+  SELECT qgp_date, channel_group
   FROM Platform
   WHERE channel_group IS NOT NULL
 
   UNION
 
-  SELECT
-    qgp_date,
-    channel_group
+  SELECT qgp_date, channel_group
   FROM Biddable
   WHERE channel_group IS NOT NULL
 
   UNION
 
-  SELECT
-    qgp_date,
-    channel_group
+  SELECT qgp_date, channel_group
   FROM UpvForecast
   WHERE channel_group IS NOT NULL
 )
@@ -1344,7 +1030,6 @@ SELECT
 
   /* ---------------------------------------------------------------------------------------------
      MFC ACTUAL SPEND
-
      Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
@@ -1355,7 +1040,6 @@ SELECT
 
   /* ---------------------------------------------------------------------------------------------
      MFC FORECAST SPEND
-
      Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
@@ -1366,7 +1050,6 @@ SELECT
 
   /* ---------------------------------------------------------------------------------------------
      PLATFORM SPEND
-
      Total = POSTPAID + BROADBAND
      --------------------------------------------------------------------------------------------- */
 
@@ -1380,8 +1063,6 @@ SELECT
 
      Total = ALL
            = POSTPAID + BROADBAND + FIBER
-
-     Total is read directly from the Silver ALL reporting row.
      --------------------------------------------------------------------------------------------- */
 
   b.biddableSpendPostpaid,
@@ -1407,6 +1088,12 @@ SELECT
 
   q.qgpActivationsBopisActual,
   q.qgpActivationsBopisTarget,
+
+  q.qgpActivationsBopisOnlyActual,
+  q.qgpActivationsBopisOnlyTarget,
+
+  q.qgpActivationsNonBopisOnlyActual,
+  q.qgpActivationsNonBopisOnlyTarget,
 
   q.qgpActivationsNewAalNoAssistanceActual,
   q.qgpActivationsNewAalNoAssistanceTarget,
@@ -1441,7 +1128,6 @@ SELECT
      --------------------------------------------------------------------------------------------- */
 
   a.cvrUpvFlow,
-
   a.cvrUpvPostpaid,
   a.cvrUpvHsi,
   a.cvrUpvByod,
@@ -1467,69 +1153,31 @@ SELECT
 
 FROM ChannelSpine spine
 
-
-/* ===============================================================================================
-   CALENDAR
-   =============================================================================================== */
-
 LEFT JOIN CalendarMeta cal
   ON cal.qgp_date = spine.qgp_date
 
-
-/* ===============================================================================================
-   ADOBE
-   =============================================================================================== */
-
 LEFT JOIN Adobe a
-  ON  a.qgp_date      = spine.qgp_date
+  ON  a.qgp_date = spine.qgp_date
   AND a.channel_group = spine.channel_group
 
-
-/* ===============================================================================================
-   MFC
-   =============================================================================================== */
-
 LEFT JOIN Mfc m
-  ON  m.qgp_date      = spine.qgp_date
+  ON  m.qgp_date = spine.qgp_date
   AND m.channel_group = spine.channel_group
 
-
-/* ===============================================================================================
-   PLATFORM
-   =============================================================================================== */
-
 LEFT JOIN Platform p
-  ON  p.qgp_date      = spine.qgp_date
+  ON  p.qgp_date = spine.qgp_date
   AND p.channel_group = spine.channel_group
 
-
-/* ===============================================================================================
-   BIDDABLE
-   =============================================================================================== */
-
 LEFT JOIN Biddable b
-  ON  b.qgp_date      = spine.qgp_date
+  ON  b.qgp_date = spine.qgp_date
   AND b.channel_group = spine.channel_group
 
-
-/* ===============================================================================================
-   UPV FORECAST
-   =============================================================================================== */
-
 LEFT JOIN UpvForecast uf
-  ON  uf.qgp_date      = spine.qgp_date
+  ON  uf.qgp_date = spine.qgp_date
   AND uf.channel_group = spine.channel_group
-
-
-/* ===============================================================================================
-   QGP SCORECARD
-
-   Date-only join because QGP has no channel_group dimension.
-   =============================================================================================== */
 
 LEFT JOIN Qgp q
   ON q.qgp_date = spine.qgp_date
-
 
 ORDER BY
   spine.qgp_date DESC,

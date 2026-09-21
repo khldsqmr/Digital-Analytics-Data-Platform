@@ -19,6 +19,7 @@ PURPOSE:
     - Adobe CVR
     - UPV forecast channel allocation
     - Spend aggregation
+    - QGP business metric construction
     - Biddable LOB reporting rollups
     - Biddable channel/platform reporting selections
 
@@ -173,8 +174,8 @@ IMPORTANT:
 
   For Biddable, true_lob is a reporting-selection dimension.
 
-  ALL is synthetic and therefore differs from the ordinary literal/canonical
-  true_lob behavior used by several other data sources.
+  ALL is synthetic and differs from the ordinary literal/canonical true_lob
+  behavior used by several other data sources.
 
   ALL, POSTPAID, BROADBAND, and FIBER are alternative reporting selections.
 
@@ -213,11 +214,7 @@ IMPORTANT:
 
   Channel totals and platform selections are alternative reporting views.
 
-  For example:
-
-    Paid Search - All
-
-  already contains its qualifying platform spend.
+  Paid Search - All already contains its qualifying Paid Search platforms.
 
   Do NOT add:
 
@@ -242,6 +239,29 @@ QGP_SCORECARD
 QGP_SCORECARD contains no channel_group dimension.
 
 channel_group is therefore NULL.
+
+QGP business metric construction occurs in Silver.
+
+The Gold QGP view now includes the two additional Phone activation components:
+
+  activationsBopisOnly
+  activationsNonBopisOnly
+
+The existing:
+
+  activationsBopis
+
+remains unchanged and continues to represent the existing combined Phone
+BOPIS + Non-BOPIS metric.
+
+Silver carries both:
+
+  QGP_ACTUAL
+  QGP_TARGET
+
+for all three metric_names.
+
+Gold performs no BOPIS / Non-BOPIS calculation.
 
 Display:
   lob = 'Postpaid + Broadband'
@@ -360,6 +380,9 @@ POSTPAID
     lob      = Biddable
     true_lob = POSTPAID
 
+  QGP:
+    supported Postpaid-specific metrics map to true_lob = POSTPAID
+
 
 BROADBAND
 
@@ -473,6 +496,8 @@ QGP TRUE_LOB
 POSTPAID:
 
   activationsBopis
+  activationsBopisOnly
+  activationsNonBopisOnly
   activationsNewAalNoAssistance
   vrPostpaidActivations
   digitalPctPhoneNewActsNoAssistPlusAssist
@@ -594,7 +619,6 @@ AS
 
 WITH
 
-
 /* ===============================================================================================
    CTE 1: ADOBE VOLUME
    =============================================================================================== */
@@ -602,46 +626,36 @@ WITH
 AdobeVolume AS (
 
   SELECT
-    'ADOBE'                                      AS data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    'ADOBE' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
-    'Postpaid + Broadband'                       AS lob,
-    CAST(NULL AS STRING)                         AS true_lob,
-
+    'Postpaid + Broadband' AS lob,
+    CAST(NULL AS STRING) AS true_lob,
     s.channel_group,
     s.metric_name,
     s.metric_type,
-
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
+    CAST(s.max_date AS DATE) AS max_date,
     s.adobe_cvr_value,
     s.adobe_cvr_numerator,
     s.adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
-
   WHERE s.metric_type = 'ADOBE_VOLUME'
 ),
 
@@ -654,95 +668,54 @@ MfcChannel AS (
 
   SELECT
     s.data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
     CASE
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'CONSUMER POSTPAID',
-        'POSTPAID'
-      )
-        THEN 'POSTPAID'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'HSI',
-        'BROADBAND'
-      )
-        THEN 'BROADBAND'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'TBG',
-        'TFB'
-      )
-        THEN 'TFB'
-
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('CONSUMER POSTPAID', 'POSTPAID') THEN 'POSTPAID'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('HSI', 'BROADBAND') THEN 'BROADBAND'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('TBG', 'TFB') THEN 'TFB'
       ELSE UPPER(TRIM(s.lob_mfc))
-    END                                           AS lob,
+    END AS lob,
 
     CASE
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'CONSUMER POSTPAID',
-        'POSTPAID'
-      )
-        THEN 'POSTPAID'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'HSI',
-        'BROADBAND'
-      )
-        THEN 'BROADBAND'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'TBG',
-        'TFB'
-      )
-        THEN 'TFB'
-
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('CONSUMER POSTPAID', 'POSTPAID') THEN 'POSTPAID'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('HSI', 'BROADBAND') THEN 'BROADBAND'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('TBG', 'TFB') THEN 'TFB'
       ELSE UPPER(TRIM(s.lob_mfc))
-    END                                           AS true_lob,
+    END AS true_lob,
 
     s.channel_group,
     s.metric_name,
 
     CASE s.metric_name
-      WHEN 'mfcSpendActual'
-        THEN 'MFC_SPEND_ACTUAL'
-
-      WHEN 'mfcSpendForecast'
-        THEN 'MFC_SPEND_FORECAST'
-
+      WHEN 'mfcSpendActual' THEN 'MFC_SPEND_ACTUAL'
+      WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
       ELSE CAST(NULL AS STRING)
-    END                                           AS metric_type,
+    END AS metric_type,
 
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
-
   WHERE s.data_source = 'MFC_SPEND_CHANNEL'
 ),
 
@@ -755,95 +728,54 @@ MfcGranular AS (
 
   SELECT
     s.data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
 
     CASE
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'CONSUMER POSTPAID',
-        'POSTPAID'
-      )
-        THEN 'POSTPAID'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'HSI',
-        'BROADBAND'
-      )
-        THEN 'BROADBAND'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'TBG',
-        'TFB'
-      )
-        THEN 'TFB'
-
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('CONSUMER POSTPAID', 'POSTPAID') THEN 'POSTPAID'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('HSI', 'BROADBAND') THEN 'BROADBAND'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('TBG', 'TFB') THEN 'TFB'
       ELSE UPPER(TRIM(s.lob_mfc))
-    END                                           AS lob,
+    END AS lob,
 
     CASE
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'CONSUMER POSTPAID',
-        'POSTPAID'
-      )
-        THEN 'POSTPAID'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'HSI',
-        'BROADBAND'
-      )
-        THEN 'BROADBAND'
-
-      WHEN UPPER(TRIM(s.lob_mfc)) IN (
-        'TBG',
-        'TFB'
-      )
-        THEN 'TFB'
-
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('CONSUMER POSTPAID', 'POSTPAID') THEN 'POSTPAID'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('HSI', 'BROADBAND') THEN 'BROADBAND'
+      WHEN UPPER(TRIM(s.lob_mfc)) IN ('TBG', 'TFB') THEN 'TFB'
       ELSE UPPER(TRIM(s.lob_mfc))
-    END                                           AS true_lob,
+    END AS true_lob,
 
     s.channel_group,
     s.metric_name,
 
     CASE s.metric_name
-      WHEN 'mfcSpendActual'
-        THEN 'MFC_SPEND_ACTUAL'
-
-      WHEN 'mfcSpendForecast'
-        THEN 'MFC_SPEND_FORECAST'
-
+      WHEN 'mfcSpendActual' THEN 'MFC_SPEND_ACTUAL'
+      WHEN 'mfcSpendForecast' THEN 'MFC_SPEND_FORECAST'
       ELSE CAST(NULL AS STRING)
-    END                                           AS metric_type,
+    END AS metric_type,
 
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    s.channel                                    AS mfc_channel,
-    s.tactic                                     AS mfc_tactic,
-    s.message_type                               AS mfc_message_type,
-    s.agency                                     AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    s.channel AS mfc_channel,
+    s.tactic AS mfc_tactic,
+    s.message_type AS mfc_message_type,
+    s.agency AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
-
   WHERE s.data_source = 'MFC_SPEND_GRANULAR'
 ),
 
@@ -855,43 +787,34 @@ MfcGranular AS (
 PlatformSpend AS (
 
   SELECT
-    'PLATFORM_SPEND_CHANNEL'                     AS data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    'PLATFORM_SPEND_CHANNEL' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
     s.lob,
-    s.lob                                        AS true_lob,
-
+    s.lob AS true_lob,
     s.channel_group,
     s.metric_name,
-    'PLATFORM_SPEND'                             AS metric_type,
-
+    'PLATFORM_SPEND' AS metric_type,
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
 ),
@@ -904,42 +827,33 @@ PlatformSpend AS (
 UpvForecast AS (
 
   SELECT
-    'UPV_FORECAST'                               AS data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    'UPV_FORECAST' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
-    'Postpaid + Broadband'                       AS lob,
-    CAST(NULL AS STRING)                         AS true_lob,
-
+    'Postpaid + Broadband' AS lob,
+    CAST(NULL AS STRING) AS true_lob,
     s.channel_group,
     s.metric_name,
     s.metric_type,
-
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
     s.allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
@@ -948,82 +862,68 @@ UpvForecast AS (
 
 /* ===============================================================================================
    CTE 6: QGP SCORECARD
+
+   Silver owns all QGP metric construction.
+
+   New Phone activation component metrics:
+     activationsBopisOnly
+     activationsNonBopisOnly
+
+   Both flow through with:
+     QGP_ACTUAL
+     QGP_TARGET
+
+   Existing activationsBopis remains unchanged.
+   Gold performs no calculation between the three metrics.
    =============================================================================================== */
 
 QgpScorecard AS (
 
   SELECT
-    'QGP_SCORECARD'                              AS data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    'QGP_SCORECARD' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
-    'Postpaid + Broadband'                       AS lob,
+    'Postpaid + Broadband' AS lob,
 
     CASE s.metric_name
-      WHEN 'activationsBopis'
-        THEN 'POSTPAID'
-
-      WHEN 'activationsNewAalNoAssistance'
-        THEN 'POSTPAID'
-
-      WHEN 'vrPostpaidActivations'
-        THEN 'POSTPAID'
-
-      WHEN 'digitalPctPhoneNewActsNoAssistPlusAssist'
-        THEN 'POSTPAID'
-
-      WHEN 'digitalPctConsumerPostpaidActivationsTotalInclAssisted'
-        THEN 'POSTPAID'
-
-      WHEN 'digitalPctNoAssistanceActivations'
-        THEN 'POSTPAID'
-
-      WHEN 'digitalPctAssistanceActivations'
-        THEN 'POSTPAID'
-
-      WHEN 'storeTraffic'
-        THEN CAST(NULL AS STRING)
-
-      WHEN 'vrCalls'
-        THEN CAST(NULL AS STRING)
-
-      WHEN 'vrChats'
-        THEN CAST(NULL AS STRING)
-
+      WHEN 'activationsBopis' THEN 'POSTPAID'
+      WHEN 'activationsBopisOnly' THEN 'POSTPAID'
+      WHEN 'activationsNonBopisOnly' THEN 'POSTPAID'
+      WHEN 'activationsNewAalNoAssistance' THEN 'POSTPAID'
+      WHEN 'vrPostpaidActivations' THEN 'POSTPAID'
+      WHEN 'digitalPctPhoneNewActsNoAssistPlusAssist' THEN 'POSTPAID'
+      WHEN 'digitalPctConsumerPostpaidActivationsTotalInclAssisted' THEN 'POSTPAID'
+      WHEN 'digitalPctNoAssistanceActivations' THEN 'POSTPAID'
+      WHEN 'digitalPctAssistanceActivations' THEN 'POSTPAID'
+      WHEN 'storeTraffic' THEN CAST(NULL AS STRING)
+      WHEN 'vrCalls' THEN CAST(NULL AS STRING)
+      WHEN 'vrChats' THEN CAST(NULL AS STRING)
       ELSE CAST(NULL AS STRING)
-    END                                           AS true_lob,
+    END AS true_lob,
 
-    CAST(NULL AS STRING)                         AS channel_group,
-
+    CAST(NULL AS STRING) AS channel_group,
     s.metric_name,
     s.metric_type,
-
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
 ),
@@ -1059,102 +959,75 @@ QgpScorecard AS (
 BiddableSpend AS (
 
   SELECT
-    'BIDDABLE_SPEND_CHANNEL'                     AS data_source,
-    CAST(s.qgp_date AS DATE)                     AS qgp_date,
+    'BIDDABLE_SPEND_CHANNEL' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
-    'Biddable'                                   AS lob,
-    s.lob                                        AS true_lob,
-
+    'Biddable' AS lob,
+    s.lob AS true_lob,
     s.channel_group,
     s.metric_name,
-    'BIDDABLE_SPEND'                             AS metric_type,
-
+    'BIDDABLE_SPEND' AS metric_type,
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                     AS max_date,
-
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                         AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                         AS mfc_channel,
-    CAST(NULL AS STRING)                         AS mfc_tactic,
-    CAST(NULL AS STRING)                         AS mfc_message_type,
-    CAST(NULL AS STRING)                         AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                         AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
 
   WHERE s.data_source = 'BIDDABLE_SPEND_CHANNEL'
-    AND s.lob IN (
-      'ALL',
-      'POSTPAID',
-      'BROADBAND',
-      'FIBER'
-    )
+    AND s.lob IN ('ALL', 'POSTPAID', 'BROADBAND', 'FIBER')
 ),
 
 
 /* ===============================================================================================
    FINAL UNIFIED DATASET
 
-   IMPORTANT:
    Every CTE returns exactly 28 columns in the same positional order.
-
-   UNION ALL is intentional.
 
    MFC:
      MFC_SPEND_CHANNEL and MFC_SPEND_GRANULAR represent the same spend at
      different grains and should not be blindly aggregated together.
 
    Biddable:
-     true_lob and channel_group contain alternative reporting selections
-     and should not be blindly aggregated across selections.
+     true_lob and channel_group contain alternative reporting selections.
+
+   QGP:
+     QGP metrics have channel_group = NULL.
+     QGP metric definitions come directly from Silver.
    =============================================================================================== */
 
 UnifiedPulseTms AS (
 
   SELECT * FROM AdobeVolume
-
   UNION ALL
-
   SELECT * FROM MfcChannel
-
   UNION ALL
-
   SELECT * FROM MfcGranular
-
   UNION ALL
-
   SELECT * FROM PlatformSpend
-
   UNION ALL
-
   SELECT * FROM UpvForecast
-
   UNION ALL
-
   SELECT * FROM QgpScorecard
-
   UNION ALL
-
   SELECT * FROM BiddableSpend
 )
-
 
 SELECT *
 FROM UnifiedPulseTms
@@ -1183,43 +1056,34 @@ must be explicitly documented for that source.
 NewSource AS (
 
   SELECT
-    '<SOURCE_NAME>'                             AS data_source,
-    CAST(s.qgp_date AS DATE)                    AS qgp_date,
+    '<SOURCE_NAME>' AS data_source,
+    CAST(s.qgp_date AS DATE) AS qgp_date,
     s.week_type,
     s.qgp_quarter,
     s.days_in_period,
     s.is_complete_period,
-
-    <lob_expression>                            AS lob,
-    <true_lob_expression>                       AS true_lob,
-
+    <lob_expression> AS lob,
+    <true_lob_expression> AS true_lob,
     s.channel_group,
     s.metric_name,
-    '<METRIC_TYPE>'                             AS metric_type,
-
+    '<METRIC_TYPE>' AS metric_type,
     s.metric_value,
     s.metric_value_ly,
-
     s.wow_numerator,
     s.wow_denominator,
     s.wow_pct,
-
     s.yoy_numerator,
     s.yoy_denominator,
     s.yoy_pct,
-
-    CAST(s.max_date AS DATE)                    AS max_date,
-
-    CAST(NULL AS DOUBLE)                        AS adobe_cvr_value,
-    CAST(NULL AS DOUBLE)                        AS adobe_cvr_numerator,
-    CAST(NULL AS DOUBLE)                        AS adobe_cvr_denominator,
-
-    CAST(NULL AS STRING)                        AS mfc_channel,
-    CAST(NULL AS STRING)                        AS mfc_tactic,
-    CAST(NULL AS STRING)                        AS mfc_message_type,
-    CAST(NULL AS STRING)                        AS mfc_agency,
-
-    CAST(NULL AS DOUBLE)                        AS allocation_ratio
+    CAST(s.max_date AS DATE) AS max_date,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_value,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_numerator,
+    CAST(NULL AS DOUBLE) AS adobe_cvr_denominator,
+    CAST(NULL AS STRING) AS mfc_channel,
+    CAST(NULL AS STRING) AS mfc_tactic,
+    CAST(NULL AS STRING) AS mfc_message_type,
+    CAST(NULL AS STRING) AS mfc_agency,
+    CAST(NULL AS DOUBLE) AS allocation_ratio
 
   FROM prdrzranalytics.lab42.<silver_table> s
 )
