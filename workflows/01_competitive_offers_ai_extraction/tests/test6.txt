@@ -339,6 +339,7 @@ FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 WHERE UPPER(TRIM(LOB)) LIKE '%FIBER%'
 GROUP BY UPPER(TRIM(LOB))
 ORDER BY row_count DESC;
+output: no rows returned
 
 
 SELECT
@@ -347,6 +348,13 @@ SELECT
 FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
 GROUP BY UPPER(TRIM(LOB))
 ORDER BY source_lob;
+output:
+source_lob	row_count
+ARCHIVED	18408
+HSI	135687
+POSTPAID	258910
+PREPAID	264280
+TFB	49809
 
 
 -- PAID SOCIAL: check Fiber after channel + agency scope,
@@ -360,6 +368,9 @@ WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
   AND UPPER(TRIM(LOB)) LIKE '%FIBER%'
 GROUP BY UPPER(TRIM(LOB))
 ORDER BY row_count DESC;
+output:
+no rows returned
+
 
 
 SELECT
@@ -370,6 +381,15 @@ WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
   AND UPPER(TRIM(Agency)) = 'INHOUSE'
 GROUP BY UPPER(TRIM(LOB))
 ORDER BY source_lob;
+output:
+source_lob	row_count
+BROADBAND	396273
+FINANCIAL SERVICES	51321
+NOT SPECIFIED	5556
+OTHER	61778
+POSTPAID	2341714
+PREPAID	258443
+TFB	875624
 
 
 
