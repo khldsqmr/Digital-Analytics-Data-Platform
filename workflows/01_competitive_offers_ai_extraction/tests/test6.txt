@@ -1,401 +1,464 @@
-checkpoint	platform	days_present	checkpoint_spend	final_spend	pct_of_final	readiness
-Mon 10 AM ET	Facebook	3	545453.421354	1265628.1033980004	43.1	NOT READY
-Mon 10 AM ET	Instagram	3	204998.37875399995	489299.09673800046	41.9	NOT READY
-Mon 10 AM ET	Pinterest	3	138970.7885858789	218699.63884573244	63.5	NOT READY
-Mon 10 AM ET	Snapchat	2	84238.26974773407	307229.11961648613	27.4	NOT READY
-Mon 10 AM ET	TikTok	3	175644.1597739067	439259.7584101297	40	NOT READY
-Mon 10 AM ET	Twitter	1	14973.530483000002	105009.30017699985	14.3	NOT READY
-Tue 10 AM ET	Facebook	7	1265617.7633659998	1265628.1033980004	100	READY
-Tue 10 AM ET	Instagram	7	489298.8367629999	489299.09673800046	100	READY
-Tue 10 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
-Tue 10 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
-Tue 10 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
-Tue 10 AM ET	Twitter	6	89995.77032000003	105009.30017699985	85.7	NOT READY
-Wed 10 AM ET	Facebook	7	1265617.7633659998	1265628.1033980004	100	READY
-Wed 10 AM ET	Instagram	7	489298.8367629999	489299.09673800046	100	READY
-Wed 10 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
-Wed 10 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
-Wed 10 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
-Wed 10 AM ET	Twitter	6	89995.77032000003	105009.30017699985	85.7	NOT READY
-Thu 6 AM ET	Facebook	7	1265628.103398	1265628.1033980004	100	READY
-Thu 6 AM ET	Instagram	7	489299.0967379999	489299.09673800046	100	READY
-Thu 6 AM ET	Pinterest	7	218699.63884573244	218699.63884573244	100	READY
-Thu 6 AM ET	Snapchat	7	307229.11961648613	307229.11961648613	100	READY
-Thu 6 AM ET	TikTok	7	439259.7584101297	439259.7584101297	100	READY
-Thu 6 AM ET	Twitter	7	105009.30017700001	105009.30017699985	100	READY
-
-
-Platform	Mon 10 AM	Tue 10 AM	Wed 10 AM	Thu 6 AM	Earliest observed ready
-Facebook	43.1%	100%	100%	100%	Tuesday 10 AM
-Instagram	41.9%	100%	100%	100%	Tuesday 10 AM
-Pinterest	63.5%	100%	100%	100%	Tuesday 10 AM
-Snapchat	27.4%	100%	100%	100%	Tuesday 10 AM
-TikTok	40.0%	100%	100%	100%	Tuesday 10 AM
-Twitter	14.3%	85.7%	85.7%	100%	Thursday 6 AM
-
-
--- ============================================================
--- UNIQUE CATEGORIES FOR ALL DIMENSION COLUMNS
---
--- Dimension definition:
---   STRING + BOOLEAN columns
---
--- Scope:
---   Programmatic = full source universe
---   Paid Social  = Channel_Group_Name = 'Paid Social'
---                  (all agencies / LOBs retained)
---   Paid Search  = full source universe
---
--- Output is long-form and Excel-friendly.
--- ============================================================
-
-DECLARE OR REPLACE VARIABLE category_sql STRING;
-
-SET VAR category_sql = (
-
-    WITH source_columns AS (
-
-        -- ====================================================
-        -- 1. PROGRAMMATIC
-        -- ====================================================
-        SELECT
-            1 AS source_order,
-            'Programmatic' AS source_channel,
-            'pbi_programmatic_browsers_currentyr' AS source_table,
-            'prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr'
-                AS full_table_name,
-            '1 = 1' AS row_filter,
-
-            ordinal_position,
-            column_name,
-            data_type
-
-        FROM prd_dbi_analytics.information_schema.columns
-
-        WHERE table_schema = 'improvado'
-          AND table_name = 'pbi_programmatic_browsers_currentyr'
-          AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
-
-
-        UNION ALL
-
-
-        -- ====================================================
-        -- 2. PAID SOCIAL
-        -- ====================================================
-        SELECT
-            2 AS source_order,
-            'Paid Social' AS source_channel,
-            'media_analytics_integrated_snapshot' AS source_table,
-            'prdrzranalytics.lab42.media_analytics_integrated_snapshot'
-                AS full_table_name,
-
-            -- Universe for Paid Social only.
-            -- Do NOT restrict Agency or LOB here.
-            'Channel_Group_Name = ''Paid Social''' AS row_filter,
-
-            ordinal_position,
-            column_name,
-            data_type
-
-        FROM prdrzranalytics.information_schema.columns
-
-        WHERE table_schema = 'lab42'
-          AND table_name = 'media_analytics_integrated_snapshot'
-          AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
-
-
-        UNION ALL
-
-
-        -- ====================================================
-        -- 3. PAID SEARCH
-        -- ====================================================
-        SELECT
-            3 AS source_order,
-            'Paid Search' AS source_channel,
-            'sdi_tbl_sa360_gold_campaign_daily' AS source_table,
-            'prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily'
-                AS full_table_name,
-            '1 = 1' AS row_filter,
-
-            ordinal_position,
-            column_name,
-            data_type
-
-        FROM prdrzranalytics.information_schema.columns
-
-        WHERE table_schema = 'lab42'
-          AND table_name = 'sdi_tbl_sa360_gold_campaign_daily'
-          AND UPPER(data_type) IN ('STRING', 'BOOLEAN')
-    ),
-
-
-    -- Build the STACK arguments dynamically.
-    --
-    -- Each dimension contributes:
-    --   ordinal_position,
-    --   dimension_name,
-    --   data_type,
-    --   value
-    dimension_expressions AS (
-
-        SELECT
-            source_order,
-            source_channel,
-            source_table,
-            full_table_name,
-            row_filter,
-            ordinal_position,
-
-            CONCAT(
-                CAST(ordinal_position AS STRING),
-                ', ',
-                '''',
-                REPLACE(column_name, '''', ''''''),
-                ''', ',
-                '''',
-                REPLACE(data_type, '''', ''''''),
-                ''', ',
-                'CAST(`',
-                REPLACE(column_name, '`', '``'),
-                '` AS STRING)'
-            ) AS stack_expression
-
-        FROM source_columns
-    ),
-
-
-    -- Build one query per source table.
-    source_queries AS (
-
-        SELECT
-            source_order,
-
-            CONCAT(
-                'SELECT ',
-                    '''', source_channel, ''' AS source_channel, ',
-                    '''', source_table, ''' AS source_table, ',
-                    'dimension_order, ',
-                    'dimension_name, ',
-                    'data_type, ',
-                    'COALESCE(category_value, ''[NULL]'') AS category_value, ',
-                    'COUNT(*) AS row_count ',
-
-                'FROM ',
-                    full_table_name, ' ',
-
-                'LATERAL VIEW STACK(',
-                    CAST(COUNT(*) AS STRING),
-                    ', ',
-
-                    ARRAY_JOIN(
-                        TRANSFORM(
-                            SORT_ARRAY(
-                                COLLECT_LIST(
-                                    NAMED_STRUCT(
-                                        'ord', ordinal_position,
-                                        'expr', stack_expression
-                                    )
-                                )
-                            ),
-                            x -> x.expr
-                        ),
-                        ', '
-                    ),
-
-                ') category_stack ',
-                    'AS dimension_order, dimension_name, data_type, category_value ',
-
-                'WHERE ',
-                    row_filter, ' ',
-
-                'GROUP BY ',
-                    'dimension_order, ',
-                    'dimension_name, ',
-                    'data_type, ',
-                    'category_value'
-            ) AS source_sql
-
-        FROM dimension_expressions
-
-        GROUP BY
-            source_order,
-            source_channel,
-            source_table,
-            full_table_name,
-            row_filter
-    )
-
-
-    -- Combine the three generated queries.
+WITH base AS (
     SELECT
-        CONCAT(
-            'SELECT * FROM (',
+        CAST(date AS DATE) AS date,
+        TRY_CAST(spend AS DOUBLE) AS spend,
+        NULLIF(TRIM(lob),'') AS lob,
+        NULLIF(TRIM(DSP),'') AS dsp,
+        NULLIF(TRIM(campaign_type),'') AS campaign_type,
+        NULLIF(TRIM(business_initiative),'') AS business_initiative,
+        NULLIF(TRIM(budget_source),'') AS budget_source,
+        NULLIF(TRIM(budget_product_line),'') AS budget_product_line,
+        NULLIF(TRIM(program),'') AS program,
+        NULLIF(TRIM(creative_type),'') AS creative_type
+    FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+)
 
-            ARRAY_JOIN(
-                TRANSFORM(
-                    SORT_ARRAY(
-                        COLLECT_LIST(
-                            NAMED_STRUCT(
-                                'ord', source_order,
-                                'sql', source_sql
-                            )
-                        )
-                    ),
-                    x -> x.sql
-                ),
-                ' UNION ALL '
-            ),
+SELECT 'LOB' AS dimension, COALESCE(lob,'<NULL>') AS category,
+       COUNT(*) AS row_count, ROUND(SUM(spend),2) AS spend,
+       MIN(date) AS min_date, MAX(date) AS max_date
+FROM base
+GROUP BY COALESCE(lob,'<NULL>')
 
-            ') categories ',
-            'ORDER BY ',
-                'source_channel, ',
-                'dimension_order, ',
-                'category_value'
-        )
+UNION ALL
 
-    FROM source_queries
-);
+SELECT 'DSP / Platform', COALESCE(dsp,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(dsp,'<NULL>')
 
+UNION ALL
 
--- Run dynamically generated query.
-EXECUTE IMMEDIATE category_sql;
+SELECT 'Campaign Type', COALESCE(campaign_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(campaign_type,'<NULL>')
 
+UNION ALL
 
-// [c.Bidd Channel Label]
+SELECT 'Business Initiative', COALESCE(business_initiative,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(business_initiative,'<NULL>')
 
-IF [Data Source] = 'BIDDABLE_SPEND_CHANNEL'
-AND [Metric Name] = 'biddableSpend'
-THEN
+UNION ALL
 
-    CASE [Channel Group]
+SELECT 'Budget Source', COALESCE(budget_source,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(budget_source,'<NULL>')
 
-        WHEN 'Paid Search - All'
-            THEN 'Paid Search'
+UNION ALL
 
-        WHEN 'Paid Social - All'
-            THEN 'Paid Social'
+SELECT 'Budget Product Line', COALESCE(budget_product_line,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(budget_product_line,'<NULL>')
 
-        WHEN 'Programmatic - All'
-            THEN 'Programmatic'
+UNION ALL
 
-        ELSE [Channel Group]
+SELECT 'Program', COALESCE(program,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(program,'<NULL>')
 
-    END
+UNION ALL
 
-END
+SELECT 'Creative Type', COALESCE(creative_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(creative_type,'<NULL>')
 
-
-Biddable Spend
-Weekly spend across Programmatic, Paid Social, and Paid Search. Current reporting scope: Postpaid + Broadband.
-
-Programmatic
-Source: pbi_programmatic_browsers_currentyr
-Universe: Amazon DSP, Blis, DV360, The Trade Desk; multiple accounts, Channels and Buy Types.
-Selected: Postpaid + HSI/Broadband. All qualifying DSPs/accounts/channels remain included.
-
-Paid Social
-Source: media_analytics_integrated_snapshot
-Universe: Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC and other Paid Social values across multiple agencies/LOBs.
-Selected: Paid Social + Agency = InHouse + Postpaid/Broadband.
-Current qualifying platforms: Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter.
-No platform whitelist is used; qualifying future platforms can flow through automatically.
-
-Paid Search
-Source: sdi_tbl_sa360_gold_campaign_daily
-Universe: Google/Bing accounts; SEARCH, SHOPPING, PERFORMANCE_MAX, DISCOVERY; Brand, Generic, Shopping, PMax, DemandGen; Postpaid, HSI, Metro, TFB, Fiber.
-Selected: Google + Bing, Postpaid + HSI/Broadband. All qualifying accounts and campaign/channel types remain included.
-
-Channel options: All Channels, Paid Search, Paid Social, Programmatic, plus platform views such as Paid Search - Google, Paid Social - Facebook, Programmatic - DV360.
-
-Total definition: All Channels = Programmatic + Paid Social + Paid Search for Postpaid + Broadband only.
+ORDER BY dimension, spend DESC;
 
 
 
+
+SELECT
+    COALESCE(NULLIF(TRIM(account_id),''),'<NULL>') AS account_id,
+    COUNT(DISTINCT campaign_id) AS campaign_count,
+    COUNT(*) AS row_count,
+    ROUND(SUM(spend),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+GROUP BY COALESCE(NULLIF(TRIM(account_id),''),'<NULL>')
+ORDER BY spend DESC;
+
+
+
+SELECT
+    account_id,
+    campaign_id,
+    campaign_name,
+    campaign_type,
+    UPPER(TRIM(lob)) AS lob,
+    TRIM(DSP) AS dsp,
+    ROUND(SUM(spend),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+GROUP BY
+    account_id,
+    campaign_id,
+    campaign_name,
+    campaign_type,
+    UPPER(TRIM(lob)),
+    TRIM(DSP)
+ORDER BY spend DESC;
+
+
+
+SELECT
+    UPPER(TRIM(lob)) AS lob,
+    TRIM(DSP) AS dsp,
+    COUNT(DISTINCT account_id) AS accounts,
+    COUNT(DISTINCT campaign_id) AS campaigns,
+    ROUND(SUM(spend),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+WHERE UPPER(TRIM(lob)) IN ('POSTPAID','CONSUMER POSTPAID','HSI','BROADBAND')
+GROUP BY
+    UPPER(TRIM(lob)),
+    TRIM(DSP)
+ORDER BY lob, spend DESC;
+
+
+
+SELECT
+    Channel_Group_Name,
+    Media_Tactic,
+    Platform,
+    COUNT(*) AS row_count,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_display
+WHERE Media_Tactic LIKE 'Programmatic%'
+GROUP BY
+    Channel_Group_Name,
+    Media_Tactic,
+    Platform
+ORDER BY spend DESC;
+
+
+
+WITH base AS (
+    SELECT
+        CAST(date AS DATE) AS date,
+        TRY_CAST(cost AS DOUBLE) AS spend,
+        NULLIF(TRIM(lob),'') AS lob,
+        NULLIF(TRIM(ad_platform),'') AS ad_platform,
+        NULLIF(TRIM(campaign_type),'') AS campaign_type,
+        NULLIF(TRIM(advertising_channel_type),'') AS advertising_channel_type,
+        NULLIF(TRIM(advertising_channel_sub_type),'') AS advertising_channel_sub_type,
+        NULLIF(TRIM(bidding_strategy_type),'') AS bidding_strategy_type,
+        NULLIF(TRIM(serving_status),'') AS serving_status
+    FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+)
+
+SELECT 'LOB' AS dimension, COALESCE(lob,'<NULL>') AS category,
+       COUNT(*) AS row_count, ROUND(SUM(spend),2) AS spend,
+       MIN(date) AS min_date, MAX(date) AS max_date
+FROM base
+GROUP BY COALESCE(lob,'<NULL>')
+
+UNION ALL
+
+SELECT 'Platform', COALESCE(ad_platform,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(ad_platform,'<NULL>')
+
+UNION ALL
+
+SELECT 'Campaign Type', COALESCE(campaign_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(campaign_type,'<NULL>')
+
+UNION ALL
+
+SELECT 'Advertising Channel Type', COALESCE(advertising_channel_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(advertising_channel_type,'<NULL>')
+
+UNION ALL
+
+SELECT 'Advertising Channel Sub-Type', COALESCE(advertising_channel_sub_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(advertising_channel_sub_type,'<NULL>')
+
+UNION ALL
+
+SELECT 'Bidding Strategy Type', COALESCE(bidding_strategy_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(bidding_strategy_type,'<NULL>')
+
+UNION ALL
+
+SELECT 'Serving Status', COALESCE(serving_status,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(serving_status,'<NULL>')
+
+ORDER BY dimension, spend DESC;
+
+
+SELECT
+    account_id,
+    account_name,
+    UPPER(TRIM(ad_platform)) AS ad_platform,
+    COUNT(DISTINCT campaign_id) AS campaign_count,
+    ROUND(SUM(cost),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+GROUP BY
+    account_id,
+    account_name,
+    UPPER(TRIM(ad_platform))
+ORDER BY spend DESC;
+
+
+
+SELECT
+    account_id,
+    account_name,
+    campaign_id,
+    campaign_name,
+    campaign_type,
+    advertising_channel_type,
+    advertising_channel_sub_type,
+    bidding_strategy_type,
+    serving_status,
+    UPPER(TRIM(lob)) AS lob,
+    UPPER(TRIM(ad_platform)) AS ad_platform,
+    ROUND(SUM(cost),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
+GROUP BY
+    account_id,
+    account_name,
+    campaign_id,
+    campaign_name,
+    campaign_type,
+    advertising_channel_type,
+    advertising_channel_sub_type,
+    bidding_strategy_type,
+    serving_status,
+    UPPER(TRIM(lob)),
+    UPPER(TRIM(ad_platform))
+ORDER BY spend DESC;
+
+
+
+SELECT
+    UPPER(TRIM(lob)) AS lob,
+    UPPER(TRIM(ad_platform)) AS ad_platform,
+    COALESCE(campaign_type,'<NULL>') AS campaign_type,
+    COALESCE(advertising_channel_type,'<NULL>') AS advertising_channel_type,
+    COUNT(DISTINCT account_id) AS accounts,
+    COUNT(DISTINCT campaign_id) AS campaigns,
+    ROUND(SUM(cost),2) AS spend,
+    MIN(date) AS min_date,
+    MAX(date) AS max_date
+FROM prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 WHERE UPPER(TRIM(ad_platform)) IN (
-  'GOOGLE',
-  'GOOGLE ADS',
-  'GOOGLE_ADS',
-  'BING',
-  'MICROSOFT',
-  'MICROSOFT ADS',
-  'MICROSOFT_ADS'
+    'GOOGLE','GOOGLE ADS','GOOGLE_ADS',
+    'BING','MICROSOFT','MICROSOFT ADS','MICROSOFT_ADS'
 )
 AND UPPER(TRIM(lob)) IN (
-  'POSTPAID',
-  'HSI',
-  'BROADBAND',
-  'FIBER'
+    'POSTPAID','HSI','BROADBAND','FIBER'
+)
+GROUP BY
+    UPPER(TRIM(lob)),
+    UPPER(TRIM(ad_platform)),
+    COALESCE(campaign_type,'<NULL>'),
+    COALESCE(advertising_channel_type,'<NULL>')
+ORDER BY lob, ad_platform, spend DESC;
+
+
+WITH base AS (
+    SELECT
+        CAST(Date AS DATE) AS date,
+        TRY_CAST(Spend AS DOUBLE) AS spend,
+        NULLIF(TRIM(Agency),'') AS agency,
+        NULLIF(TRIM(LOB),'') AS lob,
+        NULLIF(TRIM(Channel_Name),'') AS channel_name,
+        NULLIF(TRIM(Channel_Group_Name),'') AS channel_group,
+        NULLIF(TRIM(Media_Tactic),'') AS media_tactic,
+        NULLIF(TRIM(Buy_Type),'') AS buy_type,
+        NULLIF(TRIM(view_source),'') AS view_source
+    FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+    WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
 )
 
+SELECT 'LOB' AS dimension, COALESCE(lob,'<NULL>') AS category,
+       COUNT(*) AS row_count, ROUND(SUM(spend),2) AS spend,
+       MIN(date) AS min_date, MAX(date) AS max_date
+FROM base
+GROUP BY COALESCE(lob,'<NULL>')
+
+UNION ALL
+
+SELECT 'Agency', COALESCE(agency,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(agency,'<NULL>')
+
+UNION ALL
+
+SELECT 'Channel / Platform', COALESCE(channel_name,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(channel_name,'<NULL>')
+
+UNION ALL
+
+SELECT 'Media Tactic', COALESCE(media_tactic,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(media_tactic,'<NULL>')
+
+UNION ALL
+
+SELECT 'Buy Type', COALESCE(buy_type,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(buy_type,'<NULL>')
+
+UNION ALL
+
+SELECT 'Source Feed', COALESCE(view_source,'<NULL>'),
+       COUNT(*), ROUND(SUM(spend),2), MIN(date), MAX(date)
+FROM base
+GROUP BY COALESCE(view_source,'<NULL>')
+
+ORDER BY dimension, spend DESC;
 
 
--- PROGRAMMATIC: check whether any Fiber-like LOB exists in the raw source
+
 SELECT
-  UPPER(TRIM(LOB)) AS source_lob,
-  COUNT(*) AS row_count
-FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
-WHERE UPPER(TRIM(LOB)) LIKE '%FIBER%'
-GROUP BY UPPER(TRIM(LOB))
-ORDER BY row_count DESC;
-output: no rows returned
+    CASE
+        WHEN Channel_Name IN (
+            'Paid Social - Facebook',
+            'Paid Social - Instagram'
+        ) THEN 'Meta'
+        WHEN Channel_Name = 'Paid Social - Twitter'
+        THEN 'X / Twitter'
+        ELSE REPLACE(Channel_Name,'Paid Social - ','')
+    END AS platform,
+    COUNT(*) AS row_count,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+GROUP BY 1
+ORDER BY spend DESC;
+
 
 
 SELECT
-  UPPER(TRIM(LOB)) AS source_lob,
-  COUNT(*) AS row_count
-FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
-GROUP BY UPPER(TRIM(LOB))
-ORDER BY source_lob;
-output:
-source_lob	row_count
-ARCHIVED	18408
-HSI	135687
-POSTPAID	258910
-PREPAID	264280
-TFB	49809
+    COALESCE(NULLIF(TRIM(Agency),''),'<NULL>') AS agency,
+    COUNT(*) AS row_count,
+    COUNT(DISTINCT Account_ID) AS accounts,
+    COUNT(DISTINCT Campaign_ID) AS campaigns,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+GROUP BY COALESCE(NULLIF(TRIM(Agency),''),'<NULL>')
+ORDER BY spend DESC;
 
 
--- PAID SOCIAL: check Fiber after channel + agency scope,
--- but BEFORE applying our approved LOB filter
+
 SELECT
-  UPPER(TRIM(LOB)) AS source_lob,
-  COUNT(*) AS row_count
+    Agency,
+    LOB,
+    Channel_Name,
+    Account_ID,
+    Account_Name,
+    COUNT(DISTINCT Campaign_ID) AS campaign_count,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+GROUP BY
+    Agency,
+    LOB,
+    Channel_Name,
+    Account_ID,
+    Account_Name
+ORDER BY spend DESC;
+
+
+
+SELECT
+    Agency,
+    LOB,
+    Channel_Name,
+    Account_ID,
+    Account_Name,
+    Campaign_ID,
+    Campaign_Name,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+GROUP BY
+    Agency,
+    LOB,
+    Channel_Name,
+    Account_ID,
+    Account_Name,
+    Campaign_ID,
+    Campaign_Name
+ORDER BY spend DESC;
+
+
+SELECT
+    UPPER(TRIM(LOB)) AS lob,
+    TRIM(Agency) AS agency,
+    CASE
+        WHEN Channel_Name IN (
+            'Paid Social - Facebook',
+            'Paid Social - Instagram'
+        ) THEN 'Meta'
+        WHEN Channel_Name = 'Paid Social - Twitter'
+        THEN 'X / Twitter'
+        ELSE REPLACE(Channel_Name,'Paid Social - ','')
+    END AS platform,
+    COUNT(DISTINCT Account_ID) AS accounts,
+    COUNT(DISTINCT Campaign_ID) AS campaigns,
+    ROUND(SUM(Spend),2) AS spend,
+    MIN(Date) AS min_date,
+    MAX(Date) AS max_date
 FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
 WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
   AND UPPER(TRIM(Agency)) = 'INHOUSE'
-  AND UPPER(TRIM(LOB)) LIKE '%FIBER%'
-GROUP BY UPPER(TRIM(LOB))
-ORDER BY row_count DESC;
-output:
-no rows returned
+  AND UPPER(TRIM(LOB)) IN ('POSTPAID','HSI','BROADBAND')
+GROUP BY
+    UPPER(TRIM(LOB)),
+    TRIM(Agency),
+    CASE
+        WHEN Channel_Name IN (
+            'Paid Social - Facebook',
+            'Paid Social - Instagram'
+        ) THEN 'Meta'
+        WHEN Channel_Name = 'Paid Social - Twitter'
+        THEN 'X / Twitter'
+        ELSE REPLACE(Channel_Name,'Paid Social - ','')
+    END
+ORDER BY lob, spend DESC;
 
-
-
-SELECT
-  UPPER(TRIM(LOB)) AS source_lob,
-  COUNT(*) AS row_count
-FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
-WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
-  AND UPPER(TRIM(Agency)) = 'INHOUSE'
-GROUP BY UPPER(TRIM(LOB))
-ORDER BY source_lob;
-output:
-source_lob	row_count
-BROADBAND	396273
-FINANCIAL SERVICES	51321
-NOT SPECIFIED	5556
-OTHER	61778
-POSTPAID	2341714
-PREPAID	258443
-TFB	875624
-
-
-Currently, these are the LOB categories available in the raw sources:
-Programmatic: Archived, HSI, Postpaid, Prepaid, TFB
-Paid Social: Broadband, Financial Services, Not Specified, Other, Postpaid, Prepaid, TFB
-Fiber is not available in either Programmatic or Paid Social
-Currently, Fiber is only available in Paid Search
 
 
