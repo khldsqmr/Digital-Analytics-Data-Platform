@@ -330,3 +330,46 @@ AND UPPER(TRIM(lob)) IN (
 )
 
 
+
+-- PROGRAMMATIC: check whether any Fiber-like LOB exists in the raw source
+SELECT
+  UPPER(TRIM(LOB)) AS source_lob,
+  COUNT(*) AS row_count
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+WHERE UPPER(TRIM(LOB)) LIKE '%FIBER%'
+GROUP BY UPPER(TRIM(LOB))
+ORDER BY row_count DESC;
+
+
+SELECT
+  UPPER(TRIM(LOB)) AS source_lob,
+  COUNT(*) AS row_count
+FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+GROUP BY UPPER(TRIM(LOB))
+ORDER BY source_lob;
+
+
+-- PAID SOCIAL: check Fiber after channel + agency scope,
+-- but BEFORE applying our approved LOB filter
+SELECT
+  UPPER(TRIM(LOB)) AS source_lob,
+  COUNT(*) AS row_count
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+  AND UPPER(TRIM(Agency)) = 'INHOUSE'
+  AND UPPER(TRIM(LOB)) LIKE '%FIBER%'
+GROUP BY UPPER(TRIM(LOB))
+ORDER BY row_count DESC;
+
+
+SELECT
+  UPPER(TRIM(LOB)) AS source_lob,
+  COUNT(*) AS row_count
+FROM prdrzranalytics.lab42.media_analytics_integrated_snapshot
+WHERE UPPER(TRIM(Channel_Group_Name)) = 'PAID SOCIAL'
+  AND UPPER(TRIM(Agency)) = 'INHOUSE'
+GROUP BY UPPER(TRIM(LOB))
+ORDER BY source_lob;
+
+
+
