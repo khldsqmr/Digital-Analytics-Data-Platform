@@ -1,0 +1,139 @@
+%python
+
+# ==================================================================================================
+# NOTEBOOK:       sdi_nb_dashboardPulseTms_orchestration_allLayers_weekly
+# NOTEBOOK TYPE:  Databricks Python Notebook
+# PURPOSE:        Scheduled orchestration of the Dashboard Pulse TMS pipeline
+#
+# CATALOG.SCHEMA:
+#   prdrzranalytics.lab42
+#
+# STORED PROCEDURE:
+#   sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly
+#
+# FULL PROCEDURE NAME:
+#   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly
+#
+# PIPELINE EXECUTION ORDER:
+#   0. External UPV Forecast Bronze notebook upload
+#   1. Dashboard Pulse TMS Bronze
+#   2. Independent Dashboard Pulse TMS Silver
+#   3. Dependent Silver UPV Forecast
+#   4. Live Dashboard Pulse TMS Gold views
+#
+# EXTERNAL DEPENDENCY:
+#   The UPV Forecast Bronze table is populated by an external notebook upload.
+#
+#   That notebook must complete successfully before this orchestration notebook runs.
+#   The dependency should be configured in the Databricks job by placing the UPV Forecast
+#   Bronze notebook task before this orchestration task and adding the appropriate
+#   "Depends on" relationship.
+#
+#   The Silver UPV Forecast procedure also depends on the Silver Adobe Funnel table.
+#   The orchestration stored procedure handles that internal dependency by running:
+#
+#     sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly
+#
+#   before:
+#
+#     sdi_sp_dashboardPulseTms_silver_upvForecast_weekly
+#
+# GOLD OBJECTS:
+#   The following Gold objects are views and do not require stored procedure calls:
+#
+#     sdi_vw_dashboardPulseTms_dim_qgp_calendar
+#     sdi_vw_dashboardPulseTms_gold_unified_long
+#     sdi_vw_dashboardPulseTms_gold_unified_wide
+#
+#   These views resolve dynamically from the refreshed Silver tables.
+#
+# DATABRICKS JOB:
+#   Recommended Job Name:
+#     sdi_job_dashboardPulseTms_orchestration_allLayers_daily
+#
+#   Recommended Task Name:
+#     run_dashboardPulseTms_orchestration
+#
+#   Task Type:
+#     Notebook
+#
+# NOTEBOOK PATH:
+#   Update this section if the workspace path changes.
+#
+#   Recommended Path:
+#     Dashboard Pulse TMS/05_SCHEDULE/
+#     00_sdi_nb_dashboardPulseTms_orchestration_allLayers_weekly
+#
+# SCHEDULE:
+#   Recommended Frequency: Daily
+#   Scheduled Time:        Configure in Databricks Jobs & Pipelines
+#   Time Zone:             Use the applicable business timezone
+#
+# COMPUTE:
+#   Recommended Runtime: Databricks Runtime 17.3 LTS or later
+#   Compute:             Configure in the Databricks job
+#
+# RETRY CONFIGURATION:
+#   Recommended Maximum Retries: 1
+#   Recommended Retry Delay:     10 minutes
+#   Retry on Timeout:            Enabled
+#
+# EXECUTION BEHAVIOR:
+#   - Calls one Dashboard Pulse TMS orchestration stored procedure.
+#   - The stored procedure runs the Dashboard Pulse TMS Bronze procedures.
+#   - It then runs the independent Dashboard Pulse TMS Silver procedures.
+#   - It runs Silver UPV Forecast after Silver Adobe Funnel.
+#   - No Gold procedure is called because the Gold objects are live views.
+#   - Prints the UTC start time, completion time, and execution duration.
+#   - Prints the exception type and details when execution fails.
+#   - Re-raises exceptions so Databricks marks the task as failed.
+#   - Allows configured job retries and failure notifications to operate correctly.
+#
+# NAMING NOTE:
+#   The notebook and stored procedure use "weekly" because they process weekly-grain data.
+#   The Databricks job can use "daily" if the weekly-grain data is refreshed every day.
+#
+# ==================================================================================================
+
+from datetime import datetime, timezone
+
+
+procedure_name = (
+    "prdrzranalytics.lab42."
+    "sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly"
+)
+
+
+start_time = datetime.now(timezone.utc)
+
+print("=" * 100)
+print(f"Starting procedure: {procedure_name}")
+print(f"Start time (UTC): {start_time.isoformat()}")
+print("=" * 100)
+
+
+try:
+    spark.sql(f"CALL {procedure_name}()")
+
+    end_time = datetime.now(timezone.utc)
+
+    print("=" * 100)
+    print(f"Procedure completed successfully: {procedure_name}")
+    print(f"End time (UTC): {end_time.isoformat()}")
+    print(f"Duration: {end_time - start_time}")
+    print("=" * 100)
+
+except Exception as error:
+    end_time = datetime.now(timezone.utc)
+
+    print("=" * 100)
+    print(f"Procedure failed: {procedure_name}")
+    print(f"Failure time (UTC): {end_time.isoformat()}")
+    print(f"Duration before failure: {end_time - start_time}")
+    print(f"Error type: {type(error).__name__}")
+    print(f"Error details: {error}")
+    print("=" * 100)
+
+    # Re-raise the exception so Databricks marks the task as failed
+    # and applies the configured retry and notification settings.
+    raise
