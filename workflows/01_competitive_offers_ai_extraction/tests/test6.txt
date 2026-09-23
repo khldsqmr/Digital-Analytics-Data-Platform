@@ -1,3 +1,40 @@
+/* =================================================================================================
+CLEANUP: Dashboard Pulse TMS Validation Objects
+
+DROP ORDER:
+  1. Views
+  2. History table
+
+PURPOSE:
+  Removes the existing validation views and history table so they can be recreated cleanly.
+================================================================================================= */
+
+
+/* -------------------------------------------------------------------------------------------------
+1. DROP VALIDATION VIEWS
+------------------------------------------------------------------------------------------------- */
+
+DROP VIEW IF EXISTS
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_latest_perRun;
+
+DROP VIEW IF EXISTS
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_issues_perRun;
+
+DROP VIEW IF EXISTS
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_runs_perRun;
+
+DROP VIEW IF EXISTS
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_summary_perRun;
+
+
+/* -------------------------------------------------------------------------------------------------
+2. DROP VALIDATION HISTORY TABLE
+------------------------------------------------------------------------------------------------- */
+
+DROP TABLE IF EXISTS
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun;
+
+
 Biddable Spend
 Weekly spend across Programmatic, Paid Social, and Paid Search. Current reporting scope: Postpaid + Broadband.
 
