@@ -118,7 +118,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     UPSTREAM MFC BRONZE
+     1. UPSTREAM MFC BRONZE
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly();
@@ -131,7 +131,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     UPSTREAM MFC SILVER
+     2. UPSTREAM MFC SILVER
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly();
@@ -140,14 +140,14 @@ BEGIN
 
 
   /* ===============================================================================================
-     QGP ARCHIVE
+     3. QGP ARCHIVE
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_qgpArchive_orchestration_allLayers_weekly();
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS BRONZE LAYER: 5 PROCEDURES
+     4. DASHBOARD PULSE TMS BRONZE LAYER
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_adobeFunnel_weekly();
@@ -162,7 +162,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS SILVER LAYER: 5 PROCEDURES
+     5. DASHBOARD PULSE TMS SILVER LAYER
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly();
@@ -177,10 +177,10 @@ BEGIN
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS DEPENDENT SILVER: UPV FORECAST
+     6. DASHBOARD PULSE TMS DEPENDENT SILVER: UPV FORECAST
 
-     This procedure must run after Silver Adobe Funnel because it uses prior-year channel allocation
-     ratios from the Silver Adobe Funnel table.
+     Must run after Silver Adobe Funnel because it uses prior-year channel allocation ratios
+     from the Silver Adobe Funnel table.
 
      It also requires the external UPV Forecast Bronze upload.
      =============================================================================================== */
@@ -189,12 +189,12 @@ BEGIN
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS GOLD LAYER: LIVE VIEWS
+     7. DASHBOARD PULSE TMS GOLD LAYER: LIVE VIEWS
 
      No Gold procedure is required.
 
      At this point all underlying Silver tables have been refreshed, so the following views resolve
-     automatically against the current Silver state:
+     automatically against the latest Silver state:
 
        - sdi_vw_dashboardPulseTms_dim_qgp_calendar
        - sdi_vw_dashboardPulseTms_gold_unified_long
@@ -203,35 +203,39 @@ BEGIN
 
 
   /* ===============================================================================================
-     POST-RUN VALIDATION
+     8. POST-RUN VALIDATION
 
      THIS MUST REMAIN THE FINAL CALLABLE STEP.
 
      The orchestration execution metadata received from the scheduler notebook is forwarded to the
      validation procedure.
 
-     For a direct SQL call with no parameters, these values are NULL here and the validation
-     procedure automatically generates its own PULSETMS_MAN_* execution identity.
+     IMPORTANT:
+       Procedure input parameters are explicitly qualified with this orchestration procedure name.
+       This prevents Databricks from attempting to resolve them as columns.
+
+     For a direct SQL call with no parameters:
+       - the orchestration parameters are NULL
+       - the validation procedure receives NULL
+       - the validation procedure automatically generates PULSETMS_MAN_* lineage
 
      The validation SP:
        - creates the history table if it does not already exist
-       - determines the reporting period
+       - determines the latest completed reporting period
        - performs Source -> Bronze -> Silver -> Gold reconciliation
        - records Healthy / Warning / Failed
        - appends one validation snapshot
-       - attaches this orchestration execution lineage
+       - attaches orchestration execution lineage
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun
   (
-    p_orchestration_run_type,
-    p_orchestration_job_id,
-    p_orchestration_job_run_id,
-    p_orchestration_task_run_id,
-    p_orchestration_execution_count
+    sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly.p_orchestration_run_type,
+    sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly.p_orchestration_job_id,
+    sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly.p_orchestration_job_run_id,
+    sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly.p_orchestration_task_run_id,
+    sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly.p_orchestration_execution_count
   );
 
 
 END;
-
-
