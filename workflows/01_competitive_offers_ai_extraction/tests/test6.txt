@@ -18,6 +18,31 @@ Selected: Google + Bing, Postpaid + HSI/Broadband + Fiber. All qualifying accoun
 Total definition: All Channels = Programmatic + Paid Social + Paid Search for Postpaid + Broadband only.
 
 
+Biddable Spend
+Weekly spend across Programmatic, Paid Social, and Paid Search. Current reporting scope: Postpaid + Broadband + Fiber.
+
+Programmatic | Source: pbi_programmatic_browsers_currentyr
+Universe: The Trade Desk, DV360, Blis, Amazon DSP, Google Ads; LOBs = Postpaid, HSI, Prepaid, TFB, Archived; Campaign Types = Standard, Search, NULL.
+Selected: Postpaid + HSI/Broadband. Current qualifying DSPs = The Trade Desk, DV360, Amazon DSP, Blis, Google Ads. No account, campaign, or DSP whitelist is applied within the selected LOB scope.
+Fiber: Not available as a Programmatic LOB in the raw source.
+
+Paid Social | Source: media_analytics_integrated_snapshot
+Universe: Facebook, Instagram, Snapchat, TikTok, LinkedIn, Pinterest, Indirect, Twitter, Reddit, Nextdoor, General MFC, Creator, Digital Sponsorship. LOBs = Postpaid, Broadband, TFB, Prepaid, Other, Assurance, Not Specified, Financial Services, T-Vision. Agencies = InHouse, Initiative, Assurance, Corp_Exec, Essence, FB ISR, Initative, TMO Accessibility, Organic Social.
+Selected: Channel Group = Paid Social + Agency = InHouse + Postpaid/Broadband.
+Current qualifying platforms: Meta, Snapchat, Pinterest, TikTok, X / Twitter. No platform, account, or campaign whitelist is applied within the selected scope.
+Fiber: Not available in the Paid Social source.
+
+Paid Search | Source: sdi_tbl_sa360_gold_campaign_daily
+Universe: Google + Bing; LOBs = Postpaid, HSI, Metro, TFB, Fiber; Campaign Types = Generic, Brand, Shopping, Unclassified, PMax, DemandGen; Advertising Channel Types = Search, Shopping, Performance Max, Discovery; Serving Status = Serving, Pending, Ended, NULL.
+Accounts: Postpaid Google/Bing, Broadband Google/Bing, Metro Google/Bing, TFB Google/Bing, Fiber Google/Bing, BTS Google/Bing.
+Selected: Google + Bing + Postpaid/HSI/Broadband/Fiber. No account, campaign-type, bidding-strategy, or serving-status filter is applied within the selected scope.
+
+Total definition:
+All Channels = Programmatic + Paid Social + Paid Search for Postpaid + Broadband + Fiber. Fiber currently comes only from Paid Search.
+
+One important correction from the old tooltip is that I would not say “Postpaid + Broadband only” anymore. Your current Biddable ALL logic includes Fiber as well, so both the opening scope and Total definition should say Postpaid + Broadband + Fiber.
+
+
 WITH base AS (
     SELECT
         CAST(date AS DATE) AS date,
