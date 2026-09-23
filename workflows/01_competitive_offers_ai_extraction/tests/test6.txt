@@ -1,3 +1,12 @@
+**Title:** Pulse TMS Validation Monitoring
+
+**Description:**
+Post-run validation framework for Dashboard Pulse TMS that reconciles Source → Bronze → Silver → Gold and maintains run-level validation history for monitoring and troubleshooting.
+
+**Comment:**
+Updated `sdi_sp_dashboardPulseTms_validation_history_perRun` to capture Databricks Job/manual execution lineage and added `sdi_tbl_dashboardPulseTms_validation_stage_perRun` so Adobe, MFC, Platform, Biddable, QGP, and UPV validations run independently before loading `sdi_tbl_dashboardPulseTms_validation_history_perRun`. Optimized source reads to validate only the required reporting week and added a 58-row completeness check before committing the final snapshot. Updated `sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly` and the scheduler notebook to pass Job ID, Job Run ID, Task Run ID, and execution count into validation. Updated the four monitoring views: `sdi_vw_dashboardPulseTms_validation_summary_perRun`, `sdi_vw_dashboardPulseTms_validation_runs_perRun`, `sdi_vw_dashboardPulseTms_validation_latest_perRun`, and `sdi_vw_dashboardPulseTms_validation_issues_perRun`.
+
+
 1. Biddable Spend — Source Validation, Selection Logic & Reporting
 
 Sources reviewed
