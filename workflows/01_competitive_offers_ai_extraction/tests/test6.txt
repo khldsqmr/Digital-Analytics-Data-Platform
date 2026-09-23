@@ -23,6 +23,21 @@ ORDER BY
 
 LIMIT 100;
 
+Statement
+Tasks
+Duration
+Rows read
+Bytes read
+Bytes written
+Genie review
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun ()
+Sep 23, 2026, 04:27 PM
+829/829
+1 min 7 s
+7
+0 B
+0 B
+
 View 1:
 validation_run_id	validation_run_ts	data_as_of_date	week_type	summary_level	data_source	metric_count	healthy_count	warning_count	failed_count	overall_status	issue_metrics	issue_summary	next_step_summary
 PULSETMS_VAL_20260923_184602_047	2026-09-23T18:46:02.047+00:00	2026-09-19	NORMAL	DATA_SOURCE	ADOBE	18	18	0	0	Healthy	None	No validation issues detected.	No action required.
