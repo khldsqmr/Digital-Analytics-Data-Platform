@@ -6,20 +6,117 @@ CATALOG.SCHEMA: prdrzranalytics.lab42
 PROCEDURE:      sdi_sp_dashboardPulseTms_validation_history_perRun
 
 PURPOSE:
-  Performs post-run reconciliation for Dashboard Pulse TMS and appends one permanent validation
-  snapshot per execution.
+  Performs post-run reconciliation for Dashboard Pulse TMS.
 
-  Supports:
-    - scheduled Databricks Job executions
-    - Job "Run now" executions
-    - manual notebook executions
-    - direct manual SQL calls
+  Every invocation:
+    1. Creates the persistent history table if it does not yet exist.
+    2. Identifies the latest completed weekly reporting Saturday.
+    3. Reconciles selected reporting metrics:
+           Source -> Bronze -> Bronze Comparable -> Silver -> Gold
+    4. Normalizes values to TWO decimal places BEFORE comparison.
+    5. Calculates absolute and percentage variance.
+    6. Identifies the layer where a mismatch occurred.
+    7. Assigns:
+           Healthy
+           Warning
+           Failed
+    8. Generates human-readable Notes and Next Step.
+    9. Appends a permanent validation snapshot.
+   10. Attaches the orchestration execution lineage to that snapshot.
 
-  Manual executions receive:
-    PULSETMS_MAN_yyyyMMdd_HHmmss_SSS
+ORCHESTRATION LINEAGE:
+  JOB:
+    Receives the actual Databricks:
+      - Job ID
+      - Job Run ID
+      - Task Run ID
+      - Task execution count
 
-  Validation executions receive:
-    PULSETMS_VAL_yyyyMMdd_HHmmss_SSS
+  MANUAL NOTEBOOK:
+    Receives a generated identifier:
+      PULSETMS_MAN_yyyyMMdd_HHmmss_SSS
+
+  DIRECT SQL CALL:
+    If no orchestration metadata is supplied, this procedure creates its own
+    PULSETMS_MAN_* identifier.
+
+  validation_run_id:
+    Identifies the validation snapshot.
+
+  orchestration_job_run_id:
+    Identifies the pipeline/orchestration execution that produced the snapshot.
+
+WHY "PER RUN":
+  The underlying PulseTMS data is weekly-grain, but the orchestration can execute daily or
+  multiple times in one day. Validation therefore represents an execution/run, not a cadence.
+
+COMMON VALIDATION DATE:
+  Uses the latest completed Saturday from:
+    sdi_vw_dashboardPulseTms_dim_qgp_calendar
+
+  Multiple executions during the same week can therefore validate the same data_as_of_date,
+  while receiving different validation_run_id values.
+
+APPLE-TO-APPLE COMPARISON:
+  Source -> Bronze:
+    Natural source value versus Bronze natural value.
+
+  Bronze -> Silver:
+    Uses bronze_comparable_value.
+
+    Adobe / Platform / Biddable:
+      Recreates the same quarter-boundary proration used by Silver:
+        BOUNDARY_FIRST = Bronze natural week * days_in_period / 7
+        NORMAL         = Bronze natural week
+
+    MFC:
+      Direct comparison because Bronze qgp_week is already aligned to QGP date.
+
+    UPV Forecast:
+      Direct comparison because Bronze is already boundary-aware/prorated upstream.
+
+    QGP:
+      Business metrics are constructed in Silver.
+      Therefore:
+        Source -> Bronze = source coverage reconciliation
+        Silver -> Gold   = named business metric reconciliation
+
+  Silver -> Gold:
+    Direct comparison because Gold primarily conforms the Silver output.
+
+PRECISION:
+  Every comparable value is ROUND(..., 2) before calculating variance.
+
+STATUS:
+  Healthy:
+    All applicable comparisons reconcile to two decimals.
+
+  Warning:
+    Any unexpected two-decimal mismatch.
+    Or expected data is unavailable in both applicable layers.
+
+  Failed:
+    Required downstream value disappears while its upstream value exists.
+    OR absolute unexplained percentage variance >= 25%.
+
+IMPORTANT:
+  A validation result with Status='Failed' is DATA QUALITY status.
+  It does not deliberately throw a SQL exception.
+
+  The orchestration job only fails when the validation procedure itself encounters
+  a technical execution error.
+
+QGP NULL TARGET EXCEPTIONS:
+  The following QGP target metrics are permitted to be NULL in both Silver and Gold:
+
+    activationsBopisOnly
+    activationsNonBopisOnly
+      -> source component target may legitimately not exist.
+
+    digitalPctNoAssistanceActivations
+    digitalPctAssistanceActivations
+      -> confirmed source QGP target absent / Silver intentionally returns NULL.
+
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
@@ -55,7 +152,10 @@ BEGIN
   DECLARE v_orchestration_execution_count INT;
 
 
-  /* Validation snapshot ID */
+  /* -----------------------------------------------------------------------------------------------
+     One validation ID for this complete validation execution.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_validation_run_id =
     CONCAT(
       'PULSETMS_VAL_',
@@ -66,7 +166,10 @@ BEGIN
     );
 
 
-  /* Fallback manual execution ID */
+  /* -----------------------------------------------------------------------------------------------
+     Fallback manual execution ID.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_manual_run_id =
     CONCAT(
       'PULSETMS_MAN_',
@@ -77,7 +180,10 @@ BEGIN
     );
 
 
-  /* Determine whether this is a Job or manual execution */
+  /* -----------------------------------------------------------------------------------------------
+     Determine whether this validation belongs to a Job execution or a manual execution.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_orchestration_run_type =
     CASE
 
@@ -91,22 +197,16 @@ BEGIN
            ) = 'MANUAL'
         THEN 'MANUAL'
 
-      WHEN
-        sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
-          LIKE 'PULSETMS_MAN_%'
+      WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+        LIKE 'PULSETMS_MAN_%'
         THEN 'MANUAL'
 
-      WHEN
-        sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id IS NULL
-
+      WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id IS NULL
         OR TRIM(
              sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
            ) = ''
-
-        OR
-          sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
-            LIKE '{{%'
-
+        OR sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+             LIKE '{{%'
         THEN 'MANUAL'
 
       ELSE 'JOB'
@@ -114,7 +214,10 @@ BEGIN
     END;
 
 
-  /* Resolve Job ID */
+  /* -----------------------------------------------------------------------------------------------
+     Job identifier.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_orchestration_job_id =
     CASE
 
@@ -134,47 +237,42 @@ BEGIN
     END;
 
 
-  /* Resolve Job Run ID */
+  /* -----------------------------------------------------------------------------------------------
+     Job Run identifier.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_orchestration_job_run_id =
     CASE
 
       WHEN v_orchestration_run_type = 'MANUAL'
         THEN COALESCE(
-
           CASE
-            WHEN
-              sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
-                LIKE 'PULSETMS_MAN_%'
-
-              THEN
-                sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+            WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+                   LIKE 'PULSETMS_MAN_%'
+              THEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
           END,
-
           v_manual_run_id
         )
 
-      ELSE
-        sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+      ELSE sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
 
     END;
 
 
-  /* Resolve Task Run ID */
+  /* -----------------------------------------------------------------------------------------------
+     Task Run identifier.
+     --------------------------------------------------------------------------------------------- */
+
   SET v_orchestration_task_run_id =
     CASE
 
       WHEN v_orchestration_run_type = 'MANUAL'
         THEN COALESCE(
-
           CASE
-            WHEN
-              sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
-                LIKE 'PULSETMS_MAN_%'
-
-              THEN
-                sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
+            WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
+                   LIKE 'PULSETMS_MAN_%'
+              THEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
           END,
-
           CONCAT(
             v_orchestration_job_run_id,
             '_T01'
@@ -182,14 +280,12 @@ BEGIN
         )
 
       ELSE COALESCE(
-
         NULLIF(
           TRIM(
             sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
           ),
           ''
         ),
-
         CONCAT(
           v_orchestration_job_run_id,
           '_T01'
@@ -199,7 +295,6 @@ BEGIN
     END;
 
 
-  /* Resolve execution / retry count */
   SET v_orchestration_execution_count =
     COALESCE(
       sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_execution_count,
@@ -208,7 +303,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     CREATE HISTORY TABLE IF NEEDED
+     STEP 0 — CREATE PERSISTENT HISTORY TABLE IF NEEDED
      =============================================================================================== */
 
   CREATE TABLE IF NOT EXISTS
@@ -217,6 +312,7 @@ BEGIN
     validation_run_id                  STRING,
     validation_run_ts                  TIMESTAMP,
 
+    /* Orchestration execution lineage */
     orchestration_run_type             STRING,
     orchestration_job_id               STRING,
     orchestration_job_run_id           STRING,
@@ -234,33 +330,87 @@ BEGIN
     comparison_scope                   STRING,
     comparison_method                  STRING,
 
+    /* ---------------------------------------------------------------------------------------------
+       VALUES
+       ------------------------------------------------------------------------------------------- */
+
     source_value                       DECIMAL(38,2),
 
+    /* Actual value physically present in Bronze. */
     bronze_value                       DECIMAL(38,2),
 
+    /*
+      Bronze value converted to the same reporting grain used by Silver.
+
+      NORMAL:
+        usually equals bronze_value.
+
+      Adobe / Platform / Biddable BOUNDARY_FIRST:
+        bronze_value * days_in_period / 7
+    */
     bronze_comparable_value            DECIMAL(38,2),
 
     silver_value                       DECIMAL(38,2),
     gold_value                         DECIMAL(38,2),
 
+    /* ---------------------------------------------------------------------------------------------
+       SOURCE -> BRONZE
+       ------------------------------------------------------------------------------------------- */
+
     source_bronze_variance             DECIMAL(38,2),
     source_bronze_variance_pct         DECIMAL(18,2),
+
+    /* ---------------------------------------------------------------------------------------------
+       BRONZE COMPARABLE -> SILVER
+       ------------------------------------------------------------------------------------------- */
 
     bronze_silver_variance             DECIMAL(38,2),
     bronze_silver_variance_pct         DECIMAL(18,2),
 
+    /* ---------------------------------------------------------------------------------------------
+       SILVER -> GOLD
+       ------------------------------------------------------------------------------------------- */
+
     silver_gold_variance               DECIMAL(38,2),
     silver_gold_variance_pct           DECIMAL(18,2),
 
+    /*
+      Warning threshold is intentionally 0.00.
+
+      After:
+        - recreating the expected transformation
+        - normalizing both sides to two decimals
+
+      any remaining mismatch is worth displaying as a Warning.
+    */
     warning_threshold_pct              DECIMAL(18,2),
+
+    /*
+      Failed is reserved for a very large unexplained reconciliation difference.
+    */
     critical_threshold_pct             DECIMAL(18,2),
 
+    /*
+      NONE
+      SOURCE_TO_BRONZE
+      BRONZE_TO_SILVER
+      SILVER_TO_GOLD
+      DATA_AVAILABILITY
+      MULTIPLE
+    */
     issue_layer                        STRING,
+
+    /*
+      Healthy
+      Warning
+      Failed
+    */
     status                             STRING,
 
     notes                              STRING,
     next_step                          STRING,
 
+    /* Debugging lineage */
     source_object                      STRING,
     bronze_object                      STRING,
     silver_object                      STRING,
@@ -282,10 +432,14 @@ BEGIN
 
 
   /* ===============================================================================================
-     VALIDATION
+     STEP 1 — APPEND CURRENT VALIDATION RUN
      =============================================================================================== */
 
   WITH
+
+  /* ===============================================================================================
+     RUN CONTEXT
+     =============================================================================================== */
 
   RunContext AS (
 
@@ -325,6 +479,7 @@ BEGIN
 
       AND cal.qgp_date <= CURRENT_DATE()
 
+      /* Databricks DAYOFWEEK: Sunday=1 ... Saturday=7 */
       AND DAYOFWEEK(cal.qgp_date) = 7
 
     ORDER BY
@@ -334,8 +489,25 @@ BEGIN
   ),
 
 
+  /* ################################################################################################
+     ADOBE
+     ################################################################################################ */
+
+
   /* ===============================================================================================
-     ADOBE SOURCE
+     ADOBE SOURCE — ALL CHANNELS
+
+     IMPORTANT PERFORMANCE NOTE:
+       The required reporting week is filtered inside each raw-source branch BEFORE the UNION and
+       ROW_NUMBER deduplication. This avoids ranking unnecessary historical source data.
+
+     These are the 14 directly sourced Adobe metrics.
+
+     Four additional Adobe totals are derived from Bronze components:
+       cartstartTotal
+       ordersUnassistedTotal
+       ordersAssistedTotal
+       ordersTotal
      =============================================================================================== */
 
   AdobeSourceUnion AS (
@@ -348,40 +520,33 @@ BEGIN
 
       'upvPostpaid' AS metric_name,
 
-      TRY_CAST(visitors AS DOUBLE)
-        AS metric_value,
+      TRY_CAST(visitors AS DOUBLE) AS metric_value,
 
       'sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo'
         AS source_table,
 
-      __insert_date
-        AS insert_date,
-
-      File_Load_datetime
-        AS file_load_datetime,
-
-      Filename
-        AS filename
+      __insert_date AS insert_date,
+      File_Load_datetime AS file_load_datetime,
+      Filename AS filename
 
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
+
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
 
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'upvHsi',
-
       TRY_CAST(visitors AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -389,22 +554,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'upvByod',
-
       TRY_CAST(visitors AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -412,22 +576,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'upvFlowTotal',
-
       TRY_CAST(visitors AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -435,22 +598,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'upvTotalAdobe',
-
       TRY_CAST(visitors AS DOUBLE),
-
       'sdi_raw_pp_pro_uvnb_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -458,22 +620,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'cartstartPostpaid',
-
       TRY_CAST(visits AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -481,22 +642,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'cartstartHsi',
-
       TRY_CAST(visits AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -504,22 +664,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'cartstartByod',
-
       TRY_CAST(visits AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -527,22 +686,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersUnassistedPostpaid',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -550,22 +708,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersUnassistedHsi',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -573,22 +730,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersUnassistedByod',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -596,22 +752,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersAssistedPostpaid',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -619,22 +774,21 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersAssistedHsi',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
@@ -642,28 +796,33 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
 
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
+
 
     UNION ALL
 
 
     SELECT
-      DATE_ADD(
-        TO_DATE(date_yyyymmdd, 'yyyyMMdd'),
-        6
-      ),
-
+      DATE_ADD(TO_DATE(date_yyyymmdd, 'yyyyMMdd'), 6),
       'ordersAssistedByod',
-
       TRY_CAST(orders AS DOUBLE),
-
       'sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo',
-
       __insert_date,
       File_Load_datetime,
       Filename
 
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
+
+    CROSS JOIN RunContext rc
+
+    WHERE
+      TO_DATE(date_yyyymmdd, 'yyyyMMdd')
+        = DATE_SUB(rc.data_as_of_date, 6)
   ),
 
 
@@ -693,9 +852,7 @@ BEGIN
 
     SELECT
       s.metric_name,
-
-      MAX(s.metric_value)
-        AS source_value
+      MAX(s.metric_value) AS source_value
 
     FROM AdobeSourceDeduped s
 
@@ -712,47 +869,23 @@ BEGIN
   AdobeBronzeBase AS (
 
     SELECT
-      MAX(b.upvPostpaid)
-        AS upvPostpaid,
+      MAX(b.upvPostpaid)                AS upvPostpaid,
+      MAX(b.upvHsi)                     AS upvHsi,
+      MAX(b.upvByod)                    AS upvByod,
+      MAX(b.upvFlowTotal)               AS upvFlowTotal,
+      MAX(b.upvTotalAdobe)              AS upvTotalAdobe,
 
-      MAX(b.upvHsi)
-        AS upvHsi,
+      MAX(b.cartstartPostpaid)          AS cartstartPostpaid,
+      MAX(b.cartstartHsi)               AS cartstartHsi,
+      MAX(b.cartstartByod)              AS cartstartByod,
 
-      MAX(b.upvByod)
-        AS upvByod,
+      MAX(b.ordersUnassistedPostpaid)   AS ordersUnassistedPostpaid,
+      MAX(b.ordersUnassistedHsi)        AS ordersUnassistedHsi,
+      MAX(b.ordersUnassistedByod)       AS ordersUnassistedByod,
 
-      MAX(b.upvFlowTotal)
-        AS upvFlowTotal,
-
-      MAX(b.upvTotalAdobe)
-        AS upvTotalAdobe,
-
-      MAX(b.cartstartPostpaid)
-        AS cartstartPostpaid,
-
-      MAX(b.cartstartHsi)
-        AS cartstartHsi,
-
-      MAX(b.cartstartByod)
-        AS cartstartByod,
-
-      MAX(b.ordersUnassistedPostpaid)
-        AS ordersUnassistedPostpaid,
-
-      MAX(b.ordersUnassistedHsi)
-        AS ordersUnassistedHsi,
-
-      MAX(b.ordersUnassistedByod)
-        AS ordersUnassistedByod,
-
-      MAX(b.ordersAssistedPostpaid)
-        AS ordersAssistedPostpaid,
-
-      MAX(b.ordersAssistedHsi)
-        AS ordersAssistedHsi,
-
-      MAX(b.ordersAssistedByod)
-        AS ordersAssistedByod
+      MAX(b.ordersAssistedPostpaid)     AS ordersAssistedPostpaid,
+      MAX(b.ordersAssistedHsi)          AS ordersAssistedHsi,
+      MAX(b.ordersAssistedByod)         AS ordersAssistedByod
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly b
@@ -826,11 +959,9 @@ BEGIN
 
     SELECT
       'cartstartTotal',
-
       cartstartPostpaid
         + cartstartHsi
         + cartstartByod
-
     FROM AdobeBronzeBase
 
     UNION ALL
@@ -858,11 +989,9 @@ BEGIN
 
     SELECT
       'ordersUnassistedTotal',
-
       ordersUnassistedPostpaid
         + ordersUnassistedHsi
         + ordersUnassistedByod
-
     FROM AdobeBronzeBase
 
     UNION ALL
@@ -890,25 +1019,21 @@ BEGIN
 
     SELECT
       'ordersAssistedTotal',
-
       ordersAssistedPostpaid
         + ordersAssistedHsi
         + ordersAssistedByod
-
     FROM AdobeBronzeBase
 
     UNION ALL
 
     SELECT
       'ordersTotal',
-
       ordersUnassistedPostpaid
         + ordersUnassistedHsi
         + ordersUnassistedByod
         + ordersAssistedPostpaid
         + ordersAssistedHsi
         + ordersAssistedByod
-
     FROM AdobeBronzeBase
   ),
 
@@ -920,7 +1045,6 @@ BEGIN
       b.bronze_value,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN
             b.bronze_value
@@ -928,7 +1052,6 @@ BEGIN
               / 7.0
 
         ELSE b.bronze_value
-
       END AS bronze_comparable_value
 
     FROM AdobeBronzeMetrics b
@@ -941,9 +1064,7 @@ BEGIN
 
     SELECT
       s.metric_name,
-
-      MAX(s.metric_value)
-        AS silver_value
+      MAX(s.metric_value) AS silver_value
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
@@ -952,9 +1073,7 @@ BEGIN
 
     WHERE
       s.qgp_date = rc.data_as_of_date
-
       AND s.channel_group = 'All Channels'
-
       AND s.metric_type = 'ADOBE_VOLUME'
 
     GROUP BY
@@ -966,9 +1085,7 @@ BEGIN
 
     SELECT
       g.metric_name,
-
-      MAX(g.metric_value)
-        AS gold_value
+      MAX(g.metric_value) AS gold_value
 
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
@@ -977,11 +1094,8 @@ BEGIN
 
     WHERE
       g.qgp_date = rc.data_as_of_date
-
       AND g.data_source = 'ADOBE'
-
       AND g.channel_group = 'All Channels'
-
       AND g.metric_type = 'ADOBE_VOLUME'
 
     GROUP BY
@@ -992,16 +1106,13 @@ BEGIN
   AdobeValidation AS (
 
     SELECT
-      'ADOBE'
-        AS data_source,
+      'ADOBE' AS data_source,
 
       b.metric_name,
 
-      'ADOBE_VOLUME'
-        AS metric_type,
+      'ADOBE_VOLUME' AS metric_type,
 
       CASE
-
         WHEN b.metric_name IN (
           'cartstartTotal',
           'ordersUnassistedTotal',
@@ -1011,16 +1122,13 @@ BEGIN
           THEN 'BRONZE_TO_GOLD'
 
         ELSE 'SOURCE_TO_GOLD'
-
       END AS comparison_scope,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
-
       END AS comparison_method,
 
       src.source_value,
@@ -1030,7 +1138,6 @@ BEGIN
       g.gold_value,
 
       CASE
-
         WHEN b.metric_name IN (
           'cartstartTotal',
           'ordersUnassistedTotal',
@@ -1040,20 +1147,13 @@ BEGIN
           THEN FALSE
 
         ELSE TRUE
-
       END AS check_source_bronze,
 
-      TRUE
-        AS check_bronze_silver,
+      TRUE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
-      TRUE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      FALSE
-        AS require_nonzero,
+      FALSE AS allow_all_null,
+      FALSE AS require_nonzero,
 
       'Adobe Improvado weekly source tables'
         AS source_object,
@@ -1082,74 +1182,43 @@ BEGIN
   ),
 
 
-  /* ===============================================================================================
-     MFC
-     =============================================================================================== */
+  /* ################################################################################################
+     MFC SPEND
+     ################################################################################################ */
+
 
   MfcSourceTyped AS (
 
     SELECT
-      TRY_CAST(raw.QGP_Week AS DATE)
-        AS qgp_week,
+      TRY_CAST(raw.QGP_Week AS DATE) AS qgp_week,
 
       CASE UPPER(TRIM(raw.LOB_Supported))
-
-        WHEN 'CONSUMER POSTPAID'
-          THEN 'POSTPAID'
-
-        WHEN 'POSTPAID'
-          THEN 'POSTPAID'
-
-        WHEN 'HSI'
-          THEN 'BROADBAND'
-
-        WHEN 'BROADBAND'
-          THEN 'BROADBAND'
-
-        WHEN 'TBG'
-          THEN 'TFB'
-
-        WHEN 'TFB'
-          THEN 'TFB'
-
+        WHEN 'CONSUMER POSTPAID' THEN 'POSTPAID'
+        WHEN 'POSTPAID'          THEN 'POSTPAID'
+        WHEN 'HSI'               THEN 'BROADBAND'
+        WHEN 'BROADBAND'         THEN 'BROADBAND'
+        WHEN 'TBG'               THEN 'TFB'
+        WHEN 'TFB'               THEN 'TFB'
         ELSE UPPER(TRIM(raw.LOB_Supported))
-
       END AS lob,
 
-      TRY_CAST(
-        raw.spend_actual
-        AS DOUBLE
-      ) AS spend_actual,
+      TRY_CAST(raw.spend_actual AS DOUBLE)
+        AS spend_actual,
 
-      TRY_CAST(
-        raw.spend_forecast
-        AS DOUBLE
-      ) AS spend_forecast,
+      TRY_CAST(raw.spend_forecast AS DOUBLE)
+        AS spend_forecast,
 
       MAX(
         CASE
-
-          WHEN TRY_CAST(
-                 raw.spend_forecast
-                 AS DOUBLE
-               ) IS NOT NULL
-
-           AND TRY_CAST(
-                 raw.spend_forecast
-                 AS DOUBLE
-               ) != 0
-
+          WHEN TRY_CAST(raw.spend_forecast AS DOUBLE) IS NOT NULL
+           AND TRY_CAST(raw.spend_forecast AS DOUBLE) != 0
             THEN 1
 
           ELSE 0
-
         END
       ) OVER (
         PARTITION BY
-          TRY_CAST(
-            raw.QGP_Week
-            AS DATE
-          )
+          TRY_CAST(raw.QGP_Week AS DATE)
       ) AS week_has_forecast
 
     FROM
@@ -1158,20 +1227,15 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      TRY_CAST(
-        raw.QGP_Week
-        AS DATE
-      ) = rc.data_as_of_date
+      TRY_CAST(raw.QGP_Week AS DATE) = rc.data_as_of_date
 
       AND raw.Channel IS NOT NULL
 
-      AND UPPER(
-            TRIM(raw.Channel)
-          ) NOT IN (
-            'OTHER (DO NOT USE)',
-            'NON-WORKING',
-            'BUDGET HELD'
-          )
+      AND UPPER(TRIM(raw.Channel)) NOT IN (
+        'OTHER (DO NOT USE)',
+        'NON-WORKING',
+        'BUDGET HELD'
+      )
 
       AND (
         (
@@ -1196,12 +1260,10 @@ BEGIN
       spend_actual,
 
       CASE
-
         WHEN week_has_forecast = 1
           THEN spend_forecast
 
         ELSE spend_actual
-
       END AS spend_forecast
 
     FROM MfcSourceTyped
@@ -1330,7 +1392,6 @@ BEGIN
       s.metric_name,
 
       CASE
-
         WHEN UPPER(TRIM(s.lob_mfc)) IN (
           'CONSUMER POSTPAID',
           'POSTPAID'
@@ -1350,7 +1411,6 @@ BEGIN
           THEN 'TFB'
 
         ELSE UPPER(TRIM(s.lob_mfc))
-
       END AS lob,
 
       s.metric_value
@@ -1362,9 +1422,7 @@ BEGIN
 
     WHERE
       s.qgp_date = rc.data_as_of_date
-
       AND s.data_source = 'MFC_SPEND_CHANNEL'
-
       AND s.channel_group = 'All Channels'
   ),
 
@@ -1434,11 +1492,7 @@ BEGIN
 
     SELECT
       g.metric_name,
-
-      UPPER(
-        TRIM(g.true_lob)
-      ) AS lob,
-
+      UPPER(TRIM(g.true_lob)) AS lob,
       g.metric_value
 
     FROM
@@ -1448,9 +1502,7 @@ BEGIN
 
     WHERE
       g.qgp_date = rc.data_as_of_date
-
       AND g.data_source = 'MFC_SPEND_CHANNEL'
-
       AND g.channel_group = 'All Channels'
   ),
 
@@ -1519,8 +1571,7 @@ BEGIN
   MfcValidation AS (
 
     SELECT
-      'MFC_SPEND'
-        AS data_source,
+      'MFC_SPEND' AS data_source,
 
       x.metric_name,
       x.metric_type,
@@ -1534,26 +1585,22 @@ BEGIN
       x.source_value,
       x.bronze_value,
 
+      /*
+        MFC Bronze is already keyed by authoritative qgp_week.
+        No validator-side natural-week proration is required.
+      */
       x.bronze_value
         AS bronze_comparable_value,
 
       x.silver_value,
       x.gold_value,
 
-      TRUE
-        AS check_source_bronze,
+      TRUE AS check_source_bronze,
+      TRUE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
-      TRUE
-        AS check_bronze_silver,
-
-      TRUE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      FALSE
-        AS require_nonzero,
+      FALSE AS allow_all_null,
+      FALSE AS require_nonzero,
 
       'sdi_vw_mfc_gold_spendGranular_weekly'
         AS source_object,
@@ -1589,7 +1636,6 @@ BEGIN
           AS gold_value
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1608,7 +1654,6 @@ BEGIN
         go.actual_broadband
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1627,7 +1672,6 @@ BEGIN
         go.actual_total
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1646,7 +1690,6 @@ BEGIN
         go.forecast_postpaid
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1665,7 +1708,6 @@ BEGIN
         go.forecast_broadband
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1684,7 +1726,6 @@ BEGIN
         go.forecast_total
 
       FROM MfcSourceAgg src
-
       CROSS JOIN MfcBronzeAgg br
       CROSS JOIN MfcSilverAgg si
       CROSS JOIN MfcGoldAgg go
@@ -1693,9 +1734,10 @@ BEGIN
   ),
 
 
-  /* ===============================================================================================
-     PLATFORM
-     =============================================================================================== */
+  /* ################################################################################################
+     PLATFORM SPEND
+     ################################################################################################ */
+
 
   PlatformSourceAgg AS (
 
@@ -1730,12 +1772,9 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      DATE_ADD(
-        CAST(raw.Date AS DATE),
-        7 - DAYOFWEEK(
-              CAST(raw.Date AS DATE)
-            )
-      ) = rc.data_as_of_date
+      CAST(raw.Date AS DATE)
+        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
+            AND rc.data_as_of_date
 
       AND UPPER(TRIM(raw.LOB)) IN (
         'POSTPAID',
@@ -1817,9 +1856,7 @@ BEGIN
 
     WHERE
       s.qgp_date = rc.data_as_of_date
-
       AND s.channel_group = 'All Channels'
-
       AND s.metric_name = 'platformSpend'
   ),
 
@@ -1858,11 +1895,8 @@ BEGIN
 
     WHERE
       g.qgp_date = rc.data_as_of_date
-
       AND g.data_source = 'PLATFORM_SPEND_CHANNEL'
-
       AND g.channel_group = 'All Channels'
-
       AND g.metric_name = 'platformSpend'
   ),
 
@@ -1882,19 +1916,16 @@ BEGIN
         AS comparison_scope,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
-
       END AS comparison_method,
 
       x.source_value,
       x.bronze_value,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN
             x.bronze_value
@@ -1902,26 +1933,17 @@ BEGIN
               / 7.0
 
         ELSE x.bronze_value
-
       END AS bronze_comparable_value,
 
       x.silver_value,
       x.gold_value,
 
-      TRUE
-        AS check_source_bronze,
+      TRUE AS check_source_bronze,
+      TRUE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
-      TRUE
-        AS check_bronze_silver,
-
-      TRUE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      FALSE
-        AS require_nonzero,
+      FALSE AS allow_all_null,
+      FALSE AS require_nonzero,
 
       'media_analytics_integrated_snapshot'
         AS source_object,
@@ -1954,7 +1976,6 @@ BEGIN
           AS gold_value
 
       FROM PlatformSourceAgg src
-
       CROSS JOIN PlatformBronzeAgg br
       CROSS JOIN PlatformSilverAgg si
       CROSS JOIN PlatformGoldAgg go
@@ -1972,7 +1993,6 @@ BEGIN
         go.spend_broadband
 
       FROM PlatformSourceAgg src
-
       CROSS JOIN PlatformBronzeAgg br
       CROSS JOIN PlatformSilverAgg si
       CROSS JOIN PlatformGoldAgg go
@@ -1990,7 +2010,6 @@ BEGIN
         go.spend_total
 
       FROM PlatformSourceAgg src
-
       CROSS JOIN PlatformBronzeAgg br
       CROSS JOIN PlatformSilverAgg si
       CROSS JOIN PlatformGoldAgg go
@@ -2001,16 +2020,16 @@ BEGIN
   ),
 
 
-  /* ===============================================================================================
-     BIDDABLE
-     =============================================================================================== */
+  /* ################################################################################################
+     BIDDABLE SPEND
+     ################################################################################################ */
+
 
   BiddableSourceAtomic AS (
 
-    /* Programmatic */
+    /* PROGRAMMATIC */
     SELECT
       CASE
-
         WHEN UPPER(TRIM(raw.lob)) IN (
           'POSTPAID',
           'CONSUMER POSTPAID'
@@ -2022,13 +2041,10 @@ BEGIN
           'BROADBAND'
         )
           THEN 'BROADBAND'
-
       END AS lob,
 
-      TRY_CAST(
-        raw.spend
-        AS DOUBLE
-      ) AS spend
+      TRY_CAST(raw.spend AS DOUBLE)
+        AS spend
 
     FROM
       prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr raw
@@ -2036,12 +2052,9 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      DATE_ADD(
-        CAST(raw.date AS DATE),
-        7 - DAYOFWEEK(
-              CAST(raw.date AS DATE)
-            )
-      ) = rc.data_as_of_date
+      CAST(raw.date AS DATE)
+        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
+            AND rc.data_as_of_date
 
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
@@ -2054,10 +2067,9 @@ BEGIN
     UNION ALL
 
 
-    /* Paid Social */
+    /* PAID SOCIAL */
     SELECT
       CASE
-
         WHEN UPPER(TRIM(raw.LOB)) IN (
           'POSTPAID',
           'CONSUMER POSTPAID'
@@ -2069,13 +2081,10 @@ BEGIN
           'BROADBAND'
         )
           THEN 'BROADBAND'
-
       END AS lob,
 
-      TRY_CAST(
-        raw.Spend
-        AS DOUBLE
-      ) AS spend
+      TRY_CAST(raw.Spend AS DOUBLE)
+        AS spend
 
     FROM
       prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
@@ -2083,20 +2092,13 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      DATE_ADD(
-        CAST(raw.Date AS DATE),
-        7 - DAYOFWEEK(
-              CAST(raw.Date AS DATE)
-            )
-      ) = rc.data_as_of_date
+      CAST(raw.Date AS DATE)
+        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
+            AND rc.data_as_of_date
 
-      AND UPPER(
-            TRIM(raw.Channel_Group_Name)
-          ) = 'PAID SOCIAL'
+      AND UPPER(TRIM(raw.Channel_Group_Name)) = 'PAID SOCIAL'
 
-      AND UPPER(
-            TRIM(raw.Agency)
-          ) = 'INHOUSE'
+      AND UPPER(TRIM(raw.Agency)) = 'INHOUSE'
 
       AND UPPER(TRIM(raw.LOB)) IN (
         'POSTPAID',
@@ -2109,10 +2111,9 @@ BEGIN
     UNION ALL
 
 
-    /* Paid Search */
+    /* PAID SEARCH */
     SELECT
       CASE
-
         WHEN UPPER(TRIM(raw.lob)) IN (
           'POSTPAID',
           'CONSUMER POSTPAID'
@@ -2127,13 +2128,10 @@ BEGIN
 
         WHEN UPPER(TRIM(raw.lob)) = 'FIBER'
           THEN 'FIBER'
-
       END AS lob,
 
-      TRY_CAST(
-        raw.cost
-        AS DOUBLE
-      ) AS spend
+      TRY_CAST(raw.cost AS DOUBLE)
+        AS spend
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily raw
@@ -2141,12 +2139,9 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      DATE_ADD(
-        CAST(raw.date AS DATE),
-        7 - DAYOFWEEK(
-              CAST(raw.date AS DATE)
-            )
-      ) = rc.data_as_of_date
+      CAST(raw.date AS DATE)
+        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
+            AND rc.data_as_of_date
 
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
@@ -2211,7 +2206,6 @@ BEGIN
 
     SELECT
       CASE
-
         WHEN UPPER(TRIM(b.lob)) IN (
           'POSTPAID',
           'CONSUMER POSTPAID'
@@ -2226,7 +2220,6 @@ BEGIN
 
         WHEN UPPER(TRIM(b.lob)) = 'FIBER'
           THEN 'FIBER'
-
       END AS lob,
 
       b.spend
@@ -2307,6 +2300,9 @@ BEGIN
         END
       ) AS spend_fiber,
 
+      /*
+        ALL is already the synthetic total.
+      */
       SUM(
         CASE
           WHEN UPPER(TRIM(s.lob)) = 'ALL'
@@ -2322,9 +2318,7 @@ BEGIN
 
     WHERE
       s.qgp_date = rc.data_as_of_date
-
       AND s.data_source = 'BIDDABLE_SPEND_CHANNEL'
-
       AND s.channel_group = 'All Channels'
   ),
 
@@ -2367,11 +2361,8 @@ BEGIN
 
     WHERE
       g.qgp_date = rc.data_as_of_date
-
       AND g.data_source = 'BIDDABLE_SPEND_CHANNEL'
-
       AND g.channel_group = 'All Channels'
-
       AND g.metric_name = 'biddableSpend'
   ),
 
@@ -2391,19 +2382,16 @@ BEGIN
         AS comparison_scope,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
-
       END AS comparison_method,
 
       x.source_value,
       x.bronze_value,
 
       CASE
-
         WHEN rc.week_type = 'BOUNDARY_FIRST'
           THEN
             x.bronze_value
@@ -2411,26 +2399,17 @@ BEGIN
               / 7.0
 
         ELSE x.bronze_value
-
       END AS bronze_comparable_value,
 
       x.silver_value,
       x.gold_value,
 
-      TRUE
-        AS check_source_bronze,
+      TRUE AS check_source_bronze,
+      TRUE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
-      TRUE
-        AS check_bronze_silver,
-
-      TRUE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      FALSE
-        AS require_nonzero,
+      FALSE AS allow_all_null,
+      FALSE AS require_nonzero,
 
       'Programmatic + Paid Social + SA360'
         AS source_object,
@@ -2463,7 +2442,6 @@ BEGIN
           AS gold_value
 
       FROM BiddableSourceAgg src
-
       CROSS JOIN BiddableBronzeAgg br
       CROSS JOIN BiddableSilverAgg si
       CROSS JOIN BiddableGoldAgg go
@@ -2481,7 +2459,6 @@ BEGIN
         go.spend_broadband
 
       FROM BiddableSourceAgg src
-
       CROSS JOIN BiddableBronzeAgg br
       CROSS JOIN BiddableSilverAgg si
       CROSS JOIN BiddableGoldAgg go
@@ -2499,7 +2476,6 @@ BEGIN
         go.spend_fiber
 
       FROM BiddableSourceAgg src
-
       CROSS JOIN BiddableBronzeAgg br
       CROSS JOIN BiddableSilverAgg si
       CROSS JOIN BiddableGoldAgg go
@@ -2517,7 +2493,6 @@ BEGIN
         go.spend_total
 
       FROM BiddableSourceAgg src
-
       CROSS JOIN BiddableBronzeAgg br
       CROSS JOIN BiddableSilverAgg si
       CROSS JOIN BiddableGoldAgg go
@@ -2528,9 +2503,10 @@ BEGIN
   ),
 
 
-  /* ===============================================================================================
-     QGP
-     =============================================================================================== */
+  /* ################################################################################################
+     QGP SOURCE -> BRONZE COVERAGE
+     ################################################################################################ */
+
 
   QgpSourceScoped AS (
 
@@ -2553,10 +2529,8 @@ BEGIN
       TRIM(raw.Page)
         AS page,
 
-      TRY_CAST(
-        raw.InsertDateTime
-        AS TIMESTAMP
-      ) AS insert_datetime
+      TRY_CAST(raw.InsertDateTime AS TIMESTAMP)
+        AS insert_datetime
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly raw
@@ -2564,10 +2538,8 @@ BEGIN
     CROSS JOIN RunContext rc
 
     WHERE
-      TRY_CAST(
-        raw.WeekEnding
-        AS DATE
-      ) = rc.data_as_of_date
+      TRY_CAST(raw.WeekEnding AS DATE)
+        = rc.data_as_of_date
 
       AND (
 
@@ -2626,9 +2598,8 @@ BEGIN
           )
         )
 
-        OR LOWER(
-             TRIM(raw.MetricName)
-           ) = 'store traffic (excl store-in-store)'
+        OR LOWER(TRIM(raw.MetricName))
+          = 'store traffic (excl store-in-store)'
       )
   ),
 
@@ -2659,10 +2630,8 @@ BEGIN
   QgpSourceCoverage AS (
 
     SELECT
-      CAST(
-        COUNT(*)
-        AS DOUBLE
-      ) AS source_value
+      CAST(COUNT(*) AS DOUBLE)
+        AS source_value
 
     FROM QgpSourceDeduped
   ),
@@ -2671,10 +2640,8 @@ BEGIN
   QgpBronzeCoverage AS (
 
     SELECT
-      CAST(
-        COUNT(*)
-        AS DOUBLE
-      ) AS bronze_value
+      CAST(COUNT(*) AS DOUBLE)
+        AS bronze_value
 
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly b
@@ -2716,20 +2683,16 @@ BEGIN
       CAST(NULL AS DOUBLE)
         AS gold_value,
 
-      TRUE
-        AS check_source_bronze,
+      TRUE AS check_source_bronze,
+      FALSE AS check_bronze_silver,
+      FALSE AS check_silver_gold,
 
-      FALSE
-        AS check_bronze_silver,
+      FALSE AS allow_all_null,
 
-      FALSE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      TRUE
-        AS require_nonzero,
+      /*
+        0 -> 0 does not prove that QGP is healthy.
+      */
+      TRUE AS require_nonzero,
 
       'sdi_tbl_qgpArchive_bronze_retained_weekly'
         AS source_object,
@@ -2751,8 +2714,7 @@ BEGIN
 
   QgpMetricNames AS (
 
-    SELECT
-      metric_name
+    SELECT metric_name
 
     FROM VALUES
       ('activationsBopis'),
@@ -2774,8 +2736,7 @@ BEGIN
 
   QgpMetricTypes AS (
 
-    SELECT
-      metric_type
+    SELECT metric_type
 
     FROM VALUES
       ('QGP_ACTUAL'),
@@ -2872,14 +2833,9 @@ BEGIN
       s.silver_value,
       g.gold_value,
 
-      FALSE
-        AS check_source_bronze,
-
-      FALSE
-        AS check_bronze_silver,
-
-      TRUE
-        AS check_silver_gold,
+      FALSE AS check_source_bronze,
+      FALSE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
       CASE
 
@@ -2901,8 +2857,7 @@ BEGIN
 
       END AS allow_all_null,
 
-      FALSE
-        AS require_nonzero,
+      FALSE AS require_nonzero,
 
       CAST(NULL AS STRING)
         AS source_object,
@@ -2928,9 +2883,10 @@ BEGIN
   ),
 
 
-  /* ===============================================================================================
+  /* ################################################################################################
      UPV FORECAST
-     =============================================================================================== */
+     ################################################################################################ */
+
 
   UpvForecastBronze AS (
 
@@ -3039,20 +2995,12 @@ BEGIN
       x.silver_value,
       x.gold_value,
 
-      FALSE
-        AS check_source_bronze,
+      FALSE AS check_source_bronze,
+      TRUE AS check_bronze_silver,
+      TRUE AS check_silver_gold,
 
-      TRUE
-        AS check_bronze_silver,
-
-      TRUE
-        AS check_silver_gold,
-
-      FALSE
-        AS allow_all_null,
-
-      FALSE
-        AS require_nonzero,
+      FALSE AS allow_all_null,
+      FALSE AS require_nonzero,
 
       'External UPV Forecast Bronze upload notebook'
         AS source_object,
@@ -3082,7 +3030,6 @@ BEGIN
           AS gold_value
 
       FROM UpvForecastBronze br
-
       CROSS JOIN UpvForecastSilver si
       CROSS JOIN UpvForecastGold go
 
@@ -3098,7 +3045,6 @@ BEGIN
         go.upv_webapp_forecast
 
       FROM UpvForecastBronze br
-
       CROSS JOIN UpvForecastSilver si
       CROSS JOIN UpvForecastGold go
 
@@ -3106,45 +3052,42 @@ BEGIN
   ),
 
 
+  /* ===============================================================================================
+     COMBINE ALL VALIDATION CHECKS
+     =============================================================================================== */
+
   AllValidationRows AS (
 
-    SELECT *
-    FROM AdobeValidation
+    SELECT * FROM AdobeValidation
 
     UNION ALL
 
-    SELECT *
-    FROM MfcValidation
+    SELECT * FROM MfcValidation
 
     UNION ALL
 
-    SELECT *
-    FROM PlatformValidation
+    SELECT * FROM PlatformValidation
 
     UNION ALL
 
-    SELECT *
-    FROM BiddableValidation
+    SELECT * FROM BiddableValidation
 
     UNION ALL
 
-    SELECT *
-    FROM QgpCoverageValidation
+    SELECT * FROM QgpCoverageValidation
 
     UNION ALL
 
-    SELECT *
-    FROM QgpMetricValidation
+    SELECT * FROM QgpMetricValidation
 
     UNION ALL
 
-    SELECT *
-    FROM UpvForecastValidation
+    SELECT * FROM UpvForecastValidation
   ),
 
 
   /* ===============================================================================================
-     NORMALIZE TO TWO DECIMALS
+     NORMALIZE EVERYTHING TO TWO DECIMAL PLACES BEFORE COMPARISON
      =============================================================================================== */
 
   Normalized AS (
@@ -3226,7 +3169,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     VARIANCES
+     CALCULATE LAYER VARIANCES
      =============================================================================================== */
 
   Variances AS (
@@ -3234,108 +3177,96 @@ BEGIN
     SELECT
       *,
 
-      CASE
+      /* SOURCE -> BRONZE */
 
+      CASE
         WHEN check_source_bronze
          AND source_value IS NOT NULL
          AND bronze_value IS NOT NULL
-
           THEN CAST(
             bronze_value - source_value
             AS DECIMAL(38,2)
           )
-
       END AS source_bronze_variance,
 
-
       CASE
-
         WHEN check_source_bronze
          AND source_value IS NOT NULL
          AND source_value != 0
          AND bronze_value IS NOT NULL
-
           THEN CAST(
             ROUND(
-              100.0 * TRY_DIVIDE(
-                bronze_value - source_value,
-                ABS(source_value)
-              ),
+              100.0
+                * TRY_DIVIDE(
+                    bronze_value - source_value,
+                    ABS(source_value)
+                  ),
               2
             )
             AS DECIMAL(18,2)
           )
-
       END AS source_bronze_variance_pct,
 
 
-      CASE
+      /* BRONZE COMPARABLE -> SILVER */
 
+      CASE
         WHEN check_bronze_silver
          AND bronze_comparable_value IS NOT NULL
          AND silver_value IS NOT NULL
-
           THEN CAST(
             silver_value - bronze_comparable_value
             AS DECIMAL(38,2)
           )
-
       END AS bronze_silver_variance,
 
-
       CASE
-
         WHEN check_bronze_silver
          AND bronze_comparable_value IS NOT NULL
          AND bronze_comparable_value != 0
          AND silver_value IS NOT NULL
-
           THEN CAST(
             ROUND(
-              100.0 * TRY_DIVIDE(
-                silver_value - bronze_comparable_value,
-                ABS(bronze_comparable_value)
-              ),
+              100.0
+                * TRY_DIVIDE(
+                    silver_value - bronze_comparable_value,
+                    ABS(bronze_comparable_value)
+                  ),
               2
             )
             AS DECIMAL(18,2)
           )
-
       END AS bronze_silver_variance_pct,
 
 
-      CASE
+      /* SILVER -> GOLD */
 
+      CASE
         WHEN check_silver_gold
          AND silver_value IS NOT NULL
          AND gold_value IS NOT NULL
-
           THEN CAST(
             gold_value - silver_value
             AS DECIMAL(38,2)
           )
-
       END AS silver_gold_variance,
 
-
       CASE
-
         WHEN check_silver_gold
          AND silver_value IS NOT NULL
          AND silver_value != 0
          AND gold_value IS NOT NULL
-
           THEN CAST(
             ROUND(
-              100.0 * TRY_DIVIDE(
-                gold_value - silver_value,
-                ABS(silver_value)
-              ),
+              100.0
+                * TRY_DIVIDE(
+                    gold_value - silver_value,
+                    ABS(silver_value)
+                  ),
               2
             )
             AS DECIMAL(18,2)
           )
-
       END AS silver_gold_variance_pct
 
     FROM Normalized
@@ -3343,7 +3274,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     ISSUE FLAGS
+     DETECT RECONCILIATION ISSUES
      =============================================================================================== */
 
   IssueFlags AS (
@@ -3351,8 +3282,9 @@ BEGIN
     SELECT
       *,
 
-      CASE
+      /* SOURCE -> BRONZE */
 
+      CASE
         WHEN check_source_bronze = TRUE
          AND (
            (
@@ -3375,16 +3307,15 @@ BEGIN
              AND source_value != bronze_value
            )
          )
-
           THEN TRUE
 
         ELSE FALSE
-
       END AS source_bronze_issue,
 
 
-      CASE
+      /* BRONZE -> SILVER */
 
+      CASE
         WHEN check_bronze_silver = TRUE
          AND (
            (
@@ -3407,16 +3338,15 @@ BEGIN
              AND bronze_comparable_value != silver_value
            )
          )
-
           THEN TRUE
 
         ELSE FALSE
-
       END AS bronze_silver_issue,
 
 
-      CASE
+      /* SILVER -> GOLD */
 
+      CASE
         WHEN check_silver_gold = TRUE
          AND (
            (
@@ -3439,18 +3369,19 @@ BEGIN
              AND silver_value != gold_value
            )
          )
-
           THEN TRUE
 
         ELSE FALSE
-
       END AS silver_gold_issue,
 
+
+      /* DATA AVAILABILITY */
 
       CASE
 
         WHEN allow_all_null = TRUE
           THEN FALSE
+
 
         WHEN require_nonzero = TRUE
          AND COALESCE(
@@ -3466,20 +3397,24 @@ BEGIN
              ) = 0
           THEN TRUE
 
+
         WHEN check_source_bronze = TRUE
          AND source_value IS NULL
          AND bronze_value IS NULL
           THEN TRUE
+
 
         WHEN check_bronze_silver = TRUE
          AND bronze_comparable_value IS NULL
          AND silver_value IS NULL
           THEN TRUE
 
+
         WHEN check_silver_gold = TRUE
          AND silver_value IS NULL
          AND gold_value IS NULL
           THEN TRUE
+
 
         ELSE FALSE
 
@@ -3490,7 +3425,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     CLASSIFICATION
+     CLASSIFY STATUS + ISSUE LAYER
      =============================================================================================== */
 
   Classified AS (
@@ -3505,6 +3440,7 @@ BEGIN
          AND gold_value IS NULL
           THEN 'NONE'
 
+
         WHEN
           (
             CASE
@@ -3512,17 +3448,13 @@ BEGIN
                 THEN 1
               ELSE 0
             END
-
             +
-
             CASE
               WHEN bronze_silver_issue
                 THEN 1
               ELSE 0
             END
-
             +
-
             CASE
               WHEN silver_gold_issue
                 THEN 1
@@ -3531,17 +3463,22 @@ BEGIN
           ) > 1
           THEN 'MULTIPLE'
 
+
         WHEN source_bronze_issue
           THEN 'SOURCE_TO_BRONZE'
+
 
         WHEN bronze_silver_issue
           THEN 'BRONZE_TO_SILVER'
 
+
         WHEN silver_gold_issue
           THEN 'SILVER_TO_GOLD'
 
+
         WHEN data_availability_issue
           THEN 'DATA_AVAILABILITY'
+
 
         ELSE 'NONE'
 
@@ -3629,7 +3566,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     FINAL OUTPUT
+     HUMAN-READABLE NOTES + NEXT STEP
      =============================================================================================== */
 
   FinalOutput AS (
@@ -3671,12 +3608,15 @@ BEGIN
       status,
 
 
+      /* -------------------------------------------------------------------------------------------
+         NOTES
+         ----------------------------------------------------------------------------------------- */
+
       CASE
 
         WHEN allow_all_null = TRUE
          AND silver_value IS NULL
          AND gold_value IS NULL
-
           THEN
             'Silver and Gold are both NULL as permitted by this metric definition.'
 
@@ -3684,7 +3624,6 @@ BEGIN
         WHEN check_source_bronze = TRUE
          AND source_value IS NOT NULL
          AND bronze_value IS NULL
-
           THEN CONCAT(
             'Critical: Source contains ',
             CAST(source_value AS STRING),
@@ -3695,7 +3634,6 @@ BEGIN
         WHEN check_bronze_silver = TRUE
          AND bronze_comparable_value IS NOT NULL
          AND silver_value IS NULL
-
           THEN CONCAT(
             'Critical: Bronze comparable value is ',
             CAST(bronze_comparable_value AS STRING),
@@ -3706,7 +3644,6 @@ BEGIN
         WHEN check_silver_gold = TRUE
          AND silver_value IS NOT NULL
          AND gold_value IS NULL
-
           THEN CONCAT(
             'Critical: Silver contains ',
             CAST(silver_value AS STRING),
@@ -3715,7 +3652,6 @@ BEGIN
 
 
         WHEN issue_layer = 'MULTIPLE'
-
           THEN CONCAT(
             'Multiple reconciliation differences detected. ',
             'Source -> Bronze variance: ',
@@ -3753,7 +3689,6 @@ BEGIN
 
 
         WHEN issue_layer = 'SOURCE_TO_BRONZE'
-
           THEN CONCAT(
             'Source -> Bronze does not reconcile at two-decimal precision. ',
             'Variance = ',
@@ -3771,7 +3706,6 @@ BEGIN
 
 
         WHEN issue_layer = 'BRONZE_TO_SILVER'
-
           THEN CONCAT(
             'Bronze Comparable -> Silver does not reconcile at two-decimal precision. ',
             'Bronze = ',
@@ -3804,7 +3738,6 @@ BEGIN
 
 
         WHEN issue_layer = 'SILVER_TO_GOLD'
-
           THEN CONCAT(
             'Silver -> Gold does not reconcile at two-decimal precision. ',
             'Variance = ',
@@ -3837,6 +3770,10 @@ BEGIN
       END AS notes,
 
 
+      /* -------------------------------------------------------------------------------------------
+         NEXT STEP
+         ----------------------------------------------------------------------------------------- */
+
       CASE
 
         WHEN status = 'Healthy'
@@ -3844,7 +3781,6 @@ BEGIN
 
 
         WHEN issue_layer = 'SOURCE_TO_BRONZE'
-
           THEN CONCAT(
             'Compare ',
             COALESCE(
@@ -3861,7 +3797,6 @@ BEGIN
 
 
         WHEN issue_layer = 'BRONZE_TO_SILVER'
-
           THEN CONCAT(
             'Review ',
             COALESCE(
@@ -3873,7 +3808,6 @@ BEGIN
 
 
         WHEN issue_layer = 'SILVER_TO_GOLD'
-
           THEN CONCAT(
             'Review ',
             COALESCE(
@@ -3890,7 +3824,6 @@ BEGIN
 
 
         WHEN issue_layer = 'DATA_AVAILABILITY'
-
           THEN CONCAT(
             'Confirm that the expected source/publication completed for ',
             CAST(
@@ -3919,7 +3852,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     APPEND VALIDATION SNAPSHOT
+     APPEND SNAPSHOT
      =============================================================================================== */
 
   INSERT INTO
@@ -4022,7 +3955,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     ATTACH ORCHESTRATION LINEAGE TO THE CURRENT VALIDATION SNAPSHOT
+     STEP 2 — ATTACH ORCHESTRATION LINEAGE TO THIS VALIDATION SNAPSHOT
      =============================================================================================== */
 
   UPDATE
