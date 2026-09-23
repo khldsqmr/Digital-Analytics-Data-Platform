@@ -1,42 +1,52 @@
-SELECT
-  validation_run_id,
-  validation_run_ts,
+1. Biddable Spend — Source Validation, Selection Logic & Reporting
 
-  orchestration_run_type,
-  orchestration_job_id,
-  orchestration_job_run_id,
-  orchestration_task_run_id,
-  orchestration_execution_count,
+Sources reviewed
 
-  data_as_of_date,
-  data_source,
-  metric_name,
-  status
+Programmatic: prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+Paid Social: prdrzranalytics.lab42.media_analytics_integrated_snapshot
+Paid Search: prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily
 
-FROM
-  prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
+Work completed
 
-ORDER BY
-  validation_run_ts DESC,
-  data_source,
-  metric_name
+Validated actual LOBs, DSPs/platforms, agencies, accounts, campaign types, statuses, etc.
+Confirmed our selection logic for Programmatic, Paid Social and Paid Search.
+Confirmed Fiber treatment and that it currently comes only through Paid Search.
+Built source-universe and selected-universe diagnostic queries.
+Developed the 3 Source Universe & Our Selection slides.
+Updated the Tableau Biddable Spend tooltip and reporting definitions.
+2. QGP — Metric Enhancements & Business-Facing Reporting
 
-LIMIT 100;
+Main Silver table
+prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
 
-Statement
-Tasks
-Duration
-Rows read
-Bytes read
-Bytes written
-Genie review
-CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun ()
-Sep 23, 2026, 04:27 PM
-829/829
-1 min 7 s
-7
-0 B
-0 B
+Stored procedure
+prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_qgp_weekly()
+
+New QGP metrics worked on
+
+activationsBopisOnly
+activationsNonBopisOnly
+
+You separated the existing combined Phone Activation metric into its underlying components:
+
+BOPIS Only
+Source metric: ConsumerPostpaidNewPhoneBANBOPISUnassistedActivationsTM1MappedDigital
+Non-BOPIS Only
+Source metric: ConsumerPostpaidNewPhoneBANNonBOPISUnassistedActivationsTM1MappedDigital
+
+You worked on supporting both Actuals and QGP Targets, while retaining the existing combined activationsBopis metric.
+
+You also worked through the downstream impacts:
+
+Adding both metrics into the QGP Silver unpivot
+Allowing the existing generic WoW / YoY / LY logic to handle them
+Having them flow into Gold Long
+Adding corresponding fields into Gold Wide
+Mapping them to true_lob = 'POSTPAID'
+QA logic such as:
+activationsBopis = activationsBopisOnly + activationsNonBopisOnly for actuals
+
+
 
 View 1:
 validation_run_id	validation_run_ts	data_as_of_date	week_type	summary_level	data_source	metric_count	healthy_count	warning_count	failed_count	overall_status	issue_metrics	issue_summary	next_step_summary
