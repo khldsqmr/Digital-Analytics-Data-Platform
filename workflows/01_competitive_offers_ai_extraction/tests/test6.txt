@@ -1,7 +1,27 @@
-[UNRESOLVED_COLUMN.WITHOUT_SUGGESTION] A column, variable, or function parameter with name `p_orchestration_run_type` cannot be resolved.  SQLSTATE: 42703
-== SQL (line 229, position 5) ==
-    p_orchestration_run_type,
-    ^^^^^^^^^^^^^^^^^^^^^^^^
+SELECT
+  validation_run_id,
+  validation_run_ts,
+
+  orchestration_run_type,
+  orchestration_job_id,
+  orchestration_job_run_id,
+  orchestration_task_run_id,
+  orchestration_execution_count,
+
+  data_as_of_date,
+  data_source,
+  metric_name,
+  status
+
+FROM
+  prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
+
+ORDER BY
+  validation_run_ts DESC,
+  data_source,
+  metric_name
+
+LIMIT 100;
 
 View 1:
 validation_run_id	validation_run_ts	data_as_of_date	week_type	summary_level	data_source	metric_count	healthy_count	warning_count	failed_count	overall_status	issue_metrics	issue_summary	next_step_summary
