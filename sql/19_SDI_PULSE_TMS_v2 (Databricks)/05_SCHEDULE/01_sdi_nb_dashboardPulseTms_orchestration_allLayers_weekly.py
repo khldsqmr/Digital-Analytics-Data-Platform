@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 #
 #   Do NOT call the validation procedure separately from this notebook.
 # ================================================================================================
-
+  
 
 # Full orchestration stored procedure name
 procedure_name = (
