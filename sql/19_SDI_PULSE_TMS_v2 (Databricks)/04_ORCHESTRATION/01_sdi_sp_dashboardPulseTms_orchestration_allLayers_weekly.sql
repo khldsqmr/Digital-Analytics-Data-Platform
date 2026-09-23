@@ -137,6 +137,21 @@ BEGIN
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();
 
+  /* ===============================================================================================
+     POST-RUN VALIDATION
+
+     IMPORTANT:
+       This must remain AFTER every Bronze/Silver refresh.
+
+       Gold is live, so calling validation here immediately reads the final current Gold state.
+
+       One row set is appended to:
+         sdi_tbl_dashboardPulseTms_validation_history_perRun
+
+       for every orchestration execution.
+     =============================================================================================== */
+
+  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun();
 
   /* ===============================================================================================
      DASHBOARD PULSE TMS GOLD LAYER: LIVE VIEWS
