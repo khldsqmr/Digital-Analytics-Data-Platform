@@ -8,84 +8,24 @@ PROCEDURE:      sdi_sp_dashboardPulseTms_validation_history_perRun
 PURPOSE:
   Performs post-run reconciliation for Dashboard Pulse TMS.
 
-  Every invocation:
-    1. Creates the persistent history table if it does not yet exist.
-    2. Identifies the latest completed weekly reporting Saturday.
-    3. Reconciles selected reporting metrics:
-           Source -> Bronze -> Bronze Comparable -> Silver -> Gold
-    4. Normalizes values to TWO decimal places BEFORE comparison.
-    5. Calculates absolute and percentage variance.
-    6. Identifies the layer where a mismatch occurred.
-    7. Assigns:
-           Healthy
-           Warning
-           Failed
-    8. Generates human-readable Notes and Next Step.
-    9. Appends a permanent validation snapshot.
-   10. Attaches the orchestration execution lineage to that snapshot.
+DESIGN:
+  - One validation_run_id per invocation.
+  - One common completed Saturday is selected once at the start.
+  - Each validation domain is executed as its own INSERT into a small staging table:
+      Adobe -> MFC -> Platform -> Biddable -> QGP -> UPV Forecast
+  - The final history INSERT reads only the staged rows for the current validation_run_id.
+  - Successful stage rows are deleted only after the history snapshot is written.
+  - If a technical failure occurs mid-run, already-staged rows remain available for debugging.
 
-ORCHESTRATION LINEAGE:
-  JOB:
-    Receives the actual Databricks:
-      - Job ID
-      - Job Run ID
-      - Task Run ID
-      - Task execution count
-
-  MANUAL NOTEBOOK:
-    Receives a generated identifier:
-      PULSETMS_MAN_yyyyMMdd_HHmmss_SSS
-
-  DIRECT SQL CALL:
-    If no orchestration metadata is supplied, this procedure creates its own
-    PULSETMS_MAN_* identifier.
-
-  validation_run_id:
-    Identifies the validation snapshot.
-
-  orchestration_job_run_id:
-    Identifies the pipeline/orchestration execution that produced the snapshot.
-
-WHY "PER RUN":
-  The underlying PulseTMS data is weekly-grain, but the orchestration can execute daily or
-  multiple times in one day. Validation therefore represents an execution/run, not a cadence.
-
-COMMON VALIDATION DATE:
-  Uses the latest completed Saturday from:
-    sdi_vw_dashboardPulseTms_dim_qgp_calendar
-
-  Multiple executions during the same week can therefore validate the same data_as_of_date,
-  while receiving different validation_run_id values.
-
-APPLE-TO-APPLE COMPARISON:
-  Source -> Bronze:
-    Natural source value versus Bronze natural value.
-
-  Bronze -> Silver:
-    Uses bronze_comparable_value.
-
-    Adobe / Platform / Biddable:
-      Recreates the same quarter-boundary proration used by Silver:
-        BOUNDARY_FIRST = Bronze natural week * days_in_period / 7
-        NORMAL         = Bronze natural week
-
-    MFC:
-      Direct comparison because Bronze qgp_week is already aligned to QGP date.
-
-    UPV Forecast:
-      Direct comparison because Bronze is already boundary-aware/prorated upstream.
-
-    QGP:
-      Business metrics are constructed in Silver.
-      Therefore:
-        Source -> Bronze = source coverage reconciliation
-        Silver -> Gold   = named business metric reconciliation
-
-  Silver -> Gold:
-    Direct comparison because Gold primarily conforms the Silver output.
-
-PRECISION:
-  Every comparable value is ROUND(..., 2) before calculating variance.
+EXPECTED METRIC COUNT:
+  Adobe         18
+  MFC            6
+  Platform       3
+  Biddable       4
+  QGP           25
+  UPV Forecast   2
+  ----------------
+  Total         58
 
 STATUS:
   Healthy:
@@ -100,22 +40,8 @@ STATUS:
     OR absolute unexplained percentage variance >= 25%.
 
 IMPORTANT:
-  A validation result with Status='Failed' is DATA QUALITY status.
+  A validation result with status = 'Failed' is a DATA QUALITY result.
   It does not deliberately throw a SQL exception.
-
-  The orchestration job only fails when the validation procedure itself encounters
-  a technical execution error.
-
-QGP NULL TARGET EXCEPTIONS:
-  The following QGP target metrics are permitted to be NULL in both Silver and Gold:
-
-    activationsBopisOnly
-    activationsNonBopisOnly
-      -> source component target may legitimately not exist.
-
-    digitalPctNoAssistanceActivations
-    digitalPctAssistanceActivations
-      -> confirmed source QGP target absent / Silver intentionally returns NULL.
 
 ================================================================================================= */
 
@@ -137,7 +63,7 @@ AS
 BEGIN
 
   /* ===============================================================================================
-     EXECUTION LINEAGE
+     STEP 0 — EXECUTION CONTEXT
      =============================================================================================== */
 
   DECLARE v_context_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP();
@@ -151,39 +77,32 @@ BEGIN
   DECLARE v_orchestration_task_run_id STRING;
   DECLARE v_orchestration_execution_count INT;
 
+  DECLARE v_data_as_of_date DATE;
+  DECLARE v_week_type STRING;
+  DECLARE v_days_in_period INT;
 
-  /* -----------------------------------------------------------------------------------------------
-     One validation ID for this complete validation execution.
-     --------------------------------------------------------------------------------------------- */
+  DECLARE v_warning_threshold_pct DECIMAL(18,2) DEFAULT 0.00;
+  DECLARE v_critical_threshold_pct DECIMAL(18,2) DEFAULT 25.00;
+  DECLARE v_stage_metric_count INT;
 
+
+  /* Validation snapshot ID */
   SET v_validation_run_id =
     CONCAT(
       'PULSETMS_VAL_',
-      DATE_FORMAT(
-        v_context_ts,
-        'yyyyMMdd_HHmmss_SSS'
-      )
+      DATE_FORMAT(v_context_ts, 'yyyyMMdd_HHmmss_SSS')
     );
 
 
-  /* -----------------------------------------------------------------------------------------------
-     Fallback manual execution ID.
-     --------------------------------------------------------------------------------------------- */
-
+  /* Fallback manual execution ID */
   SET v_manual_run_id =
     CONCAT(
       'PULSETMS_MAN_',
-      DATE_FORMAT(
-        v_context_ts,
-        'yyyyMMdd_HHmmss_SSS'
-      )
+      DATE_FORMAT(v_context_ts, 'yyyyMMdd_HHmmss_SSS')
     );
 
 
-  /* -----------------------------------------------------------------------------------------------
-     Determine whether this validation belongs to a Job execution or a manual execution.
-     --------------------------------------------------------------------------------------------- */
-
+  /* Job versus manual execution */
   SET v_orchestration_run_type =
     CASE
 
@@ -198,7 +117,7 @@ BEGIN
         THEN 'MANUAL'
 
       WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
-        LIKE 'PULSETMS_MAN_%'
+             LIKE 'PULSETMS_MAN_%'
         THEN 'MANUAL'
 
       WHEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id IS NULL
@@ -213,10 +132,6 @@ BEGIN
 
     END;
 
-
-  /* -----------------------------------------------------------------------------------------------
-     Job identifier.
-     --------------------------------------------------------------------------------------------- */
 
   SET v_orchestration_job_id =
     CASE
@@ -237,10 +152,6 @@ BEGIN
     END;
 
 
-  /* -----------------------------------------------------------------------------------------------
-     Job Run identifier.
-     --------------------------------------------------------------------------------------------- */
-
   SET v_orchestration_job_run_id =
     CASE
 
@@ -254,14 +165,11 @@ BEGIN
           v_manual_run_id
         )
 
-      ELSE sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
+      ELSE
+        sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_job_run_id
 
     END;
 
-
-  /* -----------------------------------------------------------------------------------------------
-     Task Run identifier.
-     --------------------------------------------------------------------------------------------- */
 
   SET v_orchestration_task_run_id =
     CASE
@@ -273,10 +181,7 @@ BEGIN
                    LIKE 'PULSETMS_MAN_%'
               THEN sdi_sp_dashboardPulseTms_validation_history_perRun.p_orchestration_task_run_id
           END,
-          CONCAT(
-            v_orchestration_job_run_id,
-            '_T01'
-          )
+          CONCAT(v_orchestration_job_run_id, '_T01')
         )
 
       ELSE COALESCE(
@@ -286,10 +191,7 @@ BEGIN
           ),
           ''
         ),
-        CONCAT(
-          v_orchestration_job_run_id,
-          '_T01'
-        )
+        CONCAT(v_orchestration_job_run_id, '_T01')
       )
 
     END;
@@ -302,8 +204,66 @@ BEGIN
     );
 
 
+  /* Latest completed Saturday is resolved once and reused by every validation domain. */
+  SET v_data_as_of_date =
+  (
+    SELECT
+      cal.qgp_date
+
+    FROM
+      prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
+
+    WHERE
+      cal.is_complete_period = TRUE
+      AND cal.qgp_date <= CURRENT_DATE()
+      AND DAYOFWEEK(cal.qgp_date) = 7
+
+    ORDER BY
+      cal.qgp_date DESC
+
+    LIMIT 1
+  );
+
+
+  IF v_data_as_of_date IS NULL THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT =
+        'Pulse TMS validation could not determine a completed Saturday from sdi_vw_dashboardPulseTms_dim_qgp_calendar.';
+  END IF;
+
+
+  SET v_week_type =
+  (
+    SELECT
+      cal.week_type
+
+    FROM
+      prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
+
+    WHERE
+      cal.qgp_date = v_data_as_of_date
+
+    LIMIT 1
+  );
+
+
+  SET v_days_in_period =
+  (
+    SELECT
+      CAST(cal.days_in_period AS INT)
+
+    FROM
+      prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
+
+    WHERE
+      cal.qgp_date = v_data_as_of_date
+
+    LIMIT 1
+  );
+
+
   /* ===============================================================================================
-     STEP 0 — CREATE PERSISTENT HISTORY TABLE IF NEEDED
+     STEP 1 — CREATE TABLES IF NEEDED
      =============================================================================================== */
 
   CREATE TABLE IF NOT EXISTS
@@ -312,7 +272,6 @@ BEGIN
     validation_run_id                  STRING,
     validation_run_ts                  TIMESTAMP,
 
-    /* Orchestration execution lineage */
     orchestration_run_type             STRING,
     orchestration_job_id               STRING,
     orchestration_job_run_id           STRING,
@@ -330,87 +289,30 @@ BEGIN
     comparison_scope                   STRING,
     comparison_method                  STRING,
 
-    /* ---------------------------------------------------------------------------------------------
-       VALUES
-       ------------------------------------------------------------------------------------------- */
-
     source_value                       DECIMAL(38,2),
-
-    /* Actual value physically present in Bronze. */
     bronze_value                       DECIMAL(38,2),
-
-    /*
-      Bronze value converted to the same reporting grain used by Silver.
-
-      NORMAL:
-        usually equals bronze_value.
-
-      Adobe / Platform / Biddable BOUNDARY_FIRST:
-        bronze_value * days_in_period / 7
-    */
     bronze_comparable_value            DECIMAL(38,2),
-
     silver_value                       DECIMAL(38,2),
     gold_value                         DECIMAL(38,2),
-
-    /* ---------------------------------------------------------------------------------------------
-       SOURCE -> BRONZE
-       ------------------------------------------------------------------------------------------- */
 
     source_bronze_variance             DECIMAL(38,2),
     source_bronze_variance_pct         DECIMAL(18,2),
 
-    /* ---------------------------------------------------------------------------------------------
-       BRONZE COMPARABLE -> SILVER
-       ------------------------------------------------------------------------------------------- */
-
     bronze_silver_variance             DECIMAL(38,2),
     bronze_silver_variance_pct         DECIMAL(18,2),
-
-    /* ---------------------------------------------------------------------------------------------
-       SILVER -> GOLD
-       ------------------------------------------------------------------------------------------- */
 
     silver_gold_variance               DECIMAL(38,2),
     silver_gold_variance_pct           DECIMAL(18,2),
 
-    /*
-      Warning threshold is intentionally 0.00.
-
-      After:
-        - recreating the expected transformation
-        - normalizing both sides to two decimals
-
-      any remaining mismatch is worth displaying as a Warning.
-    */
     warning_threshold_pct              DECIMAL(18,2),
-
-    /*
-      Failed is reserved for a very large unexplained reconciliation difference.
-    */
     critical_threshold_pct             DECIMAL(18,2),
 
-    /*
-      NONE
-      SOURCE_TO_BRONZE
-      BRONZE_TO_SILVER
-      SILVER_TO_GOLD
-      DATA_AVAILABILITY
-      MULTIPLE
-    */
     issue_layer                        STRING,
-
-    /*
-      Healthy
-      Warning
-      Failed
-    */
     status                             STRING,
 
     notes                              STRING,
     next_step                          STRING,
 
-    /* Debugging lineage */
     source_object                      STRING,
     bronze_object                      STRING,
     silver_object                      STRING,
@@ -428,88 +330,75 @@ BEGIN
   )
 
   COMMENT
-  'PulseTMS post-run validation history. One row per monitored metric per validation run. Stores orchestration execution lineage plus Source, Bronze, Bronze comparable, Silver and Gold values normalized to two decimals, reconciliation variances, issue layer, status, notes and next step.';
+  'PulseTMS post-run validation history. One row per monitored metric per validation run.';
 
+
+  /*
+    Internal staging table.
+
+    Each source domain inserts independently here so Databricks does not have to optimize one giant
+    query plan spanning all six domains. The final history insert reads only the current run.
+  */
+  CREATE TABLE IF NOT EXISTS
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id                  STRING,
+    validation_run_ts                  TIMESTAMP,
+
+    data_as_of_date                    DATE,
+    week_type                          STRING,
+    days_in_period                     INT,
+
+    warning_threshold_pct              DECIMAL(18,2),
+    critical_threshold_pct             DECIMAL(18,2),
+
+    data_source                        STRING,
+    metric_name                        STRING,
+    metric_type                        STRING,
+
+    comparison_scope                   STRING,
+    comparison_method                  STRING,
+
+    source_value                       DOUBLE,
+    bronze_value                       DOUBLE,
+    bronze_comparable_value            DOUBLE,
+    silver_value                       DOUBLE,
+    gold_value                         DOUBLE,
+
+    check_source_bronze                BOOLEAN,
+    check_bronze_silver                BOOLEAN,
+    check_silver_gold                  BOOLEAN,
+
+    allow_all_null                     BOOLEAN,
+    require_nonzero                    BOOLEAN,
+
+    source_object                      STRING,
+    bronze_object                      STRING,
+    silver_object                      STRING,
+    gold_object                        STRING,
+
+    created_ts                         TIMESTAMP
+  )
+
+  USING DELTA
+
+  COMMENT
+  'Internal PulseTMS validation staging table. Domain-level rows are staged per validation_run_id before the final history snapshot is classified and written.';
+
+
+  /* Safety cleanup for the current run ID if this exact ID somehow already exists. */
+  DELETE FROM
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+
+  WHERE
+    validation_run_id = v_validation_run_id
+  ;
 
   /* ===============================================================================================
-     STEP 1 — APPEND CURRENT VALIDATION RUN
+     STEP 2A — ADOBE VALIDATION STAGE
      =============================================================================================== */
 
   WITH
-
-  /* ===============================================================================================
-     RUN CONTEXT
-     =============================================================================================== */
-
-  RunContext AS (
-
-    SELECT
-      v_validation_run_id
-        AS validation_run_id,
-
-      v_context_ts
-        AS validation_run_ts,
-
-      cal.qgp_date
-        AS data_as_of_date,
-
-      cal.week_type
-        AS week_type,
-
-      CAST(
-        cal.days_in_period
-        AS INT
-      ) AS days_in_period,
-
-      CAST(
-        0.00
-        AS DECIMAL(18,2)
-      ) AS warning_threshold_pct,
-
-      CAST(
-        25.00
-        AS DECIMAL(18,2)
-      ) AS critical_threshold_pct
-
-    FROM
-      prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
-
-    WHERE
-      cal.is_complete_period = TRUE
-
-      AND cal.qgp_date <= CURRENT_DATE()
-
-      /* Databricks DAYOFWEEK: Sunday=1 ... Saturday=7 */
-      AND DAYOFWEEK(cal.qgp_date) = 7
-
-    ORDER BY
-      cal.qgp_date DESC
-
-    LIMIT 1
-  ),
-
-
-  /* ################################################################################################
-     ADOBE
-     ################################################################################################ */
-
-
-  /* ===============================================================================================
-     ADOBE SOURCE — ALL CHANNELS
-
-     IMPORTANT PERFORMANCE NOTE:
-       The required reporting week is filtered inside each raw-source branch BEFORE the UNION and
-       ROW_NUMBER deduplication. This avoids ranking unnecessary historical source data.
-
-     These are the 14 directly sourced Adobe metrics.
-
-     Four additional Adobe totals are derived from Bronze components:
-       cartstartTotal
-       ordersUnassistedTotal
-       ordersAssistedTotal
-       ordersTotal
-     =============================================================================================== */
-
   AdobeSourceUnion AS (
 
     SELECT
@@ -532,11 +421,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_postpaid_flow_visitors_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -554,11 +441,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_hsi_flow_visitors_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -576,11 +461,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_uvnb_byod_flow_visitors_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -598,11 +481,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_flow_total_visitors_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -620,11 +501,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_pp_pro_uvnb_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -642,11 +521,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_cartstart_visits_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -664,11 +541,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_cartstart_visits_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -686,11 +561,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_cartstart_visits_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -708,11 +581,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -730,11 +601,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -752,11 +621,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -774,11 +641,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_postpaid_order_assisted_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -796,11 +661,9 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_hsi_order_assisted_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
 
 
     UNION ALL
@@ -818,13 +681,13 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.sdi_raw_adobe_pp_uvnb_all_byod_order_assisted_weekly_tmo
 
-    CROSS JOIN RunContext rc
-
     WHERE
       TO_DATE(date_yyyymmdd, 'yyyyMMdd')
-        = DATE_SUB(rc.data_as_of_date, 6)
+        = DATE_SUB(v_data_as_of_date, 6)
   ),
 
+
+  /* Same latest-file dedup principle used by Adobe Bronze. */
 
   AdobeSourceDeduped AS (
 
@@ -856,15 +719,19 @@ BEGIN
 
     FROM AdobeSourceDeduped s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.week_sun_sat = rc.data_as_of_date
+      s.week_sun_sat = v_data_as_of_date
 
     GROUP BY
       s.metric_name
   ),
 
+
+  /* ===============================================================================================
+     ADOBE BRONZE BASE
+     One All Channels natural-week row.
+     =============================================================================================== */
 
   AdobeBronzeBase AS (
 
@@ -890,14 +757,16 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_adobeFunnel_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.week_sun_sat = rc.data_as_of_date
-
+      b.week_sun_sat = v_data_as_of_date
       AND b.channel_group = 'All Channels'
   ),
 
+
+  /* ===============================================================================================
+     ADOBE BRONZE METRICS
+     =============================================================================================== */
 
   AdobeBronzeMetrics AS (
 
@@ -1038,6 +907,10 @@ BEGIN
   ),
 
 
+  /* ===============================================================================================
+     ADOBE BRONZE COMPARABLE VALUE
+     =============================================================================================== */
+
   AdobeBronzeComparable AS (
 
     SELECT
@@ -1045,10 +918,10 @@ BEGIN
       b.bronze_value,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN
             b.bronze_value
-              * rc.days_in_period
+              * v_days_in_period
               / 7.0
 
         ELSE b.bronze_value
@@ -1056,7 +929,6 @@ BEGIN
 
     FROM AdobeBronzeMetrics b
 
-    CROSS JOIN RunContext rc
   ),
 
 
@@ -1069,10 +941,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
+      s.qgp_date = v_data_as_of_date
       AND s.channel_group = 'All Channels'
       AND s.metric_type = 'ADOBE_VOLUME'
 
@@ -1090,10 +961,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'ADOBE'
       AND g.channel_group = 'All Channels'
       AND g.metric_type = 'ADOBE_VOLUME'
@@ -1125,7 +995,7 @@ BEGIN
       END AS comparison_scope,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
@@ -1178,15 +1048,87 @@ BEGIN
     LEFT JOIN AdobeGold g
       ON g.metric_name = b.metric_name
 
-    CROSS JOIN RunContext rc
-  ),
+  )
 
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
 
-  /* ################################################################################################
-     MFC SPEND
-     ################################################################################################ */
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
 
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
 
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM AdobeValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2B — MFC VALIDATION STAGE
+     =============================================================================================== */
+
+  WITH
   MfcSourceTyped AS (
 
     SELECT
@@ -1224,10 +1166,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_mfc_gold_spendGranular_weekly raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      TRY_CAST(raw.QGP_Week AS DATE) = rc.data_as_of_date
+      TRY_CAST(raw.QGP_Week AS DATE) = v_data_as_of_date
 
       AND raw.Channel IS NOT NULL
 
@@ -1379,10 +1320,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_mfcSpend_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.qgp_week = rc.data_as_of_date
+      b.qgp_week = v_data_as_of_date
   ),
 
 
@@ -1418,10 +1358,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
+      s.qgp_date = v_data_as_of_date
       AND s.data_source = 'MFC_SPEND_CHANNEL'
       AND s.channel_group = 'All Channels'
   ),
@@ -1498,10 +1437,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'MFC_SPEND_CHANNEL'
       AND g.channel_group = 'All Channels'
   ),
@@ -1731,14 +1669,87 @@ BEGIN
       CROSS JOIN MfcGoldAgg go
 
     ) x
-  ),
+  )
 
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
 
-  /* ################################################################################################
-     PLATFORM SPEND
-     ################################################################################################ */
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
 
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
 
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM MfcValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2C — PLATFORM VALIDATION STAGE
+     =============================================================================================== */
+
+  WITH
   PlatformSourceAgg AS (
 
     SELECT
@@ -1769,12 +1780,11 @@ BEGIN
     FROM
       prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
       CAST(raw.Date AS DATE)
-        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
-            AND rc.data_as_of_date
+        BETWEEN DATE_SUB(v_data_as_of_date, 6)
+            AND v_data_as_of_date
 
       AND UPPER(TRIM(raw.LOB)) IN (
         'POSTPAID',
@@ -1815,10 +1825,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_platformSpend_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.week_sun_sat = rc.data_as_of_date
+      b.week_sun_sat = v_data_as_of_date
   ),
 
 
@@ -1852,10 +1861,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
+      s.qgp_date = v_data_as_of_date
       AND s.channel_group = 'All Channels'
       AND s.metric_name = 'platformSpend'
   ),
@@ -1891,10 +1899,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'PLATFORM_SPEND_CHANNEL'
       AND g.channel_group = 'All Channels'
       AND g.metric_name = 'platformSpend'
@@ -1916,7 +1923,7 @@ BEGIN
         AS comparison_scope,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
@@ -1926,10 +1933,10 @@ BEGIN
       x.bronze_value,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN
             x.bronze_value
-              * rc.days_in_period
+              * v_days_in_period
               / 7.0
 
         ELSE x.bronze_value
@@ -2016,18 +2023,93 @@ BEGIN
 
     ) x
 
-    CROSS JOIN RunContext rc
-  ),
+  )
 
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
 
-  /* ################################################################################################
-     BIDDABLE SPEND
-     ################################################################################################ */
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
 
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
 
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM PlatformValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2D — BIDDABLE VALIDATION STAGE
+     =============================================================================================== */
+
+  WITH
   BiddableSourceAtomic AS (
 
-    /* PROGRAMMATIC */
+    /* ---------------------------------------------------------------------------------------------
+       PROGRAMMATIC
+       ------------------------------------------------------------------------------------------- */
+
     SELECT
       CASE
         WHEN UPPER(TRIM(raw.lob)) IN (
@@ -2049,12 +2131,11 @@ BEGIN
     FROM
       prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
       CAST(raw.date AS DATE)
-        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
-            AND rc.data_as_of_date
+        BETWEEN DATE_SUB(v_data_as_of_date, 6)
+            AND v_data_as_of_date
 
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
@@ -2067,7 +2148,10 @@ BEGIN
     UNION ALL
 
 
-    /* PAID SOCIAL */
+    /* ---------------------------------------------------------------------------------------------
+       PAID SOCIAL
+       ------------------------------------------------------------------------------------------- */
+
     SELECT
       CASE
         WHEN UPPER(TRIM(raw.LOB)) IN (
@@ -2089,15 +2173,13 @@ BEGIN
     FROM
       prdrzranalytics.lab42.media_analytics_integrated_snapshot raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
       CAST(raw.Date AS DATE)
-        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
-            AND rc.data_as_of_date
+        BETWEEN DATE_SUB(v_data_as_of_date, 6)
+            AND v_data_as_of_date
 
       AND UPPER(TRIM(raw.Channel_Group_Name)) = 'PAID SOCIAL'
-
       AND UPPER(TRIM(raw.Agency)) = 'INHOUSE'
 
       AND UPPER(TRIM(raw.LOB)) IN (
@@ -2111,7 +2193,10 @@ BEGIN
     UNION ALL
 
 
-    /* PAID SEARCH */
+    /* ---------------------------------------------------------------------------------------------
+       PAID SEARCH
+       ------------------------------------------------------------------------------------------- */
+
     SELECT
       CASE
         WHEN UPPER(TRIM(raw.lob)) IN (
@@ -2136,12 +2221,11 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_sa360_gold_campaign_daily raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
       CAST(raw.date AS DATE)
-        BETWEEN DATE_SUB(rc.data_as_of_date, 6)
-            AND rc.data_as_of_date
+        BETWEEN DATE_SUB(v_data_as_of_date, 6)
+            AND v_data_as_of_date
 
       AND UPPER(TRIM(raw.lob)) IN (
         'POSTPAID',
@@ -2227,10 +2311,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.week_sun_sat = rc.data_as_of_date
+      b.week_sun_sat = v_data_as_of_date
   ),
 
 
@@ -2314,10 +2397,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
+      s.qgp_date = v_data_as_of_date
       AND s.data_source = 'BIDDABLE_SPEND_CHANNEL'
       AND s.channel_group = 'All Channels'
   ),
@@ -2357,10 +2439,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'BIDDABLE_SPEND_CHANNEL'
       AND g.channel_group = 'All Channels'
       AND g.metric_name = 'biddableSpend'
@@ -2382,7 +2463,7 @@ BEGIN
         AS comparison_scope,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN 'QGP_PRORATION'
 
         ELSE 'DIRECT'
@@ -2392,10 +2473,10 @@ BEGIN
       x.bronze_value,
 
       CASE
-        WHEN rc.week_type = 'BOUNDARY_FIRST'
+        WHEN v_week_type = 'BOUNDARY_FIRST'
           THEN
             x.bronze_value
-              * rc.days_in_period
+              * v_days_in_period
               / 7.0
 
         ELSE x.bronze_value
@@ -2499,15 +2580,87 @@ BEGIN
 
     ) x
 
-    CROSS JOIN RunContext rc
-  ),
+  )
 
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
 
-  /* ################################################################################################
-     QGP SOURCE -> BRONZE COVERAGE
-     ################################################################################################ */
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
 
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
 
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM BiddableValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2E — QGP VALIDATION STAGE
+     =============================================================================================== */
+
+  WITH
   QgpSourceScoped AS (
 
     SELECT
@@ -2535,11 +2688,10 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly raw
 
-    CROSS JOIN RunContext rc
 
     WHERE
       TRY_CAST(raw.WeekEnding AS DATE)
-        = rc.data_as_of_date
+        = v_data_as_of_date
 
       AND (
 
@@ -2646,10 +2798,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.week_ending = rc.data_as_of_date
+      b.week_ending = v_data_as_of_date
   ),
 
 
@@ -2712,6 +2863,10 @@ BEGIN
   ),
 
 
+  /* ===============================================================================================
+     QGP BUSINESS METRIC UNIVERSE
+     =============================================================================================== */
+
   QgpMetricNames AS (
 
     SELECT metric_name
@@ -2770,10 +2925,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
+      s.qgp_date = v_data_as_of_date
 
     GROUP BY
       s.metric_name,
@@ -2793,11 +2947,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
-
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'QGP_SCORECARD'
 
     GROUP BY
@@ -2882,12 +3034,96 @@ BEGIN
      AND g.metric_type = m.metric_type
   ),
 
+  QgpValidation AS (
 
-  /* ################################################################################################
-     UPV FORECAST
-     ################################################################################################ */
+    SELECT *
+    FROM QgpCoverageValidation
 
+    UNION ALL
 
+    SELECT *
+    FROM QgpMetricValidation
+  )
+
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM QgpValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2F — UPV FORECAST VALIDATION STAGE
+     =============================================================================================== */
+
+  WITH
   UpvForecastBronze AS (
 
     SELECT
@@ -2900,10 +3136,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_upvForecast_weekly b
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      b.week_sun_sat = rc.data_as_of_date
+      b.week_sun_sat = v_data_as_of_date
   ),
 
 
@@ -2927,11 +3162,9 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly s
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      s.qgp_date = rc.data_as_of_date
-
+      s.qgp_date = v_data_as_of_date
       AND s.channel_group = 'All Channels'
   ),
 
@@ -2956,13 +3189,10 @@ BEGIN
     FROM
       prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long g
 
-    CROSS JOIN RunContext rc
 
     WHERE
-      g.qgp_date = rc.data_as_of_date
-
+      g.qgp_date = v_data_as_of_date
       AND g.data_source = 'UPV_FORECAST'
-
       AND g.channel_group = 'All Channels'
   ),
 
@@ -3049,128 +3279,178 @@ BEGIN
       CROSS JOIN UpvForecastGold go
 
     ) x
-  ),
+  )
+
+  INSERT INTO
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+  (
+    validation_run_id,
+    validation_run_ts,
+    data_as_of_date,
+    week_type,
+    days_in_period,
+    warning_threshold_pct,
+    critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    created_ts
+  )
+
+  SELECT
+    v_validation_run_id,
+    v_context_ts,
+    v_data_as_of_date,
+    v_week_type,
+    v_days_in_period,
+    v_warning_threshold_pct,
+    v_critical_threshold_pct,
+
+    data_source,
+    metric_name,
+    metric_type,
+    comparison_scope,
+    comparison_method,
+
+    source_value,
+    bronze_value,
+    bronze_comparable_value,
+    silver_value,
+    gold_value,
+
+    check_source_bronze,
+    check_bronze_silver,
+    check_silver_gold,
+    allow_all_null,
+    require_nonzero,
+
+    source_object,
+    bronze_object,
+    silver_object,
+    gold_object,
+
+    CURRENT_TIMESTAMP()
+
+  FROM UpvForecastValidation
+  ;
+
+  /* ===============================================================================================
+     STEP 2G — STRUCTURAL CHECK
+
+     A healthy or unhealthy data state still produces the same monitored metric universe.
+     If the stage does not contain 58 rows, treat that as a technical validation failure.
+     =============================================================================================== */
+
+  SET v_stage_metric_count =
+  (
+    SELECT
+      COUNT(*)
+
+    FROM
+      prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+
+    WHERE
+      validation_run_id = v_validation_run_id
+  );
+
+
+  IF v_stage_metric_count != 58 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT =
+        'Pulse TMS validation staging did not produce the expected 58 metric rows. Review sdi_tbl_dashboardPulseTms_validation_stage_perRun for the current validation_run_id.';
+  END IF;
 
 
   /* ===============================================================================================
-     COMBINE ALL VALIDATION CHECKS
+     STEP 3 — NORMALIZE, CLASSIFY, AND APPEND FINAL HISTORY SNAPSHOT
      =============================================================================================== */
 
-  AllValidationRows AS (
-
-    SELECT * FROM AdobeValidation
-
-    UNION ALL
-
-    SELECT * FROM MfcValidation
-
-    UNION ALL
-
-    SELECT * FROM PlatformValidation
-
-    UNION ALL
-
-    SELECT * FROM BiddableValidation
-
-    UNION ALL
-
-    SELECT * FROM QgpCoverageValidation
-
-    UNION ALL
-
-    SELECT * FROM QgpMetricValidation
-
-    UNION ALL
-
-    SELECT * FROM UpvForecastValidation
-  ),
-
-
-  /* ===============================================================================================
-     NORMALIZE EVERYTHING TO TWO DECIMAL PLACES BEFORE COMPARISON
-     =============================================================================================== */
+  WITH
 
   Normalized AS (
 
     SELECT
-      rc.validation_run_id,
-      rc.validation_run_ts,
+      validation_run_id,
+      validation_run_ts,
 
-      rc.data_as_of_date,
-      rc.week_type,
-      rc.days_in_period,
+      data_as_of_date,
+      week_type,
+      days_in_period,
 
-      v.data_source,
-      v.metric_name,
-      v.metric_type,
+      data_source,
+      metric_name,
+      metric_type,
 
-      v.comparison_scope,
-      v.comparison_method,
+      comparison_scope,
+      comparison_method,
 
       CAST(
-        ROUND(
-          v.source_value,
-          2
-        )
+        ROUND(source_value, 2)
         AS DECIMAL(38,2)
       ) AS source_value,
 
       CAST(
-        ROUND(
-          v.bronze_value,
-          2
-        )
+        ROUND(bronze_value, 2)
         AS DECIMAL(38,2)
       ) AS bronze_value,
 
       CAST(
-        ROUND(
-          v.bronze_comparable_value,
-          2
-        )
+        ROUND(bronze_comparable_value, 2)
         AS DECIMAL(38,2)
       ) AS bronze_comparable_value,
 
       CAST(
-        ROUND(
-          v.silver_value,
-          2
-        )
+        ROUND(silver_value, 2)
         AS DECIMAL(38,2)
       ) AS silver_value,
 
       CAST(
-        ROUND(
-          v.gold_value,
-          2
-        )
+        ROUND(gold_value, 2)
         AS DECIMAL(38,2)
       ) AS gold_value,
 
-      v.check_source_bronze,
-      v.check_bronze_silver,
-      v.check_silver_gold,
+      check_source_bronze,
+      check_bronze_silver,
+      check_silver_gold,
 
-      v.allow_all_null,
-      v.require_nonzero,
+      allow_all_null,
+      require_nonzero,
 
-      rc.warning_threshold_pct,
-      rc.critical_threshold_pct,
+      warning_threshold_pct,
+      critical_threshold_pct,
 
-      v.source_object,
-      v.bronze_object,
-      v.silver_object,
-      v.gold_object
+      source_object,
+      bronze_object,
+      silver_object,
+      gold_object
 
-    FROM AllValidationRows v
+    FROM
+      prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
 
-    CROSS JOIN RunContext rc
+    WHERE
+      validation_run_id = v_validation_run_id
   ),
-
-
-  /* ===============================================================================================
-     CALCULATE LAYER VARIANCES
-     =============================================================================================== */
 
   Variances AS (
 
@@ -3433,6 +3713,10 @@ BEGIN
     SELECT
       *,
 
+      /* -------------------------------------------------------------------------------------------
+         ISSUE LAYER
+         ----------------------------------------------------------------------------------------- */
+
       CASE
 
         WHEN allow_all_null = TRUE
@@ -3485,6 +3769,10 @@ BEGIN
       END AS issue_layer,
 
 
+      /* -------------------------------------------------------------------------------------------
+         STATUS
+         ----------------------------------------------------------------------------------------- */
+
       CASE
 
         WHEN allow_all_null = TRUE
@@ -3493,24 +3781,28 @@ BEGIN
           THEN 'Healthy'
 
 
+        /* Required downstream Bronze disappeared */
         WHEN check_source_bronze = TRUE
          AND source_value IS NOT NULL
          AND bronze_value IS NULL
           THEN 'Failed'
 
 
+        /* Required downstream Silver disappeared */
         WHEN check_bronze_silver = TRUE
          AND bronze_comparable_value IS NOT NULL
          AND silver_value IS NULL
           THEN 'Failed'
 
 
+        /* Required downstream Gold disappeared */
         WHEN check_silver_gold = TRUE
          AND silver_value IS NOT NULL
          AND gold_value IS NULL
           THEN 'Failed'
 
 
+        /* Critical Source -> Bronze variance */
         WHEN ABS(
                COALESCE(
                  source_bronze_variance_pct,
@@ -3523,6 +3815,7 @@ BEGIN
           THEN 'Failed'
 
 
+        /* Critical Bronze -> Silver variance */
         WHEN ABS(
                COALESCE(
                  bronze_silver_variance_pct,
@@ -3535,6 +3828,7 @@ BEGIN
           THEN 'Failed'
 
 
+        /* Critical Silver -> Gold variance */
         WHEN ABS(
                COALESCE(
                  silver_gold_variance_pct,
@@ -3849,17 +4143,17 @@ BEGIN
 
     FROM Classified
   )
-
-
-  /* ===============================================================================================
-     APPEND SNAPSHOT
-     =============================================================================================== */
-
   INSERT INTO
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
   (
     validation_run_id,
     validation_run_ts,
+
+    orchestration_run_type,
+    orchestration_job_id,
+    orchestration_job_run_id,
+    orchestration_task_run_id,
+    orchestration_execution_count,
 
     data_as_of_date,
     week_type,
@@ -3908,6 +4202,12 @@ BEGIN
     validation_run_id,
     validation_run_ts,
 
+    v_orchestration_run_type,
+    v_orchestration_job_id,
+    v_orchestration_job_run_id,
+    v_orchestration_task_run_id,
+    v_orchestration_execution_count,
+
     data_as_of_date,
     week_type,
     days_in_period,
@@ -3955,32 +4255,14 @@ BEGIN
 
 
   /* ===============================================================================================
-     STEP 2 — ATTACH ORCHESTRATION LINEAGE TO THIS VALIDATION SNAPSHOT
+     STEP 4 — CLEAN SUCCESSFUL STAGE ROWS
      =============================================================================================== */
 
-  UPDATE
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
-
-  SET
-    orchestration_run_type =
-      v_orchestration_run_type,
-
-    orchestration_job_id =
-      v_orchestration_job_id,
-
-    orchestration_job_run_id =
-      v_orchestration_job_run_id,
-
-    orchestration_task_run_id =
-      v_orchestration_task_run_id,
-
-    orchestration_execution_count =
-      v_orchestration_execution_count
+  DELETE FROM
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
 
   WHERE
     validation_run_id = v_validation_run_id
-
-    AND orchestration_job_run_id IS NULL
   ;
 
 END;
