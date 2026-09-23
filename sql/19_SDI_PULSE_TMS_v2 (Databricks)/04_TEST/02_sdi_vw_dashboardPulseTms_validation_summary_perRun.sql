@@ -1,6 +1,7 @@
 /* =================================================================================================
 FILE:           sdi_vw_dashboardPulseTms_validation_summary_perRun.sql
 LAYER:          Validation / Monitoring
+CATALOG.SCHEMA: prdrzranalytics.lab42
 VIEW:           sdi_vw_dashboardPulseTms_validation_summary_perRun
 
 PURPOSE:
@@ -8,83 +9,173 @@ PURPOSE:
 
 OUTPUT:
   DATA_SOURCE rows:
-    ADOBE
-    MFC_SPEND
-    PLATFORM_SPEND
-    BIDDABLE_SPEND
-    QGP_SCORECARD
-    UPV_FORECAST
+    - ADOBE
+    - MFC_SPEND
+    - PLATFORM_SPEND
+    - BIDDABLE_SPEND
+    - QGP_SCORECARD
+    - UPV_FORECAST
 
   PLUS:
-    one OVERALL / PULSE_TMS row per validation run.
+    - one OVERALL / PULSE_TMS row per validation run
+
+ORCHESTRATION LINEAGE:
+  Carries the execution identifiers associated with each validation snapshot:
+
+    orchestration_run_type
+      JOB / MANUAL
+
+    orchestration_job_id
+      Databricks Job ID or PULSETMS_MAN
+
+    orchestration_job_run_id
+      Databricks Job Run ID or generated PULSETMS_MAN_* ID
+
+    orchestration_task_run_id
+      Databricks Task Run ID or generated manual task ID
+
+    orchestration_execution_count
+      Databricks task execution count / retry number
 
 STATUS PRECEDENCE:
   Failed > Warning > Healthy
 
 DASHBOARD USE:
-  Status cards / source summary table.
+  - Overall status card
+  - Data-source status table
+  - Issue counts
+  - High-level issue summary
+  - Next-step summary
+
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_summary_perRun
+
 AS
 
 WITH
 
+/* =================================================================================================
+   DATA-SOURCE LEVEL SUMMARY
+
+   One row per:
+     validation run
+       x
+     data source
+   ================================================================================================= */
+
 BySource AS (
 
   SELECT
+
+    /* ---------------------------------------------------------------------------------------------
+       Validation execution
+       ------------------------------------------------------------------------------------------- */
+
     validation_run_id,
     validation_run_ts,
 
+
+    /* ---------------------------------------------------------------------------------------------
+       Orchestration execution lineage
+       ------------------------------------------------------------------------------------------- */
+
+    orchestration_run_type,
+    orchestration_job_id,
+    orchestration_job_run_id,
+    orchestration_task_run_id,
+    orchestration_execution_count,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Reporting period
+       ------------------------------------------------------------------------------------------- */
+
     data_as_of_date,
     week_type,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Summary level
+       ------------------------------------------------------------------------------------------- */
 
     'DATA_SOURCE' AS summary_level,
 
     data_source,
 
+
+    /* ---------------------------------------------------------------------------------------------
+       Metric counts
+       ------------------------------------------------------------------------------------------- */
+
     COUNT(*) AS metric_count,
+
 
     SUM(
       CASE
-        WHEN status = 'Healthy' THEN 1
+        WHEN status = 'Healthy'
+          THEN 1
+
         ELSE 0
       END
     ) AS healthy_count,
 
+
     SUM(
       CASE
-        WHEN status = 'Warning' THEN 1
+        WHEN status = 'Warning'
+          THEN 1
+
         ELSE 0
       END
     ) AS warning_count,
 
+
     SUM(
       CASE
-        WHEN status = 'Failed' THEN 1
+        WHEN status = 'Failed'
+          THEN 1
+
         ELSE 0
       END
     ) AS failed_count,
 
 
+    /* ---------------------------------------------------------------------------------------------
+       Data-source overall status
+
+       Precedence:
+         Failed
+           >
+         Warning
+           >
+         Healthy
+       ------------------------------------------------------------------------------------------- */
+
     CASE
 
       WHEN SUM(
              CASE
-               WHEN status = 'Failed' THEN 1
+               WHEN status = 'Failed'
+                 THEN 1
+
                ELSE 0
              END
            ) > 0
         THEN 'Failed'
 
+
       WHEN SUM(
              CASE
-               WHEN status = 'Warning' THEN 1
+               WHEN status = 'Warning'
+                 THEN 1
+
                ELSE 0
              END
            ) > 0
         THEN 'Warning'
+
 
       ELSE 'Healthy'
 
@@ -92,7 +183,11 @@ BySource AS (
 
 
     /* ---------------------------------------------------------------------------------------------
-       Which metrics require attention?
+       Metrics requiring attention
+
+       Example:
+         mfcSpendActualBroadband [DATA_AVAILABILITY],
+         biddableSpendFiber [DATA_AVAILABILITY]
        ------------------------------------------------------------------------------------------- */
 
     COALESCE(
@@ -101,6 +196,7 @@ BySource AS (
           SORT_ARRAY(
             COLLECT_SET(
               CASE
+
                 WHEN status <> 'Healthy'
                   THEN CONCAT(
                     metric_name,
@@ -108,6 +204,7 @@ BySource AS (
                     issue_layer,
                     ']'
                   )
+
               END
             )
           ),
@@ -120,7 +217,7 @@ BySource AS (
 
 
     /* ---------------------------------------------------------------------------------------------
-       Human-readable issue summary.
+       Human-readable issue summary
        ------------------------------------------------------------------------------------------- */
 
     COALESCE(
@@ -129,12 +226,14 @@ BySource AS (
           SORT_ARRAY(
             COLLECT_SET(
               CASE
+
                 WHEN status <> 'Healthy'
                   THEN CONCAT(
                     metric_name,
                     ': ',
                     notes
                   )
+
               END
             )
           ),
@@ -146,14 +245,20 @@ BySource AS (
     ) AS issue_summary,
 
 
+    /* ---------------------------------------------------------------------------------------------
+       Suggested next steps
+       ------------------------------------------------------------------------------------------- */
+
     COALESCE(
       NULLIF(
         ARRAY_JOIN(
           SORT_ARRAY(
             COLLECT_SET(
               CASE
+
                 WHEN status <> 'Healthy'
                   THEN next_step
+
               END
             )
           ),
@@ -164,43 +269,111 @@ BySource AS (
       'No action required.'
     ) AS next_step_summary
 
+
   FROM
     prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
 
+
   GROUP BY
+
     validation_run_id,
     validation_run_ts,
+
+    orchestration_run_type,
+    orchestration_job_id,
+    orchestration_job_run_id,
+    orchestration_task_run_id,
+    orchestration_execution_count,
+
     data_as_of_date,
     week_type,
+
     data_source
 ),
 
 
+/* =================================================================================================
+   OVERALL PULSETMS SUMMARY
+
+   One row per validation execution.
+
+   Rolls all data-source summaries into one overall pipeline status.
+   ================================================================================================= */
+
 Overall AS (
 
   SELECT
-    validation_run_id,
-    validation_run_ts,
 
-    data_as_of_date,
-    week_type,
+    /* ---------------------------------------------------------------------------------------------
+       Validation execution
+       ------------------------------------------------------------------------------------------- */
+
+    bs.validation_run_id,
+    bs.validation_run_ts,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Orchestration execution lineage
+       ------------------------------------------------------------------------------------------- */
+
+    bs.orchestration_run_type,
+    bs.orchestration_job_id,
+    bs.orchestration_job_run_id,
+    bs.orchestration_task_run_id,
+    bs.orchestration_execution_count,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Reporting period
+       ------------------------------------------------------------------------------------------- */
+
+    bs.data_as_of_date,
+    bs.week_type,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Summary level
+       ------------------------------------------------------------------------------------------- */
 
     'OVERALL' AS summary_level,
 
     'PULSE_TMS' AS data_source,
 
-    SUM(metric_count) AS metric_count,
-    SUM(healthy_count) AS healthy_count,
-    SUM(warning_count) AS warning_count,
-    SUM(failed_count) AS failed_count,
 
+    /* ---------------------------------------------------------------------------------------------
+       Metric counts
+       ------------------------------------------------------------------------------------------- */
+
+    SUM(bs.metric_count)
+      AS metric_count,
+
+    SUM(bs.healthy_count)
+      AS healthy_count,
+
+    SUM(bs.warning_count)
+      AS warning_count,
+
+    SUM(bs.failed_count)
+      AS failed_count,
+
+
+    /* ---------------------------------------------------------------------------------------------
+       Overall pipeline status
+
+       Precedence:
+         Failed
+           >
+         Warning
+           >
+         Healthy
+       ------------------------------------------------------------------------------------------- */
 
     CASE
 
-      WHEN SUM(failed_count) > 0
+      WHEN SUM(bs.failed_count) > 0
         THEN 'Failed'
 
-      WHEN SUM(warning_count) > 0
+      WHEN SUM(bs.warning_count) > 0
         THEN 'Warning'
 
       ELSE 'Healthy'
@@ -208,18 +381,24 @@ Overall AS (
     END AS overall_status,
 
 
+    /* ---------------------------------------------------------------------------------------------
+       Aggregate issue metric list across affected data sources
+       ------------------------------------------------------------------------------------------- */
+
     COALESCE(
       NULLIF(
         ARRAY_JOIN(
           SORT_ARRAY(
             COLLECT_SET(
               CASE
-                WHEN overall_status <> 'Healthy'
+
+                WHEN bs.overall_status <> 'Healthy'
                   THEN CONCAT(
-                    data_source,
+                    bs.data_source,
                     ': ',
-                    issue_metrics
+                    bs.issue_metrics
                   )
+
               END
             )
           ),
@@ -231,18 +410,24 @@ Overall AS (
     ) AS issue_metrics,
 
 
+    /* ---------------------------------------------------------------------------------------------
+       Aggregate issue descriptions
+       ------------------------------------------------------------------------------------------- */
+
     COALESCE(
       NULLIF(
         ARRAY_JOIN(
           SORT_ARRAY(
             COLLECT_SET(
               CASE
-                WHEN overall_status <> 'Healthy'
+
+                WHEN bs.overall_status <> 'Healthy'
                   THEN CONCAT(
-                    data_source,
+                    bs.data_source,
                     ': ',
-                    issue_summary
+                    bs.issue_summary
                   )
+
               END
             )
           ),
@@ -254,14 +439,20 @@ Overall AS (
     ) AS issue_summary,
 
 
+    /* ---------------------------------------------------------------------------------------------
+       Aggregate next steps
+       ------------------------------------------------------------------------------------------- */
+
     COALESCE(
       NULLIF(
         ARRAY_JOIN(
           SORT_ARRAY(
             COLLECT_SET(
               CASE
-                WHEN overall_status <> 'Healthy'
-                  THEN next_step_summary
+
+                WHEN bs.overall_status <> 'Healthy'
+                  THEN bs.next_step_summary
+
               END
             )
           ),
@@ -272,19 +463,41 @@ Overall AS (
       'No action required.'
     ) AS next_step_summary
 
-  FROM BySource
+
+  FROM BySource bs
+
 
   GROUP BY
-    validation_run_id,
-    validation_run_ts,
-    data_as_of_date,
-    week_type
+
+    bs.validation_run_id,
+    bs.validation_run_ts,
+
+    bs.orchestration_run_type,
+    bs.orchestration_job_id,
+    bs.orchestration_job_run_id,
+    bs.orchestration_task_run_id,
+    bs.orchestration_execution_count,
+
+    bs.data_as_of_date,
+    bs.week_type
 )
 
 
-SELECT * FROM BySource
+/* =================================================================================================
+   FINAL OUTPUT
+   ================================================================================================= */
+
+SELECT
+  *
+
+FROM BySource
+
 
 UNION ALL
 
-SELECT * FROM Overall
+
+SELECT
+  *
+
+FROM Overall
 ;

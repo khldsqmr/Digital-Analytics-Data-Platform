@@ -5,68 +5,97 @@ CATALOG.SCHEMA: prdrzranalytics.lab42
 PROCEDURE:      sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly
 
 PURPOSE:
-  Runs the full weekly Dashboard Pulse TMS pipeline end to end in dependency order:
+  Runs the full Dashboard Pulse TMS pipeline end to end in dependency order and then performs
+  one post-run validation snapshot.
 
-    0. External dependency: UPV Forecast Bronze data
-       - The UPV Forecast Bronze table is populated by an external notebook upload.
-       - That notebook must complete successfully before this orchestration procedure runs.
-       - The Silver UPV Forecast procedure also depends on the refreshed Silver Adobe Funnel
-         table for prior-year channel allocation ratios.
+EXECUTION MODES:
 
-    1. Bronze
-       - Runs 5 procedures:
-           - adobeFunnel
-           - mfcSpend
-           - platformSpend
-           - qgp
-           - biddableSpend
-       - These Bronze procedures do not depend on one another.
-       - They are executed sequentially by this orchestration procedure.
+  DATABRICKS JOB:
+    The scheduler notebook passes:
+      - orchestration_run_type
+      - Databricks Job ID
+      - Databricks Job Run ID
+      - Databricks Task Run ID
+      - Task execution count
 
-    2. Silver
-       - Runs 5 independent Silver procedures:
-           - adobeFunnel
-           - mfcSpend
-           - platformSpend
-           - qgp
-           - biddableSpend
-       - Each Silver procedure depends on its corresponding Bronze table and any required
-         live reference views.
+  INTERACTIVE NOTEBOOK:
+    The scheduler notebook generates a PULSETMS_MAN_* execution ID and passes it into this SP.
 
-    3. Dependent Silver
-       - Runs 1 additional Silver procedure:
-           - upvForecast
-       - This procedure must run after Silver adobeFunnel because it uses prior-year
-         channel allocation ratios from the Silver Adobe Funnel table.
-       - It also requires the UPV Forecast Bronze data populated by the external notebook.
+  DIRECT SQL CALL:
+    All parameters have DEFAULT NULL, so this remains valid:
 
-    4. Gold
-       - No Gold stored procedures are called.
-       - The following Gold objects are views:
-           - sdi_vw_dashboardPulseTms_dim_qgp_calendar
-           - sdi_vw_dashboardPulseTms_gold_unified_long
-           - sdi_vw_dashboardPulseTms_gold_unified_wide
-       - These views resolve dynamically from the current Silver tables and therefore
-         do not require materialization or an explicit CALL.
+      CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly();
 
-  Each Bronze and Silver procedure performs its configured table-refresh operation.
-  The complete callable portion of the pipeline can be rerun through this orchestration
-  procedure.
+    In that case the validation SP automatically creates a PULSETMS_MAN_* lineage ID.
 
-EXECUTION ORDER:
-  External UPV Forecast Bronze upload
-    -> Dashboard Pulse TMS Bronze
-    -> Independent Dashboard Pulse TMS Silver
-    -> Silver UPV Forecast
-    -> Live Gold views
+PIPELINE EXECUTION ORDER:
+
+  0. External UPV Forecast Bronze notebook upload
+       - Must complete successfully before this orchestration procedure runs.
+       - There is no CALL for that notebook inside this procedure.
+
+  1. Upstream MFC Bronze
+       - sdi_sp_mfc_bronze_spendActuals_weekly
+       - sdi_sp_mfc_bronze_spendActualsGranular_weekly
+       - sdi_sp_mfc_bronze_spendForecast_weekly
+       - sdi_sp_mfc_bronze_spendForecastGranular_weekly
+
+  2. Upstream MFC Silver
+       - sdi_sp_mfc_silver_spend_weekly
+       - sdi_sp_mfc_silver_spendGranular_weekly
+
+  3. QGP Archive
+       - sdi_sp_qgpArchive_orchestration_allLayers_weekly
+
+  4. Dashboard Pulse TMS Bronze
+       - adobeFunnel
+       - mfcSpend
+       - platformSpend
+       - qgp
+       - biddableSpend
+
+  5. Dashboard Pulse TMS Silver
+       - adobeFunnel
+       - mfcSpend
+       - platformSpend
+       - qgp
+       - biddableSpend
+
+  6. Dependent Silver
+       - upvForecast
+       - Must run after Silver Adobe Funnel.
+
+  7. Gold
+       - No Gold stored procedure is called.
+       - Gold objects are live views:
+           sdi_vw_dashboardPulseTms_dim_qgp_calendar
+           sdi_vw_dashboardPulseTms_gold_unified_long
+           sdi_vw_dashboardPulseTms_gold_unified_wide
+
+  8. Post-run Validation
+       - sdi_sp_dashboardPulseTms_validation_history_perRun
+       - This MUST remain the final callable step.
+       - One validation snapshot is appended for each completed orchestration execution.
 
 USAGE:
-  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly();
+
+  From scheduler notebook:
+    Parameters are supplied automatically.
+
+  Direct manual SQL:
+    CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly();
 
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly()
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly
+(
+  IN p_orchestration_run_type STRING DEFAULT NULL,
+  IN p_orchestration_job_id STRING DEFAULT NULL,
+  IN p_orchestration_job_run_id STRING DEFAULT NULL,
+  IN p_orchestration_task_run_id STRING DEFAULT NULL,
+  IN p_orchestration_execution_count INT DEFAULT NULL
+)
 
 LANGUAGE SQL
 SQL SECURITY INVOKER
@@ -79,24 +108,43 @@ BEGIN
      EXTERNAL DEPENDENCY: UPV FORECAST BRONZE DATA
 
      The external notebook that populates the UPV Forecast Bronze table must run successfully
-     before this orchestration procedure starts. There is no CALL for that notebook here.
+     before this orchestration procedure starts.
+
+     There is no CALL for that notebook here.
+
+     The dependency must remain configured in the Databricks Job by making the orchestration
+     notebook task depend on the UPV Forecast Bronze upload task.
      =============================================================================================== */
 
-  -- ============================================================
-  -- BRONZE — must run first (Silver reads from these tables)
-  -- ============================================================
+
+  /* ===============================================================================================
+     UPSTREAM MFC BRONZE
+     =============================================================================================== */
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActuals_weekly();
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActualsGranular_weekly();
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecast_weekly();
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendForecastGranular_weekly();
 
-  -- ============================================================
-  -- SILVER — must run after Bronze (Gold reads from these tables)
-  -- ============================================================
+
+  /* ===============================================================================================
+     UPSTREAM MFC SILVER
+     =============================================================================================== */
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_silver_spend_weekly();
+
   CALL prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly();
 
+
+  /* ===============================================================================================
+     QGP ARCHIVE
+     =============================================================================================== */
+
   CALL prdrzranalytics.lab42.sdi_sp_qgpArchive_orchestration_allLayers_weekly();
+
 
   /* ===============================================================================================
      DASHBOARD PULSE TMS BRONZE LAYER: 5 PROCEDURES
@@ -114,7 +162,7 @@ BEGIN
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS SILVER LAYER: 5 INDEPENDENT PROCEDURES
+     DASHBOARD PULSE TMS SILVER LAYER: 5 PROCEDURES
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_adobeFunnel_weekly();
@@ -129,37 +177,59 @@ BEGIN
 
 
   /* ===============================================================================================
-     DASHBOARD PULSE TMS DEPENDENT SILVER LAYER: 1 PROCEDURE
+     DASHBOARD PULSE TMS DEPENDENT SILVER: UPV FORECAST
 
-     This procedure must run after Silver adobeFunnel.
-     It also requires the UPV Forecast Bronze data populated by the external notebook.
+     This procedure must run after Silver Adobe Funnel because it uses prior-year channel allocation
+     ratios from the Silver Adobe Funnel table.
+
+     It also requires the external UPV Forecast Bronze upload.
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();
 
-  /* ===============================================================================================
-     POST-RUN VALIDATION
-
-     IMPORTANT:
-       This must remain AFTER every Bronze/Silver refresh.
-
-       Gold is live, so calling validation here immediately reads the final current Gold state.
-
-       One row set is appended to:
-         sdi_tbl_dashboardPulseTms_validation_history_perRun
-
-       for every orchestration execution.
-     =============================================================================================== */
-
-  -- CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun();
 
   /* ===============================================================================================
      DASHBOARD PULSE TMS GOLD LAYER: LIVE VIEWS
 
-     No Gold procedures are called because the Gold objects are live views that resolve
-     automatically from the refreshed Silver tables:
+     No Gold procedure is required.
+
+     At this point all underlying Silver tables have been refreshed, so the following views resolve
+     automatically against the current Silver state:
+
+       - sdi_vw_dashboardPulseTms_dim_qgp_calendar
        - sdi_vw_dashboardPulseTms_gold_unified_long
        - sdi_vw_dashboardPulseTms_gold_unified_wide
      =============================================================================================== */
+
+
+  /* ===============================================================================================
+     POST-RUN VALIDATION
+
+     THIS MUST REMAIN THE FINAL CALLABLE STEP.
+
+     The orchestration execution metadata received from the scheduler notebook is forwarded to the
+     validation procedure.
+
+     For a direct SQL call with no parameters, these values are NULL here and the validation
+     procedure automatically generates its own PULSETMS_MAN_* execution identity.
+
+     The validation SP:
+       - creates the history table if it does not already exist
+       - determines the reporting period
+       - performs Source -> Bronze -> Silver -> Gold reconciliation
+       - records Healthy / Warning / Failed
+       - appends one validation snapshot
+       - attaches this orchestration execution lineage
+     =============================================================================================== */
+
+  CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun
+  (
+    p_orchestration_run_type,
+    p_orchestration_job_id,
+    p_orchestration_job_run_id,
+    p_orchestration_task_run_id,
+    p_orchestration_execution_count
+  );
+
 
 END;
