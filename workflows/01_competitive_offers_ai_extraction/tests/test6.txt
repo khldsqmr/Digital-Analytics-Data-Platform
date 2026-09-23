@@ -1,3 +1,23 @@
+Biddable Spend
+Weekly spend across Programmatic, Paid Social, and Paid Search. Current reporting scope: Postpaid + Broadband.
+
+Programmatic | Source: pbi_programmatic_browsers_currentyr
+Universe: Amazon DSP, Blis, DV360, The Trade Desk; multiple accounts, Channels and Buy Types.
+Selected: Postpaid + HSI/Broadband. All qualifying DSPs/accounts/channels remain included.
+
+Paid Social | Source: media_analytics_integrated_snapshot
+Universe: Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter, LinkedIn, Indirect, Nextdoor, General MFC and other Paid Social values across multiple agencies/LOBs.
+Selected: Paid Social + Agency = InHouse + Postpaid/Broadband.
+Current qualifying platforms: Facebook, Instagram, TikTok, Snapchat, Pinterest, Twitter.
+No platform whitelist is used; qualifying future platforms can flow through automatically.
+
+Paid Search | Source: sdi_tbl_sa360_gold_campaign_daily
+Universe: Google/Bing accounts; SEARCH, SHOPPING, PERFORMANCE_MAX, DISCOVERY; Brand, Generic, Shopping, PMax, DemandGen; Postpaid, HSI, Metro, TFB, Fiber.
+Selected: Google + Bing, Postpaid + HSI/Broadband + Fiber. All qualifying accounts and campaign/channel types remain included.
+
+Total definition: All Channels = Programmatic + Paid Social + Paid Search for Postpaid + Broadband only.
+
+
 WITH base AS (
     SELECT
         CAST(date AS DATE) AS date,
