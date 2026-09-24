@@ -1,3 +1,6 @@
+validation_run_id	validation_run_ts	orchestration_run_type	orchestration_job_id	orchestration_job_run_id	orchestration_task_run_id	orchestration_execution_count	data_as_of_date	week_type	overall_status	metric_count	healthy_count	warning_count	failed_count	issue_metrics	issue_summary	next_step_summary	run_label
+PULSETMS_VAL_20260923_211128_106	2026-09-23T21:11:28.106+00:00	MANUAL	PULSETMS_MAN	PULSETMS_MAN_20260923_211128_106	PULSETMS_MAN_20260923_211128_106_T01	1	2026-09-19	NORMAL	Warning	58	54	4	0	BIDDABLE_SPEND: biddableSpendFiber [DATA_AVAILABILITY] | MFC_SPEND: mfcSpendActualBroadband [DATA_AVAILABILITY], mfcSpendActualPostpaid [DATA_AVAILABILITY], mfcSpendActualTotal [DATA_AVAILABILITY]	BIDDABLE_SPEND: biddableSpendFiber: Expected validation data is unavailable for the selected reporting period. || MFC_SPEND: mfcSpendActualBroadband: Expected validation data is unavailable for the selected reporting period. | mfcSpendActualPostpaid: Expected validation data is unavailable for the selected reporting period. | mfcSpendActualTotal: Expected validation data is unavailable for the selected reporting period.	Confirm that the expected source/publication completed for 2026-09-19 and then verify the corresponding Bronze/Silver refresh.	Run PULSETMS_MAN_20260923_211128_106 | 2026-09-23 21:11:28 | Data: 2026-09-19 | Warning
+
 
 SELECT
   validation_run_id,
