@@ -1,4 +1,34 @@
 
+
+Forge Repository
+tmobile → DMA → T-Media → Forge
+                         ↓
+Application Code
+Backend + Frontend + Documentation
+                         ↓
+Git Workflow
+Create branch → Develop → Test → Review → Merge to tmo/main
+                         ↓
+GitLab CI/CD
+Validate → Run tests → Security checks → Build application
+                         ↓
+Dockerfile
+Package backend, frontend, and dependencies into a container image
+                         ↓
+Helm
+Define environment settings and release the container
+                         ↓
+Environment Update
+Apply Helm chart → Update running application
+                         ↓
+Validation and Support
+Health checks → Logs → Monitoring → Troubleshooting
+                         ↓
+What We Need to Understand
+Repository access + Branching rules + Pipeline stages
++ Docker configuration + Helm setup + Environment variables
++ Authentication + Secrets/certificates + Release approvals
++ Monitoring + Support ownership
 MinimizeMaximizeClose
 
 Qamar, Khalid
