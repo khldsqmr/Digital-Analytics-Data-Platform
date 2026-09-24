@@ -7,19 +7,9 @@ Think deeper
 
 
 You said:
-So i'm going to understand a few stuff here. help me understand please.
+I will keep providing you some of the screenshots, and you try to figure this out please
 Copilot said:
-Absolutely. Send me the topics, screenshots, code, messages, or concepts one at a time, and I’ll explain them in simple English with practical examples.
-
-I can help you understand:
-
-What it means
-How it works
-Why it is used
-How the different pieces connect
-What questions you may want to ask
-Whether your understanding is correct
-Go ahead with the first item.
+Sorry, it looks like I can’t respond to this. Let’s try a different topic.
 
 
 
@@ -27,409 +17,374 @@ Go ahead with the first item.
 
 You said:
 
-
-
-Help me understand this in detail in easy ways please
 Copilot said:
 
-Reasoning completed in 4 steps
-I’ll break down what this screen represents, how the hierarchy works, what each icon means, and how the code-development workflow fits together. The simplest way to think about it is: you are looking at a shared workspace that contains many folders and code repositories for the Kubernetes team.
+Reasoning completed in 1 step
+Yes, this screenshot gives us much stronger evidence about how the prototype is developed and deployed. It appears to confirm that the Forge application is deployed on T-Mobile’s Kubernetes infrastructure, but it still does not conclusively prove that the source repository sits inside the specific tmobile/k8s GitLab group.
 
-1. What are you looking at?
-This is the GitLab group page for:
+1. What the screenshot shows
+The screenshot appears to be an AI-assisted coding environment, possibly Claude Code inside VS Code or a terminal interface. The terminal is describing completed Git operations, configuration changes, and deployment instructions for the Forge application.
+
+Visible browser/editor tabs include items resembling:
+
+DMG
+dist migration
+Anthropic MediaOS Disc...
+forge-security-quick-wins
+dv360-mcp-server-implem...
+dist migration rework
+mediaos-forge UI unificati...
+fix-taxonomy-glossary-de...
+Claude Code
+This suggests multiple development branches, worktrees, documents, or repositories related to Forge, MediaOS, migration work, security, and DV360 integration.
+
+2. Important visible text
+The clearest terminal output says approximately:
 
 
 
 
 Plain Text
-tmobile / k8s
-The URL confirms the location:
+New worktree, so deps aren't installed. My changes are backend-only,
+but the rule exists because a broken build slipped through before,
+so I'll run it.
+Then:
 
 
 
 
 Plain Text
-gitlab.com/groups/tmobile/k8s
+Build clean. Merging to tmo/main:
  
-The hierarchy is approximately:
+And:
 
 
 
 
 Plain Text
-T-Mobile
-└── k8s group
-    ├── sampleapp subgroup
-    ├── knowledge-graph subgroup
-    ├── documentation subgroup
-    ├── mcp-servers subgroup
-    ├── vibes subgroup
-    ├── birdseye subgroup
-    ├── lighthouse project
-    ├── kubeprompt project
-    ├── platform-architecture project
-    ├── proxy-optimization project
-    └── other subgroups and projects
-A GitLab group is a container for related projects, people, permissions, issues, and merge requests. If someone receives access at the group level, that access can generally be inherited by projects inside the group.
-gitlab
-
-2. What does k8s mean?
-k8s is the commonly used shortened form of Kubernetes.
-
-The abbreviation works like this:
+4 commits to push, all mine - the Splunk work is already on the remote
+and untouched.
+Followed by:
 
 
 
 
 Plain Text
-K + 8 letters + s
-There are eight letters between the first K and final s in “Kubernetes,” so it becomes:
+Merged and pushed ... on origin/tmo/main.
+Local and remote in sync, worktree cleaned up.
+This means someone:
+
+Worked in a separate Git worktree or branch.
+Made backend changes.
+Ran the build verification.
+Combined the changes with the tmo/main branch.
+Pushed the commits to the remote Git repository.
+Cleaned up the temporary development worktree.
+“What shipped” section
+The screenshot lists four commits or changes:
 
 
 
 
 Plain Text
-Kubernetes → K8s
-Kubernetes is a platform used to run and manage applications packaged inside containers.
+Commit    Change
+ 
+9860735   Host + prd.api.incubator.tda.kube.t-mobile.com
+674545c   Prod OAuth scope + PROD-then-DEV precedence in 4 modules
+6f123c8   /health reports base_url + scope_source
+e88bfff   Merge
+Some commit characters are blurry, so the exact hashes may differ slightly.
 
-Simple example
-Imagine that a company has an application with:
-
-A website
-An API
-A database connection
-Multiple supporting services
-Each part may run inside a container. Kubernetes helps manage those containers by:
-
-Starting them
-Restarting them if they fail
-Running multiple copies
-Balancing traffic
-Deploying updated versions
-Scaling capacity up or down
-Therefore, the k8s GitLab group probably holds repositories related to the organization’s Kubernetes platform, tools, documentation, automation, and experiments. That conclusion is also supported by the visible project descriptions, such as:
-
-“T-Mobile K8s nginx-ingress fleet optimization pipeline”
-“Event-driven capacity management for T-Mobile K8s clusters”
-“CNCF-style landscape of open-source components used across T-Mobile Kubernetes”
-3. Group, subgroup, and project
-This is the most important distinction on the screen.
-
-A. Group
-A group is a large organizational container.
-
-For example:
+The most important hostname is:
 
 
 
 
 Plain Text
-k8s
-A group can contain:
+prd.api.incubator.tda.kube.t-mobile.com
+This is strong evidence that the Forge backend communicates with, or is deployed behind, a T-Mobile Kubernetes-related production endpoint.
 
-Subgroups
-Projects
-Members
-Permissions
-Issues
-Merge requests
-Shared settings
-Think of the k8s group as a department-level shared drive.
-
-B. Subgroup
-A subgroup is a smaller organizational container inside a group.
-
-A subgroup can contain:
-
-More subgroups
-One or more projects
-Its own members and permissions
-In the first screenshot, entries such as these appear to be subgroups:
-
-sampleapp
-knowledge-graph
-documentation
-mcp-servers
-vibes
-birdseye
-haystack-ecosystem
-kseer
-The strong visual clue is the expand arrow on the left:
+3. Configuration involved
+The screenshot says:
 
 
 
 
 Plain Text
->
-That arrow means the item may be expanded to display projects or additional subgroups contained within it.
+Deployed config verified on tmo/main:
+- INCUBATOR_BASE_URL: "https://prd.api.incubator.tda.kube.t-mobile.com"
+- INCUBATOR_SCOPE_ID_PROD: "[value]"
+I have intentionally not repeated the visible scope identifier. Even if it is not a password, environment identifiers and authentication configuration should be handled carefully.
 
-GitLab allows groups to be organized into multiple subgroup levels. This helps large organizations separate different products, teams, technologies, or access requirements.
-gitlab
-+1
+This configuration indicates two important things:
 
-Simple analogy
-
-
-
-Plain Text
-Company shared drive
-└── Kubernetes department
-    └── Documentation team
-        ├── User guide repository
-        └── Architecture guide repository
-In GitLab terms:
+INCUBATOR_BASE_URL
+This tells the application where to find the production Incubator API:
 
 
 
 
 Plain Text
-Top-level group
-└── k8s group
-    └── documentation subgroup
-        ├── user-guide project
-        └── architecture-guide project
-C. Project
-A project is normally where the actual work is stored.
-
-A project can contain:
-
-Source code
-SQL files
-Python files
-Documentation
-Configuration files
-Branches
-Commit history
-CI/CD pipelines
-Issues
-Merge requests
-Releases
-Project settings
-In the second and third screenshots, these appear to be individual projects:
-
-lighthouse
-kubeprompt
-platform-architecture
-masquerade-proxy
-kroot
-proxy-optimization
-landscape
-Gitlab Token Manager
-kubeconfigs-portal
-haymaker
-twrtools
-grafana-mcp-plugin
-The icon on the left of those items looks like a small project/repository symbol, rather than the connected-circles subgroup symbol.
-
-The simplest distinction
-
-
-
-Plain Text
-Group/subgroup = organizes work
-Project = contains the actual work
-Or:
+https://prd.api.incubator.tda.kube.t-mobile.com
+The naming likely breaks down approximately as:
 
 
 
 
 Plain Text
-Folder = group or subgroup
-Repository = project
-The comparison is not perfect, but it is a good starting point.
+prd         = production environment
+api         = API service
+incubator   = service or platform name
+tda         = organizational or platform namespace
+kube        = Kubernetes-related domain
+t-mobile.com = company domain
+The exact meaning of tda cannot be confirmed from this screenshot.
 
-4. How to identify a subgroup versus a project
-From the screenshots, there are two different icon patterns.
+INCUBATOR_SCOPE_ID_PROD
+This appears to be an OAuth scope or resource identifier for the production environment.
 
-Subgroup pattern
-Examples:
-
-sampleapp
-knowledge-graph
-mcp-servers
-vibes
-Visible clues:
-
-An expand arrow > appears
-A connected-circles-style group icon appears
-Several numbers appear on the right, representing summarized content
-A subgroup may contain multiple projects, so clicking the arrow can reveal nested objects.
-
-Project pattern
-Examples:
-
-lighthouse
-kubeprompt
-proxy-optimization
-landscape
-Visible clues:
-
-A project/repository icon appears to the left
-No subgroup expansion tree is displayed
-A star count appears on the right
-Clicking the project name should open the project itself
-This distinction explains why the first screenshot looks different from the later screenshots. The page contains both organizational containers and individual repositories.
-
-5. What do the padlock icons mean?
-Most names have a small padlock beside them.
-
-That means the item is private.
-
-For example:
+In easy terms, the application likely needs both:
 
 
 
 
 Plain Text
-sampleapp 🔒
-platform-architecture 🔒
-landscape 🔒
-Private normally means:
-
-The content is not publicly visible
-A person must sign in
-A person must have the necessary permission
-Search engines and unrelated GitLab users cannot inspect the code
-The lock does not mean that the project cannot be edited. It means access is restricted to authorized users.
-
-6. What do the numbers at the top mean?
-The first screenshot shows activity for the last 30 days:
+Where should I make the API request?
+→ INCUBATOR_BASE_URL
+ 
+What authorized permission or scope should I request?
+→ INCUBATOR_SCOPE_ID_PROD
+4. What was being fixed?
+The clearest summary appears near the bottom:
 
 
 
 
 Plain Text
-Merge requests created: 104
-Issues created: 0
-Members added: 2
-These numbers summarize activity across the k8s group and its visible hierarchy.
-
-104 merge requests created
-A merge request, often called an MR, is a proposal to add a code change into another branch.
-
-Example:
+Goal was restoring Forge's Incubator connectivity after the 503s;
+the fix (prd endpoint plus production OAuth scope) is merged and
+pushed to tmo/main.
+This means the Forge application had trouble communicating with the Incubator service and received:
 
 
 
 
 Plain Text
-Developer creates a feature branch
-        ↓
-Developer changes the code
-        ↓
-Developer opens a merge request
-        ↓
-Other people review and test it
-        ↓
-Approved changes are merged into the main branch
-The number 104 means that 104 merge requests were created within the reporting period shown on the page. It does not necessarily mean that all 104 were approved or merged.
+HTTP 503
+An HTTP 503 generally means that the requested service is unavailable or cannot currently handle the request. In this specific case, the screenshot indicates that the application may have been using incorrect environment configuration, such as:
 
-0 issues created
-An issue is a work item used to track something such as:
-
-A bug
-A new feature
-A technical task
-An investigation
-A change request
-0 means no new issues were created during that displayed period. It does not mean that no older issues already exist.
-
-2 members added
-Two users were added to the group or relevant group scope during the displayed reporting period.
-
-7. What are the tabs?
-The screen shows four tabs:
-
-Subgroups and projects
-This is the selected tab.
-
-It shows the items directly organized under k8s, including:
-
-Child subgroups
-Individual projects
-Shared projects
-These are projects that may be owned somewhere else in GitLab but have been shared with the k8s group.
-
-Example:
+The wrong API hostname
+A non-production endpoint
+The wrong OAuth scope
+Development configuration taking precedence over production configuration
+The implemented fix appears to include:
 
 
 
 
 Plain Text
-Security team owns a scanning project
-        ↓
-Security team shares it with the k8s group
-        ↓
-k8s members can access it based on the shared permission
-Shared groups
-These are other groups that have been connected or shared with the k8s group for collaboration or access purposes.
+Correct production API endpoint
++
+Correct production OAuth scope
++
+Production-before-development configuration precedence
+5. What does “PROD-then-DEV precedence” mean?
+The line says:
 
-Inactive
-This can contain projects or subgroups considered inactive according to GitLab’s applicable activity rules or organization settings.
 
-8. What do the descriptions tell you?
-Some projects include helpful descriptions beneath their names.
 
-mcp-servers
-Visible description:
 
-MCP (Model Context Protocol) Servers developed and owned by T-Mobile Kubernetes team.
+Plain Text
+Prod OAuth scope + PROD-then-DEV precedence in 4 modules
+``
+This likely means the backend checks for the production setting first and uses the development setting only as a fallback.
 
-This suggests that the subgroup or repository organizes MCP server implementations maintained by the Kubernetes team.
+Conceptually:
 
-vibes
-Visible description:
 
-Experimental playground for vibe-coded proof-of-concepts before they graduate to official projects.
 
-This appears to be an experimentation area. Teams can test ideas there before turning a successful idea into a formal, supported project.
 
-haystack-ecosystem
-Visible description:
+Python
+scope = production_scope or development_scope
+In other words:
 
-This group holds projects that extend Haystack's ecosystem.
 
-This looks like a subgroup holding multiple projects related to a Haystack-based ecosystem.
 
-proxy-optimization
-Visible description:
 
-T-Mobile K8s nginx-ingress fleet optimization pipeline
+Plain Text
+If production scope exists:
+    use production scope
+Otherwise:
+    fall back to development scope
+Before this change, the application may have mistakenly selected a development scope while operating in production.
 
-This likely contains an automation or data pipeline for improving how an NGINX ingress fleet is managed. The screenshot does not disclose the exact implementation.
+The screenshot says this correction applies to four modules, although the module names are not shown.
 
-landscape
-Visible description:
+6. What is the /health endpoint?
+The screenshot says:
 
-CNCF-style landscape of open-source components used across T-Mobile Kubernetes. Published to GitLab Pages.
 
-This likely creates a visual catalog of Kubernetes-related open-source components used by the organization.
 
-haymaker
-Visible description:
 
-Event-driven capacity management for T-Mobile K8s clusters
+Plain Text
+/health reports base_url + scope_source
+It later mentions:
 
-This likely deals with adjusting or managing computing capacity based on events. The precise logic would only be clear after opening the project documentation or README.
 
-9. What does the left navigation mean?
-The left-side menu provides group-level tools.
 
-Pinned area
-This gives quick access to commonly used pages.
 
-Members
-Shows the users and groups with access, including roles such as:
+Plain Text
+GET /api/taxonomy/glossary/health
+A health endpoint is a diagnostic URL used to see whether a backend service is configured and operating correctly.
 
-Guest
-Reporter
-Developer
-Maintainer
-Owner
-The exact available roles and capabilities depend on the GitLab configuration and access level.
+This particular endpoint appears to return information about:
 
-Work items
-A broad work-tracking area. It may include tasks, issues, objectives, or other trackable items, depending on the GitLab setup.
+Which base URL the application selected
+Whether the selected OAuth scope came from production or development configuration
+Whether synchronization or connectivity works
+In easy terms, instead of developers guessing which configuration the application is using, they can call:
+
+
+
+
+Plain Text
+/api/taxonomy/glossary/health
+and receive a direct diagnostic answer.
+
+7. The response interpretation table
+The screenshot contains a small table that reads approximately:
+
+Response	Meaning
+base_url: prd + scope_source: "prod" + sync works	Done
+Correct values, JSON 403 on writes	Service principal needs production-side grant
+HTML 503	Helm chart not applied yet
+Here is what that means.
+
+Result 1: Production values and synchronization works
+If the health response shows:
+
+
+
+
+Plain Text
+base_url = production
+scope_source = production
+sync works
+then the configuration and connectivity fix is successful.
+
+Result 2: Correct values but HTTP 403
+An HTTP 403 Forbidden means the application reached the correct service, but the application identity does not have permission to perform the requested operation.
+
+The screenshot says:
+
+
+
+
+Plain Text
+SP needs prod-side grant
+``
+SP almost certainly means service principal.
+
+So this outcome means:
+
+
+
+
+Plain Text
+Correct endpoint
++ successful authentication pathway
++ insufficient authorization
+Someone would need to grant the application’s service principal the required production permission.
+
+Result 3: HTML 503
+The screenshot interprets this as:
+
+
+
+
+Plain Text
+Chart not applied yet
+That refers to a Helm chart, which is commonly used to describe and deploy applications or configuration onto Kubernetes.
+
+In simple terms:
+
+
+
+
+Plain Text
+Code merged into Git
+        ≠
+configuration currently running in Kubernetes
+The Helm deployment must still apply the new configuration to the running application.
+
+8. Git change versus deployment change
+This line is especially important:
+
+
+
+
+Plain Text
+Nothing changes until the chart is applied.
+The commit is on tmo/main; the running pod still has the old values.
+This explains the separation between source control and runtime deployment:
+
+
+
+
+Plain Text
+Code/configuration pushed to Git repository
+                ↓
+Change exists on tmo/main
+                ↓
+Helm chart must be applied
+                ↓
+Kubernetes updates the running workload
+                ↓
+New or restarted pod receives the new values
+Until the chart is applied, the running Kubernetes pod continues using the previous configuration.
+
+This confirms the application is not merely stored in Git. There is an actual Kubernetes deployment lifecycle involving:
+
+A Git branch
+A Helm chart
+A running pod
+Environment-specific configuration
+An API health check
+OAuth authorization
+9. Does this prove they use Kubernetes?
+Yes, with high confidence.
+
+The screenshot contains multiple pieces of direct Kubernetes-related evidence:
+
+The production API hostname contains:
+
+
+
+
+Plain Text
+kube.t-mobile.com
+The instructions explicitly say:
+
+
+
+
+Plain Text
+apply the Helm chart
+The instructions explicitly reference:
+
+
+
+
+Plain Text
+the running pod
+A pod is a fundamental Kubernetes workload unit, and Helm is a deployment/package-management mechanism commonly used with Kubernetes.
+
+Therefore, we can accurately say:
+
+The Forge prototype appears to be deployed on T-Mobile’s Kubernetes platform and uses a Helm chart to update the running Kubernetes pods.
+
+10. Does this prove they use the tmobile/k8s GitLab group?
+No, not yet.
 
 The screenshot shows:
 
@@ -437,683 +392,752 @@ The screenshot shows:
 
 
 Plain Text
-Work items: 5
-That means five work items are currently represented by that menu counter, although the screenshot alone does not indicate their statuses.
+tmo/main
+origin/tmo/main
+But tmo/main appears to be a Git branch or remote branch reference, not the GitLab group path.
 
-Issue boards
-A visual, Kanban-style board for organizing issues into stages such as:
-
-
-
-
-Plain Text
-Open → In progress → Review → Done
-Merge requests
-Shows merge requests across projects inside the group.
-
-The menu displays:
+That could mean something like:
 
 
 
 
 Plain Text
-Merge requests: 12
-This counter is separate from the 104 merge requests created statistic. The 104 value is a historical activity count for the last 30 days. The 12 in the sidebar likely represents a current filtered or actionable merge-request count, but opening the section would be necessary to confirm the exact filter.
+remote name: tmo
+branch name: main
+or possibly a local branching convention. It does not show the full repository URL.
 
-Epic boards
-Used for higher-level planning across multiple issues or projects. An epic typically represents a larger body of work.
-
-Feature catalog
-This appears to be a GitLab feature-management area available in this group. It can help organize and understand features separately from individual technical tasks. The precise options depend on the GitLab version and enabled features.
-
-10. The major menu categories
-Manage
-Usually contains administrative and access-related controls, such as:
-
-Members
-Invitations
-Labels
-Group-level settings
-Access management
-Plan
-Used to organize work:
-
-Issues
-Work items
-Boards
-Epics
-Milestones
-Code
-Used to access code-related content:
-
-Repositories
-Branches
-Commits
-Merge requests
-Code review
-At a group level, this can aggregate information from multiple projects.
-
-Deploy
-Typically connects to software delivery:
-
-CI/CD pipelines
-Environments
-Releases
-Deployment-related controls
-Operate
-Typically covers running and monitoring applications:
-
-Kubernetes-related operational resources
-Environments
-Infrastructure
-Observability or operational capabilities
-The exact menu options depend on permissions, license, and enabled GitLab features.
-
-Analyze
-Used for reporting and analytics, potentially including:
-
-Group activity
-Productivity
-Contribution metrics
-CI/CD performance
-Value-stream analytics
-11. What are branches, commits, pipelines, and merge requests?
-When you open an individual project, these concepts become important.
-
-Repository
-The repository is the complete controlled storage area for project files and their history.
-
-Example:
+To prove that the repository is inside the GitLab group shown earlier, we would need to see something like:
 
 
 
 
 Plain Text
-proxy-optimization/
-├── README.md
-├── src/
-├── tests/
-├── config/
-└── .gitlab-ci.yml
-Branch
-A branch is an independent working line or copy of the code.
-
-Common pattern:
+git@gitlab.com:tmobile/k8s/forge.git
+or:
 
 
 
 
 Plain Text
-main
-├── feature/add-capacity-check
-├── bugfix/fix-timeout
-└── feature/update-dashboard
-main normally represents the approved version. Developers work on separate branches to avoid directly breaking main.
-
-Commit
-A commit is a saved version of one or more changes.
-
-Example:
+https://gitlab.com/tmobile/k8s/forge
+ 
+Right now, we can establish:
 
 
 
 
 Plain Text
-Commit: Add validation for missing configuration
-A commit records:
-
-What changed
-Who submitted the change
-When the change was submitted
-A message explaining the change
-Merge request
-A merge request asks reviewers to merge one branch into another.
-
-Example:
-
-
-
-
-Plain Text
-feature/add-capacity-check → main
-Reviewers can:
-
-Read the changes
-Add comments
-Request corrections
-Approve the work
-Verify pipeline results
-Merge the branch
-Pipeline
-A pipeline is an automated set of jobs triggered by code activity.
-
-For example:
-
-
-
-
-Plain Text
-Code pushed
-    ↓
-Validate formatting
-    ↓
-Run tests
-    ↓
-Perform security scan
-    ↓
-Build application
-    ↓
-Deploy to development
-The pipeline is usually controlled through a file such as:
-
-
-
-
-Plain Text
-.gitlab-ci.yml
-``
-12. What access might you need?
-If you are requesting access for SDI process automation or development work, the required access depends on the task.
-
-Read-only investigation
-You may need enough access to:
-
-View repositories
-Read README documentation
-Inspect files
-Review commit history
-View pipeline results
-Contributing code
-You may need enough access to:
-
-Clone repositories
-Create branches
-Push changes
-Open merge requests
-Run permitted pipelines
-Managing a project
-Higher access may be required to:
-
-Configure CI/CD variables
-Manage protected branches
-Change project settings
-Add members
-Configure runners or integrations
-You generally should request only the minimum permission required for the work.
-
-A concise business justification could be:
-
-GitLab access is required to support SDI team process automation, review the relevant repositories and documentation, collaborate through controlled branches and merge requests, and monitor CI/CD pipeline execution.
-
-13. The complete workflow in simple English
-A typical workflow in this environment looks like this:
-
-
-
-
-Plain Text
-1. The k8s group organizes Kubernetes-related work.
+Confirmed:
+✓ Forge is using T-Mobile Kubernetes infrastructure
+✓ Forge has a running Kubernetes pod
+✓ Forge deployment uses a Helm chart
+✓ Changes are managed through Git
+✓ Changes were pushed to a main branch
+✓ The backend uses production OAuth configuration
+✓ The application communicates with an Incubator API
  
-2. Subgroups organize work by product, platform, or technical area.
- 
-3. Projects contain the actual code and configuration.
- 
-4. A developer copies or clones a project locally.
- 
-5. A separate branch is created for the change.
- 
-6. The developer updates the code.
- 
-7. The change is saved through one or more commits.
- 
-8. The branch is pushed to GitLab.
- 
-9. GitLab runs an automated pipeline.
- 
-10. The developer creates a merge request.
- 
-11. Reviewers inspect the code and pipeline results.
- 
-12. After approval, the change is merged into the main branch.
- 
-13. Another pipeline may build or deploy the approved version.
+Not confirmed:
+✗ The exact GitLab repository URL
+✗ Whether the repository belongs to gitlab.com/tmobile/k8s
+✗ Whether the k8s team owns the application
+✗ Whether another team owns the code and only deploys it on Kubernetes
+Best current conclusion
+The other team’s Forge prototype is clearly deployed on T-Mobile’s Kubernetes platform using Helm and Kubernetes pods. However, the available screenshots still do not establish whether the source repository is located specifically inside the tmobile/k8s GitLab group.
 
-Show more lines
-14. The key takeaway from your screenshots
-The screenshots are not showing one application. The screenshots show an organizational area containing many different Kubernetes-related initiatives.
+The most useful screenshot to look for next would show one of these:
 
-The easiest mental model is:
+The GitLab project page and browser URL
+The repository’s Clone URL
+Output from git remote -v
+The project breadcrumb at the top of GitLab
+The .git/config remote section
+The CI/CD pipeline page showing the full GitLab project path
 
 
 
 
-Plain Text
-k8s group
-│
-├── Subgroups
-│   ├── Used to organize related projects
-│   └── Can contain more subgroups
-│
-└── Projects
-    ├── Contain code and files
-    ├── Have branches and commits
-    ├── Use merge requests for review
-    └── May run CI/CD pipelines
-So, for example:
-
-
-
-
-Plain Text
-mcp-servers
-appears to be an organizational subgroup, while:
-
-
-
-
-Plain Text
-proxy-optimization
-appears to be an individual project containing the actual implementation for a specific purpose.
-
-In one sentence
-You are inside a private GitLab workspace for Kubernetes-related work, where subgroups organize different areas and projects hold the actual code, documentation, configuration, and automation.
-
-
-
-
-
-Favicon type
-Sources
 You said:
-Suppose I want to start a project where I'm building an application (having backend python, frontend html css javascript, and getting data from the databricks table), where do i go? Is this the right place?
+
 Copilot said:
+Yes, this screenshot gives us the missing confirmation. Forge is not stored in the tmobile/k8s GitLab group. The project is stored under a different GitLab hierarchy, while Kubernetes is being used to host/deploy the application.
 
-Reasoning completed in 2 steps
-Yes, GitLab is the right place to store and manage the application’s code, but the specific tmobile/k8s group is the right location only if the Kubernetes team owns, sponsors, or will deploy/support the application.
-
-Think of the process as two decisions:
-
-Where does the code belong organizationally?
-Where will the application run?
-1. What should you create?
-For one application containing a Python backend and an HTML/CSS/JavaScript frontend, you would normally create a new GitLab project, not a new group.
-
-For example:
+Confirmed GitLab location
+The breadcrumb at the top shows:
 
 
 
 
 Plain Text
-tmobile / appropriate-team / databricks-data-app
-The new project would be the repository containing everything for the application:
+tmobile / DMA / T-Media / Forge
+The browser address appears to show:
 
 
 
 
 Plain Text
-databricks-data-app/
-├── backend/
-│   ├── app.py
-│   ├── routes/
-│   ├── services/
-│   │   └── databricks_service.py
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── index.html
-│   ├── css/
-│   │   └── styles.css
-│   └── js/
-│       └── app.js
-│
-├── tests/
-├── Dockerfile
-├── .gitignore
-├── .gitlab-ci.yml
-├── README.md
-└── requirements.txt
-
-Show more lines
-In simple terms:
-
-
-
-
-Plain Text
-GitLab project
-├── Frontend code
-├── Backend code
-├── Databricks connection logic
-├── Tests
-├── Deployment configuration
-└── Documentation
-A GitLab group organizes related projects and their permissions, while the project is the actual home for files and code.
-gitlab
-+1
-
-2. Is tmobile/k8s the correct group?
-It is likely correct if:
-The application will be deployed to the Kubernetes platform
-The Kubernetes team owns the application
-The Kubernetes team asked you to create the project there
-The application is a Kubernetes platform tool
-The application directly supports Kubernetes operations
-The application is an experiment that belongs in one of the visible experimental subgroups
-It may not be correct if:
-The application is owned by the SDI team
-The application is a business dashboard
-The application is part of an analytics or data product
-Kubernetes is only the eventual hosting platform
-The k8s team provides infrastructure but does not own the application
-Your own team already has a GitLab group
-This distinction is important:
-
-The application does not automatically belong in the k8s group simply because it may eventually run on Kubernetes.
-
-For example, an SDI application deployed on Kubernetes might still belong here:
-
-
-
-
-Plain Text
-tmobile / sdi / databricks-data-app
-rather than here:
-
-
-
-
-Plain Text
-tmobile / k8s / databricks-data-app
-The Kubernetes team might provide the deployment platform, while the SDI team remains the application owner.
-
-3. Where should you go in GitLab?
-First, identify the group or subgroup that owns the application.
-
-A likely flow is:
-
-
-
-
-Plain Text
-GitLab
-  → T-Mobile
-    → Your team's group or subgroup
-      → New project
-        → Create blank project
-You would enter information such as:
-
-
-
-
-Plain Text
-Project name: SDI Data Application
-Project URL:   tmobile/[your-team]/sdi-data-application
-Visibility:    Private
-README:        Initialize repository with a README
-If your team does not have a suitable subgroup, the team may need:
+gitlab.com/tmobile/dma/t-media/forge
+So the organizational structure is:
 
 
 
 
 Plain Text
 tmobile
-└── sdi
-    ├── data-pipelines
-    ├── data-quality
-    └── applications
-        └── your-new-project
-However, do not create a new group just because you are beginning one application. Usually:
+└── DMA
+    └── T-Media
+        └── Forge
+Where:
+
+tmobile is the top-level GitLab group
+DMA is a subgroup
+T-Media is another subgroup
+Forge is the actual GitLab project/repository
+Final answer to the original question
+The other team is not using the tmobile/k8s GitLab group to store the Forge source code.
+
+Instead:
 
 
 
 
 Plain Text
-One application = one project
-Multiple related applications = possibly one subgroup
-4. What if you do not see “New project”?
-In the screenshots, the plus sign in the upper-right corner may provide creation options. However, the options depend on your permissions.
+Source code:
+tmobile/DMA/T-Media/Forge
+ 
+Application hosting:
+T-Mobile Kubernetes environment
+That distinction is now clearly supported by the screenshots.
 
-If you cannot create a project, possible reasons include:
-
-You only have read access
-You are a Guest or Reporter
-Group policy prevents members from creating projects
-You need Maintainer or Owner-level assistance
-Project creation is restricted by organizational governance
-In that situation, ask the owner of the appropriate group:
-
-I’m planning to create a web application with a Python backend, an HTML/CSS/JavaScript frontend, and a Databricks data connection. Could you advise which GitLab subgroup should own the repository and whether I can be granted permission to create the project there?
-
-5. How would the application work?
-The expected architecture is:
+What the Forge repository contains
+The repository shows these main folders:
 
 
 
 
 Plain Text
-User's browser
-      │
-      │ HTTPS request
-      ▼
-Frontend
-HTML + CSS + JavaScript
-      │
-      │ API request
-      ▼
-Python backend
-Flask, FastAPI, or Django
-      │
-      │ Authenticated SQL query
-      ▼
-Databricks SQL warehouse
-      │
-      │ Reads permitted table or view
-      ▼
-Python backend processes results
-      │
-      │ Returns JSON
-      ▼
-Frontend displays the data
+backend/
+docs/
+frontend/
+helm/
+tasks/
+This strongly matches the application architecture discussed earlier.
+
+backend/
+This contains the server-side application code, which likely handles:
+
+Business logic
+API endpoints
+Authentication
+Connections to external systems
+Data retrieval
+Taxonomy and glossary functionality
+The earlier screenshot explicitly described changes as backend-only, confirming that this repository contains a distinct backend.
+
+frontend/
+This contains the application’s user interface. It likely includes JavaScript or TypeScript, HTML-related components, CSS, and frontend configuration.
+
+The screenshot does not show the contents of this folder, so the exact frontend framework cannot yet be confirmed.
+
+helm/
+This contains the Helm deployment configuration for Kubernetes.
+
+This folder likely defines:
+
+Kubernetes deployments
+Pods and containers
+Runtime environment variables
+Service configuration
+Ingress or application routing
+Resource limits
+Environment-specific settings
+This connects directly to the previous terminal message:
+
+
+
+
+Plain Text
+Nothing changes until the chart is applied.
+The “chart” refers to configuration stored under this helm/ directory.
+
+docs/
+This contains project documentation, architectural notes, setup instructions, or other supporting information.
+
+tasks/
+This likely contains task documentation, scripts, or implementation notes. The exact purpose cannot be confirmed until the folder is opened.
+
+Important root-level files
+The project also includes:
+
+
+
+
+Plain Text
+.dockerignore
+.gitignore
+.gitlab-ci.yml
+Dockerfile
+PHASE1_FRONTEND_NEXT.md
+PHASE1_SUMMARY.md
+PRD.md
+app.yaml
+test_request.json
+tmo-ca-bundle.crt
+.gitlab-ci.yml
+This is the GitLab CI/CD pipeline configuration file.
+
+It tells GitLab which automated jobs to run, such as:
+
+
+
+
+Plain Text
+Install dependencies
+      ↓
+Validate frontend and backend
+      ↓
+Run automated tests
+      ↓
+Build the Docker image
+      ↓
+Publish the image
+      ↓
+Prepare or perform deployment
+The visible Build → Pipelines section on the left is where the team can view pipeline executions generated from this configuration.
+
+Dockerfile
+This defines how the application is packaged into a Docker container image.
+
+Conceptually:
+
+
+
+
+Plain Text
+Backend + frontend + dependencies
+               ↓
+            Dockerfile
+               ↓
+        Container image
+               ↓
+      Kubernetes deployment
+.dockerignore
+This tells Docker which project files should not be copied into the container image.
+
+Examples could include:
+
+Local development files
+Git history
+Temporary files
+Dependency caches
+Test output
+.gitignore
+This tells Git which local files should not be committed to the repository.
+
+PRD.md
+This likely means a Product Requirements Document. It may explain:
+
+What Forge is supposed to do
+The intended users
+Functional requirements
+Business objectives
+Features and constraints
+PHASE1_FRONTEND_NEXT.md
+This appears to document the next steps for Phase 1 frontend development.
+
+PHASE1_SUMMARY.md
+This appears to summarize the first phase of the project.
+
+app.yaml
+This is an application configuration or deployment-related YAML file. Its exact purpose requires opening the file.
+
+test_request.json
+This likely contains sample JSON data used to test an API request.
+
+tmo-ca-bundle.crt
+This appears to be a T-Mobile certificate authority bundle. It may allow the application container to trust internal HTTPS certificates when connecting to approved internal T-Mobile services.
+
+Branch information
+The selected branch appears to be:
+
+
+
+
+Plain Text
+tmo/main
+The latest visible commit is:
+
+
+
+
+Plain Text
+Merge fix/incubator-prd-endpoint: restore Incubator connectivity
+That corresponds directly with the terminal screenshot describing:
+
+Production Incubator endpoint correction
+Production OAuth scope correction
+Health endpoint diagnostics
+Merge and push to tmo/main
+The project information panel also shows:
+
+633 commits
+5 branches
+0 tags
+163.2 MiB project storage
+2 environments
+This indicates that Forge is a substantial existing project rather than only an empty prototype repository.
+
+The two environments may represent something such as development and production, but their exact names are not visible, so that cannot be confirmed yet.
+
+Complete architecture now visible
+Based on the combined screenshots, the Forge process appears to be:
+
+
+
+
+Plain Text
+GitLab repository
+tmobile/DMA/T-Media/Forge
+        │
+        ├── backend/
+        ├── frontend/
+        ├── helm/
+        ├── Dockerfile
+        └── .gitlab-ci.yml
+                │
+                ▼
+       GitLab CI/CD pipeline
+                │
+                ▼
+       Builds container image
+                │
+                ▼
+       Helm chart is applied
+                │
+                ▼
+    T-Mobile Kubernetes environment
+                │
+                ▼
+       Forge application URL
 
 Show more lines
-Example interaction
-A user selects a date range:
+The key organizational distinction is:
 
 
 
 
 Plain Text
-September 1 to September 30
-The browser sends this request:
-
-
-
-
-Plain Text
-GET /api/metrics?start_date=2026-09-01&end_date=2026-09-30
-The Python backend validates the dates, queries the permitted Databricks table or view, and returns something like:
-
-
-
-
-JSON
-{
-  "total_orders": 1200,
-  "completed_activations": 1085
-}
-``
-The JavaScript frontend then turns the returned data into cards, tables, or charts.
-
-6. Should the browser connect directly to Databricks?
-No. The frontend should not connect directly to Databricks.
-
-Use this setup:
-
-
-
-
-Plain Text
-Frontend → Python backend → Databricks
-Avoid this:
-
-
-
-
-Plain Text
-Frontend → Databricks
-``
-If browser-side JavaScript connects directly to Databricks, authentication information could be exposed to users. It would also be more difficult to apply proper query restrictions and access controls.
-
-The Python backend should hold the connection logic and authenticate through an organization-approved method. The Databricks SQL Connector allows Python applications to execute SQL against a Databricks SQL warehouse or supported all-purpose compute.
-databricks
-+1
-
-7. Which Python framework should you use?
-For your described application, the most likely options are:
-
-Flask
-Use Flask if:
-
-The application is relatively small
-You want straightforward backend routes
-You wish to serve HTML pages and APIs from one application
-You want to learn the structure easily
-Possible organization:
-
-
-
-
-Plain Text
-Flask
-├── Serves HTML
-├── Provides API endpoints
-└── Connects to Databricks
-FastAPI
-Use FastAPI if:
-
-The backend is mainly an API
-The frontend is more separate
-You want automatic API documentation
-You want strong request and response validation
-Possible organization:
-
-
-
-
-Plain Text
-JavaScript frontend
-        ↓
-FastAPI REST endpoints
-        ↓
-Databricks
-Django
-Use Django if:
-
-The application is larger
-The application needs user management
-The application needs complex permissions
-The application requires administrative screens
-The application will maintain its own transactional database
-For an internal application that mainly reads and displays data from Databricks, Flask or FastAPI is probably simpler than Django.
-
-8. Where does each component live?
-Component	Where it belongs
-Python backend code	GitLab project
-HTML/CSS/JavaScript	GitLab project
-Tests	GitLab project
-Databricks SQL queries	GitLab project, subject to internal policy
-Passwords and access tokens	Protected secret management, not source code
-GitLab CI/CD pipeline	.gitlab-ci.yml in the project
-Source tables	Databricks
-Application runtime	Kubernetes, another approved platform, or Databricks Apps if applicable
-Container image	Approved container registry
-Documentation	README.md and project documentation
-9. GitLab stores the application but does not necessarily run it
-This is another important distinction.
-
-
-
-
-Plain Text
-GitLab = stores and manages the code
-Databricks = stores or processes the data
-Kubernetes = may run the application
-Browser = displays the application to the user
-A typical delivery process might be:
-
-
-
-
-Plain Text
-Developer pushes code to GitLab
-             ↓
-GitLab pipeline runs tests
-             ↓
-Pipeline builds a Docker image
-             ↓
-Image is stored in a container registry
-             ↓
-Kubernetes deploys the image
-             ↓
-Users access the application through a URL
-Therefore, creating the GitLab project is only the beginning. You will also need to determine:
-
-Who owns the application
-Where it will run
-How users authenticate
-How the backend authenticates to Databricks
-Which table or view it can read
-Where secrets are stored
-Which CI/CD template must be used
-Who supports the application after deployment
-10. My recommendation for your situation
-Do not immediately create the project directly under tmobile/k8s.
-
-Follow this order:
-
-Define the owner, such as SDI, data engineering, analytics, or the Kubernetes team.
-Find the owner’s GitLab subgroup.
-Create one private project inside that subgroup.
-Keep the frontend and backend in the same project initially.
-Use Flask or FastAPI for the Python backend.
-Have only the backend query Databricks.
-Use an approved non-personal identity and secret-management method for deployment.
-Work with the platform team to deploy it to Kubernetes or another approved environment.
-A reasonable repository location might be:
-
-
-
-
-Plain Text
-tmobile / sdi / applications / databricks-data-app
+DMA / T-Media team
+        │
+        └── Owns and stores the Forge application code
  
-If the Kubernetes team confirms it is a Kubernetes-owned platform utility, then something like this could be appropriate:
+Kubernetes platform
+        │
+        └── Provides the runtime environment for Forge
+What this means for your application
+If your application is owned by the SDI team, you should follow a similar pattern:
 
 
 
 
 Plain Text
-tmobile / k8s / databricks-data-app
+tmobile
+└── SDI or appropriate business group
+    └── Your application project
+        ├── backend/
+        ├── frontend/
+        ├── helm/
+        ├── Dockerfile
+        ├── .gitlab-ci.yml
+        └── README.md
+Your code would belong under the GitLab group of the team that owns the application, not necessarily under:
+
+
+
+
+Plain Text
+tmobile/k8s
+The Kubernetes group or platform team may provide:
+
+Deployment standards
+Helm templates
+Kubernetes clusters
+Container registry access
+Ingress and application URLs
+Runtime secrets
+Monitoring and operational support
 Bottom line
-GitLab is the right place to create the code project. The k8s group is only the right place if that team owns or formally hosts the project within its organizational structure. Deployment on Kubernetes alone does not necessarily make tmobile/k8s the correct repository location.
+Forge is stored in tmobile/DMA/T-Media/Forge, not in tmobile/k8s. Forge is then packaged and deployed into T-Mobile’s Kubernetes environment using a Dockerfile, GitLab CI/CD, and Helm.
+
+So yes, the project uses Kubernetes, but no, the project does not use the tmobile/k8s GitLab group as its source-code location.
 
 
 
 
 
+You said:
 
-Favicon typeFavicon typeFavicon type
-Sources
+Copilot said:
+This screenshot shows the GitLab CI/CD pipeline history for the Forge project. It confirms that Forge uses automated pipelines to check and build changes, but the screenshot does not prove that every successful pipeline automatically deploys Forge to Kubernetes.
 
-Help me choose Flask or FastAPI
+1. Confirmed project location
+The GitLab breadcrumb shows:
 
-Draft a starter project structure
 
-Create a deployment checklist
+
+
+Plain Text
+tmobile / DMA / T-Media / Forge / Pipelines
+The browser URL also appears to be:
+
+
+
+
+Plain Text
+gitlab.com/tmobile/dma/t-media/forge/-/pipelines
+So the source-code location remains confirmed as:
+
+
+
+
+Plain Text
+tmobile
+└── DMA
+    └── T-Media
+        └── Forge
+This is not the tmobile/k8s GitLab group.
+
+2. What page is open?
+The selected menu is:
+
+
+
+
+Plain Text
+Build → Pipelines
+This page lists executions of the automation defined in the Forge repository’s:
+
+
+
+
+Plain Text
+.gitlab-ci.yml
+Every row represents one pipeline execution triggered by something such as:
+
+A commit pushed to a branch
+A branch merge
+A scheduled pipeline
+A manually started pipeline
+Potentially a merge request
+The page shows approximately:
+
+
+
+
+Plain Text
+All: 291
+This suggests that around 291 pipeline records exist in the selected pipeline view.
+
+3. What is a pipeline here?
+A pipeline is a sequence of automated stages executed against the project.
+
+A simplified example might be:
+
+
+
+
+Plain Text
+Code change
+    ↓
+Install dependencies
+    ↓
+Validate code
+    ↓
+Run tests
+    ↓
+Build frontend
+    ↓
+Build container image
+    ↓
+Security or dependency checks
+    ↓
+Optional deployment step
+
+Show more lines
+The precise names of the stages are not visible because the screenshot only displays status icons. Opening a pipeline would show the exact jobs.
+
+4. What the green “Passed” status means
+Each visible pipeline has a green:
+
+
+
+
+Plain Text
+Passed
+That means all required jobs for that pipeline completed successfully.
+
+For example, the first pipeline ran for approximately:
+
+
+
+
+Plain Text
+00:04:25
+and was executed about:
+
+
+
+
+Plain Text
+29 minutes ago
+Its title appears to be:
+
+
+
+
+Plain Text
+Merge fix/incubator-prd-endpoint: restore...
+This corresponds directly to the earlier change intended to restore Incubator connectivity.
+
+However, an important distinction is:
+
+Pipeline passed does not automatically mean production deployment completed.
+
+A pipeline can pass after completing code validation and image-building jobs while leaving a deployment job manual, skipped, allowed to fail, or dependent on a separate Helm process.
+
+5. Understanding the stage icons
+The Stages column displays a sequence such as:
+
+
+
+
+Plain Text
+✓  ✓  ✓  ✓  ✓  ⏭  →  !
+The exact meanings depend on the project’s pipeline configuration, but visually:
+
+Green checkmark
+
+
+
+Plain Text
+✓
+The stage or job completed successfully.
+
+Gray skipped symbol
+
+
+
+Plain Text
+⏭
+A job or stage was skipped, likely because its rule or condition did not apply.
+
+For example:
+
+Deployment runs only on a release branch
+A frontend job runs only when frontend files change
+Production deployment requires a manual action
+A job does not run for scheduled dependency scans
+Orange exclamation mark
+
+
+
+Plain Text
+!
+This generally indicates a warning or a job allowed to fail without failing the complete pipeline.
+
+That explains how a pipeline can show:
+
+
+
+
+Plain Text
+Overall status: Passed
+while still having an orange warning near the end.
+
+Red X visible in one pipeline
+One pipeline shows a red X at the end of the stage sequence but still has an overall green Passed status.
+
+A likely explanation is that the failed job was configured as allowed to fail or was a downstream/optional job that did not make the parent pipeline fail. The precise reason requires opening that individual pipeline.
+
+6. Visible pipelines
+The screenshot shows several recent pipeline executions.
+
+Pipeline 1
+Approximately:
+
+
+
+
+Plain Text
+Pipeline: #2852081151
+Status: Passed
+Duration: 00:04:25
+Created: 29 minutes ago
+Branch: tmo/main
+Commit: e88bfffc
+Change: Merge fix/incubator-prd-endpoint: restore...
+Labels: latest, branch
+This is the pipeline associated with the Incubator production endpoint fix discussed in the previous screenshots.
+
+Pipeline 2
+Approximately:
+
+
+
+
+Plain Text
+Pipeline: #2851896838
+Status: Passed
+Duration: 00:04:47
+Created: 1 hour ago
+Branch: tmo/main
+Commit: a7c878d6
+Change: fix(dmg-v2): remove orphaned product...
+This looks like a separate fix affecting a DMG-related module.
+
+Pipeline 3
+Approximately:
+
+
+
+
+Plain Text
+Pipeline: #2851856970
+Status: Passed
+Duration: 00:04:29
+Created: 1 hour ago
+Branch: tmo/main
+Commit: e52c9433
+Change: fix(otel): address independent review...
+otel commonly indicates OpenTelemetry, but that meaning should be confirmed from the repository rather than assumed solely from the abbreviation.
+
+This pipeline contains a red X among the final status icons, although the overall pipeline is marked Passed. That indicates the affected job did not make the whole pipeline fail.
+
+Pipeline 4
+Approximately:
+
+
+
+
+Plain Text
+Pipeline: #2851490863
+Status: Passed
+Duration: 00:02:28
+Created: 3 hours ago
+Branch: feature/structured-logging
+Change: feat(logging): structured JSON logging +...
+Labels: latest, branch
+This pipeline belongs to a feature branch rather than tmo/main.
+
+It shows that the team tests changes on development branches before or independently of merging them into the main branch.
+
+Pipelines 5 and 6
+Both are titled:
+
+
+
+
+Plain Text
+Nightly dependency audit
+Visible details include:
+
+
+
+
+Plain Text
+Status: Passed
+Trigger: scheduled
+Branch: tmo/main
+One ran about 10 hours earlier, and another ran about one day earlier.
+
+These pipelines appear to run automatically on a schedule, probably to inspect application dependencies for concerns such as:
+
+Outdated packages
+Dependency problems
+Known vulnerabilities
+License or policy issues
+The exact checks require opening the pipeline jobs.
+
+7. What does “scheduled” mean?
+The Nightly dependency audit rows have the label:
+
+
+
+
+Plain Text
+scheduled
+This means a person does not have to manually push code to trigger those pipelines.
+
+GitLab starts them according to a configured schedule, conceptually:
+
+
+
+
+Plain Text
+Every night at a configured time
+              ↓
+Start dependency-audit pipeline
+              ↓
+Check backend and frontend dependencies
+              ↓
+Report success, warnings, or failures
+The left menu includes:
+
+
+
+
+Plain Text
+Pipeline schedules
+That is likely where the timing for the nightly audit is configured.
+
+8. What does the play button mean?
+Some rows have a play button on the right:
+
+
+
+
+Plain Text
+▶
+This usually indicates a manual action is available.
+
+Depending on the pipeline configuration, the manual action could be:
+
+Deploy to an environment
+Re-run a particular process
+Start an optional job
+Promote a build
+Trigger another pipeline
+Because the job name is not visible, the screenshot does not establish whether the play button specifically means “Deploy.”
+
+This is relevant to the earlier terminal statement:
+
+
+
+
+Plain Text
+Nothing changes until the chart is applied.
+A reasonable possibility is that the pipeline validates or builds the application, while deployment through Helm is a separate or manual action. We would need to open the latest pipeline to confirm that.
+
+9. What are “Clear runner caches” and “New pipeline”?
+At the top-right, the page contains:
+
+Clear runner caches
+GitLab runners may cache downloaded dependencies or build files to speed up future pipelines.
+
+Clearing the cache forces subsequent jobs to retrieve or recreate those files. This may be necessary if stale or corrupted cached content is causing incorrect builds.
+
+New pipeline
+This starts a pipeline manually, normally after choosing a branch and potentially supplying permitted variables.
+
+It does not necessarily create or change code. It tells GitLab to execute the pipeline against the selected code version.
+
+10. What are runners?
+A pipeline definition tells GitLab what needs to happen. A runner
+
 
 
 
 Message Copilot
+
 
 
 AI-generated content may be incorrect
