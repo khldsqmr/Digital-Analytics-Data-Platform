@@ -1,3 +1,166 @@
+
+%python
+
+# Databricks notebook source
+
+# ==================================================================================================
+# Dashboard Pulse TMS - Weekly Orchestration
+#
+# JOB RUN:
+#   Receives Databricks Job/Task metadata through notebook task parameters.
+#
+# MANUAL NOTEBOOK RUN:
+#   Generates a PULSETMS_MAN_* execution ID.
+#
+# The orchestration SP runs the full SQL pipeline and executes validation as its final step.
+# ==================================================================================================
+
+from datetime import datetime, timezone
+
+
+procedure_name = (
+    "prdrzranalytics.lab42."
+    "sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly"
+)
+
+
+# --------------------------------------------------------------------------------------------------
+# Read a notebook task parameter.
+#
+# Parameters exist when this notebook runs as a Databricks Job task.
+# During a direct interactive notebook run they may not exist.
+# --------------------------------------------------------------------------------------------------
+
+def get_param(name):
+    try:
+        value = dbutils.widgets.get(name).strip()
+
+        # Also protect against an unresolved Databricks dynamic-value reference.
+        if not value or value.startswith("{{"):
+            return None
+
+        return value
+
+    except Exception:
+        return None
+
+
+# --------------------------------------------------------------------------------------------------
+# Databricks Job metadata
+# --------------------------------------------------------------------------------------------------
+
+job_id = get_param("orchestration_job_id")
+job_run_id = get_param("orchestration_job_run_id")
+task_run_id = get_param("orchestration_task_run_id")
+execution_count = get_param("orchestration_execution_count")
+
+
+# --------------------------------------------------------------------------------------------------
+# Determine execution mode.
+#
+# If a Job Run ID exists, this is a Databricks Job execution.
+# Otherwise this notebook was executed interactively/manually.
+# --------------------------------------------------------------------------------------------------
+
+if job_run_id:
+
+    run_type = "JOB"
+
+    execution_count = int(
+        execution_count or 1
+    )
+
+else:
+
+    run_type = "MANUAL"
+
+    now = datetime.now(timezone.utc)
+
+    manual_run_id = (
+        "PULSETMS_MAN_"
+        + now.strftime("%Y%m%d_%H%M%S")
+        + f"_{now.microsecond // 1000:03d}"
+    )
+
+    job_id = "PULSETMS_MAN"
+    job_run_id = manual_run_id
+    task_run_id = f"{manual_run_id}_T01"
+    execution_count = 1
+
+
+# --------------------------------------------------------------------------------------------------
+# Execution information
+# --------------------------------------------------------------------------------------------------
+
+start_time = datetime.now(timezone.utc)
+
+print("Starting Dashboard Pulse TMS orchestration")
+print(f"Run Type:       {run_type}")
+print(f"Job ID:         {job_id}")
+print(f"Job Run ID:     {job_run_id}")
+print(f"Task Run ID:    {task_run_id}")
+print(f"Execution #:    {execution_count}")
+print(f"Start UTC:      {start_time.isoformat()}")
+
+
+# --------------------------------------------------------------------------------------------------
+# Execute the orchestration procedure.
+#
+# Parameter markers keep runtime values separate from the SQL statement.
+# --------------------------------------------------------------------------------------------------
+
+try:
+
+    result = spark.sql(
+        f"""
+        CALL {procedure_name}
+        (
+          :run_type,
+          :job_id,
+          :job_run_id,
+          :task_run_id,
+          :execution_count
+        )
+        """,
+        args={
+            "run_type": run_type,
+            "job_id": job_id,
+            "job_run_id": job_run_id,
+            "task_run_id": task_run_id,
+            "execution_count": execution_count,
+        },
+    )
+
+    # Ensure the CALL fully completes before the notebook reports success.
+    result.collect()
+
+    end_time = datetime.now(timezone.utc)
+
+    print("")
+    print("Dashboard Pulse TMS orchestration completed successfully.")
+    print(f"Job Run ID: {job_run_id}")
+    print(f"End UTC:    {end_time.isoformat()}")
+    print(f"Duration:   {end_time - start_time}")
+
+
+except Exception as error:
+
+    end_time = datetime.now(timezone.utc)
+
+    print("")
+    print("Dashboard Pulse TMS orchestration FAILED.")
+    print(f"Job Run ID: {job_run_id}")
+    print(f"End UTC:    {end_time.isoformat()}")
+    print(f"Duration:   {end_time - start_time}")
+    print(f"Error:      {error}")
+
+    # Important: re-raise so Databricks marks the Job task as Failed.
+    raise
+
+
+
+
+
 validation_run_id	validation_run_ts	orchestration_run_type	orchestration_job_id	orchestration_job_run_id	orchestration_task_run_id	orchestration_execution_count	data_as_of_date	week_type	overall_status	metric_count	healthy_count	warning_count	failed_count	issue_metrics	issue_summary	next_step_summary	run_label
 PULSETMS_VAL_20260923_211128_106	2026-09-23T21:11:28.106+00:00	MANUAL	PULSETMS_MAN	PULSETMS_MAN_20260923_211128_106	PULSETMS_MAN_20260923_211128_106_T01	1	2026-09-19	NORMAL	Warning	58	54	4	0	BIDDABLE_SPEND: biddableSpendFiber [DATA_AVAILABILITY] | MFC_SPEND: mfcSpendActualBroadband [DATA_AVAILABILITY], mfcSpendActualPostpaid [DATA_AVAILABILITY], mfcSpendActualTotal [DATA_AVAILABILITY]	BIDDABLE_SPEND: biddableSpendFiber: Expected validation data is unavailable for the selected reporting period. || MFC_SPEND: mfcSpendActualBroadband: Expected validation data is unavailable for the selected reporting period. | mfcSpendActualPostpaid: Expected validation data is unavailable for the selected reporting period. | mfcSpendActualTotal: Expected validation data is unavailable for the selected reporting period.	Confirm that the expected source/publication completed for 2026-09-19 and then verify the corresponding Bronze/Silver refresh.	Run PULSETMS_MAN_20260923_211128_106 | 2026-09-23 21:11:28 | Data: 2026-09-19 | Warning
 
