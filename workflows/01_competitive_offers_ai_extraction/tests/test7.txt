@@ -1,4 +1,31 @@
 
+Ross's MediaOS/Forge app lives at tmobile/DMA/T-Media/Forge in GitLab — a mature, production K8s app (600+ commits, live Helm-managed deployment), not a prototype.
+
+Their repo structure:
+
+backend/     → Python API, handles auth + data connections
+frontend/    → UI (HTML/CSS/JS)
+helm/        → Kubernetes deployment config
+docs/        → project docs
+Dockerfile   → packages backend + frontend into one container
+.gitlab-ci.yml → CI/CD: test → build → push image → deploy
+app.yaml     → app/env config
+
+Flow: code → GitLab branch/MR → CI builds & tests → Docker image pushed to registry → Helm chart applies it to their K8s cluster → live app, with a /health endpoint for diagnostics and Splunk for monitoring.
+
+Our plan: mirror this same structure for our PulseTMS app —
+
+backend/ → Flask, queries our Databricks gold tables
+frontend/ → React instead of plain HTML/CSS/JS — component-based, more modular, and matches Databricks Apps' own frontend stack if we ever move that direction
+helm/ + Dockerfile + .gitlab-ci.yml → same build/deploy pipeline as Forge
+
+What we still need:
+
+Decide: onboard onto the existing K8s/Helm setup, or use Databricks Apps instead (simpler — no Docker/Helm/K8s needed, Databricks handles hosting natively)
+Confirm which GitLab group owns our repo (likely our own team's, not tmobile/k8s)
+A Databricks service principal with read access to our gold tables
+If K8s: a cluster slot, OAuth scope, and registry access from the platform team — ideally we reuse Forge's Helm/CI templates rather than building from scratch
+
 
 Forge Repository
 tmobile → DMA → T-Media → Forge
