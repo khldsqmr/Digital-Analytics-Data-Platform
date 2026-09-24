@@ -1,4 +1,35 @@
 
+
+-- 1. Latest validation history actually written
+SELECT
+  validation_run_id,
+  validation_run_ts,
+  orchestration_run_type,
+  orchestration_job_id,
+  orchestration_job_run_id,
+  orchestration_task_run_id,
+  orchestration_execution_count,
+  data_as_of_date
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
+ORDER BY validation_run_ts DESC
+LIMIT 10;
+
+
+-- 2. Check whether today's validation got as far as staging
+SELECT
+  validation_run_id,
+  data_source,
+  COUNT(*) AS staged_rows
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_stage_perRun
+GROUP BY
+  validation_run_id,
+  data_source
+ORDER BY
+  validation_run_id DESC,
+  data_source;
+
+
+
 %python
 
 # Databricks notebook source
