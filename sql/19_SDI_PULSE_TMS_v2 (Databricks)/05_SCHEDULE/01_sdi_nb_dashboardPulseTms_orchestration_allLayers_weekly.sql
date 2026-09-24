@@ -1,7 +1,7 @@
 # Databricks notebook source
 
 # ==================================================================================================
-# Dashboard Pulse TMS - Weekly Orchestration
+# Dashboard Pulse TMS - Weekly Orchestration Scheduler
 #
 # JOB RUN:
 #   Receives Databricks Job/Task metadata through notebook task parameters.
@@ -9,7 +9,7 @@
 # MANUAL NOTEBOOK RUN:
 #   Generates a PULSETMS_MAN_* execution ID.
 #
-# The orchestration SP runs the full SQL pipeline and executes validation as its final step.
+# The orchestration SP runs the pipeline and validation as its final step.
 # ==================================================================================================
 
 from datetime import datetime, timezone
@@ -22,17 +22,17 @@ procedure_name = (
 
 
 # --------------------------------------------------------------------------------------------------
-# Read a notebook task parameter.
+# Read notebook task parameter.
 #
-# Parameters exist when this notebook runs as a Databricks Job task.
-# During a direct interactive notebook run they may not exist.
+# Job task parameters become notebook widgets in Databricks.
+# If the notebook is run manually, those parameters may not exist.
 # --------------------------------------------------------------------------------------------------
 
 def get_param(name):
     try:
         value = dbutils.widgets.get(name).strip()
 
-        # Also protect against an unresolved Databricks dynamic-value reference.
+        # Protect against blank or unresolved dynamic references.
         if not value or value.startswith("{{"):
             return None
 
@@ -43,7 +43,7 @@ def get_param(name):
 
 
 # --------------------------------------------------------------------------------------------------
-# Databricks Job metadata
+# Read Databricks Job metadata.
 # --------------------------------------------------------------------------------------------------
 
 job_id = get_param("orchestration_job_id")
@@ -54,21 +54,30 @@ execution_count = get_param("orchestration_execution_count")
 
 # --------------------------------------------------------------------------------------------------
 # Determine execution mode.
-#
-# If a Job Run ID exists, this is a Databricks Job execution.
-# Otherwise this notebook was executed interactively/manually.
 # --------------------------------------------------------------------------------------------------
 
 if job_run_id:
 
     run_type = "JOB"
 
-    execution_count = int(
-        execution_count or 1
-    )
+    # If this is a Job run, the Job ID and Task Run ID should also have been supplied.
+    # Fail rather than writing incomplete lineage.
+    if not job_id:
+        raise ValueError(
+            "orchestration_job_id was not supplied to the scheduler notebook."
+        )
+
+    if not task_run_id:
+        raise ValueError(
+            "orchestration_task_run_id was not supplied to the scheduler notebook."
+        )
+
+    execution_count = int(execution_count or 1)
+
 
 else:
 
+    # Direct interactive notebook execution.
     run_type = "MANUAL"
 
     now = datetime.now(timezone.utc)
@@ -86,7 +95,7 @@ else:
 
 
 # --------------------------------------------------------------------------------------------------
-# Execution information
+# Execution information.
 # --------------------------------------------------------------------------------------------------
 
 start_time = datetime.now(timezone.utc)
@@ -101,9 +110,7 @@ print(f"Start UTC:      {start_time.isoformat()}")
 
 
 # --------------------------------------------------------------------------------------------------
-# Execute the orchestration procedure.
-#
-# Parameter markers keep runtime values separate from the SQL statement.
+# Execute orchestration SP.
 # --------------------------------------------------------------------------------------------------
 
 try:
@@ -128,7 +135,7 @@ try:
         },
     )
 
-    # Ensure the CALL fully completes before the notebook reports success.
+    # Force the CALL to complete before the notebook reports success.
     result.collect()
 
     end_time = datetime.now(timezone.utc)
@@ -151,5 +158,5 @@ except Exception as error:
     print(f"Duration:   {end_time - start_time}")
     print(f"Error:      {error}")
 
-    # Important: re-raise so Databricks marks the Job task as Failed.
+    # Re-raise so Databricks marks the task as Failed.
     raise
