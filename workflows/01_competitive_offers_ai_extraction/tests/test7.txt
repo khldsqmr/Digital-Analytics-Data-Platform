@@ -1,3 +1,11 @@
+-- Check the ACTUALLY DEPLOYED orchestration procedure
+DESCRIBE PROCEDURE EXTENDED
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_orchestration_allLayers_weekly;
+
+-- Check the ACTUALLY DEPLOYED validation procedure
+DESCRIBE PROCEDURE EXTENDED
+  prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun;
+
 
 
 -- 1. Latest validation history actually written
