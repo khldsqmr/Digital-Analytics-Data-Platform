@@ -1,4 +1,37 @@
 
+SELECT
+  validation_run_id,
+  validation_run_ts,
+
+  orchestration_run_type,
+  orchestration_job_id,
+  orchestration_job_run_id,
+  orchestration_task_run_id,
+  orchestration_execution_count,
+
+  data_as_of_date,
+  week_type,
+
+  overall_status,
+
+  metric_count,
+  healthy_count,
+  warning_count,
+  failed_count,
+
+  issue_metrics,
+  issue_summary,
+  next_step_summary,
+
+  run_label
+
+FROM
+  prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_validation_runs_perRun
+
+WHERE
+  is_latest_run = TRUE;
+
+
 Ross's MediaOS/Forge app lives at tmobile/DMA/T-Media/Forge in GitLab — a mature, production K8s app (600+ commits, live Helm-managed deployment), not a prototype.
 
 Their repo structure:
