@@ -1,4 +1,27 @@
 SELECT
+  row_identity_hash,
+  event_date,
+  event_timestamp_utc,
+  event_timestamp_pst,
+  page_app_type,
+  site_name,
+  full_page_name,
+  customer_id,
+  first_party_id,
+  app_instance_id,
+  channel_name,
+  COALESCE(event_page_view, 0) AS page_view,
+  COALESCE(event_link_click, 0) AS link_click
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-23'                                         -- partition filter
+  AND COALESCE(attribute_event_type, '') <> 'Debug Attribute'                -- drop app telemetry
+  AND COALESCE(site_name, '') <> 'Expert Assist'                             -- drop care-agent tool
+  AND NOT lower(COALESCE(user_agent, '')) RLIKE
+      'bot|crawl|spider|slurp|adsbot|storebot|vertexbot|mediapartners'       -- drop known crawlers
+LIMIT 1000;
+
+
+SELECT
   COUNT(participant_key)                                              AS pk_populated,
   SUM(CASE WHEN length(participant_key) = 32 THEN 1 ELSE 0 END)      AS pk_32,
   SUM(CASE WHEN length(participant_key) = 31 THEN 1 ELSE 0 END)      AS pk_31,
