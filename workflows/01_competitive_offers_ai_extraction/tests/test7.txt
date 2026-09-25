@@ -1,3 +1,30 @@
+SELECT
+  COUNT(participant_key)                                              AS pk_populated,
+  SUM(CASE WHEN length(participant_key) = 32 THEN 1 ELSE 0 END)      AS pk_32,
+  SUM(CASE WHEN length(participant_key) = 31 THEN 1 ELSE 0 END)      AS pk_31,
+  SUM(CASE WHEN participant_key LIKE 'device_id_%' THEN 1 ELSE 0 END) AS pk_device_id,
+  SUM(CASE WHEN length(participant_key) NOT IN (31, 32)
+            AND participant_key NOT LIKE 'device_id_%' THEN 1 ELSE 0 END) AS pk_other,
+  COUNT(DISTINCT CASE WHEN length(participant_key) = 31
+                      THEN lpad(participant_key, 32, '0') END)        AS pk31_padded_distinct
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-23';
+
+SELECT
+  COUNT(*)                          AS rows,
+  COUNT(DISTINCT lower(hit_id))     AS distinct_hit_id,
+  COUNT(DISTINCT row_identity_hash) AS distinct_row_hash
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-23';
+
+SELECT *
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-23'
+  AND source_table = 't_web_interactions'
+  AND page_app_type = 'Web'
+LIMIT 100;
+
+
 SELECT source_table, page_app_type, attribute_event_type, COUNT(*) AS n
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date = DATE '2026-09-23'
