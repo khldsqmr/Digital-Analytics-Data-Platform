@@ -3,12 +3,36 @@ FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date = DATE '2026-09-23'
 GROUP BY ALL
 ORDER BY n DESC;
+OUTPUT:
+source_table	page_app_type	attribute_event_type	n
+t_app_interactions	TLife App	Event Attribute	225502485
+t_app_interactions	TLife App	Debug Attribute	51234256
+t_web_interactions	Web	null	41248449
+t_app_interactions	Metro App	Event Attribute	13163206
+t_web_interactions	TLife App	null	9853471
+t_app_interactions	Metro App	Debug Attribute	7004126
+t_app_interactions	null	Event Attribute	476957
+t_web_interactions	Metro App	null	90711
+t_app_interactions	TLife App	null	84654
+t_web_interactions	null	null	69852
+t_app_interactions	null	Debug Attribute	39706
+t_web_interactions	Flagship App	null	19462
+t_app_interactions	Metro App	null	15218
 
 SELECT source_datalakeLoadDate, COUNT(*) AS n
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date = DATE '2026-09-20'
 GROUP BY 1
 ORDER BY 1;
+OUTPUT:
+source_datalakeLoadDate	n
+2026-09-19	4009
+2026-09-20	266278301
+2026-09-21	1581896
+2026-09-22	757250
+2026-09-23	184631
+2026-09-24	120360
+2026-09-25	12515
 
 SELECT
   SUM(CASE WHEN try_cast(event_collection_timestamp_utc AS TIMESTAMP) IS NULL
@@ -18,4 +42,7 @@ SELECT
   SUM(CASE WHEN hit_id <> lower(hit_id) THEN 1 ELSE 0 END) AS upper_hit_ids
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date = DATE '2026-09-23';
+OUTPUT:
+bad_collection_ts	pk_31_chars	pk_device_id	upper_hit_ids
+0	10001391	511551	172234011
 
