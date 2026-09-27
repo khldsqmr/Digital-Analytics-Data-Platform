@@ -1,1 +1,442 @@
 .
+# EDL → Weekly Health Diagnostic: Metric & Breakout Mapping
+
+Source table: `prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions` (hit-level), joined where needed to `session_event_fact` and `session_summary_fact` (session-level, join key `row_identity_hash` + `event_date` + `source_table`).
+
+All metrics are counted **unique per visitor**, not raw event counts, per the original requirement.
+
+---
+
+## 1. Identity resolution
+
+**`resolved_identity_id`** = `COALESCE(customer_id, profile_uid, encrypted_ban_msisdn, first_party_id, app_instance_id)`
+
+Priority order: deterministic IDs (customer_id, profile_uid, encrypted_ban_msisdn) before probabilistic ones (first_party_id, app_instance_id). `ecid` (the real Adobe Experience Cloud/Marketing Cloud Visitor ID) is excluded — confirmed 100% null across the table.
+
+For session-level work, `session_event_fact.canonical_user_id` (T-Mobile's own authoritative resolved-identity field, session-scoped) is an alternative/cross-check, joined via:
+
+```sql
+FROM session_event_fact sef
+JOIN unified_digital_interactions udi
+  ON sef.row_identity_hash = udi.row_identity_hash
+ AND sef.event_date = udi.event_date
+ AND sef.source_table = udi.source_table
+```
+
+**Known limitation:** raw `resolved_identity_id` (and `canonical_user_id`) run well above Adobe's actual UPV — confirmed against the Lab42 Pulse gold table (`prdrzranalytics.lab42.sdi_vw_dashboardpulsetms_gold_unified_long`, fed directly from Adobe). Root causes: no bot/fraud-exclusion field exists anywhere in this pipeline, and `ecid` (the field that would tie directly to Adobe's visitor ID) is dead. Once properly scoped to match Adobe's own methodology — real visits only (2+ actual page views, via `event_page_view`, not raw `hit_count`), non-authenticated (`customer_type = 'Prospect'`), and off the T-Mobile network (`user_carrier_isp NOT LIKE 'T-Mobile%'`) — the gap narrows to roughly **1.3–1.45x** Adobe's number, which Briana has accepted as a reasonable residual (not a structural EDL defect; no engineering escalation needed).
+
+---
+
+## 2. Breakout columns
+
+### LOB (5 slices — both a breakout column and a whole-report filter)
+| Slice | Predicate |
+|---|---|
+| Postpaid | `site_name = 'TMO'` (default, minus HSI path) |
+| HSI | `site_name = 'TMO' AND page_url_path LIKE '%/home-internet%'` |
+| TFB | `site_name = 'TFB'` |
+| Metro | `site_name IN ('Metro App', 'MbyT')` |
+| Prepaid | `site_name = 'T-Mo Prepaid'` |
+
+Everything else (Expert Assist, TMO Concierge, TRetail App, INVALID/null) → unmapped/Other bucket.
+
+```sql
+CASE
+  WHEN site_name = 'TMO' AND page_url_path LIKE '%/home-internet%' THEN 'HSI'
+  WHEN site_name = 'TMO' THEN 'Postpaid'
+  WHEN site_name = 'TFB' THEN 'TFB'
+  WHEN site_name IN ('Metro App', 'MbyT') THEN 'Metro'
+  WHEN site_name = 'T-Mo Prepaid' THEN 'Prepaid'
+  ELSE 'Other'
+END AS lob
+```
+
+**Multi-LOB sessions are real, not noise:** a single session can genuinely touch more than one LOB (e.g. cross-shopping Postpaid and HSI, or landing on a Care subdomain that buckets as Other before moving to Postpaid). Confirmed on real data — 149,636 of 5,517,027 non-bounced sessions (2.7%) on 2026-09-24 touch more than one LOB. Because of this, the silver layer stores LOB as a **list** (`lob_list`, one row's full set of LOBs touched) rather than collapsing to a single ranked value — see §5. Platform, by contrast, is genuinely single-valued (only 0.02% of sessions touch more than one) and stays a scalar.
+
+### Platform (both a breakout column and a whole-report filter, same as LOB)
+`page_app_type`: Web, TLife App, Flagship App, Metro App. Kept as its own dimension, separate from LOB, so Metro's split between its `MbyT` web presence and its `Metro App` app presence shows up correctly rather than being conflated. A report viewer can filter the whole health report down to a single Platform value, just as they can for LOB.
+
+### Prospect vs Base
+`customer_type`: **Prospect / Customer / Care** — all 3 native values kept distinct (Care not folded into Customer). This is the account-match field, distinct from session login state.
+
+### Auth-state / visitor-type
+`user_auth_state`: real values are **ambiguous / authenticated / loggedOut** (the schema comment describes authenticated/recognized/anonymous, which doesn't match — engineering is aware and fixing separately). Do not confuse this with Prospect vs Base — 418,373 UV/week are `customer_type = Customer` but `user_auth_state = ambiguous` (existing customers browsing without logging in).
+
+### Channel
+`channel_name` (canonical marketing channel) — **not** the raw `channel` field, which is page-context (shop/my-account/support) and a documented naming collision.
+
+**Known data-quality issue:** `channel_name` should be sticky for the life of a session (persisted from first touch) but currently isn't — 1,152,260 of 5,517,027 non-bounced sessions (20.9%) on 2026-09-24 show more than one distinct `channel_name` value. Unlike LOB, this is **not** treated as a genuine multi-valued dimension — engineering is aware and fixing it upstream so the field persists correctly. Silver layer keeps a single resolved value in the interim (see §5); revisit once the upstream fix lands.
+
+### Campaign / Marketing Code
+`external_campaign_code`, 4th underscore-delimited token: `split_part(external_campaign_code, '_', 4)`. Not `attribute_cmpid` (confirmed strict subset, 0% unique coverage beyond `external_campaign_code`).
+
+Resolves to a real campaign name via `prdrzranalytics.lab42.dim_marketing_code`, joined on `campaign_code = MKT_CODE`. Match rate: 640 of 799 distinct codes in a single day (80%) resolve to a name — the unmatched 20% are largely internal service/messaging tokens (`SVCPRD`, `SVCMSG`, `SVCCRM`) rather than true marketing campaigns. Fields pulled from the dimension table: `MKT_CODE_NAME` (campaign name), `Category`, `is_active`. `MKT_CODE_DESCRIPTION` also exists but is intentionally not carried through — too long for this use.
+
+### Entry Page
+`session_summary_fact.entry_page_url_path` — full domain+path kept **distinct** (not normalized), e.g. `www.t-mobile.com/` and `www.metrobyt-mobile.com/` are different slices. Left unfiltered intentionally — includes visible anomalies (e.g. a spam/malvertising-referral spike on `/home-internet/http-warning`), which is useful diagnostic signal for this report, not noise to strip out.
+
+### Page category
+`site_sub_section`, top 100 distinct values used as individual slices (covers **99.14%** of volume), everything else → Other. Preferred over the raw `channel` field, which is dominated by huge ambiguous flow/wrapper tags (Experience, Benefits, Me, Success, Onboarding) that don't map to real content categories, and has no Cart/Checkout value at all.
+
+### Buy flow step
+Also `site_sub_section`-based, restricted to real purchase-flow values (billing/account-servicing values like Payment Arrangement, Scheduled Payment, Order Status excluded):
+
+| Step | site_sub_section values |
+|---|---|
+| Plan select | Plan, Plans, Change Plan |
+| Cart | Cart |
+| Accessories add-on | Accessory Detail, Accessories |
+| Trade-in | Upgrade Trade-In |
+| Checkout | Checkout, Slim Checkout, Choose Payment Method |
+| Confirmation | Confirmation, One Time Payment Confirmation |
+
+```sql
+CASE
+  WHEN site_sub_section IN ('Plan', 'Plans', 'Change Plan') THEN 'Plan select'
+  WHEN site_sub_section = 'Cart' THEN 'Cart'
+  WHEN site_sub_section IN ('Accessory Detail', 'Accessories') THEN 'Accessories add-on'
+  WHEN site_sub_section = 'Upgrade Trade-In' THEN 'Trade-in'
+  WHEN site_sub_section IN ('Checkout', 'Slim Checkout', 'Choose Payment Method') THEN 'Checkout'
+  WHEN site_sub_section IN ('Confirmation', 'One Time Payment Confirmation') THEN 'Confirmation'
+  ELSE NULL  -- not a buy-flow-step hit; billing/servicing values (Payment Arrangement,
+             -- Scheduled Payment, Manage Payment Method, Order Status/History, etc.)
+             -- are intentionally excluded, not bucketed into a step
+END AS buy_flow_step
+```
+
+Device configure and Shipping details steps dropped — no clean dedicated EDL value exists for either (device config likely happens on the PDP itself; shipping details likely folded into Checkout).
+
+### UTM (source / medium / campaign)
+No native `utm_source`/`utm_medium`/`utm_campaign` columns exist anywhere in the pipeline (checked `unified_digital_interactions`, `session_event_fact`, `session_summary_fact`). Parsed instead from the raw query string on `session_summary_fact.entry_page_url_full`:
+
+```sql
+parse_url('https://' || entry_page_url_full, 'QUERY', 'utm_source')
+parse_url('https://' || entry_page_url_full, 'QUERY', 'utm_medium')
+parse_url('https://' || entry_page_url_full, 'QUERY', 'utm_campaign')
+```
+
+Real values used as-is (no normalization mapping, e.g. `fb`/`ig` stay as-is rather than being renamed "meta"). ~9% of sessions carry a real UTM tag; the rest default to `(not set)`. Top 100 values used per field + Other for the long tail:
+- `utm_source`: 367 distinct values, top 100 = 99.94% coverage
+- `utm_medium`: 358 distinct values, top 100 = 99.94% coverage
+- `utm_campaign`: 10,780 distinct values, top 100 = 89.77% coverage (real long tail, expected)
+
+### Region — **PLACEHOLDER, not yet implemented**
+`geo_postal_code` exists (standard 5-digit US ZIPs, IP-geolocation-derived) but only 6.76% filled. Briana's team is separately building a geo solution — hold this breakout as a placeholder and revisit once that's ready rather than building a ZIP→region crosswalk now.
+
+---
+
+## 3. Metrics (unique-per-visitor)
+
+All counts are `COUNT(DISTINCT resolved_identity_id)` (or `canonical_user_id` where session-level fields are needed) with the qualifying condition below.
+
+| Metric | Qualifying condition |
+|---|---|
+| NB Visitor (Non-Bounced Visitor) | Session has 2+ real page views (see below) — scoped by LOB/platform/etc. breakouts as needed. Replaces "UPV," since this report includes Base (existing customer) traffic, not just prospects, so "unique prospect/page visitor" was no longer accurate. |
+| Pageviews | `SUM(event_page_view)` — total page view events. **Exception to the unique-per-visitor rule**: this is a raw additive count, not a distinct-visitor count (consistent with how the platform spec's own additivity rules treat page-level traffic metrics). |
+| NB Buy Flow | `flow_name IS NOT NULL AND TRIM(flow_name) <> ''` AND `LOWER(TRIM(flow_name))` not in the exclude list below |
+| Orders | `event_purchase = 1` — unique **ordering customers**, not unique `order_id`. Splittable into acquisition vs. base via `order_customer_type` (see §5, `silver_session_actions`) — resolved at order-time, not from the session-wide `prospect_vs_base` resolve, since a Prospect's first order is often the moment they convert to Customer. |
+| Assisted Orders | 8-condition OR (see below) |
+| VR Chat | `event_chat_engage = 1` |
+| VR Call | `event_click_to_call = 1` |
+| Store Locator | `event_store_search = 1` |
+
+**NB Visitor** — a visitor counts only if their session has more than one real page view (excludes bounces / non-pageview-only hits, e.g. a lone click-tracking beacon with no page load). Built off the same session join used for Adobe reconciliation:
+
+```sql
+WITH session_pv AS (
+  SELECT sef.session_id, SUM(COALESCE(udi.event_page_view, 0)) AS pv_count
+  FROM session_event_fact sef
+  JOIN unified_digital_interactions udi
+    ON sef.row_identity_hash = udi.row_identity_hash
+   AND sef.event_date = udi.event_date
+   AND sef.source_table = udi.source_table
+  WHERE udi.event_date BETWEEN :start_date AND :end_date
+    -- add LOB / platform / other breakout filters here
+  GROUP BY sef.session_id
+)
+SELECT COUNT(DISTINCT ssf.canonical_user_id) AS nb_visitors
+FROM session_pv sp
+JOIN session_summary_fact ssf ON sp.session_id = ssf.session_id
+WHERE sp.pv_count > 1
+```
+
+**NB Buy Flow exclude list** (account servicing / auth / junk `flow_name` values, case-insensitive):
+```
+guestpay, otp, otp 31+ days past due, set up auto pay, manage autopay, autopay,
+rateplanchange, billing, profile, my-wallet, payment-arrangement, choose-payment-method,
+raf-customer, raf-prospect, raf-common, insider-submission, na, pa, 0:0, statementcount:0
+```
+Benefits and Coverage (incl. `sm-coverage-map`) are **included** in Buy Flow — pre-purchase research signal, not servicing.
+
+**Assisted Orders** — translated from the Adobe Assisted segment definition, all conditions OR'd together:
+```sql
+modal_name LIKE '%Buy online while in store is available%'
+OR shipping_method LIKE '%while in store%' OR shipping_method LIKE '%Comprar por Internet desde una tienda%'
+OR external_campaign_code = 'MGPO_RS_P_PPMGNWLRSU_9FED46B36BD7D485135485'
+OR page_shipping_options LIKE '%online while in store%'
+OR (modal_name IN ('Welcome to T-Mobile - Store In Store - Sam''s Club','Welcome to T-Mobile - Store In Store - Costco') AND full_page_name LIKE 'TLife App |%')
+OR alert_message = 'Message: Screen share in progress'
+OR (page_name = 'About Screen Share' AND link_name = 'clickToAction')
+OR page_url_full LIKE '%assist.t-mobile%'
+```
+Note: the `assisted_channel` field ("Retail Assisted"/"Care Assisted") was tested and ruled out — confirmed via true `session_id` join that it essentially never co-occurs with a self-service purchase session (2 of 56,603 purchase sessions). Whatever it tracks is a structurally separate journey, not usable for splitting self-service orders.
+
+The 7th condition above (screen-share code-share confirmation) is a substitution: the literal Adobe string (`Page Name = "TLife App | Support : Screen Share : Share This Code"`, `Action Name = "Button Click : Allow"`) does not exist verbatim in EDL. Real values are `page_name = 'About Screen Share'` with `link_name` carrying internal event tags (`clickToAction`, `externalCampaign`, `error`, etc.) rather than human-readable action labels — `clickToAction` is the closest real equivalent.
+
+---
+
+## 4. Open items / known gaps
+
+- **Region**: placeholder only, pending separate geo solution from Briana's team.
+- **No bot/fraud exclusion field** exists anywhere in this pipeline — a real, confirmed gap, not expected to be fixed short-term.
+- **`user_auth_state`** real values don't match its own schema documentation — engineering aware, fixing separately.
+- Several literal Adobe segment strings didn't exist verbatim in EDL and were substituted with the closest real equivalent (see Assisted Orders above) — worth spot-checking if Adobe segment definitions change upstream.
+
+---
+
+## 5. Silver table schemas
+
+Two tables, both scoped to **non-bounced sessions only** (session has 2+ real page views — same `pv_count > 1` logic as NB Visitor above). Both grain-keyed on `session_id`; join to each other on `session_id`.
+
+### `silver_session_attributes` — one row per session
+
+| Column | Type | Source / definition |
+|---|---|---|
+| `session_id` | string | `session_summary_fact.session_id` |
+| `canonical_user_id` | string | `session_summary_fact.canonical_user_id` |
+| `event_date` | date | `session_summary_fact.session_start_date` |
+| `session_start_time` | timestamp | `session_summary_fact.session_start_time` (UTC, first event assigned to the session) |
+| `session_end_time` | timestamp | `session_summary_fact.session_end_time` (UTC, last event assigned to the session) |
+| `lob_list` | array\<string\> | Distinct set of LOB CASE values (see §2) touched anywhere in the session — **not** a single ranked value. 2.7% of sessions touch more than one LOB (real cross-shopping, e.g. Postpaid + HSI), so this is a list rather than a MAX/rank pick. Filtering the whole report to one LOB means `array_contains(lob_list, 'Postpaid')`. |
+| `platform` | string | `page_app_type` |
+| `prospect_vs_base` | string | `customer_type` rank-resolved (Customer > Care > Prospect > Unknown) — strongest state reached anywhere in session |
+| `auth_state` | string | `user_auth_state` rank-resolved (Authenticated > Network Authenticated > LoggedOut > Ambiguous) — strongest state reached anywhere in session |
+| `channel` | string | `channel_name` |
+| `campaign_code` | string | `split_part(external_campaign_code, '_', 4)` |
+| `campaign_name` | string | `dim_marketing_code.MKT_CODE_NAME`, joined on `campaign_code = MKT_CODE` |
+| `campaign_category` | string | `dim_marketing_code.Category` |
+| `campaign_is_active` | boolean | `dim_marketing_code.is_active` |
+| `entry_page` | string | `session_summary_fact.entry_page_url_path` |
+| `utm_source` | string | parsed from `entry_page_url_full` query string |
+| `utm_medium` | string | parsed from `entry_page_url_full` query string |
+| `utm_campaign` | string | parsed from `entry_page_url_full` query string |
+
+Real count: **5,516,816 rows** for a single day (2026-09-24), non-bounced sessions only.
+
+```sql
+CREATE OR REPLACE TABLE silver_session_attributes AS
+WITH nonbounced_sessions AS (
+  SELECT sef.session_id, SUM(COALESCE(udi.event_page_view, 0)) AS pv_count
+  FROM session_event_fact sef
+  JOIN unified_digital_interactions udi
+    ON sef.row_identity_hash = udi.row_identity_hash
+   AND sef.event_date = udi.event_date
+   AND sef.source_table = udi.source_table
+  WHERE sef.event_date = :event_date
+  GROUP BY sef.session_id
+  HAVING SUM(COALESCE(udi.event_page_view, 0)) > 1
+),
+hits AS (
+  SELECT sef.session_id, udi.site_name, udi.page_url_path, udi.page_app_type,
+         udi.customer_type, udi.user_auth_state, udi.channel_name, udi.external_campaign_code
+  FROM session_event_fact sef
+  JOIN unified_digital_interactions udi
+    ON sef.row_identity_hash = udi.row_identity_hash
+   AND sef.event_date = udi.event_date
+   AND sef.source_table = udi.source_table
+  WHERE sef.event_date = :event_date
+    AND sef.session_id IN (SELECT session_id FROM nonbounced_sessions)
+),
+tagged AS (
+  SELECT session_id,
+    CASE
+      WHEN site_name = 'TMO' AND page_url_path LIKE '%/home-internet%' THEN 'HSI'
+      WHEN site_name = 'TMO' THEN 'Postpaid'
+      WHEN site_name = 'TFB' THEN 'TFB'
+      WHEN site_name IN ('Metro App', 'MbyT') THEN 'Metro'
+      WHEN site_name = 'T-Mo Prepaid' THEN 'Prepaid'
+      ELSE 'Other'
+    END AS lob,
+    page_app_type, customer_type, user_auth_state, channel_name, external_campaign_code
+  FROM hits
+),
+ranked AS (
+  SELECT session_id,
+    collect_set(lob) AS lob_list,
+    MAX(CASE LOWER(TRIM(customer_type))
+          WHEN 'customer' THEN 3 WHEN 'care' THEN 2 WHEN 'prospect' THEN 1 ELSE 0 END) AS ct_rank,
+    MAX(CASE
+          WHEN LOWER(TRIM(user_auth_state)) = 'authenticated' THEN 3
+          WHEN LOWER(TRIM(user_auth_state)) = 'network authenticated' THEN 2
+          WHEN LOWER(TRIM(user_auth_state)) = 'loggedout' THEN 1
+          ELSE 0 END) AS auth_rank,
+    MAX(page_app_type) AS any_platform,
+    MAX(channel_name) AS any_channel,
+    MAX(split_part(external_campaign_code, '_', 4)) AS campaign_code
+  FROM tagged
+  GROUP BY session_id
+)
+SELECT
+  ssf.session_id,
+  ssf.canonical_user_id,
+  ssf.session_start_date AS event_date,
+  ssf.session_start_time,
+  ssf.session_end_time,
+  r.lob_list,
+  r.any_platform AS platform,
+  CASE r.ct_rank WHEN 3 THEN 'Customer' WHEN 2 THEN 'Care' WHEN 1 THEN 'Prospect' ELSE 'Unknown' END AS prospect_vs_base,
+  CASE r.auth_rank WHEN 3 THEN 'Authenticated' WHEN 2 THEN 'Network Authenticated' WHEN 1 THEN 'LoggedOut' ELSE 'Ambiguous' END AS auth_state,
+  r.any_channel AS channel,
+  r.campaign_code,
+  m.MKT_CODE_NAME AS campaign_name,
+  m.Category AS campaign_category,
+  m.is_active AS campaign_is_active,
+  ssf.entry_page_url_path AS entry_page,
+  parse_url('https://' || ssf.entry_page_url_full, 'QUERY', 'utm_source') AS utm_source,
+  parse_url('https://' || ssf.entry_page_url_full, 'QUERY', 'utm_medium') AS utm_medium,
+  parse_url('https://' || ssf.entry_page_url_full, 'QUERY', 'utm_campaign') AS utm_campaign
+FROM session_summary_fact ssf
+JOIN ranked r ON ssf.session_id = r.session_id
+LEFT JOIN prdrzranalytics.lab42.dim_marketing_code m ON r.campaign_code = m.MKT_CODE
+WHERE ssf.session_start_date = :event_date
+  AND ssf.session_id IN (SELECT session_id FROM nonbounced_sessions)
+```
+
+**Sample output** (real rows, 2026-09-24):
+
+| session_id | canonical_user_id | lob_list | platform | prospect_vs_base | auth_state | channel | campaign_code | campaign_name | entry_page |
+|---|---|---|---|---|---|---|---|---|---|
+| 00000d71...05d | 3fefcc33...8bc | `["Postpaid","HSI"]` | TLife App | Prospect | Ambiguous | Session Refresh | null | null | es.t-mobile.com/coverage/coverage-map |
+| 00001822...0d7c | null | `["Other","Postpaid"]` | Web | Prospect | Ambiguous | Session Refresh | null | null | uep-care.t-mobile.com/ |
+| 00001119...0a3a | f18232...318c | `["Postpaid"]` | Web | Prospect | Ambiguous | Session Refresh | 26PPI18PBY | 2026 Q3 Postpaid Apple iPhone 18 Pro On Us with Any Condition Trade-In on Beyond NPI Hero Offer | www.t-mobile.com/cell-phone/apple-iphone-18-pro |
+| 0000125e...078 | 55275d...c27 | `["Postpaid"]` | Web | Prospect | Ambiguous | Social Network - Campaign | 26PP250RSN | 2026 Q3 Postpaid 250 Reasons Demand Gen Campaign | www.t-mobile.com/membership |
+
+First two rows are real multi-LOB examples (the reason `lob_list` is an array); last two are the common single-LOB case.
+
+### `silver_session_actions` — one row per session × page_category
+
+| Column | Type | Source / definition |
+|---|---|---|
+| `session_id` | string | `session_summary_fact.session_id` |
+| `canonical_user_id` | string | `session_summary_fact.canonical_user_id` |
+| `event_date` | date | `session_summary_fact.session_start_date` |
+| `page_category` | string | `site_sub_section` |
+| `buy_flow_step` | string | Buy flow step CASE (see §2) — stored explicitly, not re-derived downstream, so the definition can't drift by accident |
+| `pageview_count` | bigint | `SUM(event_page_view)` |
+| `order_count` | bigint | `SUM(event_purchase)` |
+| `order_customer_type` | string | Priority-resolved `customer_type` across purchase-flagged hits only, within this (session, page_category) row: **Prospect > Care > Customer**. `NULL` if no order in this row. Lets Orders be split into acquisition (Prospect) vs. base (Customer) orders — see note below. |
+| `vr_call_count` | bigint | `SUM(event_click_to_call)` |
+| `vr_chat_count` | bigint | `SUM(event_chat_engage)` |
+| `store_locator_count` | bigint | `SUM(event_store_search)` |
+| `assisted_order_count` | bigint | `SUM(CASE WHEN event_purchase = 1 AND <assisted 8-condition OR> THEN 1 ELSE 0 END)` |
+
+Real count: **20,005,688 rows** for a single day (2026-09-24), non-bounced sessions only, after the zero-signal filter below (down from 29,907,028 unfiltered — see note).
+
+**Non-additivity note:** `buy_flow_step` is a subset rollup of `page_category` (many rows have `buy_flow_step IS NULL`) — don't sum both totals together, same rule as channels not summing to All Channels.
+
+**Zero-signal row filter:** a page_category row only gets created because some hit carried that `site_sub_section` value — it doesn't require an actual page view. Many hits are `componentView`-type events (a UI component rendering, not a real page load) that carry a page_category context but never fire any of our tracked metrics. Confirmed real and material: 9,901,340 of 29,907,028 rows (33.1%) on 2026-09-24 have **every** metric column at zero — no pageview, no order, no call, no chat, no store search. These rows carry zero measurable signal, so they're filtered out via a `HAVING` clause requiring at least one non-zero metric. All `SUM()`s are also wrapped in `COALESCE(..., 0)` so a genuine zero renders as `0`, not a blank cell.
+
+**Why `order_customer_type` uses Prospect > Care > Customer priority, not a session-wide resolve:** a Prospect's very first order is usually the moment they become a Customer — if attribution just used the session-level resolved `prospect_vs_base` (Customer > Care > Prospect, correct for a general session descriptor), that acquisition order would get silently reclassified as base/existing-customer activity. Confirmed real and material on 2026-09-24: 12,394 of 61,577 order events (20%) were placed while `customer_type = 'Prospect'` at that exact hit, and 1,524 of those sessions later resolve to `Customer` by session end — i.e. 1,524 real acquisition orders would be miscounted as base orders under a naive session-wide resolve. Genuine same-session mixed-customer-type orders (e.g. one order placed as Prospect, a separate one placed as Customer) are rare — 202 of 57,056 ordering sessions (0.35%) — and the page_category grain further isolates most of those, since a second order later in the session typically lands in a different page_category row.
+
+```sql
+CREATE OR REPLACE TABLE silver_session_actions AS
+WITH nonbounced_sessions AS (
+  SELECT sef.session_id, SUM(COALESCE(udi.event_page_view, 0)) AS pv_count
+  FROM session_event_fact sef
+  JOIN unified_digital_interactions udi
+    ON sef.row_identity_hash = udi.row_identity_hash
+   AND sef.event_date = udi.event_date
+   AND sef.source_table = udi.source_table
+  WHERE sef.event_date = :event_date
+  GROUP BY sef.session_id
+  HAVING SUM(COALESCE(udi.event_page_view, 0)) > 1
+),
+hits AS (
+  SELECT sef.session_id, ssf.canonical_user_id, ssf.session_start_date AS event_date,
+         udi.site_sub_section, udi.event_page_view, udi.event_purchase, udi.customer_type,
+         udi.event_click_to_call, udi.event_chat_engage, udi.event_store_search,
+         udi.modal_name, udi.shipping_method, udi.external_campaign_code, udi.page_shipping_options,
+         udi.full_page_name, udi.alert_message, udi.page_name, udi.link_name, udi.page_url_full
+  FROM session_event_fact sef
+  JOIN unified_digital_interactions udi
+    ON sef.row_identity_hash = udi.row_identity_hash
+   AND sef.event_date = udi.event_date
+   AND sef.source_table = udi.source_table
+  JOIN session_summary_fact ssf ON sef.session_id = ssf.session_id
+  WHERE sef.event_date = :event_date
+    AND sef.session_id IN (SELECT session_id FROM nonbounced_sessions)
+),
+tagged AS (
+  SELECT *,
+    CASE
+      WHEN site_sub_section IN ('Plan', 'Plans', 'Change Plan') THEN 'Plan select'
+      WHEN site_sub_section = 'Cart' THEN 'Cart'
+      WHEN site_sub_section IN ('Accessory Detail', 'Accessories') THEN 'Accessories add-on'
+      WHEN site_sub_section = 'Upgrade Trade-In' THEN 'Trade-in'
+      WHEN site_sub_section IN ('Checkout', 'Slim Checkout', 'Choose Payment Method') THEN 'Checkout'
+      WHEN site_sub_section IN ('Confirmation', 'One Time Payment Confirmation') THEN 'Confirmation'
+      ELSE NULL
+    END AS buy_flow_step,
+    CASE WHEN
+      modal_name LIKE '%Buy online while in store is available%'
+      OR shipping_method LIKE '%while in store%' OR shipping_method LIKE '%Comprar por Internet desde una tienda%'
+      OR external_campaign_code = 'MGPO_RS_P_PPMGNWLRSU_9FED46B36BD7D485135485'
+      OR page_shipping_options LIKE '%online while in store%'
+      OR (modal_name IN ('Welcome to T-Mobile - Store In Store - Sam''s Club', 'Welcome to T-Mobile - Store In Store - Costco') AND full_page_name LIKE 'TLife App |%')
+      OR alert_message = 'Message: Screen share in progress'
+      OR (page_name = 'About Screen Share' AND link_name = 'clickToAction')
+      OR page_url_full LIKE '%assist.t-mobile%'
+      THEN 1 ELSE 0 END AS is_assisted
+  FROM hits
+)
+SELECT
+  session_id,
+  canonical_user_id,
+  event_date,
+  site_sub_section AS page_category,
+  buy_flow_step,
+  SUM(COALESCE(event_page_view, 0)) AS pageview_count,
+  SUM(COALESCE(event_purchase, 0)) AS order_count,
+  CASE
+    WHEN MAX(CASE WHEN event_purchase = 1 AND LOWER(TRIM(customer_type)) = 'prospect' THEN 1 ELSE 0 END) = 1 THEN 'Prospect'
+    WHEN MAX(CASE WHEN event_purchase = 1 AND LOWER(TRIM(customer_type)) = 'care' THEN 1 ELSE 0 END) = 1 THEN 'Care'
+    WHEN MAX(CASE WHEN event_purchase = 1 AND LOWER(TRIM(customer_type)) = 'customer' THEN 1 ELSE 0 END) = 1 THEN 'Customer'
+    ELSE NULL
+  END AS order_customer_type,
+  SUM(COALESCE(event_click_to_call, 0)) AS vr_call_count,
+  SUM(COALESCE(event_chat_engage, 0)) AS vr_chat_count,
+  SUM(COALESCE(event_store_search, 0)) AS store_locator_count,
+  SUM(CASE WHEN event_purchase = 1 AND is_assisted = 1 THEN 1 ELSE 0 END) AS assisted_order_count
+FROM tagged
+GROUP BY session_id, canonical_user_id, event_date, site_sub_section, buy_flow_step
+HAVING SUM(COALESCE(event_page_view, 0)) > 0
+    OR SUM(COALESCE(event_purchase, 0)) > 0
+    OR SUM(COALESCE(event_click_to_call, 0)) > 0
+    OR SUM(COALESCE(event_chat_engage, 0)) > 0
+    OR SUM(COALESCE(event_store_search, 0)) > 0
+    OR SUM(CASE WHEN event_purchase = 1 AND is_assisted = 1 THEN 1 ELSE 0 END) > 0
+```
+
+**Sample output** (real rows, 2026-09-24, session `00001119...0a3a`, `canonical_user_id f18232...318c`):
+
+| page_category | buy_flow_step | pageview_count | order_count | order_customer_type | vr_call_count | vr_chat_count | store_locator_count | assisted_order_count |
+|---|---|---|---|---|---|---|---|---|
+| Browse | — | 2 | 0 | null | 0 | 0 | 0 | 0 |
+| Cart | Cart | 2 | 0 | null | 0 | 0 | 0 | 0 |
+| Cell Phone Detail | — | 1 | 0 | null | 0 | 0 | 0 | 0 |
+| Checkout | Checkout | 3 | 0 | null | 0 | 0 | 0 | 0 |
+| Plan | Plan select | 1 | 0 | null | 0 | 0 | 0 | 0 |
+
+This session's page-view path (Browse → Cart → Cell Phone Detail → Checkout → Plan) shows the session×page_category grain in action: 5 rows for one session, `pageview_count` summed per category, `buy_flow_step` populated only where the category maps to a real purchase step.
+
+**Second real example, showing `order_customer_type` on an actual order** (session `0009e6a5...92a`, 2026-09-24):
+
+| page_category | pageview_count | order_count | order_customer_type |
+|---|---|---|---|
+| Agent | 1 | 0 | null |
+| Channel | 1 | 0 | null |
+| Checkout | 6 | 1 | **Prospect** |
+| Home | 1 | 0 | null |
+| Shop | 1 | 0 | null |
+
+This is a real acquisition order — the customer was still `Prospect` at the moment of purchase. Under the old approach (session-wide resolved `prospect_vs_base`, Customer-wins), this order would have risked getting rolled up as base activity if the visitor's account status flipped to Customer later in the session; `order_customer_type` preserves the true order-time state instead.
