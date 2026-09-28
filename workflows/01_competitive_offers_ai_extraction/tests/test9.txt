@@ -1,0 +1,135 @@
+DESCRIBE EXTENDED prd_dbi_analytics.silver_digital_interactions.session_event_fact;
+DESCRIBE EXTENDED prd_dbi_analytics.silver_digital_interactions.session_summary_fact;
+
+DESCRIBE HISTORY prd_dbi_analytics.silver_digital_interactions.session_event_fact LIMIT 20;
+DESCRIBE HISTORY prd_dbi_analytics.silver_digital_interactions.session_summary_fact LIMIT 20;
+
+SELECT
+  event_date,
+  COUNT(*)                                            AS rows,
+  SUM(CASE WHEN load_datetime_pst IS NULL THEN 1 ELSE 0 END) AS null_load_ts,
+  MIN(load_datetime_pst)                              AS first_load,
+  MAX(load_datetime_pst)                              AS last_load,
+  COUNT(DISTINCT pipeline_batch_id)                   AS batches
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN DATE '2026-09-20' AND DATE '2026-09-26'
+GROUP BY 1
+ORDER BY 1;
+
+SELECT
+  datediff(to_date(load_datetime_pst), event_date) AS days_late,
+  COUNT(*)                                         AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-20'
+GROUP BY 1
+ORDER BY 1;
+
+CREATE TABLE sdi_tbl_mip_bronze_edlSnapshotTest_ref AS
+SELECT row_identity_hash, load_datetime_pst, pipeline_batch_id, event_page_view, customer_id, channel_name
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-26'
+  AND pmod(abs(hash(row_identity_hash)), 100) = 0;
+
+  WITH now_rows AS (
+  SELECT row_identity_hash, load_datetime_pst, event_page_view, customer_id, channel_name
+  FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+  WHERE event_date = DATE '2026-09-26'
+    AND pmod(abs(hash(row_identity_hash)), 100) = 0
+)
+SELECT
+  SUM(CASE WHEN n.row_identity_hash IS NULL THEN 1 ELSE 0 END) AS deleted_or_rehashed,
+  SUM(CASE WHEN o.row_identity_hash IS NULL THEN 1 ELSE 0 END) AS newly_arrived,
+  SUM(CASE WHEN o.row_identity_hash IS NOT NULL AND n.row_identity_hash IS NOT NULL
+            AND (NOT (o.load_datetime_pst <=> n.load_datetime_pst)
+              OR NOT (o.customer_id     <=> n.customer_id)
+              OR NOT (o.event_page_view <=> n.event_page_view)
+              OR NOT (o.channel_name    <=> n.channel_name)) THEN 1 ELSE 0 END) AS updated_in_place
+FROM sdi_tbl_mip_bronze_edlSnapshotTest_ref o
+FULL OUTER JOIN now_rows n ON o.row_identity_hash = n.row_identity_hash;
+
+SELECT
+  u.source_table,
+  datediff(to_date(u.load_datetime_pst), u.event_date) AS days_late,
+  COUNT(*)                                             AS hits,
+  SUM(CASE WHEN s.row_identity_hash IS NULL THEN 1 ELSE 0 END) AS hits_without_session
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+  ON  s.row_identity_hash = u.row_identity_hash
+  AND s.event_date        = u.event_date
+  AND s.source_table      = u.source_table
+WHERE u.event_date = DATE '2026-09-24'
+GROUP BY ALL
+ORDER BY 1, 2;
+
+SELECT
+  u.source_table,
+  COUNT(*)                                                         AS hits,
+  SUM(CASE WHEN s.canonical_user_id IS NULL THEN 1 ELSE 0 END)     AS null_canonical,
+  SUM(CASE WHEN u.customer_id IS NOT NULL
+            AND s.canonical_user_id = u.customer_id THEN 1 ELSE 0 END) AS canonical_equals_customer_id,
+  COUNT(DISTINCT s.canonical_user_id)                              AS distinct_canonical,
+  COUNT(DISTINCT s.session_id)                                     AS distinct_sessions
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+  ON  s.row_identity_hash = u.row_identity_hash
+  AND s.event_date        = u.event_date
+  AND s.source_table      = u.source_table
+WHERE s.event_date = DATE '2026-09-24'
+GROUP BY 1;
+
+SELECT
+  COUNT(*)                                                               AS sessions,
+  SUM(CASE WHEN to_date(session_end_time) > session_start_date THEN 1 ELSE 0 END) AS cross_midnight,
+  percentile_approx(unix_timestamp(session_end_time) - unix_timestamp(session_start_time), 0.99) AS p99_duration_sec
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date = DATE '2026-09-24';
+
+SELECT
+  SUM(CASE WHEN page_url_path = 'REDACTED' THEN 1 ELSE 0 END)                AS url_path_redacted,
+  SUM(CASE WHEN page_url_path LIKE '%/home-internet%' THEN 1 ELSE 0 END)     AS hsi_rule_matches,
+  SUM(CASE WHEN channel = 'HINT' THEN 1 ELSE 0 END)                          AS hint_channel_rows,
+  SUM(CASE WHEN alert_message = 'REDACTED' THEN 1 ELSE 0 END)                AS alert_redacted
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+  AND site_name = 'TMO';
+
+SELECT entry_page_url_path, entry_page_url_full
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date = DATE '2026-09-24'
+LIMIT 20;
+
+-- T9a: site names (LOB mapping)
+SELECT site_name, page_app_type, COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+GROUP BY ALL ORDER BY rows DESC;
+
+-- T9b: sub-sections (page category and buy flow mapping)
+SELECT site_sub_section, SUM(COALESCE(event_page_view, 0)) AS page_views, COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+GROUP BY 1 ORDER BY page_views DESC LIMIT 200;
+
+-- T9c: flow names (buy flow exclude list)
+SELECT lower(trim(flow_name)) AS flow_name, COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24' AND flow_name IS NOT NULL
+GROUP BY 1 ORDER BY rows DESC;
+
+-- T9d: customer type and auth state (rank mappings)
+SELECT customer_type, user_auth_state, COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+GROUP BY ALL ORDER BY rows DESC;
+
+SELECT
+  source_table,
+  link_name,
+  COUNT(*)                          AS rows,
+  SUM(COALESCE(event_page_view, 0)) AS page_views
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+GROUP BY ALL
+ORDER BY page_views DESC
+LIMIT 40;
+
