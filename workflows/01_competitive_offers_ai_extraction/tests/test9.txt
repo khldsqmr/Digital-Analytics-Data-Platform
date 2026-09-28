@@ -638,3 +638,6 @@ except Exception as error:
     print(f"Error:      {error}")
 
     raise
+
+
+Delta keeps each individual table write safe and consistent. But the whole pipeline is not one single transaction, so if a later step fails, the earlier successful steps stay committed. We handle this by running the steps in order, stopping when there is an error, validating everything at the end, and making sure reruns can safely update the same period without creating duplicates.
