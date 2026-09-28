@@ -641,3 +641,14 @@ except Exception as error:
 
 
 Delta keeps each individual table write safe and consistent. But the whole pipeline is not one single transaction, so if a later step fails, the earlier successful steps stay committed. We handle this by running the steps in order, stopping when there is an error, validating everything at the end, and making sure reruns can safely update the same period without creating duplicates.
+
+
+
+Documented Silver pipeline cadence: hourly.
+The Silver pipeline runs hourly, incrementally appending new Bronze rows after dedup and mapping.
+Typical end-to-end lag from event → queryable in Silver is ~1–2 hours.
+Last 7 days of data may still shift as late-arriving Bronze events are repaired.
+History older than 7 days is stable.
+Related but different — session tables have their own cadence
+- SESSION_EVENT_FACT — also hourly, tracks Silver.
+- SESSION_SUMMARY_FACT — hourly appends, but the session-closing step (converting OPEN → CLOSED after the 30-min inactivity window) currently lags 2–3 days behind the newest data. That's why the guidance is to always filter session_status IN ('OPEN','CLOSED'), never CLOSED alone.
