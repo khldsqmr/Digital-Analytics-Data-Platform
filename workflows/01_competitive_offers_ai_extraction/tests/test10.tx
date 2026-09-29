@@ -2789,7 +2789,22 @@ GROUP BY
 
 ORDER BY unmatched_hits DESC;
 
-
+output:
+page_app_type	site_name	attribute_event_type	device_status	unmatched_hits	distinct_devices	pageviews	purchases
+TLife App	TLife App	Event Attribute	Device has other sessionized hits	874519	24384	248865	547
+TLife App	TLife App	Debug Attribute	Device has other sessionized hits	326611	16087	0	0
+Metro App	Metro App	Event Attribute	Device has other sessionized hits	40738	1795	8994	1
+Metro App	Metro App	Debug Attribute	Device has other sessionized hits	31112	1054	0	0
+TLife App	TLife App	Event Attribute	Device never appears in SEF	25756	1946	8355	4
+TLife App	TLife App	Debug Attribute	Device never appears in SEF	8730	747	0	0
+null	TRetail App	Event Attribute	Device has other sessionized hits	6083	56	2464	0
+Metro App	Metro App	Event Attribute	Device never appears in SEF	3104	228	861	0
+Metro App	Metro App	Debug Attribute	Device never appears in SEF	1946	161	0	0
+TLife App	TLife App	null	Device has other sessionized hits	604	264	175	0
+null	TRetail App	Debug Attribute	Device has other sessionized hits	474	45	0	0
+Metro App	Metro App	null	Device has other sessionized hits	128	26	23	0
+TLife App	TLife App	null	Device never appears in SEF	9	9	0	0
+Metro App	Metro App	null	Device never appears in SEF	6	4	2	0
 
 -- ============================================================
 -- TEST P:
@@ -2860,4 +2875,7 @@ GROUP BY
     END;
 
 
-
+output:
+device_status	purchase_events	devices	app_sessions
+Device has sessionized activity	548	495	510
+Device absent from SEF	4	4	4
