@@ -2699,3 +2699,165 @@ source_table	visitor_key_type	joined_hits	fpid_exact_matches	device_id_exact_mat
 t_app_interactions	DEVICE_ID	212870423	0	212870423	125489009	0
 t_web_interactions	FPID	28409587	28409587	0	0	0
 
+
+
+
+
+
+
+
+
+-- ============================================================
+-- TEST O:
+-- Do unmatched APP events belong to devices that otherwise
+-- have sessionized activity on the same day?
+-- ============================================================
+
+WITH sessionized_devices AS (
+    SELECT DISTINCT
+        visitor_key_value AS device_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+      AND source_table = 't_app_interactions'
+      AND visitor_key_type = 'DEVICE_ID'
+),
+
+sef_keys AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched_app AS (
+    SELECT
+        udi.attribute_device_id,
+        udi.page_app_type,
+        udi.site_name,
+        udi.attribute_event_type,
+        udi.event_page_view,
+        udi.event_purchase
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef_keys sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+      AND udi.source_table = 't_app_interactions'
+)
+
+SELECT
+    page_app_type,
+    site_name,
+    attribute_event_type,
+
+    CASE
+        WHEN sd.device_id IS NOT NULL
+            THEN 'Device has other sessionized hits'
+        ELSE 'Device never appears in SEF'
+    END AS device_status,
+
+    COUNT(*) AS unmatched_hits,
+
+    COUNT(DISTINCT ua.attribute_device_id)
+        AS distinct_devices,
+
+    SUM(COALESCE(event_page_view, 0))
+        AS pageviews,
+
+    SUM(COALESCE(event_purchase, 0))
+        AS purchases
+
+FROM unmatched_app ua
+
+LEFT JOIN sessionized_devices sd
+    ON ua.attribute_device_id = sd.device_id
+
+GROUP BY
+    page_app_type,
+    site_name,
+    attribute_event_type,
+    CASE
+        WHEN sd.device_id IS NOT NULL
+            THEN 'Device has other sessionized hits'
+        ELSE 'Device never appears in SEF'
+    END
+
+ORDER BY unmatched_hits DESC;
+
+
+
+-- ============================================================
+-- TEST P:
+-- Do unmatched APP purchases belong to devices with
+-- otherwise valid sessions?
+-- ============================================================
+
+WITH sessionized_devices AS (
+    SELECT DISTINCT
+        visitor_key_value AS device_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+      AND source_table = 't_app_interactions'
+      AND visitor_key_type = 'DEVICE_ID'
+),
+
+sef_keys AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched_purchases AS (
+    SELECT
+        udi.attribute_device_id,
+        udi.app_session_id,
+        udi.page_app_type,
+        udi.site_name,
+        udi.flow_name,
+        udi.customer_type,
+        udi.event_timestamp_utc
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef_keys sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+      AND udi.source_table = 't_app_interactions'
+      AND COALESCE(udi.event_purchase, 0) = 1
+)
+
+SELECT
+    CASE
+        WHEN sd.device_id IS NOT NULL
+            THEN 'Device has sessionized activity'
+        ELSE 'Device absent from SEF'
+    END AS device_status,
+
+    COUNT(*) AS purchase_events,
+    COUNT(DISTINCT up.attribute_device_id) AS devices,
+    COUNT(DISTINCT up.app_session_id) AS app_sessions
+
+FROM unmatched_purchases up
+
+LEFT JOIN sessionized_devices sd
+    ON up.attribute_device_id = sd.device_id
+
+GROUP BY
+    CASE
+        WHEN sd.device_id IS NOT NULL
+            THEN 'Device has sessionized activity'
+        ELSE 'Device absent from SEF'
+    END;
+
+
+
