@@ -6247,6 +6247,9 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
 WHERE event_date = DATE '2026-09-28'
 GROUP BY event_date;
+output:
+event_date	rowCount	distinctHits	minIngestedAt	maxIngestedAt
+2026-09-28	295217904	295217904	2026-09-29T21:45:27.411+00:00	2026-09-29T21:45:27.411+00:00
 
 SELECT
     'SOURCE' AS dataset,
@@ -6264,6 +6267,11 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
 WHERE event_date = DATE '2026-09-28';
 
+output:
+dataset	rowCount	distinctHits
+SOURCE	295217904	295217904
+BRONZE	295217904	295217904
+
 SELECT
     row_identity_hash,
     COUNT(*) AS rowCount
@@ -6272,3 +6280,5 @@ WHERE event_date = DATE '2026-09-28'
 GROUP BY row_identity_hash
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC;
+output:
+No rows returned
