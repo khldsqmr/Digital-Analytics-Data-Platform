@@ -6228,3 +6228,12 @@ CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlHits_daily(
 status	requestedWindowStart	requestedWindowEnd	sourceObject	message
 VALIDATION_ONLY	2026-09-28	2026-09-28	prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	No Bronze table was created or modified.
 
+-- Load one explicit completed day:
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlHits_daily(
+    p_asOfDate        => DATE '2026-09-28',
+    p_eventWindowDays => 1,
+    p_validateOnly    => FALSE
+);
+
+status	loadedWindowStart	loadedWindowEnd	targetObject
+SUCCESS	2026-09-28	2026-09-28	prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
