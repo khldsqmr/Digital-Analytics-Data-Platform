@@ -2513,3 +2513,146 @@ attribute_device_count	INT	Total number of devices shown in the Me screen card o
 device_ip_address	STRING	IP address of the device making the request.
 
 
+
+
+
+
+
+-- ============================================================
+-- TEST M:
+-- Do non-sessionized UDI rows lack the key EDL uses
+-- for sessionization?
+-- ============================================================
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+base AS (
+    SELECT
+        udi.source_table,
+        udi.page_app_type,
+        udi.site_name,
+
+        udi.first_party_id,
+        udi.attribute_device_id,
+
+        udi.event_page_view,
+        udi.event_purchase,
+
+        CASE
+            WHEN sef.row_identity_hash IS NOT NULL THEN 1
+            ELSE 0
+        END AS is_sessionized
+
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT JOIN sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+)
+
+SELECT
+    source_table,
+    page_app_type,
+    site_name,
+    is_sessionized,
+
+    COUNT(*) AS hits,
+
+    SUM(CASE
+        WHEN first_party_id IS NOT NULL THEN 1
+        ELSE 0
+    END) AS has_fpid,
+
+    SUM(CASE
+        WHEN attribute_device_id IS NOT NULL THEN 1
+        ELSE 0
+    END) AS has_device_id,
+
+    SUM(COALESCE(event_page_view, 0)) AS pageviews,
+    SUM(COALESCE(event_purchase, 0)) AS purchases
+
+FROM base
+
+GROUP BY
+    source_table,
+    page_app_type,
+    site_name,
+    is_sessionized
+
+ORDER BY
+    source_table,
+    page_app_type,
+    site_name,
+    is_sessionized DESC;
+
+
+-- ============================================================
+-- TEST N:
+-- Validate SEF visitor_key_value against UDI identity fields
+-- ============================================================
+
+SELECT
+    sef.source_table,
+    sef.visitor_key_type,
+
+    COUNT(*) AS joined_hits,
+
+    SUM(
+        CASE
+            WHEN sef.visitor_key_type = 'FPID'
+             AND sef.visitor_key_value = udi.first_party_id
+            THEN 1 ELSE 0
+        END
+    ) AS fpid_exact_matches,
+
+    SUM(
+        CASE
+            WHEN sef.visitor_key_type = 'DEVICE_ID'
+             AND sef.visitor_key_value = udi.attribute_device_id
+            THEN 1 ELSE 0
+        END
+    ) AS device_id_exact_matches,
+
+    SUM(
+        CASE
+            WHEN sef.visitor_key_type = 'DEVICE_ID'
+             AND sef.visitor_key_value = udi.app_instance_id
+            THEN 1 ELSE 0
+        END
+    ) AS app_instance_exact_matches,
+
+    SUM(
+        CASE
+            WHEN sef.visitor_key_type = 'DEVICE_ID'
+             AND sef.visitor_key_value = udi.app_session_id
+            THEN 1 ELSE 0
+        END
+    ) AS app_session_exact_matches
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+
+JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+    ON  sef.row_identity_hash = udi.row_identity_hash
+    AND sef.event_date        = udi.event_date
+    AND sef.source_table      = udi.source_table
+
+WHERE sef.event_date = DATE '2026-09-27'
+
+GROUP BY
+    sef.source_table,
+    sef.visitor_key_type
+
+ORDER BY
+    sef.source_table;
+
+
