@@ -2594,7 +2594,47 @@ ORDER BY
     page_app_type,
     site_name,
     is_sessionized DESC;
-
+output:
+source_table	page_app_type	site_name	is_sessionized	hits	has_fpid	has_device_id	pageviews	purchases
+t_app_interactions	null	TRetail App	1	611430	0	611430	256034	0
+t_app_interactions	null	TRetail App	0	6557	0	6557	2464	0
+t_app_interactions	Metro App	Metro App	1	15874642	0	15874642	2458655	39
+t_app_interactions	Metro App	Metro App	0	77034	0	77034	9880	1
+t_app_interactions	TLife App	TLife App	1	196384351	13267192	196384351	46051607	49885
+t_app_interactions	TLife App	TLife App	0	1236229	157075	1236229	257395	551
+t_web_interactions	null	null	0	30168	0	0	0	0
+t_web_interactions	Flagship App	T-Mo Prepaid	0	3	0	0	3	0
+t_web_interactions	Flagship App	TMO	1	4648	4648	0	1290	6
+t_web_interactions	Flagship App	TMO	0	12445	0	0	6232	0
+t_web_interactions	Metro App	INVALID	1	38	38	38	13	0
+t_web_interactions	Metro App	INVALID	0	380	0	378	152	0
+t_web_interactions	Metro App	MbyT	1	5481	5481	5468	3125	0
+t_web_interactions	Metro App	MbyT	0	67809	2	65836	39136	4
+t_web_interactions	Metro App	TMO	0	61	0	59	25	0
+t_web_interactions	TLife App	INVALID	1	41	41	21	3	0
+t_web_interactions	TLife App	INVALID	0	1585	0	1295	602	0
+t_web_interactions	TLife App	MbyT	1	330	330	246	155	0
+t_web_interactions	TLife App	MbyT	0	159624	0	122195	78143	18
+t_web_interactions	TLife App	T-Mo Prepaid	1	5463	5463	4787	3450	0
+t_web_interactions	TLife App	T-Mo Prepaid	0	8851	0	7749	5264	0
+t_web_interactions	TLife App	TFB	1	16139	16139	15187	7669	1
+t_web_interactions	TLife App	TFB	0	47810	0	22467	22011	1
+t_web_interactions	TLife App	TMO	1	961740	961740	800704	430653	99
+t_web_interactions	TLife App	TMO	0	5801217	800	4645552	3068070	117
+t_web_interactions	Web	Expert Assist	1	497694	497694	0	131307	0
+t_web_interactions	Web	Expert Assist	0	2227629	7697	0	604886	0
+t_web_interactions	Web	INVALID	1	34683	34683	57	7923	0
+t_web_interactions	Web	INVALID	0	410	52	0	124	0
+t_web_interactions	Web	MbyT	1	4337626	4337626	29259	1197396	534
+t_web_interactions	Web	MbyT	0	94048	4666	1608	43627	4
+t_web_interactions	Web	T-Mo Prepaid	1	600692	600692	14362	226104	973
+t_web_interactions	Web	T-Mo Prepaid	0	186532	1489	1426	61222	184
+t_web_interactions	Web	TFB	1	520931	520931	19358	128410	50
+t_web_interactions	Web	TFB	0	167788	18890	4686	50458	18
+t_web_interactions	Web	TMO	1	21109117	21109117	226806	5694399	6343
+t_web_interactions	Web	TMO	0	1508205	270135	35443	684454	53
+t_web_interactions	Web	TMO Concierge	1	314964	314964	0	50915	2741
+t_web_interactions	Web	TMO Concierge	0	62	61	0	12	1
 
 -- ============================================================
 -- TEST N:
@@ -2654,5 +2694,8 @@ GROUP BY
 
 ORDER BY
     sef.source_table;
-
+output:
+source_table	visitor_key_type	joined_hits	fpid_exact_matches	device_id_exact_matches	app_instance_exact_matches	app_session_exact_matches
+t_app_interactions	DEVICE_ID	212870423	0	212870423	125489009	0
+t_web_interactions	FPID	28409587	28409587	0	0	0
 
