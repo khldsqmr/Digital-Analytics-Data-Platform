@@ -1651,3 +1651,191 @@ t_web_interactions	Metro App	TMO	61	58	0	0	0	0	25	0
 t_web_interactions	Flagship App	T-Mo Prepaid	3	0	0	0	0	0	3	0
 
 
+
+
+
+
+
+
+
+
+
+
+
+-- ============================================================
+-- TEST I:
+-- Sessionization coverage by source / platform / site
+-- ============================================================
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+base AS (
+    SELECT
+        udi.source_table,
+        udi.page_app_type,
+        udi.site_name,
+        udi.attribute_event_type,
+        udi.event_page_view,
+        udi.event_purchase,
+
+        CASE
+            WHEN sef.row_identity_hash IS NOT NULL THEN 1
+            ELSE 0
+        END AS is_sessionized
+
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT JOIN sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+)
+
+SELECT
+    source_table,
+    page_app_type,
+    site_name,
+    attribute_event_type,
+
+    COUNT(*) AS total_udi_hits,
+
+    SUM(is_sessionized) AS sessionized_hits,
+
+    COUNT(*) - SUM(is_sessionized) AS non_sessionized_hits,
+
+    ROUND(
+        100.0 * SUM(is_sessionized) / COUNT(*),
+        2
+    ) AS sessionized_pct,
+
+    SUM(
+        CASE
+            WHEN is_sessionized = 0
+            THEN COALESCE(event_page_view, 0)
+            ELSE 0
+        END
+    ) AS non_sessionized_pageviews,
+
+    SUM(
+        CASE
+            WHEN is_sessionized = 0
+            THEN COALESCE(event_purchase, 0)
+            ELSE 0
+        END
+    ) AS non_sessionized_purchases
+
+FROM base
+
+GROUP BY
+    source_table,
+    page_app_type,
+    site_name,
+    attribute_event_type
+
+ORDER BY
+    non_sessionized_hits DESC;
+
+
+-- ============================================================
+-- TEST J:
+-- Inspect purchase events that did NOT sessionize
+-- ============================================================
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+)
+
+SELECT
+    udi.row_identity_hash,
+    udi.event_timestamp_utc,
+
+    udi.source_table,
+    udi.page_app_type,
+    udi.site_name,
+
+    udi.full_page_name,
+    udi.page_name,
+    udi.site_sub_section,
+    udi.flow_name,
+
+    udi.customer_type,
+    udi.user_auth_state,
+
+    udi.customer_id,
+    udi.profile_uid,
+    udi.first_party_id,
+    udi.app_instance_id,
+    udi.app_session_id,
+
+    udi.event_page_view,
+    udi.event_purchase
+
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+LEFT ANTI JOIN sef
+    ON  udi.row_identity_hash = sef.row_identity_hash
+    AND udi.event_date        = sef.event_date
+    AND udi.source_table      = sef.source_table
+
+WHERE udi.event_date = DATE '2026-09-27'
+  AND COALESCE(udi.event_purchase, 0) = 1
+
+ORDER BY
+    udi.source_table,
+    udi.page_app_type,
+    udi.site_name,
+    udi.event_timestamp_utc
+
+LIMIT 500;
+
+
+SELECT
+    column_name,
+    data_type,
+    comment
+
+FROM prd_dbi_analytics.information_schema.columns
+
+WHERE table_schema = 'silver_digital_interactions'
+  AND table_name = 'session_event_fact'
+
+ORDER BY ordinal_position;
+
+
+SELECT
+    column_name,
+    data_type,
+    comment
+
+FROM prd_dbi_analytics.information_schema.columns
+
+WHERE table_schema = 'silver_digital_interactions'
+  AND table_name = 'session_event_fact'
+
+  AND (
+       LOWER(column_name) LIKE '%session%'
+    OR LOWER(column_name) LIKE '%source%'
+    OR LOWER(column_name) LIKE '%event%'
+    OR LOWER(column_name) LIKE '%identity%'
+    OR LOWER(column_name) LIKE '%user%'
+    OR LOWER(column_name) LIKE '%visitor%'
+    OR LOWER(column_name) LIKE '%id%'
+  )
+
+ORDER BY ordinal_position;
+
+
