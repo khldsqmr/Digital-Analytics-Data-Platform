@@ -2425,3 +2425,70 @@ pipeline_batch_id	STRING	Pipeline, repair or backfill run that published the cur
 session_start_time_pst	TIMESTAMP	Session start timestamp converted from UTC to America/Los_Angeles local time.
 event_timestamp_pst	TIMESTAMP	Event timestamp converted from UTC to America/Los_Angeles local time.
 event_date_pst	DATE	Pacific local event date derived from event_timestamp_utc in America/Los_Angeles timezone.
+
+
+
+
+
+
+-- ============================================================
+-- TEST K:
+-- What visitor key is EDL actually using for each source?
+-- ============================================================
+
+SELECT
+    source_table,
+    visitor_key_type,
+
+    COUNT(*) AS hit_count,
+    COUNT(DISTINCT visitor_key_value) AS distinct_visitor_keys,
+    COUNT(DISTINCT session_id) AS distinct_sessions,
+
+    SUM(
+        CASE
+            WHEN visitor_key_value IS NULL THEN 1
+            ELSE 0
+        END
+    ) AS null_visitor_key_rows
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+
+WHERE event_date = DATE '2026-09-27'
+
+GROUP BY
+    source_table,
+    visitor_key_type
+
+ORDER BY
+    source_table,
+    hit_count DESC;
+
+
+-- ============================================================
+-- TEST L:
+-- Find potential visitor/session key columns in UDI
+-- ============================================================
+
+SELECT
+    column_name,
+    data_type,
+    comment
+
+FROM prd_dbi_analytics.information_schema.columns
+
+WHERE table_schema = 'silver_digital_interactions'
+  AND table_name = 'unified_digital_interactions'
+
+  AND (
+       LOWER(column_name) LIKE '%device%'
+    OR LOWER(column_name) LIKE '%visitor%'
+    OR LOWER(column_name) LIKE '%first_party%'
+    OR LOWER(column_name) LIKE '%fpid%'
+    OR LOWER(column_name) LIKE '%session%'
+    OR LOWER(column_name) LIKE '%instance%'
+  )
+
+ORDER BY ordinal_position;
+
+
+
