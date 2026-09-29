@@ -6237,3 +6237,38 @@ CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlHits_daily(
 
 status	loadedWindowStart	loadedWindowEnd	targetObject
 SUCCESS	2026-09-28	2026-09-28	prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+
+SELECT
+    event_date,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT row_identity_hash) AS distinctHits,
+    MIN(_ingestedAt) AS minIngestedAt,
+    MAX(_ingestedAt) AS maxIngestedAt
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+WHERE event_date = DATE '2026-09-28'
+GROUP BY event_date;
+
+SELECT
+    'SOURCE' AS dataset,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT row_identity_hash) AS distinctHits
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-28'
+
+UNION ALL
+
+SELECT
+    'BRONZE' AS dataset,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT row_identity_hash) AS distinctHits
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+WHERE event_date = DATE '2026-09-28';
+
+SELECT
+    row_identity_hash,
+    COUNT(*) AS rowCount
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+WHERE event_date = DATE '2026-09-28'
+GROUP BY row_identity_hash
+HAVING COUNT(*) > 1
+ORDER BY rowCount DESC;
