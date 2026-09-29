@@ -762,3 +762,278 @@ Dd+maiPhLcAbs/RIq36JlzpUsZ6vm9ajAfF42KDADug=	2026-09-27	2026-09-27T19:45:54.821+
 M9vc+zskZ6eVZ7cTVk2aOPSCH5cXWC84ZyXbxhjT+so=	2026-09-27	2026-09-27T19:46:00.608+00:00	Web	MbyT	MbyT | My Account : Login : Start	null	null	null	00003cf117fb23383b2aab840a5fbc8763362e8a92c8563d4d413c00b978a6fb	7c9e6f0e0d0e549d866333af9354a6695a1922cb72167735fec98f74f59c50d9	2026-09-27	2026-09-27T19:45:53.823+00:00	2026-09-27T19:48:17.457+00:00	REDACTED
 kQShGsIS3gU5qVDwSvcCxR0O01GtbRi99ClUGctGmKo=	2026-09-27	2026-09-27T19:46:03.651+00:00	Web	MbyT	MbyT | My Account : Login : Enter PIN	Session Refresh	1	null	00003cf117fb23383b2aab840a5fbc8763362e8a92c8563d4d413c00b978a6fb	7c9e6f0e0d0e549d866333af9354a6695a1922cb72167735fec98f74f59c50d9	2026-09-27	2026-09-27T19:45:53.823+00:00	2026-09-27T19:48:17.457+00:00	REDACTED
 
+
+
+
+
+
+
+
+
+-- ============================================================
+-- TEST A: Are missing join-key values explaining UDI → SEF gap?
+-- Date: 2026-09-27
+-- ============================================================
+
+SELECT
+    'UDI' AS table_name,
+
+    COUNT(*) AS total_rows,
+
+    SUM(CASE
+        WHEN row_identity_hash IS NULL THEN 1 ELSE 0
+    END) AS null_row_identity_hash,
+
+    SUM(CASE
+        WHEN source_table IS NULL THEN 1 ELSE 0
+    END) AS null_source_table,
+
+    SUM(CASE
+        WHEN event_date IS NULL THEN 1 ELSE 0
+    END) AS null_event_date
+
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+
+WHERE event_date = DATE '2026-09-27'
+
+
+UNION ALL
+
+
+SELECT
+    'SEF' AS table_name,
+
+    COUNT(*) AS total_rows,
+
+    SUM(CASE
+        WHEN row_identity_hash IS NULL THEN 1 ELSE 0
+    END) AS null_row_identity_hash,
+
+    SUM(CASE
+        WHEN source_table IS NULL THEN 1 ELSE 0
+    END) AS null_source_table,
+
+    SUM(CASE
+        WHEN event_date IS NULL THEN 1 ELSE 0
+    END) AS null_event_date
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+
+WHERE event_date = DATE '2026-09-27';
+
+
+-- ============================================================
+-- TEST B: Profile UDI hits that do NOT exist in SEF
+-- ============================================================
+
+WITH unmatched AS (
+
+    SELECT
+        udi.source_table,
+        udi.attribute_event_type,
+        udi.site_name,
+        udi.page_app_type,
+        udi.event_page_view,
+        udi.event_purchase
+
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN
+        prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+      AND sef.event_date = DATE '2026-09-27'
+)
+
+SELECT
+    source_table,
+    attribute_event_type,
+    page_app_type,
+    site_name,
+
+    COUNT(*) AS unmatched_hits,
+
+    SUM(COALESCE(event_page_view, 0))
+        AS pageviews,
+
+    SUM(COALESCE(event_purchase, 0))
+        AS purchases
+
+FROM unmatched
+
+GROUP BY
+    source_table,
+    attribute_event_type,
+    page_app_type,
+    site_name
+
+ORDER BY unmatched_hits DESC
+
+LIMIT 100;
+
+
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched AS (
+    SELECT
+        udi.source_table,
+        udi.attribute_event_type,
+        udi.site_name,
+        udi.page_app_type,
+        udi.event_page_view,
+        udi.event_purchase
+
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+)
+
+SELECT
+    source_table,
+    attribute_event_type,
+    page_app_type,
+    site_name,
+
+    COUNT(*) AS unmatched_hits,
+
+    SUM(COALESCE(event_page_view, 0)) AS pageviews,
+    SUM(COALESCE(event_purchase, 0)) AS purchases
+
+FROM unmatched
+
+GROUP BY
+    source_table,
+    attribute_event_type,
+    page_app_type,
+    site_name
+
+ORDER BY unmatched_hits DESC
+
+LIMIT 100;
+
+
+
+-- ============================================================
+-- TEST C: Inspect unusually old sessions with activity on Sep 27
+-- ============================================================
+
+SELECT
+    ssf.session_id,
+    ssf.session_start_date,
+    ssf.session_start_time,
+    ssf.session_end_time,
+
+    COUNT(*) AS sef_hits_on_test_date
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+
+JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+    ON sef.session_id = ssf.session_id
+
+WHERE sef.event_date = DATE '2026-09-27'
+  AND ssf.session_start_date < DATE '2026-09-26'
+
+GROUP BY
+    ssf.session_id,
+    ssf.session_start_date,
+    ssf.session_start_time,
+    ssf.session_end_time
+
+ORDER BY
+    ssf.session_start_date,
+    ssf.session_start_time;
+
+
+
+-- ============================================================
+-- TEST D: SSF sessions for Sep 27 with no Sep-27 SEF record
+-- ============================================================
+
+WITH sef_sessions AS (
+    SELECT DISTINCT
+        session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+missing AS (
+    SELECT
+        ssf.session_id,
+        ssf.session_start_date,
+        ssf.session_start_time,
+        ssf.session_end_time,
+        ssf.canonical_user_id,
+        ssf.entry_page_url_path
+
+    FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+
+    LEFT ANTI JOIN sef_sessions sef
+        ON ssf.session_id = sef.session_id
+
+    WHERE ssf.session_start_date = DATE '2026-09-27'
+)
+
+SELECT *
+FROM missing
+ORDER BY session_start_time
+LIMIT 500;
+
+
+
+-- ============================================================
+-- TEST E: Final three-table join cardinality check
+-- ============================================================
+
+WITH udi AS (
+    SELECT *
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date = DATE '2026-09-27'
+),
+
+sef AS (
+    SELECT *
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+)
+
+SELECT
+    COUNT(*) AS final_join_rows,
+
+    COUNT(DISTINCT udi.row_identity_hash)
+        AS distinct_hit_ids,
+
+    COUNT(DISTINCT sef.session_id)
+        AS distinct_sessions,
+
+    COUNT(DISTINCT ssf.session_id)
+        AS distinct_summary_sessions
+
+FROM udi
+
+JOIN sef
+    ON  udi.row_identity_hash = sef.row_identity_hash
+    AND udi.event_date        = sef.event_date
+    AND udi.source_table      = sef.source_table
+
+JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+    ON sef.session_id = ssf.session_id;
+
+
+
