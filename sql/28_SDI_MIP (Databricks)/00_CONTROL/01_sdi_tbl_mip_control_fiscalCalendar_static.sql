@@ -195,3 +195,6 @@ END;
 -- ###########################################################################
 -- END control/01_sdi_tbl_mip_control_fiscalCalendar_static.sql
 -- ###########################################################################
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input. SQLSTATE: 42601
