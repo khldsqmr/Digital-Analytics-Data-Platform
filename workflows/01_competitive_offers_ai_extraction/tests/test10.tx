@@ -6176,3 +6176,44 @@ d853ad36-20b3-4dbf-ba18-8473dffa10f5	fc1b92e1-3a2b-4885-bae6-3291b5709fcc	2026-0
 d853ad36-20b3-4dbf-ba18-8473dffa10f5	fc1b92e1-3a2b-4885-bae6-3291b5709fcc	2026-09-27T22:51:35.034+00:00	Event Attribute	TLife App | Shop : Order Status : Get Ready To Trade In	Order Status	null	null	null	1	1169d48bae44b945f8703b5e38ca96da2a7cafd73a03fc8c6692ba30204a2fc8
 d853ad36-20b3-4dbf-ba18-8473dffa10f5	fc1b92e1-3a2b-4885-bae6-3291b5709fcc	2026-09-27T22:52:05.252+00:00	Event Attribute	null	null	null	null	null	1	1169d48bae44b945f8703b5e38ca96da2a7cafd73a03fc8c6692ba30204a2fc8
 d853ad36-20b3-4dbf-ba18-8473dffa10f5	fc1b92e1-3a2b-4885-bae6-3291b5709fcc	2026-09-27T22:52:06.795+00:00	Event Attribute	TLife App | Experience : Launch : App Homepage	Launch	null	null	null	1	1169d48bae44b945f8703b5e38ca96da2a7cafd73a03fc8c6692ba30204a2fc8
+
+
+
+How a Session is Defined
+In BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT and SESSION_EVENT_FACT, a session = one continuous sitting of activity by a single visitor stream, bounded by inactivity.
+
+The Rules
+1. Inactivity timeout: 30 minutes (1,800 seconds)
+- If the gap between two consecutive events from the same visitor exceeds 1,800s, a new session starts.
+- This matches Adobe Analytics visit semantics — session counts here are directly comparable to Adobe visit counts.
+
+2. Visitor identity (the boundary key)
+Sessions are bounded per visitor stream, not per person:
+- Web → FPID (first-party browser cookie)
+- App → DEVICE_ID (app installation ID)
+
+⚠ A visitor stream ≠ a person. One customer using laptop + phone browser + T-Life app = 3 independent visitor streams = 3 parallel session timelines.
+
+3. Person identity (separate from session boundaries)
+Sessions are stitched to a person after the fact via canonical_user_id, using this authority order:
+MSISDN > PROFILE_UID > DEVICE_ID > FPID
+
+identity_status tells you how confident that stitching is:
+- RESOLVED (~97%) — confidently identified, safe for customer analysis
+- CONFLICT (~3%) — multiple customers on the same stream; canonical_user_id is NULL
+- UNRESOLVED — no usable identity evidence
+
+Session Lifecycle — session_status
+Status	Meaning	Include in counts?
+OPEN	Visit may still be in progress	✅ Yes
+CLOSED	Visit finished, 30-min window elapsed	✅ Yes
+MERGED	Corrected — merged into another session (merged_into_session_id points to survivor)	❌ Exclude
+SUPERSEDED	Replaced by a corrected version	❌ Exclude
+Always filter: WHERE session_status IN ('OPEN', 'CLOSED')
+
+⚠ The CLOSED marker lags 2–3 days behind newest data — never filter to CLOSED only, or you'll drop ~36% of the last 7 days and ~84% of today.
+
+Two Tables, Joined on session_id
+`SESSION_SUMMARY_FACT` — 1 row per session (48 cols: durations, entry/exit pages, hit counts, cart/purchase flags, identity)
+`SESSION_EVENT_FACT` — 1 row per event within a session (32 cols: per-hit timestamp, page path, flow name, hit_number_in_session)
+Want me to run a quick example — e.g. show the distribution of session durations, or count today's sessions by site_name?
