@@ -1490,3 +1490,140 @@ GROUP BY table_name
 ORDER BY table_name;
 output:
 No rows returned
+
+
+
+
+
+
+
+
+
+
+
+-- ============================================================
+-- TEST G:
+-- For UDI rows that fail the full UDI → SEF join,
+-- does the same row_identity_hash exist in SEF anyway?
+-- ============================================================
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched AS (
+    SELECT
+        udi.row_identity_hash,
+        udi.event_date,
+        udi.source_table,
+        udi.page_app_type,
+        udi.site_name,
+        udi.event_page_view,
+        udi.event_purchase
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+),
+
+sef_hash AS (
+    SELECT DISTINCT
+        row_identity_hash
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+)
+
+SELECT
+    CASE
+        WHEN s.row_identity_hash IS NOT NULL
+            THEN 'Hash exists in SEF - other join field differs'
+        ELSE 'Hash completely absent from SEF'
+    END AS match_status,
+
+    COUNT(*) AS hits,
+    SUM(COALESCE(u.event_page_view, 0)) AS pageviews,
+    SUM(COALESCE(u.event_purchase, 0)) AS purchases
+
+FROM unmatched u
+
+LEFT JOIN sef_hash s
+    ON u.row_identity_hash = s.row_identity_hash
+
+GROUP BY 1
+ORDER BY hits DESC;
+
+
+-- ============================================================
+-- TEST H:
+-- Identity/session-field availability on unmatched UDI hits
+-- ============================================================
+
+WITH sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched AS (
+    SELECT udi.*
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+)
+
+SELECT
+    source_table,
+    page_app_type,
+    site_name,
+
+    COUNT(*) AS unmatched_hits,
+
+    SUM(CASE WHEN customer_id IS NOT NULL THEN 1 ELSE 0 END)
+        AS has_customer_id,
+
+    SUM(CASE WHEN first_party_id IS NOT NULL THEN 1 ELSE 0 END)
+        AS has_first_party_id,
+
+    SUM(CASE WHEN app_instance_id IS NOT NULL THEN 1 ELSE 0 END)
+        AS has_app_instance_id,
+
+    SUM(CASE WHEN app_session_id IS NOT NULL THEN 1 ELSE 0 END)
+        AS has_app_session_id,
+
+    SUM(CASE WHEN profile_uid IS NOT NULL THEN 1 ELSE 0 END)
+        AS has_profile_uid,
+
+    SUM(COALESCE(event_page_view, 0))
+        AS pageviews,
+
+    SUM(COALESCE(event_purchase, 0))
+        AS purchases
+
+FROM unmatched
+
+GROUP BY
+    source_table,
+    page_app_type,
+    site_name
+
+ORDER BY unmatched_hits DESC;
+
+
+
