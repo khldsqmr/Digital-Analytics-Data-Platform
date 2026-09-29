@@ -1,3 +1,5 @@
+A visitor who touched Postpaid and HSI in the same week: should they count in both LOB rows (rows then add up to more than the total), in a separate 'Postpaid + HSI' row, or only under their main LOB (most page views, which is what we do today)?
+
 DESCRIBE EXTENDED prd_dbi_analytics.silver_digital_interactions.session_event_fact;
 DESCRIBE EXTENDED prd_dbi_analytics.silver_digital_interactions.session_summary_fact;
 
