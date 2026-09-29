@@ -1,0 +1,242 @@
+-- TEST DATE: 2026-09-27
+
+SELECT
+    'unified_digital_interactions' AS table_name,
+    COUNT(*) AS row_count
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-27'
+
+UNION ALL
+
+SELECT
+    'session_event_fact',
+    COUNT(*)
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+WHERE event_date = DATE '2026-09-27'
+
+UNION ALL
+
+SELECT
+    'session_summary_fact',
+    COUNT(*)
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date = DATE '2026-09-27';
+
+
+
+WITH udi AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table,
+        COUNT(*) AS udi_rows
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date = DATE '2026-09-27'
+    GROUP BY
+        row_identity_hash,
+        event_date,
+        source_table
+),
+
+sef AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table,
+        COUNT(*) AS sef_rows
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+    GROUP BY
+        row_identity_hash,
+        event_date,
+        source_table
+)
+
+SELECT
+    COUNT(*) AS total_join_keys,
+
+    SUM(CASE
+        WHEN udi_rows IS NOT NULL
+         AND sef_rows IS NOT NULL
+        THEN 1 ELSE 0
+    END) AS matched_keys,
+
+    SUM(CASE
+        WHEN udi_rows IS NOT NULL
+         AND sef_rows IS NULL
+        THEN 1 ELSE 0
+    END) AS udi_keys_missing_in_sef,
+
+    SUM(CASE
+        WHEN udi_rows IS NULL
+         AND sef_rows IS NOT NULL
+        THEN 1 ELSE 0
+    END) AS sef_keys_missing_in_udi,
+
+    SUM(CASE
+        WHEN udi_rows = 1
+         AND sef_rows = 1
+        THEN 1 ELSE 0
+    END) AS perfect_1_to_1_keys,
+
+    SUM(CASE WHEN udi_rows > 1 THEN 1 ELSE 0 END)
+        AS duplicate_keys_in_udi,
+
+    SUM(CASE WHEN sef_rows > 1 THEN 1 ELSE 0 END)
+        AS duplicate_keys_in_sef
+
+FROM udi
+FULL OUTER JOIN sef
+    USING (
+        row_identity_hash,
+        event_date,
+        source_table
+    );
+
+
+
+SELECT
+    row_identity_hash,
+    event_date,
+    source_table,
+    COUNT(*) AS bridge_rows,
+    COUNT(DISTINCT session_id) AS distinct_session_ids
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+
+WHERE event_date = DATE '2026-09-27'
+
+GROUP BY
+    row_identity_hash,
+    event_date,
+    source_table
+
+HAVING COUNT(DISTINCT session_id) > 1
+
+ORDER BY distinct_session_ids DESC
+
+LIMIT 100;
+
+
+
+WITH sef AS (
+    SELECT
+        session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+)
+
+SELECT
+    COUNT(*) AS sef_rows,
+
+    SUM(
+        CASE
+            WHEN ssf.session_id IS NOT NULL THEN 1
+            ELSE 0
+        END
+    ) AS rows_with_session_summary,
+
+    SUM(
+        CASE
+            WHEN ssf.session_id IS NULL THEN 1
+            ELSE 0
+        END
+    ) AS rows_missing_session_summary,
+
+    COUNT(DISTINCT sef.session_id)
+        AS distinct_sef_sessions,
+
+    COUNT(DISTINCT ssf.session_id)
+        AS matched_summary_sessions
+
+FROM sef
+
+LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+    ON sef.session_id = ssf.session_id;
+
+
+
+SELECT
+    ssf.session_start_date,
+    COUNT(DISTINCT sef.session_id) AS sessions
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+
+JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+    ON sef.session_id = ssf.session_id
+
+WHERE sef.event_date = DATE '2026-09-27'
+
+GROUP BY
+    ssf.session_start_date
+
+ORDER BY
+    ssf.session_start_date;
+
+
+
+SELECT
+    session_id,
+    COUNT(*) AS row_count
+
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+
+WHERE session_start_date BETWEEN
+      DATE '2026-09-26'
+      AND DATE '2026-09-28'
+
+GROUP BY session_id
+
+HAVING COUNT(*) > 1
+
+ORDER BY row_count DESC
+
+LIMIT 100;
+
+
+
+SELECT
+    -- Hit identity
+    udi.row_identity_hash,
+    udi.event_date,
+    udi.event_timestamp_utc,
+
+    -- Digital interaction
+    udi.page_app_type,
+    udi.site_name,
+    udi.full_page_name,
+    udi.channel_name,
+
+    udi.event_page_view,
+    udi.event_purchase,
+
+    -- Session bridge
+    sef.session_id,
+
+    -- Session attributes
+    ssf.canonical_user_id,
+    ssf.session_start_date,
+    ssf.session_start_time,
+    ssf.session_end_time,
+    ssf.entry_page_url_path
+
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+    ON  udi.row_identity_hash = sef.row_identity_hash
+    AND udi.event_date        = sef.event_date
+    AND udi.source_table      = sef.source_table
+
+LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ssf
+    ON sef.session_id = ssf.session_id
+
+WHERE udi.event_date = DATE '2026-09-27'
+
+ORDER BY
+    sef.session_id,
+    udi.event_timestamp_utc
+
+LIMIT 500;
+
+
+
