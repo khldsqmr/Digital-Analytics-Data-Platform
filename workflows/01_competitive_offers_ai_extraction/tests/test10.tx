@@ -6217,3 +6217,14 @@ Two Tables, Joined on session_id
 `SESSION_SUMMARY_FACT` — 1 row per session (48 cols: durations, entry/exit pages, hit counts, cart/purchase flags, identity)
 `SESSION_EVENT_FACT` — 1 row per event within a session (32 cols: per-hit timestamp, page path, flow name, hit_number_in_session)
 Want me to run a quick example — e.g. show the distribution of session durations, or count today's sessions by site_name?
+
+
+-- Preflight only; creates/writes nothing:
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlHits_daily(
+    p_asOfDate        => DATE '2026-09-28',
+    p_eventWindowDays => 1,
+    p_validateOnly    => TRUE
+);
+status	requestedWindowStart	requestedWindowEnd	sourceObject	message
+VALIDATION_ONLY	2026-09-28	2026-09-28	prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	No Bronze table was created or modified.
+
