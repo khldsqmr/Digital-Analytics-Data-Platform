@@ -1560,7 +1560,9 @@ LEFT JOIN sef_hash s
 
 GROUP BY 1
 ORDER BY hits DESC;
-
+output:
+match_status	hits	pageviews	purchases
+Hash completely absent from SEF	11677620	4942210	962
 
 -- ============================================================
 -- TEST H:
@@ -1624,6 +1626,28 @@ GROUP BY
     site_name
 
 ORDER BY unmatched_hits DESC;
-
+output:
+source_table	page_app_type	site_name	unmatched_hits	has_customer_id	has_first_party_id	has_app_instance_id	has_app_session_id	has_profile_uid	pageviews	purchases
+t_web_interactions	TLife App	TMO	5801217	4913897	800	0	0	3432147	3068070	117
+t_web_interactions	Web	Expert Assist	2227629	501	7697	0	0	0	604886	0
+t_web_interactions	Web	TMO	1508260	35993	270190	0	0	9653	684477	53
+t_app_interactions	TLife App	TLife App	1267142	1123069	160323	1267142	1267142	1111152	263046	558
+t_web_interactions	Web	T-Mo Prepaid	186535	121	1492	0	0	0	61223	184
+t_web_interactions	Web	TFB	167788	253	18890	0	0	9	50458	18
+t_web_interactions	TLife App	MbyT	159624	22683	0	0	0	0	78143	18
+t_web_interactions	Web	MbyT	94048	2841	4666	0	0	0	43627	4
+t_app_interactions	Metro App	Metro App	77612	0	0	77612	77612	57944	10349	1
+t_web_interactions	Metro App	MbyT	67809	2741	2	0	0	0	39136	4
+t_web_interactions	TLife App	TFB	47810	3177	0	0	0	516	22011	1
+t_web_interactions	null	null	30168	0	0	0	0	0	0	0
+t_web_interactions	Flagship App	TMO	12445	12176	0	0	0	10250	6232	0
+t_web_interactions	TLife App	T-Mo Prepaid	8851	1696	0	0	0	0	5264	0
+t_app_interactions	null	TRetail App	6557	0	0	6557	6557	252	2464	0
+t_web_interactions	TLife App	INVALID	1585	211	0	0	0	3	602	0
+t_web_interactions	Web	INVALID	410	8	52	0	0	0	124	0
+t_web_interactions	Metro App	INVALID	380	0	0	0	0	0	152	0
+t_web_interactions	Web	TMO Concierge	62	0	61	0	0	0	12	1
+t_web_interactions	Metro App	TMO	61	58	0	0	0	0	25	0
+t_web_interactions	Flagship App	T-Mo Prepaid	3	0	0	0	0	0	3	0
 
 
