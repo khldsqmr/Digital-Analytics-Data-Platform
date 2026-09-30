@@ -7232,3 +7232,9 @@ UNION ALL
 SELECT * FROM crosstabAvailability
 
 ORDER BY sourceType;
+
+
+sourceType	targetWeekStartDate	totalRows	currentAvailableRows	priorWeekAvailableRows	fourWeekAvailableRows	maxFourWeekTrendWeekCount	lastYearAvailableRows
+BREAKOUT	2026-09-27	20706	20706	0	0	0	0
+CROSSTAB	2026-09-27	5082	5082	0	0	0	0
+OVERVIEW	2026-09-27	21	21	0	0	0	0
