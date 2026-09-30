@@ -467,5 +467,3 @@ END;
 --   AND comparisonType='fourWeek'
 -- ORDER BY targetWeekStartDate;
 
-
-[DELTA_INSERT_COLUMN_ARITY_MISMATCH] Cannot write to 'prdrzranalytics.lab42.sdi_tbl_mip_gold_appoverviewtrend_long', not enough data columns; target table has 44 column(s) but the inserted data has 27 column(s).
