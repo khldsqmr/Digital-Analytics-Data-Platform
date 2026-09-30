@@ -7232,3 +7232,79 @@ UNION ALL
 SELECT * FROM crosstabAvailability
 
 ORDER BY sourceType;
+
+
+media-intelligence-platform/
+│
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── __init__.py
+│   │   │   ├── health.py
+│   │   │   ├── metadata.py
+│   │   │   ├── overview.py
+│   │   │   ├── breakouts.py
+│   │   │   ├── crosstabs.py
+│   │   │   └── explore.py
+│   │   │
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── metadata.py
+│   │   │   ├── overview.py
+│   │   │   ├── breakouts.py
+│   │   │   ├── crosstabs.py
+│   │   │   └── explore.py
+│   │   │
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   ├── common.py
+│   │   │   └── explore.py
+│   │   │
+│   │   └── db/
+│   │       ├── __init__.py
+│   │       └── databricks.py
+│   │
+│   ├── tests/
+│   │   ├── test_health.py
+│   │   └── test_schemas.py
+│   │
+│   ├── requirements.txt
+│   └── README.md
+│
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Overview/
+│   │   │   ├── Breakouts/
+│   │   │   ├── Crosstabs/
+│   │   │   └── Explore/
+│   │   │
+│   │   ├── components/
+│   │   │   ├── GlobalFilterBar.tsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── services/
+│   │   │   └── api.ts
+│   │   │
+│   │   ├── hooks/
+│   │   ├── types/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   │
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── README.md
+│
+├── docs/
+│   ├── architecture.md
+│   └── api.md
+│
+├── .env.example
+├── .gitignore
+├── .gitlab-ci.yml
+└── README.md
