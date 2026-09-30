@@ -606,9 +606,6 @@ BEGIN
                         configuredTopN,
                         configuredPairTopN,
 
-                        'all' AS displaySize,
-                        'All' AS displaySizeLabel,
-                        100 AS displayLimit,
                         displayRankWithinBreakout,
                         isOtherBucket,
                         rawMemberCount,
@@ -1413,9 +1410,6 @@ FROM (
             configuredTopN,
             configuredPairTopN,
 
-            'all' AS displaySize,
-            'All' AS displaySizeLabel,
-            100 AS displayLimit,
             displayRankWithinBreakout,
             isOtherBucket,
             rawMemberCount,
