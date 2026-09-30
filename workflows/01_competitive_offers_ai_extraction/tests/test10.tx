@@ -6765,3 +6765,39 @@ WHERE h.event_date = DATE '2026-09-28';
 
 
 [AMBIGUOUS_REFERENCE] Reference `displaySize` is ambiguous, could be: [`expanded`.`displaySize`, `expanded`.`displaySize`]. SQLSTATE: 42704; line 766, pos 24
+
+
+[DELTA_CLUSTERING_COLUMN_MISSING_STATS] Liquid clustering requires clustering columns to have stats. Couldn't find clustering column(s) 'comparisonType' in stats schema:
+root
+ |-- targetWeekStartDate: date (nullable = true)
+ |-- targetWeekEndDate: date (nullable = true)
+ |-- fiscalQuarterLabel: string (nullable = true)
+ |-- fiscalWeekCode: string (nullable = true)
+ |-- weekLabel: string (nullable = true)
+ |-- weekEndingLabel: string (nullable = true)
+ |-- filterLob: string (nullable = true)
+ |-- filterPlatform: string (nullable = true)
+ |-- pairKey: string (nullable = true)
+ |-- pairLabel: string (nullable = true)
+ |-- pairSortOrder: integer (nullable = true)
+ |-- displaySize: string (nullable = true)
+ |-- displaySizeLabel: string (nullable = true)
+ |-- displayLimit: integer (nullable = true)
+ |-- displaySizeSortOrder: integer (nullable = true)
+ |-- rowBreakoutType: string (nullable = true)
+ |-- rowBreakoutValue: string (nullable = true)
+ |-- rowDisplayRank: integer (nullable = true)
+ |-- isRowOtherBucket: boolean (nullable = true)
+ |-- rowCurrentValue: double (nullable = true)
+ |-- rowComparisonValue: double (nullable = true)
+ |-- configuredRowPairTopN: integer (nullable = true)
+ |-- columnBreakoutType: string (nullable = true)
+ |-- columnBreakoutValue: string (nullable = true)
+ |-- columnDisplayRank: integer (nullable = true)
+ |-- isColumnOtherBucket: boolean (nullable = true)
+ |-- columnCurrentValue: double (nullable = true)
+ |-- columnComparisonValue: double (nullable = true)
+ |-- configuredColumnPairTopN: integer (nullable = true)
+ |-- rawCellMemberCount: long (nullable = true)
+ |-- metricName: string (nullable = true)
+ |-- metricLabel: string (nullable = true)
