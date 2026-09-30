@@ -6801,3 +6801,358 @@ root
  |-- rawCellMemberCount: long (nullable = true)
  |-- metricName: string (nullable = true)
  |-- metricLabel: string (nullable = true)
+
+
+
+ objectName	rowCount	latestGoldProcessedAt	latestAppProcessedAt	freshnessStatus
+appBreakoutsAbsoluteTrend_long	0	-	-	FAIL - NO ROWS
+appBreakoutsComparisonTable_long	819	2026-09-30T04:12:47.724+00:00	2026-09-30T06:34:26.151+00:00	OK
+appBreakoutsWaterfall_long	0	-	-	FAIL - NO ROWS
+appCrosstabsMatrix_long	41163	2026-09-30T04:13:44.488+00:00	2026-09-30T07:01:05.203+00:00	OK
+appCrosstabsRankedPairs_long	0	-	-	FAIL - NO ROWS
+appExploreBase_wide	15946367	2026-09-30T04:14:44.830+00:00	2026-09-30T06:54:05.349+00:00	OK
+appExploreRankedPairs_long	0	-	-	FAIL - NO ROWS
+appOverviewCards_wide	12	2026-09-30T00:19:08.974+00:00	2026-09-30T06:33:37.623+00:00	OK
+appOverviewConversionFunnel_long	27	2026-09-30T00:19:08.974+00:00	2026-09-30T06:34:13.045+00:00	OK
+appOverviewToplineMovers_long	0	-	-	FAIL - NO ROWS
+appOverviewTrend_long	36	2026-09-30T00:19:08.974+00:00	2026-09-30T06:33:48.502+00:00	OK
+
+
+objectName	comparatorCount	comparatorsFound	unexpectedComparatorRows	comparatorStatus
+appBreakoutsAbsoluteTrend_long	0	null	0	CHECK
+appBreakoutsComparisonTable_long	3	["fourWeek","lastYear","priorWeek"]	0	OK
+appBreakoutsWaterfall_long	0	null	0	CHECK
+appCrosstabsMatrix_long	3	["fourWeek","lastYear","priorWeek"]	0	OK
+appCrosstabsRankedPairs_long	0	null	0	CHECK
+appExploreRankedPairs_long	0	null	0	CHECK
+appOverviewConversionFunnel_long	3	["fourWeek","lastYear","priorWeek"]	0	OK
+appOverviewToplineMovers_long	0	null	0	CHECK
+appOverviewTrend_long	3	["fourWeek","lastYear","priorWeek"]	0	OK
+
+
+
+-- =================================================================================================
+-- VALIDATION 1
+-- TABLE POPULATION + APP FRESHNESS
+--
+-- Purpose:
+--   - confirms every Gold App table received rows for the target week
+--   - compares latest analytical Gold processing timestamp vs App processing timestamp
+--
+-- Expected:
+--   rowCount > 0 for every table
+--   freshnessStatus = OK for every table
+-- =================================================================================================
+
+WITH params AS (
+    SELECT DATE '2026-09-28' AS asOfDate
+),
+
+target AS (
+    SELECT
+        date_add(asOfDate, 1 - dayofweek(asOfDate)) AS targetWeekStartDate
+    FROM params
+),
+
+health AS (
+
+    SELECT
+        'appOverviewCards_wide' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appOverviewTrend_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewTrend_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appOverviewToplineMovers_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewToplineMovers_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appOverviewConversionFunnel_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewConversionFunnel_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsComparisonTable_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsComparisonTable_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsWaterfall_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsWaterfall_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsAbsoluteTrend_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsAbsoluteTrend_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appCrosstabsMatrix_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appCrosstabsRankedPairs_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long a
+    CROSS JOIN target t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appExploreBase_wide' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide a
+    CROSS JOIN target t
+    WHERE a.weekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appExploreRankedPairs_long' AS objectName,
+        count(*) AS rowCount,
+        max(a.goldProcessedAt) AS latestGoldProcessedAt,
+        max(a.appProcessedAt) AS latestAppProcessedAt
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long a
+    CROSS JOIN target t
+    WHERE a.weekStartDate = t.targetWeekStartDate
+)
+
+SELECT
+    objectName,
+    rowCount,
+    latestGoldProcessedAt,
+    latestAppProcessedAt,
+    CASE
+        WHEN rowCount = 0
+            THEN 'FAIL - NO ROWS'
+        WHEN latestAppProcessedAt IS NULL
+            THEN 'FAIL - NO APP TIMESTAMP'
+        WHEN latestGoldProcessedAt IS NOT NULL
+         AND latestAppProcessedAt < latestGoldProcessedAt
+            THEN 'CHECK - APP OLDER THAN GOLD'
+        ELSE 'OK'
+    END AS freshnessStatus
+FROM health
+ORDER BY objectName;
+
+
+
+-- =================================================================================================
+-- VALIDATION 2
+-- COMPARATOR COVERAGE
+--
+-- Comparator-aware sections should contain exactly:
+--   priorWeek
+--   fourWeek
+--   lastYear
+--
+-- Overview Cards and Explore Base are intentionally excluded:
+--   - Overview Cards displays comparisons simultaneously in wide format.
+--   - Explore Base is a dynamic aggregation base rather than a comparator-long UI contract.
+--
+-- Expected:
+--   comparatorCount = 3
+--   comparatorStatus = OK
+-- =================================================================================================
+WITH params AS (
+    SELECT DATE '2026-09-28' AS asOfDate
+),
+
+target AS (
+    SELECT
+        date_add(asOfDate, 1 - dayofweek(asOfDate)) AS targetWeekStartDate
+    FROM params
+),
+
+expectedObjects AS (
+    SELECT *
+    FROM VALUES
+        ('appOverviewTrend_long'),
+        ('appOverviewToplineMovers_long'),
+        ('appOverviewConversionFunnel_long'),
+        ('appBreakoutsComparisonTable_long'),
+        ('appBreakoutsWaterfall_long'),
+        ('appBreakoutsAbsoluteTrend_long'),
+        ('appCrosstabsMatrix_long'),
+        ('appCrosstabsRankedPairs_long'),
+        ('appExploreRankedPairs_long')
+    AS e(objectName)
+),
+
+comparatorRows AS (
+    SELECT
+        'appOverviewTrend_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewTrend_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appOverviewToplineMovers_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewToplineMovers_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appOverviewConversionFunnel_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewConversionFunnel_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsComparisonTable_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsComparisonTable_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsWaterfall_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsWaterfall_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appBreakoutsAbsoluteTrend_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsAbsoluteTrend_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appCrosstabsMatrix_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appCrosstabsRankedPairs_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long AS a
+    CROSS JOIN target AS t
+    WHERE a.targetWeekStartDate = t.targetWeekStartDate
+
+    UNION ALL
+
+    SELECT
+        'appExploreRankedPairs_long' AS objectName,
+        a.comparisonType
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long AS a
+    CROSS JOIN target AS t
+    WHERE a.weekStartDate = t.targetWeekStartDate
+),
+
+summary AS (
+    SELECT
+        objectName,
+        sort_array(collect_set(comparisonType)) AS comparatorsFound,
+        count(DISTINCT comparisonType) AS comparatorCount,
+        sum(
+            CASE
+                WHEN comparisonType IS NULL
+                  OR comparisonType NOT IN (
+                      'priorWeek',
+                      'fourWeek',
+                      'lastYear'
+                  )
+                    THEN 1
+                ELSE 0
+            END
+        ) AS unexpectedComparatorRows
+    FROM comparatorRows
+    GROUP BY objectName
+)
+
+SELECT
+    e.objectName,
+    coalesce(s.comparatorCount, 0) AS comparatorCount,
+    s.comparatorsFound,
+    coalesce(s.unexpectedComparatorRows, 0) AS unexpectedComparatorRows,
+    CASE
+        WHEN coalesce(s.comparatorCount, 0) = 3
+         AND coalesce(s.unexpectedComparatorRows, 0) = 0
+            THEN 'OK'
+        ELSE 'CHECK'
+    END AS comparatorStatus
+FROM expectedObjects AS e
+LEFT JOIN summary AS s
+    ON s.objectName = e.objectName
+ORDER BY e.objectName;
+
