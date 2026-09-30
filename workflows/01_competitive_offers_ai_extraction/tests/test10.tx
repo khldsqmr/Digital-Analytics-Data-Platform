@@ -7254,3 +7254,19 @@ Sep 30, 2026, 09:57 AM
 8,923,414,055
 1.27 TB
 176.41 GB
+
+
+Statement
+Tasks
+Duration
+Rows read
+Bytes read
+Bytes written
+Genie review
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily( p_asOfDate => DATE '2026-09-29', p_eventWindowDays => 14, p_validateOnly => FALSE )
+Sep 30, 2026, 09:57 AM
+12,818/12,851
+2 h 50 min 16 s
+8,923,414,055
+1.27 TB
+390.61 GB
