@@ -257,7 +257,6 @@ BEGIN
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewToplineMovers_long
 
         USING DELTA
--- comparisonType intentionally excluded from liquid clustering because it may fall outside the default Delta stats schema.
 
         CLUSTER BY (targetWeekStartDate, metricName, breakoutType)
 
