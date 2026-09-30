@@ -243,3 +243,17 @@ END;
 -- ###########################################################################
 -- END orchestration/01_sdi_sp_mip_orchestration_allLayers_daily.sql
 -- ###########################################################################
+
+-- Manual/recovery refresh helper. Normal freshness is handled by TRIGGER ON UPDATE.
+
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_overviewCards_wide;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_overviewTrend_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_overviewConversionFunnel_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_breakoutsComparisonTable_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_overviewToplineMovers_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_breakoutsWaterfall_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_breakoutsAbsoluteTrend_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_crosstabsMatrix_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_crosstabsRankedPairs_long;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_exploreBase_wide;
+-- REFRESH MATERIALIZED VIEW prdrzranalytics.lab42.sdi_mv_mip_serving_exploreRankedPairs_long;
