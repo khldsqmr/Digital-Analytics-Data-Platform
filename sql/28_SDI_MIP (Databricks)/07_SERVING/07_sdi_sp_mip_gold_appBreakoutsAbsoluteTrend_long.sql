@@ -128,7 +128,12 @@ BEGIN
         -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsAbsoluteTrend_long
         USING DELTA
-        CLUSTER BY (metricName, breakoutType, targetWeekStartDate, comparisonType, displaySize)
+        CLUSTER BY (
+            targetWeekStartDate,
+            metricName,
+            breakoutType,
+            comparisonType
+        )
         COMMENT 'MIP Gold app: Breakouts absolute trend. Actual and benchmark series for Top5/Top10/All; All = Top100 + Other.'
         AS
         SELECT *
@@ -607,9 +612,6 @@ BEGIN
                             configuredTopN,
                             configuredPairTopN,
 
-                            'all' AS displaySize,
-                            'All' AS displaySizeLabel,
-                            100 AS displayLimit,
                             displayRankWithinBreakout,
                             isOtherBucket,
                             rawMemberCount,
@@ -1467,9 +1469,6 @@ FROM (
                 configuredTopN,
                 configuredPairTopN,
 
-                'all' AS displaySize,
-                'All' AS displaySizeLabel,
-                100 AS displayLimit,
                 displayRankWithinBreakout,
                 isOtherBucket,
                 rawMemberCount,
