@@ -142,7 +142,7 @@ BEGIN
             targetWeekStartDate,
             metricName,
             pairKey,
-            comparisonType
+            displaySize
         )
         COMMENT 'MIP Gold app: Crosstabs matrix. Comparator-aware Top5/Top8/Top10/All axis bucketing; All = Top100 + Other.'
         AS
