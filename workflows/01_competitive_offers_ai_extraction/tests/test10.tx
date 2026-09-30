@@ -7447,3 +7447,1684 @@ class SectionResponse(BaseModel):
     filters: dict[str, Any]
     rowCount: int
     data: list[dict[str, Any]]
+
+
+-- CONFIG.PY
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="MIP_",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    app_name: str = "Media Intelligence Platform API"
+    api_prefix: str = "/api/v1"
+
+    # Local frontend for now
+    cors_origins: str = "http://localhost:5173"
+
+    # Databricks SQL Warehouse
+    databricks_server_hostname: str = ""
+    databricks_http_path: str = ""
+    databricks_access_token: str = ""
+
+    # Unity Catalog location
+    databricks_catalog: str = "prdrzranalytics"
+    databricks_schema: str = "lab42"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [
+            value.strip()
+            for value in self.cors_origins.split(",")
+            if value.strip()
+        ]
+
+    def table(self, table_name: str) -> str:
+        """
+        Returns a fully qualified Databricks table name.
+
+        Example:
+        prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
+        """
+        return (
+            f"{self.databricks_catalog}."
+            f"{self.databricks_schema}."
+            f"{table_name}"
+        )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
+
+
+EXPLORE.PY
+Explore is the one section where schema validation matters a lot because the user can choose dimensions dynamically.
+
+from enum import Enum
+
+
+class ExploreDimension(str, Enum):
+    PAGE_CATEGORY = "pageCategory"
+    CHANNEL = "channel"
+    CAMPAIGN = "campaign"
+    DEVICE = "device"
+    PROSPECT_VS_BASE = "prospectVsBase"
+    AUTH_STATE = "authState"
+    ENTRY_PAGE = "entryPage"
+    BUY_FLOW_STEP = "buyFlowStep"
+    REGION = "region"
+    UTM_SOURCE = "utmSource"
+    UTM_MEDIUM = "utmMedium"
+    UTM_CAMPAIGN = "utmCampaign"
+
+
+class ExploreMetric(str, Enum):
+    SESSIONS = "sessions"
+    PAGE_VIEWS = "pageViews"
+    ORDERS = "orders"
+    VR_CALLS = "vrCalls"
+    VR_CHATS = "vrChats"
+    STORE_LOCATOR = "storeLocator"
+    ASSISTED_ORDERS = "assistedOrders"
+    CONFIGURE_EVENTS = "configureEvents"
+    CHECKOUT_START_EVENTS = "checkoutStartEvents"
+
+
+
+services/overview.py:
+from datetime import date
+
+from app.config import settings
+from app.db.databricks import fetch_all
+
+
+OVERVIEW_CARDS_TABLE = (
+    "sdi_tbl_mip_gold_appOverviewCards_wide"
+)
+
+OVERVIEW_TREND_TABLE = (
+    "sdi_tbl_mip_gold_appOverviewTrend_long"
+)
+
+OVERVIEW_MOVERS_TABLE = (
+    "sdi_tbl_mip_gold_appOverviewToplineMovers_long"
+)
+
+OVERVIEW_FUNNEL_TABLE = (
+    "sdi_tbl_mip_gold_appOverviewConversionFunnel_long"
+)
+
+
+def get_cards(
+    week: date,
+    lob: str,
+    platform: str,
+):
+    """
+    Cards show all comparisons simultaneously,
+    so comparisonType/displaySize are intentionally not used.
+    """
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(OVERVIEW_CARDS_TABLE)}
+        WHERE targetWeekStartDate = ?
+          AND filterLob = ?
+          AND filterPlatform = ?
+        ORDER BY sortOrder, metricName
+    """
+
+    return fetch_all(
+        query,
+        [week, lob, platform],
+    )
+
+
+def get_trend(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    metric: str | None,
+):
+    conditions = [
+        "targetWeekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(OVERVIEW_TREND_TABLE)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            metricSortOrder,
+            comparisonSortOrder,
+            metricName
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+
+def get_topline_movers(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+):
+    """
+    Topline Movers does not physically have displaySize.
+    It already contains global impact ranks.
+
+    We translate the global Top5/Top10/All selector
+    into a rank limit here.
+    """
+
+    display_limit = {
+        "top5": 5,
+        "top10": 10,
+        "all": 100,
+    }[display_size]
+
+    conditions = [
+        "targetWeekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+        "impactRankAcrossBreakouts <= ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_limit,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(OVERVIEW_MOVERS_TABLE)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY impactRankAcrossBreakouts
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+
+def get_conversion_funnel(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+):
+    query = f"""
+        SELECT *
+        FROM {settings.table(OVERVIEW_FUNNEL_TABLE)}
+        WHERE targetWeekStartDate = ?
+          AND filterLob = ?
+          AND filterPlatform = ?
+          AND comparisonType = ?
+        ORDER BY funnelStepOrder
+    """
+
+    return fetch_all(
+        query,
+        [
+            week,
+            lob,
+            platform,
+            comparison_type,
+        ],
+    )
+
+backend/app/services/breakouts.py
+from datetime import date
+
+from app.config import settings
+from app.db.databricks import fetch_all
+
+
+COMPARISON_TABLE = (
+    "sdi_tbl_mip_gold_appBreakoutsComparisonTable_long"
+)
+
+WATERFALL_TABLE = (
+    "sdi_tbl_mip_gold_appBreakoutsWaterfall_long"
+)
+
+ABSOLUTE_TREND_TABLE = (
+    "sdi_tbl_mip_gold_appBreakoutsAbsoluteTrend_long"
+)
+
+
+def _query_breakout_table(
+    table_name: str,
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    breakout_type: str | None,
+):
+    conditions = [
+        "targetWeekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+        "displaySize = ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_size,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    if breakout_type:
+        conditions.append("breakoutType = ?")
+        parameters.append(breakout_type)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(table_name)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            metricSortOrder,
+            breakoutSortOrder,
+            displayRank,
+            breakoutValue
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+
+def get_comparison(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    breakout_type: str | None,
+):
+    return _query_breakout_table(
+        COMPARISON_TABLE,
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_size,
+        metric,
+        breakout_type,
+    )
+
+
+def get_waterfall(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    breakout_type: str | None,
+):
+    return _query_breakout_table(
+        WATERFALL_TABLE,
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_size,
+        metric,
+        breakout_type,
+    )
+
+
+def get_absolute_trend(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    breakout_type: str | None,
+):
+    return _query_breakout_table(
+        ABSOLUTE_TREND_TABLE,
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_size,
+        metric,
+        breakout_type,
+    )
+
+backend/app/services/crosstabs.py
+from datetime import date
+
+from app.config import settings
+from app.db.databricks import fetch_all
+
+
+MATRIX_TABLE = (
+    "sdi_tbl_mip_gold_appCrosstabsMatrix_long"
+)
+
+RANKED_PAIRS_TABLE = (
+    "sdi_tbl_mip_gold_appCrosstabsRankedPairs_long"
+)
+
+
+def get_matrix(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    pair_key: str | None,
+):
+    conditions = [
+        "targetWeekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+        "displaySize = ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_size,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    if pair_key:
+        conditions.append("pairKey = ?")
+        parameters.append(pair_key)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(MATRIX_TABLE)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            pairSortOrder,
+            metricSortOrder,
+            rowDisplayRank,
+            columnDisplayRank
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+
+def get_ranked_pairs(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    pair_key: str | None,
+):
+    """
+    RankedPairs does not physically use displaySize.
+
+    We apply the global display selector using its
+    cross-pair impact rank.
+    """
+
+    display_limit = {
+        "top5": 5,
+        "top10": 10,
+        "all": 100,
+    }[display_size]
+
+    conditions = [
+        "targetWeekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+        "cellImpactRankAcrossPairs <= ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_limit,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    if pair_key:
+        conditions.append("pairKey = ?")
+        parameters.append(pair_key)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(RANKED_PAIRS_TABLE)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            cellImpactRankAcrossPairs,
+            pairSortOrder
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+backend/app/services/explore.py
+from datetime import date
+
+from app.config import settings
+from app.db.databricks import fetch_all
+
+
+EXPLORE_BASE_TABLE = (
+    "sdi_tbl_mip_gold_appExploreBase_wide"
+)
+
+EXPLORE_RANKED_PAIRS_TABLE = (
+    "sdi_tbl_mip_gold_appExploreRankedPairs_long"
+)
+
+
+DIMENSIONS = {
+    "pageCategory": "pageCategory",
+    "channel": "channel",
+    "campaign": "campaign",
+    "device": "device",
+    "prospectVsBase": "prospectVsBase",
+    "authState": "authState",
+    "entryPage": "entryPage",
+    "buyFlowStep": "buyFlowStep",
+    "region": "region",
+    "utmSource": "utmSource",
+    "utmMedium": "utmMedium",
+    "utmCampaign": "utmCampaign",
+}
+
+
+METRICS = {
+    "sessions": "count(DISTINCT sessionId)",
+    "pageViews": "sum(pageViews)",
+    "orders": "sum(orderCount)",
+    "vrCalls": "sum(vrCallEvents)",
+    "vrChats": "sum(vrChatEvents)",
+    "storeLocator": "sum(storeLocatorEvents)",
+    "assistedOrders": "sum(assistedOrderEvents)",
+    "configureEvents": "sum(configureEvents)",
+    "checkoutStartEvents": "sum(checkoutStartEvents)",
+}
+
+
+def get_results(
+    week: date,
+    lob: str,
+    platform: str,
+    dimension: str,
+    metric: str,
+    channel: str | None,
+    device: str | None,
+    page_category: str | None,
+):
+    """
+    Dynamically aggregates Explore inside Databricks.
+
+    Only DIMENSIONS and METRICS from the whitelist above
+    can be inserted into the SQL statement.
+    """
+
+    dimension_sql = DIMENSIONS[dimension]
+    metric_sql = METRICS[metric]
+
+    conditions = [
+        "weekStartDate = ?",
+    ]
+
+    parameters = [
+        week,
+    ]
+
+    if lob != "All":
+        conditions.append(
+            "array_contains(lobList, ?)"
+        )
+        parameters.append(lob)
+
+    if platform != "All":
+        conditions.append(
+            "platform = ?"
+        )
+        parameters.append(platform)
+
+    if channel:
+        conditions.append(
+            "channel = ?"
+        )
+        parameters.append(channel)
+
+    if device:
+        conditions.append(
+            "device = ?"
+        )
+        parameters.append(device)
+
+    if page_category:
+        conditions.append(
+            "pageCategory = ?"
+        )
+        parameters.append(page_category)
+
+    query = f"""
+        SELECT
+            coalesce(
+                cast({dimension_sql} AS STRING),
+                '(not set)'
+            ) AS dimensionValue,
+
+            {metric_sql} AS metricValue
+
+        FROM {settings.table(EXPLORE_BASE_TABLE)}
+
+        WHERE {" AND ".join(conditions)}
+
+        GROUP BY
+            coalesce(
+                cast({dimension_sql} AS STRING),
+                '(not set)'
+            )
+
+        ORDER BY
+            metricValue DESC NULLS LAST,
+            dimensionValue
+
+        LIMIT 100
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+
+def get_ranked_pairs(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: str,
+    display_size: str,
+    metric: str | None,
+    pair_key: str | None,
+):
+    display_limit = {
+        "top5": 5,
+        "top10": 10,
+        "all": 100,
+    }[display_size]
+
+    conditions = [
+        "weekStartDate = ?",
+        "filterLob = ?",
+        "filterPlatform = ?",
+        "comparisonType = ?",
+        "cellImpactRankAcrossPairs <= ?",
+    ]
+
+    parameters = [
+        week,
+        lob,
+        platform,
+        comparison_type,
+        display_limit,
+    ]
+
+    if metric:
+        conditions.append("metricName = ?")
+        parameters.append(metric)
+
+    if pair_key:
+        conditions.append("pairKey = ?")
+        parameters.append(pair_key)
+
+    query = f"""
+        SELECT *
+        FROM {settings.table(EXPLORE_RANKED_PAIRS_TABLE)}
+        WHERE {" AND ".join(conditions)}
+        ORDER BY
+            cellImpactRankAcrossPairs,
+            pairSortOrder
+    """
+
+    return fetch_all(
+        query,
+        parameters,
+    )
+
+backend/app/services/metadata.py
+from app.config import settings
+from app.db.databricks import fetch_all
+
+
+CARDS_TABLE = (
+    "sdi_tbl_mip_gold_appOverviewCards_wide"
+)
+
+BREAKOUTS_TABLE = (
+    "sdi_tbl_mip_gold_appBreakoutsComparisonTable_long"
+)
+
+CROSSTABS_TABLE = (
+    "sdi_tbl_mip_gold_appCrosstabsMatrix_long"
+)
+
+
+def get_metadata():
+    weeks = fetch_all(
+        f"""
+        SELECT DISTINCT
+            targetWeekStartDate AS value
+        FROM {settings.table(CARDS_TABLE)}
+        WHERE targetWeekStartDate IS NOT NULL
+        ORDER BY value DESC
+        """
+    )
+
+    lobs = fetch_all(
+        f"""
+        SELECT DISTINCT
+            filterLob AS value
+        FROM {settings.table(CARDS_TABLE)}
+        WHERE filterLob IS NOT NULL
+        ORDER BY value
+        """
+    )
+
+    platforms = fetch_all(
+        f"""
+        SELECT DISTINCT
+            filterPlatform AS value
+        FROM {settings.table(CARDS_TABLE)}
+        WHERE filterPlatform IS NOT NULL
+        ORDER BY value
+        """
+    )
+
+    metrics = fetch_all(
+        f"""
+        SELECT DISTINCT
+            metricName,
+            metricLabel
+        FROM {settings.table(CARDS_TABLE)}
+        WHERE metricName IS NOT NULL
+        ORDER BY metricLabel
+        """
+    )
+
+    breakout_types = fetch_all(
+        f"""
+        SELECT DISTINCT
+            breakoutType AS value
+        FROM {settings.table(BREAKOUTS_TABLE)}
+        WHERE breakoutType IS NOT NULL
+        ORDER BY value
+        """
+    )
+
+    pair_keys = fetch_all(
+        f"""
+        SELECT DISTINCT
+            pairKey AS value
+        FROM {settings.table(CROSSTABS_TABLE)}
+        WHERE pairKey IS NOT NULL
+        ORDER BY value
+        """
+    )
+
+    return {
+        "weeks": [
+            row["value"]
+            for row in weeks
+        ],
+
+        "lobs": [
+            row["value"]
+            for row in lobs
+        ],
+
+        "platforms": [
+            row["value"]
+            for row in platforms
+        ],
+
+        "comparisonTypes": [
+            "priorWeek",
+            "fourWeek",
+            "lastYear",
+        ],
+
+        "displaySizes": [
+            "top5",
+            "top10",
+            "all",
+        ],
+
+        "metrics": metrics,
+
+        "breakoutTypes": [
+            row["value"]
+            for row in breakout_types
+        ],
+
+        "pairKeys": [
+            row["value"]
+            for row in pair_keys
+        ],
+    }
+
+backend/app/routes/overview.py
+from datetime import date
+
+from fastapi import APIRouter, Query
+
+from app.schemas.common import (
+    ComparisonType,
+    DisplaySize,
+    SectionResponse,
+)
+from app.services import overview as service
+
+
+router = APIRouter(
+    prefix="/overview",
+    tags=["Overview"],
+)
+
+
+def build_response(
+    section: str,
+    filters: dict,
+    data: list[dict],
+) -> SectionResponse:
+
+    return SectionResponse(
+        section=section,
+        filters=filters,
+        rowCount=len(data),
+        data=data,
+    )
+
+
+@router.get(
+    "/cards",
+    response_model=SectionResponse,
+)
+def cards(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+):
+    data = service.get_cards(
+        week=week,
+        lob=lob,
+        platform=platform,
+    )
+
+    return build_response(
+        "overviewCards",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+        },
+        data,
+    )
+
+
+@router.get(
+    "/trend",
+    response_model=SectionResponse,
+)
+def trend(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        default=ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    metric: str | None = None,
+):
+    data = service.get_trend(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+        metric=metric,
+    )
+
+    return build_response(
+        "overviewTrend",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+            "metric": metric,
+        },
+        data,
+    )
+
+
+@router.get(
+    "/topline-movers",
+    response_model=SectionResponse,
+)
+def topline_movers(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        default=ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        default=DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+):
+    data = service.get_topline_movers(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+        display_size=display_size.value,
+        metric=metric,
+    )
+
+    return build_response(
+        "overviewToplineMovers",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+            "displaySize": display_size,
+            "metric": metric,
+        },
+        data,
+    )
+
+
+@router.get(
+    "/conversion-funnel",
+    response_model=SectionResponse,
+)
+def conversion_funnel(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        default=ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+):
+    data = service.get_conversion_funnel(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+    )
+
+    return build_response(
+        "overviewConversionFunnel",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+        },
+        data,
+    )
+
+backend/app/routes/breakouts.py
+from datetime import date
+
+from fastapi import APIRouter, Query
+
+from app.schemas.common import (
+    ComparisonType,
+    DisplaySize,
+    SectionResponse,
+)
+from app.services import breakouts as service
+
+
+router = APIRouter(
+    prefix="/breakouts",
+    tags=["Breakouts"],
+)
+
+
+def build_response(
+    section: str,
+    filters: dict,
+    data: list[dict],
+):
+    return SectionResponse(
+        section=section,
+        filters=filters,
+        rowCount=len(data),
+        data=data,
+    )
+
+
+def get_filters(
+    week: date,
+    lob: str,
+    platform: str,
+    comparison_type: ComparisonType,
+    display_size: DisplaySize,
+    metric: str | None,
+    breakout_type: str | None,
+):
+    return {
+        "week": week,
+        "lob": lob,
+        "platform": platform,
+        "comparisonType": comparison_type,
+        "displaySize": display_size,
+        "metric": metric,
+        "breakoutType": breakout_type,
+    }
+
+
+@router.get(
+    "/comparison",
+    response_model=SectionResponse,
+)
+def comparison(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    breakout_type: str | None = Query(
+        default=None,
+        alias="breakoutType",
+    ),
+):
+    data = service.get_comparison(
+        week,
+        lob,
+        platform,
+        comparison_type.value,
+        display_size.value,
+        metric,
+        breakout_type,
+    )
+
+    return build_response(
+        "breakoutsComparison",
+        get_filters(
+            week,
+            lob,
+            platform,
+            comparison_type,
+            display_size,
+            metric,
+            breakout_type,
+        ),
+        data,
+    )
+
+
+@router.get(
+    "/waterfall",
+    response_model=SectionResponse,
+)
+def waterfall(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    breakout_type: str | None = Query(
+        default=None,
+        alias="breakoutType",
+    ),
+):
+    data = service.get_waterfall(
+        week,
+        lob,
+        platform,
+        comparison_type.value,
+        display_size.value,
+        metric,
+        breakout_type,
+    )
+
+    return build_response(
+        "breakoutsWaterfall",
+        get_filters(
+            week,
+            lob,
+            platform,
+            comparison_type,
+            display_size,
+            metric,
+            breakout_type,
+        ),
+        data,
+    )
+
+
+@router.get(
+    "/absolute-trend",
+    response_model=SectionResponse,
+)
+def absolute_trend(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    breakout_type: str | None = Query(
+        default=None,
+        alias="breakoutType",
+    ),
+):
+    data = service.get_absolute_trend(
+        week,
+        lob,
+        platform,
+        comparison_type.value,
+        display_size.value,
+        metric,
+        breakout_type,
+    )
+
+    return build_response(
+        "breakoutsAbsoluteTrend",
+        get_filters(
+            week,
+            lob,
+            platform,
+            comparison_type,
+            display_size,
+            metric,
+            breakout_type,
+        ),
+        data,
+    )
+
+backend/app/routes/crosstabs.py
+from datetime import date
+
+from fastapi import APIRouter, Query
+
+from app.schemas.common import (
+    ComparisonType,
+    DisplaySize,
+    SectionResponse,
+)
+from app.services import crosstabs as service
+
+
+router = APIRouter(
+    prefix="/crosstabs",
+    tags=["Crosstabs"],
+)
+
+
+def build_response(
+    section: str,
+    filters: dict,
+    data: list[dict],
+):
+    return SectionResponse(
+        section=section,
+        filters=filters,
+        rowCount=len(data),
+        data=data,
+    )
+
+
+@router.get(
+    "/matrix",
+    response_model=SectionResponse,
+)
+def matrix(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    pair_key: str | None = Query(
+        default=None,
+        alias="pairKey",
+    ),
+):
+    data = service.get_matrix(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+        display_size=display_size.value,
+        metric=metric,
+        pair_key=pair_key,
+    )
+
+    return build_response(
+        "crosstabsMatrix",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+            "displaySize": display_size,
+            "metric": metric,
+            "pairKey": pair_key,
+        },
+        data,
+    )
+
+
+@router.get(
+    "/ranked-pairs",
+    response_model=SectionResponse,
+)
+def ranked_pairs(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    pair_key: str | None = Query(
+        default=None,
+        alias="pairKey",
+    ),
+):
+    data = service.get_ranked_pairs(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+        display_size=display_size.value,
+        metric=metric,
+        pair_key=pair_key,
+    )
+
+    return build_response(
+        "crosstabsRankedPairs",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+            "displaySize": display_size,
+            "metric": metric,
+            "pairKey": pair_key,
+        },
+        data,
+    )
+
+backend/app/routes/explore.py
+from datetime import date
+
+from fastapi import APIRouter, Query
+
+from app.schemas.common import (
+    ComparisonType,
+    DisplaySize,
+    SectionResponse,
+)
+from app.schemas.explore import (
+    ExploreDimension,
+    ExploreMetric,
+)
+from app.services import explore as service
+
+
+router = APIRouter(
+    prefix="/explore",
+    tags=["Explore"],
+)
+
+
+def build_response(
+    section: str,
+    filters: dict,
+    data: list[dict],
+):
+    return SectionResponse(
+        section=section,
+        filters=filters,
+        rowCount=len(data),
+        data=data,
+    )
+
+
+@router.get(
+    "/results",
+    response_model=SectionResponse,
+)
+def results(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    dimension: ExploreDimension = (
+        ExploreDimension.PAGE_CATEGORY
+    ),
+
+    metric: ExploreMetric = (
+        ExploreMetric.ORDERS
+    ),
+
+    channel: str | None = None,
+    device: str | None = None,
+
+    page_category: str | None = Query(
+        default=None,
+        alias="pageCategory",
+    ),
+):
+    data = service.get_results(
+        week=week,
+        lob=lob,
+        platform=platform,
+        dimension=dimension.value,
+        metric=metric.value,
+        channel=channel,
+        device=device,
+        page_category=page_category,
+    )
+
+    return build_response(
+        "exploreResults",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "dimension": dimension,
+            "metric": metric,
+            "channel": channel,
+            "device": device,
+            "pageCategory": page_category,
+        },
+        data,
+    )
+
+
+@router.get(
+    "/ranked-pairs",
+    response_model=SectionResponse,
+)
+def ranked_pairs(
+    week: date,
+    lob: str = "All",
+    platform: str = "All",
+
+    comparison_type: ComparisonType = Query(
+        ComparisonType.PRIOR_WEEK,
+        alias="comparisonType",
+    ),
+
+    display_size: DisplaySize = Query(
+        DisplaySize.TOP_10,
+        alias="displaySize",
+    ),
+
+    metric: str | None = None,
+
+    pair_key: str | None = Query(
+        default=None,
+        alias="pairKey",
+    ),
+):
+    data = service.get_ranked_pairs(
+        week=week,
+        lob=lob,
+        platform=platform,
+        comparison_type=comparison_type.value,
+        display_size=display_size.value,
+        metric=metric,
+        pair_key=pair_key,
+    )
+
+    return build_response(
+        "exploreRankedPairs",
+        {
+            "week": week,
+            "lob": lob,
+            "platform": platform,
+            "comparisonType": comparison_type,
+            "displaySize": display_size,
+            "metric": metric,
+            "pairKey": pair_key,
+        },
+        data,
+    )
+
+backend/app/routes/metadata.py
+from fastapi import APIRouter
+
+from app.services.metadata import get_metadata
+
+
+router = APIRouter(
+    prefix="/metadata",
+    tags=["Metadata"],
+)
+
+
+@router.get("")
+def metadata():
+    return get_metadata()
+
+backend/app/routes/health.py
+from fastapi import APIRouter, HTTPException
+
+from app.db.databricks import fetch_one
+
+
+router = APIRouter(
+    prefix="/health",
+    tags=["Health"],
+)
+
+
+@router.get("")
+def health():
+    return {
+        "status": "ok"
+    }
+
+
+@router.get("/databricks")
+def databricks_health():
+    try:
+        result = fetch_one(
+            "SELECT 1 AS healthy"
+        )
+
+        return {
+            "status": "ok",
+            "databricks": result,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Databricks unavailable: {exc}",
+        ) from exc
+
+backend/app/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import settings
+from app.routes import (
+    breakouts,
+    crosstabs,
+    explore,
+    health,
+    metadata,
+    overview,
+)
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version="0.1.0",
+    description=(
+        "Backend API for the Media Intelligence Platform"
+    ),
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_credentials=True,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+
+app.include_router(
+    health.router,
+    prefix=settings.api_prefix,
+)
+
+app.include_router(
+    metadata.router,
+    prefix=settings.api_prefix,
+)
+
+app.include_router(
+    overview.router,
+    prefix=settings.api_prefix,
+)
+
+app.include_router(
+    breakouts.router,
+    prefix=settings.api_prefix,
+)
+
+app.include_router(
+    crosstabs.router,
+    prefix=settings.api_prefix,
+)
+
+app.include_router(
+    explore.router,
+    prefix=settings.api_prefix,
+)
+
+
+@app.get("/")
+def root():
+    return {
+        "application": settings.app_name,
+        "status": "running",
+        "api": settings.api_prefix,
+        "swagger": "/docs",
+    }
+
+backend/tests/test_health.py
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+
+client = TestClient(app)
+
+
+def test_health_endpoint():
+    response = client.get(
+        "/api/v1/health"
+    )
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "status": "ok"
+    }
+
+backend/tests/test_schemas.py
+import pytest
+from pydantic import TypeAdapter, ValidationError
+
+from app.schemas.common import (
+    ComparisonType,
+    DisplaySize,
+)
+
+
+def test_valid_comparison_type():
+    adapter = TypeAdapter(ComparisonType)
+
+    value = adapter.validate_python(
+        "priorWeek"
+    )
+
+    assert value == ComparisonType.PRIOR_WEEK
+
+
+def test_invalid_comparison_type():
+    adapter = TypeAdapter(ComparisonType)
+
+    with pytest.raises(ValidationError):
+        adapter.validate_python(
+            "randomComparison"
+        )
+
+
+def test_valid_display_size():
+    adapter = TypeAdapter(DisplaySize)
+
+    value = adapter.validate_python(
+        "top10"
+    )
+
+    assert value == DisplaySize.TOP_10
+
+
+def test_invalid_display_size():
+    adapter = TypeAdapter(DisplaySize)
+
+    with pytest.raises(ValidationError):
+        adapter.validate_python(
+            "top500"
+        )
+
+backend/requirements.txt
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
+databricks-sql-connector>=3.0,<5.0
+pydantic-settings>=2.0,<3.0
+pytest>=8.0,<9.0
+httpx>=0.27,<1.0
