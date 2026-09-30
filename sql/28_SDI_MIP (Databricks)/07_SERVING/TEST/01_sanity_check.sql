@@ -847,3 +847,37 @@ ORDER BY
     scopeName,
     comparisonType,
     displaySize;
+
+
+
+-- MIP Gold app comparison availability diagnostic
+-- If the eligible counts below are 0, the zero-row ranked/waterfall app tables
+-- are expected until historical comparison data is loaded upstream.
+
+WITH breakout_check AS (
+    SELECT
+        targetWeekStartDate,
+        count(*) AS breakoutRows,
+        sum(CASE WHEN priorWeekDataAvailable THEN 1 ELSE 0 END) AS priorWeekEligibleRows,
+        sum(CASE WHEN fourWeekTrendWeekCount > 0 THEN 1 ELSE 0 END) AS fourWeekEligibleRows,
+        max(fourWeekTrendWeekCount) AS maxFourWeekTrendWeekCount,
+        sum(CASE WHEN sameWeekLyDataAvailable THEN 1 ELSE 0 END) AS lastYearEligibleRows
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+    WHERE targetWeekStartDate = DATE '2026-09-27'
+    GROUP BY targetWeekStartDate
+),
+crosstab_check AS (
+    SELECT
+        targetWeekStartDate,
+        count(*) AS crosstabRows,
+        sum(CASE WHEN priorWeekDataAvailable THEN 1 ELSE 0 END) AS priorWeekEligibleRows,
+        sum(CASE WHEN fourWeekTrendWeekCount > 0 THEN 1 ELSE 0 END) AS fourWeekEligibleRows,
+        max(fourWeekTrendWeekCount) AS maxFourWeekTrendWeekCount,
+        sum(CASE WHEN sameWeekLyDataAvailable THEN 1 ELSE 0 END) AS lastYearEligibleRows
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+    WHERE targetWeekStartDate = DATE '2026-09-27'
+    GROUP BY targetWeekStartDate
+)
+SELECT 'breakout' AS sourceType, * FROM breakout_check
+UNION ALL
+SELECT 'crosstab' AS sourceType, * FROM crosstab_check;

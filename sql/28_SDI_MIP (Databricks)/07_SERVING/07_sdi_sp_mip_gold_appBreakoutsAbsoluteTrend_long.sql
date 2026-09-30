@@ -128,12 +128,8 @@ BEGIN
         -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsAbsoluteTrend_long
         USING DELTA
-        CLUSTER BY (
-            targetWeekStartDate,
-            metricName,
-            breakoutType,
-            comparisonType
-        )
+-- comparisonType intentionally excluded from liquid clustering because it may fall outside the default Delta stats schema.
+        CLUSTER BY (targetWeekStartDate, metricName, breakoutType)
         COMMENT 'MIP Gold app: Breakouts absolute trend. Actual and benchmark series for Top5/Top10/All; All = Top100 + Other.'
         AS
         SELECT *

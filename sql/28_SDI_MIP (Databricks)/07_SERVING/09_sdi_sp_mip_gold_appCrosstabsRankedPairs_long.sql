@@ -138,7 +138,8 @@ BEGIN
         -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long
         USING DELTA
-        CLUSTER BY (targetWeekStartDate, metricName, comparisonType)
+-- comparisonType intentionally excluded from liquid clustering because it may fall outside the default Delta stats schema.
+        CLUSTER BY (targetWeekStartDate, pairKey, metricName)
         COMMENT 'MIP Gold app: Crosstabs Every pair ranked. Global comparator-aware ranking over All=Top100+Other pair cells.'
         AS
         SELECT *
