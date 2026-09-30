@@ -6756,3 +6756,7 @@ LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily s
     AND h.source_table      = s.source_table
 
 WHERE h.event_date = DATE '2026-09-28';
+
+
+
+[MATERIALIZED_VIEW_OPERATION_NOT_ALLOWED.REQUIRES_DBSQL_PRO_PLUS] The materialized view operation CREATE OR REPLACE is not allowed: Cannot CREATE OR REPLACE the Materialized View `prdrzranalytics`.`lab42`.`sdi_mv_mip_serving_overviewCards_wide` from general compute, please use DBSQL Serverless (recommended) or Pro warehouse. SQLSTATE: 56038
