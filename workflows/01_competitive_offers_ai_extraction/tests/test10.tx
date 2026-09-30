@@ -7416,3 +7416,34 @@ def fetch_one(
     )
 
     return rows[0] if rows else None
+
+
+
+
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel
+
+
+class ComparisonType(str, Enum):
+    PRIOR_WEEK = "priorWeek"
+    FOUR_WEEK = "fourWeek"
+    LAST_YEAR = "lastYear"
+
+
+class DisplaySize(str, Enum):
+    TOP_5 = "top5"
+    TOP_10 = "top10"
+    ALL = "all"
+
+
+class SectionResponse(BaseModel):
+    """
+    Common response structure used by all 11 sections.
+    """
+
+    section: str
+    filters: dict[str, Any]
+    rowCount: int
+    data: list[dict[str, Any]]
