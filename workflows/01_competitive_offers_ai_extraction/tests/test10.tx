@@ -7308,3 +7308,111 @@ media-intelligence-platform/
 ├── .gitignore
 ├── .gitlab-ci.yml
 └── README.md
+
+
+
+
+
+from contextlib import contextmanager
+from typing import Any, Iterable, Iterator
+
+from databricks import sql
+
+from app.config import settings
+
+
+def _validate_connection_settings() -> None:
+    missing = []
+
+    if not settings.databricks_server_hostname:
+        missing.append("MIP_DATABRICKS_SERVER_HOSTNAME")
+
+    if not settings.databricks_http_path:
+        missing.append("MIP_DATABRICKS_HTTP_PATH")
+
+    if not settings.databricks_access_token:
+        missing.append("MIP_DATABRICKS_ACCESS_TOKEN")
+
+    if missing:
+        raise RuntimeError(
+            "Missing Databricks configuration: "
+            + ", ".join(missing)
+        )
+
+
+@contextmanager
+def get_connection() -> Iterator[Any]:
+    """
+    Creates a Databricks SQL Warehouse connection.
+
+    For now this uses a token.
+    Authentication can later be replaced with service-principal/OAuth
+    without changing the API routes or services.
+    """
+    _validate_connection_settings()
+
+    connection = sql.connect(
+        server_hostname=settings.databricks_server_hostname,
+        http_path=settings.databricks_http_path,
+        access_token=settings.databricks_access_token,
+    )
+
+    try:
+        yield connection
+    finally:
+        connection.close()
+
+
+def fetch_all(
+    statement: str,
+    parameters: Iterable[Any] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Executes a parameterized SELECT and returns dictionaries.
+
+    Example output:
+    [
+        {
+            "metricName": "orders",
+            "currentValue": 12500
+        }
+    ]
+    """
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                statement,
+                list(parameters or []),
+            )
+
+            if cursor.description is None:
+                return []
+
+            columns = [
+                column[0]
+                for column in cursor.description
+            ]
+
+            rows = cursor.fetchall()
+
+            return [
+                {
+                    columns[index]: value
+                    for index, value in enumerate(row)
+                }
+                for row in rows
+            ]
+
+
+def fetch_one(
+    statement: str,
+    parameters: Iterable[Any] | None = None,
+) -> dict[str, Any] | None:
+
+    rows = fetch_all(
+        statement,
+        parameters,
+    )
+
+    return rows[0] if rows else None
