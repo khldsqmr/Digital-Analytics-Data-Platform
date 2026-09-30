@@ -941,3 +941,7 @@ END;
 --     p_weeksToRebuild => 12,
 --     p_validateOnly   => FALSE
 -- );
+
+
+[UNRESOLVED_ROUTINE] Cannot resolve routine `v_weekTo` on search path [`system`.`session`, `system`.`builtin`, `system`.`ai`, `hive_metastore`.`default`].
+Verify the spelling of `v_weekTo`, check that the routine exists, and confirm you have `USE` privilege on the catalog and schema, and EXECUTE on the routine. SQLSTATE: 42883; line 161, pos 55
