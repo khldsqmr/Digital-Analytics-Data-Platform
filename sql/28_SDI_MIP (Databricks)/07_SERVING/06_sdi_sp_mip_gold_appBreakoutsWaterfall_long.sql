@@ -128,7 +128,7 @@ BEGIN
         -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsWaterfall_long
         USING DELTA
-        CLUSTER BY (targetWeekStartDate, metricName, breakoutType, comparisonType, displaySize)
+        CLUSTER BY (targetWeekStartDate, metricName, breakoutType, comparisonType)
         COMMENT 'MIP Gold app: Breakouts waterfall. Comparator-aware Top5/Top10/All presentation buckets; All = Top100 + Other.'
         AS
         SELECT *
