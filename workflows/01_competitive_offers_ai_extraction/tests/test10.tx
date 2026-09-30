@@ -7156,3 +7156,6 @@ LEFT JOIN summary AS s
     ON s.objectName = e.objectName
 ORDER BY e.objectName;
 
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'p'. SQLSTATE: 42601
