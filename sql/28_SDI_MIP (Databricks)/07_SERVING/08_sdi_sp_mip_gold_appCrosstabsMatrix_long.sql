@@ -138,7 +138,12 @@ BEGIN
         -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
         USING DELTA
-        CLUSTER BY (targetWeekStartDate, metricName, pairKey, comparisonType, displaySize)
+        CLUSTER BY (
+            targetWeekStartDate,
+            metricName,
+            pairKey,
+            comparisonType
+        )
         COMMENT 'MIP Gold app: Crosstabs matrix. Comparator-aware Top5/Top8/Top10/All axis bucketing; All = Top100 + Other.'
         AS
         SELECT *
