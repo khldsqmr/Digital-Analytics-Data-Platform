@@ -9144,3 +9144,5 @@ Hi team — quick update: I’ve created the 11 Gold App tables for the Media In
 - sdi_tbl_mip_gold_appExploreBase_wide
 - sdi_tbl_mip_gold_appExploreRankedPairs_long
 These tables are designed as the application-ready layer for the backend/API and include the relevant combinations needed by each section, such as reporting week, LOB/platform context, metric, comparison type (Prior week, 4-wk trend, Same wk LY), display-size logic, breakout dimensions, crosstab pairings, rankings, and other UI-facing values where applicable.
+
+This is still under active refinement as we continue iterating on the UI, API requirements, naming, and overall user experience. I’m continuing to simplify the schemas, remove unnecessary fields, and align each table more closely with what the corresponding application section actually needs.
