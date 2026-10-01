@@ -3,8 +3,8 @@
 -- LAYER : SILVER
 -- PURPOSE:
 --   Canonical hit enrichment; business derivations are centralized here once.
+--   Bronze hit-session links are joined directly at their validated unique grain.
 -- ============================================================================
-
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
     IN p_asOfDate        DATE    DEFAULT NULL,
     IN p_eventWindowDays INT     DEFAULT 1,
@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHi
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'Silver canonical hit enrichment from MIP Bronze hits plus hit-to-session assignments.'
+COMMENT 'Silver canonical hit enrichment from MIP Bronze hits plus validated-unique hit-to-session assignments.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
@@ -26,15 +26,12 @@ BEGIN
     DECLARE v_windowStart DATE;
     DECLARE v_windowEnd DATE;
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
-
     IF p_eventWindowDays IS NULL OR p_eventWindowDays < 1 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'p_eventWindowDays must be >= 1.';
     END IF;
-
     SET v_windowEnd = v_asOfDate;
     SET v_windowStart = date_add(v_asOfDate, -(p_eventWindowDays - 1));
-
     IF NOT EXISTS (
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
@@ -44,7 +41,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Bronze UDI hits returned no rows for the requested Silver window.';
     END IF;
-
     IF NOT EXISTS (
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily
@@ -54,7 +50,6 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Bronze hit-to-session links returned no rows for the requested Silver window.';
     END IF;
-
     IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
@@ -126,15 +121,25 @@ BEGIN
         USING DELTA
         CLUSTER BY (eventDate, sourceTable)
         COMMENT 'Silver: one enriched row per Bronze UDI hit. Business derivations are centralized here once.';
-
-        WITH linkDedup AS (
-            SELECT *
+        WITH scopedLinks AS (
+            SELECT
+                row_identity_hash,
+                event_date,
+                source_table,
+                session_id,
+                canonical_user_id,
+                identity_status,
+                visitor_key_type,
+                visitor_key_value,
+                session_assignment_method,
+                assignment_version
             FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily
             WHERE event_date BETWEEN v_windowStart AND v_windowEnd
-            QUALIFY row_number() OVER (
-                PARTITION BY row_identity_hash, event_date, source_table
-                ORDER BY load_datetime_pst DESC NULLS LAST
-            ) = 1
+        ),
+        scopedHits AS (
+            SELECT *
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+            WHERE event_date BETWEEN v_windowStart AND v_windowEnd
         ),
         base AS (
             SELECT
@@ -146,12 +151,11 @@ BEGIN
                 l.visitor_key_value,
                 l.session_assignment_method,
                 l.assignment_version
-            FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily h
-            LEFT JOIN linkDedup l
-              ON  l.row_identity_hash = h.row_identity_hash
-              AND l.event_date = h.event_date
-              AND l.source_table = h.source_table
-            WHERE h.event_date BETWEEN v_windowStart AND v_windowEnd
+            FROM scopedHits h
+            LEFT JOIN scopedLinks l
+              ON l.row_identity_hash=h.row_identity_hash
+             AND l.event_date=h.event_date
+             AND l.source_table=h.source_table
         ),
         normalized AS (
             SELECT
@@ -322,7 +326,6 @@ BEGIN
             CASE WHEN lower(coalesce(user_carrier_isp, '')) LIKE 't-mobile%' THEN 1 ELSE 0 END AS isTmoNetwork,
             v_processedAt AS silverProcessedAt
         FROM normalized;
-
         SELECT
             'SUCCESS' AS status,
             v_windowStart AS loadedWindowStart,
@@ -330,9 +333,39 @@ BEGIN
             'prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily' AS targetObject;
     END IF;
 END;
-
--- Test:
+-- ============================================================================
+-- DEVELOPMENT / BACKFILL EXAMPLES
+-- ============================================================================
+-- IMPORTANT PERFORMANCE / DATA-CONTRACT NOTE:
+-- sdi_tbl_mip_bronze_edlHitSessionLinks_daily is expected to be unique on
+-- (row_identity_hash,event_date,source_table) before this procedure runs.
+-- Do not reintroduce ROW_NUMBER() deduplication here; it forces a very large
+-- distributed sort/shuffle. The pipeline validation layer should block duplicate
+-- Bronze link keys before SILVER_HIT execution.
+-- For large historical backfills, run this high-volume procedure one day at a time.
+-- Preflight only:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
---   p_asOfDate => DATE '2026-09-28', p_eventWindowDays => 1, p_validateOnly => TRUE);
+--     p_asOfDate=>DATE '2026-09-28',p_eventWindowDays=>1,p_validateOnly=>TRUE
+-- );
+-- Load/rebuild one completed day:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
---   p_asOfDate => DATE '2026-09-28', p_eventWindowDays => 1, p_validateOnly => FALSE);
+--     p_asOfDate=>DATE '2026-09-28',p_eventWindowDays=>1,p_validateOnly=>FALSE
+-- );
+-- Do NOT use p_eventWindowDays=>14 for a large backfill. Invoke each date separately
+-- with p_eventWindowDays=>1 so each join, write and retry remains day-bounded.
+-- Post-load row-count reconciliation:
+-- SELECT
+--     h.event_date,
+--     count(*) AS bronzeHitRows,
+--     s.silverRows,
+--     s.silverRows-count(*) AS rowDiff
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily h
+-- LEFT JOIN (
+--     SELECT eventDate,count(*) AS silverRows
+--     FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+--     WHERE eventDate=DATE '2026-09-28'
+--     GROUP BY eventDate
+-- ) s ON s.eventDate=h.event_date
+-- WHERE h.event_date=DATE '2026-09-28'
+-- GROUP BY h.event_date,s.silverRows;
+-- Expected rowDiff=0 because the SESSION_EVENT_FACT link is a LEFT enrichment.
