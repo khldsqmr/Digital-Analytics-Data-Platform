@@ -9307,3 +9307,15 @@ utmSource__utmMedium	utmSource	utmMedium	false	432
 utmSource__utmCampaign	utmSource	utmCampaign	false	432
 utmMedium__utmSource	utmMedium	utmSource	true	432
 utmCampaign__utmMedium	utmCampaign	utmMedium	true	432
+
+
+
+SELECT
+    event_date,
+    COUNT(*) AS linkRows,
+    COUNT(DISTINCT struct(row_identity_hash,event_date,source_table)) AS uniqueKeys,
+    COUNT(*)-COUNT(DISTINCT struct(row_identity_hash,event_date,source_table)) AS duplicateRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily
+WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28'
+GROUP BY event_date
+ORDER BY event_date;
