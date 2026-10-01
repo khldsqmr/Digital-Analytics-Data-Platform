@@ -3,196 +3,198 @@
 -- LAYER : GOLD / APP
 -- TAB   : Explore
 -- PURPOSE:
---   Application-ready flexible Explore base at week × session × page-category grain.
+--   Canonical dynamic Explore source at week × session × page-category grain.
+--   The API applies arbitrary filters first, then performs selected Rows × Columns
+--   aggregation, comparator math and Top-N in Databricks SQL.
 --
--- DESIGN:
---   - One top-level CREATE OR REPLACE PROCEDURE per file.
---   - No app-table-to-app-table runtime dependency.
---   - Reads only reusable Gold analytical tables + control views.
---   - Incremental/idempotent at the whole reporting-week grain.
---   - p_weeksToRebuild controls the target-week slice rebuilt.
---   - p_validateOnly = TRUE performs preflight only.
---   - Default as-of date is the previous Pacific calendar day.
---   - Browser/API reads never recompute this transformation.
+-- IMPORTANT:
+--   - Do NOT precompute every filter / row / column combination here.
+--   - Do NOT precompute Top-N here; Top-N must be calculated AFTER Explore filters.
+--   - Quick Filters are presets over the same underlying dimensions, not extra facts.
+--   - Comparator anchors are persisted so priorWeek / fourWeek / lastYear can be
+--     resolved without rebuilding business calendar logic in the API.
+--   - Historical weeks required by the selected comparator must exist in this base.
 -- ============================================================================
 
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
-    IN p_asOfDate       DATE    DEFAULT NULL,
-    IN p_weeksToRebuild INT     DEFAULT 1,
-    IN p_validateOnly   BOOLEAN DEFAULT FALSE
+    IN p_asOfDate DATE DEFAULT NULL,
+    IN p_weeksToRebuild INT DEFAULT 1,
+    IN p_validateOnly BOOLEAN DEFAULT FALSE
 )
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'MIP Gold app: Explore wide base. Dynamic API aggregation source; browser should not aggregate raw rows.'
+COMMENT 'MIP Gold App: canonical dynamic Explore base; filter first, then aggregate Rows × Columns in Databricks SQL.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
         p_asOfDate,
-        date_add(
-            to_date(from_utc_timestamp(current_timestamp(), 'America/Los_Angeles')),
-            -1
-        )
+        date_add(to_date(from_utc_timestamp(current_timestamp(),'America/Los_Angeles')),-1)
     );
-
     DECLARE v_weekTo DATE;
     DECLARE v_weekFrom DATE;
     DECLARE v_weekEndTo DATE;
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
-    -- ------------------------------------------------------------------------
-    -- 1. Parameter validation
-    -- ------------------------------------------------------------------------
-    IF p_weeksToRebuild IS NULL OR p_weeksToRebuild < 1 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'p_weeksToRebuild must be >= 1.';
+    IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_weeksToRebuild must be >= 1.';
     END IF;
 
-    SET v_weekTo = date_add(v_asOfDate, 1 - dayofweek(v_asOfDate));
-    SET v_weekFrom = date_add(v_weekTo, -7 * (p_weeksToRebuild - 1));
-    SET v_weekEndTo = date_add(v_weekTo, 6);
+    SET v_weekTo=date_add(v_asOfDate,1-dayofweek(v_asOfDate));
+    SET v_weekFrom=date_add(v_weekTo,-7*(p_weeksToRebuild-1));
+    SET v_weekEndTo=date_add(v_weekTo,6);
 
-    -- ------------------------------------------------------------------------
-    -- 2. Source/control preflight
-    -- ------------------------------------------------------------------------
-    IF NOT EXISTS (
+    IF NOT EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide
         WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
         LIMIT 1
     ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Explore Gold analytical base has no rows for the requested app target-week range.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Explore Gold analytical base has no rows for the requested App week range.';
     END IF;
 
-    IF NOT EXISTS (
+    IF NOT EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static
         WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
         LIMIT 1
     ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Fiscal calendar control view has no rows for the requested app target-week range.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Fiscal Calendar has no rows for the requested App week range.';
     END IF;
 
-    -- ------------------------------------------------------------------------
-    -- 3. Validation-only mode
-    -- ------------------------------------------------------------------------
-    IF p_validateOnly THEN
+    IF EXISTS(
+        SELECT 1
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide g
+        LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c
+          ON c.weekStartDate=g.weekStartDate
+        WHERE g.weekStartDate BETWEEN v_weekFrom AND v_weekTo
+          AND c.weekStartDate IS NULL
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Explore Gold contains weekStartDate values missing from Fiscal Calendar.';
+    END IF;
 
+    IF EXISTS(
+        SELECT 1
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide
+        WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
+        GROUP BY weekStartDate,sessionId,pageCategory
+        HAVING count(*)>1
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Duplicate Explore Gold analytical grain detected at weekStartDate × sessionId × pageCategory.';
+    END IF;
+
+    IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
             v_weekFrom AS rebuildWeekStartFrom,
             v_weekTo AS rebuildWeekStartTo,
             v_weekEndTo AS latestWeekEndDate,
-            CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            'priorWeek | fourWeek | lastYear' AS supportedComparisons,
+            'Filter first → aggregate → rank → Top-N' AS exploreProcessingRule,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS targetObject,
-            'No Gold app table was created or modified.' AS message;
-
+            'Validation passed. No Gold App table was created or modified.' AS message;
     ELSE
-
-        -- --------------------------------------------------------------------
-        -- 4. Bootstrap target schema only if the table does not exist.
-        --    The zero-row CTAS keeps the target schema exactly aligned to the
-        --    application contract without materialized-view/serverless compute.
-        -- --------------------------------------------------------------------
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide
         USING DELTA
-        CLUSTER BY (weekStartDate, platform, pageCategory)
-        COMMENT 'MIP Gold app: Explore wide base. Dynamic API aggregation source; browser should not aggregate raw rows.'
+        CLUSTER BY (weekStartDate,platform,pageCategory)
+        COMMENT 'MIP Gold App: canonical dynamic Explore base at week × session × page-category grain.'
         AS
         SELECT *
-        FROM (
+        FROM(
             SELECT
-                appResult.*,
+                g.weekStartDate,g.weekEndDate,
+                c.fiscalYear,c.fiscalQuarter,c.fiscalQuarterLabel,c.fiscalWeekOfQuarter,c.fiscalWeekCode,c.weekLabel,c.weekEndingLabel,
+                c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
+                g.sessionId,g.visitorId,
+                g.lobList,
+                coalesce(g.platform,'(not set)') AS platform,
+                coalesce(g.prospectVsBase,'Unknown') AS prospectVsBase,
+                coalesce(g.authState,'(not set)') AS authState,
+                coalesce(g.channel,'(not set)') AS channel,
+                coalesce(g.campaign,'(not set)') AS campaign,
+                coalesce(g.entryPage,'(not set)') AS entryPage,
+                coalesce(g.pageCategory,'(not set)') AS pageCategory,
+                coalesce(g.device,'Unknown') AS device,
+                coalesce(g.region,'(not available)') AS region,
+                coalesce(g.utmSource,'(not set)') AS utmSource,
+                coalesce(g.utmMedium,'(not set)') AS utmMedium,
+                coalesce(g.utmCampaign,'(not set)') AS utmCampaign,
+                coalesce(g.buyFlowStep,'Did not enter buy flow') AS buyFlowStep,
+                g.pageViews,g.orderCount,g.vrCallEvents,g.vrChatEvents,g.storeLocatorEvents,g.assistedOrderEvents,
+                g.hasBuyFlow,g.configureEvents,g.checkoutStartEvents,
+                CASE WHEN coalesce(g.orderCount,0)>0 THEN 1 ELSE 0 END AS hasOrder,
+                1 AS sessionPageCategoryRow,
+                g.goldProcessedAt,
                 v_processedAt AS appProcessedAt
-            FROM (
-                WITH
-                scopeExplore AS (
-                    SELECT *
-                    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide
-                    WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
-                )
-                SELECT
-                    g.weekStartDate,g.weekEndDate,
-                    c.fiscalYear,c.fiscalQuarter,c.fiscalQuarterLabel,c.fiscalWeekOfQuarter,c.fiscalWeekCode,c.weekLabel,c.weekEndingLabel,
-                    c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
-                    g.sessionId,g.visitorId,
-                    g.lobList,g.platform,g.prospectVsBase,g.authState,g.channel,g.campaign,g.entryPage,g.pageCategory,g.device,g.region,
-                    g.utmSource,g.utmMedium,g.utmCampaign,g.buyFlowStep,
-                    g.pageViews,g.orderCount,g.vrCallEvents,g.vrChatEvents,g.storeLocatorEvents,g.assistedOrderEvents,
-                    g.hasBuyFlow,g.configureEvents,g.checkoutStartEvents,
-                    CASE WHEN coalesce(g.orderCount,0)>0 THEN 1 ELSE 0 END AS hasOrder,
-                    1 AS sessionPageCategoryRow,
-                    g.goldProcessedAt
-                FROM scopeExplore g
-                LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c
-                  ON c.weekStartDate=g.weekStartDate
-            ) appResult
-        ) schemaBootstrap
-        WHERE 1 = 0;
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide g
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c
+              ON c.weekStartDate=g.weekStartDate
+            WHERE g.weekStartDate BETWEEN v_weekFrom AND v_weekTo
+        ) bootstrap
+        WHERE 1=0;
 
-        -- --------------------------------------------------------------------
-        -- 5. Rebuild requested whole target-week range.
-        --    Whole-week replacement is intentional because comparator ranks,
-        --    Top-N membership and (Other) buckets can all change together.
-        -- --------------------------------------------------------------------
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide
         REPLACE WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
-SELECT
-    appResult.*,
-    v_processedAt AS appProcessedAt
-FROM (
-    WITH
-    scopeExplore AS (
-        SELECT *
-        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide
-        WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
-    )
-    SELECT
-        g.weekStartDate,g.weekEndDate,
-        c.fiscalYear,c.fiscalQuarter,c.fiscalQuarterLabel,c.fiscalWeekOfQuarter,c.fiscalWeekCode,c.weekLabel,c.weekEndingLabel,
-        c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
-        g.sessionId,g.visitorId,
-        g.lobList,g.platform,g.prospectVsBase,g.authState,g.channel,g.campaign,g.entryPage,g.pageCategory,g.device,g.region,
-        g.utmSource,g.utmMedium,g.utmCampaign,g.buyFlowStep,
-        g.pageViews,g.orderCount,g.vrCallEvents,g.vrChatEvents,g.storeLocatorEvents,g.assistedOrderEvents,
-        g.hasBuyFlow,g.configureEvents,g.checkoutStartEvents,
-        CASE WHEN coalesce(g.orderCount,0)>0 THEN 1 ELSE 0 END AS hasOrder,
-        1 AS sessionPageCategoryRow,
-        g.goldProcessedAt
-    FROM scopeExplore g
-    LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c
-      ON c.weekStartDate=g.weekStartDate
-) appResult;
+        SELECT
+            g.weekStartDate,g.weekEndDate,
+            c.fiscalYear,c.fiscalQuarter,c.fiscalQuarterLabel,c.fiscalWeekOfQuarter,c.fiscalWeekCode,c.weekLabel,c.weekEndingLabel,
+            c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
+            g.sessionId,g.visitorId,
+            g.lobList,
+            coalesce(g.platform,'(not set)') AS platform,
+            coalesce(g.prospectVsBase,'Unknown') AS prospectVsBase,
+            coalesce(g.authState,'(not set)') AS authState,
+            coalesce(g.channel,'(not set)') AS channel,
+            coalesce(g.campaign,'(not set)') AS campaign,
+            coalesce(g.entryPage,'(not set)') AS entryPage,
+            coalesce(g.pageCategory,'(not set)') AS pageCategory,
+            coalesce(g.device,'Unknown') AS device,
+            coalesce(g.region,'(not available)') AS region,
+            coalesce(g.utmSource,'(not set)') AS utmSource,
+            coalesce(g.utmMedium,'(not set)') AS utmMedium,
+            coalesce(g.utmCampaign,'(not set)') AS utmCampaign,
+            coalesce(g.buyFlowStep,'Did not enter buy flow') AS buyFlowStep,
+            g.pageViews,g.orderCount,g.vrCallEvents,g.vrChatEvents,g.storeLocatorEvents,g.assistedOrderEvents,
+            g.hasBuyFlow,g.configureEvents,g.checkoutStartEvents,
+            CASE WHEN coalesce(g.orderCount,0)>0 THEN 1 ELSE 0 END AS hasOrder,
+            1 AS sessionPageCategoryRow,
+            g.goldProcessedAt,
+            v_processedAt AS appProcessedAt
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_exploreSessionPageCategoryByWeek_wide g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c
+          ON c.weekStartDate=g.weekStartDate
+        WHERE g.weekStartDate BETWEEN v_weekFrom AND v_weekTo;
 
-        -- --------------------------------------------------------------------
-        -- 6. Success metadata
-        -- --------------------------------------------------------------------
         SELECT
             'SUCCESS' AS status,
             v_weekFrom AS rebuiltWeekStartFrom,
             v_weekTo AS rebuiltWeekStartTo,
             v_weekEndTo AS latestWeekEndDate,
-            CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            'priorWeek | fourWeek | lastYear' AS supportedComparisons,
+            'Filter first → aggregate → rank → Top-N' AS exploreProcessingRule,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS targetObject,
             v_processedAt AS appProcessedAt;
-
     END IF;
 END;
 
--- Development examples:
+-- EXPLORE AXIS OPTIONS:
+-- SELECT breakoutType,breakoutLabel,sortOrder
+-- FROM prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static
+-- WHERE isActive AND isExploreDimension
+--   AND breakoutType IN('channel','authState','prospectVsBase','entryPage','pageCategory','device',
+--                       'utmSource','utmMedium','utmCampaign','buyFlowStep','campaign','platform')
+-- ORDER BY sortOrder;
 --
--- Preflight only:
--- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
---     p_asOfDate       => DATE '2026-09-28',
---     p_weeksToRebuild => 1,
---     p_validateOnly   => TRUE
--- );
+-- IMPORTANT:
+-- Do not expose region while inactive/placeholder.
+-- Do not expose LOB as a simple scalar axis while Explore stores lobList ARRAY<STRING>.
+-- LOB may still be supported as a filter via array_contains(lobList,?).
 --
--- Load / rebuild:
--- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
---     p_asOfDate       => DATE '2026-09-28',
---     p_weeksToRebuild => 1,
---     p_validateOnly   => FALSE
--- );
+-- INITIAL HISTORY:
+-- priorWeek / fourWeek / lastYear comparisons require the corresponding historical weeks
+-- to exist in this App base. Seed enough history before production; routine runs can then
+-- continue with a small p_weeksToRebuild window.
