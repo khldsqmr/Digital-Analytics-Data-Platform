@@ -9372,3 +9372,26 @@ targetWeekStartDate	minFourWeekCount	maxFourWeekCount	priorWeekRows	lastYearRows
 2026-09-27	2	2	394653	0	0
 2026-09-20	1	1	354396	0	0
 2026-09-13	0	0	0	0	0
+
+
+SELECT
+    weekStartDate,
+    COUNT(*) AS visitors,
+
+    COUNT_IF(lower(trim(utmSource))='(not set)') AS notSetUtmSource,
+    ROUND(100.0*COUNT_IF(lower(trim(utmSource))='(not set)')/COUNT(*),2) AS notSetUtmSourcePct,
+
+    COUNT_IF(lower(trim(utmMedium))='(not set)') AS notSetUtmMedium,
+    ROUND(100.0*COUNT_IF(lower(trim(utmMedium))='(not set)')/COUNT(*),2) AS notSetUtmMediumPct,
+
+    COUNT_IF(lower(trim(utmCampaign))='(not set)') AS notSetUtmCampaign,
+    ROUND(100.0*COUNT_IF(lower(trim(utmCampaign))='(not set)')/COUNT(*),2) AS notSetUtmCampaignPct,
+
+    COUNT_IF(lower(trim(entryPage))='(not set)') AS notSetEntryPage,
+    ROUND(100.0*COUNT_IF(lower(trim(entryPage))='(not set)')/COUNT(*),2) AS notSetEntryPagePct
+
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+GROUP BY weekStartDate
+ORDER BY weekStartDate DESC;
+
+
