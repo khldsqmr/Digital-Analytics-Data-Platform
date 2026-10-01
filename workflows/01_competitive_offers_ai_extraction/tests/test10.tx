@@ -9400,3 +9400,43 @@ weekStartDate	visitors	notSetUtmSource	notSetUtmSourcePct	notSetUtmMedium	notSet
 2026-09-20	21275663	21275663	100.00	21275663	100.00	21275663	100.00	16545006	77.76
 2026-09-13	12148292	12148292	100.00	12148292	100.00	12148292	100.00	9007617	74.15
 
+-- Check the session-level source directly
+SELECT
+    sessionStartDatePst,
+    COUNT(*) AS sessions,
+    COUNT_IF(entryPage='(not set)') AS notSetEntryPage,
+    ROUND(100.0*COUNT_IF(entryPage='(not set)')/COUNT(*),2) AS notSetEntryPagePct,
+    COUNT_IF(utmSource='(not set)') AS notSetUtmSource,
+    ROUND(100.0*COUNT_IF(utmSource='(not set)')/COUNT(*),2) AS notSetUtmSourcePct,
+    COUNT_IF(utmMedium='(not set)') AS notSetUtmMedium,
+    ROUND(100.0*COUNT_IF(utmMedium='(not set)')/COUNT(*),2) AS notSetUtmMediumPct,
+    COUNT_IF(utmCampaign='(not set)') AS notSetUtmCampaign,
+    ROUND(100.0*COUNT_IF(utmCampaign='(not set)')/COUNT(*),2) AS notSetUtmCampaignPct
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+GROUP BY sessionStartDatePst
+ORDER BY sessionStartDatePst DESC;
+
+SELECT
+    session_start_date,
+    COUNT(*) AS sessions,
+
+    COUNT_IF(entry_page_url_path IS NULL OR trim(entry_page_url_path)='') AS missingEntryPath,
+    ROUND(
+        100.0*COUNT_IF(entry_page_url_path IS NULL OR trim(entry_page_url_path)='')/COUNT(*),
+        2
+    ) AS missingEntryPathPct,
+
+    COUNT_IF(entry_page_url_full IS NULL OR trim(entry_page_url_full)='') AS missingEntryFull,
+    ROUND(
+        100.0*COUNT_IF(entry_page_url_full IS NULL OR trim(entry_page_url_full)='')/COUNT(*),
+        2
+    ) AS missingEntryFullPct,
+
+    COUNT_IF(lower(entry_page_url_full) LIKE '%utm_source=%') AS hasUtmSource,
+    COUNT_IF(lower(entry_page_url_full) LIKE '%utm_medium=%') AS hasUtmMedium,
+    COUNT_IF(lower(entry_page_url_full) LIKE '%utm_campaign=%') AS hasUtmCampaign
+
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessions_daily
+GROUP BY session_start_date
+ORDER BY session_start_date DESC;
+
