@@ -1,11 +1,38 @@
 -- ============================================================================
+-- FILE  : 04_sdi_vw_mip_control_crosstabCatalog_static.sql
+-- LAYER : CONTROL
+-- PURPOSE:
+--   Supported prebuilt Crosstab dimension pairs.
+-- ============================================================================
+
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
+COMMENT 'Control view: supported Crosstab dimension pairs. App Gold may expose both row/column orientations.'
+AS
+SELECT *
+FROM VALUES
+    ('channel__entryPage',     'channel',     'entryPage', 'Channel × Entry page',          true,10,''),
+    ('authState__entryPage',   'authState',   'entryPage', 'Visitor type × Entry page',     true,20,''),
+    ('utmSource__channel',     'utmSource',   'channel',   'UTM source × Channel',           true,30,''),
+    ('utmMedium__authState',   'utmMedium',   'authState', 'UTM medium × Visitor type',      true,40,''),
+    ('buyFlowStep__authState', 'buyFlowStep', 'authState', 'Buy flow step × Visitor type',   true,50,''),
+    ('utmCampaign__device',    'utmCampaign', 'device',    'UTM campaign × Device',          true,60,''),
+    ('device__entryPage',      'device',      'entryPage', 'Device × Entry page',            true,70,''),
+    ('channel__device',        'channel',      'device',    'Channel × Device',               true,80,'')
+AS t(
+    pairKey,
+    rowBreakoutType,
+    columnBreakoutType,
+    pairLabel,
+    isActive,
+    sortOrder,
+    notes
+);
+
+-- ============================================================================
 -- FILE  : 08_sdi_sp_mip_gold_appCrosstabsMatrix_long.sql
 -- LAYER : GOLD / APP
 -- TAB   : Crosstabs
 -- SECTION: Crosstab matrix
---
--- PURPOSE:
---   Fully application-ready Crosstab matrix.
 --
 -- UI FILTERS:
 --   Quarter
@@ -15,41 +42,23 @@
 --   Columns
 --   Comparator = priorWeek | fourWeek | lastYear
 --   Size       = top5 | top8 | top10 | all
---   LOB / Platform where applicable
+--   LOB / Platform
 --
--- APP ELIGIBILITY:
---   metric -> isActive AND showOnBreakouts
---   pair   -> active Crosstab pair
---   axes   -> active breakout dimensions
+-- DESIGN:
+--   - API only filters/selects.
+--   - App Gold performs Top-N/Other, comparison math and totals.
+--   - Both supported axis orientations are persisted.
+--   - Row and column Top-N are ranked independently by THIS-WEEK level.
+--   - All = Top100 + scoped Other.
+--   - Ratio metrics aggregate numerator/denominator internally before division.
+--   - Numerators/denominators are NOT exposed in final App table.
 --
--- BEHAVIOR:
---   - Rows and Columns are independently ranked by THIS-WEEK level.
---   - Both normal and swapped orientations are persisted.
---   - Top5 / Top8 / Top10 / All are materialized.
---   - All = Top100 + scoped (Other).
---   - Ratio metrics reaggregate numerator/denominator internally before ratio.
---
--- FINAL APP TABLE DOES NOT EXPOSE NUMERATORS/DENOMINATORS.
---
--- SCREENSHOT:
---   Cell:
---     absolute change
---     percentage / pp change
---
---   Row total:
---     this-week level
---     selected-comparator change
---
---   Column total:
---     this-week level
---     selected-comparator change
---
---   Bottom-right:
---     topline this-week level
---     topline absolute change
+-- Assumes metric catalog contains:
+--   isActive
+--   showOnBreakouts
 -- ============================================================================
 
--- ONE-TIME MIGRATION ONLY:
+-- ONE TIME BEFORE FIRST RUN OF THIS CONTRACT:
 -- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long;
 
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appCrosstabsMatrix_long(
@@ -60,7 +69,7 @@ CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appCrosstabsMa
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'MIP Gold App: Crosstab matrix with dynamic supported row/column orientation, comparator-aware values and Top5/Top8/Top10/All.'
+COMMENT 'MIP Gold App: Crosstab matrix with supported axis orientations, comparator-aware values, independent Top-N axes, totals and display-ready fields.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
@@ -73,7 +82,7 @@ BEGIN
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
     -- =========================================================================
-    -- 1. Parameters
+    -- 1. PARAMETERS
     -- =========================================================================
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
         SIGNAL SQLSTATE '45000'
@@ -85,7 +94,7 @@ BEGIN
     SET v_weekEndTo=date_add(v_weekTo,6);
 
     -- =========================================================================
-    -- 2. Preflight
+    -- 2. PREFLIGHT
     -- =========================================================================
     IF NOT EXISTS(
         SELECT 1
@@ -137,11 +146,12 @@ BEGIN
     IF NOT EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
-        WHERE isActive AND showOnBreakouts
+        WHERE isActive
+          AND showOnBreakouts
         LIMIT 1
     ) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT='Metric Catalog has no active diagnostic metrics.';
+            SET MESSAGE_TEXT='Metric Catalog has no active Crosstab-eligible metrics.';
     END IF;
 
     IF NOT EXISTS(
@@ -155,7 +165,7 @@ BEGIN
     END IF;
 
     -- =========================================================================
-    -- 3. Duplicate grain checks
+    -- 3. DUPLICATE / METADATA VALIDATION
     -- =========================================================================
     IF EXISTS(
         SELECT 1
@@ -185,10 +195,30 @@ BEGIN
 
     IF EXISTS(
         SELECT 1
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc
+          ON mc.metricName=g.metricName
+         AND mc.isActive
+         AND mc.showOnBreakouts
+        WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        GROUP BY
+            g.targetWeekStartDate,
+            g.filterLob,
+            g.filterPlatform,
+            g.metricName
+        HAVING count(*)>1
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT='Duplicate eligible Overview Gold analytical keys detected.';
+    END IF;
+
+    IF EXISTS(
+        SELECT 1
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
         WHERE isActive
           AND showOnBreakouts
-          AND (
+          AND(
               metricKind NOT IN('count','ratio')
               OR displayFormat NOT IN('number','percent')
               OR changeUnit NOT IN('pct','pp')
@@ -196,26 +226,34 @@ BEGIN
         LIMIT 1
     ) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT='Crosstab Metric Catalog contains unsupported metadata.';
+            SET MESSAGE_TEXT='Crosstab metric metadata contains unsupported values.';
     END IF;
 
     -- =========================================================================
-    -- 4. Validation only
+    -- 4. VALIDATION ONLY
     -- =========================================================================
     IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
             v_weekFrom AS rebuildWeekStartFrom,
             v_weekTo AS rebuildWeekStartTo,
+            v_weekEndTo AS latestWeekEndDate,
+            CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
             'priorWeek | fourWeek | lastYear' AS supportedComparisons,
             'top5 | top8 | top10 | all' AS supportedDisplaySizes,
             TRUE AS supportsSwappedAxes,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long' AS targetObject,
-            'Validation passed. No Gold App table was modified.' AS message;
+            'Validation passed. No Gold App table was created or modified.' AS message;
     ELSE
 
         -- =====================================================================
-        -- 5. App table
+        -- 5. APP TABLE
+        --
+        -- IMPORTANT:
+        --   Liquid clustering keys are intentionally limited to columns that
+        --   have Delta stats and are meaningful API filters.
+        --
+        --   displaySize is NOT a clustering key.
         -- =====================================================================
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long(
             targetWeekStartDate DATE,
@@ -293,6 +331,7 @@ BEGIN
             rowTotalAbsoluteDiffDisplay STRING,
             rowTotalChangeValue DOUBLE,
             rowTotalChangeDisplay STRING,
+            rowTotalDirection STRING,
 
             columnTotalCurrentValue DOUBLE,
             columnTotalCurrentDisplay STRING,
@@ -300,6 +339,7 @@ BEGIN
             columnTotalAbsoluteDiffDisplay STRING,
             columnTotalChangeValue DOUBLE,
             columnTotalChangeDisplay STRING,
+            columnTotalDirection STRING,
 
             toplineCurrentValue DOUBLE,
             toplineCurrentDisplay STRING,
@@ -307,15 +347,21 @@ BEGIN
             toplineAbsoluteDiffDisplay STRING,
             toplineChangeValue DOUBLE,
             toplineChangeDisplay STRING,
+            toplineDirection STRING,
 
             appProcessedAt TIMESTAMP
         )
         USING DELTA
-        CLUSTER BY(targetWeekStartDate,metricName,pairKey,displaySize)
-        COMMENT 'MIP Gold App: Crosstab matrix with both axis orientations and render-ready cells, totals and comparator values.';
+        CLUSTER BY(
+            targetWeekStartDate,
+            metricName,
+            rowBreakoutType,
+            columnBreakoutType
+        )
+        COMMENT 'MIP Gold App: Crosstab matrix with both supported axis orientations and render-ready cells, row totals, column totals and topline.';
 
         -- =====================================================================
-        -- 6. Rebuild
+        -- 6. REBUILD
         -- =====================================================================
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
         REPLACE WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
@@ -348,7 +394,10 @@ BEGIN
                 g.columnBreakoutValue AS sourceColumnBreakoutValue,
 
                 g.metricName,
-                CASE WHEN g.metricName='nbv' THEN 'Total UPV' ELSE mc.metricLabel END AS metricLabel,
+                CASE
+                    WHEN g.metricName='nbv' THEN 'Total UPV'
+                    ELSE mc.metricLabel
+                END AS metricLabel,
                 mc.metricDescription,
                 mc.metricKind,
                 mc.displayFormat,
@@ -388,14 +437,12 @@ BEGIN
         ),
 
         -- =====================================================================
-        -- Store BOTH orientations.
+        -- Both orientations are physically persisted.
         --
-        -- This means:
-        -- Rows=Channel, Columns=Entry page
-        -- AND
-        -- Rows=Entry page, Columns=Channel
+        -- Channel × Entry page
+        -- Entry page × Channel
         --
-        -- are both simple App-table filters.
+        -- FastAPI therefore never needs to transpose matrix data.
         -- =====================================================================
         oriented AS(
             SELECT
@@ -425,15 +472,15 @@ BEGIN
                 concat(sourceColumnBreakoutLabel,' × ',sourceRowBreakoutLabel) AS pairLabel,
                 TRUE AS isSwappedOrientation,
 
-                sourceColumnBreakoutType,
-                sourceColumnBreakoutLabel,
-                sourceColumnBreakoutSortOrder,
-                sourceColumnBreakoutValue,
+                sourceColumnBreakoutType AS rowBreakoutType,
+                sourceColumnBreakoutLabel AS rowBreakoutLabel,
+                sourceColumnBreakoutSortOrder AS rowBreakoutSortOrder,
+                sourceColumnBreakoutValue AS rowBreakoutValue,
 
-                sourceRowBreakoutType,
-                sourceRowBreakoutLabel,
-                sourceRowBreakoutSortOrder,
-                sourceRowBreakoutValue
+                sourceRowBreakoutType AS columnBreakoutType,
+                sourceRowBreakoutLabel AS columnBreakoutLabel,
+                sourceRowBreakoutSortOrder AS columnBreakoutSortOrder,
+                sourceRowBreakoutValue AS columnBreakoutValue
             FROM sourceBase s
             WHERE sourceRowBreakoutType<>sourceColumnBreakoutType
         ),
@@ -454,39 +501,43 @@ BEGIN
 
             SELECT
                 o.*,
-                'fourWeek',
-                '4-wk trend',
-                20,
-                fourWeekTrendWeekCount>0,
-                fourWeekTrendWeekCount=4,
+                'fourWeek' AS comparisonType,
+                '4-wk trend' AS comparisonLabel,
+                20 AS comparisonSortOrder,
+                fourWeekTrendWeekCount>0 AS comparisonDataAvailable,
+                fourWeekTrendWeekCount=4 AS comparisonWindowComplete,
+
                 CASE
                     WHEN metricKind='count' AND fourWeekTrendWeekCount>0
-                        THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
+                        THEN try_divide(
+                            fourWeekTrendNumerator,
+                            cast(fourWeekTrendWeekCount AS DOUBLE)
+                        )
                     ELSE fourWeekTrendNumerator
-                END,
+                END AS comparisonNumerator,
+
                 CASE
                     WHEN metricKind='count' THEN NULL
                     ELSE fourWeekTrendDenominator
-                END
+                END AS comparisonDenominator
             FROM oriented o
 
             UNION ALL
 
             SELECT
                 o.*,
-                'lastYear',
-                'Same wk LY',
-                30,
-                sameWeekLyDataAvailable,
-                sameWeekLyDataAvailable,
-                sameWeekLyNumerator,
-                sameWeekLyDenominator
+                'lastYear' AS comparisonType,
+                'Same wk LY' AS comparisonLabel,
+                30 AS comparisonSortOrder,
+                sameWeekLyDataAvailable AS comparisonDataAvailable,
+                sameWeekLyDataAvailable AS comparisonWindowComplete,
+                sameWeekLyNumerator AS comparisonNumerator,
+                sameWeekLyDenominator AS comparisonDenominator
             FROM oriented o
         ),
 
         -- =====================================================================
-        -- Axis totals before Top-N bucketing.
-        -- These determine what is Top5 / Top8 / Top10.
+        -- Independent ROW ranking by this-week level.
         -- =====================================================================
         rowAgg AS(
             SELECT
@@ -542,6 +593,9 @@ BEGIN
             FROM rowValues
         ),
 
+        -- =====================================================================
+        -- Independent COLUMN ranking by this-week level.
+        -- =====================================================================
         columnAgg AS(
             SELECT
                 targetWeekStartDate,
@@ -644,7 +698,10 @@ BEGIN
 
                 CASE
                     WHEN rowRankByMetric<=s.displayLimit
-                        THEN concat('ROW::VALUE::',coalesce(rowBreakoutValue,'(null)'))
+                        THEN concat(
+                            'ROW::VALUE::',
+                            coalesce(rowBreakoutValue,'(null)')
+                        )
                     ELSE 'ROW::OTHER::REMAINDER'
                 END AS rowBucketKey,
 
@@ -658,7 +715,10 @@ BEGIN
 
                 CASE
                     WHEN columnRankByMetric<=s.displayLimit
-                        THEN concat('COL::VALUE::',coalesce(columnBreakoutValue,'(null)'))
+                        THEN concat(
+                            'COL::VALUE::',
+                            coalesce(columnBreakoutValue,'(null)')
+                        )
                     ELSE 'COL::OTHER::REMAINDER'
                 END AS columnBucketKey,
 
@@ -675,7 +735,6 @@ BEGIN
 
         -- =====================================================================
         -- Reaggregate after Top-N / Other mapping.
-        -- Ratios remain ratio-safe because ingredients are summed first.
         -- =====================================================================
         bucketAgg AS(
             SELECT
@@ -804,7 +863,6 @@ BEGIN
         cellValues AS(
             SELECT
                 *,
-
                 CASE
                     WHEN metricKind='ratio'
                         THEN try_divide(currentNumerator,currentDenominator)
@@ -822,15 +880,23 @@ BEGIN
         cellCalculated AS(
             SELECT
                 *,
-
-                cellCurrentValue-cellComparisonValue AS cellAbsoluteDiffValue,
+                cellCurrentValue-cellComparisonValue
+                    AS cellAbsoluteDiffValue,
 
                 CASE
-                    WHEN cellCurrentValue IS NULL OR cellComparisonValue IS NULL THEN NULL
+                    WHEN cellCurrentValue IS NULL
+                      OR cellComparisonValue IS NULL THEN NULL
+
                     WHEN changeUnit='pp'
                         THEN 100D*(cellCurrentValue-cellComparisonValue)
+
                     WHEN changeUnit='pct'
-                        THEN 100D*(try_divide(cellCurrentValue,cellComparisonValue)-1D)
+                        THEN 100D*(
+                            try_divide(
+                                cellCurrentValue,
+                                cellComparisonValue
+                            )-1D
+                        )
                 END AS cellChangeRaw,
 
                 CASE
@@ -840,13 +906,15 @@ BEGIN
                     ELSE 'unavailable'
                 END AS cellDirection,
 
-                cast(rowDisplayRank*1000+columnDisplayRank AS BIGINT)
-                    AS cellSortOrder
+                cast(
+                    rowDisplayRank*1000+columnDisplayRank
+                    AS BIGINT
+                ) AS cellSortOrder
             FROM cellValues
         ),
 
         -- =====================================================================
-        -- Displayed row totals.
+        -- ROW TOTALS from displayed matrix buckets.
         -- =====================================================================
         rowTotalsAgg AS(
             SELECT
@@ -884,7 +952,6 @@ BEGIN
         rowTotals AS(
             SELECT
                 *,
-
                 CASE
                     WHEN metricKind='ratio'
                         THEN try_divide(currentNumerator,currentDenominator)
@@ -902,22 +969,38 @@ BEGIN
         rowTotalsCalculated AS(
             SELECT
                 *,
-
                 rowTotalCurrentValue-rowTotalComparisonValue
                     AS rowTotalAbsoluteDiffValue,
 
                 CASE
-                    WHEN rowTotalCurrentValue IS NULL OR rowTotalComparisonValue IS NULL THEN NULL
+                    WHEN rowTotalCurrentValue IS NULL
+                      OR rowTotalComparisonValue IS NULL THEN NULL
+
                     WHEN changeUnit='pp'
-                        THEN 100D*(rowTotalCurrentValue-rowTotalComparisonValue)
+                        THEN 100D*(
+                            rowTotalCurrentValue-rowTotalComparisonValue
+                        )
+
                     WHEN changeUnit='pct'
-                        THEN 100D*(try_divide(rowTotalCurrentValue,rowTotalComparisonValue)-1D)
-                END AS rowTotalChangeRaw
+                        THEN 100D*(
+                            try_divide(
+                                rowTotalCurrentValue,
+                                rowTotalComparisonValue
+                            )-1D
+                        )
+                END AS rowTotalChangeRaw,
+
+                CASE
+                    WHEN rowTotalCurrentValue>rowTotalComparisonValue THEN 'up'
+                    WHEN rowTotalCurrentValue<rowTotalComparisonValue THEN 'down'
+                    WHEN rowTotalCurrentValue=rowTotalComparisonValue THEN 'flat'
+                    ELSE 'unavailable'
+                END AS rowTotalDirection
             FROM rowTotals
         ),
 
         -- =====================================================================
-        -- Displayed column totals.
+        -- COLUMN TOTALS from displayed matrix buckets.
         -- =====================================================================
         columnTotalsAgg AS(
             SELECT
@@ -955,7 +1038,6 @@ BEGIN
         columnTotals AS(
             SELECT
                 *,
-
                 CASE
                     WHEN metricKind='ratio'
                         THEN try_divide(currentNumerator,currentDenominator)
@@ -973,22 +1055,39 @@ BEGIN
         columnTotalsCalculated AS(
             SELECT
                 *,
-
                 columnTotalCurrentValue-columnTotalComparisonValue
                     AS columnTotalAbsoluteDiffValue,
 
                 CASE
-                    WHEN columnTotalCurrentValue IS NULL OR columnTotalComparisonValue IS NULL THEN NULL
+                    WHEN columnTotalCurrentValue IS NULL
+                      OR columnTotalComparisonValue IS NULL THEN NULL
+
                     WHEN changeUnit='pp'
-                        THEN 100D*(columnTotalCurrentValue-columnTotalComparisonValue)
+                        THEN 100D*(
+                            columnTotalCurrentValue-columnTotalComparisonValue
+                        )
+
                     WHEN changeUnit='pct'
-                        THEN 100D*(try_divide(columnTotalCurrentValue,columnTotalComparisonValue)-1D)
-                END AS columnTotalChangeRaw
+                        THEN 100D*(
+                            try_divide(
+                                columnTotalCurrentValue,
+                                columnTotalComparisonValue
+                            )-1D
+                        )
+                END AS columnTotalChangeRaw,
+
+                CASE
+                    WHEN columnTotalCurrentValue>columnTotalComparisonValue THEN 'up'
+                    WHEN columnTotalCurrentValue<columnTotalComparisonValue THEN 'down'
+                    WHEN columnTotalCurrentValue=columnTotalComparisonValue THEN 'flat'
+                    ELSE 'unavailable'
+                END AS columnTotalDirection
             FROM columnTotals
         ),
 
         -- =====================================================================
-        -- Topline from Overview Gold, not by summing displayed cells.
+        -- TOPLINE from Overview Gold.
+        -- Never calculate overall topline by adding displayed Crosstab cells.
         -- =====================================================================
         toplineBase AS(
             SELECT
@@ -1024,49 +1123,70 @@ BEGIN
             SELECT
                 t.*,
                 'priorWeek' AS comparisonType,
-                t.priorWeekNumerator AS comparisonNumerator,
-                t.priorWeekDenominator AS comparisonDenominator
+                priorWeekNumerator AS comparisonNumerator,
+                priorWeekDenominator AS comparisonDenominator
             FROM toplineBase t
 
             UNION ALL
 
             SELECT
                 t.*,
-                'fourWeek',
+                'fourWeek' AS comparisonType,
+
                 CASE
-                    WHEN t.metricKind='count' AND t.fourWeekTrendWeekCount>0
-                        THEN try_divide(t.fourWeekTrendNumerator,cast(t.fourWeekTrendWeekCount AS DOUBLE))
-                    ELSE t.fourWeekTrendNumerator
-                END,
+                    WHEN metricKind='count' AND fourWeekTrendWeekCount>0
+                        THEN try_divide(
+                            fourWeekTrendNumerator,
+                            cast(fourWeekTrendWeekCount AS DOUBLE)
+                        )
+                    ELSE fourWeekTrendNumerator
+                END AS comparisonNumerator,
+
                 CASE
-                    WHEN t.metricKind='count' THEN NULL
-                    ELSE t.fourWeekTrendDenominator
-                END
+                    WHEN metricKind='count' THEN NULL
+                    ELSE fourWeekTrendDenominator
+                END AS comparisonDenominator
             FROM toplineBase t
 
             UNION ALL
 
             SELECT
                 t.*,
-                'lastYear',
-                t.sameWeekLyNumerator,
-                t.sameWeekLyDenominator
+                'lastYear' AS comparisonType,
+                sameWeekLyNumerator AS comparisonNumerator,
+                sameWeekLyDenominator AS comparisonDenominator
             FROM toplineBase t
         ),
 
         toplineValues AS(
             SELECT
                 *,
-
                 CASE
+                    WHEN NOT thisWeekDataAvailable THEN NULL
                     WHEN metricKind='ratio'
-                        THEN try_divide(thisWeekNumerator,thisWeekDenominator)
+                        THEN try_divide(
+                            thisWeekNumerator,
+                            thisWeekDenominator
+                        )
                     ELSE thisWeekNumerator
                 END AS toplineCurrentValue,
 
                 CASE
+                    WHEN comparisonType='priorWeek'
+                     AND NOT priorWeekDataAvailable THEN NULL
+
+                    WHEN comparisonType='fourWeek'
+                     AND fourWeekTrendWeekCount<=0 THEN NULL
+
+                    WHEN comparisonType='lastYear'
+                     AND NOT sameWeekLyDataAvailable THEN NULL
+
                     WHEN metricKind='ratio'
-                        THEN try_divide(comparisonNumerator,comparisonDenominator)
+                        THEN try_divide(
+                            comparisonNumerator,
+                            comparisonDenominator
+                        )
+
                     ELSE comparisonNumerator
                 END AS toplineComparisonValue
             FROM toplineLong
@@ -1075,17 +1195,33 @@ BEGIN
         toplineCalculated AS(
             SELECT
                 *,
-
                 toplineCurrentValue-toplineComparisonValue
                     AS toplineAbsoluteDiffValue,
 
                 CASE
-                    WHEN toplineCurrentValue IS NULL OR toplineComparisonValue IS NULL THEN NULL
+                    WHEN toplineCurrentValue IS NULL
+                      OR toplineComparisonValue IS NULL THEN NULL
+
                     WHEN changeUnit='pp'
-                        THEN 100D*(toplineCurrentValue-toplineComparisonValue)
+                        THEN 100D*(
+                            toplineCurrentValue-toplineComparisonValue
+                        )
+
                     WHEN changeUnit='pct'
-                        THEN 100D*(try_divide(toplineCurrentValue,toplineComparisonValue)-1D)
-                END AS toplineChangeRaw
+                        THEN 100D*(
+                            try_divide(
+                                toplineCurrentValue,
+                                toplineComparisonValue
+                            )-1D
+                        )
+                END AS toplineChangeRaw,
+
+                CASE
+                    WHEN toplineCurrentValue>toplineComparisonValue THEN 'up'
+                    WHEN toplineCurrentValue<toplineComparisonValue THEN 'down'
+                    WHEN toplineCurrentValue=toplineComparisonValue THEN 'flat'
+                    ELSE 'unavailable'
+                END AS toplineDirection
             FROM toplineValues
         ),
 
@@ -1096,14 +1232,17 @@ BEGIN
                 r.rowTotalCurrentValue,
                 r.rowTotalAbsoluteDiffValue,
                 r.rowTotalChangeRaw,
+                r.rowTotalDirection,
 
                 k.columnTotalCurrentValue,
                 k.columnTotalAbsoluteDiffValue,
                 k.columnTotalChangeRaw,
+                k.columnTotalDirection,
 
                 t.toplineCurrentValue,
                 t.toplineAbsoluteDiffValue,
-                t.toplineChangeRaw
+                t.toplineChangeRaw,
+                t.toplineDirection
             FROM cellCalculated c
 
             JOIN rowTotalsCalculated r
@@ -1170,9 +1309,9 @@ BEGIN
             SELECT
                 *,
 
-                -- -------------------------------------------------------------
-                -- Cell current
-                -- -------------------------------------------------------------
+                -- =============================================================
+                -- CELL
+                -- =============================================================
                 CASE
                     WHEN cellCurrentValue IS NULL THEN NULL
                     WHEN displayFormat='percent'
@@ -1186,7 +1325,6 @@ BEGIN
                     ELSE format_number(cellCurrentValue,0)
                 END AS cellCurrentValueDisplay,
 
-                -- Comparator cell level
                 CASE
                     WHEN cellComparisonValue IS NULL THEN NULL
                     WHEN displayFormat='percent'
@@ -1200,7 +1338,6 @@ BEGIN
                     ELSE format_number(cellComparisonValue,0)
                 END AS cellComparisonValueDisplay,
 
-                -- Screenshot first number in each matrix cell.
                 CASE
                     WHEN cellAbsoluteDiffValue IS NULL THEN NULL
 
@@ -1214,21 +1351,33 @@ BEGIN
                     WHEN abs(cellAbsoluteDiffValue)>=1000000000D
                         THEN concat(
                             CASE WHEN cellAbsoluteDiffValue>0D THEN '+' ELSE '' END,
-                            regexp_replace(format_number(cellAbsoluteDiffValue/1000000000D,1),'\\.0$',''),
+                            regexp_replace(
+                                format_number(cellAbsoluteDiffValue/1000000000D,1),
+                                '\\.0$',
+                                ''
+                            ),
                             'B'
                         )
 
                     WHEN abs(cellAbsoluteDiffValue)>=1000000D
                         THEN concat(
                             CASE WHEN cellAbsoluteDiffValue>0D THEN '+' ELSE '' END,
-                            regexp_replace(format_number(cellAbsoluteDiffValue/1000000D,1),'\\.0$',''),
+                            regexp_replace(
+                                format_number(cellAbsoluteDiffValue/1000000D,1),
+                                '\\.0$',
+                                ''
+                            ),
                             'M'
                         )
 
                     WHEN abs(cellAbsoluteDiffValue)>=1000D
                         THEN concat(
                             CASE WHEN cellAbsoluteDiffValue>0D THEN '+' ELSE '' END,
-                            regexp_replace(format_number(cellAbsoluteDiffValue/1000D,1),'\\.0$',''),
+                            regexp_replace(
+                                format_number(cellAbsoluteDiffValue/1000D,1),
+                                '\\.0$',
+                                ''
+                            ),
                             'K'
                         )
 
@@ -1238,7 +1387,6 @@ BEGIN
                     )
                 END AS cellAbsoluteDiffDisplay,
 
-                -- Screenshot second number in each matrix cell.
                 CASE
                     WHEN cellChangeValue IS NULL THEN NULL
                     WHEN changeUnit='pp'
@@ -1254,9 +1402,9 @@ BEGIN
                     )
                 END AS cellChangeDisplay,
 
-                -- -------------------------------------------------------------
-                -- Row-total right side
-                -- -------------------------------------------------------------
+                -- =============================================================
+                -- ROW TOTAL
+                -- =============================================================
                 CASE
                     WHEN rowTotalCurrentValue IS NULL THEN NULL
                     WHEN displayFormat='percent'
@@ -1272,24 +1420,35 @@ BEGIN
 
                 CASE
                     WHEN rowTotalAbsoluteDiffValue IS NULL THEN NULL
+
                     WHEN metricKind='ratio'
                         THEN concat(
                             CASE WHEN rowTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             format_number(100D*rowTotalAbsoluteDiffValue,1),
                             'pp'
                         )
+
+                    WHEN abs(rowTotalAbsoluteDiffValue)>=1000000000D
+                        THEN concat(
+                            CASE WHEN rowTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
+                            regexp_replace(format_number(rowTotalAbsoluteDiffValue/1000000000D,1),'\\.0$',''),
+                            'B'
+                        )
+
                     WHEN abs(rowTotalAbsoluteDiffValue)>=1000000D
                         THEN concat(
                             CASE WHEN rowTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(rowTotalAbsoluteDiffValue/1000000D,1),'\\.0$',''),
                             'M'
                         )
+
                     WHEN abs(rowTotalAbsoluteDiffValue)>=1000D
                         THEN concat(
                             CASE WHEN rowTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(rowTotalAbsoluteDiffValue/1000D,1),'\\.0$',''),
                             'K'
                         )
+
                     ELSE concat(
                         CASE WHEN rowTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                         format_number(rowTotalAbsoluteDiffValue,0)
@@ -1311,9 +1470,9 @@ BEGIN
                     )
                 END AS rowTotalChangeDisplay,
 
-                -- -------------------------------------------------------------
-                -- Column-total bottom row
-                -- -------------------------------------------------------------
+                -- =============================================================
+                -- COLUMN TOTAL
+                -- =============================================================
                 CASE
                     WHEN columnTotalCurrentValue IS NULL THEN NULL
                     WHEN displayFormat='percent'
@@ -1329,24 +1488,35 @@ BEGIN
 
                 CASE
                     WHEN columnTotalAbsoluteDiffValue IS NULL THEN NULL
+
                     WHEN metricKind='ratio'
                         THEN concat(
                             CASE WHEN columnTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             format_number(100D*columnTotalAbsoluteDiffValue,1),
                             'pp'
                         )
+
+                    WHEN abs(columnTotalAbsoluteDiffValue)>=1000000000D
+                        THEN concat(
+                            CASE WHEN columnTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
+                            regexp_replace(format_number(columnTotalAbsoluteDiffValue/1000000000D,1),'\\.0$',''),
+                            'B'
+                        )
+
                     WHEN abs(columnTotalAbsoluteDiffValue)>=1000000D
                         THEN concat(
                             CASE WHEN columnTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(columnTotalAbsoluteDiffValue/1000000D,1),'\\.0$',''),
                             'M'
                         )
+
                     WHEN abs(columnTotalAbsoluteDiffValue)>=1000D
                         THEN concat(
                             CASE WHEN columnTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(columnTotalAbsoluteDiffValue/1000D,1),'\\.0$',''),
                             'K'
                         )
+
                     ELSE concat(
                         CASE WHEN columnTotalAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                         format_number(columnTotalAbsoluteDiffValue,0)
@@ -1368,9 +1538,9 @@ BEGIN
                     )
                 END AS columnTotalChangeDisplay,
 
-                -- -------------------------------------------------------------
-                -- Bottom-right topline
-                -- -------------------------------------------------------------
+                -- =============================================================
+                -- TOPLINE
+                -- =============================================================
                 CASE
                     WHEN toplineCurrentValue IS NULL THEN NULL
                     WHEN displayFormat='percent'
@@ -1386,30 +1556,35 @@ BEGIN
 
                 CASE
                     WHEN toplineAbsoluteDiffValue IS NULL THEN NULL
+
                     WHEN metricKind='ratio'
                         THEN concat(
                             CASE WHEN toplineAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             format_number(100D*toplineAbsoluteDiffValue,1),
                             'pp'
                         )
+
                     WHEN abs(toplineAbsoluteDiffValue)>=1000000000D
                         THEN concat(
                             CASE WHEN toplineAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(toplineAbsoluteDiffValue/1000000000D,1),'\\.0$',''),
                             'B'
                         )
+
                     WHEN abs(toplineAbsoluteDiffValue)>=1000000D
                         THEN concat(
                             CASE WHEN toplineAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(toplineAbsoluteDiffValue/1000000D,1),'\\.0$',''),
                             'M'
                         )
+
                     WHEN abs(toplineAbsoluteDiffValue)>=1000D
                         THEN concat(
                             CASE WHEN toplineAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                             regexp_replace(format_number(toplineAbsoluteDiffValue/1000D,1),'\\.0$',''),
                             'K'
                         )
+
                     ELSE concat(
                         CASE WHEN toplineAbsoluteDiffValue>0D THEN '+' ELSE '' END,
                         format_number(toplineAbsoluteDiffValue,0)
@@ -1509,6 +1684,7 @@ BEGIN
             rowTotalAbsoluteDiffDisplay,
             rowTotalChangeValue,
             rowTotalChangeDisplay,
+            rowTotalDirection,
 
             columnTotalCurrentValue,
             columnTotalCurrentDisplay,
@@ -1516,6 +1692,7 @@ BEGIN
             columnTotalAbsoluteDiffDisplay,
             columnTotalChangeValue,
             columnTotalChangeDisplay,
+            columnTotalDirection,
 
             toplineCurrentValue,
             toplineCurrentDisplay,
@@ -1523,14 +1700,20 @@ BEGIN
             toplineAbsoluteDiffDisplay,
             toplineChangeValue,
             toplineChangeDisplay,
+            toplineDirection,
 
             v_processedAt AS appProcessedAt
         FROM formatted;
 
+        -- =====================================================================
+        -- 7. SUCCESS
+        -- =====================================================================
         SELECT
             'SUCCESS' AS status,
             v_weekFrom AS rebuiltWeekStartFrom,
             v_weekTo AS rebuiltWeekStartTo,
+            v_weekEndTo AS latestWeekEndDate,
+            CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
             'priorWeek | fourWeek | lastYear' AS supportedComparisons,
             'top5 | top8 | top10 | all' AS supportedDisplaySizes,
             TRUE AS supportsSwappedAxes,
@@ -1540,10 +1723,12 @@ BEGIN
 END;
 
 -- ============================================================================
--- DEVELOPMENT
+-- DEPLOYMENT
 -- ============================================================================
 
--- ONE TIME ONLY:
+-- Run ONCE because CREATE TABLE IF NOT EXISTS will not replace the old schema /
+-- old liquid-clustering configuration.
+--
 -- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long;
 
 -- Validate:
@@ -1561,21 +1746,21 @@ END;
 -- );
 
 -- ============================================================================
--- SCREENSHOT API QUERY
+-- SCREENSHOT QUERY
 --
 -- Q3 2026
--- W7 / 9-15 Aug
+-- W7
 -- Total UPV
--- Prior wk | 4-wk | Last yr
 -- Rows    = Channel
 -- Columns = Entry page
+-- Compare = 4-wk
 -- Size    = Top 8
 -- ============================================================================
 
 -- SELECT *
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
 -- WHERE fiscalYear=2026
---   AND fiscalQuarterLabel='Q3'
+--   AND fiscalQuarterLabel='2026 Q3'
 --   AND targetWeekStartDate=DATE '2026-08-09'
 --   AND filterLob='All'
 --   AND filterPlatform='All'
@@ -1587,9 +1772,22 @@ END;
 -- ORDER BY rowDisplayRank,columnDisplayRank;
 
 -- ============================================================================
--- ROWS / COLUMNS OPTIONS
---
--- API only reads what App Gold actually supports.
+-- METRIC DROPDOWN
+-- ============================================================================
+
+-- SELECT DISTINCT
+--     metricName,
+--     metricLabel,
+--     metricDescription,
+--     metricKind,
+--     displayFormat,
+--     changeUnit,
+--     metricSortOrder
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
+-- ORDER BY metricSortOrder;
+
+-- ============================================================================
+-- ROW DROPDOWN
 -- ============================================================================
 
 -- SELECT DISTINCT
@@ -1601,8 +1799,10 @@ END;
 --   AND metricName='nbv'
 -- ORDER BY rowBreakoutSortOrder;
 
--- Once Rows is selected:
---
+-- ============================================================================
+-- COLUMN DROPDOWN AFTER ROW SELECTION
+-- ============================================================================
+
 -- SELECT DISTINCT
 --     columnBreakoutType,
 --     columnBreakoutLabel,
@@ -1614,21 +1814,7 @@ END;
 -- ORDER BY columnBreakoutSortOrder;
 
 -- ============================================================================
--- PRE-BUILT CHIPS
---
--- Use original orientation only so each pair appears once.
--- ============================================================================
-
--- SELECT DISTINCT
---     sourcePairKey,
---     sourcePairLabel,
---     sourcePairSortOrder
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE NOT isSwappedOrientation
--- ORDER BY sourcePairSortOrder;
-
--- ============================================================================
--- SIZE OPTIONS
+-- SIZE DROPDOWN
 -- ============================================================================
 
 -- SELECT DISTINCT
@@ -1640,96 +1826,21 @@ END;
 -- ORDER BY displaySizeSortOrder;
 
 -- ============================================================================
--- MATRIX CELL EXAMPLE
---
--- Paid Search × /
---   -3.6K
---   -6.4%
--- ============================================================================
-
--- SELECT
---     rowBreakoutValue,
---     columnBreakoutValue,
---     cellAbsoluteDiffDisplay,
---     cellChangeDisplay,
---     cellDirection
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=DATE '2026-08-09'
---   AND metricName='nbv'
---   AND rowBreakoutType='channel'
---   AND columnBreakoutType='entryPage'
---   AND comparisonType='fourWeek'
---   AND displaySize='top8'
--- ORDER BY rowDisplayRank,columnDisplayRank;
-
--- ============================================================================
--- ROW TOTALS
---
--- API can DISTINCT these fields per row; no calculations.
+-- PRE-BUILT CHIPS
+-- Original orientation only so each configured pair appears once.
 -- ============================================================================
 
 -- SELECT DISTINCT
---     rowBreakoutValue,
---     rowDisplayRank,
---     rowTotalCurrentValue,
---     rowTotalCurrentDisplay,
---     rowTotalAbsoluteDiffValue,
---     rowTotalAbsoluteDiffDisplay,
---     rowTotalChangeValue,
---     rowTotalChangeDisplay
+--     sourcePairKey,
+--     sourcePairLabel,
+--     sourcePairSortOrder
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=DATE '2026-08-09'
---   AND metricName='nbv'
---   AND rowBreakoutType='channel'
---   AND columnBreakoutType='entryPage'
---   AND comparisonType='fourWeek'
---   AND displaySize='top8'
--- ORDER BY rowDisplayRank;
-
--- ============================================================================
--- COLUMN TOTALS
--- ============================================================================
-
--- SELECT DISTINCT
---     columnBreakoutValue,
---     columnDisplayRank,
---     columnTotalCurrentValue,
---     columnTotalCurrentDisplay,
---     columnTotalAbsoluteDiffValue,
---     columnTotalAbsoluteDiffDisplay,
---     columnTotalChangeValue,
---     columnTotalChangeDisplay
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=DATE '2026-08-09'
---   AND metricName='nbv'
---   AND rowBreakoutType='channel'
---   AND columnBreakoutType='entryPage'
---   AND comparisonType='fourWeek'
---   AND displaySize='top8'
--- ORDER BY columnDisplayRank;
-
--- ============================================================================
--- BOTTOM-RIGHT TOPLINE
--- ============================================================================
-
--- SELECT DISTINCT
---     toplineCurrentValue,
---     toplineCurrentDisplay,
---     toplineAbsoluteDiffValue,
---     toplineAbsoluteDiffDisplay,
---     toplineChangeValue,
---     toplineChangeDisplay
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=DATE '2026-08-09'
---   AND metricName='nbv'
---   AND rowBreakoutType='channel'
---   AND columnBreakoutType='entryPage'
---   AND comparisonType='fourWeek'
---   AND displaySize='top8';
+-- WHERE NOT isSwappedOrientation
+-- ORDER BY sourcePairSortOrder;
 
 -- ============================================================================
 -- DUPLICATE CHECK
--- Expected zero.
+-- Expected zero rows.
 -- ============================================================================
 
 -- SELECT
@@ -1756,38 +1867,8 @@ END;
 --     columnBreakoutValue
 -- HAVING count(*)>1;
 
+-- ============================================================================
+-- LIQUID CLUSTERING CHECK
+-- ============================================================================
 
-[DELTA_CLUSTERING_COLUMN_MISSING_STATS] Liquid clustering requires clustering columns to have stats. Couldn't find clustering column(s) 'displaySize' in stats schema:
-root
- |-- targetWeekStartDate: date (nullable = true)
- |-- targetWeekEndDate: date (nullable = true)
- |-- fiscalYear: integer (nullable = true)
- |-- fiscalQuarterLabel: string (nullable = true)
- |-- fiscalWeekCode: string (nullable = true)
- |-- weekLabel: string (nullable = true)
- |-- weekEndingLabel: string (nullable = true)
- |-- filterLob: string (nullable = true)
- |-- filterPlatform: string (nullable = true)
- |-- sourcePairKey: string (nullable = true)
- |-- sourcePairLabel: string (nullable = true)
- |-- sourcePairSortOrder: integer (nullable = true)
- |-- pairKey: string (nullable = true)
- |-- pairLabel: string (nullable = true)
- |-- isSwappedOrientation: boolean (nullable = true)
- |-- rowBreakoutType: string (nullable = true)
- |-- rowBreakoutLabel: string (nullable = true)
- |-- rowBreakoutSortOrder: integer (nullable = true)
- |-- columnBreakoutType: string (nullable = true)
- |-- columnBreakoutLabel: string (nullable = true)
- |-- columnBreakoutSortOrder: integer (nullable = true)
- |-- metricName: string (nullable = true)
- |-- metricLabel: string (nullable = true)
- |-- metricDescription: string (nullable = true)
- |-- metricKind: string (nullable = true)
- |-- displayFormat: string (nullable = true)
- |-- changeUnit: string (nullable = true)
- |-- metricSortOrder: integer (nullable = true)
- |-- comparisonType: string (nullable = true)
- |-- comparisonLabel: string (nullable = true)
- |-- comparisonSortOrder: integer (nullable = true)
- |-- comparisonDataAvailable: boolean (nullable = true)
+-- DESCRIBE DETAIL prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long;
