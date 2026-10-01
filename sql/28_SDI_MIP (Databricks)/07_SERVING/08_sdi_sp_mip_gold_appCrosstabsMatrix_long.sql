@@ -24,7 +24,7 @@
 
 --   - Supported source pairs come from sdi_vw_mip_control_crosstabCatalog_static
 
---   - Both orientations of each supported pair are persisted
+--   - Only the canonical catalog orientation is persisted; reverse UI orientation is handled by lightweight API aliasing
 
 --   - Metrics require isActive = TRUE AND showOnBreakouts = TRUE
 
@@ -50,7 +50,7 @@ SQL SECURITY INVOKER
 
 MODIFIES SQL DATA
 
-COMMENT 'MIP Gold App: Crosstab matrix with supported axis orientations, Top5/Top8/Top10/All+Other, comparator-aware cells and render-ready totals.'
+COMMENT 'MIP Gold App: canonical Crosstab matrix with Top5/Top8/Top10/All+Other, comparator-aware cells and render-ready totals.'
 
 AS
 
@@ -219,6 +219,8 @@ BEGIN
                'top5 | top8 | top10 | all' AS supportedDisplaySizes,
 
                TRUE AS supportsSwappedAxes,
+
+               'canonicalOnly' AS orientationStorage,
 
                'prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long' AS targetObject,
 
@@ -428,7 +430,7 @@ BEGIN
 
         ),
 
-        oriented AS(
+        canonical AS(
 
             SELECT s.*,sourcePairKey AS pairKey,sourcePairLabel AS pairLabel,FALSE AS isSwappedOrientation,
 
@@ -437,18 +439,6 @@ BEGIN
                    sourceColumnBreakoutType AS columnBreakoutType,sourceColumnBreakoutLabel AS columnBreakoutLabel,sourceColumnBreakoutSortOrder AS columnBreakoutSortOrder,sourceColumnBreakoutValue AS columnBreakoutValue
 
             FROM sourceBase s
-
-            UNION ALL
-
-            SELECT s.*,concat(sourceColumnBreakoutType,'__',sourceRowBreakoutType),concat(sourceColumnBreakoutLabel,' × ',sourceRowBreakoutLabel),TRUE,
-
-                   sourceColumnBreakoutType,sourceColumnBreakoutLabel,sourceColumnBreakoutSortOrder,sourceColumnBreakoutValue,
-
-                   sourceRowBreakoutType,sourceRowBreakoutLabel,sourceRowBreakoutSortOrder,sourceRowBreakoutValue
-
-            FROM sourceBase s
-
-            WHERE sourceRowBreakoutType<>sourceColumnBreakoutType
 
         ),
 
@@ -460,7 +450,7 @@ BEGIN
 
                    priorWeekNumerator AS comparisonNumerator,priorWeekDenominator AS comparisonDenominator,CAST(NULL AS INT) AS comparisonWeekCount
 
-            FROM oriented o
+            FROM canonical o
 
             UNION ALL
 
@@ -470,7 +460,7 @@ BEGIN
 
                    fourWeekTrendNumerator,fourWeekTrendDenominator,fourWeekTrendWeekCount
 
-            FROM oriented o
+            FROM canonical o
 
             UNION ALL
 
@@ -480,7 +470,7 @@ BEGIN
 
                    sameWeekLyNumerator,sameWeekLyDenominator,CAST(NULL AS INT)
 
-            FROM oriented o
+            FROM canonical o
 
         ),
 
@@ -970,6 +960,8 @@ BEGIN
 
                TRUE AS supportsSwappedAxes,
 
+               'canonicalOnly' AS orientationStorage,
+
                'prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long' AS targetObject,
 
                v_processedAt AS appProcessedAt;
@@ -981,26 +973,44 @@ END;
 -- ============================================================================
 -- DEPLOYMENT / API NOTES
 -- ============================================================================
--- Because the physical App contract now includes isPrebuiltPair, if the current
--- table was created from the older schema, run this ONCE separately before the
--- first non-validation execution:
+-- STORAGE:
+--   08 stores each active catalog pair once only. isSwappedOrientation is always FALSE.
+--   Example: channel × pageCategory is stored; pageCategory × channel is not duplicated.
+--   The same cell/current/comparator values are reused for the reverse UI orientation.
 --
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long;
+-- ONE-TIME CLEANUP AFTER DEPLOYING THIS VERSION:
+-- DELETE FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
+-- WHERE isSwappedOrientation;
+--
+-- Then rebuild the desired week range with this procedure.
 --
 -- PRE-BUILT shortcut chips:
--- SELECT DISTINCT sourcePairKey,sourcePairLabel,sourcePairSortOrder
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE isPrebuiltPair AND NOT isSwappedOrientation
--- ORDER BY sourcePairSortOrder;
+-- SELECT pairKey,pairLabel,sortOrder
+-- FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
+-- WHERE isActive AND isPrebuiltPair
+-- ORDER BY sortOrder;
 --
--- Rows selector uses all supported active pairs:
--- SELECT DISTINCT rowBreakoutType,rowBreakoutLabel,rowBreakoutSortOrder
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=? AND metricName=?
--- ORDER BY rowBreakoutSortOrder;
+-- RESOLVE USER-SELECTED ROW/COLUMN PAIR:
+-- SELECT
+--     pairKey,rowBreakoutType,columnBreakoutType,
+--     CASE
+--         WHEN rowBreakoutType=? AND columnBreakoutType=? THEN FALSE
+--         ELSE TRUE
+--     END AS swapAxes
+-- FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
+-- WHERE isActive
+--   AND(
+--       (rowBreakoutType=? AND columnBreakoutType=?)
+--       OR
+--       (rowBreakoutType=? AND columnBreakoutType=?)
+--   )
+-- LIMIT 1;
 --
--- Columns selector after Rows selection:
--- SELECT DISTINCT columnBreakoutType,columnBreakoutLabel,columnBreakoutSortOrder
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
--- WHERE targetWeekStartDate=? AND metricName=? AND rowBreakoutType=?
--- ORDER BY columnBreakoutSortOrder;
+-- If swapAxes=FALSE, return stored row/column fields normally.
+-- If swapAxes=TRUE, only alias/swap presentation fields:
+--   rowBreakout* <-> columnBreakout*
+--   rowDisplayRank <-> columnDisplayRank
+--   isRowOtherBucket <-> isColumnOtherBucket
+--   rowTotal* <-> columnTotal*
+-- Cell values/comparison values/topline values do not change.
+-- For swapped display ordering, use stored columnDisplayRank first, then rowDisplayRank.
