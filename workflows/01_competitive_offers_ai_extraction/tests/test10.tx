@@ -9173,3 +9173,25 @@ GROUP BY
     columnBreakoutValue
 HAVING COUNT(*)>1
 ORDER BY rowCount DESC;
+
+SELECT
+    targetWeekStartDate,
+    comparisonType,
+    displaySize,
+    COUNT(*) AS rows,
+    COUNT(DISTINCT metricName) AS metrics,
+    COUNT(DISTINCT pairKey) AS orientedPairs
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
+GROUP BY targetWeekStartDate,comparisonType,displaySize
+ORDER BY targetWeekStartDate,comparisonType,displaySize;
+
+SELECT
+    pairKey,
+    rowBreakoutType,
+    columnBreakoutType,
+    isSwappedOrientation,
+    COUNT(*) AS rows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
+GROUP BY pairKey,rowBreakoutType,columnBreakoutType,isSwappedOrientation
+ORDER BY rows DESC;
+
