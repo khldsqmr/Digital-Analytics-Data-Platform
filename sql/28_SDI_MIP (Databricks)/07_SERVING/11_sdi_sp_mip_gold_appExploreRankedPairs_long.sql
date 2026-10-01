@@ -2,1772 +2,668 @@
 -- FILE  : 11_sdi_sp_mip_gold_appExploreRankedPairs_long.sql
 -- LAYER : GOLD / APP
 -- TAB   : Explore
--- PURPOSE:
---   Application-ready default Explore ranked-pairs fast path, computed directly from analytical Gold.
+-- SECTION: Every pair, ranked
 --
--- DESIGN:
---   - One top-level CREATE OR REPLACE PROCEDURE per file.
---   - No app-table-to-app-table runtime dependency.
---   - Reads only reusable Gold analytical tables + control views.
---   - Incremental/idempotent at the whole reporting-week grain.
---   - p_weeksToRebuild controls the target-week slice rebuilt.
---   - p_validateOnly = TRUE performs preflight only.
---   - Default as-of date is the previous Pacific calendar day.
---   - Browser/API reads never recompute this transformation.
+-- PURPOSE:
+--   Render-ready Explore ranked intersections for the default/unfiltered fast path.
+--
+-- UI:
+--   Quarter
+--   Week
+--   Metric
+--   Comparator = priorWeek | fourWeek | lastYear
+--
+-- SCREENSHOT CONTRACT:
+--   - One selected comparator controls GLOBAL RANK and IMPACT ON TOPLINE.
+--   - Visible columns simultaneously show:
+--       This week
+--       Vs prior week
+--       Vs 4-wk trend
+--       Vs same wk LY
+--       Vs peer set
+--       Impact on topline
+--   - Top 18 rows are rendered by the UI.
+--   - Clicking a row can load its pairKey/rowBreakoutType/columnBreakoutType Crosstab.
+--   - The currently loaded matrix pair is excluded at API query time, so the list represents remaining breakouts.
+--
+-- APP RULES:
+--   - Metrics: isActive AND showOnBreakouts.
+--   - Pairs: all active Crosstab-catalog rows whose two dimensions are active Explore dimensions.
+--   - Each pair is bounded to Top100 row values + Other and Top100 column values + Other.
+--   - No cross-pair numeric Other is created.
+--   - Final App table exposes no numerator/denominator ingredients.
+--   - Peer-set fields remain NULL until analytical Gold supplies peer-set ingredients.
+--   - Persisted rows are the default/unfiltered Explore fast path only.
+--   - Arbitrary Add-filter / Quick-filter states must be recomputed from appExploreBase_wide AFTER filters are applied.
 -- ============================================================================
 
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
-    IN p_asOfDate       DATE    DEFAULT NULL,
-    IN p_weeksToRebuild INT     DEFAULT 1,
-    IN p_validateOnly   BOOLEAN DEFAULT FALSE
+    IN p_asOfDate DATE DEFAULT NULL,
+    IN p_weeksToRebuild INT DEFAULT 1,
+    IN p_validateOnly BOOLEAN DEFAULT FALSE
 )
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'MIP Gold app: Explore ranked-pairs default fast path. Dynamic filtered Explore must query appExploreBase_wide.'
+COMMENT 'MIP Gold App: Explore Every pair ranked default fast path. Selected comparator drives rank/impact; prior/4wk/LY/peer columns are simultaneously render-ready.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
         p_asOfDate,
-        date_add(
-            to_date(from_utc_timestamp(current_timestamp(), 'America/Los_Angeles')),
-            -1
-        )
+        date_add(to_date(from_utc_timestamp(current_timestamp(),'America/Los_Angeles')),-1)
     );
-
     DECLARE v_weekTo DATE;
     DECLARE v_weekFrom DATE;
     DECLARE v_weekEndTo DATE;
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
-    -- ------------------------------------------------------------------------
-    -- 1. Parameter validation
-    -- ------------------------------------------------------------------------
-    IF p_weeksToRebuild IS NULL OR p_weeksToRebuild < 1 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'p_weeksToRebuild must be >= 1.';
+    IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_weeksToRebuild must be >= 1.';
     END IF;
 
-    SET v_weekTo = date_add(v_asOfDate, 1 - dayofweek(v_asOfDate));
-    SET v_weekFrom = date_add(v_weekTo, -7 * (p_weeksToRebuild - 1));
-    SET v_weekEndTo = date_add(v_weekTo, 6);
+    SET v_weekTo=date_add(v_asOfDate,1-dayofweek(v_asOfDate));
+    SET v_weekFrom=date_add(v_weekTo,-7*(p_weeksToRebuild-1));
+    SET v_weekEndTo=date_add(v_weekTo,6);
 
-    -- ------------------------------------------------------------------------
-    -- 2. Source/control preflight
-    -- ------------------------------------------------------------------------
-    IF NOT EXISTS (
+    IF NOT EXISTS(
         SELECT 1
-        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
-        WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static pc ON pc.pairKey=g.pairKey AND pc.isActive
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+        WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
         LIMIT 1
     ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Crosstab Gold analytical ingredients has no rows for the requested app target-week range.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Crosstab Gold has no eligible Explore Ranked Pairs rows for the requested week range.';
     END IF;
 
-    IF NOT EXISTS (
+    IF NOT EXISTS(
         SELECT 1
-        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
-        WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+        WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
         LIMIT 1
     ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Overview Gold analytical ingredients has no rows for the requested app target-week range.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Overview Gold has no eligible Explore Ranked Pairs metrics for the requested week range.';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
-        WHERE isActive
-        LIMIT 1
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Metric catalog control view has no active metrics.';
+    IF NOT EXISTS(SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static WHERE isActive LIMIT 1) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Crosstab Catalog has no active pairs.';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static
-        WHERE isActive AND isPrebuiltBreakout
-        LIMIT 1
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Breakout catalog control view has no active prebuilt breakouts.';
+    IF NOT EXISTS(SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static WHERE isActive AND showOnBreakouts LIMIT 1) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Metric Catalog has no active Explore Ranked Pairs metrics.';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-        FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
-        WHERE isActive
-        LIMIT 1
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Crosstab catalog control view has no active pairs.';
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1
-        FROM prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static
+    IF NOT EXISTS(
+        SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static
         WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
         LIMIT 1
     ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Fiscal calendar control view has no rows for the requested app target-week range.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Fiscal Calendar has no rows for the requested week range.';
     END IF;
 
-    -- ------------------------------------------------------------------------
-    -- 3. Validation-only mode
-    -- ------------------------------------------------------------------------
-    IF p_validateOnly THEN
+    IF EXISTS(
+        SELECT 1
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static pc ON pc.pairKey=g.pairKey AND pc.isActive
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static rb ON rb.breakoutType=g.rowBreakoutType AND rb.isActive AND rb.isExploreDimension
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static cb ON cb.breakoutType=g.columnBreakoutType AND cb.isActive AND cb.isExploreDimension
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+        WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        GROUP BY g.targetWeekStartDate,g.filterLob,g.filterPlatform,g.pairKey,g.rowBreakoutValue,g.columnBreakoutValue,g.metricName
+        HAVING count(*)>1
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Duplicate eligible Crosstab Gold analytical keys detected for Explore Ranked Pairs.';
+    END IF;
 
+    IF EXISTS(
+        SELECT 1
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+        JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+        WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        GROUP BY g.targetWeekStartDate,g.filterLob,g.filterPlatform,g.metricName
+        HAVING count(*)>1
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Duplicate eligible Overview Gold analytical keys detected for Explore Ranked Pairs.';
+    END IF;
+
+    IF EXISTS(
+        SELECT 1
+        FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
+        WHERE isActive AND showOnBreakouts
+          AND(metricKind NOT IN('count','ratio') OR displayFormat NOT IN('number','percent') OR changeUnit NOT IN('pct','pp'))
+        LIMIT 1
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Explore Ranked Pairs metric metadata contains unsupported values.';
+    END IF;
+
+    IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
             v_weekFrom AS rebuildWeekStartFrom,
             v_weekTo AS rebuildWeekStartTo,
             v_weekEndTo AS latestWeekEndDate,
-            CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            'priorWeek | fourWeek | lastYear' AS supportedComparisons,
+            18 AS uiResultLimit,
+            'defaultAll' AS exploreFilterMode,
+            FALSE AS supportsArbitraryExploreFilters,
+            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS dynamicFilterSourceObject,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long' AS targetObject,
-            'No Gold app table was created or modified.' AS message;
-
+            'Validation passed. No Gold App table was created or modified.' AS message;
     ELSE
-
-        -- --------------------------------------------------------------------
-        -- 4. Bootstrap target schema only if the table does not exist.
-        --    The zero-row CTAS keeps the target schema exactly aligned to the
-        --    application contract without materialized-view/serverless compute.
-        -- --------------------------------------------------------------------
-        CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long
+        CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long(
+            targetWeekStartDate DATE,
+            targetWeekEndDate DATE,
+            fiscalYear INT,
+            fiscalQuarterLabel STRING,
+            fiscalWeekCode STRING,
+            weekLabel STRING,
+            weekEndingLabel STRING,
+            filterLob STRING,
+            filterPlatform STRING,
+            pairKey STRING,
+            pairLabel STRING,
+            pairSortOrder INT,
+            isPrebuiltPair BOOLEAN,
+            rowBreakoutType STRING,
+            rowBreakoutLabel STRING,
+            rowBreakoutValue STRING,
+            columnBreakoutType STRING,
+            columnBreakoutLabel STRING,
+            columnBreakoutValue STRING,
+            intersectionLabel STRING,
+            metricName STRING,
+            metricLabel STRING,
+            metricDescription STRING,
+            metricKind STRING,
+            displayFormat STRING,
+            changeUnit STRING,
+            metricSortOrder INT,
+            comparisonType STRING,
+            comparisonLabel STRING,
+            comparisonSortOrder INT,
+            comparisonDataAvailable BOOLEAN,
+            comparisonWindowComplete BOOLEAN,
+            globalIntersectionImpactRank BIGINT,
+            isTop5 BOOLEAN,
+            isTop10 BOOLEAN,
+            isTop18 BOOLEAN,
+            isTop100 BOOLEAN,
+            candidateIntersectionCount BIGINT,
+            resultLimit INT,
+            exploreFilterMode STRING,
+            supportsArbitraryExploreFilters BOOLEAN,
+            dynamicFilterSourceObject STRING,
+            currentValue DOUBLE,
+            currentValueDisplay STRING,
+            priorWeekDataAvailable BOOLEAN,
+            priorWeekAbsoluteDiffValue DOUBLE,
+            priorWeekAbsoluteDiffDisplay STRING,
+            priorWeekChangeValue DOUBLE,
+            priorWeekChangeDisplay STRING,
+            fourWeekDataAvailable BOOLEAN,
+            fourWeekWindowComplete BOOLEAN,
+            fourWeekAbsoluteDiffValue DOUBLE,
+            fourWeekAbsoluteDiffDisplay STRING,
+            fourWeekChangeValue DOUBLE,
+            fourWeekChangeDisplay STRING,
+            lastYearDataAvailable BOOLEAN,
+            lastYearAbsoluteDiffValue DOUBLE,
+            lastYearAbsoluteDiffDisplay STRING,
+            lastYearChangeValue DOUBLE,
+            lastYearChangeDisplay STRING,
+            peerSetDataAvailable BOOLEAN,
+            peerSetValue DOUBLE,
+            peerSetValueDisplay STRING,
+            peerSetAbsoluteDiffValue DOUBLE,
+            peerSetAbsoluteDiffDisplay STRING,
+            peerSetChangeValue DOUBLE,
+            peerSetChangeDisplay STRING,
+            impactOnToplineValue DOUBLE,
+            impactOnToplineDisplay STRING,
+            impactOnToplineUnit STRING,
+            appProcessedAt TIMESTAMP
+        )
         USING DELTA
--- comparisonType intentionally excluded from liquid clustering because it may fall outside the default Delta stats schema.
-        CLUSTER BY (weekStartDate, pairKey, metricName)
-        COMMENT 'MIP Gold app: Explore ranked-pairs default fast path. Dynamic filtered Explore must query appExploreBase_wide.'
-        AS
-        SELECT *
-        FROM (
-            SELECT
-                appResult.*,
-                v_processedAt AS appProcessedAt
-            FROM (
-                WITH rankedPairsDirect AS (
-                    WITH crosstabsMatrix AS (
-                        WITH
-                        scopeCrosstabs AS (
-                            SELECT *
-                            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
-                            WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
-                        ),
-                        scopeOverview AS (
-                            SELECT *
-                            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
-                            WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
-                        ),
-                        base AS (
-                            SELECT
-                                g.targetWeekStartDate,g.targetWeekEndDate,g.fiscalQuarterLabel,g.fiscalWeekCode,g.weekLabel,
-                                c.weekEndingLabel,c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
-                                g.filterLob,g.filterPlatform,
-                                g.pairKey,g.pairLabel,pc.sortOrder AS pairSortOrder,
-                                g.rowBreakoutType,g.rowBreakoutValue,rb.pairTopN AS configuredRowPairTopN,
-                                g.columnBreakoutType,g.columnBreakoutValue,cb.pairTopN AS configuredColumnPairTopN,
-                                g.metricName,g.metricLabel,mc.metricDescription,g.metricKind,g.displayFormat,g.changeUnit,
-                                mc.definitionStatus AS metricDefinitionStatus,mc.sortOrder AS metricSortOrder,
-                                g.thisWeekNumerator,g.thisWeekDenominator,g.priorWeekNumerator,g.priorWeekDenominator,
-                                g.fourWeekTrendNumerator,g.fourWeekTrendDenominator,g.sameWeekLyNumerator,g.sameWeekLyDenominator,
-                                g.peerSetNumerator,g.peerSetDenominator,
-                                g.thisWeekDataAvailable,g.priorWeekDataAvailable,g.fourWeekTrendWeekCount,g.sameWeekLyDataAvailable,
-                                g.goldProcessedAt
-                            FROM scopeCrosstabs g
-                            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static pc ON pc.pairKey=g.pairKey AND pc.isActive
-                            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static rb ON rb.breakoutType=g.rowBreakoutType AND rb.isActive
-                            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static cb ON cb.breakoutType=g.columnBreakoutType AND cb.isActive
-                            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive
-                            LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c ON c.weekStartDate=g.targetWeekStartDate
-                        ),
+        COMMENT 'MIP Gold App: Explore Every pair ranked default fast path. Wide visible comparisons with selected-comparator global ranking and impact.';
 
-                        comparisonLong AS (
-                            SELECT
-                                base.*,
-                                'priorWeek' AS comparisonType,
-                                'Prior week' AS comparisonLabel,
-                                10 AS comparisonSortOrder,
-                                priorWeekStartDate AS comparisonStartDate,
-                                date_add(priorWeekStartDate, 6) AS comparisonEndDate,
-                                1 AS comparisonWeekCount,
-                                priorWeekDataAvailable AS comparisonDataAvailable,
-                                priorWeekDataAvailable AS comparisonWindowComplete,
-                                priorWeekNumerator AS comparisonNumerator,
-                                priorWeekDenominator AS comparisonDenominator
-                            FROM base
-
-                            UNION ALL
-
-                            SELECT
-                                base.*,
-                                'fourWeek' AS comparisonType,
-                                '4-wk trend' AS comparisonLabel,
-                                20 AS comparisonSortOrder,
-                                fourWeekAvgStartDate AS comparisonStartDate,
-                                fourWeekAvgEndDate AS comparisonEndDate,
-                                fourWeekTrendWeekCount AS comparisonWeekCount,
-                                fourWeekTrendWeekCount > 0 AS comparisonDataAvailable,
-                                fourWeekTrendWeekCount = 4 AS comparisonWindowComplete,
-                                CASE
-                                    WHEN metricKind = 'count' AND fourWeekTrendWeekCount > 0
-                                        THEN try_divide(fourWeekTrendNumerator, cast(fourWeekTrendWeekCount AS DOUBLE))
-                                    ELSE fourWeekTrendNumerator
-                                END AS comparisonNumerator,
-                                CASE
-                                    WHEN metricKind = 'count' THEN NULL
-                                    ELSE fourWeekTrendDenominator
-                                END AS comparisonDenominator
-                            FROM base
-
-                            UNION ALL
-
-                            SELECT
-                                base.*,
-                                'lastYear' AS comparisonType,
-                                'Same wk LY' AS comparisonLabel,
-                                30 AS comparisonSortOrder,
-                                sameWeekLastYearStartDate AS comparisonStartDate,
-                                date_add(sameWeekLastYearStartDate, 6) AS comparisonEndDate,
-                                1 AS comparisonWeekCount,
-                                sameWeekLyDataAvailable AS comparisonDataAvailable,
-                                sameWeekLyDataAvailable AS comparisonWindowComplete,
-                                sameWeekLyNumerator AS comparisonNumerator,
-                                sameWeekLyDenominator AS comparisonDenominator
-                            FROM base
-                        ),
-                        valuesCalculated AS (
-                            SELECT
-                                *,
-                                CASE
-                                    WHEN metricKind = 'ratio' THEN try_divide(thisWeekNumerator, thisWeekDenominator)
-                                    ELSE thisWeekNumerator
-                                END AS currentValue,
-                                CASE
-                                    WHEN metricKind = 'ratio' THEN try_divide(comparisonNumerator, comparisonDenominator)
-                                    ELSE comparisonNumerator
-                                END AS comparisonValue
-                            FROM comparisonLong
-                        ),
-                        deltasCalculated AS (
-                            SELECT
-                                *,
-                                currentValue - comparisonValue AS absoluteDeltaValue,
-                                CASE
-                                    WHEN NOT thisWeekDataAvailable OR NOT comparisonDataAvailable
-                                      OR currentValue IS NULL OR comparisonValue IS NULL THEN NULL
-                                    WHEN changeUnit = 'pp' THEN 100D * (currentValue - comparisonValue)
-                                    WHEN changeUnit = 'pct' THEN 100D * (try_divide(currentValue, comparisonValue) - 1D)
-                                    ELSE NULL
-                                END AS changeValue,
-                                CASE
-                                    WHEN currentValue IS NULL OR comparisonValue IS NULL THEN 'unavailable'
-                                    WHEN currentValue > comparisonValue THEN 'up'
-                                    WHEN currentValue < comparisonValue THEN 'down'
-                                    ELSE 'flat'
-                                END AS changeDirection
-                            FROM valuesCalculated
-                        )
-                        ,
-                        peerCalculated AS (
-                            SELECT
-                                d.*,
-                                CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator)
-                                     ELSE peerSetNumerator END AS peerSetValue,
-                                CASE WHEN metricKind='ratio' THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
-                                     ELSE peerSetNumerator IS NOT NULL END AS peerSetDataAvailable
-                            FROM deltasCalculated d
-                        ),
-                        toplineBase AS (
-                            SELECT targetWeekStartDate,filterLob,filterPlatform,metricName,metricKind,
-                                   thisWeekNumerator,thisWeekDenominator,priorWeekNumerator,priorWeekDenominator,
-                                   fourWeekTrendNumerator,fourWeekTrendDenominator,sameWeekLyNumerator,sameWeekLyDenominator,fourWeekTrendWeekCount
-                            FROM scopeOverview
-                        ),
-                        toplineLong AS (
-                            SELECT *, 'priorWeek' AS comparisonType, priorWeekNumerator AS comparisonNumerator, priorWeekDenominator AS comparisonDenominator FROM toplineBase
-                            UNION ALL
-                            SELECT *, 'fourWeek' AS comparisonType,
-                                   CASE WHEN metricKind='count' AND fourWeekTrendWeekCount>0 THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE)) ELSE fourWeekTrendNumerator END,
-                                   CASE WHEN metricKind='count' THEN NULL ELSE fourWeekTrendDenominator END
-                            FROM toplineBase
-                            UNION ALL
-                            SELECT *, 'lastYear' AS comparisonType, sameWeekLyNumerator, sameWeekLyDenominator FROM toplineBase
-                        ),
-                        toplineValues AS (
-                            SELECT *,
-                                   CASE WHEN metricKind='ratio' THEN try_divide(thisWeekNumerator,thisWeekDenominator) ELSE thisWeekNumerator END AS toplineCurrentValue,
-                                   CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS toplineComparisonValue
-                            FROM toplineLong
-                        ),
-                        cellValues AS (
-                            SELECT
-                                p.*,
-                                t.toplineCurrentValue,t.toplineComparisonValue,
-                                t.thisWeekDenominator AS toplineCurrentDenominator,t.comparisonDenominator AS toplineComparisonDenominator,
-                                CASE WHEN p.metricKind='count' THEN 100D*try_divide(p.absoluteDeltaValue,t.toplineComparisonValue)
-                                     WHEN p.metricKind='ratio' THEN 100D*(try_divide(p.thisWeekNumerator,t.thisWeekDenominator)-try_divide(p.comparisonNumerator,t.comparisonDenominator)) END AS impactOnToplineValue,
-                                CASE WHEN p.metricKind='count' THEN 'pct' WHEN p.metricKind='ratio' THEN 'pp' END AS impactOnToplineUnit,
-                                p.currentValue-p.peerSetValue AS peerSetAbsoluteDeltaValue,
-                                CASE WHEN NOT p.peerSetDataAvailable THEN NULL
-                                     WHEN p.changeUnit='pp' THEN 100D*(p.currentValue-p.peerSetValue)
-                                     WHEN p.changeUnit='pct' THEN 100D*(try_divide(p.currentValue,p.peerSetValue)-1D) END AS peerSetChangeValue
-                            FROM peerCalculated p
-                            LEFT JOIN toplineValues t
-                              ON t.targetWeekStartDate=p.targetWeekStartDate AND t.filterLob=p.filterLob AND t.filterPlatform=p.filterPlatform
-                             AND t.metricName=p.metricName AND t.comparisonType=p.comparisonType
-                        ),
-                        rowAgg AS (
-                            SELECT
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,rowBreakoutValue,metricKind,
-                                sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator,
-                                sum(comparisonNumerator) AS comparisonNumerator,sum(comparisonDenominator) AS comparisonDenominator
-                            FROM cellValues
-                            GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,rowBreakoutValue,metricKind
-                        ),
-                        rowValues AS (
-                            SELECT *,
-                                CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS rowCurrentValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS rowComparisonValue
-                            FROM rowAgg
-                        ),
-                        rowRanks AS (
-                            SELECT *, row_number() OVER (
-                                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType
-                                ORDER BY rowCurrentValue DESC NULLS LAST,rowBreakoutValue
-                            ) AS rowRankByMetric
-                            FROM rowValues
-                        ),
-                        columnAgg AS (
-                            SELECT
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,columnBreakoutValue,metricKind,
-                                sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator,
-                                sum(comparisonNumerator) AS comparisonNumerator,sum(comparisonDenominator) AS comparisonDenominator
-                            FROM cellValues
-                            GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,columnBreakoutValue,metricKind
-                        ),
-                        columnValues AS (
-                            SELECT *,
-                                CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS columnCurrentValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS columnComparisonValue
-                            FROM columnAgg
-                        ),
-                        columnRanks AS (
-                            SELECT *, row_number() OVER (
-                                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType
-                                ORDER BY columnCurrentValue DESC NULLS LAST,columnBreakoutValue
-                            ) AS columnRankByMetric
-                            FROM columnValues
-                        ),
-                        ranked AS (
-                            SELECT
-                                c.*,
-                                r.rowCurrentValue,r.rowComparisonValue,r.rowRankByMetric,
-                                k.columnCurrentValue,k.columnComparisonValue,k.columnRankByMetric,
-                                CASE WHEN c.comparisonDataAvailable AND c.impactOnToplineValue IS NOT NULL THEN
-                                    row_number() OVER (
-                                        PARTITION BY c.targetWeekStartDate,c.filterLob,c.filterPlatform,c.pairKey,c.metricName,c.comparisonType
-                                        ORDER BY abs(c.impactOnToplineValue) DESC NULLS LAST,abs(c.absoluteDeltaValue) DESC NULLS LAST,
-                                                 c.rowBreakoutValue,c.columnBreakoutValue
-                                    )
-                                END AS cellImpactRankWithinPair,
-                                CASE WHEN c.comparisonDataAvailable AND c.impactOnToplineValue IS NOT NULL THEN
-                                    row_number() OVER (
-                                        PARTITION BY c.targetWeekStartDate,c.filterLob,c.filterPlatform,c.metricName,c.comparisonType
-                                        ORDER BY abs(c.impactOnToplineValue) DESC NULLS LAST,abs(c.absoluteDeltaValue) DESC NULLS LAST,
-                                                 c.pairKey,c.rowBreakoutValue,c.columnBreakoutValue
-                                    )
-                                END AS cellImpactRankAcrossPairs
-                            FROM cellValues c
-                            LEFT JOIN rowRanks r
-                              ON r.targetWeekStartDate=c.targetWeekStartDate AND r.filterLob=c.filterLob AND r.filterPlatform=c.filterPlatform
-                             AND r.pairKey=c.pairKey AND r.metricName=c.metricName AND r.comparisonType=c.comparisonType
-                             AND r.rowBreakoutValue=c.rowBreakoutValue
-                            LEFT JOIN columnRanks k
-                              ON k.targetWeekStartDate=c.targetWeekStartDate AND k.filterLob=c.filterLob AND k.filterPlatform=c.filterPlatform
-                             AND k.pairKey=c.pairKey AND k.metricName=c.metricName AND k.comparisonType=c.comparisonType
-                             AND k.columnBreakoutValue=c.columnBreakoutValue
-                        )
-                        ,
-                        sizeConfig AS (
-                            SELECT * FROM VALUES
-                                ('top5',  'Top 5',  5,   10),
-                                ('top8',  'Top 8',  8,   20),
-                                ('top10', 'Top 10', 10,  30),
-                                ('all',   'All',    100, 40)
-                            AS s(displaySize, displaySizeLabel, displayLimit, displaySizeSortOrder)
-                        ),
-                        expanded AS (
-                            SELECT
-                                r.*,
-                                s.displaySize,
-                                s.displaySizeLabel,
-                                s.displayLimit,
-                                s.displaySizeSortOrder,
-
-                                CASE
-                                    WHEN rowRankByMetric <= s.displayLimit
-                                        THEN concat('ROW::VALUE::', coalesce(rowBreakoutValue, '(null)'))
-                                    ELSE 'ROW::OTHER::REMAINDER'
-                                END AS rowBucketKey,
-                                CASE
-                                    WHEN rowRankByMetric <= s.displayLimit THEN rowBreakoutValue
-                                    ELSE '(Other)'
-                                END AS displayRowBreakoutValue,
-                                rowRankByMetric > s.displayLimit AS rowOtherMember,
-
-                                CASE
-                                    WHEN columnRankByMetric <= s.displayLimit
-                                        THEN concat('COL::VALUE::', coalesce(columnBreakoutValue, '(null)'))
-                                    ELSE 'COL::OTHER::REMAINDER'
-                                END AS columnBucketKey,
-                                CASE
-                                    WHEN columnRankByMetric <= s.displayLimit THEN columnBreakoutValue
-                                    ELSE '(Other)'
-                                END AS displayColumnBreakoutValue,
-                                columnRankByMetric > s.displayLimit AS columnOtherMember
-                            FROM ranked r
-                            CROSS JOIN sizeConfig s
-                        ),
-                        bucketAgg AS (
-                            SELECT
-                                targetWeekStartDate,
-                                targetWeekEndDate,
-                                fiscalQuarterLabel,
-                                fiscalWeekCode,
-                                weekLabel,
-                                weekEndingLabel,
-                                filterLob,
-                                filterPlatform,
-
-                                pairKey,
-                                pairLabel,
-                                pairSortOrder,
-                                rowBreakoutType,
-                                columnBreakoutType,
-                                configuredRowPairTopN,
-                                configuredColumnPairTopN,
-
-                                metricName,
-                                metricLabel,
-                                metricDescription,
-                                metricKind,
-                                displayFormat,
-                                changeUnit,
-                                metricSortOrder,
-                                metricDefinitionStatus,
-
-                                comparisonType,
-                                comparisonLabel,
-                                comparisonSortOrder,
-                                comparisonStartDate,
-                                comparisonEndDate,
-                                comparisonWeekCount,
-                                comparisonDataAvailable,
-                                comparisonWindowComplete,
-
-                                displaySize,
-                                displaySizeLabel,
-                                displayLimit,
-                                displaySizeSortOrder,
-
-                                rowBucketKey,
-                                displayRowBreakoutValue AS rowBreakoutValue,
-                                max(CASE WHEN rowOtherMember THEN 1 ELSE 0 END) = 1 AS isRowOtherBucket,
-                                CASE
-                                    WHEN max(CASE WHEN rowOtherMember THEN 1 ELSE 0 END) = 1 THEN displayLimit + 1
-                                    ELSE min(rowRankByMetric)
-                                END AS rowDisplayRank,
-
-                                columnBucketKey,
-                                displayColumnBreakoutValue AS columnBreakoutValue,
-                                max(CASE WHEN columnOtherMember THEN 1 ELSE 0 END) = 1 AS isColumnOtherBucket,
-                                CASE
-                                    WHEN max(CASE WHEN columnOtherMember THEN 1 ELSE 0 END) = 1 THEN displayLimit + 1
-                                    ELSE min(columnRankByMetric)
-                                END AS columnDisplayRank,
-
-                                count(*) AS rawCellMemberCount,
-
-                                sum(thisWeekNumerator) AS currentNumerator,
-                                sum(thisWeekDenominator) AS currentDenominator,
-                                sum(comparisonNumerator) AS comparisonNumerator,
-                                sum(comparisonDenominator) AS comparisonDenominator,
-
-                                sum(peerSetNumerator) AS peerSetNumerator,
-                                sum(peerSetDenominator) AS peerSetDenominator,
-
-                                max(toplineCurrentValue) AS toplineCurrentValue,
-                                max(toplineComparisonValue) AS toplineComparisonValue,
-                                max(toplineCurrentDenominator) AS toplineCurrentDenominator,
-                                max(toplineComparisonDenominator) AS toplineComparisonDenominator,
-
-                                thisWeekDataAvailable,
-                                max(goldProcessedAt) AS goldProcessedAt
-                            FROM expanded
-                            GROUP BY
-                                targetWeekStartDate,
-                                targetWeekEndDate,
-                                fiscalQuarterLabel,
-                                fiscalWeekCode,
-                                weekLabel,
-                                weekEndingLabel,
-                                filterLob,
-                                filterPlatform,
-                                pairKey,
-                                pairLabel,
-                                pairSortOrder,
-                                rowBreakoutType,
-                                columnBreakoutType,
-                                configuredRowPairTopN,
-                                configuredColumnPairTopN,
-                                metricName,
-                                metricLabel,
-                                metricDescription,
-                                metricKind,
-                                displayFormat,
-                                changeUnit,
-                                metricSortOrder,
-                                metricDefinitionStatus,
-                                comparisonType,
-                                comparisonLabel,
-                                comparisonSortOrder,
-                                comparisonStartDate,
-                                comparisonEndDate,
-                                comparisonWeekCount,
-                                comparisonDataAvailable,
-                                comparisonWindowComplete,
-                                displaySize,
-                                displaySizeLabel,
-                                displayLimit,
-                                displaySizeSortOrder,
-                                rowBucketKey,
-                                displayRowBreakoutValue,
-                                columnBucketKey,
-                                displayColumnBreakoutValue,
-                                thisWeekDataAvailable
-                        ),
-                        bucketValues AS (
-                            SELECT
-                                a.*,
-                                CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator)
-                                     ELSE currentNumerator END AS currentValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator)
-                                     ELSE comparisonNumerator END AS comparisonValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator)
-                                     ELSE peerSetNumerator END AS peerSetValue,
-                                CASE WHEN metricKind='ratio'
-                                          THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
-                                     ELSE peerSetNumerator IS NOT NULL END AS peerSetDataAvailable
-                            FROM bucketAgg a
-                        ),
-                        bucketCalculated AS (
-                            SELECT
-                                v.*,
-                                currentValue-comparisonValue AS absoluteDeltaValue,
-                                CASE
-                                    WHEN NOT thisWeekDataAvailable OR NOT comparisonDataAvailable
-                                      OR currentValue IS NULL OR comparisonValue IS NULL THEN NULL
-                                    WHEN changeUnit='pp' THEN 100D*(currentValue-comparisonValue)
-                                    WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
-                                    ELSE NULL
-                                END AS changeValue,
-                                CASE
-                                    WHEN currentValue IS NULL OR comparisonValue IS NULL THEN 'unavailable'
-                                    WHEN currentValue > comparisonValue THEN 'up'
-                                    WHEN currentValue < comparisonValue THEN 'down'
-                                    ELSE 'flat'
-                                END AS changeDirection,
-                                CASE
-                                    WHEN metricKind='count' THEN 100D*try_divide(currentValue-comparisonValue,toplineComparisonValue)
-                                    WHEN metricKind='ratio' THEN 100D*(
-                                        try_divide(currentNumerator,toplineCurrentDenominator)
-                                        - try_divide(comparisonNumerator,toplineComparisonDenominator)
-                                    )
-                                    ELSE NULL
-                                END AS impactOnToplineValue,
-                                CASE WHEN metricKind='count' THEN 'pct'
-                                     WHEN metricKind='ratio' THEN 'pp'
-                                     ELSE NULL END AS impactOnToplineUnit,
-                                currentValue-peerSetValue AS peerSetAbsoluteDeltaValue,
-                                CASE
-                                    WHEN NOT peerSetDataAvailable OR currentValue IS NULL THEN NULL
-                                    WHEN changeUnit='pp' THEN 100D*(currentValue-peerSetValue)
-                                    WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,peerSetValue)-1D)
-                                    ELSE NULL
-                                END AS peerSetChangeValue
-                            FROM bucketValues v
-                        ),
-                        rowAggDisplay AS (
-                            SELECT
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                                rowBreakoutValue,rowDisplayRank,isRowOtherBucket,metricKind,
-                                sum(currentNumerator) AS rowCurrentNumerator,
-                                sum(currentDenominator) AS rowCurrentDenominator,
-                                sum(comparisonNumerator) AS rowComparisonNumerator,
-                                sum(comparisonDenominator) AS rowComparisonDenominator
-                            FROM bucketCalculated
-                            GROUP BY
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                                rowBreakoutValue,rowDisplayRank,isRowOtherBucket,metricKind
-                        ),
-                        rowValuesDisplay AS (
-                            SELECT
-                                *,
-                                CASE WHEN metricKind='ratio' THEN try_divide(rowCurrentNumerator,rowCurrentDenominator)
-                                     ELSE rowCurrentNumerator END AS rowCurrentValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(rowComparisonNumerator,rowComparisonDenominator)
-                                     ELSE rowComparisonNumerator END AS rowComparisonValue
-                            FROM rowAggDisplay
-                        ),
-                        columnAggDisplay AS (
-                            SELECT
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                                columnBreakoutValue,columnDisplayRank,isColumnOtherBucket,metricKind,
-                                sum(currentNumerator) AS columnCurrentNumerator,
-                                sum(currentDenominator) AS columnCurrentDenominator,
-                                sum(comparisonNumerator) AS columnComparisonNumerator,
-                                sum(comparisonDenominator) AS columnComparisonDenominator
-                            FROM bucketCalculated
-                            GROUP BY
-                                targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                                columnBreakoutValue,columnDisplayRank,isColumnOtherBucket,metricKind
-                        ),
-                        columnValuesDisplay AS (
-                            SELECT
-                                *,
-                                CASE WHEN metricKind='ratio' THEN try_divide(columnCurrentNumerator,columnCurrentDenominator)
-                                     ELSE columnCurrentNumerator END AS columnCurrentValue,
-                                CASE WHEN metricKind='ratio' THEN try_divide(columnComparisonNumerator,columnComparisonDenominator)
-                                     ELSE columnComparisonNumerator END AS columnComparisonValue
-                            FROM columnAggDisplay
-                        ),
-                        withTotals AS (
-                            SELECT
-                                c.*,
-                                r.rowCurrentValue,
-                                r.rowComparisonValue,
-                                k.columnCurrentValue,
-                                k.columnComparisonValue
-                            FROM bucketCalculated c
-                            LEFT JOIN rowValuesDisplay r
-                              ON r.targetWeekStartDate=c.targetWeekStartDate
-                             AND r.filterLob=c.filterLob
-                             AND r.filterPlatform=c.filterPlatform
-                             AND r.pairKey=c.pairKey
-                             AND r.metricName=c.metricName
-                             AND r.comparisonType=c.comparisonType
-                             AND r.displaySize=c.displaySize
-                             AND r.rowBreakoutValue=c.rowBreakoutValue
-                             AND r.rowDisplayRank=c.rowDisplayRank
-                            LEFT JOIN columnValuesDisplay k
-                              ON k.targetWeekStartDate=c.targetWeekStartDate
-                             AND k.filterLob=c.filterLob
-                             AND k.filterPlatform=c.filterPlatform
-                             AND k.pairKey=c.pairKey
-                             AND k.metricName=c.metricName
-                             AND k.comparisonType=c.comparisonType
-                             AND k.displaySize=c.displaySize
-                             AND k.columnBreakoutValue=c.columnBreakoutValue
-                             AND k.columnDisplayRank=c.columnDisplayRank
-                        ),
-                        finalRanked AS (
-                            SELECT
-                                w.*,
-                                row_number() OVER (
-                                    PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize
-                                    ORDER BY abs(impactOnToplineValue) DESC NULLS LAST,
-                                             abs(absoluteDeltaValue) DESC NULLS LAST,
-                                             rowBreakoutValue,columnBreakoutValue
-                                ) AS cellImpactRankWithinPair,
-                                row_number() OVER (
-                                    PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType,displaySize
-                                    ORDER BY abs(impactOnToplineValue) DESC NULLS LAST,
-                                             abs(absoluteDeltaValue) DESC NULLS LAST,
-                                             pairKey,rowBreakoutValue,columnBreakoutValue
-                                ) AS cellImpactRankAcrossPairs
-                            FROM withTotals w
-                        )
-
-                        SELECT
-                            targetWeekStartDate,
-                            targetWeekEndDate,
-                            fiscalQuarterLabel,
-                            fiscalWeekCode,
-                            weekLabel,
-                            weekEndingLabel,
-                            filterLob,
-                            filterPlatform,
-
-                            pairKey,
-                            pairLabel,
-                            pairSortOrder,
-
-                            displaySize,
-                            displaySizeLabel,
-                            displayLimit,
-                            displaySizeSortOrder,
-
-                            rowBreakoutType,
-                            rowBreakoutValue,
-                            rowDisplayRank,
-                            isRowOtherBucket,
-                            rowCurrentValue,
-                            rowComparisonValue,
-                            configuredRowPairTopN,
-
-                            columnBreakoutType,
-                            columnBreakoutValue,
-                            columnDisplayRank,
-                            isColumnOtherBucket,
-                            columnCurrentValue,
-                            columnComparisonValue,
-                            configuredColumnPairTopN,
-
-                            rawCellMemberCount,
-
-                            metricName,
-                            metricLabel,
-                            metricDescription,
-                            metricKind,
-                            displayFormat,
-                            changeUnit,
-                            metricSortOrder,
-                            metricDefinitionStatus,
-
-                            comparisonType,
-                            comparisonLabel,
-                            comparisonSortOrder,
-                            comparisonStartDate,
-                            comparisonEndDate,
-                            comparisonWeekCount,
-                            comparisonDataAvailable,
-                            comparisonWindowComplete,
-
-                            currentNumerator,
-                            currentDenominator,
-                            comparisonNumerator,
-                            comparisonDenominator,
-                            currentValue,
-                            comparisonValue,
-                            absoluteDeltaValue,
-                            changeValue,
-                            changeDirection,
-
-                            toplineCurrentValue,
-                            toplineComparisonValue,
-                            impactOnToplineValue,
-                            impactOnToplineUnit,
-
-                            cellImpactRankWithinPair,
-                            cellImpactRankAcrossPairs,
-
-                            peerSetValue,
-                            peerSetAbsoluteDeltaValue,
-                            peerSetChangeValue,
-                            peerSetDataAvailable,
-
-                            thisWeekDataAvailable,
-                            goldProcessedAt
-                        FROM finalRanked
-                    ),
-                    ranked AS (
-                        SELECT
-                            m.*,
-                            row_number() OVER (
-                                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType
-                                ORDER BY
-                                    abs(impactOnToplineValue) DESC NULLS LAST,
-                                    abs(absoluteDeltaValue) DESC NULLS LAST,
-                                    pairKey,rowBreakoutValue,columnBreakoutValue
-                            ) AS globalIntersectionImpactRank,
-                            count(*) OVER (
-                                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType
-                            ) AS candidateIntersectionCount
-                        FROM crosstabsMatrix m
-                        WHERE displaySize='all'
-                          AND comparisonDataAvailable
-                          AND impactOnToplineValue IS NOT NULL
-                    )
-                    SELECT
-                        targetWeekStartDate,
-                        targetWeekEndDate,
-                        fiscalQuarterLabel,
-                        fiscalWeekCode,
-                        weekLabel,
-                        weekEndingLabel,
-                        filterLob,
-                        filterPlatform,
-
-                        pairKey,
-                        pairLabel,
-                        pairSortOrder,
-
-                        rowBreakoutType,
-                        rowBreakoutValue,
-                        rowDisplayRank,
-                        isRowOtherBucket,
-                        columnBreakoutType,
-                        columnBreakoutValue,
-                        columnDisplayRank,
-                        isColumnOtherBucket,
-                        concat(rowBreakoutValue,' × ',columnBreakoutValue) AS intersectionLabel,
-
-                        metricName,
-                        metricLabel,
-                        metricDescription,
-                        metricKind,
-                        displayFormat,
-                        changeUnit,
-                        metricSortOrder,
-
-                        comparisonType,
-                        comparisonLabel,
-                        comparisonSortOrder,
-                        comparisonStartDate,
-                        comparisonEndDate,
-                        comparisonWeekCount,
-                        comparisonDataAvailable,
-                        comparisonWindowComplete,
-
-                        currentValue,
-                        comparisonValue,
-                        absoluteDeltaValue,
-                        changeValue,
-                        changeDirection,
-
-                        toplineCurrentValue,
-                        toplineComparisonValue,
-                        impactOnToplineValue,
-                        impactOnToplineUnit,
-
-                        cellImpactRankWithinPair,
-                        globalIntersectionImpactRank AS cellImpactRankAcrossPairs,
-
-                        coalesce(globalIntersectionImpactRank<=5,FALSE) AS isTop5,
-                        coalesce(globalIntersectionImpactRank<=10,FALSE) AS isTop10,
-                        coalesce(globalIntersectionImpactRank<=18,FALSE) AS isTop18,
-                        coalesce(globalIntersectionImpactRank<=100,FALSE) AS isTop100,
-
-                        candidateIntersectionCount,
-                        greatest(candidateIntersectionCount-100,0) AS allSuppressedIntersectionCount,
-                        100 AS allSelectionLimit,
-                        'All = Top 100 globally ranked intersections. Row/column (Other) buckets are already scoped within each pair; no cross-pair numeric Other is created.' AS allSelectionRule,
-
-                        peerSetValue,
-                        peerSetChangeValue,
-                        peerSetDataAvailable,
-
-                        goldProcessedAt
-                    FROM ranked
-                )
-                SELECT
-                    targetWeekStartDate AS weekStartDate,
-                    targetWeekEndDate AS weekEndDate,
-                    fiscalQuarterLabel,
-                    fiscalWeekCode,
-                    weekLabel,
-                    weekEndingLabel,
-                    filterLob,
-                    filterPlatform,
-
-                    pairKey,
-                    pairLabel,
-                    pairSortOrder,
-                    rowBreakoutType,
-                    rowBreakoutValue,
-                    rowDisplayRank,
-                    isRowOtherBucket,
-                    columnBreakoutType,
-                    columnBreakoutValue,
-                    columnDisplayRank,
-                    isColumnOtherBucket,
-                    intersectionLabel,
-
-                    metricName,
-                    metricLabel,
-                    metricDescription,
-                    metricKind,
-                    displayFormat,
-                    changeUnit,
-                    metricSortOrder,
-
-                    comparisonType,
-                    comparisonLabel,
-                    comparisonSortOrder,
-                    comparisonStartDate,
-                    comparisonEndDate,
-                    comparisonWeekCount,
-                    comparisonDataAvailable,
-                    comparisonWindowComplete,
-
-                    currentValue,
-                    comparisonValue,
-                    absoluteDeltaValue,
-                    changeValue,
-                    changeDirection,
-
-                    toplineCurrentValue,
-                    toplineComparisonValue,
-                    impactOnToplineValue,
-                    impactOnToplineUnit,
-
-                    cellImpactRankWithinPair,
-                    cellImpactRankAcrossPairs,
-                    isTop5,
-                    isTop10,
-                    isTop18,
-                    isTop100,
-
-                    candidateIntersectionCount,
-                    allSuppressedIntersectionCount,
-                    allSelectionLimit,
-                    allSelectionRule,
-
-                    peerSetValue,
-                    peerSetChangeValue,
-                    peerSetDataAvailable,
-
-                    'defaultAll' AS exploreFilterMode,
-                    FALSE AS supportsArbitraryExploreFilters,
-                    'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS dynamicFilterSourceObject,
-
-                    goldProcessedAt
-                FROM rankedPairsDirect
-            ) appResult
-        ) schemaBootstrap
-        WHERE 1 = 0;
-
-        -- --------------------------------------------------------------------
-        -- 5. Rebuild requested whole target-week range.
-        --    Whole-week replacement is intentional because comparator ranks,
-        --    Top-N membership and (Other) buckets can all change together.
-        -- --------------------------------------------------------------------
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long
-        REPLACE WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
-SELECT
-    appResult.*,
-    v_processedAt AS appProcessedAt
-FROM (
-    WITH rankedPairsDirect AS (
-        WITH crosstabsMatrix AS (
-            WITH
-            scopeCrosstabs AS (
-                SELECT *
-                FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
-                WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
-            ),
-            scopeOverview AS (
-                SELECT *
-                FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
-                WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
-            ),
-            base AS (
-                SELECT
-                    g.targetWeekStartDate,g.targetWeekEndDate,g.fiscalQuarterLabel,g.fiscalWeekCode,g.weekLabel,
-                    c.weekEndingLabel,c.priorWeekStartDate,c.fourWeekAvgStartDate,c.fourWeekAvgEndDate,c.sameWeekLastYearStartDate,
-                    g.filterLob,g.filterPlatform,
-                    g.pairKey,g.pairLabel,pc.sortOrder AS pairSortOrder,
-                    g.rowBreakoutType,g.rowBreakoutValue,rb.pairTopN AS configuredRowPairTopN,
-                    g.columnBreakoutType,g.columnBreakoutValue,cb.pairTopN AS configuredColumnPairTopN,
-                    g.metricName,g.metricLabel,mc.metricDescription,g.metricKind,g.displayFormat,g.changeUnit,
-                    mc.definitionStatus AS metricDefinitionStatus,mc.sortOrder AS metricSortOrder,
-                    g.thisWeekNumerator,g.thisWeekDenominator,g.priorWeekNumerator,g.priorWeekDenominator,
-                    g.fourWeekTrendNumerator,g.fourWeekTrendDenominator,g.sameWeekLyNumerator,g.sameWeekLyDenominator,
-                    g.peerSetNumerator,g.peerSetDenominator,
-                    g.thisWeekDataAvailable,g.priorWeekDataAvailable,g.fourWeekTrendWeekCount,g.sameWeekLyDataAvailable,
-                    g.goldProcessedAt
-                FROM scopeCrosstabs g
-                JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static pc ON pc.pairKey=g.pairKey AND pc.isActive
-                JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static rb ON rb.breakoutType=g.rowBreakoutType AND rb.isActive
-                JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static cb ON cb.breakoutType=g.columnBreakoutType AND cb.isActive
-                JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive
-                LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c ON c.weekStartDate=g.targetWeekStartDate
-            ),
+        REPLACE WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
 
-            comparisonLong AS (
-                SELECT
-                    base.*,
-                    'priorWeek' AS comparisonType,
-                    'Prior week' AS comparisonLabel,
-                    10 AS comparisonSortOrder,
-                    priorWeekStartDate AS comparisonStartDate,
-                    date_add(priorWeekStartDate, 6) AS comparisonEndDate,
-                    1 AS comparisonWeekCount,
-                    priorWeekDataAvailable AS comparisonDataAvailable,
-                    priorWeekDataAvailable AS comparisonWindowComplete,
-                    priorWeekNumerator AS comparisonNumerator,
-                    priorWeekDenominator AS comparisonDenominator
-                FROM base
-
-                UNION ALL
-
-                SELECT
-                    base.*,
-                    'fourWeek' AS comparisonType,
-                    '4-wk trend' AS comparisonLabel,
-                    20 AS comparisonSortOrder,
-                    fourWeekAvgStartDate AS comparisonStartDate,
-                    fourWeekAvgEndDate AS comparisonEndDate,
-                    fourWeekTrendWeekCount AS comparisonWeekCount,
-                    fourWeekTrendWeekCount > 0 AS comparisonDataAvailable,
-                    fourWeekTrendWeekCount = 4 AS comparisonWindowComplete,
-                    CASE
-                        WHEN metricKind = 'count' AND fourWeekTrendWeekCount > 0
-                            THEN try_divide(fourWeekTrendNumerator, cast(fourWeekTrendWeekCount AS DOUBLE))
-                        ELSE fourWeekTrendNumerator
-                    END AS comparisonNumerator,
-                    CASE
-                        WHEN metricKind = 'count' THEN NULL
-                        ELSE fourWeekTrendDenominator
-                    END AS comparisonDenominator
-                FROM base
-
-                UNION ALL
-
-                SELECT
-                    base.*,
-                    'lastYear' AS comparisonType,
-                    'Same wk LY' AS comparisonLabel,
-                    30 AS comparisonSortOrder,
-                    sameWeekLastYearStartDate AS comparisonStartDate,
-                    date_add(sameWeekLastYearStartDate, 6) AS comparisonEndDate,
-                    1 AS comparisonWeekCount,
-                    sameWeekLyDataAvailable AS comparisonDataAvailable,
-                    sameWeekLyDataAvailable AS comparisonWindowComplete,
-                    sameWeekLyNumerator AS comparisonNumerator,
-                    sameWeekLyDenominator AS comparisonDenominator
-                FROM base
-            ),
-            valuesCalculated AS (
-                SELECT
-                    *,
-                    CASE
-                        WHEN metricKind = 'ratio' THEN try_divide(thisWeekNumerator, thisWeekDenominator)
-                        ELSE thisWeekNumerator
-                    END AS currentValue,
-                    CASE
-                        WHEN metricKind = 'ratio' THEN try_divide(comparisonNumerator, comparisonDenominator)
-                        ELSE comparisonNumerator
-                    END AS comparisonValue
-                FROM comparisonLong
-            ),
-            deltasCalculated AS (
-                SELECT
-                    *,
-                    currentValue - comparisonValue AS absoluteDeltaValue,
-                    CASE
-                        WHEN NOT thisWeekDataAvailable OR NOT comparisonDataAvailable
-                          OR currentValue IS NULL OR comparisonValue IS NULL THEN NULL
-                        WHEN changeUnit = 'pp' THEN 100D * (currentValue - comparisonValue)
-                        WHEN changeUnit = 'pct' THEN 100D * (try_divide(currentValue, comparisonValue) - 1D)
-                        ELSE NULL
-                    END AS changeValue,
-                    CASE
-                        WHEN currentValue IS NULL OR comparisonValue IS NULL THEN 'unavailable'
-                        WHEN currentValue > comparisonValue THEN 'up'
-                        WHEN currentValue < comparisonValue THEN 'down'
-                        ELSE 'flat'
-                    END AS changeDirection
-                FROM valuesCalculated
-            )
-            ,
-            peerCalculated AS (
-                SELECT
-                    d.*,
-                    CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator)
-                         ELSE peerSetNumerator END AS peerSetValue,
-                    CASE WHEN metricKind='ratio' THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
-                         ELSE peerSetNumerator IS NOT NULL END AS peerSetDataAvailable
-                FROM deltasCalculated d
-            ),
-            toplineBase AS (
-                SELECT targetWeekStartDate,filterLob,filterPlatform,metricName,metricKind,
-                       thisWeekNumerator,thisWeekDenominator,priorWeekNumerator,priorWeekDenominator,
-                       fourWeekTrendNumerator,fourWeekTrendDenominator,sameWeekLyNumerator,sameWeekLyDenominator,fourWeekTrendWeekCount
-                FROM scopeOverview
-            ),
-            toplineLong AS (
-                SELECT *, 'priorWeek' AS comparisonType, priorWeekNumerator AS comparisonNumerator, priorWeekDenominator AS comparisonDenominator FROM toplineBase
-                UNION ALL
-                SELECT *, 'fourWeek' AS comparisonType,
-                       CASE WHEN metricKind='count' AND fourWeekTrendWeekCount>0 THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE)) ELSE fourWeekTrendNumerator END,
-                       CASE WHEN metricKind='count' THEN NULL ELSE fourWeekTrendDenominator END
-                FROM toplineBase
-                UNION ALL
-                SELECT *, 'lastYear' AS comparisonType, sameWeekLyNumerator, sameWeekLyDenominator FROM toplineBase
-            ),
-            toplineValues AS (
-                SELECT *,
-                       CASE WHEN metricKind='ratio' THEN try_divide(thisWeekNumerator,thisWeekDenominator) ELSE thisWeekNumerator END AS toplineCurrentValue,
-                       CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS toplineComparisonValue
-                FROM toplineLong
-            ),
-            cellValues AS (
-                SELECT
-                    p.*,
-                    t.toplineCurrentValue,t.toplineComparisonValue,
-                    t.thisWeekDenominator AS toplineCurrentDenominator,t.comparisonDenominator AS toplineComparisonDenominator,
-                    CASE WHEN p.metricKind='count' THEN 100D*try_divide(p.absoluteDeltaValue,t.toplineComparisonValue)
-                         WHEN p.metricKind='ratio' THEN 100D*(try_divide(p.thisWeekNumerator,t.thisWeekDenominator)-try_divide(p.comparisonNumerator,t.comparisonDenominator)) END AS impactOnToplineValue,
-                    CASE WHEN p.metricKind='count' THEN 'pct' WHEN p.metricKind='ratio' THEN 'pp' END AS impactOnToplineUnit,
-                    p.currentValue-p.peerSetValue AS peerSetAbsoluteDeltaValue,
-                    CASE WHEN NOT p.peerSetDataAvailable THEN NULL
-                         WHEN p.changeUnit='pp' THEN 100D*(p.currentValue-p.peerSetValue)
-                         WHEN p.changeUnit='pct' THEN 100D*(try_divide(p.currentValue,p.peerSetValue)-1D) END AS peerSetChangeValue
-                FROM peerCalculated p
-                LEFT JOIN toplineValues t
-                  ON t.targetWeekStartDate=p.targetWeekStartDate AND t.filterLob=p.filterLob AND t.filterPlatform=p.filterPlatform
-                 AND t.metricName=p.metricName AND t.comparisonType=p.comparisonType
-            ),
-            rowAgg AS (
-                SELECT
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,rowBreakoutValue,metricKind,
-                    sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator,
-                    sum(comparisonNumerator) AS comparisonNumerator,sum(comparisonDenominator) AS comparisonDenominator
-                FROM cellValues
-                GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,rowBreakoutValue,metricKind
-            ),
-            rowValues AS (
-                SELECT *,
-                    CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS rowCurrentValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS rowComparisonValue
-                FROM rowAgg
-            ),
-            rowRanks AS (
-                SELECT *, row_number() OVER (
-                    PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType
-                    ORDER BY rowCurrentValue DESC NULLS LAST,rowBreakoutValue
-                ) AS rowRankByMetric
-                FROM rowValues
-            ),
-            columnAgg AS (
-                SELECT
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,columnBreakoutValue,metricKind,
-                    sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator,
-                    sum(comparisonNumerator) AS comparisonNumerator,sum(comparisonDenominator) AS comparisonDenominator
-                FROM cellValues
-                GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,columnBreakoutValue,metricKind
-            ),
-            columnValues AS (
-                SELECT *,
-                    CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS columnCurrentValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator) ELSE comparisonNumerator END AS columnComparisonValue
-                FROM columnAgg
-            ),
-            columnRanks AS (
-                SELECT *, row_number() OVER (
-                    PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType
-                    ORDER BY columnCurrentValue DESC NULLS LAST,columnBreakoutValue
-                ) AS columnRankByMetric
-                FROM columnValues
-            ),
-            ranked AS (
-                SELECT
-                    c.*,
-                    r.rowCurrentValue,r.rowComparisonValue,r.rowRankByMetric,
-                    k.columnCurrentValue,k.columnComparisonValue,k.columnRankByMetric,
-                    CASE WHEN c.comparisonDataAvailable AND c.impactOnToplineValue IS NOT NULL THEN
-                        row_number() OVER (
-                            PARTITION BY c.targetWeekStartDate,c.filterLob,c.filterPlatform,c.pairKey,c.metricName,c.comparisonType
-                            ORDER BY abs(c.impactOnToplineValue) DESC NULLS LAST,abs(c.absoluteDeltaValue) DESC NULLS LAST,
-                                     c.rowBreakoutValue,c.columnBreakoutValue
-                        )
-                    END AS cellImpactRankWithinPair,
-                    CASE WHEN c.comparisonDataAvailable AND c.impactOnToplineValue IS NOT NULL THEN
-                        row_number() OVER (
-                            PARTITION BY c.targetWeekStartDate,c.filterLob,c.filterPlatform,c.metricName,c.comparisonType
-                            ORDER BY abs(c.impactOnToplineValue) DESC NULLS LAST,abs(c.absoluteDeltaValue) DESC NULLS LAST,
-                                     c.pairKey,c.rowBreakoutValue,c.columnBreakoutValue
-                        )
-                    END AS cellImpactRankAcrossPairs
-                FROM cellValues c
-                LEFT JOIN rowRanks r
-                  ON r.targetWeekStartDate=c.targetWeekStartDate AND r.filterLob=c.filterLob AND r.filterPlatform=c.filterPlatform
-                 AND r.pairKey=c.pairKey AND r.metricName=c.metricName AND r.comparisonType=c.comparisonType
-                 AND r.rowBreakoutValue=c.rowBreakoutValue
-                LEFT JOIN columnRanks k
-                  ON k.targetWeekStartDate=c.targetWeekStartDate AND k.filterLob=c.filterLob AND k.filterPlatform=c.filterPlatform
-                 AND k.pairKey=c.pairKey AND k.metricName=c.metricName AND k.comparisonType=c.comparisonType
-                 AND k.columnBreakoutValue=c.columnBreakoutValue
-            )
-            ,
-            sizeConfig AS (
-                SELECT * FROM VALUES
-                    ('top5',  'Top 5',  5,   10),
-                    ('top8',  'Top 8',  8,   20),
-                    ('top10', 'Top 10', 10,  30),
-                    ('all',   'All',    100, 40)
-                AS s(displaySize, displaySizeLabel, displayLimit, displaySizeSortOrder)
-            ),
-            expanded AS (
-                SELECT
-                    r.*,
-                    s.displaySize,
-                    s.displaySizeLabel,
-                    s.displayLimit,
-                    s.displaySizeSortOrder,
-
-                    CASE
-                        WHEN rowRankByMetric <= s.displayLimit
-                            THEN concat('ROW::VALUE::', coalesce(rowBreakoutValue, '(null)'))
-                        ELSE 'ROW::OTHER::REMAINDER'
-                    END AS rowBucketKey,
-                    CASE
-                        WHEN rowRankByMetric <= s.displayLimit THEN rowBreakoutValue
-                        ELSE '(Other)'
-                    END AS displayRowBreakoutValue,
-                    rowRankByMetric > s.displayLimit AS rowOtherMember,
-
-                    CASE
-                        WHEN columnRankByMetric <= s.displayLimit
-                            THEN concat('COL::VALUE::', coalesce(columnBreakoutValue, '(null)'))
-                        ELSE 'COL::OTHER::REMAINDER'
-                    END AS columnBucketKey,
-                    CASE
-                        WHEN columnRankByMetric <= s.displayLimit THEN columnBreakoutValue
-                        ELSE '(Other)'
-                    END AS displayColumnBreakoutValue,
-                    columnRankByMetric > s.displayLimit AS columnOtherMember
-                FROM ranked r
-                CROSS JOIN sizeConfig s
-            ),
-            bucketAgg AS (
-                SELECT
-                    targetWeekStartDate,
-                    targetWeekEndDate,
-                    fiscalQuarterLabel,
-                    fiscalWeekCode,
-                    weekLabel,
-                    weekEndingLabel,
-                    filterLob,
-                    filterPlatform,
-
-                    pairKey,
-                    pairLabel,
-                    pairSortOrder,
-                    rowBreakoutType,
-                    columnBreakoutType,
-                    configuredRowPairTopN,
-                    configuredColumnPairTopN,
-
-                    metricName,
-                    metricLabel,
-                    metricDescription,
-                    metricKind,
-                    displayFormat,
-                    changeUnit,
-                    metricSortOrder,
-                    metricDefinitionStatus,
-
-                    comparisonType,
-                    comparisonLabel,
-                    comparisonSortOrder,
-                    comparisonStartDate,
-                    comparisonEndDate,
-                    comparisonWeekCount,
-                    comparisonDataAvailable,
-                    comparisonWindowComplete,
-
-                    displaySize,
-                    displaySizeLabel,
-                    displayLimit,
-                    displaySizeSortOrder,
-
-                    rowBucketKey,
-                    displayRowBreakoutValue AS rowBreakoutValue,
-                    max(CASE WHEN rowOtherMember THEN 1 ELSE 0 END) = 1 AS isRowOtherBucket,
-                    CASE
-                        WHEN max(CASE WHEN rowOtherMember THEN 1 ELSE 0 END) = 1 THEN displayLimit + 1
-                        ELSE min(rowRankByMetric)
-                    END AS rowDisplayRank,
-
-                    columnBucketKey,
-                    displayColumnBreakoutValue AS columnBreakoutValue,
-                    max(CASE WHEN columnOtherMember THEN 1 ELSE 0 END) = 1 AS isColumnOtherBucket,
-                    CASE
-                        WHEN max(CASE WHEN columnOtherMember THEN 1 ELSE 0 END) = 1 THEN displayLimit + 1
-                        ELSE min(columnRankByMetric)
-                    END AS columnDisplayRank,
-
-                    count(*) AS rawCellMemberCount,
-
-                    sum(thisWeekNumerator) AS currentNumerator,
-                    sum(thisWeekDenominator) AS currentDenominator,
-                    sum(comparisonNumerator) AS comparisonNumerator,
-                    sum(comparisonDenominator) AS comparisonDenominator,
-
-                    sum(peerSetNumerator) AS peerSetNumerator,
-                    sum(peerSetDenominator) AS peerSetDenominator,
-
-                    max(toplineCurrentValue) AS toplineCurrentValue,
-                    max(toplineComparisonValue) AS toplineComparisonValue,
-                    max(toplineCurrentDenominator) AS toplineCurrentDenominator,
-                    max(toplineComparisonDenominator) AS toplineComparisonDenominator,
-
-                    thisWeekDataAvailable,
-                    max(goldProcessedAt) AS goldProcessedAt
-                FROM expanded
-                GROUP BY
-                    targetWeekStartDate,
-                    targetWeekEndDate,
-                    fiscalQuarterLabel,
-                    fiscalWeekCode,
-                    weekLabel,
-                    weekEndingLabel,
-                    filterLob,
-                    filterPlatform,
-                    pairKey,
-                    pairLabel,
-                    pairSortOrder,
-                    rowBreakoutType,
-                    columnBreakoutType,
-                    configuredRowPairTopN,
-                    configuredColumnPairTopN,
-                    metricName,
-                    metricLabel,
-                    metricDescription,
-                    metricKind,
-                    displayFormat,
-                    changeUnit,
-                    metricSortOrder,
-                    metricDefinitionStatus,
-                    comparisonType,
-                    comparisonLabel,
-                    comparisonSortOrder,
-                    comparisonStartDate,
-                    comparisonEndDate,
-                    comparisonWeekCount,
-                    comparisonDataAvailable,
-                    comparisonWindowComplete,
-                    displaySize,
-                    displaySizeLabel,
-                    displayLimit,
-                    displaySizeSortOrder,
-                    rowBucketKey,
-                    displayRowBreakoutValue,
-                    columnBucketKey,
-                    displayColumnBreakoutValue,
-                    thisWeekDataAvailable
-            ),
-            bucketValues AS (
-                SELECT
-                    a.*,
-                    CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator)
-                         ELSE currentNumerator END AS currentValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(comparisonNumerator,comparisonDenominator)
-                         ELSE comparisonNumerator END AS comparisonValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator)
-                         ELSE peerSetNumerator END AS peerSetValue,
-                    CASE WHEN metricKind='ratio'
-                              THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
-                         ELSE peerSetNumerator IS NOT NULL END AS peerSetDataAvailable
-                FROM bucketAgg a
-            ),
-            bucketCalculated AS (
-                SELECT
-                    v.*,
-                    currentValue-comparisonValue AS absoluteDeltaValue,
-                    CASE
-                        WHEN NOT thisWeekDataAvailable OR NOT comparisonDataAvailable
-                          OR currentValue IS NULL OR comparisonValue IS NULL THEN NULL
-                        WHEN changeUnit='pp' THEN 100D*(currentValue-comparisonValue)
-                        WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
-                        ELSE NULL
-                    END AS changeValue,
-                    CASE
-                        WHEN currentValue IS NULL OR comparisonValue IS NULL THEN 'unavailable'
-                        WHEN currentValue > comparisonValue THEN 'up'
-                        WHEN currentValue < comparisonValue THEN 'down'
-                        ELSE 'flat'
-                    END AS changeDirection,
-                    CASE
-                        WHEN metricKind='count' THEN 100D*try_divide(currentValue-comparisonValue,toplineComparisonValue)
-                        WHEN metricKind='ratio' THEN 100D*(
-                            try_divide(currentNumerator,toplineCurrentDenominator)
-                            - try_divide(comparisonNumerator,toplineComparisonDenominator)
-                        )
-                        ELSE NULL
-                    END AS impactOnToplineValue,
-                    CASE WHEN metricKind='count' THEN 'pct'
-                         WHEN metricKind='ratio' THEN 'pp'
-                         ELSE NULL END AS impactOnToplineUnit,
-                    currentValue-peerSetValue AS peerSetAbsoluteDeltaValue,
-                    CASE
-                        WHEN NOT peerSetDataAvailable OR currentValue IS NULL THEN NULL
-                        WHEN changeUnit='pp' THEN 100D*(currentValue-peerSetValue)
-                        WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,peerSetValue)-1D)
-                        ELSE NULL
-                    END AS peerSetChangeValue
-                FROM bucketValues v
-            ),
-            rowAggDisplay AS (
-                SELECT
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                    rowBreakoutValue,rowDisplayRank,isRowOtherBucket,metricKind,
-                    sum(currentNumerator) AS rowCurrentNumerator,
-                    sum(currentDenominator) AS rowCurrentDenominator,
-                    sum(comparisonNumerator) AS rowComparisonNumerator,
-                    sum(comparisonDenominator) AS rowComparisonDenominator
-                FROM bucketCalculated
-                GROUP BY
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                    rowBreakoutValue,rowDisplayRank,isRowOtherBucket,metricKind
-            ),
-            rowValuesDisplay AS (
-                SELECT
-                    *,
-                    CASE WHEN metricKind='ratio' THEN try_divide(rowCurrentNumerator,rowCurrentDenominator)
-                         ELSE rowCurrentNumerator END AS rowCurrentValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(rowComparisonNumerator,rowComparisonDenominator)
-                         ELSE rowComparisonNumerator END AS rowComparisonValue
-                FROM rowAggDisplay
-            ),
-            columnAggDisplay AS (
-                SELECT
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                    columnBreakoutValue,columnDisplayRank,isColumnOtherBucket,metricKind,
-                    sum(currentNumerator) AS columnCurrentNumerator,
-                    sum(currentDenominator) AS columnCurrentDenominator,
-                    sum(comparisonNumerator) AS columnComparisonNumerator,
-                    sum(comparisonDenominator) AS columnComparisonDenominator
-                FROM bucketCalculated
-                GROUP BY
-                    targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize,
-                    columnBreakoutValue,columnDisplayRank,isColumnOtherBucket,metricKind
-            ),
-            columnValuesDisplay AS (
-                SELECT
-                    *,
-                    CASE WHEN metricKind='ratio' THEN try_divide(columnCurrentNumerator,columnCurrentDenominator)
-                         ELSE columnCurrentNumerator END AS columnCurrentValue,
-                    CASE WHEN metricKind='ratio' THEN try_divide(columnComparisonNumerator,columnComparisonDenominator)
-                         ELSE columnComparisonNumerator END AS columnComparisonValue
-                FROM columnAggDisplay
-            ),
-            withTotals AS (
-                SELECT
-                    c.*,
-                    r.rowCurrentValue,
-                    r.rowComparisonValue,
-                    k.columnCurrentValue,
-                    k.columnComparisonValue
-                FROM bucketCalculated c
-                LEFT JOIN rowValuesDisplay r
-                  ON r.targetWeekStartDate=c.targetWeekStartDate
-                 AND r.filterLob=c.filterLob
-                 AND r.filterPlatform=c.filterPlatform
-                 AND r.pairKey=c.pairKey
-                 AND r.metricName=c.metricName
-                 AND r.comparisonType=c.comparisonType
-                 AND r.displaySize=c.displaySize
-                 AND r.rowBreakoutValue=c.rowBreakoutValue
-                 AND r.rowDisplayRank=c.rowDisplayRank
-                LEFT JOIN columnValuesDisplay k
-                  ON k.targetWeekStartDate=c.targetWeekStartDate
-                 AND k.filterLob=c.filterLob
-                 AND k.filterPlatform=c.filterPlatform
-                 AND k.pairKey=c.pairKey
-                 AND k.metricName=c.metricName
-                 AND k.comparisonType=c.comparisonType
-                 AND k.displaySize=c.displaySize
-                 AND k.columnBreakoutValue=c.columnBreakoutValue
-                 AND k.columnDisplayRank=c.columnDisplayRank
-            ),
-            finalRanked AS (
-                SELECT
-                    w.*,
-                    row_number() OVER (
-                        PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,comparisonType,displaySize
-                        ORDER BY abs(impactOnToplineValue) DESC NULLS LAST,
-                                 abs(absoluteDeltaValue) DESC NULLS LAST,
-                                 rowBreakoutValue,columnBreakoutValue
-                    ) AS cellImpactRankWithinPair,
-                    row_number() OVER (
-                        PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType,displaySize
-                        ORDER BY abs(impactOnToplineValue) DESC NULLS LAST,
-                                 abs(absoluteDeltaValue) DESC NULLS LAST,
-                                 pairKey,rowBreakoutValue,columnBreakoutValue
-                    ) AS cellImpactRankAcrossPairs
-                FROM withTotals w
-            )
-
+        WITH base AS(
             SELECT
-                targetWeekStartDate,
-                targetWeekEndDate,
-                fiscalQuarterLabel,
-                fiscalWeekCode,
-                weekLabel,
-                weekEndingLabel,
-                filterLob,
-                filterPlatform,
-
-                pairKey,
-                pairLabel,
-                pairSortOrder,
-
-                displaySize,
-                displaySizeLabel,
-                displayLimit,
-                displaySizeSortOrder,
-
-                rowBreakoutType,
-                rowBreakoutValue,
-                rowDisplayRank,
-                isRowOtherBucket,
-                rowCurrentValue,
-                rowComparisonValue,
-                configuredRowPairTopN,
-
-                columnBreakoutType,
-                columnBreakoutValue,
-                columnDisplayRank,
-                isColumnOtherBucket,
-                columnCurrentValue,
-                columnComparisonValue,
-                configuredColumnPairTopN,
-
-                rawCellMemberCount,
-
-                metricName,
-                metricLabel,
-                metricDescription,
-                metricKind,
-                displayFormat,
-                changeUnit,
-                metricSortOrder,
-                metricDefinitionStatus,
-
-                comparisonType,
-                comparisonLabel,
-                comparisonSortOrder,
-                comparisonStartDate,
-                comparisonEndDate,
-                comparisonWeekCount,
-                comparisonDataAvailable,
-                comparisonWindowComplete,
-
-                currentNumerator,
-                currentDenominator,
-                comparisonNumerator,
-                comparisonDenominator,
-                currentValue,
-                comparisonValue,
-                absoluteDeltaValue,
-                changeValue,
-                changeDirection,
-
-                toplineCurrentValue,
-                toplineComparisonValue,
-                impactOnToplineValue,
-                impactOnToplineUnit,
-
-                cellImpactRankWithinPair,
-                cellImpactRankAcrossPairs,
-
-                peerSetValue,
-                peerSetAbsoluteDeltaValue,
-                peerSetChangeValue,
-                peerSetDataAvailable,
-
-                thisWeekDataAvailable,
-                goldProcessedAt
-            FROM finalRanked
+                g.targetWeekStartDate,g.targetWeekEndDate,c.fiscalYear,g.fiscalQuarterLabel,g.fiscalWeekCode,g.weekLabel,c.weekEndingLabel,
+                g.filterLob,g.filterPlatform,
+                g.pairKey,pc.pairLabel,pc.sortOrder AS pairSortOrder,pc.isPrebuiltPair,
+                g.rowBreakoutType,rb.breakoutLabel AS rowBreakoutLabel,coalesce(g.rowBreakoutValue,'(not set)') AS rowBreakoutValue,
+                g.columnBreakoutType,cb.breakoutLabel AS columnBreakoutLabel,coalesce(g.columnBreakoutValue,'(not set)') AS columnBreakoutValue,
+                g.metricName,CASE WHEN g.metricName='nbv' THEN 'Total UPV' ELSE mc.metricLabel END AS metricLabel,
+                mc.metricDescription,mc.metricKind,mc.displayFormat,mc.changeUnit,mc.sortOrder AS metricSortOrder,
+                g.thisWeekNumerator,g.thisWeekDenominator,g.priorWeekNumerator,g.priorWeekDenominator,
+                g.fourWeekTrendNumerator,g.fourWeekTrendDenominator,g.sameWeekLyNumerator,g.sameWeekLyDenominator,
+                g.peerSetNumerator,g.peerSetDenominator,
+                g.thisWeekDataAvailable,g.priorWeekDataAvailable,g.fourWeekTrendWeekCount,g.sameWeekLyDataAvailable
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long g
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static pc ON pc.pairKey=g.pairKey AND pc.isActive
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static rb ON rb.breakoutType=g.rowBreakoutType AND rb.isActive AND rb.isExploreDimension
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static cb ON cb.breakoutType=g.columnBreakoutType AND cb.isActive AND cb.isExploreDimension
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+            LEFT JOIN prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static c ON c.weekStartDate=g.targetWeekStartDate
+            WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
         ),
-        ranked AS (
+        rowAgg AS(
+            SELECT targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,rowBreakoutValue,metricKind,
+                   sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator
+            FROM base
+            GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,rowBreakoutValue,metricKind
+        ),
+        rowValues AS(
+            SELECT *,CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS rowCurrentValue
+            FROM rowAgg
+        ),
+        rowRanks AS(
+            SELECT *,row_number() OVER(
+                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName
+                ORDER BY rowCurrentValue DESC NULLS LAST,rowBreakoutValue
+            ) AS rowRank
+            FROM rowValues
+        ),
+        columnAgg AS(
+            SELECT targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,columnBreakoutValue,metricKind,
+                   sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator
+            FROM base
+            GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName,columnBreakoutValue,metricKind
+        ),
+        columnValues AS(
+            SELECT *,CASE WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS columnCurrentValue
+            FROM columnAgg
+        ),
+        columnRanks AS(
+            SELECT *,row_number() OVER(
+                PARTITION BY targetWeekStartDate,filterLob,filterPlatform,pairKey,metricName
+                ORDER BY columnCurrentValue DESC NULLS LAST,columnBreakoutValue
+            ) AS columnRank
+            FROM columnValues
+        ),
+        mapped AS(
             SELECT
-                m.*,
-                row_number() OVER (
+                b.*,
+                CASE WHEN r.rowRank<=100 THEN b.rowBreakoutValue ELSE '(Other)' END AS displayRowBreakoutValue,
+                CASE WHEN k.columnRank<=100 THEN b.columnBreakoutValue ELSE '(Other)' END AS displayColumnBreakoutValue
+            FROM base b
+            JOIN rowRanks r
+              ON r.targetWeekStartDate=b.targetWeekStartDate AND r.filterLob=b.filterLob AND r.filterPlatform=b.filterPlatform
+             AND r.pairKey=b.pairKey AND r.metricName=b.metricName AND r.rowBreakoutValue=b.rowBreakoutValue
+            JOIN columnRanks k
+              ON k.targetWeekStartDate=b.targetWeekStartDate AND k.filterLob=b.filterLob AND k.filterPlatform=b.filterPlatform
+             AND k.pairKey=b.pairKey AND k.metricName=b.metricName AND k.columnBreakoutValue=b.columnBreakoutValue
+        ),
+        bucketAgg AS(
+            SELECT
+                targetWeekStartDate,max(targetWeekEndDate) AS targetWeekEndDate,max(fiscalYear) AS fiscalYear,
+                max(fiscalQuarterLabel) AS fiscalQuarterLabel,max(fiscalWeekCode) AS fiscalWeekCode,
+                max(weekLabel) AS weekLabel,max(weekEndingLabel) AS weekEndingLabel,
+                filterLob,filterPlatform,pairKey,max(pairLabel) AS pairLabel,max(pairSortOrder) AS pairSortOrder,
+                max(CASE WHEN isPrebuiltPair THEN 1 ELSE 0 END)=1 AS isPrebuiltPair,
+                max(rowBreakoutType) AS rowBreakoutType,max(rowBreakoutLabel) AS rowBreakoutLabel,
+                displayRowBreakoutValue AS rowBreakoutValue,
+                max(columnBreakoutType) AS columnBreakoutType,max(columnBreakoutLabel) AS columnBreakoutLabel,
+                displayColumnBreakoutValue AS columnBreakoutValue,
+                metricName,max(metricLabel) AS metricLabel,max(metricDescription) AS metricDescription,
+                max(metricKind) AS metricKind,max(displayFormat) AS displayFormat,max(changeUnit) AS changeUnit,max(metricSortOrder) AS metricSortOrder,
+                sum(thisWeekNumerator) AS currentNumerator,sum(thisWeekDenominator) AS currentDenominator,
+                sum(priorWeekNumerator) AS priorWeekNumerator,sum(priorWeekDenominator) AS priorWeekDenominator,
+                sum(fourWeekTrendNumerator) AS fourWeekNumerator,sum(fourWeekTrendDenominator) AS fourWeekDenominator,
+                max(fourWeekTrendWeekCount) AS fourWeekWeekCount,
+                sum(sameWeekLyNumerator) AS lastYearNumerator,sum(sameWeekLyDenominator) AS lastYearDenominator,
+                sum(peerSetNumerator) AS peerSetNumerator,sum(peerSetDenominator) AS peerSetDenominator,
+                min(CASE WHEN thisWeekDataAvailable THEN 1 ELSE 0 END)=1 AS currentDataAvailable,
+                min(CASE WHEN priorWeekDataAvailable THEN 1 ELSE 0 END)=1 AS priorWeekDataAvailable,
+                min(CASE WHEN sameWeekLyDataAvailable THEN 1 ELSE 0 END)=1 AS lastYearDataAvailable
+            FROM mapped
+            GROUP BY targetWeekStartDate,filterLob,filterPlatform,pairKey,displayRowBreakoutValue,displayColumnBreakoutValue,metricName
+        ),
+        cellValues AS(
+            SELECT
+                *,
+                CASE WHEN NOT currentDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(currentNumerator,currentDenominator) ELSE currentNumerator END AS currentValue,
+                CASE WHEN NOT priorWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(priorWeekNumerator,priorWeekDenominator) ELSE priorWeekNumerator END AS priorWeekValue,
+                fourWeekWeekCount>0 AS fourWeekDataAvailable,
+                fourWeekWeekCount=4 AS fourWeekWindowComplete,
+                CASE WHEN fourWeekWeekCount<=0 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekNumerator,fourWeekDenominator)
+                     ELSE try_divide(fourWeekNumerator,cast(fourWeekWeekCount AS DOUBLE)) END AS fourWeekValue,
+                CASE WHEN NOT lastYearDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(lastYearNumerator,lastYearDenominator) ELSE lastYearNumerator END AS lastYearValue,
+                CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator) ELSE peerSetNumerator END AS peerSetValue,
+                CASE WHEN metricKind='ratio' THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
+                     ELSE peerSetNumerator IS NOT NULL END AS peerSetDataAvailable
+            FROM bucketAgg
+        ),
+        cellDeltas AS(
+            SELECT
+                *,
+                currentValue-priorWeekValue AS priorWeekAbsoluteDiffValue,
+                CASE WHEN currentValue IS NULL OR priorWeekValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN 100D*(currentValue-priorWeekValue)
+                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D) END AS priorWeekChangeRaw,
+                currentValue-fourWeekValue AS fourWeekAbsoluteDiffValue,
+                CASE WHEN currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN 100D*(currentValue-fourWeekValue)
+                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D) END AS fourWeekChangeRaw,
+                currentValue-lastYearValue AS lastYearAbsoluteDiffValue,
+                CASE WHEN currentValue IS NULL OR lastYearValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN 100D*(currentValue-lastYearValue)
+                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,lastYearValue)-1D) END AS lastYearChangeRaw,
+                currentValue-peerSetValue AS peerSetAbsoluteDiffValue,
+                CASE WHEN NOT peerSetDataAvailable OR currentValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN 100D*(currentValue-peerSetValue)
+                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,peerSetValue)-1D) END AS peerSetChangeRaw
+            FROM cellValues
+        ),
+        toplineBase AS(
+            SELECT
+                g.targetWeekStartDate,g.filterLob,g.filterPlatform,g.metricName,mc.metricKind,
+                g.thisWeekNumerator,g.thisWeekDenominator,g.priorWeekNumerator,g.priorWeekDenominator,
+                g.fourWeekTrendNumerator,g.fourWeekTrendDenominator,g.sameWeekLyNumerator,g.sameWeekLyDenominator,
+                g.thisWeekDataAvailable,g.priorWeekDataAvailable,g.fourWeekTrendWeekCount,g.sameWeekLyDataAvailable
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+            JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static mc
+              ON mc.metricName=g.metricName AND mc.isActive AND mc.showOnBreakouts
+            WHERE g.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        ),
+        toplineValues AS(
+            SELECT
+                *,
+                CASE WHEN NOT thisWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(thisWeekNumerator,thisWeekDenominator) ELSE thisWeekNumerator END AS toplineCurrentValue,
+                CASE WHEN NOT priorWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(priorWeekNumerator,priorWeekDenominator) ELSE priorWeekNumerator END AS toplinePriorWeekValue,
+                CASE WHEN fourWeekTrendWeekCount<=0 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                     ELSE try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE)) END AS toplineFourWeekValue,
+                CASE WHEN NOT sameWeekLyDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator) ELSE sameWeekLyNumerator END AS toplineLastYearValue
+            FROM toplineBase
+        ),
+        joined AS(
+            SELECT
+                c.*,
+                t.toplineCurrentValue,t.thisWeekDenominator AS toplineCurrentDenominator,
+                t.toplinePriorWeekValue,t.priorWeekDenominator AS toplinePriorWeekDenominator,t.priorWeekDataAvailable AS toplinePriorWeekDataAvailable,
+                t.toplineFourWeekValue,t.fourWeekTrendDenominator AS toplineFourWeekDenominator,t.fourWeekTrendWeekCount AS toplineFourWeekWeekCount,
+                t.toplineLastYearValue,t.sameWeekLyDenominator AS toplineLastYearDenominator,t.sameWeekLyDataAvailable AS toplineLastYearDataAvailable
+            FROM cellDeltas c
+            JOIN toplineValues t
+              ON t.targetWeekStartDate=c.targetWeekStartDate AND t.filterLob=c.filterLob
+             AND t.filterPlatform=c.filterPlatform AND t.metricName=c.metricName
+        ),
+        comparatorExpanded AS(
+            SELECT
+                j.*,'priorWeek' AS comparisonType,'Prior week' AS comparisonLabel,10 AS comparisonSortOrder,
+                j.priorWeekDataAvailable AND j.toplinePriorWeekDataAvailable AS comparisonDataAvailable,
+                j.priorWeekDataAvailable AND j.toplinePriorWeekDataAvailable AS comparisonWindowComplete,
+                j.priorWeekAbsoluteDiffValue AS selectedAbsoluteDiffValue,
+                j.priorWeekNumerator AS selectedComparisonNumerator,
+                j.priorWeekDenominator AS selectedComparisonDenominator,
+                j.toplinePriorWeekValue AS selectedToplineComparisonValue,
+                j.toplinePriorWeekDenominator AS selectedToplineComparisonDenominator
+            FROM joined j
+            UNION ALL
+            SELECT
+                j.*,'fourWeek','4-wk trend',20,
+                j.fourWeekDataAvailable AND j.toplineFourWeekWeekCount>0,
+                j.fourWeekWindowComplete AND j.toplineFourWeekWeekCount=4,
+                j.fourWeekAbsoluteDiffValue,j.fourWeekNumerator,j.fourWeekDenominator,
+                j.toplineFourWeekValue,j.toplineFourWeekDenominator
+            FROM joined j
+            UNION ALL
+            SELECT
+                j.*,'lastYear','Same wk LY',30,
+                j.lastYearDataAvailable AND j.toplineLastYearDataAvailable,
+                j.lastYearDataAvailable AND j.toplineLastYearDataAvailable,
+                j.lastYearAbsoluteDiffValue,j.lastYearNumerator,j.lastYearDenominator,
+                j.toplineLastYearValue,j.toplineLastYearDenominator
+            FROM joined j
+        ),
+        impacts AS(
+            SELECT
+                *,
+                CASE
+                    WHEN NOT comparisonDataAvailable OR selectedAbsoluteDiffValue IS NULL THEN NULL
+                    WHEN metricKind='count' THEN 100D*try_divide(selectedAbsoluteDiffValue,selectedToplineComparisonValue)
+                    WHEN metricKind='ratio' THEN 100D*(
+                        try_divide(currentNumerator,toplineCurrentDenominator)
+                        -try_divide(selectedComparisonNumerator,selectedToplineComparisonDenominator)
+                    )
+                END AS impactOnToplineRaw,
+                CASE WHEN metricKind='count' THEN 'pct' WHEN metricKind='ratio' THEN 'pp' END AS impactOnToplineUnit
+            FROM comparatorExpanded
+        ),
+        ranked AS(
+            SELECT
+                *,
+                row_number() OVER(
                     PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType
-                    ORDER BY
-                        abs(impactOnToplineValue) DESC NULLS LAST,
-                        abs(absoluteDeltaValue) DESC NULLS LAST,
-                        pairKey,rowBreakoutValue,columnBreakoutValue
+                    ORDER BY abs(impactOnToplineRaw) DESC NULLS LAST,abs(selectedAbsoluteDiffValue) DESC NULLS LAST,
+                             pairKey,rowBreakoutValue,columnBreakoutValue
                 ) AS globalIntersectionImpactRank,
-                count(*) OVER (
+                count(*) OVER(
                     PARTITION BY targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType
                 ) AS candidateIntersectionCount
-            FROM crosstabsMatrix m
-            WHERE displaySize='all'
-              AND comparisonDataAvailable
-              AND impactOnToplineValue IS NOT NULL
+            FROM impacts
+            WHERE comparisonDataAvailable AND impactOnToplineRaw IS NOT NULL
+        ),
+        rounded AS(
+            SELECT
+                *,
+                CASE WHEN priorWeekChangeRaw IS NULL THEN NULL WHEN abs(priorWeekChangeRaw)<0.05D THEN 0D ELSE round(priorWeekChangeRaw,1) END AS priorWeekChangeValue,
+                CASE WHEN fourWeekChangeRaw IS NULL THEN NULL WHEN abs(fourWeekChangeRaw)<0.05D THEN 0D ELSE round(fourWeekChangeRaw,1) END AS fourWeekChangeValue,
+                CASE WHEN lastYearChangeRaw IS NULL THEN NULL WHEN abs(lastYearChangeRaw)<0.05D THEN 0D ELSE round(lastYearChangeRaw,1) END AS lastYearChangeValue,
+                CASE WHEN peerSetChangeRaw IS NULL THEN NULL WHEN abs(peerSetChangeRaw)<0.05D THEN 0D ELSE round(peerSetChangeRaw,1) END AS peerSetChangeValue,
+                CASE WHEN impactOnToplineRaw IS NULL THEN NULL WHEN abs(impactOnToplineRaw)<0.05D THEN 0D ELSE round(impactOnToplineRaw,1) END AS impactOnToplineValue
+            FROM ranked
+            WHERE globalIntersectionImpactRank<=100
+        ),
+        formatted AS(
+            SELECT
+                *,
+                CASE
+                    WHEN currentValue IS NULL THEN NULL
+                    WHEN displayFormat='percent' THEN concat(format_number(100D*currentValue,1),'%')
+                    WHEN abs(currentValue)>=1000000000D THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(currentValue)>=1000000D THEN concat(regexp_replace(format_number(currentValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(currentValue)>=1000D THEN concat(regexp_replace(format_number(currentValue/1000D,1),'\\.0$',''),'K')
+                    ELSE format_number(currentValue,0)
+                END AS currentValueDisplay,
+
+                CASE
+                    WHEN priorWeekAbsoluteDiffValue IS NULL THEN NULL
+                    WHEN metricKind='ratio' THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*priorWeekAbsoluteDiffValue,1),'pp')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    ELSE concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(priorWeekAbsoluteDiffValue,0))
+                END AS priorWeekAbsoluteDiffDisplay,
+                CASE WHEN priorWeekChangeValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),'pp')
+                     ELSE concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),'%') END AS priorWeekChangeDisplay,
+
+                CASE
+                    WHEN fourWeekAbsoluteDiffValue IS NULL THEN NULL
+                    WHEN metricKind='ratio' THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*fourWeekAbsoluteDiffValue,1),'pp')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    ELSE concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(fourWeekAbsoluteDiffValue,0))
+                END AS fourWeekAbsoluteDiffDisplay,
+                CASE WHEN fourWeekChangeValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),'pp')
+                     ELSE concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),'%') END AS fourWeekChangeDisplay,
+
+                CASE
+                    WHEN lastYearAbsoluteDiffValue IS NULL THEN NULL
+                    WHEN metricKind='ratio' THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*lastYearAbsoluteDiffValue,1),'pp')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    ELSE concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(lastYearAbsoluteDiffValue,0))
+                END AS lastYearAbsoluteDiffDisplay,
+                CASE WHEN lastYearChangeValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),'pp')
+                     ELSE concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),'%') END AS lastYearChangeDisplay,
+
+                CASE
+                    WHEN peerSetValue IS NULL THEN NULL
+                    WHEN displayFormat='percent' THEN concat(format_number(100D*peerSetValue,1),'%')
+                    WHEN abs(peerSetValue)>=1000000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(peerSetValue)>=1000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(peerSetValue)>=1000D THEN concat(regexp_replace(format_number(peerSetValue/1000D,1),'\\.0$',''),'K')
+                    ELSE format_number(peerSetValue,0)
+                END AS peerSetValueDisplay,
+                CASE
+                    WHEN peerSetAbsoluteDiffValue IS NULL THEN NULL
+                    WHEN metricKind='ratio' THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*peerSetAbsoluteDiffValue,1),'pp')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    ELSE concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(peerSetAbsoluteDiffValue,0))
+                END AS peerSetAbsoluteDiffDisplay,
+                CASE WHEN peerSetChangeValue IS NULL THEN NULL
+                     WHEN changeUnit='pp' THEN concat(CASE WHEN peerSetChangeValue>0D THEN '+' ELSE '' END,format_number(peerSetChangeValue,1),'pp')
+                     ELSE concat(CASE WHEN peerSetChangeValue>0D THEN '+' ELSE '' END,format_number(peerSetChangeValue,1),'%') END AS peerSetChangeDisplay,
+
+                CASE WHEN impactOnToplineValue IS NULL THEN NULL
+                     WHEN impactOnToplineUnit='pp' THEN concat(CASE WHEN impactOnToplineValue>0D THEN '+' ELSE '' END,format_number(impactOnToplineValue,1),'pp')
+                     ELSE concat(CASE WHEN impactOnToplineValue>0D THEN '+' ELSE '' END,format_number(impactOnToplineValue,1),'%') END AS impactOnToplineDisplay
+            FROM rounded
         )
+
         SELECT
-            targetWeekStartDate,
-            targetWeekEndDate,
-            fiscalQuarterLabel,
-            fiscalWeekCode,
-            weekLabel,
-            weekEndingLabel,
-            filterLob,
-            filterPlatform,
-
-            pairKey,
-            pairLabel,
-            pairSortOrder,
-
-            rowBreakoutType,
-            rowBreakoutValue,
-            rowDisplayRank,
-            isRowOtherBucket,
-            columnBreakoutType,
-            columnBreakoutValue,
-            columnDisplayRank,
-            isColumnOtherBucket,
+            targetWeekStartDate,targetWeekEndDate,fiscalYear,fiscalQuarterLabel,fiscalWeekCode,weekLabel,weekEndingLabel,
+            filterLob,filterPlatform,
+            pairKey,pairLabel,pairSortOrder,isPrebuiltPair,
+            rowBreakoutType,rowBreakoutLabel,rowBreakoutValue,
+            columnBreakoutType,columnBreakoutLabel,columnBreakoutValue,
             concat(rowBreakoutValue,' × ',columnBreakoutValue) AS intersectionLabel,
+            metricName,metricLabel,metricDescription,metricKind,displayFormat,changeUnit,metricSortOrder,
+            comparisonType,comparisonLabel,comparisonSortOrder,comparisonDataAvailable,comparisonWindowComplete,
+            globalIntersectionImpactRank,
+            globalIntersectionImpactRank<=5 AS isTop5,
+            globalIntersectionImpactRank<=10 AS isTop10,
+            globalIntersectionImpactRank<=18 AS isTop18,
+            globalIntersectionImpactRank<=100 AS isTop100,
+            candidateIntersectionCount,18 AS resultLimit,
+            'defaultAll' AS exploreFilterMode,
+            FALSE AS supportsArbitraryExploreFilters,
+            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS dynamicFilterSourceObject,
+            currentValue,currentValueDisplay,
+            priorWeekDataAvailable,priorWeekAbsoluteDiffValue,priorWeekAbsoluteDiffDisplay,priorWeekChangeValue,priorWeekChangeDisplay,
+            fourWeekDataAvailable,fourWeekWindowComplete,fourWeekAbsoluteDiffValue,fourWeekAbsoluteDiffDisplay,fourWeekChangeValue,fourWeekChangeDisplay,
+            lastYearDataAvailable,lastYearAbsoluteDiffValue,lastYearAbsoluteDiffDisplay,lastYearChangeValue,lastYearChangeDisplay,
+            peerSetDataAvailable,peerSetValue,peerSetValueDisplay,peerSetAbsoluteDiffValue,peerSetAbsoluteDiffDisplay,peerSetChangeValue,peerSetChangeDisplay,
+            impactOnToplineValue,impactOnToplineDisplay,impactOnToplineUnit,
+            v_processedAt AS appProcessedAt
+        FROM formatted;
 
-            metricName,
-            metricLabel,
-            metricDescription,
-            metricKind,
-            displayFormat,
-            changeUnit,
-            metricSortOrder,
-
-            comparisonType,
-            comparisonLabel,
-            comparisonSortOrder,
-            comparisonStartDate,
-            comparisonEndDate,
-            comparisonWeekCount,
-            comparisonDataAvailable,
-            comparisonWindowComplete,
-
-            currentValue,
-            comparisonValue,
-            absoluteDeltaValue,
-            changeValue,
-            changeDirection,
-
-            toplineCurrentValue,
-            toplineComparisonValue,
-            impactOnToplineValue,
-            impactOnToplineUnit,
-
-            cellImpactRankWithinPair,
-            globalIntersectionImpactRank AS cellImpactRankAcrossPairs,
-
-            coalesce(globalIntersectionImpactRank<=5,FALSE) AS isTop5,
-            coalesce(globalIntersectionImpactRank<=10,FALSE) AS isTop10,
-            coalesce(globalIntersectionImpactRank<=18,FALSE) AS isTop18,
-            coalesce(globalIntersectionImpactRank<=100,FALSE) AS isTop100,
-
-            candidateIntersectionCount,
-            greatest(candidateIntersectionCount-100,0) AS allSuppressedIntersectionCount,
-            100 AS allSelectionLimit,
-            'All = Top 100 globally ranked intersections. Row/column (Other) buckets are already scoped within each pair; no cross-pair numeric Other is created.' AS allSelectionRule,
-
-            peerSetValue,
-            peerSetChangeValue,
-            peerSetDataAvailable,
-
-            goldProcessedAt
-        FROM ranked
-    )
-    SELECT
-        targetWeekStartDate AS weekStartDate,
-        targetWeekEndDate AS weekEndDate,
-        fiscalQuarterLabel,
-        fiscalWeekCode,
-        weekLabel,
-        weekEndingLabel,
-        filterLob,
-        filterPlatform,
-
-        pairKey,
-        pairLabel,
-        pairSortOrder,
-        rowBreakoutType,
-        rowBreakoutValue,
-        rowDisplayRank,
-        isRowOtherBucket,
-        columnBreakoutType,
-        columnBreakoutValue,
-        columnDisplayRank,
-        isColumnOtherBucket,
-        intersectionLabel,
-
-        metricName,
-        metricLabel,
-        metricDescription,
-        metricKind,
-        displayFormat,
-        changeUnit,
-        metricSortOrder,
-
-        comparisonType,
-        comparisonLabel,
-        comparisonSortOrder,
-        comparisonStartDate,
-        comparisonEndDate,
-        comparisonWeekCount,
-        comparisonDataAvailable,
-        comparisonWindowComplete,
-
-        currentValue,
-        comparisonValue,
-        absoluteDeltaValue,
-        changeValue,
-        changeDirection,
-
-        toplineCurrentValue,
-        toplineComparisonValue,
-        impactOnToplineValue,
-        impactOnToplineUnit,
-
-        cellImpactRankWithinPair,
-        cellImpactRankAcrossPairs,
-        isTop5,
-        isTop10,
-        isTop18,
-        isTop100,
-
-        candidateIntersectionCount,
-        allSuppressedIntersectionCount,
-        allSelectionLimit,
-        allSelectionRule,
-
-        peerSetValue,
-        peerSetChangeValue,
-        peerSetDataAvailable,
-
-        'defaultAll' AS exploreFilterMode,
-        FALSE AS supportsArbitraryExploreFilters,
-        'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS dynamicFilterSourceObject,
-
-        goldProcessedAt
-    FROM rankedPairsDirect
-) appResult;
-
-        -- --------------------------------------------------------------------
-        -- 6. Success metadata
-        -- --------------------------------------------------------------------
         SELECT
             'SUCCESS' AS status,
             v_weekFrom AS rebuiltWeekStartFrom,
             v_weekTo AS rebuiltWeekStartTo,
             v_weekEndTo AS latestWeekEndDate,
-            CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            'priorWeek | fourWeek | lastYear' AS supportedComparisons,
+            18 AS uiResultLimit,
+            'defaultAll' AS exploreFilterMode,
+            FALSE AS supportsArbitraryExploreFilters,
+            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide' AS dynamicFilterSourceObject,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long' AS targetObject,
             v_processedAt AS appProcessedAt;
-
     END IF;
 END;
 
--- Development examples:
---
+-- ============================================================================
+-- DEVELOPMENT / DEPLOYMENT EXAMPLES
+-- ============================================================================
+
+-- ONE-TIME MIGRATION:
+-- The physical contract changed from the older long/default-fast-path version.
+-- Run separately before the first execution of this redesigned procedure:
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long;
+
 -- Preflight only:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
---     p_asOfDate       => DATE '2026-09-28',
---     p_weeksToRebuild => 1,
---     p_validateOnly   => TRUE
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>1,
+--     p_validateOnly=>TRUE
 -- );
---
--- Load / rebuild:
+
+-- Rebuild latest week:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
---     p_asOfDate       => DATE '2026-09-28',
---     p_weeksToRebuild => 1,
---     p_validateOnly   => FALSE
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>1,
+--     p_validateOnly=>FALSE
 -- );
+
+-- Backfill / rebuild multiple weeks:
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>12,
+--     p_validateOnly=>FALSE
+-- );
+
+-- Default screenshot query:
+-- The selected comparator controls global rank + Impact on topline.
+-- Prior week / 4-wk / Same wk LY columns remain simultaneously visible.
+-- SELECT *
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long
+-- WHERE targetWeekStartDate=DATE '2026-08-09'
+--   AND fiscalQuarterLabel='Q3 2026'
+--   AND filterLob='All'
+--   AND filterPlatform='All'
+--   AND metricName='nbv'
+--   AND comparisonType='fourWeek'
+--   AND isTop18
+-- ORDER BY globalIntersectionImpactRank;
+
+-- "Remaining breakouts" behavior:
+-- Resolve the currently loaded matrix to its canonical sourcePairKey, then exclude it.
+-- Fetch more than 18 before applying the exclusion if needed, then return the first 18.
+-- Example:
+-- SELECT *
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long
+-- WHERE targetWeekStartDate=?
+--   AND metricName=?
+--   AND comparisonType=?
+--   AND globalIntersectionImpactRank<=100
+--   AND pairKey<>?              -- current matrix canonical sourcePairKey
+-- ORDER BY globalIntersectionImpactRank
+-- LIMIT 18;
+
+-- Supported persisted/default-fast-path filters:
+--   fiscalYear / fiscalQuarterLabel
+--   targetWeekStartDate
+--   filterLob
+--   filterPlatform
+--   metricName
+--   comparisonType = priorWeek | fourWeek | lastYear
+--   current matrix pair exclusion via pairKey<>?
+--
+-- Arbitrary Explore Add-filter / Quick-filter states:
+--   DO NOT query this persisted table.
+--   Query prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide instead.
+--   Apply all Explore filters FIRST, then aggregate pair intersections, calculate
+--   priorWeek / fourWeek / lastYear, rank by selected-comparator impact, and return Top 18.
+--   This keeps Prospects / Base users / Mobile web / Paid Search / Shop & browse /
+--   Freedom Explorer / In cart and custom filters mathematically correct.
+
+-- Validate duplicate physical grain; expected result = 0 rows:
+-- SELECT
+--     targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType,
+--     pairKey,rowBreakoutValue,columnBreakoutValue,count(*) AS rowCount
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreRankedPairs_long
+-- GROUP BY
+--     targetWeekStartDate,filterLob,filterPlatform,metricName,comparisonType,
+--     pairKey,rowBreakoutValue,columnBreakoutValue
+-- HAVING count(*)>1
+-- ORDER BY rowCount DESC;
+
+-- Peer set:
+-- Peer-set display fields are persisted, but the UI must suppress them whenever
+-- peerSetDataAvailable=FALSE. Do not fabricate peer-set values until analytical
+-- Gold contains an approved peer-set definition.
