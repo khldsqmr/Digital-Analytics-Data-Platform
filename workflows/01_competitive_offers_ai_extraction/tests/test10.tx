@@ -9184,6 +9184,45 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
 GROUP BY targetWeekStartDate,comparisonType,displaySize
 ORDER BY targetWeekStartDate,comparisonType,displaySize;
+output:
+targetWeekStartDate	comparisonType	displaySize	rows	metrics	orientedPairs
+2026-09-13	fourWeek	all	105430	12	72
+2026-09-13	fourWeek	top10	17966	12	72
+2026-09-13	fourWeek	top5	10774	12	72
+2026-09-13	fourWeek	top8	15220	12	72
+2026-09-13	lastYear	all	105430	12	72
+2026-09-13	lastYear	top10	17966	12	72
+2026-09-13	lastYear	top5	10774	12	72
+2026-09-13	lastYear	top8	15220	12	72
+2026-09-13	priorWeek	all	105430	12	72
+2026-09-13	priorWeek	top10	17966	12	72
+2026-09-13	priorWeek	top5	10774	12	72
+2026-09-13	priorWeek	top8	15220	12	72
+2026-09-20	fourWeek	all	111718	12	72
+2026-09-20	fourWeek	top10	18544	12	72
+2026-09-20	fourWeek	top5	10968	12	72
+2026-09-20	fourWeek	top8	15678	12	72
+2026-09-20	lastYear	all	111718	12	72
+2026-09-20	lastYear	top10	18544	12	72
+2026-09-20	lastYear	top5	10968	12	72
+2026-09-20	lastYear	top8	15678	12	72
+2026-09-20	priorWeek	all	111718	12	72
+2026-09-20	priorWeek	top10	18544	12	72
+2026-09-20	priorWeek	top5	10968	12	72
+2026-09-20	priorWeek	top8	15678	12	72
+2026-09-27	fourWeek	all	111836	12	72
+2026-09-27	fourWeek	top10	18586	12	72
+2026-09-27	fourWeek	top5	11018	12	72
+2026-09-27	fourWeek	top8	15758	12	72
+2026-09-27	lastYear	all	111836	12	72
+2026-09-27	lastYear	top10	18586	12	72
+2026-09-27	lastYear	top5	11018	12	72
+2026-09-27	lastYear	top8	15758	12	72
+2026-09-27	priorWeek	all	111836	12	72
+2026-09-27	priorWeek	top10	18586	12	72
+2026-09-27	priorWeek	top5	11018	12	72
+2026-09-27	priorWeek	top8	15758	12	72
+
 
 SELECT
     pairKey,
@@ -9194,4 +9233,77 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long
 GROUP BY pairKey,rowBreakoutType,columnBreakoutType,isSwappedOrientation
 ORDER BY rows DESC;
-
+output:
+pairKey	rowBreakoutType	columnBreakoutType	isSwappedOrientation	rows
+pageCategory__channel	pageCategory	channel	true	236034
+channel__pageCategory	channel	pageCategory	false	236034
+device__pageCategory	device	pageCategory	true	71982
+pageCategory__device	pageCategory	device	false	71982
+buyFlowStep__pageCategory	buyFlowStep	pageCategory	true	63900
+pageCategory__buyFlowStep	pageCategory	buyFlowStep	false	63900
+pageCategory__authState	pageCategory	authState	true	51717
+authState__pageCategory	authState	pageCategory	false	51717
+channel__device	channel	device	false	35079
+device__channel	device	channel	true	35079
+channel__buyFlowStep	channel	buyFlowStep	false	30891
+buyFlowStep__channel	buyFlowStep	channel	true	30891
+authState__channel	authState	channel	true	27258
+channel__authState	channel	authState	false	27258
+entryPage__pageCategory	entryPage	pageCategory	false	25902
+pageCategory__entryPage	pageCategory	entryPage	true	25902
+device__buyFlowStep	device	buyFlowStep	false	16611
+buyFlowStep__device	buyFlowStep	device	true	16611
+utmSource__pageCategory	utmSource	pageCategory	true	13716
+pageCategory__utmSource	pageCategory	utmSource	false	13716
+utmMedium__pageCategory	utmMedium	pageCategory	true	13716
+utmCampaign__pageCategory	utmCampaign	pageCategory	true	13716
+pageCategory__utmMedium	pageCategory	utmMedium	false	13716
+pageCategory__utmCampaign	pageCategory	utmCampaign	false	13716
+authState__buyFlowStep	authState	buyFlowStep	true	12312
+buyFlowStep__authState	buyFlowStep	authState	false	12312
+device__authState	device	authState	true	11220
+authState__device	authState	device	false	11220
+entryPage__channel	entryPage	channel	true	11037
+channel__entryPage	channel	entryPage	false	11037
+entryPage__device	entryPage	device	true	5832
+device__entryPage	device	entryPage	false	5832
+entryPage__buyFlowStep	entryPage	buyFlowStep	false	5721
+buyFlowStep__entryPage	buyFlowStep	entryPage	true	5721
+channel__utmMedium	channel	utmMedium	false	5616
+utmMedium__channel	utmMedium	channel	true	5616
+utmCampaign__channel	utmCampaign	channel	true	5616
+channel__utmCampaign	channel	utmCampaign	false	5616
+channel__utmSource	channel	utmSource	true	5616
+utmSource__channel	utmSource	channel	false	5616
+entryPage__authState	entryPage	authState	true	3888
+authState__entryPage	authState	entryPage	false	3888
+device__utmCampaign	device	utmCampaign	true	2916
+utmSource__buyFlowStep	utmSource	buyFlowStep	false	2916
+utmMedium__device	utmMedium	device	true	2916
+device__utmSource	device	utmSource	false	2916
+buyFlowStep__utmMedium	buyFlowStep	utmMedium	true	2916
+buyFlowStep__utmCampaign	buyFlowStep	utmCampaign	true	2916
+utmCampaign__buyFlowStep	utmCampaign	buyFlowStep	false	2916
+utmMedium__buyFlowStep	utmMedium	buyFlowStep	false	2916
+buyFlowStep__utmSource	buyFlowStep	utmSource	true	2916
+utmSource__device	utmSource	device	true	2916
+utmCampaign__device	utmCampaign	device	false	2916
+device__utmMedium	device	utmMedium	false	2916
+authState__utmMedium	authState	utmMedium	true	2160
+utmMedium__authState	utmMedium	authState	false	2160
+authState__utmSource	authState	utmSource	false	2160
+utmCampaign__authState	utmCampaign	authState	true	2160
+utmSource__authState	utmSource	authState	true	2160
+authState__utmCampaign	authState	utmCampaign	false	2160
+entryPage__utmCampaign	entryPage	utmCampaign	false	864
+entryPage__utmSource	entryPage	utmSource	false	864
+utmSource__entryPage	utmSource	entryPage	true	864
+utmMedium__entryPage	utmMedium	entryPage	true	864
+utmCampaign__entryPage	utmCampaign	entryPage	true	864
+entryPage__utmMedium	entryPage	utmMedium	false	864
+utmMedium__utmCampaign	utmMedium	utmCampaign	false	432
+utmCampaign__utmSource	utmCampaign	utmSource	true	432
+utmSource__utmMedium	utmSource	utmMedium	false	432
+utmSource__utmCampaign	utmSource	utmCampaign	false	432
+utmMedium__utmSource	utmMedium	utmSource	true	432
+utmCampaign__utmMedium	utmCampaign	utmMedium	true	432
