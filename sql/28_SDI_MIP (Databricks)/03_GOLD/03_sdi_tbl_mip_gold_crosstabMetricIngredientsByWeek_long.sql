@@ -1,121 +1,215 @@
 -- ============================================================================
+
 -- FILE  : 03_sdi_sp_mip_gold_crosstabMetricIngredientsByWeek_long.sql
+
 -- LAYER : GOLD
+
 -- PURPOSE:
+
 --   Gold crosstab comparison ingredients by target week, supported pair cell, and metric.
+
 --
+
 -- DESIGN:
+
 --   - One top-level CREATE OR REPLACE PROCEDURE per file.
+
 --   - No run/job ID dependency during development.
+
 --   - Uses control VIEWS, not persisted control tables.
+
 --   - Validates required sources/control metadata before target creation/write.
+
 --   - p_validateOnly = TRUE performs preflight only.
+
 --   - Default as-of date is the previous Pacific calendar day.
+
 --   - Comparison percentages are NOT persisted; Gold stores ingredients.
+--   - Every isActive row in sdi_vw_mip_control_crosstabCatalog_static is generated here.
+--   - isPrebuiltPair is App/UI metadata only and is intentionally not persisted in analytical Gold.
+
 -- ============================================================================
 
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_crosstabMetricIngredientsByWeek_long(
+
     IN p_asOfDate       DATE    DEFAULT NULL,
+
     IN p_weeksToRebuild INT     DEFAULT 1,
+
     IN p_validateOnly   BOOLEAN DEFAULT FALSE
+
 )
+
 LANGUAGE SQL
+
 SQL SECURITY INVOKER
+
 MODIFIES SQL DATA
+
 COMMENT 'Gold crosstab comparison ingredients by target week, supported pair cell, and metric.'
+
 AS
+
 BEGIN
+
     DECLARE v_asOfDate DATE DEFAULT coalesce(
+
         p_asOfDate,
+
         date_add(
+
             to_date(from_utc_timestamp(current_timestamp(), 'America/Los_Angeles')),
+
             -1
+
         )
+
     );
 
     DECLARE v_weekTo DATE;
+
     DECLARE v_weekFrom DATE;
+
     DECLARE v_weekEndTo DATE;
+
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
     -- ------------------------------------------------------------------------
+
     -- 1. Parameter validation
+
     -- ------------------------------------------------------------------------
+
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild < 1 THEN
+
         SIGNAL SQLSTATE '45000'
+
             SET MESSAGE_TEXT = 'p_weeksToRebuild must be >= 1.';
+
     END IF;
 
     SET v_weekTo = date_add(v_asOfDate, 1 - dayofweek(v_asOfDate));
+
     SET v_weekFrom = date_add(v_weekTo, -7 * (p_weeksToRebuild - 1));
+
     SET v_weekEndTo = date_add(v_weekTo, 6);
 
     -- ------------------------------------------------------------------------
+
     -- 2. Source/control preflight
+
     -- ------------------------------------------------------------------------
+
     IF NOT EXISTS (
+
         SELECT 1
+
         FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly a
+
         JOIN prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly x
+
           ON x.weekStartDate = a.weekStartDate
+
          AND x.visitorId = a.visitorId
+
         WHERE a.weekStartDate BETWEEN v_weekFrom AND v_weekTo
+
         LIMIT 1
+
     ) THEN
+
         SIGNAL SQLSTATE '45000'
+
             SET MESSAGE_TEXT = 'Weekly Silver attribute/action visitor keys have no joined rows for the requested Gold target-week range.';
+
     END IF;
 
     IF NOT EXISTS (
+
         SELECT 1
+
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static
+
         WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
+
         LIMIT 1
+
     ) THEN
+
         SIGNAL SQLSTATE '45000'
+
             SET MESSAGE_TEXT = 'Fiscal calendar control view has no rows for the requested Gold target-week range.';
+
     END IF;
 
     IF NOT EXISTS (
+
         SELECT 1
+
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
+
         WHERE isActive
+
         LIMIT 1
+
     ) THEN
+
         SIGNAL SQLSTATE '45000'
+
             SET MESSAGE_TEXT = 'Metric catalog control view has no active metrics.';
+
     END IF;
 
     IF NOT EXISTS (
+
         SELECT 1
+
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
+
         WHERE isActive
+
         LIMIT 1
+
     ) THEN
+
         SIGNAL SQLSTATE '45000'
+
             SET MESSAGE_TEXT = 'Crosstab catalog control view has no active pairs.';
+
     END IF;
 
+    -- ------------------------------------------------------------------------
+
+    -- 3. Validation-only mode
 
     -- ------------------------------------------------------------------------
-    -- 3. Validation-only mode
-    -- ------------------------------------------------------------------------
+
     IF p_validateOnly THEN
 
         SELECT
+
             'VALIDATION_ONLY' AS status,
+
             v_weekFrom AS rebuildWeekStartFrom,
+
             v_weekTo AS rebuildWeekStartTo,
+
             v_weekEndTo AS latestWeekEndDate,
+
             CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+
             'No Gold table was created or modified.' AS message;
 
     ELSE
 
         -- --------------------------------------------------------------------
+
         -- 4. Create target only after preflight succeeds
+
         -- --------------------------------------------------------------------
+
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long (
+
 targetWeekStartDate         DATE,
 
   targetWeekEndDate           DATE,
@@ -181,14 +275,21 @@ targetWeekStartDate         DATE,
   peerSetDenominator          DOUBLE,
 
   goldProcessedAt             TIMESTAMP
+
         )
+
         USING DELTA
+
         CLUSTER BY (targetWeekStartDate, pairKey, metricName)
+
         COMMENT 'Gold Crosstabs: supported attributed breakout-pair cells with safe comparison ingredients.';
 
         -- --------------------------------------------------------------------
+
         -- 5. Rebuild requested target-week range
+
         -- --------------------------------------------------------------------
+
         WITH visitorWeek AS (
 
             SELECT
@@ -606,8 +707,11 @@ targetWeekStartDate         DATE,
                OR h.weekStartDate = t.sameWeekLastYearStartDate
 
           )
+
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+
         REPLACE WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+
         SELECT
 
             t.weekStartDate AS targetWeekStartDate,
@@ -845,28 +949,49 @@ targetWeekStartDate         DATE,
             ly.denominatorValue;
 
         SELECT
+
             'SUCCESS' AS status,
+
             v_weekFrom AS rebuiltWeekStartFrom,
+
             v_weekTo AS rebuiltWeekStartTo,
+
             v_weekEndTo AS latestWeekEndDate,
+
             CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long' AS targetObject;
 
     END IF;
+
 END;
 
 -- Development examples:
+
 --
+
 -- Preflight:
+
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_crosstabMetricIngredientsByWeek_long(
+
 --     p_asOfDate       => DATE '2026-09-28',
+
 --     p_weeksToRebuild => 1,
+
 --     p_validateOnly   => TRUE
+
 -- );
+
 --
+
 -- Load/rebuild:
+
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_crosstabMetricIngredientsByWeek_long(
+
 --     p_asOfDate       => DATE '2026-09-28',
+
 --     p_weeksToRebuild => 1,
+
 --     p_validateOnly   => FALSE
+
 -- );
