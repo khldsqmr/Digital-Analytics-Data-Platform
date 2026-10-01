@@ -1872,3 +1872,6 @@ END;
 -- ============================================================================
 
 -- DESCRIBE DETAIL prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsMatrix_long;
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'CREATE': extra input 'CREATE'. SQLSTATE: 42601
