@@ -198,3 +198,65 @@ END;
 -- priorWeek / fourWeek / lastYear comparisons require the corresponding historical weeks
 -- to exist in this App base. Seed enough history before production; routine runs can then
 -- continue with a small p_weeksToRebuild window.
+-- ============================================================================
+-- DEVELOPMENT / DEPLOYMENT EXAMPLES
+-- ============================================================================
+
+-- Preflight only:
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>1,
+--     p_validateOnly=>TRUE
+-- );
+
+-- Rebuild latest week:
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>1,
+--     p_validateOnly=>FALSE
+-- );
+
+-- Backfill / rebuild multiple weeks:
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreBase_wide(
+--     p_asOfDate=>DATE '2026-09-28',
+--     p_weeksToRebuild=>12,
+--     p_validateOnly=>FALSE
+-- );
+
+-- Validate loaded week counts:
+-- SELECT weekStartDate,count(*) AS rows
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide
+-- GROUP BY weekStartDate
+-- ORDER BY weekStartDate DESC;
+
+-- Validate canonical grain; expected result = 0 rows:
+-- SELECT weekStartDate,sessionId,pageCategory,count(*) AS rowCount
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide
+-- GROUP BY weekStartDate,sessionId,pageCategory
+-- HAVING count(*)>1
+-- ORDER BY rowCount DESC;
+
+-- Explore axis options:
+-- SELECT breakoutType,breakoutLabel,sortOrder
+-- FROM prdrzranalytics.lab42.sdi_vw_mip_control_breakoutCatalog_static
+-- WHERE isActive
+--   AND isExploreDimension
+--   AND breakoutType IN(
+--       'channel','authState','prospectVsBase','entryPage','pageCategory',
+--       'device','utmSource','utmMedium','utmCampaign','buyFlowStep',
+--       'campaign','platform'
+--   )
+-- ORDER BY sortOrder;
+
+-- LOB filter example:
+-- WHERE array_contains(lobList,?)
+
+-- Comparator history requirement:
+-- priorWeek requires the prior reporting week to be present.
+-- fourWeek requires the previous four reporting weeks to be present for a complete window.
+-- lastYear requires the same fiscal/reporting week last year to be present.
+-- Seed sufficient history before production; normal incremental runs can remain small afterward.
+
+-- IMPORTANT EXPLORE RULE:
+-- Apply user filters FIRST, then aggregate selected Rows × Columns, then rank and apply Top-N.
+-- Do not precompute every possible Explore filter / Rows / Columns combination in this table.
