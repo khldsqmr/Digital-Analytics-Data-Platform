@@ -11909,3 +11909,31 @@ targetWeekStartDate	targetWeekEndDate	fiscalYear	fiscalQuarterLabel	fiscalWeekCo
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W14	W14 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	channel__utmMedium	Channel × UTM medium	60	false	channel	Channel	Mobile App	utmMedium	UTM medium	(not set)	Mobile App × (not set)	vrChats	VR Chat	Unique NB visitors with event_chat_engage = 1.	count	number	pct	80	0	0	true	0	0	0	null	null	flat	0	0.0%	603	620	true	false	7714.5	-7714.5	-7.7K	-100	-100.0%	down	-3.5	-3.5%	78	620	false	null	null	null	null	null	unavailable	null	null	null	0	false	null	null	null	null	null	null	pct	25	100	18	defaultAll	false	prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide	2026-10-01T22:11:39.408+00:00
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W14	W14 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	utmSource__channel	UTM source × Channel	50	true	utmSource	UTM source	(not set)	channel	Channel	(not set)	(not set) × (not set)	vrChats	VR Chat	Unique NB visitors with event_chat_engage = 1.	count	number	pct	80	0	0	true	0	0	0	null	null	flat	0	0.0%	616	620	true	false	24034.5	-24034.5	-24K	-100	-100.0%	down	-10.8	-10.8%	46	620	false	null	null	null	null	null	unavailable	null	null	null	0	false	null	null	null	null	null	null	pct	25	100	18	defaultAll	false	prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide	2026-10-01T22:11:39.408+00:00
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W14	W14 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	utmSource__channel	UTM source × Channel	50	true	utmSource	UTM source	(not set)	channel	Channel	Mobile App	(not set) × Mobile App	vrChats	VR Chat	Unique NB visitors with event_chat_engage = 1.	count	number	pct	80	0	0	true	0	0	0	null	null	flat	0	0.0%	619	620	true	false	7714.5	-7714.5	-7.7K	-100	-100.0%	down	-3.5	-3.5%	79	620	false	null	null	null	null	null	unavailable	null	null	null	0	false	null	null	null	null	null	null	pct	25	100	18	defaultAll	false	prdrzranalytics.lab42.sdi_tbl_mip_gold_appExploreBase_wide	2026-10-01T22:11:39.408+00:00
+
+
+SELECT
+    weekStartDate,
+    COUNT(*) AS visitors,
+    COUNT_IF(utmSource IS NULL OR trim(utmSource)='') AS missingUtmSource,
+    ROUND(100.0*COUNT_IF(utmSource IS NULL OR trim(utmSource)='')/COUNT(*),2) AS missingUtmSourcePct,
+    COUNT_IF(utmMedium IS NULL OR trim(utmMedium)='') AS missingUtmMedium,
+    ROUND(100.0*COUNT_IF(utmMedium IS NULL OR trim(utmMedium)='')/COUNT(*),2) AS missingUtmMediumPct,
+    COUNT_IF(utmCampaign IS NULL OR trim(utmCampaign)='') AS missingUtmCampaign,
+    ROUND(100.0*COUNT_IF(utmCampaign IS NULL OR trim(utmCampaign)='')/COUNT(*),2) AS missingUtmCampaignPct,
+    COUNT_IF(entryPage IS NULL OR trim(entryPage)='') AS missingEntryPage,
+    ROUND(100.0*COUNT_IF(entryPage IS NULL OR trim(entryPage)='')/COUNT(*),2) AS missingEntryPagePct
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+GROUP BY weekStartDate
+ORDER BY weekStartDate DESC;
+
+
+SELECT
+    targetWeekStartDate,
+    MIN(fourWeekTrendWeekCount) AS minFourWeekCount,
+    MAX(fourWeekTrendWeekCount) AS maxFourWeekCount,
+    COUNT_IF(priorWeekDataAvailable) AS priorWeekRows,
+    COUNT_IF(sameWeekLyDataAvailable) AS lastYearRows,
+    COUNT_IF(peerSetNumerator IS NOT NULL) AS peerSetRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+GROUP BY targetWeekStartDate
+ORDER BY targetWeekStartDate DESC;
