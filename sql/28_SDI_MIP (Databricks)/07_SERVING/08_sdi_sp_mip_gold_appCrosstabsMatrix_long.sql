@@ -1755,3 +1755,39 @@ END;
 --     rowBreakoutValue,
 --     columnBreakoutValue
 -- HAVING count(*)>1;
+
+
+[DELTA_CLUSTERING_COLUMN_MISSING_STATS] Liquid clustering requires clustering columns to have stats. Couldn't find clustering column(s) 'displaySize' in stats schema:
+root
+ |-- targetWeekStartDate: date (nullable = true)
+ |-- targetWeekEndDate: date (nullable = true)
+ |-- fiscalYear: integer (nullable = true)
+ |-- fiscalQuarterLabel: string (nullable = true)
+ |-- fiscalWeekCode: string (nullable = true)
+ |-- weekLabel: string (nullable = true)
+ |-- weekEndingLabel: string (nullable = true)
+ |-- filterLob: string (nullable = true)
+ |-- filterPlatform: string (nullable = true)
+ |-- sourcePairKey: string (nullable = true)
+ |-- sourcePairLabel: string (nullable = true)
+ |-- sourcePairSortOrder: integer (nullable = true)
+ |-- pairKey: string (nullable = true)
+ |-- pairLabel: string (nullable = true)
+ |-- isSwappedOrientation: boolean (nullable = true)
+ |-- rowBreakoutType: string (nullable = true)
+ |-- rowBreakoutLabel: string (nullable = true)
+ |-- rowBreakoutSortOrder: integer (nullable = true)
+ |-- columnBreakoutType: string (nullable = true)
+ |-- columnBreakoutLabel: string (nullable = true)
+ |-- columnBreakoutSortOrder: integer (nullable = true)
+ |-- metricName: string (nullable = true)
+ |-- metricLabel: string (nullable = true)
+ |-- metricDescription: string (nullable = true)
+ |-- metricKind: string (nullable = true)
+ |-- displayFormat: string (nullable = true)
+ |-- changeUnit: string (nullable = true)
+ |-- metricSortOrder: integer (nullable = true)
+ |-- comparisonType: string (nullable = true)
+ |-- comparisonLabel: string (nullable = true)
+ |-- comparisonSortOrder: integer (nullable = true)
+ |-- comparisonDataAvailable: boolean (nullable = true)
