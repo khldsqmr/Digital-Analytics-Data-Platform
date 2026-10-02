@@ -10802,3 +10802,52 @@ output:
 sessions	missingSsfEntry	recoverableFromFirstHit	recoverablePct
 7258473	4802224	2	0.00
 
+
+
+
+SELECT
+    routine_name,
+    CASE WHEN lower(routine_definition) LIKE '%row_number%' THEN 'OLD VERSION - ROW_NUMBER STILL PRESENT'
+         WHEN lower(routine_definition) LIKE '%scopedlinks%' THEN 'UPDATED VERSION'
+         ELSE 'CHECK DEFINITION'
+    END AS deployedVersion
+FROM prdrzranalytics.information_schema.routines
+WHERE routine_schema='lab42'
+  AND routine_name='sdi_sp_mip_silver_detailsPerHit_daily';
+
+
+SELECT
+    event_date,
+    source_table,
+    COUNT(*) AS hitRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
+WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28'
+GROUP BY event_date,source_table
+ORDER BY event_date,hitRows DESC;
+
+SELECT
+    eventDate,
+    COUNT(*) AS silverRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-15' AND DATE '2026-09-28'
+GROUP BY eventDate
+ORDER BY eventDate;
+
+Databricks Query Profile:
+Scan rows / bytes: Bronze hits
+Scan rows / bytes: Bronze links
+Join type
+Shuffle read
+Shuffle write
+Spill to disk
+Output rows
+Output/write bytes
+Total task time
+
+
+SELECT
+    COUNT(*) AS rows,
+    COUNT(DISTINCT row_identity_hash) AS distinctHashes,
+    COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily
+WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28';
