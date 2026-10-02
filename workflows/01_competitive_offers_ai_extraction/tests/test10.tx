@@ -9473,3 +9473,175 @@ session_start_date	sessions	missingEntryPath	missingEntryPathPct	missingEntryFul
 2026-09-17	6499519	4107796	63.20	4107790	63.20	0	0	0
 2026-09-16	6980959	4686101	67.13	4686091	67.13	0	0	0
 2026-09-15	12203371	9844693	80.67	9844684	80.67	0	0	0
+
+
+
+SELECT
+    table_name,
+    ordinal_position,
+    column_name,
+    data_type
+FROM prd_dbi_analytics.information_schema.columns
+WHERE table_schema='silver_digital_interactions'
+  AND table_name IN(
+      'unified_digital_interactions',
+      'session_event_fact',
+      'session_summary_fact'
+  )
+  AND (
+      lower(column_name) RLIKE 'utm|campaign|cmp|cid|referr|refer|landing|entry|url|query|source|medium|channel|tracking|click|adobe'
+  )
+ORDER BY table_name,ordinal_position;
+
+SELECT
+    COUNT(*) AS pageViewHits,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%utm_source=%') AS urlUtmSource,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%utm_medium=%') AS urlUtmMedium,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%utm_campaign=%') AS urlUtmCampaign,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%cmpid=%') AS urlCmpid,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%cmpid=%'
+          OR lower(coalesce(page_url_full,'')) LIKE '%cmpid=%') AS urlCmpAny,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%cid=%') AS urlCid,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%refsource=%') AS urlRefsource,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%gclid=%') AS urlGclid,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%msclkid=%') AS urlMsclkid,
+    COUNT_IF(lower(coalesce(page_url_full,'')) LIKE '%fbclid=%') AS urlFbclid,
+    COUNT_IF(external_campaign_code IS NOT NULL AND trim(external_campaign_code)<>'') AS hasExternalCampaignCode,
+    COUNT_IF(channel_name IS NOT NULL AND trim(channel_name)<>'') AS hasChannelName
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24'
+  AND coalesce(try_cast(event_page_view AS INT),0)>0;
+
+
+SELECT
+    COUNT(*) AS pageViewHits,
+    COUNT_IF(lower(coalesce(page_url_path,'')) LIKE '%cmpid=%') AS pathCmpid,
+    COUNT_IF(lower(coalesce(page_name,'')) LIKE '%cmpid=%') AS pageNameCmpid,
+    COUNT_IF(lower(coalesce(full_page_name,'')) LIKE '%cmpid=%') AS fullPageNameCmpid,
+    COUNT_IF(lower(coalesce(link_name,'')) LIKE '%cmpid=%') AS linkNameCmpid,
+    COUNT_IF(lower(coalesce(page_url_path,'')) LIKE '%refsource=%') AS pathRefsource,
+    COUNT_IF(lower(coalesce(page_name,'')) LIKE '%refsource=%') AS pageNameRefsource,
+    COUNT_IF(lower(coalesce(full_page_name,'')) LIKE '%refsource=%') AS fullPageNameRefsource
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24'
+  AND coalesce(try_cast(event_page_view AS INT),0)>0;
+
+
+SELECT
+    event_timestamp_utc,
+    session_id,
+    channel_name,
+    external_campaign_code,
+    page_url_full,
+    page_url_path,
+    page_name,
+    full_page_name,
+    link_name
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+  ON s.row_identity_hash=u.row_identity_hash
+ AND s.event_date=u.event_date
+ AND s.source_table=u.source_table
+WHERE u.event_date=DATE '2026-09-24'
+  AND (
+      lower(coalesce(u.page_url_full,'')) RLIKE 'cmpid=|refsource=|utm_|gclid=|msclkid=|fbclid='
+      OR lower(coalesce(u.page_url_path,'')) RLIKE 'cmpid=|refsource=|utm_'
+      OR lower(coalesce(u.page_name,'')) RLIKE 'cmpid=|refsource=|utm_'
+      OR lower(coalesce(u.full_page_name,'')) RLIKE 'cmpid=|refsource=|utm_'
+  )
+LIMIT 200;
+
+
+SELECT
+    channel_name,
+    split_part(external_campaign_code,'_',1) AS token1,
+    split_part(external_campaign_code,'_',2) AS token2,
+    split_part(external_campaign_code,'_',3) AS token3,
+    split_part(external_campaign_code,'_',4) AS token4,
+    split_part(external_campaign_code,'_',5) AS token5,
+    COUNT(*) AS hits
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24'
+  AND external_campaign_code IS NOT NULL
+  AND trim(external_campaign_code)<>''
+GROUP BY
+    channel_name,
+    split_part(external_campaign_code,'_',1),
+    split_part(external_campaign_code,'_',2),
+    split_part(external_campaign_code,'_',3),
+    split_part(external_campaign_code,'_',4),
+    split_part(external_campaign_code,'_',5)
+ORDER BY hits DESC
+LIMIT 500;
+
+
+WITH x AS(
+    SELECT DISTINCT
+        channel_name,
+        external_campaign_code,
+        split_part(external_campaign_code,'_',2) AS token2,
+        split_part(external_campaign_code,'_',3) AS token3,
+        split_part(external_campaign_code,'_',4) AS campaignCode
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date=DATE '2026-09-24'
+      AND external_campaign_code IS NOT NULL
+)
+SELECT
+    x.channel_name,
+    x.token2,
+    x.token3,
+    m.Category,
+    COUNT(*) AS distinctCodes
+FROM x
+LEFT JOIN prdrzranalytics.lab42.dim_marketing_code m
+  ON cast(m.MKT_CODE AS STRING)=x.campaignCode
+GROUP BY x.channel_name,x.token2,x.token3,m.Category
+ORDER BY distinctCodes DESC;
+
+
+WITH firstPageView AS(
+    SELECT
+        l.session_id,
+        min_by(
+            nullif(trim(h.page_url_path),''),
+            h.event_timestamp_utc
+        ) FILTER(
+            WHERE coalesce(try_cast(h.event_page_view AS INT),0)>0
+              AND nullif(trim(h.page_url_path),'') IS NOT NULL
+        ) AS firstHitPagePath,
+        min_by(
+            nullif(trim(h.page_url_full),''),
+            h.event_timestamp_utc
+        ) FILTER(
+            WHERE coalesce(try_cast(h.event_page_view AS INT),0)>0
+              AND nullif(trim(h.page_url_full),'') IS NOT NULL
+        ) AS firstHitPageFull
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions h
+    JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact l
+      ON l.row_identity_hash=h.row_identity_hash
+     AND l.event_date=h.event_date
+     AND l.source_table=h.source_table
+    WHERE h.event_date=DATE '2026-09-24'
+    GROUP BY l.session_id
+)
+SELECT
+    COUNT(*) AS sessions,
+    COUNT_IF(s.entry_page_url_path IS NULL OR trim(s.entry_page_url_path)='') AS missingSsfEntry,
+    COUNT_IF(
+        (s.entry_page_url_path IS NULL OR trim(s.entry_page_url_path)='')
+        AND f.firstHitPagePath IS NOT NULL
+    ) AS recoverableFromFirstHit,
+    ROUND(
+        100.0*COUNT_IF(
+            (s.entry_page_url_path IS NULL OR trim(s.entry_page_url_path)='')
+            AND f.firstHitPagePath IS NOT NULL
+        )
+        /NULLIF(COUNT_IF(s.entry_page_url_path IS NULL OR trim(s.entry_page_url_path)=''),0),
+        2
+    ) AS recoverablePct
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+LEFT JOIN firstPageView f
+  ON f.session_id=s.session_id
+WHERE s.session_start_date=DATE '2026-09-24';
+
+
