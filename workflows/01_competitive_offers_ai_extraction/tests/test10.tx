@@ -10886,3 +10886,4 @@ WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28';
 output:
 rows	distinctHashes	duplicateHashes
 3703561481	3703561481	0
+.
