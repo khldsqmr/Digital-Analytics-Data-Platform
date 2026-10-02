@@ -10814,7 +10814,7 @@ SELECT
 FROM prdrzranalytics.information_schema.routines
 WHERE routine_schema='lab42'
   AND routine_name='sdi_sp_mip_silver_detailsPerHit_daily';
-
+output: No rows returned
 
 SELECT
     event_date,
@@ -10824,6 +10824,34 @@ FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
 WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28'
 GROUP BY event_date,source_table
 ORDER BY event_date,hitRows DESC;
+output:
+event_date	source_table	hitRows
+2026-09-16	t_app_interactions	279586394
+2026-09-16	t_web_interactions	48780536
+2026-09-17	t_app_interactions	254279071
+2026-09-17	t_web_interactions	49592668
+2026-09-18	t_app_interactions	288874578
+2026-09-18	t_web_interactions	54172825
+2026-09-19	t_app_interactions	256948471
+2026-09-19	t_web_interactions	48385521
+2026-09-20	t_app_interactions	224541873
+2026-09-20	t_web_interactions	44712553
+2026-09-21	t_app_interactions	255225373
+2026-09-21	t_web_interactions	51284598
+2026-09-22	t_app_interactions	496075256
+2026-09-22	t_web_interactions	52630461
+2026-09-23	t_app_interactions	299183018
+2026-09-23	t_web_interactions	51284003
+2026-09-24	t_app_interactions	265896458
+2026-09-24	t_web_interactions	50553149
+2026-09-25	t_app_interactions	259078184
+2026-09-25	t_web_interactions	47613383
+2026-09-26	t_app_interactions	221741209
+2026-09-26	t_web_interactions	41318615
+2026-09-27	t_app_interactions	214905069
+2026-09-27	t_web_interactions	38724829
+2026-09-28	t_app_interactions	244742319
+2026-09-28	t_web_interactions	50762880
 
 SELECT
     eventDate,
@@ -10832,17 +10860,21 @@ FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 WHERE eventDate BETWEEN DATE '2026-09-15' AND DATE '2026-09-28'
 GROUP BY eventDate
 ORDER BY eventDate;
-
-Databricks Query Profile:
-Scan rows / bytes: Bronze hits
-Scan rows / bytes: Bronze links
-Join type
-Shuffle read
-Shuffle write
-Spill to disk
-Output rows
-Output/write bytes
-Total task time
+output:
+eventDate	silverRows
+2026-09-16	328366930
+2026-09-17	303871739
+2026-09-18	343047403
+2026-09-19	305333992
+2026-09-20	269254426
+2026-09-21	306509971
+2026-09-22	548705717
+2026-09-23	350467021
+2026-09-24	316449607
+2026-09-25	306691567
+2026-09-26	263059824
+2026-09-27	253629898
+2026-09-28	295505199
 
 
 SELECT
@@ -10851,3 +10883,6 @@ SELECT
     COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily
 WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28';
+output:
+rows	distinctHashes	duplicateHashes
+3703561481	3703561481	0
