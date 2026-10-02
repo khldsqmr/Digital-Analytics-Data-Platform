@@ -11350,3 +11350,109 @@ output:
 sessions	hasEntryUrl	hasQueryString	hasAnyUtm	hasCmpid	hasRefsource
 7258966	2456289	0	0	0	0
 
+
+
+Digital Data Agent - Enterprise Data Lake
+Analytics Engineering · T-Mobile
+?
+Refresh
+Light
+Silver
+UNIFIED_DIGITAL_INTERACTIONS
+Coverage Gap
+Bronze → Silver
+Segment Translator
+Adobe → SQL
+Jira Ticket
+Create a JIRA Ticket
+Board
+EDL JIRA Board
+Tech Specs
+TWDA Confluence
+Governance
+Issues & Quality
+Bronze
+Raw · Restricted
+Eddy
+Eddy
+Ready
+.md
+PDF
+clear
+where can i get the utm source, utm medium and utm campaign from?
+03:25 AM
+Eddy
+search silver dict
+run sql
+There is no dedicated `utm_source` / `utm_medium` / `utm_campaign` field in the Silver UNIFIED_DIGITAL_INTERACTIONS table. T‑Mobile uses its own campaign tracking conventions instead of standard UTM parameters. Here's what you have and how to work with it:
+
+Closest equivalents in Silver
+Standard UTM	Silver equivalent	Notes
+utm_source / utm_medium	channel_name + channel_id	Derived post-UNION from cmpid / referrer / page URL query string, aligned with Adobe Marketing Channel processing order.
+utm_campaign (external/paid)	external_campaign_code	Captures the paid-media campaign tracking code from the landing URL (cdl_param_extCampaign / data_param_extCampaign). Both channels.
+utm_campaign (internal)	clicked_icid, deeplink_icid, campaign_list	Internal Campaign IDs (ICIDs) for on-site/in-app placements.
+Full URL with raw query string	page_url_full	Web only — you can parse_url(…, 'QUERY') to extract raw UTM params if they're there.
+If you need raw UTM params (web)
+You'd have to parse them yourself from the URL:
+
+<br>I checked the last 7 days of web traffic — zero rows contain `utm_` parameters in the URL. T‑Mobile.com doesn't use UTM params; it uses its own cmpid / icid / extCampaign conventions.
+
+Recommended fields to use instead
+Paid/external attribution → external_campaign_code (both channels)
+Marketing channel bucket → channel_name, channel_id (derived, aligned with Adobe Marketing Channel rules)
+Internal campaigns / placements → clicked_icid, deeplink_icid, campaign_list
+MoEngage personalization → moe_campaign_name, moe_cid, moe_audience_name
+Adobe Classic Campaign (email) → ac_campaign_id, ac_broad_log_id
+All of these live in `BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS`.
+
+Want me to show a sample of channel_name + external_campaign_code values to see how your traffic breaks down?
+
+03:25 AMcopy
+Generate SQL ▼
+👍
+👎
+🚩
+but most of them empty. Can you check and let me know which url related column is full?
+03:26 AM
+Eddy
+search silver dict
+run sql
+Let me check null rates for all URL-related columns in Silver over a recent window.Now let me check actual fill rates on these URL-related columns across the last 7 days of PST data.Here's the fill rate reality for URL-related columns over the last 7 days (2.26B rows total). The split by channel matters a lot:
+
+Overall fill rate (both channels combined)
+Column	Fill %	Notes
+page_name	96.2%	✅ Best overall — populated on both app and web
+channel_name	26.4%	Derived marketing channel bucket
+page_url_full	14.1%	Web only (NULL on app by design)
+page_url_path	14.1%	Web only
+page_referrer	14.1%	Web only in practice
+deeplink_url	3.2%	App only, and only on deep-link entry events
+external_campaign_code	1.8%	Only on paid-media landings
+link_url	0.1%	Only on web link-click events
+Split by channel — the real picture
+Column	📱 App (1.94B rows)	🌐 Web (319M rows)
+page_url_full	0.0%	99.9%
+page_url_path	0.0%	99.9%
+page_referrer	0.0%	99.9%
+page_name	95.6%	99.9%
+channel_name	23.2%	45.6%
+external_campaign_code	0.2%	11.9%
+deeplink_url	3.8%	0.0%
+link_url	0.0%	0.4%
+Takeaways
+`page_name` is the only URL-ish column that's essentially always filled on both channels (~96% overall, 99.9% on web). Use it as your primary page identifier.
+For web traffic, page_url_full, page_url_path, and page_referrer are ~100% filled — use these when you need the raw URL or to parse query params.
+For app traffic, there is no URL column equivalent — the app isn't web, so there's no page_url_full. Use page_name + screen_name + deeplink_url (when applicable).
+Low fill on `external_campaign_code` and `channel_name` isn't a bug — those only populate when the visitor landed via a tracked campaign or an attributable channel.
+Want me to show the top page_url_full values on web, or break down what populates channel_name when it is filled?
+
+03:26 AMcopy
+Generate SQL ▼
+👍
+👎
+🚩
+Ask about schemas, coverage, or data quality…
+
+
+Shift+Enter for newline · powered by claude-opus-4-7
+
