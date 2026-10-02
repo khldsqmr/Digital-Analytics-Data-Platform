@@ -10904,7 +10904,9 @@ SELECT
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date=DATE '2026-09-24'
   AND coalesce(try_cast(event_page_view AS INT),0)>0;
-
+output:
+pageViewHits	pageNameUtmSource	pageNameUtmMedium	pageNameUtmCampaign	fullPageNameUtmSource	fullPageNameUtmMedium	fullPageNameUtmCampaign	hasAttributeCmpid	hasExternalCampaignCode
+78597596	12426	11297	11273	12428	11299	11275	461994	2072227
 
 WITH x AS(
     SELECT
@@ -10938,7 +10940,9 @@ SELECT
     SUM(hasExternalCampaignCode) AS sessionsWithExternalCampaignCode,
     ROUND(100.0*SUM(hasExternalCampaignCode)/COUNT(*),2) AS externalCampaignCodePct
 FROM x;
-
+output:
+sessions	sessionsWithUtmSource	utmSourcePct	sessionsWithUtmMedium	utmMediumPct	sessionsWithUtmCampaign	utmCampaignPct	sessionsWithAttributeCmpid	attributeCmpidPct	sessionsWithExternalCampaignCode	externalCampaignCodePct
+7300406	10009	0.14	9247	0.13	9227	0.13	395129	5.41	1288777	17.65
 
 SELECT
     COUNT(*) AS hits,
@@ -10952,7 +10956,9 @@ SELECT
     COUNT_IF(page_referrer IS NOT NULL AND trim(page_referrer)<>'') AS pageReferrer
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date=DATE '2026-09-24';
-
+output:
+hits	attributeCmpid	clickedIcid	deeplinkIcid	attributeClickedIcid	attributeDeepLinkIcid	acCampaignId	moeCampaignName	pageReferrer
+316597198	634754	1642046	30210	1193426	30210	16262	12174263	50595044
 
 SELECT
     channel_name,
@@ -10977,7 +10983,208 @@ WHERE event_date=DATE '2026-09-24'
       OR nullif(trim(moe_campaign_name),'') IS NOT NULL
   )
 LIMIT 200;
-
+output:
+channel_name	attribute_cmpid	external_campaign_code	clicked_icid	deeplink_icid	attribute_clicked_icid	attribute_deep_link_icid	ac_campaign_id	moe_campaign_name	page_referrer	page_name	full_page_name
+null	null	null	MovieTicket-Tue	null	null	null	null	null	REDACTED	Hub	TMO | Account : Benefits : Hub
+Natural Search	null	null	MGPO_TMO_P_5GNETWORK_3PRU5WWIB34G2EHMJ34920	null	null	null	null	null	REDACTED	Get the Latest T-Mobile Apps	TMO | Marketing : Landing Page : Get the Latest T-Mobile Apps
+null	null	null	Netflix-SWA-SOC	null	null	null	null	null	REDACTED	Hub	TMO | Account : Benefits : Hub
+null	null	null	Shop in store mode	null	null	null	null	null	REDACTED	Cell Phones	TMO Concierge | Shop : Browse : Cell Phones
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Cart	TFB | SFDC : Shop : Cart
+SMS	null	MGPO_SS_C_26PPTQSNRS_F78285BCAFBD8FB1151382	MGPO_TMO_C_26PPTQSNRS_F78285BCAFBD8FB147063	null	null	null	null	null	REDACTED	 	TMO | Home : INVALID :  
+null	null	null	MGPO_TMO_U_26PPI18PBY_871862O6S01508195547M	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MTPR_MTW_U_26MTA37FRE_155103727479T73251PO3	null	null	null	null	null	REDACTED	40period	MbyT | Marketing : Deals : 40period
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_P_24Q4APPLTV_C70D3329893BA51243539	null	null	null	null	null	REDACTED	Benefits	TMO | Marketing : Landing Page : Benefits
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_40027952_144127667708_	psbrand_hero_byod	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	MTPR_MTW_U_25MTR25PTA_DBB55A3584C37E0943197	null	null	null	null	null	REDACTED	Phone Plans	MbyT | Marketing : Landing Page : Phone Plans
+null	null	null	MTPR_MTW_U_18TMOTUES_72A84FB673A2B31E47095	null	null	null	null	null	REDACTED	Start	MbyT | My Account : Login : Start
+Natural Search	null	null	MGPO_TMO_C_26TMOMM_EE785AF7270A052046817	null	null	null	null	null	REDACTED	Travel Benefits	TMO | Marketing : Landing Page : Travel Benefits
+Natural Search	null	null	MGPO_TMO_U_26PPI18PBY_7P0893025928AG3797975	null	null	null	null	null	REDACTED	Deals Hub	TMO | Marketing : Offers : Deals Hub
+Natural Search	null	null	TMM-26MTA37FRE	null	null	null	null	null	REDACTED	Metro by T-Mobile 1619 N Valley Mills Dr	MbyT | Store : Business Detail : Metro by T-Mobile 1619 N Valley Mills Dr
+null	null	null	MGPR_MTW_U_EVGUNL5G50_A88D7D9899ED082B41421	null	null	null	null	null	REDACTED	Connect Phone Plans	T-Mo Prepaid | Shop : Browse : Connect Phone Plans
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_26741626_135032613545_810593119880	psbrand_hero_byod	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+Natural Search	null	null	MGPO_TMO_P_25PPSUTMIL_8B747C9EB5D80DEE45214	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+Natural Search	null	null	WMD_TM_JUMPLFCYCL_OV5WMKBTZSR1184	null	null	null	null	null	REDACTED	JUMP Upgrade	TMO | Marketing : Offers : JUMP Upgrade
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+Online Video	null	MGPO_OV_P_26PP250RSN_YT	MGPO_TMO_P_25PPSUTMIL_8B747C9EB5D80DEE45214	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_P_EVGRNDLS_FBD5B082B0D0569941212	null	null	null	null	null	REDACTED	Deals Hub	TMO | Marketing : Offers : Deals Hub
+Paid Search: Non-Brand	null	HEIS_PG_P_26HSIAR4NP_12041581_199337865355_824277997190	HEIS_ISW_U_24HMENET_5E132E168196F61042346	null	null	null	null	null	REDACTED	Home	TMO | HINT : Home : Home
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_U_26PPFREXPA_23140R3690571DE777964	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_C_5GNETWORK_7874BD378567495C40880	null	null	null	null	null	REDACTED	Hub	TMO | Account : Benefits : Hub
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_U_5GNETWORK_K62GOXP6NLHTQ4FR32586	null	null	null	null	null	REDACTED	5G & 4G LTE Coverage Map	TMO | Coverage : Network : 5G & 4G LTE Coverage Map
+null	null	null	Keep Your Numebr	null	null	null	null	null	REDACTED	Apple iPhone 18 Pro	MbyT | Shop : Cell Phone Detail : Apple iPhone 18 Pro
+null	null	null	Add new authorized user	null	null	null	null	null	REDACTED	User Roles	TMO | Account : Settings : User Roles
+null	null	null	Plans	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	MGPO_TMO_P_24VIPSAVCL_6D11675515A455F039102	null	null	null	null	null	REDACTED	Cell Phone Plans	TMO | Shop : Plan : Cell Phone Plans
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+Display	null	MGPO_DS_P_26PPI18PBY_451940362_650460770_264446869_36048781	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	Apply promo code	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_40027952_144127667708_	psbrand_hero_phone	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_26741626_135032613545_810593119880	psbrand_hero_phone	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	Plans	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+Paid Search: Non-Brand	null	MGPO_PG_P_26PPFREXPA_121436814_199101281908_819897176347	MGPO_TMO_P_26TMOMM_EE785AF7270A052046919	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_P_26PPBYO720_249N9263MB88155634934	null	null	null	null	null	REDACTED	Bring Your Own Phone	TMO | Shop : Browse : Bring Your Own Phone
+Paid Search: Non-Brand	null	MTPR_PG_P_25MTRIP16E_75626111_199333517746_825047877314	MTPR_MWB_U_26MTI18PNP_L33184K824H2362604059	null	null	null	null	null	REDACTED	Apple iPhone Deals	MbyT | Marketing : Offers : Apple iPhone Deals
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Cart	TFB | SFDC : Shop : Cart
+Natural Search	null	null	MGPR_MTW_U_EVTMOPREPD_3F1BE1C5C94EB7F642326	null	null	null	null	null	REDACTED	Connect Home	T-Mo Prepaid | Home : Home : Connect Home
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_26741626_135032613545_810593119880	psbrand_hero_phone	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61042346	null	null	null	null	null	REDACTED	Home	TMO | HINT : Home : Home
+null	null	null	HEIS_ISW_P_HMEINTRNET_10B494896EA5D6A141710	null	null	null	null	null	REDACTED	Phone Home Internet Bundle	TMO | Shop : Plans : Phone Home Internet Bundle
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+SMS	null	HEIS_SS_C_HINTCSTRET_AFAFA23D514D497A149847	null	null	null	null	6a7e32505a6baf58868bbc06_F_T_SMS_AB_0_P_0_TIME_2026-09-24 22:03:13.855862_UEI_1790022694050_UED_55_FL_O_L_0	null	REDACTED	Connect Your Devices	TMO | Support : HINT : Connect Your Devices
+null	null	null	MGPO_TMO_U_26PPFREXPA_6397M223421E516B92575	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+null	null	null	New Customer	null	null	null	null	null	REDACTED	Apple iPhone 17 Pro	MbyT | Shop : Cell Phone Detail : Apple iPhone 17 Pro
+Natural Search	null	null	MGPO_TMO_U_26PPI18PBY_1G5K59927M41395779210	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MTPR_MTW_U_25MTRSGA15_8C4B39B5E7AFFE3443858	null	null	null	null	null	REDACTED	Deals Hub	MbyT | Marketing : Offers : Deals Hub
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_P_EVGRNPSTPD_78F146C86569D56246075	null	null	null	null	null	REDACTED	How To Join Us	TMO | Marketing : Landing Page : How To Join Us
+null	null	null	MGPO_TMO_U_26PPI18PBY_4I19276144729391446FX	null	null	null	null	null	REDACTED	Base Customer Offers	TMO | Shop : Browse : Base Customer Offers
+Direct	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Cart	TFB | SFDC : Shop : Cart
+null	null	null	Get a new number	null	null	null	null	null	REDACTED	Galaxy A17 5G	INVALID | Shop : Cell Phone Detail : Galaxy A17 5G
+Natural Search	null	null	MGPO_TMO_U_26PPI17NOT_0O728885371306ZK16897	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_P_24IP4L25JL_037E1B92B0458F4D43924	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+Display	null	MGPO_DS_P_26PPI18PBY_DG	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	MTPR_MTW_U_26MTRSGA11_C8D3192C96DA863E46124	null	null	null	null	null	REDACTED	Prepaid Device Data Plan Options	MbyT | Marketing : Landing Page : Prepaid Device Data Plan Options
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review	TMO | Benefits : Benefit Hub : Activation Status Review
+null	null	null	Plans	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+Online Video	null	MGPO_OV_P_26NTBPLTFM_YT	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_U_26PPI18PBY_9L86146F41219U3838050	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+Natural Search	null	null	MGPO_SP_C_PROJCT10MM_84944DMLEX10AHO130255	null	null	null	null	null	REDACTED	Home	TMO | Brand : Project 10 Million : Home
+Natural Search	null	null	MTPR_MTW_U_MTI17EBTF_464962D10516AD8846148	null	null	null	null	null	REDACTED	Metro Home	MbyT | Home : Home : Metro Home
+Natural Search	null	null	MGPO_TMO_U_26PPI18PBY_9L86146F41219U3838050	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MTPR_MTW_U_26MTNIP16E_95E80AC48351261E45357	null	null	null	null	null	REDACTED	Apple iPhone Deals	MbyT | Marketing : Offers : Apple iPhone Deals
+null	null	null	Get a new number	null	null	null	null	null	REDACTED	iPhone 18 Pro	INVALID | Shop : Cell Phone Detail : iPhone 18 Pro
+Paid Search: Brand	null	MTPR_PB_P_26MTIP18NP_55541513_188462617172_824897590299	MTPR_MTW_U_25MTOEMAPW_BCE8CBB49F6F87A144985	null	null	null	null	null	REDACTED	Apple iPhone Deals	MbyT | Marketing : Offers : Apple iPhone Deals
+Natural Search	null	null	MGPO_TMO_U_26PPI18PBY_4I19276144729391446FX	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_P_26TMOMM_EE785AF7270A052046916	null	null	null	null	null	REDACTED	Membership Hub	TMO | Resources : Landing Page : Membership Hub
+Paid Search: Non-Brand	null	MGPO_PG_P_26PPFREXPA_321759311246_191126091055_819856804539	MGPO_TMO_U_26PPFREXPA_6397M223421E516B92575	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+Natural Search	null	null	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+Paid Search: Non-Brand	null	MTPR_PG_P_26MTA37FR_10619985258_148866311938_817233580248	MTPR_MTW_U_25MTTCLK32_CFE03D75EEBD9E8A44332	null	null	null	null	null	REDACTED	40period	MbyT | Marketing : Deals : 40period
+SMS	null	MGPO_SS_U_SVCPRD_4E6513C8088D5D48135876	MGPO_TMO_U_26PPI18PBY_1G5K59927M41395779210	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	null	null	null	null	DIS|GM|PAS|Q320|Essence|	null	REDACTED	Metro Home	MbyT | Home : Home : Metro Home
+null	null	null	New Customer	null	null	null	null	null	REDACTED	Samsung Galaxy A17 5G	MbyT | Shop : Cell Phone Detail : Samsung Galaxy A17 5G
+On Device	null	MTPR_OD_C_MTAPSOSBYD_B12D2072D1AFA0E2132137	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones	MbyT | Shop : Browse : Cell Phones
+null	null	null	MGPO_TMO_U_MYTMOAPP_5E76C40D4DA40AF037687	null	null	null	null	null	REDACTED	Get the Latest T-Mobile Apps	TMO | Marketing : Landing Page : Get the Latest T-Mobile Apps
+Paid Search: Brand	null	MTPR_PB_P_26MTIP18NP_317534853745_145377959457_825154541661	MTPR_MTW_U_25MTOEMAPW_BCE8CBB49F6F87A144985	null	null	null	null	null	REDACTED	Apple iPhone Deals	MbyT | Marketing : Offers : Apple iPhone Deals
+null	null	null	Netflix-SWA-SOC	null	null	null	null	null	REDACTED	Hub	TMO | Account : Benefits : Hub
+Paid Search: Non-Brand	null	MTPR_PG_P_EVGRNSMSG_1228690563021_202271958470_819675600673	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones : Samsung	MbyT | Shop : Browse : Cell Phones : Samsung
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MTPR_MTW_U_25MTRSGA15_8C4B39B5E7AFFE3443858	null	null	null	null	null	REDACTED	Metro Home	MbyT | Home : Home : Metro Home
+null	null	null	MGPO_TMO_P_25PPSUTMIL_8B747C9EB5D80DEE45214	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	Plans	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	MGPO_SP_C_PROJCT10MM_84944DMLEX10AHO130255	null	null	null	null	null	REDACTED	Home	TMO | Brand : Project 10 Million : Home
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_26741626_135032613545	MGPO_TMO_U_25PPSUTMIL_8B747C9EB5D80DEE45203	null	null	null	null	null	REDACTED	Deals Hub	TMO | Marketing : Offers : Deals Hub
+Paid Search: Non-Brand	null	MTPR_PG_P_26MTA37FR_16726001277_150586971100_	MTPR_MTW_U_26MTA37FRE_155103727479T73251PO3	null	null	null	null	null	REDACTED	40period	MbyT | Marketing : Deals : 40period
+Affiliate	null	MGPO_AF_P_POSTEVGPZ_2F3E88C2D9EA26AF137360	MGPO_TMO_P_26PPI17MR_FC38D8DE5535A61846121	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_C_MYTMOSHOP_F5D15D95AF5445C537537	null	null	null	null	null	REDACTED	Base Customer Offers	TMO | Shop : Browse : Base Customer Offers
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+Paid Search: Brand	null	MGPO_PB_P_26PPFREXPA_26741626_135032613545_819897176311	MGPO_TMO_P_NETWORK_16X47044667005D18573W	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Next after Terms Review	null	null	null	null	null	REDACTED	Account Credit Profile	Expert Assist | Home : Home : Account Credit Profile
+null	null	null	MTPR_MWB_U_26MT55APUN_38K59725732N635527V04	null	null	null	null	null	REDACTED	Metro Home	MbyT | Home : Home : Metro Home
+null	null	null	Shop in store mode	null	null	null	null	null	REDACTED	Cell Phones	TMO Concierge | Shop : Browse : Cell Phones
+null	null	null	New Customer	null	null	null	null	null	REDACTED	TCL FLIP 4	MbyT | Shop : Cell Phone Detail : TCL FLIP 4
+null	null	null	MGPO_TMO_U_26PPI17EOU_76731292Y747592117Q2K	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones	MbyT | Shop : Browse : Cell Phones
+null	null	null	MGPO_TMO_P_26PPBYO720_249N9263MB88155634934	null	null	null	null	null	REDACTED	Bring Your Own Phone	TMO | Shop : Browse : Bring Your Own Phone
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Keep Your Numebr	null	null	null	null	null	REDACTED	Apple iPhone 16e	MbyT | Shop : Cell Phone Detail : Apple iPhone 16e
+null	null	null	MTPR_MTW_U_MTJEBQZWB_266A7C32306422CD44420	null	null	null	null	null	REDACTED	Deals Hub	MbyT | Marketing : Offers : Deals Hub
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	MGPO_TMO_P_26PPBYO720_249N9263MB88155634934	null	null	null	null	null	REDACTED	Bring Your Own Phone	TMO | Shop : Browse : Bring Your Own Phone
+null	null	null	New Customer	null	null	null	null	null	REDACTED	Apple iPhone 18 Pro	MbyT | Shop : Detalle Teléfono celular : Apple iPhone 18 Pro
+null	null	null	Done	null	null	null	null	null	REDACTED	Add New Authorized User - Success Confirmation	TMO | Account : Settings : Add New Authorized User - Success Confirmation
+null	null	null	MGPR_TMO_U_EVGRNPRPD_F2735A3F5F9CD6A843408	null	null	null	null	null	REDACTED	View All Plans	T-Mo Prepaid | Shop : Browse : View All Plans
+null	null	null	Shop in store mode	null	null	null	null	null	REDACTED	Cell Phones	TMO Concierge | Shop : Browse : Cell Phones
+null	null	null	MGPO_TMO_U_26PPI18PBY_4I19276144729391446FX	null	null	null	null	null	REDACTED	Base Customer Offers	TMO | Shop : Browse : Base Customer Offers
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_40027952_144127667708_	psbrand_hero_benefits	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	MGPO_TMO_U_26PPI18PBY_9L86146F41219U3838050	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	Keep Your Numebr	null	null	null	null	null	REDACTED	Apple iPhone 16e	MbyT | Shop : Cell Phone Detail : Apple iPhone 16e
+null	null	null	MGPO_TMO_U_26PPI18PBY_9007221750F765033A0P9	null	null	null	null	null	REDACTED	Deals Hub	TMO | Marketing : Offers : Deals Hub
+Direct	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Cart	TFB | SFDC : Shop : Cart
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_36339110_135032613545_810593119880	psbrand_hero_phone	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	MTPR_MTW_U_24MTRMRKPP_72E2633F5D3D650542284	null	null	null	null	null	REDACTED	Phone Plans	MbyT | Marketing : Landing Page : Phone Plans
+null	null	null	Shop in store mode	null	null	null	null	null	REDACTED	Cell Phones	TMO Concierge | Shop : Browse : Cell Phones
+Affiliate	null	HEIS_AF_U_26HSIIMPT_CB3DCFE68D310F3A139136	HEIS_ISW_U_24HMENET_5E132E168196F61045627	null	null	null	null	null	REDACTED	Fiber-Optic Home Internet Plans	TMO | T-Fiber : Landing Page : Fiber-Optic Home Internet Plans
+null	null	null	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones : Apple	MbyT | Shop : Browse : Cell Phones : Apple
+null	null	null	MGPO_TMO_P_26PPBYO720_249N9263MB88155634934	null	null	null	null	null	REDACTED	Bring Your Own Phone	TMO | Shop : Browse : Bring Your Own Phone
+null	null	null	MGPO_TMO_U_26PPI18PBY_U37V756512677486786F0	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+Affiliate	null	MGPO_AF_P_POSTEVGPZ_2F3E88C2D9EA26AF137360	MGPO_TMO_P_26TMOMM_EE785AF7270A052046911	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_C_MYTMOSHOP_F5D15D95AF5445C537533	null	null	null	null	null	REDACTED	Base Customer Offers	TMO | Shop : Browse : Base Customer Offers
+null	null	null	Next after Terms Review	null	null	null	null	null	REDACTED	Account Landing	Expert Assist | Home : Home : Account Landing
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Devices	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : PDP : Active Cart
+null	null	null	MGPR_TMO_P_EVGRNPRPD_F2735A3F5F9CD6A843405	null	null	null	null	null	REDACTED	View All Plans	T-Mo Prepaid | Shop : Browse : View All Plans
+null	null	null	Next after Terms Review	null	null	null	null	null	REDACTED	Account Landing	Expert Assist | Home : Home : Account Landing
+null	null	null	Shop in store mode	null	null	null	null	null	REDACTED	Cell Phones : Samsung	TMO | Shop : Browse : Cell Phones : Samsung
+null	null	null	MGPR_TMO_U_EVGRNPRPD_F2735A3F5F9CD6A843416	null	null	null	null	null	REDACTED	View All Plans	T-Mo Prepaid | Shop : Browse : View All Plans
+null	null	null	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones	MbyT | Shop : Browse : Cell Phones
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPR_TMO_P_EVGRNPRPD_F2735A3F5F9CD6A843424	null	null	null	null	null	REDACTED	Prepaid Home	T-Mo Prepaid | Home : Home : Prepaid Home
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Add new authorized user	null	null	null	null	null	REDACTED	User Roles	TMO | Account : Settings : User Roles
+null	null	null	MTPR_MTW_U_MTMMP5G20M_76BF9B45CC5E959B45485	null	null	null	null	null	REDACTED	Phone Plans	MbyT | Marketing : Landing Page : Phone Plans
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_128707971_135032613545_810593119880	psbrand_hero_phone	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	TFB_TMO_P_25AFFDZSCH_EA455CFAA15C22A043490	null	null	null	null	null	REDACTED	Zero Down Phones	TFB | Marketing : Landing Page : Zero Down Phones
+null	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Cart	TFB | SFDC : Shop : Cart
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MTPR_MTW_U_EVGMTRFLEX_B67F64E7D37C379042976	null	null	null	null	null	REDACTED	Deals Hub	MbyT | Marketing : Offers : Deals Hub
+null	null	null	MTPR_MTW_U_MTI17EBTF_464962D10516AD8846148	null	null	null	null	null	REDACTED	Deals Hub	MbyT | Marketing : Offers : Deals Hub
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046314	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Plans	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+Paid Search: Brand	null	MGPO_PB_P_EVGRNPSTPD_26741626_135032613545_810593119880	psbrand_hero_internet	null	null	null	null	null	REDACTED	get-started	TMO | Store : Info Page : get-started : get-started
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_C_23PANTMO_JH5DTXFQH66GAJIT33785	null	null	null	null	null	REDACTED	Pandora Premium	TMO | Marketing : Landing Page : Pandora Premium
+null	null	null	Next after Terms Review	null	null	null	null	null	REDACTED	Account Landing	Expert Assist | Home : Home : Account Landing
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_U_26PPS26OUE_6A98A17F1EA195A646970	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+Paid Search: Brand	null	MGPO_DS_P_26PPH8BYN_DG	MGPO_TMO_U_26PPQ819K_99835Z3V39638E1502633	null	null	null	null	null	REDACTED	Samsung Phone Deals	TMO | Marketing : Offers : Samsung Phone Deals
+null	null	null	Manage add-ons	null	null	null	null	null	REDACTED	Activation Status Review - No Services Available	TMO | Benefits : Benefit Hub : Activation Status Review - No Services Available
+null	null	null	MGPO_TMO_P_26PPBYO720_249N9263MB88155634934	null	null	null	null	null	REDACTED	Bring Your Own Phone	TMO Concierge | Shop : Browse : Bring Your Own Phone
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+Natural Search	null	null	MTPR_MTW_U_26MTN4TF5G_239AB63EEB07F1DA45358	null	null	null	null	null	REDACTED	Deals Hub	MbyT | Marketing : Offers : Deals Hub
+null	null	null	MGPO_TMO_C_26TMOMM_EE785AF7270A052047082	null	null	null	null	null	REDACTED	Travel Benefits	TMO | Marketing : Landing Page : Travel Benefits
+null	null	null	Apply promo code	null	null	null	null	null	REDACTED	Active Cart	TMO | Shop : Cart : Active Cart
+null	null	null	HEIS_ISW_U_24HMENET_5E132E168196F61046312	null	null	null	null	null	REDACTED	Manage your Home Internet with TLife	TMO | Support : HINT : Manage your Home Internet with TLife
+null	null	null	MGPO_TMO_U_26PPI18PBY_83Z7X78845103352E2035	null	null	null	null	null	REDACTED	Deals Hub	TMO | Marketing : Offers : Deals Hub
+null	null	null	MGPO_TMO_U_EVDACCESS_89DB06D290A698CD46581	null	null	null	null	null	REDACTED	Apple iPhone Deals	TMO | Marketing : Offers : Apple iPhone Deals
+null	null	null	MGPO_TMO_U_26PPI17NOT_0O728885371306ZK16897	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	Edit Location	null	null	null	null	null	REDACTED	Apple Apple AirPods Pro 3	TMO | Shop : Accessory Detail : Apple Apple AirPods Pro 3
+Natural Search	null	null	MGPO_TMO_U_PPFREAFRDA_30027X701474281Z91O02	null	null	null	null	null	REDACTED	Free Cell Phone with Plan	TMO | Marketing : Offers : Free Cell Phone with Plan
+Paid Search: Brand	null	MGPO_OV_P_26PPFREXPA_YT	MGPO_TMO_P_26TMOMM_EE785AF7270A052046917	null	null	null	null	null	REDACTED	FreedomExplorer-LP	TMO | Home : INVALID : FreedomExplorer-LP
+null	null	null	MGPO_TMO_P_24IP4L25JL_037E1B92B0458F4D43922	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	MGPO_TMO_U_26PPI18PBY_7877G506074O7Q9767994	null	null	null	null	null	REDACTED	T-Mobile Home	TMO | Home : Home : T-Mobile Home
+null	null	null	plp_product_card	null	null	null	null	null	REDACTED	Cell Phones	MbyT | Shop : Browse : Cell Phones
+null	null	null	null	null	null	null	T3JnSUQ9NzAwMDAwMDAwMDAwMDAxODY1MSZhcHBJZD1BU09Q	null	REDACTED	Checkout	TFB | SFDC : Shop : Checkout
 
 SELECT
     session_start_date,
@@ -10988,7 +11195,15 @@ FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
 WHERE session_start_date BETWEEN DATE '2026-09-20' AND DATE '2026-09-26'
 GROUP BY session_start_date
 ORDER BY session_start_date;
-
+output:
+session_start_date	sessions	hasEntryReferrer	entryReferrerPct
+2026-09-20	5894392	2470595	41.91
+2026-09-21	6758052	2461372	36.42
+2026-09-22	11982449	2467298	20.59
+2026-09-23	7807517	2420724	31.01
+2026-09-24	7258529	2457742	33.86
+2026-09-25	7219203	2371425	32.85
+2026-09-26	5966869	2139917	35.86
 
 SELECT
     entry_page_referrer,
@@ -11000,7 +11215,9 @@ WHERE session_start_date=DATE '2026-09-24'
 GROUP BY entry_page_referrer
 ORDER BY sessions DESC
 LIMIT 100;
-
+output:
+entry_page_referrer	sessions
+REDACTED	2457742
 
 SELECT
     COUNT(*) AS rows,
@@ -11008,10 +11225,6 @@ SELECT
     COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
 WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
-
-SELECT
-    COUNT(*) AS rows,
-    COUNT(DISTINCT row_identity_hash) AS distinctHashes,
-    COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
-FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
+output:
+rows	distinctHashes	duplicateHashes
+4190893294	4190893294	0
