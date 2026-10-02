@@ -11597,3 +11597,46 @@ Ask about schemas, coverage, or data quality…
 
 Shift+Enter for newline · powered by claude-opus-4-7
 
+
+
+
+
+
+
+
+
+
+
+
+Good question — let me verify what app entry attribution columns exist on the session summary table before answering.Confirmed — SESSION_SUMMARY_FACT has no app-specific entry columns (no entry_screen_name, no entry_deeplink_url, no entry_page_name). The entry/exit URL columns are web-only by design.
+
+For app entry attribution, you have to derive it yourself from SESSION_EVENT_FACT → join back to UNIFIED_DIGITAL_INTERACTIONS on row_identity_hash and pick the first event in the session. Let me pull the fill rates for the relevant app entry fields so you know what to expect.Confirmed — no screen_name column exists in Silver (the app analog is ATTRIBUTE_SCREEN_NAME). Let me re-run with the correct name.Zero matches — the event_timestamp_pst window on UNIFIED_DIGITAL_INTERACTIONS is misaligned with session timestamps. Let me widen the window and use source_table filter on the unified table directly.Zero rows returned — the issue is likely the SOURCE_TABLE value case. Let me check actual values.Good — values are t_app_interactions lowercase. Re-running with the correct value.Timed out. Let me shrink the window to 1 day.The join is too expensive. Let me take a direct sampled approach — just look at first-hit app events via event_collection_timestamp_pst or similar, sampled.sample is a Snowflake keyword. Renaming CTE.Here's what you get for app entry — based on 500K app session-entry events (hit #1) from Oct 1 PST, joined back to UNIFIED_DIGITAL_INTERACTIONS.
+
+The short answer
+There is NO entry URL for the app in `SESSION_SUMMARY_FACT`. The ENTRY_PAGE_URL_* columns are web-only — they're 100% populated on web sessions and 0% on app sessions. The schema has no entry_screen_name or entry_deeplink_url equivalent.
+
+To get app entry attribution, you have to derive it yourself by joining SESSION_EVENT_FACT (filtering hit_number_in_session = 1) back to UNIFIED_DIGITAL_INTERACTIONS on row_identity_hash + source_table = 't_app_interactions'.
+
+Fill rates for app entry events (sample of 500K first-hits)
+Column	Fill %	What it tells you
+page_name	99.1%	✅ Primary entry screen name — use this
+push_notification	97.8%	✅ Push notification payload that opened the app (where applicable)
+full_page_name	34.1%	Fuller screen path, when provided
+channel_name	8.6%	Marketing channel bucket (derived)
+deeplink_url	2.0%	Only populated when the user entered via a deep link
+external_campaign_code	0.1%	Rare — paid-media landings only
+attribute_cmpid	0.1%	Rare — campaign ID from URL
+flow_name	0.1%	Mostly null on entry
+attribute_screen_name	0.0%	Essentially empty — don't use
+deeplink_icid / attribute_deep_link_icid	0.0%	Essentially empty
+attribute_clicked_icid	0.0%	Essentially empty
+Recommended app entry pattern
+Entry screen:            page_name           (fallback: full_page_name)
+Entry via push:          push_notification   (populated ~98% of entries)
+Entry via deep link:     deeplink_url        (only when applicable, ~2%)
+Entry marketing channel: channel_name        (sparse ~9%, Adobe-rule derived)
+Key takeaways
+- `page_name` is your reliable app entry screen — 99% filled on first hit.
+- `push_notification` carrying ~98% fill on entry hits is interesting — a huge share of app opens appear tied to a push payload. Worth validating if you're doing push-attribution work.
+- No cmpid / ICID / extCampaign-style attribution exists for app entry at any meaningful rate. Deep-link-based attribution tops out at ~2%.
+- Session-level app entry is a derived join, not a column — this is a gap vs. the web ENTRY_PAGE_URL_* convenience columns.
