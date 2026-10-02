@@ -10886,6 +10886,119 @@ WHERE event_date BETWEEN DATE '2026-09-15' AND DATE '2026-09-28';
 output:
 rows	distinctHashes	duplicateHashes
 3703561481	3703561481	0
-., ,
 
-hLjEgpPkgQpVkPGvQX7L2JkglfOuDy
+
+
+
+
+SELECT
+    COUNT(*) AS pageViewHits,
+    COUNT_IF(lower(coalesce(page_name,'')) LIKE '%utm_source=%') AS pageNameUtmSource,
+    COUNT_IF(lower(coalesce(page_name,'')) LIKE '%utm_medium=%') AS pageNameUtmMedium,
+    COUNT_IF(lower(coalesce(page_name,'')) LIKE '%utm_campaign=%') AS pageNameUtmCampaign,
+    COUNT_IF(lower(coalesce(full_page_name,'')) LIKE '%utm_source=%') AS fullPageNameUtmSource,
+    COUNT_IF(lower(coalesce(full_page_name,'')) LIKE '%utm_medium=%') AS fullPageNameUtmMedium,
+    COUNT_IF(lower(coalesce(full_page_name,'')) LIKE '%utm_campaign=%') AS fullPageNameUtmCampaign,
+    COUNT_IF(attribute_cmpid IS NOT NULL AND trim(attribute_cmpid)<>'') AS hasAttributeCmpid,
+    COUNT_IF(external_campaign_code IS NOT NULL AND trim(external_campaign_code)<>'') AS hasExternalCampaignCode
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24'
+  AND coalesce(try_cast(event_page_view AS INT),0)>0;
+
+
+WITH x AS(
+    SELECT
+        s.session_id,
+        max(CASE WHEN lower(coalesce(u.page_name,'')) LIKE '%utm_source=%'
+                  OR lower(coalesce(u.full_page_name,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS hasUtmSource,
+        max(CASE WHEN lower(coalesce(u.page_name,'')) LIKE '%utm_medium=%'
+                  OR lower(coalesce(u.full_page_name,'')) LIKE '%utm_medium=%' THEN 1 ELSE 0 END) AS hasUtmMedium,
+        max(CASE WHEN lower(coalesce(u.page_name,'')) LIKE '%utm_campaign=%'
+                  OR lower(coalesce(u.full_page_name,'')) LIKE '%utm_campaign=%' THEN 1 ELSE 0 END) AS hasUtmCampaign,
+        max(CASE WHEN u.attribute_cmpid IS NOT NULL AND trim(u.attribute_cmpid)<>'' THEN 1 ELSE 0 END) AS hasAttributeCmpid,
+        max(CASE WHEN u.external_campaign_code IS NOT NULL AND trim(u.external_campaign_code)<>'' THEN 1 ELSE 0 END) AS hasExternalCampaignCode
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+    JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+      ON s.row_identity_hash=u.row_identity_hash
+     AND s.event_date=u.event_date
+     AND s.source_table=u.source_table
+    WHERE u.event_date=DATE '2026-09-24'
+    GROUP BY s.session_id
+)
+SELECT
+    COUNT(*) AS sessions,
+    SUM(hasUtmSource) AS sessionsWithUtmSource,
+    ROUND(100.0*SUM(hasUtmSource)/COUNT(*),2) AS utmSourcePct,
+    SUM(hasUtmMedium) AS sessionsWithUtmMedium,
+    ROUND(100.0*SUM(hasUtmMedium)/COUNT(*),2) AS utmMediumPct,
+    SUM(hasUtmCampaign) AS sessionsWithUtmCampaign,
+    ROUND(100.0*SUM(hasUtmCampaign)/COUNT(*),2) AS utmCampaignPct,
+    SUM(hasAttributeCmpid) AS sessionsWithAttributeCmpid,
+    ROUND(100.0*SUM(hasAttributeCmpid)/COUNT(*),2) AS attributeCmpidPct,
+    SUM(hasExternalCampaignCode) AS sessionsWithExternalCampaignCode,
+    ROUND(100.0*SUM(hasExternalCampaignCode)/COUNT(*),2) AS externalCampaignCodePct
+FROM x;
+
+
+SELECT
+    COUNT(*) AS hits,
+    COUNT_IF(attribute_cmpid IS NOT NULL AND trim(attribute_cmpid)<>'') AS attributeCmpid,
+    COUNT_IF(clicked_icid IS NOT NULL AND trim(clicked_icid)<>'') AS clickedIcid,
+    COUNT_IF(deeplink_icid IS NOT NULL AND trim(deeplink_icid)<>'') AS deeplinkIcid,
+    COUNT_IF(attribute_clicked_icid IS NOT NULL AND trim(attribute_clicked_icid)<>'') AS attributeClickedIcid,
+    COUNT_IF(attribute_deep_link_icid IS NOT NULL AND trim(attribute_deep_link_icid)<>'') AS attributeDeepLinkIcid,
+    COUNT_IF(ac_campaign_id IS NOT NULL AND trim(ac_campaign_id)<>'') AS acCampaignId,
+    COUNT_IF(moe_campaign_name IS NOT NULL AND trim(moe_campaign_name)<>'') AS moeCampaignName,
+    COUNT_IF(page_referrer IS NOT NULL AND trim(page_referrer)<>'') AS pageReferrer
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24';
+
+
+SELECT
+    channel_name,
+    attribute_cmpid,
+    external_campaign_code,
+    clicked_icid,
+    deeplink_icid,
+    attribute_clicked_icid,
+    attribute_deep_link_icid,
+    ac_campaign_id,
+    moe_campaign_name,
+    page_referrer,
+    page_name,
+    full_page_name
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date=DATE '2026-09-24'
+  AND (
+      nullif(trim(attribute_cmpid),'') IS NOT NULL
+      OR nullif(trim(clicked_icid),'') IS NOT NULL
+      OR nullif(trim(deeplink_icid),'') IS NOT NULL
+      OR nullif(trim(ac_campaign_id),'') IS NOT NULL
+      OR nullif(trim(moe_campaign_name),'') IS NOT NULL
+  )
+LIMIT 200;
+
+
+SELECT
+    session_start_date,
+    COUNT(*) AS sessions,
+    COUNT_IF(entry_page_referrer IS NOT NULL AND trim(entry_page_referrer)<>'') AS hasEntryReferrer,
+    ROUND(100.0*COUNT_IF(entry_page_referrer IS NOT NULL AND trim(entry_page_referrer)<>'')/COUNT(*),2) AS entryReferrerPct
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date BETWEEN DATE '2026-09-20' AND DATE '2026-09-26'
+GROUP BY session_start_date
+ORDER BY session_start_date;
+
+
+SELECT
+    entry_page_referrer,
+    COUNT(*) AS sessions
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date=DATE '2026-09-24'
+  AND entry_page_referrer IS NOT NULL
+  AND trim(entry_page_referrer)<>''
+GROUP BY entry_page_referrer
+ORDER BY sessions DESC
+LIMIT 100;
+
+
