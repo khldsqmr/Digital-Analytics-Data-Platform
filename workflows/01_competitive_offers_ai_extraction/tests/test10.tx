@@ -11008,3 +11008,10 @@ SELECT
     COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
 WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
+
+SELECT
+    COUNT(*) AS rows,
+    COUNT(DISTINCT row_identity_hash) AS distinctHashes,
+    COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
