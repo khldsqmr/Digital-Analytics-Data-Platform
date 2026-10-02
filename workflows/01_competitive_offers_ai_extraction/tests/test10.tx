@@ -11228,3 +11228,13 @@ WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
 output:
 rows	distinctHashes	duplicateHashes
 4190893294	4190893294	0
+
+SELECT
+    COUNT(*) AS rows,
+    COUNT(DISTINCT row_identity_hash) AS distinctHashes,
+    COUNT(*)-COUNT(DISTINCT row_identity_hash) AS duplicateHashes
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
+output:
+rows	distinctHashes	duplicateHashes
+4192753479	4192752381	1098
