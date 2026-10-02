@@ -1474,3 +1474,67 @@ REDACTED	REDACTED	REDACTED	REDACTED	REDACTED
 REDACTED	REDACTED	REDACTED	REDACTED	REDACTED
 REDACTED	REDACTED	REDACTED	REDACTED	REDACTED
 REDACTED	REDACTED	REDACTED	REDACTED	REDACTED
+
+
+Let me check the dictionary definitions and cross-tab both fields against actual device columns to see if there's a real relationship.Let me get sample values and cross-tabs on a smaller slice.Here's the empirical answer, measured on Sept 24, 2026 PST.
+
+## Short answer: **No, neither is a device field.**
+
+Both are **page/content context fields**, not device descriptors. They describe the *type of page or screen the user is on*, not the hardware or OS.
+
+## `attribute_page_app_type` — top values (app only, 2.07% fill)
+
+| Value | % of non-null |
+|---|---|
+| `webview` | 50.9% |
+| `app` | 48.4% |
+| `moe` | 0.7% |
+
+**This is the "is this a native app screen or an in-app web view" indicator** — exactly the "App Web View" distinction you asked about earlier. It's semantically relevant to platform classification, BUT it's only populated on ~2% of app events, so it's not useful as a universal signal. When it IS populated, it tells you whether the current screen is native vs embedded web — this is page context, not device.
+
+## `attribute_page_layout_state` — top values (0.90% fill)
+
+| Value | % of non-null |
+|---|---|
+| `app view` | 44.6% |
+| `desktop` | 25.4% |
+| `app pwa` | 11.3% |
+| `mobile` | 9.7% |
+| `mweb` | 7.0% |
+| `tablet` | 1.9% |
+
+**This is a page-layout mode indicator** — what rendering mode the page is using (desktop layout, mobile layout, PWA, in-app view, etc.). It's loosely related to form factor but it's a **page rendering choice, not a device fact**. The same device could render in multiple layout states on different pages (e.g., a tablet forced into mobile layout).
+
+## Relationship to `device_type` and `device_operating_system`
+
+| Field | What it describes | Fill rate | Reliable? |
+|---|---|---|---|
+| `device_type` | Hardware form factor (Mobile / Desktop / Tablet) | **99.95%** | ✅ Yes — the authoritative device signal |
+| `device_operating_system` | OS family (iOS / Android / Windows / macOS) | **99.95%** | ✅ Yes — the authoritative OS signal |
+| `attribute_page_app_type` | Page is native-app vs webview vs MOE | 1.78% | ❌ Too sparse |
+| `attribute_page_layout_state` | Page rendering mode (desktop/mobile/mweb/app-view/pwa/tablet) | 0.90% | ❌ Too sparse |
+
+**The two attribute fields are page-context signals that *correlate* with device + channel but are not derived from them, and are populated on <2% of rows.**
+
+## Implications for the Web/Desktop/Mobile Web/iOS App/Android App/App Web View derivation
+
+Your current derivation uses `page_app_type` + `page_layout_state` + `attribute_os_name` to classify sessions — but as I measured earlier, two of the three input columns are 1-2% filled. **For 97-99% of sessions, your derivation is falling back to defaults rather than using these signals.** The classification mostly ends up driven by `attribute_os_name` (54% fill) alone.
+
+The **reliable replacement** uses only three columns at 99.95% fill:
+
+| Logical bucket | Rule |
+|---|---|
+| Desktop | `source_table='t_web_interactions'` AND `device_type='Desktop'` |
+| Mobile Web | `source_table='t_web_interactions'` AND `device_type IN ('Mobile','Tablet')` |
+| iOS App | `source_table='t_app_interactions'` AND `device_operating_system='iOS'` |
+| Android App | `source_table='t_app_interactions'` AND `device_operating_system='Android'` |
+| **App Web View** | `source_table='t_app_interactions'` AND `attribute_page_app_type='webview'` → **only identifiable on the 2% of events where the field fires** |
+
+The App Web View bucket is the one real gap — there's no universal column that distinguishes native app screens from webview-embedded screens for the other 98% of app events. If MIP needs this split comprehensively, it'd require either (a) a product/engineering list of webview screen names you can match against `page_name`, or (b) upstream instrumentation to populate `attribute_page_app_type` on every event.
+
+## TL;DR
+
+- `attribute_page_app_type` and `attribute_page_layout_state` are **page/content context fields**, not device fields.
+- They are *semantically related* to form factor (webview, mobile, desktop, tablet) but are **sparsely populated (~1-2%)** and should not be used as primary device/platform signals.
+- The authoritative device fields are `device_type` and `device_operating_system` at ~99.95% fill — use those.
+- `attribute_page_app_type` is still worth carrying for the specific App Web View distinction, even at 2% fill, since no other column captures that split.
