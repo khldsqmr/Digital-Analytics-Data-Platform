@@ -11268,3 +11268,6 @@ SELECT
     ) AS utmCampaignPct
 FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
 WHERE session_start_date=DATE '2026-09-24';
+output:
+sessions	hasUtmSource	utmSourcePct	hasUtmMedium	utmMediumPct	hasUtmCampaign	utmCampaignPct
+7258966	0	0.00	0	0.00	0	0.00
