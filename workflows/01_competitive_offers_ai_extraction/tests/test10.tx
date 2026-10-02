@@ -11303,7 +11303,9 @@ SELECT
     SUM(linkUrlUtm) AS linkUrlSessions,
     SUM(sefPageUrlFullUtm) AS sefPageUrlFullSessions
 FROM x;
-
+output:
+sessions	pageNameSessions	fullPageNameSessions	deeplinkUrlSessions	udiPageUrlFullSessions	linkUrlSessions	sefPageUrlFullSessions
+7300846	10009	10009	1009664	0	921	0
 
 WITH x AS(
     SELECT
@@ -11331,7 +11333,9 @@ SELECT
     SUM(linkUrlUtm) AS linkUrlSessions,
     SUM(sefPageUrlFullUtm) AS sefPageUrlFullSessions
 FROM x;
-
+output:
+sessions	pageNameSessions	fullPageNameSessions	deeplinkUrlSessions	udiPageUrlFullSessions	linkUrlSessions	sefPageUrlFullSessions
+7300846	10009	10009	1009664	0	921	0
 
 SELECT
     COUNT(*) AS sessions,
@@ -11342,5 +11346,7 @@ SELECT
     COUNT_IF(lower(entry_page_url_full) LIKE '%refsource=%') AS hasRefsource
 FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
 WHERE session_start_date=DATE '2026-09-24';
-
+output:
+sessions	hasEntryUrl	hasQueryString	hasAnyUtm	hasCmpid	hasRefsource
+7258966	2456289	0	0	0	0
 
