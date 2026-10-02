@@ -11271,3 +11271,76 @@ WHERE session_start_date=DATE '2026-09-24';
 output:
 sessions	hasUtmSource	utmSourcePct	hasUtmMedium	utmMediumPct	hasUtmCampaign	utmCampaignPct
 7258966	0	0.00	0	0.00	0	0.00
+
+
+WITH x AS(
+    SELECT
+        s.session_id,
+        max(CASE WHEN lower(coalesce(u.page_name,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS pageNameUtm,
+        max(CASE WHEN lower(coalesce(u.full_page_name,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS fullPageNameUtm,
+        max(CASE WHEN lower(coalesce(u.deeplink_url,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS deeplinkUrlUtm,
+        max(CASE WHEN lower(coalesce(u.page_url_full,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS udiPageUrlFullUtm,
+        max(CASE WHEN lower(coalesce(u.link_url,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS linkUrlUtm,
+        max(CASE WHEN lower(coalesce(sef.page_url_full,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS sefPageUrlFullUtm
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+    LEFT JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+      ON u.row_identity_hash=s.row_identity_hash
+     AND u.event_date=s.event_date
+     AND u.source_table=s.source_table
+    LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+      ON sef.row_identity_hash=s.row_identity_hash
+     AND sef.event_date=s.event_date
+     AND sef.source_table=s.source_table
+    WHERE s.event_date=DATE '2026-09-24'
+    GROUP BY s.session_id
+)
+SELECT
+    COUNT(*) AS sessions,
+    SUM(pageNameUtm) AS pageNameSessions,
+    SUM(fullPageNameUtm) AS fullPageNameSessions,
+    SUM(deeplinkUrlUtm) AS deeplinkUrlSessions,
+    SUM(udiPageUrlFullUtm) AS udiPageUrlFullSessions,
+    SUM(linkUrlUtm) AS linkUrlSessions,
+    SUM(sefPageUrlFullUtm) AS sefPageUrlFullSessions
+FROM x;
+
+
+WITH x AS(
+    SELECT
+        s.session_id,
+        max(CASE WHEN lower(coalesce(u.page_name,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS pageNameUtm,
+        max(CASE WHEN lower(coalesce(u.full_page_name,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS fullPageNameUtm,
+        max(CASE WHEN lower(coalesce(u.deeplink_url,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS deeplinkUrlUtm,
+        max(CASE WHEN lower(coalesce(u.page_url_full,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS udiPageUrlFullUtm,
+        max(CASE WHEN lower(coalesce(u.link_url,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS linkUrlUtm,
+        max(CASE WHEN lower(coalesce(s.page_url_full,'')) LIKE '%utm_source=%' THEN 1 ELSE 0 END) AS sefPageUrlFullUtm
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact s
+    JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+      ON u.row_identity_hash=s.row_identity_hash
+     AND u.event_date=s.event_date
+     AND u.source_table=s.source_table
+    WHERE s.event_date=DATE '2026-09-24'
+    GROUP BY s.session_id
+)
+SELECT
+    COUNT(*) AS sessions,
+    SUM(pageNameUtm) AS pageNameSessions,
+    SUM(fullPageNameUtm) AS fullPageNameSessions,
+    SUM(deeplinkUrlUtm) AS deeplinkUrlSessions,
+    SUM(udiPageUrlFullUtm) AS udiPageUrlFullSessions,
+    SUM(linkUrlUtm) AS linkUrlSessions,
+    SUM(sefPageUrlFullUtm) AS sefPageUrlFullSessions
+FROM x;
+
+
+SELECT
+    COUNT(*) AS sessions,
+    COUNT_IF(entry_page_url_full IS NOT NULL AND trim(entry_page_url_full)<>'') AS hasEntryUrl,
+    COUNT_IF(entry_page_url_full LIKE '%?%') AS hasQueryString,
+    COUNT_IF(lower(entry_page_url_full) LIKE '%utm_%') AS hasAnyUtm,
+    COUNT_IF(lower(entry_page_url_full) LIKE '%cmpid=%') AS hasCmpid,
+    COUNT_IF(lower(entry_page_url_full) LIKE '%refsource=%') AS hasRefsource
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date=DATE '2026-09-24';
+
+
