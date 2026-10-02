@@ -11238,3 +11238,33 @@ WHERE event_date BETWEEN DATE '2026-09-16' AND DATE '2026-09-28';
 output:
 rows	distinctHashes	duplicateHashes
 4192753479	4192752381	1098
+
+
+SELECT
+    COUNT(*) AS sessions,
+    COUNT_IF(
+        try_parse_url('https://' || entry_page_url_full,'QUERY','utm_source') IS NOT NULL
+    ) AS hasUtmSource,
+    ROUND(
+        100.0*COUNT_IF(
+            try_parse_url('https://' || entry_page_url_full,'QUERY','utm_source') IS NOT NULL
+        )/COUNT(*),2
+    ) AS utmSourcePct,
+    COUNT_IF(
+        try_parse_url('https://' || entry_page_url_full,'QUERY','utm_medium') IS NOT NULL
+    ) AS hasUtmMedium,
+    ROUND(
+        100.0*COUNT_IF(
+            try_parse_url('https://' || entry_page_url_full,'QUERY','utm_medium') IS NOT NULL
+        )/COUNT(*),2
+    ) AS utmMediumPct,
+    COUNT_IF(
+        try_parse_url('https://' || entry_page_url_full,'QUERY','utm_campaign') IS NOT NULL
+    ) AS hasUtmCampaign,
+    ROUND(
+        100.0*COUNT_IF(
+            try_parse_url('https://' || entry_page_url_full,'QUERY','utm_campaign') IS NOT NULL
+        )/COUNT(*),2
+    ) AS utmCampaignPct
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date=DATE '2026-09-24';
