@@ -11640,3 +11640,178 @@ Key takeaways
 - `push_notification` carrying ~98% fill on entry hits is interesting — a huge share of app opens appear tied to a push payload. Worth validating if you're doing push-attribution work.
 - No cmpid / ICID / extCampaign-style attribution exists for app entry at any meaningful rate. Deep-link-based attribution tops out at ~2%.
 - Session-level app entry is a derived join, not a column — this is a gap vs. the web ENTRY_PAGE_URL_* convenience columns.
+
+
+
+
+
+
+
+
+
+
+
+
+
+I would ask Eddy these, roughly in this order:
+1. First, give Eddy the architecture and ask for an exhaustive mapping rather than one field at a time:
+I am building a Media Intelligence Platform using UNIFIED_DIGITAL_INTERACTIONS, SESSION_EVENT_FACT, and SESSION_SUMMARY_FACT. Before I finalize Bronze/Silver, can you review the schemas of all three tables and identify every existing column that could replace a derivation or expensive join?
+I specifically need session-level dimensions and metrics for:
+LOB, platform, prospect/base, auth state, marketing channel, campaign code/name, entry page or entry screen, page category, buy-flow step, device, UTM/source/medium/campaign, geography/region, pageviews, orders, calls, chats, store locator, buy-flow activity, assisted orders, non-bounced session detection, visitor identity.
+For each desired field, please return:
+- recommended source table
+- exact source column
+- whether it is hit-level or session-level
+- fill rate overall and separately for t_web_interactions and t_app_interactions
+- whether it is already first-touch/session-resolved
+- whether using it would let us avoid joining back to UDI
+- any known data-quality issue
+Please search the actual schema/data rather than infer from column names.
+
+That question alone could expose several fields we haven't considered.
+2. This is probably the highest-value cost question:
+Does SESSION_SUMMARY_FACT already contain a page-view count, event count, hit count, engaged-session flag, bounce flag, or any equivalent field that can reliably identify a session with 2+ real event_page_view events?
+Our current architecture joins SESSION_EVENT_FACT to UNIFIED_DIGITAL_INTERACTIONS and sums event_page_view by session_id only to determine whether a session is non-bounced. At our scale this is billions of rows.
+Please identify every potentially relevant session-level count/flag column, explain its exact semantics, and compare it against SUM(UDI.event_page_view)>1 on one day.
+
+This could be huge. Your manager's current definition requires the giant hit join purely to establish pv_count > 1.    Pasted text If SSF already stores a trustworthy pageview count, we could potentially remove a massive amount of work.
+3. Ask whether SESSION_EVENT_FACT already contains the metrics we need:
+Which of these UDI metric/event fields are also available directly in SESSION_EVENT_FACT, with the same semantics?
+event_page_view
+event_purchase
+event_click_to_call
+event_chat_engage
+event_store_search
+event_cart_add
+event_cart_checkout
+event_product_view
+flow_name
+site_sub_section
+customer_type
+user_auth_state
+channel_name
+external_campaign_code
+For each one, give me exact column name, fill rate, and whether the values match UDI when joined on row_identity_hash + event_date + source_table.
+If SESSION_EVENT_FACT already has equivalent values, tell me which UDI joins we can eliminate safely.
+
+This is the other potentially large cost saving. If SESSION_EVENT_FACT already contains enough event payload, our current Bronze design may be duplicating a multi-billion-row UDI join unnecessarily.
+4. Ask about first-hit/session-entry fields comprehensively:
+For session entry attribution, what existing columns identify the first event of a session?
+I know about hit_number_in_session = 1. Please check whether there are also columns such as event sequence, hit number, entry flag, first-event flag, session-event index, or precomputed first-touch attributes.
+For the first App hit, show fill rates for:
+page_name
+full_page_name
+page_app_type
+channel_name
+external_campaign_code
+deeplink_url
+push_notification
+customer_type
+user_auth_state
+site_name
+site_sub_section
+device/OS fields
+Also confirm whether hit_number_in_session=1 is guaranteed unique per session_id and stable across source refreshes.
+
+That last question matters. We don't want to architect around it unless it is a reliable contract.
+5. Ask whether there is already a canonical session-level platform/device field:
+Do either SESSION_SUMMARY_FACT or SESSION_EVENT_FACT contain authoritative session-level fields for platform/device that would make this derivation unnecessary?
+Today we use:
+page_app_type
+page_layout_state
+attribute_os_name
+to derive Web/Desktop/Mobile Web/iOS App/Android App/App Web View.
+Search for canonical fields such as device category/type, platform, app/web indicator, OS family, client type, browser/device class, or session channel. Please return exact fields and fill rates by web/app.
+
+If EDL already has a canonical device grouping, use it rather than maintain our own CASE forever.
+6. Ask whether there is already proper geography beyond geo_postal_code:
+Search all three tables for geography fields that could support Region without an external ZIP crosswalk.
+Please check for state, region, market, DMA, city, country, ZIP/postal code, latitude/longitude, geo market, network region, billing region, or similar.
+For every candidate, give fill rate separately for web/app and explain whether it is IP-derived, customer-derived, or another source.
+
+Your manager's notes only identified geo_postal_code at 6.76% and left Region as a placeholder.    Pasted text There may nevertheless be another geography field elsewhere in EDL that wasn't part of that initial investigation.
+7. Ask about the channel problem specifically:
+channel_name currently changes within some sessions even though it is supposed to be sticky from first touch. Is there another EDL field/table that stores the authoritative session-level first-touch or attributed marketing channel?
+Search for fields such as first channel, entry channel, session channel, attributed channel, marketing channel, channel ID, referring channel, or persisted acquisition channel.
+Compare the candidates with channel_name and tell me whether any one of them is explicitly designed to be session-sticky.
+
+The manager notes already document the channel_name issue, with 20.9% of non-bounced sessions showing multiple values.    Pasted text It would be much better to find the real persisted session attribution field than to resolve it ourselves with MAX().
+8. Do the same for Campaign:
+Is there an authoritative session-level / first-touch external campaign field anywhere in EDL, rather than resolving external_campaign_code across all hits?
+Search for entry campaign, acquisition campaign, first campaign, session campaign, campaign code, extCampaign, cmpid, marketing code, or persisted campaign fields.
+Our documented campaign definition is split_part(external_campaign_code,'_',4) joined to dim_marketing_code. Please tell me whether another table already persists that value at session grain.
+
+Your manager explicitly identified external_campaign_code as the intended campaign source and ruled out attribute_cmpid as a replacement.    Pasted text But an already-resolved session version would save work.
+9. Ask specifically about UTM/deep-link semantics, now that we know web and app differ:
+Please document the intended attribution semantics of deeplink_url.
+For App first hits (SESSION_EVENT_FACT.hit_number_in_session=1, source t_app_interactions):
+- what percentage contain utm_source
+- utm_medium
+- utm_campaign
+- cmpid
+- icid
+- extCampaign
+- refsource
+Are those values guaranteed to describe the app-entry deep link, or can deeplink_url contain unrelated navigation/deep-link context?
+Also confirm whether there is any dedicated parsed deep-link campaign/source field that is preferable to parsing the URL ourselves.
+
+We found deeplink_url on 1,009,664 sessions versus only 10,009 using page_name/full_page_name for utm_source, so it is clearly a major App signal.    Pasted text But we still need its semantic contract.
+10. Ask what push_notification actually means before we use it:
+On sampled App first hits, push_notification is populated around 98%, which seems surprisingly high.
+What exactly does push_notification represent?
+Is non-null proof that the session was opened from a push notification, or is it a generic app payload/context field?
+Please show its cardinality/top values and compare sessions with and without actual deep-link/campaign activity.
+
+This prevents us from turning a misleading field into a dimension.
+11. Ask whether session_summary already carries identity and resolved customer state strongly enough to skip hit-level resolution:
+For each of these session-level attributes, is there already an authoritative resolved value in SESSION_SUMMARY_FACT?
+canonical_user_id
+customer/prospect/base state
+auth/login state
+platform
+site/LOB
+marketing channel
+campaign
+device
+If yes, explain whether the field represents entry state, exit state, strongest state, last state, or another rule.
+
+We already know canonical_user_id is there, but finding more resolved session attributes could eliminate aggregation CTEs.
+12. Ask about source physical design/cost directly:
+For these three Silver EDL tables:
+UNIFIED_DIGITAL_INTERACTIONS
+SESSION_EVENT_FACT
+SESSION_SUMMARY_FACT
+What are their physical partitioning/clustering keys and the cheapest predicates to use?
+Specifically:
+- which date field should always be filtered
+- whether source_table pruning is effective
+- whether filtering hit_number_in_session=1 materially reduces scan before joins
+- whether row_identity_hash is clustered/indexed/optimized for joins
+- whether joining by session_id is cheaper than hit-level hash joins for any supported use case
+- whether there are pre-aggregated session tables/views intended for analytics use
+
+This may affect the architecture more than any one new field.
+13. Ask about late-arriving data so we stop arbitrarily rebuilding 14 days:
+How late can records or corrections arrive in:
+UNIFIED_DIGITAL_INTERACTIONS,
+SESSION_EVENT_FACT,
+SESSION_SUMMARY_FACT?
+What refresh/reconciliation window does the EDL team recommend for downstream consumers?
+Please give typical and maximum observed lateness if available, and whether any source has a completion/readiness flag.
+
+That can directly reduce recurring pipeline cost. Instead of habitually rebuilding 14 days, maybe EDL only needs 2–3 days after completion.
+14. Finally ask Eddy for the result we ultimately want:
+Based on everything above, propose the minimum set of source columns MIP needs to persist in Bronze from each of the three EDL tables.
+Optimize for:
+- no loss of required MIP dimensions/metrics
+- minimal row width
+- avoiding duplicate information across Bronze tables
+- avoiding downstream joins when a reliable session-level field already exists
+- preserving only raw fields whose semantics are known
+Please separate them into:
+UDI required
+SESSION_EVENT_FACT required
+SESSION_SUMMARY_FACT required
+diagnostic only
+do not carry
+For every suggested column, state which downstream MIP field uses it.
