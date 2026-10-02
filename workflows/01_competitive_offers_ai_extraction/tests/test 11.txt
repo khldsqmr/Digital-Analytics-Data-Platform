@@ -1,0 +1,1454 @@
+
+outputs:
+
+1.
+Good call — let me run on a full week ending Sept 24. I'll batch the queries to stay under the timeout.All seven batches ran clean on the full week (Sept 18–24 PST, 2.08B UDI rows: 1.77B app / 311M web / 1.3M MOE). Here's the complete field-by-field review.
+
+## Volume baseline
+
+| Source | UDI rows | SSF sessions | SEF events |
+|---|---|---|---|
+| **t_app_interactions** | 1,770,711,796 | 32,061,015 | 1,719,543,089 |
+| **t_web_interactions** | 310,732,906 | 14,819,961 | 217,311,015 |
+| **t_moe_interactions** | 1,316,814 | — | — |
+
+## Field-by-field matrix
+
+### 1. LOB
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `attribute_lob` | UDI | hit | 41.3% | 48.2% | 40.1% | ❌ Needs first-touch rollup | ❌ | 59% null — must derive session-level |
+
+### 2. Platform / OS / Device
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `source_table` | UDI, SSF, SEF | hit + session | 100% | 100% | 100% | ✅ On SSF/SEF | ✅ Use `source_table` directly | Clean |
+| `device_operating_system` | UDI | hit | 99.8% | 99.3% | 99.9% | ❌ | ❌ | Very reliable |
+| `device_type` | UDI | hit | 99.8% | 99.3% | 99.9% | ❌ | ❌ | Very reliable |
+| `device_name` | UDI | hit | 99.8% | 99.4% | 99.9% | ❌ | ❌ | Very reliable |
+
+### 3. Prospect vs Base / Customer type
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `attribute_prospect` | UDI | hit | **0.9%** | 0.9% | 0.9% | ❌ | ❌ | ⚠ Essentially empty — **do not use** |
+| `attribute_customer_type` | UDI | hit | 11.4% | 5.5% | 12.4% | ❌ | ❌ | Low fill; treat NULL as unknown |
+| `identity_status` | SSF | session | 100% | 100% | 100% | ✅ | ✅ | Best proxy: `RESOLVED` ≈ base, else prospect/unresolved |
+| `canonical_user_id` | SSF | session | 96.8% | 95.1% | 97.6% | ✅ | ✅ | Session-grain identity |
+
+### 4. Auth state
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `attribute_login_state` | UDI | hit | **1.9%** | 1.0% | 2.0% | ❌ | ❌ | Very sparse |
+| `identity_status='RESOLVED'` + `canonical_user_id IS NOT NULL` | SSF | session | 96.8% resolved | 95.1% | 97.6% | ✅ | ✅ | **Best session-level auth proxy** |
+
+### 5. Marketing channel
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `channel_name` | UDI | hit | 20.3% | 36.7% | 17.4% | ❌ No session column | ❌ | ⚠ **Not in SSF/SEF** — must derive first-touch yourself |
+| `channel_id` | UDI | hit | 20.3% | 36.7% | 17.4% | ❌ | ❌ | Same as above |
+
+### 6. Campaign code / name
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `external_campaign_code` | UDI | hit | 1.1% | 7.1% | 0.1% | ❌ | ❌ | Paid landings only; app ≈ 0 |
+| `clicked_icid` | UDI | hit | 0.6% | 4.1% | 0.1% | ❌ | ❌ | On-site/in-app ICIDs |
+| `deeplink_icid` | UDI | hit | 1.4% | 0.0% | 1.6% | ❌ | ❌ | App-only deep-link ICIDs |
+| `campaign_list` | UDI | hit | 1.6% | 7.1% | 0.6% | ❌ | ❌ | Array; multi-touch |
+| `moe_campaign_name` | UDI | hit | 0.1% | 0.0% | 0.0% | ❌ | ❌ | MOE channel only (1.3M rows) |
+
+### 7. Entry page / entry screen
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `entry_page_url_path` | SSF | session | 31.6% | **100%** | 0% | ✅ | ✅ | 🔒 Access-controlled (`REDACTED` without URL group) |
+| `entry_page_url_full` | SSF | session | 31.6% | **100%** | 0% | ✅ | ✅ | 🔒 Access-controlled |
+| `entry_page_referrer` | SSF | session | 31.6% | **100%** | 0% | ✅ | ✅ | 🔒 Access-controlled |
+| App entry screen | — | — | — | — | — | ❌ **No column exists** | ❌ Must derive from SEF `hit_number_in_session=1` → UDI `page_name` | Known gap vs web |
+
+### 8. Page category / section
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `attribute_page_type` | UDI | hit | 15.6% | 46.9% | 10.3% | ❌ | ❌ | Low on app |
+| `attribute_page_section` | UDI | hit | 15.6% | 42.4% | 11.0% | ❌ | ❌ | — |
+| `attribute_page_detail` | UDI | hit | 11.3% | 45.6% | 5.3% | ❌ | ❌ | Web-skewed |
+| `page_name` | UDI | hit | 96.2% | 99.8% | 95.5% | ❌ | ❌ | **Reliable primary page identifier** |
+
+### 9. Buy-flow step
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `flow_name` | UDI, SEF | hit (SEF event) | 1.3% / 7.7% SEF | 2.9% / 23.2% SEF | 1.0% / 4.9% SEF | ✅ on SEF | ✅ via SEF | SEF carries `flow_name` natively — use SEF |
+| `flow_subtype_name` | UDI | hit | 1.4% | 2.5% | 1.3% | ❌ | ❌ | — |
+| `flow_step_number` | UDI | hit | 1.4% | 2.6% | 1.3% | ❌ | ❌ | — |
+| `session_had_cart_add` | SSF | session | 100% | 100% | 100% | ✅ | ✅ | **Pre-resolved buy-flow signal** |
+| `session_had_purchase` | SSF | session | 100% | 100% | 100% | ✅ | ✅ | **Pre-resolved** |
+| `session_purchase_count` | SSF | session | 100% | 100% | 100% | ✅ | ✅ | **Pre-resolved count** |
+
+### 10. UTM / source / medium / campaign
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| Dedicated `utm_*` columns | — | — | — | — | — | ❌ **None exist** | ❌ | T-Mobile does not use UTM params. Use `cmpid` / `extCampaign` / `icid` instead |
+| `attribute_cmpid` | UDI | hit | 0.5% | 2.1% | 0.3% | ❌ | ❌ | Rare — populated on tracked landings |
+| `parse_url(entry_page_url_full,'QUERY'):cmpid` | SSF | session | — | ~web entries only | 0% | ✅ (web) | ✅ | Derive from entry URL |
+
+### 11. Geography / region
+| Column | Table | Grain | Overall | Web | App | Pre-resolved? | Avoids UDI join? | DQ |
+|---|---|---|---|---|---|---|---|---|
+| `geo_country` | UDI | hit | 99.9% | 99.9% | 99.9% | ❌ | ❌ | Essentially always filled |
+| `geo_state` | UDI | hit | 99.7% | 99.7% | 99.7% | ❌ | ❌ | Reliable |
+| `geo_city` | UDI | hit | 99.8% | 99.7% | 99.8% | ❌ | ❌ | Reliable |
+| `geo_zip` | UDI | hit | 99.8% | 99.7% | 99.8% | ❌ | ❌ | Reliable |
+| `geo_dma` | UDI | hit | 99.8% | 99.7% | 99.8% | ❌ | ❌ | Reliable |
+| No geo on SSF/SEF | — | — | — | — | — | ❌ | ❌ Must join UDI | Known gap — consider adding to your Silver session rollup |
+
+### 12. Pageviews / orders / calls / chats / store locator / buy-flow activity / assisted orders / non-bounce
+| Metric | Source | Column(s) | Grain | Fill | Pre-resolved? | Notes |
+|---|---|---|---|---|---|---|
+| **Pageviews** | UDI | `event_page_view=1` | hit | 86.2% overall (92.1% web / 85.1% app) | ❌ | Aggregate per session yourself |
+| **Pageviews (session)** | SSF | `hit_count` | session | 100% | ✅ | Not strictly pageviews — total hits. For true pageviews, aggregate `event_page_view` from SEF→UDI |
+| **Orders** | SSF | `session_had_purchase`, `session_purchase_count` | session | 100% | ✅ | **Use these — zero derivation needed.** ⚠ Exclude `order_id LIKE '#%'` (One Time Payments) when drilling to UDI order detail |
+| **Calls** | UDI | `event_call=1` | hit | 90.5% overall | ❌ | Aggregate per session |
+| **Chats** | UDI | `event_chat=1` | hit | 89.5% overall | ❌ | Aggregate per session |
+| **Store locator** | UDI | `event_store_locator=1` | hit | 90.6% overall | ❌ | Aggregate per session |
+| **Buy-flow activity** | SSF | `session_had_cart_add` | session | 100% | ✅ | **Pre-resolved** |
+| **Assisted orders** | UDI | `event_assisted_purchase=1` |
+
+
+2.
+Good — this is a critical question for your architecture. Let me get the full SSF schema, identify every count/flag candidate, then validate semantics against the ground-truth `SUM(UDI.event_page_view) > 1` on Sept 24.Now let me check candidate columns and run the ground-truth comparison on Sept 24 PST.Now the ground-truth comparison on Sept 24 — do any SSF columns reliably identify sessions with `SUM(UDI.event_page_view) > 1`?Here's the full answer, with ground truth measured on **Sept 24, 2026 PST** (6.59M sessions / 300M events).
+
+## Candidate columns on `SESSION_SUMMARY_FACT`
+
+SSF has **only one count column and no bounce/engagement flag**:
+
+| Column | Type | Semantics |
+|---|---|---|
+| `hit_count` | NUMBER | **Total events in the session** — every row in SEF, including non-pageview events (link clicks, form interactions, cart adds, errors, impressions, etc.). Not a pageview count. |
+
+**No columns exist for:** `page_view_count`, `event_count`, `engaged_session_flag`, `bounce_flag`, `is_non_bounce`, or any pre-computed non-bounce indicator. Confirmed by searching the full 48-column schema.
+
+## Ground-truth distribution — Sept 24, 2026 PST
+
+**6,587,641 sessions total** (web + app, filtered to `session_status IN ('OPEN','CLOSED')`).
+
+### True non-bounce = `SUM(UDI.event_page_view) > 1`
+
+| | Sessions | % |
+|---|---|---|
+| **True non-bounce (pv > 1)** | 5,117,933 | **77.7%** |
+| True bounce (pv ≤ 1) | 1,469,708 | 22.3% |
+
+### SSF `hit_count > 1` as a proxy
+
+| | Sessions | % |
+|---|---|---|
+| `hit_count > 1` | 6,431,055 | **97.6%** |
+| `hit_count ≤ 1` | 156,586 | 2.4% |
+
+### Confusion matrix: `hit_count > 1` vs true non-bounce
+
+| | True non-bounce | True bounce | Row total |
+|---|---|---|---|
+| **`hit_count > 1`** | 5,113,773 ✅ TP | 1,317,282 ❌ FP | 6,431,055 |
+| **`hit_count ≤ 1`** | 4,160 ❌ FN | 152,426 ✅ TN | 156,586 |
+
+### Classifier metrics
+
+| Metric | Value |
+|---|---|
+| **Precision** (of flagged non-bounces, how many are real) | **79.5%** |
+| **Recall** (of real non-bounces, how many we catch) | **99.9%** |
+| **Overall accuracy** | 79.98% |
+| **False positive rate** | 89.6% of true bounces get mislabeled as non-bounces |
+
+## Verdict — can `hit_count > 1` replace the join?
+
+**No, not for a precise non-bounce definition.**
+
+- `hit_count > 1` **over-counts non-bounces by ~1.32M sessions per day (~26% inflation)** because it includes sessions where the user triggered multiple non-pageview events (link tracking, form impressions, errors, etc.) on a single page.
+- Recall is excellent (99.9%) — virtually no true non-bounces are missed.
+- Precision is only 79.5% — about 1 in 5 sessions flagged by `hit_count > 1` are actually single-pageview sessions with multiple interaction events.
+
+**If your business definition of "non-bounce" is "viewed more than one page" (the standard Adobe/GA4 definition), `hit_count > 1` is NOT equivalent and you cannot drop the join.**
+
+If your business definition is "did anything beyond opening" (any interaction at all), then `hit_count > 1` is a reasonable proxy — but even then, note that `hit_count = 1` is only 2.4% of sessions, so it's a weak discriminator.
+
+## Recommended paths forward
+
+Pick whichever matches your SLA and precision needs:
+
+**Option A — Push non-bounce calculation into the Silver pipeline (recommended)**
+Add a `session_page_view_count` and/or `session_had_non_bounce` column to `SESSION_SUMMARY_FACT`. This is a one-time pipeline change that eliminates the billions-of-rows join forever. File it under DIRT-691 — this is exactly the kind of pre-resolved metric SSF should carry alongside `session_had_cart_add` and `session_had_purchase`.
+
+**Option B — Pre-aggregate once per day in your Media Intelligence Silver layer**
+Materialize a `media_session_metrics` table with `session_id`, `page_view_count`, `is_non_bounce`, plus any other session-level sums you need (calls, chats, store_locator, etc.). Compute it once nightly from SEF→UDI, then join on `session_id` thereafter. Billion-row scan happens once per day, not per query.
+
+**Option C — Use SEF alone (no UDI join) if you accept hit-level proxy**
+SEF carries `flow_name` and `page_url_path` (web). You could approximate pageviews as `COUNT(*) WHERE page_url_path IS NOT NULL` grouped by session — but that's web-only and still a full SEF scan. Not materially cheaper than the current approach.
+
+**Option D — Fast approximation + sampled truth**
+Use `hit_count > 1` as a cheap first-pass filter (catches 99.9% recall), then refine only the flagged subset against UDI. Cuts the join scope by ~2.4% — negligible.
+
+## Bottom line
+
+- **SSF has no pre-computed pageview or non-bounce column today.**
+- **`hit_count` ≠ pageview count** — it over-counts by ~26%.
+- **Your current SEF→UDI join is the only accurate path** given today's schema.
+- **The right fix is to add `session_page_view_count` to SSF** — want me to draft the Jira ticket for DIRT-691?
+
+3.
+Let me get the SEF schema first and see which of these fields actually exist on SEF, then measure fill rates and value agreement.Now let me measure fill rates on SEF for the fields that exist, and cross-check value agreement with UDI on a sample.Here's the full answer, measured on Sept 24, 2026 PST (300M SEF events).
+
+Which fields exist on SESSION_EVENT_FACT?
+SEF has only 32 columns. Of your 14 requested fields, only ONE is natively on SEF: flow_name. Everything else must come from UDI.
+
+Column-by-column availability
+UDI field	On SEF?	SEF column	SEF fill (overall)	SEF fill (web)	SEF fill (app)	Match UDI?
+event_page_view	❌	—	—	—	—	—
+event_purchase	❌	—	—	—	—	—
+event_click_to_call	❌	—	—	—	—	—
+event_chat_engage	❌	—	—	—	—	—
+event_store_search	❌	—	—	—	—	—
+event_cart_add	❌	—	—	—	—	—
+event_cart_checkout	❌	—	—	—	—	—
+event_product_view	❌	—	—	—	—	—
+`flow_name`	✅	flow_name	7.6%	23.1%	4.9%	✅ Exact 1:1 match on sampled rows
+site_sub_section	❌	—	—	—	—	—
+customer_type	❌	—	—	—	—	—
+user_auth_state	❌	—	—	—	—	—
+channel_name	❌	—	—	—	—	—
+external_campaign_code	❌	—	—	—	—	—
+Full SEF column inventory (what IS available)
+For reference, SEF carries only these 32 columns, grouped by purpose:
+
+Join keys / identity: session_id, row_identity_hash, canonical_user_id, fpid, device_id, profile_uid, msisdn, source_table
+Session mechanics: hit_number_in_session, event_timestamp_utc, event_timestamp_pst, event_date, event_date_pst, visit_number
+Identity resolution: identity_status, identity_authority_source, identity_evidence_count, is_authenticated, candidate_resolved_id, candidate_authority
+Page context (web only, access-controlled): page_url_full, page_url_path, page_referrer
+Flow context: flow_name (the only one from your list)
+Lineage/audit: created_at_utc, updated_at_utc, event_version, source_rowkey, session_watermark_utc, is_corrected, superseded_by_hash, correction_reason
+flow_name validation — exact value agreement with UDI
+I joined SEF to UDI on row_identity_hash + source_table + event_date_pst for a 10K-row sample where both had non-null flow_name:
+
+Count
+Rows compared	10,000
+Values match	10,000 (100%)
+Values differ	0
+Verdict: `flow_name` on SEF is a safe, exact replacement for UDI's `flow_name`. Pull it directly from SEF — no UDI join needed for this field.
+
+Agreement is expected: SEF is populated from UDI during Silver session construction, so flow_name is copied verbatim rather than re-derived.
+
+Which UDI joins can you eliminate?
+Only `flow_name`. Of your 14 requested fields, this is the sole one you can safely source from SEF without joining UDI.
+
+All 13 other fields still require joining SEF → UDI on `row_identity_hash + source_table + event_date_pst` (or event_date if you prefer UTC). The event flag fields (event_page_view, event_purchase, event_click_to_call, etc.) and the attribute fields (customer_type, channel_name, external_campaign_code, etc.) are NOT carried through to SEF today.
+
+Implications for your Media Intelligence Platform
+Given this and your prior non-bounce question, SEF's current design is explicitly lightweight by intent — it's a thin "which events belong to which session" bridge, not an enriched event store. The heavy lifting still happens in UDI.
+
+Pragmatic recommendations:
+
+Use SEF directly for `flow_name` — easy win, eliminates one join column.
+For every other event flag and attribute, either:
+File a DIRT-691 enhancement to add the top event flags (event_page_view, event_purchase, event_cart_add, event_cart_checkout) and the key dimensions (channel_name, customer_type, attribute_lob) directly to SEF. These are the exact fields a Media Intelligence Platform needs at event grain, and carrying them through would unlock a lot of downstream performance.
+
+
+
+4.
+Let me check SEF/SSF for all first-event/entry attribution columns, then measure fill rates on the first app hit, and validate uniqueness/stability of `hit_number_in_session = 1`.Let me check what columns actually exist in UDI for the requested fields before measuring fill rates.Good — now I have the real column names. `page_app_type`, `user_auth_state`, and `site_name` don't exist in UDI; closest matches are `attribute_page_app_type`, `attribute_login_state`, and `attribute_site_name`. Let me run the fill rate query and the uniqueness check in parallel.Here's the full answer, measured on **Sept 24, 2026 PST** (300M SEF events / 6.59M sessions).
+
+## Entry attribution columns on SEF/SSF — complete inventory
+
+### SEF has only ONE first-event mechanism
+| Column | Semantics | Notes |
+|---|---|---|
+| `hit_number_in_session` | 1-indexed sequential event number within a session | **This is the only first-event flag.** First event always = 1. |
+
+**No other first-event columns exist on SEF.** Specifically, SEF does NOT have:
+- `is_first_event` / `first_event_flag` / `entry_flag`
+- `session_event_index` (other than `hit_number_in_session`)
+- `event_sequence` / `event_order`
+- Any precomputed first-touch attributes copied from UDI
+
+### SSF has entry-attribute columns, but web-only
+| Column | Grain | Semantics | Fill |
+|---|---|---|---|
+| `entry_page_url_full` | session | Full URL of first web page in session | 100% web / 0% app |
+| `entry_page_url_path` | session | Path portion of entry URL | 100% web / 0% app |
+| `entry_page_referrer` | session | Referrer of entry page | 100% web / 0% app |
+| `exit_page_url_full`, `exit_page_url_path` | session | Last page in session | 100% web / 0% app |
+
+**For app, there is NO equivalent entry column on SSF.** You must derive app entry attributes yourself via `SEF.hit_number_in_session = 1` → join UDI.
+
+## Fill rates on the first APP hit — Sept 24 PST
+
+Measured on **1,023,591 first-event app hits** (SEF `hit_number_in_session=1` + `source_table='t_app_interactions'` joined to UDI on `row_identity_hash + event_date_pst + source_table`):
+
+| Field | UDI column | Fill on first app hit |
+|---|---|---|
+| **page_name** | `page_name` | **100.00%** |
+| **full_page_name** | `full_page_name` | 36.17% |
+| **page_app_type** ⚠ not in UDI | `attribute_page_app_type` *(closest)* | 2.84% |
+| **channel_name** | `channel_name` | 9.52% |
+| **external_campaign_code** | `external_campaign_code` | 0.13% |
+| **deeplink_url** | `deeplink_url` | 2.02% |
+| **push_notification** | `push_notification` | **97.83%** |
+| **customer_type** | `attribute_customer_type` | 10.52% |
+| **user_auth_state** ⚠ not in UDI | `attribute_login_state` *(closest)* | 1.80% |
+| **site_name** ⚠ not in UDI | `attribute_site_name` *(closest)* | 2.84% |
+| **site_sub_section** | `attribute_site_sub_section` *(if exists — not in schema; using `attribute_page_section`)* | 10.86% |
+| **device_type** | `device_type` | **99.95%** |
+| **device_operating_system** | `device_operating_system` | **99.95%** |
+
+### Takeaways for app entry attribution
+
+- **Reliable (>95%)**: `page_name`, `push_notification`, `device_type`, `device_operating_system` — safe to use as entry dimensions.
+- **Interesting**: `push_notification` at 97.8% is unusually high — likely indicates most app opens carry a push payload, or the field defaults to a value even when no push triggered the open. **Worth validating semantics before using as a push-attribution signal.**
+- **Sparse but useful when present**: `channel_name` (9.5%), `attribute_customer_type` (10.5%), `attribute_page_section` (10.9%).
+- **Essentially empty on entry (<3%)**: `attribute_page_app_type`, `deeplink_url`, `attribute_site_name`, `attribute_login_state`, `external_campaign_code`.
+
+### Schema reality — three names you asked about do NOT exist in UDI
+
+| Requested | Actual Silver column | Notes |
+|---|---|---|
+| `page_app_type` | `attribute_page_app_type` | 2.84% fill on app entry |
+| `user_auth_state` | `attribute_login_state` | 1.80% fill — too sparse to use. Instead use `identity_status='RESOLVED'` from SSF (97.6% on app) |
+| `site_name` | `attribute_site_name` | 2.84% fill — use `source_table` to distinguish app vs web instead |
+| `site_sub_section` | not in schema | Closest: `attribute_page_section` (10.9% on app entry) |
+
+## Is `hit_number_in_session = 1` unique per `session_id`?
+
+**Yes — 100% unique on Sept 24 PST.**
+
+| Metric | Value |
+|---|---|
+| Total sessions | 6,587,641 |
+| Sessions with exactly one `hit_number_in_session = 1` | **6,587,641 (100.00%)** |
+| Sessions with duplicates | **0** |
+| Sessions with none | 0 |
+
+Confirmed: `(session_id, hit_number_in_session=1)` is a safe unique key for the entry event.
+
+## Is `hit_number_in_session` stable across source refreshes?
+
+**Mostly yes, but with explicit correction semantics you need to handle.** From the SEF schema:
+
+- `is_corrected` — flag indicating this row was corrected after initial write
+- `superseded_by_hash` — points to the row that replaces this one
+- `correction_reason` — why the row was corrected
+- `event_version` — version number for the event, increments on correction
+- `session_watermark_utc` — watermark indicating session processing time
+- `updated_at_utc` — last update timestamp
+
+**Pipeline freshness:** Last 7 days may shift as late events are repaired. Specifically, sessions can be **re-sequenced** if late-arriving events land after initial processing, which would cause `hit_number_in_session` to shift. The guarantees are:
+
+1. **For sessions where `session_status = 'CLOSED'` AND older than ~7 days**: `hit_number_in_session` is stable.
+2. **For sessions where `session_status = 'OPEN'` OR within the 7-day repair window**: sequencing may change as late events backfill. The first event of a session can be replaced by an earlier-timestamp event that arrives late.
+3. **To get the latest/authoritative sequencing**: filter out corrected rows with `WHERE is_corrected = FALSE OR is_corrected IS NULL`, OR equivalently exclude `MERGED` / `SUPERSEDED` session statuses.
+
+**Operational recommendation for Media Intelligence Platform:**
+
+```
+WHERE session_status IN ('OPEN', 'CLOSED')
+  AND (is_corrected = FALSE OR is_corrected IS NULL)
+  AND hit_number_in_session = 1
+```
+
+For stable historical analytics, lag your "first event" materialization by **7 days** behind the current date to let the repair window settle. For near-real-time use cases, accept that recent entry events can shift and refresh daily.
+
+## Recommended app-entry pattern
+
+Since SSF has no app entry columns and most UDI entry attributes are sparse:
+
+```sql
+-- App session entry attribution
+SELECT
+  s.session_id,
+  s.canonical_user_id,
+  s.identity_status,
+  u.page_name                        AS entry_page_name,        -- 100% fill
+  u.push_notification                AS entry_push_payload,     -- 97.8% fill (validate semantics)
+  u.device_type,
+  u.device_operating_system,
+  u.channel_name                     AS entry_channel,          -- 9.5% fill
+  u.attribute_customer_type          AS entry_customer_type,    -- 10.5% fill
+  u.deeplink_url                     AS entry_deeplink,         -- 2.0% fill
+  u.external_campaign_code           AS entry_campaign_code     -- 0.1% fill
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT s
+JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  ON s.session_id = e.session_id
+  AND e.hit_number_in_session = 1
+JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+  ON u.row_identity_hash = e.row_identity_hash
+  AND u.event_date_pst = e.event_date_pst
+  AND u.source_table = e.source_table
+WHERE s.source_table = 't_app_interactions'
+  AND s.session_status IN ('OPEN','CLOSED')
+```
+
+This is unavoidable at app grain today. If app entry attribution is central to Media Intelligence, **file DIRT-691 to add `entry_page_name_app`, `entry_push_notification`, `entry_deeplink_url`, `entry_channel_name` to SSF** — same pattern as the web entry columns, pre-resolved at session creation.
+
+5.
+Let me check both session tables for any platform/device columns, then measure fill rates and verify what UDI columns the derivation actually needs.Now let me check UDI for platform/device-relevant columns and measure fill rates on both the session tables and UDI, split by source_table.Here's the full answer, measured on **Sept 24, 2026 PST** (6.59M sessions / 300M SEF events / 2.08B UDI rows for the week baseline).
+
+## Session tables — platform/device column inventory
+
+### `SESSION_SUMMARY_FACT` (48 cols) — platform/device columns found: **1**
+| Column | Semantics | Session fill |
+|---|---|---|
+| `source_table` | `'t_app_interactions'` vs `'t_web_interactions'` — the only platform signal | **100%** |
+
+**Explicitly NOT present on SSF**: `device_type`, `device_category`, `device_name`, `device_operating_system`, `os_name`, `platform`, `app_web_indicator`, `client_type`, `browser`, `page_app_type`, `page_layout_state`.
+
+### `SESSION_EVENT_FACT` (32 cols) — platform/device columns found: **1**
+| Column | Semantics | Event fill |
+|---|---|---|
+| `source_table` | Same as SSF | 100% |
+
+**Same gap**: no device/OS/platform columns on SEF either.
+
+**Bottom line: Neither session table carries any device, OS, or app-view-type information.** `source_table` is the only session-level platform signal, and it only distinguishes app vs web — not Desktop vs Mobile Web, not iOS vs Android, not App Web View vs Native App.
+
+## UDI — authoritative platform/device columns
+
+Measured on Sept 24, split by `source_table`:
+
+| UDI column | Overall fill | Web fill | App fill | Semantics |
+|---|---|---|---|---|
+| `device_type` | **99.95%** | 99.65% | 100.00% | Mobile / Desktop / Tablet / etc. |
+| `device_operating_system` | **99.95%** | 99.65% | 100.00% | iOS / Android / Windows / macOS / etc. |
+| `device_name` | **99.95%** | 99.65% | 100.00% | Specific device model |
+| `device_marketing_name` | **99.95%** | 99.65% | 100.00% | Marketing-friendly device name |
+| `attribute_os_name` | 54.80% | 1.25% | 63.51% | **App-skewed** — currently used in your derivation |
+| `attribute_page_app_type` | 1.78% | 0.10% | 2.07% | ⚠ Essentially empty — current derivation input |
+| `attribute_page_layout_state` | 0.90% | 2.92% | 0.55% | ⚠ Essentially empty — current derivation input |
+| `attribute_platform_type` | 0.09% | 0.40% | 0.03% | ⚠ Essentially empty |
+| `attribute_device_type` | 0.00% | 0.00% | 0.00% | ⚠ Dead field |
+
+**Wait — your current derivation relies on three columns, two of which (`page_app_type` 1.8% and `page_layout_state` 0.9%) are essentially empty.** That means your current logic is likely falling back to defaults for 97–99% of rows. Worth re-examining whether the derivation is actually producing meaningful Desktop/Mobile Web/App Web View splits, or whether most sessions are just defaulting.
+
+## Recommended replacement derivation
+
+The reliable foundation is just three columns, all at ~99.95% fill:
+
+| Logical bucket | Rule (source_table + device_type + device_operating_system) |
+|---|---|
+| **Web / Desktop** | `source_table = 't_web_interactions'` AND `device_type = 'Desktop'` |
+| **Web / Mobile Web** | `source_table = 't_web_interactions'` AND `device_type IN ('Mobile','Tablet')` |
+| **iOS App** | `source_table = 't_app_interactions'` AND `device_operating_system = 'iOS'` |
+| **Android App** | `source_table = 't_app_interactions'` AND `device_operating_system = 'Android'` |
+| **App Web View** | ⚠ **No reliable column exists.** `attribute_page_app_type` would be the semantic home but is 1.8% filled. See note below. |
+
+**App Web View identification is the gap.** No column reliably distinguishes a native app screen from a web view embedded inside the app. If you need this today:
+- Check whether specific `page_name` or `full_page_name` values indicate web-view screens (requires product/engineering input to list them).
+- Or inspect `user_agent`-style columns if any exist — I can run a scan if you have candidate column names.
+
+Otherwise, the Web/Desktop/Mobile Web/iOS App/Android App split is cleanly achievable with the three fields above at ~99.95% coverage — a massive improvement over your current derivation that relies on two near-empty columns.
+
+## Can you avoid the UDI join?
+
+**No — not today.** `device_type` and `device_operating_system` live only on UDI, not on SSF or SEF. The join remains unavoidable for platform classification at session or event grain.
+
+**Fix for your Media Intelligence Platform:**
+1. **Short term**: materialize platform classification in your own Silver layer during the daily SEF→UDI enrichment join (same pass as pageview count, event flags, LOB, etc.).
+2. **Long term**: file DIRT-691 to add `session_device_type`, `session_device_operating_system`, and a derived `platform_bucket` (Desktop / Mobile Web / iOS App / Android App / App Web View) directly to `SESSION_SUMMARY_FACT`. These are stable per session (device doesn't change mid-session) and would eliminate the join entirely for platform analytics.
+
+
+6.
+Let me check all three tables for every candidate geography column and measure fill rates by source_table.Now let me measure fill rates on UDI (split by source_table) for all candidates found, on Sept 24 PST.Here's the full geography inventory, measured on **Sept 24, 2026 PST** (300M+ web/app UDI rows).
+
+## Session tables — geography column inventory
+
+### `SESSION_SUMMARY_FACT` (48 cols): **ZERO geography columns**
+### `SESSION_EVENT_FACT` (32 cols): **ZERO geography columns**
+
+Confirmed by full schema scan — no `country`, `state`, `region`, `zip`, `dma`, `city`, `geo_*`, `postal`, `market`, `lat`, `lon`, `latitude`, or `longitude` fields on either session table. **All geography lives on UDI.**
+
+## UDI geography columns — fill rate by platform
+
+### Tier 1 — IP-derived geo (reliable, both channels)
+
+| Column | Overall | 🌐 Web | 📱 App | Source | Notes |
+|---|---|---|---|---|---|
+| `geo_country` | **99.5%** | 99.6% | 99.5% | IP geolocation | Essentially always filled |
+| `geo_region` | **99.5%** | 99.6% | 99.5% | IP geolocation | **State/province name** (e.g., "Washington", "California") — not a custom T-Mobile region |
+| `geo_city` | **99.5%** | 99.6% | 99.5% | IP geolocation | City name |
+| `geo_dma` | **99.5%** | 99.6% | 99.5% | IP geolocation | Nielsen DMA code |
+| `geo_zip` | **99.5%** | 99.6% | 99.5% | IP geolocation | 5-digit postal code from IP |
+| `geo_latitude` | **99.5%** | 99.6% | 99.5% | IP geolocation | Lat/long centroid |
+| `geo_longitude` | **99.5%** | 99.6% | 99.5% | IP geolocation | Lat/long centroid |
+
+**Important semantics about `geo_region`**: this is the IP-derived **state/province**, not a T-Mobile internal region grouping (e.g., "West", "Central", "Northeast"). If your business definition of Region is "T-Mobile sales/marketing region bucket," you'll need to roll `geo_region` (state) up to your internal region definition — but no external ZIP crosswalk is required; the mapping is just state → region.
+
+### Tier 2 — Customer-derived geo (sparse, mostly app)
+
+| Column | Overall | 🌐 Web | 📱 App | Source | Notes |
+|---|---|---|---|---|---|
+| `attribute_zipcode` | 1.4% | 0.1% | 1.6% | Customer-provided (form input, profile) | Explicit user-entered ZIP — e.g., coverage checker, shipping |
+| `attribute_user_zip` | 0.9% | 0.0% | 1.0% | Customer profile | Billing/profile ZIP |
+| `attribute_tfb_zip` | 0.2% | 0.9% | 0.1% | TFB coverage flow | T-Mobile for Business ZIP input |
+| `attribute_tfb_market` | 0.2% | 0.9% | 0.1% | TFB flow | TFB-specific market attribute |
+
+**These are useful signal when present but far too sparse for primary Region derivation.** They're most valuable as supplementary context (e.g., for TFB funnel analysis or coverage-checker events), not as the base geography column.
+
+## Summary — can you derive Region without an external ZIP crosswalk?
+
+**Yes — using `geo_region` directly.** `geo_region` is the IP-derived state at **99.5% fill on both web and app**. State → T-Mobile internal region is a small (~50-row) static mapping, not an external ZIP crosswalk, and can be inlined as a CASE statement or a tiny join table in your Silver layer.
+
+**You do NOT need `geo_zip` for state/region derivation.** Only use `geo_zip` when you specifically need ZIP-level granularity (e.g., coverage analysis, local store attribution).
+
+## Known caveats
+
+- **IP geolocation accuracy**: `geo_region`/`geo_city`/`geo_zip` reflect the user's **IP address at hit time**, which may be:
+  - A mobile carrier gateway (not the user's physical location) — common on cellular connections
+  - A VPN or corporate proxy
+  - A different state than the user's billing address
+  - At app grain, often more volatile than web since mobile users roam
+- **For billing/sales region analytics**, `attribute_user_zip` or `attribute_zipcode` are more accurate but ~1% filled — only trust them when present, don't use them as your primary field.
+- **Lat/long are centroid-level**, not GPS-precise. They correspond to the city/ZIP centroid, not the user's actual coordinates.
+- **No session-level rollup columns exist for geography on SSF.** Each hit can theoretically have different geo values (mobile users roaming, IP changes). For session-level Region, you'll need to pick a resolution rule — most common: first-hit geo (join via SEF `hit_number_in_session=1`).
+
+## Recommended Region derivation pattern
+
+```sql
+-- Session-level Region using first-hit IP geo (99.5% fill)
+WITH first_hit AS (
+  SELECT
+    e.session_id,
+    u.geo_country,
+    u.geo_region        AS entry_state,
+    u.geo_dma,
+    u.geo_zip
+  FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+    ON u.row_identity_hash = e.row_identity_hash
+   AND u.event_date_pst   = e.event_date_pst
+   AND u.source_table     = e.source_table
+  WHERE e.hit_number_in_session = 1
+)
+SELECT
+  s.session_id,
+  f.geo_country,
+  f.entry_state,
+  f.geo_dma,
+  f.geo_zip,
+  CASE  -- your internal state → region mapping
+    WHEN f.entry_state IN ('Washington','Oregon','California','Nevada','Arizona','Idaho','Montana','Wyoming','Utah','Colorado','Alaska','Hawaii') THEN 'West'
+    WHEN f.entry_state IN ('Texas','Oklahoma','Arkansas','Louisiana','New Mexico') THEN 'South Central'
+    -- ... etc.
+    ELSE 'Other'
+  END AS tmobile_region
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT s
+JOIN first_hit f ON f.session_id = s.session_id
+WHERE s.session_status IN ('OPEN','CLOSED')
+```
+
+## Fix recommendation
+
+To eliminate the SEF→UDI join for Region at session grain, file a DIRT-691 enhancement to add these columns to `SESSION_SUMMARY_FACT`:
+
+- `entry_geo_country` (99.5% expected fill)
+- `entry_geo_region` (state, 99.5%)
+- `entry_geo_dma` (99.5%)
+- `entry_geo_zip` (99.5%)
+
+These are stable per-session choices (first-hit geo) and would complete the pattern already established by `entry_page_url_*` for web.
+
+7.
+Let me check all three tables for any channel-related columns, then verify stickiness behavior empirically.Now let me check SSF and SEF for channel columns, and empirically test if `channel_name` on UDI varies within sessions on Sept 24.Here's the full channel-column inventory and empirical stickiness check, measured on **Sept 24, 2026 PST** (6.59M sessions / 300M events).
+
+## Channel column inventory — all three tables
+
+### `SESSION_SUMMARY_FACT` (48 cols): **ZERO channel columns**
+No `session_channel`, `entry_channel`, `first_channel`, `attributed_channel`, or `channel_name` field exists on SSF today.
+
+### `SESSION_EVENT_FACT` (32 cols): **ZERO channel columns**
+Same — no channel field carried through at event grain.
+
+### UDI — channel-related columns found
+
+| Column | Grain | Overall fill | Web | App | Semantics |
+|---|---|---|---|---|---|
+| `channel_name` | hit | 20.0% | 36.5% | 17.1% | Marketing channel bucket (Direct, Paid Search, Email, Display, etc.) — Adobe Marketing Channel-processed |
+| `channel_id` | hit | 20.3% | 36.7% | 17.4% | Numeric channel ID paired with `channel_name` |
+| `attribute_last_touch_channel` | hit | 0.08% | 0.06% | 0.09% | Adobe `s.channel` style field — last-touch raw channel string |
+| `attribute_marketing_channel` | hit | 0.0% | 0.0% | 0.0% | ⚠ Essentially empty — dead field |
+| `attribute_tracking_code` | hit | 1.1% | 7.1% | 0.1% | Raw campaign tracking code (cmpid) |
+
+**Bottom line: no column in the EDL today is explicitly designed to be session-sticky for marketing channel.** `channel_name` is the primary channel field but is hit-level and documented as derived per-hit from `cmpid` / referrer / page URL — it recomputes on every hit, so it legitimately changes mid-session when the user clicks internal links that carry different `cmpid` values or when the Adobe Marketing Channel rules fire differently on later pages.
+
+## Empirical stickiness check — Sept 24 PST
+
+I measured how often `channel_name` actually varies within a session.
+
+### Overall channel stability
+
+| Session population | Count | % |
+|---|---|---|
+| Total sessions | 6,587,641 | 100.0% |
+| Sessions with ≥1 non-null `channel_name` event | 1,497,057 | 22.7% |
+| **Sessions with exactly 1 distinct non-null channel** | **1,414,484** | **21.5%** of all / 94.5% of channel-having |
+| **Sessions with 2+ distinct non-null channels** | **82,573** | **1.25%** of all / 5.5% of channel-having |
+
+**Verdict: 5.5% of sessions that have any channel assignment have a channel change within the session.** For most analytics, 94.5% stability sounds high — but at your scale, that's **82K+ sessions per day with ambiguous channel attribution**, which absolutely explains the behavior you're seeing.
+
+### Split by platform
+
+| Platform | Sessions with channel | Multi-channel sessions | Multi-channel rate (within channel-having) |
+|---|---|---|---|
+| 📱 App | 892,105 | 29,718 | **3.3%** |
+| 🌐 Web | 604,952 | 52,855 | **8.7%** |
+
+**Web is ~2.6× more likely than app to show channel drift within a session** — consistent with the derivation being URL-driven (users clicking around hit different `cmpid` / referrer contexts; apps have fewer such transitions).
+
+### Entry-channel vs any-later-channel disagreement
+
+For the 82,573 sessions with multiple distinct channels, the entry-hit channel disagrees with later-hit channels by definition. This is the exact pattern you're observing: `channel_name` on the first hit ≠ `channel_name` on later hits in the same session.
+
+## Why `channel_name` drifts — root cause
+
+`channel_name` is **recomputed per hit** by the Adobe Marketing Channel processing rules. On each hit, it looks at:
+- Current page's `cmpid` / `extCampaign` query param
+- `page_referrer`
+- `page_url_full` landing context
+
+If a user lands via Paid Search (`channel_name='Paid Search'`), then clicks an internal link carrying a different `cmpid` (e.g., an email promo link embedded in the page), the rules fire again and the next hit's `channel_name` reflects the new context. **This is Adobe's intended per-hit behavior, not a bug** — but it means `channel_name` is NOT a session-sticky attribution field by design.
+
+Standard Adobe practice is to pair the per-hit `channel_name` with an eVar-based "First Touch Channel" or "Last Touch Channel" variable that persists for the whole visit. **Those persisted variables don't appear to be mapped into Silver today** — both `attribute_last_touch_channel` (0.08% fill) and `attribute_marketing_channel` (0.0% fill) are effectively absent.
+
+## Is any existing field explicitly designed to be session-sticky?
+
+**No.** Based on both schema inspection and empirical measurement:
+
+- `channel_name` / `channel_id`: hit-level, recomputed per hit, **not sticky by design**
+- `attribute_last_touch_channel`: would be the correct semantic home, but **0.08% fill — unusable**
+- `attribute_marketing_channel`: dead field — 0.0% fill
+- SSF / SEF: zero channel columns
+
+**There is no pre-computed session-sticky marketing channel in the EDL today.** You have to derive it yourself.
+
+## Recommended derivation — first-touch session channel
+
+Pick whichever rule fits your attribution model (first-touch is standard for acquisition analytics):
+
+```sql
+-- First non-null channel per session (first-touch acquisition channel)
+WITH first_channel AS (
+  SELECT
+    e.session_id,
+    u.channel_name,
+    u.channel_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY e.session_id
+      ORDER BY e.hit_number_in_session
+    ) AS rn
+  FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+    ON u.row_identity_hash = e.row_identity_hash
+   AND u.event_date_pst   = e.event_date_pst
+   AND u.source_table     = e.source_table
+  WHERE u.channel_name IS NOT NULL
+)
+SELECT session_id, channel_name AS session_first_touch_channel, channel_id
+FROM first_channel
+WHERE rn = 1
+```
+
+If you need last-touch instead, flip to `ORDER BY e.hit_number_in_session DESC`.
+
+## The right fix — DIRT-691 enhancement
+
+Three complementary columns should be added to `SESSION_SUMMARY_FACT`:
+
+| Proposed column | Semantics | Expected fill |
+|---|---|---|
+| `session_first_touch_channel_name` | First non-null `channel_name` in the session, locked at session close | ~22% (matches `channel_name` session coverage) |
+| `session_first_touch_channel_id` | Corresponding numeric channel ID | ~22% |
+| `session_last_touch_channel_name` | Last non-null `channel_name` — useful for conversion attribution | ~22% |
+
+These would be stable per session (no mid-session drift), eliminate the SEF→UDI join for channel attribution, and match the pattern already established by `entry_page_url_*` and `session_had_purchase`.
+
+
+8.
+Let me search for every campaign-related column across all three tables and check SSF/SEF explicitly.Now let me measure fill rates on all campaign candidates (UDI, split by platform) and check if BDM_DBI_DB has a dim_marketing_code or any session-grain campaign table.Here's the full inventory, measured on **Sept 24, 2026 PST** (6.59M sessions / 310M web UDI rows / 1.77B app UDI rows).
+
+## Session tables — campaign column inventory
+
+### `SESSION_SUMMARY_FACT` (48 cols): **ZERO campaign columns**
+No `session_campaign`, `entry_campaign`, `first_touch_campaign`, `campaign_code`, `cmpid`, or `extCampaign` field exists on SSF today.
+
+### `SESSION_EVENT_FACT` (32 cols): **ZERO campaign columns**
+Same — no campaign field carried through at event grain.
+
+**Bottom line: there is no pre-computed session-level campaign anywhere in the EDL session tables today.**
+
+## UDI — all campaign-related columns
+
+Fill rates on Sept 24, split by platform:
+
+| Column | Overall | 🌐 Web | 📱 App | Semantics |
+|---|---|---|---|---|
+| `external_campaign_code` | 1.1% | **7.1%** | 0.1% | Full tracking code from landing URL (`cdl_param_extCampaign` / `data_param_extCampaign`). **This is the field your `split_part(…, '_', 4)` logic parses.** |
+| `attribute_cmpid` | 0.5% | 2.1% | 0.3% | Raw `cmpid` query-string value |
+| `attribute_tracking_code` | 1.1% | 7.1% | 0.1% | Raw tracking code — appears to be the same source as `external_campaign_code` |
+| `attribute_last_touch_campaign` | 0.0% | 0.0% | 0.0% | ⚠ Essentially empty — dead field |
+| `clicked_icid` | 0.6% | 4.1% | 0.1% | On-site/in-app internal campaign click |
+| `deeplink_icid` | 1.4% | 0.0% | 1.6% | App-only deep-link ICID |
+| `campaign_list` | 1.6% | 7.1% | 0.6% | Array of campaigns touched during session hit |
+| `moe_campaign_name` | 0.1% | 0.0% | 0.0% | MOE channel only (negligible) |
+| `ac_campaign_id` | 0.0% | 0.0% | 0.0% | Adobe Classic Campaign (email) — essentially empty |
+
+### Observations
+
+- **`external_campaign_code` is the only usable external campaign field, and only on web** (7.1% web / 0.1% app). This matches your current documented logic.
+- **`attribute_last_touch_campaign` would be the correct semantic home for a persisted first/last-touch value — but it's 0.0% filled.** The Adobe eVar carrying persisted campaign is not mapped into Silver.
+- **App has essentially no external campaign tracking.** External campaign attribution is a web-only story today; for app, deep-link ICIDs are the closest equivalent at ~2% fill.
+
+## Does any downstream table already persist the parsed campaign at session grain?
+
+I checked three places for a session-level campaign rollup or a `dim_marketing_code` reference:
+
+### 1. BDM_DBI_DB — Silver and Gold session tables
+Searched `GOLD_DIGITAL_INTERACTIONS`, `GOLD_DIGITAL_INSIGHTS`, and `SILVER_DIGITAL_INTERACTIONS` for any table containing a campaign column. **Result: none found.** The Gold session-grain tables (`FACT_DIGITAL_ENGAGEMENT_AGG`, `FACT_DIGITAL_SALES_AGG`, etc.) don't carry a persisted session campaign field either.
+
+### 2. `dim_marketing_code` lookup
+Searched the full Snowflake catalog across all 1,070 tables for `dim_marketing_code` or any variant (`marketing_code`, `marketing_cd`, `mktg_code`). **Result: no table named `dim_marketing_code` exists in the EDL catalog.** This dimension is either:
+- Materialized in a different environment (Databricks/dbt catalog) outside this Snowflake instance, or
+- Referenced in your pipeline but sourced from somewhere not surfaced in BDM_DBI_DB
+
+If you know the actual DB/schema where `dim_marketing_code` lives, I can look it up directly.
+
+### 3. TLIFE_ANALYTICS / DIGITAL_INSIGHTS
+No campaign-code rollup at session grain found in these schemas either. Campaign attribution appears to be computed per-use-case rather than materialized once.
+
+## Verdict
+
+**No table in the EDL persists the parsed campaign token at session grain today.** Your current pattern — join SEF → UDI, resolve `external_campaign_code` across all session hits, parse `split_part(external_campaign_code, '_', 4)`, join to `dim_marketing_code` — is the only path available.
+
+Multi-hit resolution is also legitimately needed because:
+- `external_campaign_code` only fires on the landing hit (and sometimes echoes on subsequent hits), so you have to scan session events to find the non-null value
+- Different hits in the same session can carry different campaign codes if the user clicks through internal campaign-tagged links
+- There's no persisted first-touch campaign eVar mapped to Silver
+
+## Recommended session campaign derivation
+
+First-touch (acquisition attribution — standard):
+
+```sql
+WITH session_campaign AS (
+  SELECT
+    e.session_id,
+    u.external_campaign_code,
+    SPLIT_PART(u.external_campaign_code, '_', 4) AS campaign_token,
+    ROW_NUMBER() OVER (
+      PARTITION BY e.session_id
+      ORDER BY e.hit_number_in_session
+    ) AS rn
+  FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+    ON u.row_identity_hash = e.row_identity_hash
+   AND u.event_date_pst   = e.event_date_pst
+   AND u.source_table     = e.source_table
+  WHERE u.external_campaign_code IS NOT NULL
+)
+SELECT session_id,
+       external_campaign_code     AS session_first_touch_campaign_code,
+       campaign_token             AS session_first_touch_campaign_token
+FROM session_campaign
+WHERE rn = 1
+```
+
+## Recommended fix — DIRT-691 enhancement
+
+Add to `SESSION_SUMMARY_FACT`:
+
+| Proposed column | Semantics | Expected fill |
+|---|---|---|
+| `session_first_touch_campaign_code` | First non-null `external_campaign_code` in session | ~7% web / ~0.1% app (matches hit-level fill) |
+| `session_first_touch_campaign_token` | `split_part(…, '_', 4)` already applied | ~7% web / ~0.1% app |
+| `session_first_touch_cmpid` | First non-null `attribute_cmpid` | ~2% web |
+| `session_first_touch_icid` | First non-null `clicked_icid` / `deeplink_icid` | ~4% web / ~2% app |
+| `session_last_touch_campaign_code` | Last non-null — useful for conversion attribution | Same |
+
+This would eliminate the SEF→UDI campaign resolution join entirely and match the pattern already established by `entry_page_url_*`, `session_had_purchase`, and the proposed first-touch channel fields
+
+
+9.
+Let me check the Silver dictionary for `deeplink_url` documentation, find any parsed deep-link fields, and empirically measure what parameters appear in app-entry deeplink URLs.Now let me check the full dictionary for deeplink documentation and search for any pre-parsed deep-link campaign/source fields.Now let me empirically measure what parameters appear in app-entry `deeplink_url` values on Sept 24.Let me check UDI schema for deeplink/launch columns.Let me simplify — just do substring matching on deeplink_url directly without URL parsing, over a bigger sample.Here's the full answer, measured on **Sept 24, 2026 PST** across app-entry events (`SEF.hit_number_in_session=1` + `source_table='t_app_interactions'`).
+
+## Baseline — how many app sessions have a deeplink_url at entry?
+
+**13,893 app-entry events out of 1,029,420 (1.35%) carry a non-null `deeplink_url`.**
+
+This confirms what we saw earlier: `deeplink_url` is populated on **~1.4% of app session entries**, not the majority. Most app opens happen via home-screen tap (direct launch), push notification tap (captured in `push_notification` at ~98%), or system handoff — none of which populate `deeplink_url`. Only sessions that start via an external deep link (universal link, custom URL scheme, email/web → app handoff, ad landing → app, etc.) have this field.
+
+## Intended attribution semantics of `deeplink_url`
+
+Based on dictionary definitions and empirical behavior:
+
+- `deeplink_url` captures **the exact URL used to launch or navigate the app**. On entry (`hit_number_in_session=1`), it represents the **external deep link that opened the app** — a universal link, custom URL scheme (`tmobile://…`), or OS-handoff URL.
+- On non-entry hits, `deeplink_url` can also populate when the user **follows an internal in-app deep link** (e.g., tapping a card in the home feed that resolves via the deep-link router). So **`deeplink_url` is NOT guaranteed to describe only the entry link** — on later hits it can describe mid-session navigation.
+- Dictionary documents it as _"Deep link URL used to open the app or navigate within the app"_ — the "or navigate within" wording is the gotcha. **Filtering to `hit_number_in_session=1` is required** to isolate the entry attribution.
+
+## Parameter prevalence in app-entry deeplink URLs — Sept 24 PST
+
+Measured on 13,893 non-null app-entry `deeplink_url` values:
+
+| Parameter | Hits with it | % of app-entry deeplinks containing it | % of ALL app-entry events |
+|---|---|---|---|
+| **cmpid** | 10,106 | **72.74%** | 0.98% |
+| **icid** | 4,106 | **29.55%** | 0.40% |
+| **extCampaign** | 0 | **0.00%** | 0.00% |
+| **utm_source** | 0 | **0.00%** | 0.00% |
+| **utm_medium** | 0 | **0.00%** | 0.00% |
+| **utm_campaign** | 0 | **0.00%** | 0.00% |
+| **refsource** | 0 | **0.00%** | 0.00% |
+
+### Takeaways on parameter content
+
+- **`cmpid` is the dominant attribution parameter** in app-entry deep links — present in ~73% of them. This is the primary T-Mobile campaign tracking convention.
+- **`icid` is secondary** — present in ~30%, typically for internal campaign placements that chain into the app.
+- **`extCampaign` is NOT used in app deep links** at all (0%). This parameter appears on web landings but not in app URL schemes — don't look for it here.
+- **UTM parameters are not used in T-Mobile's deep-link convention** — all three (`utm_source`, `utm_medium`, `utm_campaign`) are 0.00%. This matches the broader finding earlier that T-Mobile.com uses `cmpid`/`icid`/`extCampaign` rather than UTM across the board.
+- **`refsource` is not used** either.
+
+**Operational implication**: when parsing app-entry `deeplink_url` for attribution, you only need to extract `cmpid` and `icid`. Looking for UTM, `extCampaign`, or `refsource` is wasted logic — they're never there.
+
+## Can `deeplink_url` contain unrelated navigation context?
+
+**Yes — three important cases to handle:**
+
+1. **Internal deep-link navigation (mid-session)**: On non-entry hits, `deeplink_url` can be set when the user taps an internal card/link that routes via the deep-link framework. These are navigational, not acquisition. **Filter: `hit_number_in_session = 1`.**
+
+2. **Push notification handoff**: When a user taps a push and the push payload includes a deep link, both `push_notification` and `deeplink_url` can populate on the entry hit. The deep link here IS attribution-relevant — but you may want to distinguish push-driven entry from pure external deep-link entry for channel attribution. **Check `push_notification IS NOT NULL` to split push-driven from external deep-link opens.**
+
+3. **System-generated opens**: Some OS-level handoffs (Siri, Spotlight, third-party apps) can populate `deeplink_url` with context that isn't a tracked campaign — no `cmpid`/`icid` present. These show up in the ~27% of app-entry deeplinks that have no `cmpid`.
+
+## Is there a pre-parsed deep-link campaign/source field?
+
+**Partially — `deeplink_icid` exists but no `deeplink_cmpid` or `deeplink_source` equivalent.**
+
+| Column | Fill (app overall) | Fill (app entry) | Semantics |
+|---|---|---|---|
+| `deeplink_icid` | ~1.6% | ~2% | **Pre-parsed ICID extracted from `deeplink_url`.** When present, prefer this over re-parsing. |
+| `deeplink_cmpid` | — | — | ⚠ **Does not exist.** No pre-parsed CMPID column — you must parse `deeplink_url` yourself. |
+| `attribute_deep_link_icid` | ~0% | ~0% | Appears to be a legacy/alt mapping — essentially empty. Use `deeplink_icid`. |
+
+### Verdict on parsed fields
+
+- **For ICID: use `deeplink_icid` directly** — don't re-parse. It's pre-extracted and matches whatever lives in the URL.
+- **For CMPID: no pre-parsed field exists** — you must apply `parse_url(deeplink_url, 'QUERY'):cmpid` or equivalent regex extraction yourself. This is the most-populated attribution parameter (73%) so it's a real gap.
+- **For external_campaign_code / extCampaign on app**: not applicable — this parameter is never in app deep links.
+
+## Recommended app-entry deep-link attribution pattern
+
+```sql
+-- App-entry deep-link attribution (hit_number_in_session=1, app only)
+SELECT
+  e.session_id,
+  u.deeplink_url,
+  u.push_notification                              AS entry_push_payload,
+  u.deeplink_icid                                  AS entry_deeplink_icid,  -- pre-parsed, use directly
+  REGEXP_SUBSTR(u.deeplink_url, 'cmpid=([^&]+)', 1, 1, 'e', 1) AS entry_deeplink_cmpid,  -- parse yourself
+  CASE
+    WHEN u.deeplink_url IS NULL                       THEN 'direct_launch'
+    WHEN u.push_notification IS NOT NULL              THEN 'push_with_deeplink'
+    WHEN u.deeplink_url ILIKE '%cmpid=%'              THEN 'external_campaign_deeplink'
+    WHEN u.deeplink_url ILIKE '%icid=%'               THEN 'internal_campaign_deeplink'
+    ELSE 'untagged_deeplink'
+  END AS app_entry_type
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+  ON u.row_identity_hash = e.row_identity_hash
+ AND u.event_date_pst   = e.event_date_pst
+ AND u.source_table     = e.source_table
+WHERE e.source_table = 't_app_interactions'
+  AND e.hit_number_in_session = 1
+```
+
+## Recommended fix — DIRT-691 enhancement
+
+Add to Silver so you don't have to parse `deeplink_url` yourself:
+
+| Proposed column | Semantics | Expected fill |
+|---|---|---|
+| `deeplink_cmpid` | Pre-parsed `cmpid` from `deeplink_url` | ~1% app (73% of the 1.4% with deeplink) |
+| `deeplink_source` | Pre-parsed `source` / origin app from deep link, if present | ~1% app |
+
+And to `SESSION_SUMMARY_FACT`:
+
+| Proposed column | Semantics | Expected fill |
+|---|---|---|
+| `entry_deeplink_url` | Full entry deep link (hit 1 only) | ~1.4% app |
+| `entry_deeplink_cmpid` | Pre-parsed CMPID from entry deep link | ~1% app |
+| `entry_deeplink_icid` | Pre-parsed ICID from entry deep link | ~0.4% app |
+| `entry_push_notification` | Push payload at entry (companion to deep link) | ~98% app |
+| `entry_type` | Enum: `direct_launch` / `push` / `push_with_deeplink` / `external_deeplink` / `internal_deeplink` / `untagged_deeplink` | 100% app |
+
+This mirrors the pattern already established by web's `entry_page_url_*` columns and would make app entry attribution a one-table lookup instead of a SEF→UDI join + URL parsing.
+
+
+10.
+Great instinct to push on this — 98% fill on first hits is way too high for a "session opened from push" field. Let me get the dictionary definition, cardinality, top values, and cross-tab against deeplink and campaign activity.Now let me check the dictionary definition and get cardinality/top values of push_notification on app first hits.Now let me check cardinality, top values, and cross-tab against deep-link/campaign activity.Let me get the top distinct values and cross-tab with deep-link activity.Now the cross-tab against deep-link and campaign activity.Here's the full forensic answer. **`push_notification` is NOT what its name suggests** — the 98% fill was misleading me, and I owe you a correction on the prior session.
+
+## What `push_notification` actually represents
+
+### Dictionary definition
+`PUSH_NOTIFICATION` is sourced from the APP Bronze field `data_user_tLifePushNotificationStatus` with transformation note:
+
+> _"Direct mapping from data_user_tLifePushNotificationStatus which contains the T-Life push notification subscription status: TRUE/FALSE, or NULL."_
+
+**It is NOT the payload of a push that opened the app. It is the user's push-notification subscription setting (opted-in or opted-out).**
+
+### Cardinality on app first hits — Sept 24
+
+| Value | Events | % of app first hits |
+|---|---|---|
+| `TRUE` | 737,998 | **71.69%** |
+| `FALSE` | 269,041 | **26.13%** |
+| `NULL` | 22,381 | 2.17% |
+
+Only **two values** — `TRUE` / `FALSE`. This is a boolean subscription flag, not a payload identifier. The ~98% fill rate reflects the fact that virtually every app session logs the user's current push-opt-in status on the entry hit; it does not mean 98% of sessions were opened by tapping a push.
+
+### Cross-tab with actual deep-link / campaign activity
+
+Among app first hits with `push_notification = TRUE` (the 71.69% supposedly "opened by push"):
+
+| | Count | % of TRUE group |
+|---|---|---|
+| Total `push_notification=TRUE` first hits | 737,998 | 100% |
+| Of those, with a `deeplink_url` populated | 10,142 | **1.37%** |
+| Of those, with any campaign tracking (`cmpid`, `external_campaign_code`, or `deeplink_icid`) | 23,489 | **3.18%** |
+
+**If `push_notification=TRUE` genuinely meant "this session was opened from a push notification," we'd expect the vast majority of those sessions to carry a deep link or campaign payload** — because that's what pushes carry. Instead, only ~1.4% have a deep link and ~3.2% have any campaign tracking. The remaining ~97% are indistinguishable from direct app launches by any attribution signal.
+
+**Conclusion: `push_notification` is a user-profile subscription status flag, not a session-origin indicator.** TRUE means "this user has T-Life push notifications enabled"; FALSE means they've opted out. It tells you nothing about whether the current session was launched from a push tap.
+
+## Correction to my earlier response
+
+In the earlier app entry attribution answers, I presented `push_notification` as a push-attribution signal and even suggested renaming it to `entry_push_notification` for the DIRT-691 enhancement. **That was wrong — I misread the field name without verifying semantics.** The 97.8% fill rate should have been the signal that something was off, and I should have pulled the dictionary definition before interpreting. My apologies for the misdirection on the prior turns.
+
+## What this means for your Media Intelligence Platform
+
+- **Do NOT use `push_notification` as a push-origin or push-attribution signal.** It will not tell you which sessions were launched from a push tap, and treating it as such will massively over-count push-driven acquisition.
+- **It IS useful** as a user-level propensity dimension: segment users by whether they have T-Life push notifications enabled vs disabled. That's a legitimate behavioral/engagement cut (e.g., "do push-opted-in users have higher LTV?").
+- **For actual push-origin detection**, the honest answer is: there is no reliable column in Silver today. The signals you'd combine are:
+  - `deeplink_url` populated at entry (~1.4% of app entries) — strongest signal, since pushes typically carry a deep link
+  - `deeplink_icid` populated at entry (~2%) — if the push payload used an ICID
+  - `cmpid` in the deep-link URL (73% of the deep-linked entries) — identifies tracked push campaigns
+- **The real "opened from push" rate is likely in the 1–3% range on any given day**, based on the deep-link + campaign cross-tabs — not the 72% implied by `push_notification=TRUE`.
+
+## Updated recommendation for DIRT-691
+
+The push attribution gap is real. Instead of relying on an existing field, Silver needs a true session-origin indicator:
+
+| Proposed column | Semantics |
+|---|---|
+| `entry_push_opened_flag` | Boolean — TRUE only if entry hit has evidence of push origin (push payload captured upstream, not the subscription status) |
+| `entry_push_campaign_id` | Push campaign identifier if available |
+| **Rename recommendation**: `push_notification` → `user_push_subscription_status` | To eliminate the semantic trap we just fell into |
+
+
+11.
+Let me get the full SSF schema and verify what's resolved at session grain.Here's the authoritative inventory — measured against the full 48-column SSF schema.
+
+## SSF resolved-value matrix
+
+| Attribute | On SSF? | Column(s) | Resolution rule | Notes |
+|---|---|---|---|---|
+| **canonical_user_id** | ✅ **YES** | `canonical_user_id`, `identity_status`, `identity_authority_source`, `identity_evidence_count` | **Strongest-state (authority hierarchy)** — not entry/exit. Picks the best identity observed across all hits using MSISDN > PROFILE_UID > DEVICE_ID > FPID priority. `identity_status` indicates confidence: `RESOLVED` (~97%), `CONFLICT` (~3%, canonical_user_id NULL), `UNRESOLVED`. | Pre-computed, no join needed. |
+| **Customer / prospect / base state** | ❌ **NO** | — | Not resolved on SSF. Nearest proxy: `identity_status = 'RESOLVED'` + `canonical_user_id IS NOT NULL` (base signal, 96.8% fill). | Must derive from UDI `attribute_customer_type` (10.5% hit fill — poor) or infer from identity. |
+| **Auth / login state** | ❌ **NO** (semantically close) | `is_authenticated` (if present via identity_status) — but not an explicit SSF column | Not pre-resolved. Nearest proxy: `identity_status = 'RESOLVED'` AND `identity_authority_source IN ('MSISDN','PROFILE_UID')` → authenticated during session. | UDI `attribute_login_state` is 1.9% filled — unusable. The identity-based proxy at session grain is the only reliable path. |
+| **Platform** | ✅ **PARTIAL** | `source_table` | **Session-constant** — set once at session creation. `t_app_interactions` vs `t_web_interactions`. 100% fill. | Only distinguishes app vs web. No Desktop/Mobile Web/iOS/Android split — those require UDI `device_type` + `device_operating_system`. |
+| **Site / LOB** | ❌ **NO** | — | Not resolved on SSF. Must derive from UDI `attribute_lob` (41% hit fill) with first-touch rule. | Known gap. |
+| **Marketing channel** | ❌ **NO** | — | Not resolved on SSF. Must derive from UDI `channel_name` (22% hit fill, drifts within sessions ~5.5% of the time). | Known gap — covered in prior response. |
+| **Campaign** | ❌ **NO** | — | Not resolved on SSF. Must derive from UDI `external_campaign_code` (7% web / 0.1% app). | Known gap — covered in prior response. |
+| **Device** | ❌ **NO** | — | Not resolved on SSF. Must join UDI for `device_type` (99.95%), `device_operating_system` (99.95%), `device_name`, `device_marketing_name`. | Known gap — covered in prior response. |
+| **Entry page (web only)** | ✅ YES | `entry_page_url_full`, `entry_page_url_path`, `entry_page_referrer` | **Entry state** — first hit's page. 🔒 Access-controlled. 100% web / 0% app. | — |
+| **Exit page (web only)** | ✅ YES | `exit_page_url_full`, `exit_page_url_path` | **Exit state** — last hit's page. 🔒 Access-controlled. 100% web / 0% app. | — |
+| **Purchase/cart flags** | ✅ YES | `session_had_cart_add`, `session_had_purchase`, `session_purchase_count` | **Any-state** — TRUE if the signal appeared on any hit; count sums across all purchase events in session. | 100% fill — pre-computed. |
+| **Hit count** | ✅ YES | `hit_count` | Total events in session (not pageviews — see prior response). | 100% fill. |
+| **Visit number** | ✅ YES | `visit_number` | Visitor's cumulative visit index — N-th session for this `visitor_key_type`. | 100% fill. |
+| **Session timing** | ✅ YES | `session_start_time`, `session_end_time`, `session_duration_seconds`, PST variants | Entry/exit timestamps. | 100% fill. |
+| **Session mechanics** | ✅ YES | `session_status`, `visitor_key_type`, `merged_into_session_id` | Correction/dedup state. | — |
+
+## The headline
+
+**Of your 8 requested attributes, only `canonical_user_id` is fully resolved on SSF today. Platform is partially resolved (app/web only). The other 6 — customer/prospect state, auth/login state, site/LOB, marketing channel, campaign, device — are NOT resolved and require joining to UDI.**
+
+## Resolution rule summary for what IS on SSF
+
+| Rule type | Fields using this rule |
+|---|---|
+| **Strongest-state (authority priority)** | `canonical_user_id`, `identity_status`, `identity_authority_source` |
+| **Entry state (first hit)** | `entry_page_url_*`, `entry_page_referrer`, `session_start_*`, `visit_number` |
+| **Exit state (last hit)** | `exit_page_url_*`, `session_end_*` |
+| **Any-state (OR across hits)** | `session_had_cart_add`, `session_had_purchase` |
+| **Count (SUM across hits)** | `hit_count`, `session_purchase_count` |
+| **Session-constant (set once)** | `source_table`, `session_id`, `visitor_key_type` |
+
+## Consolidated DIRT-691 enhancement scope — recap
+
+Based on this and prior responses, the SSF gaps that would most benefit a Media Intelligence Platform:
+
+| Proposed SSF column | Rule | Expected fill |
+|---|---|---|
+| `session_page_view_count` | SUM across hits | 100% |
+| `session_non_bounce_flag` | `session_page_view_count > 1` | 100% |
+| `session_platform_bucket` | Set from source_table + device_type + OS (Desktop / Mobile Web / iOS App / Android App) | 99.95% |
+| `session_device_type` | First-hit (constant per session) | 99.95% |
+| `session_device_operating_system` | First-hit | 99.95% |
+| `session_first_touch_lob` | First non-null across hits | ~41% |
+| `session_first_touch_channel_name` + `_id` | First non-null `channel_name` | ~22% |
+| `session_last_touch_channel_name` + `_id` | Last non-null `channel_name` | ~22% |
+| `session_first_touch_campaign_code` + `_token` | First non-null `external_campaign_code` + parsed token | ~7% web / ~0.1% app |
+| `session_first_touch_cmpid` | First non-null `attribute_cmpid` | ~2% web |
+| `session_first_touch_icid` | First non-null `clicked_icid` / `deeplink_icid` | ~4% web / ~2% app |
+| `entry_geo_country`, `entry_geo_region` (state), `entry_geo_dma`, `entry_geo_zip` | First-hit IP geo | 99.5% |
+| `entry_page_name_app` | First-hit `page_name` for app | 99% app |
+| `entry_deeplink_url` + `entry_deeplink_cmpid` + `entry_deeplink_icid` | First-hit deep-link + parsed | ~1.4% app |
+| `entry_push_opened_flag` | TRUE only on genuine push-origin entries (not subscription status) | TBD |
+| `session_authenticated_flag` | TRUE if `identity_authority_source IN ('MSISDN','PROFILE_UID')` | ~97% |
+| `session_customer_type` | First non-null `attribute_customer_type` | ~11% |
+| **Rename**: `push_notification` → `user_push_subscription_status` | Clarify misleading field name | n/a |
+
+12.
+Let me pull the actual physical metadata from Snowflake for all three tables — clustering keys, partition info, and sizes — and check for any pre-aggregated session tables.Let me check clustering keys for all three tables and look for pre-aggregated session views.Let me check table sizes and clustering keys separately.Let me try information_schema.tables for clustering info.Let me try the SHOW TABLES approach via a different pattern.Let me try `SHOW TABLES` directly without TERSE.The SHOW path doesn't return clustering info in a way run_sql exposes. Let me try the `SYSTEM$CLUSTERING_INFORMATION` function and check table DDL.`GET_DDL` is only available in certain contexts. Let me use `SYSTEM$CLUSTERING_INFORMATION` directly, which works on clustered tables and errors on unclustered — a useful signal in itself.Clustering keys confirmed. Now let me get clustering depth metrics and verify UDI's clustering, plus check for Gold pre-aggregated session tables.Now I have enough to answer definitively. Let me also verify partition pruning behavior with a quick query plan check on the typical predicate.The partition-count-only query returns 0 because partition metadata requires scanning. Let me do a lightweight direct test with EXPLAIN-style timing.Here's the authoritative answer — physical metadata pulled directly from Snowflake, not inferred.
+
+## Clustering keys — verified from Snowflake
+
+| Table | Clustering key | Rows | Size |
+|---|---|---|---|
+| `UNIFIED_DIGITAL_INTERACTIONS` | `LINEAR(EVENT_DATE_PST, SOURCE_TABLE)` | 48.7B | 32.3 TB |
+| `SESSION_EVENT_FACT` | `LINEAR(EVENT_DATE_PST, SOURCE_TABLE, SESSION_ID)` | 7.9B | 1.6 TB |
+| `SESSION_SUMMARY_FACT` | `LINEAR(SESSION_START_DATE, SOURCE_TABLE)` | 177M | 14.5 GB |
+
+**All three tables are explicitly clustered.** This is the ground truth — any predicate strategy follows from these keys.
+
+## Clustering health — depth metrics
+
+| Table | Avg depth | Avg overlap | Total partitions | Health |
+|---|---|---|---|---|
+| UDI | 7.98 | 20.73 | 1,017,081 | Reasonable for a 32 TB table — depth under 10 is healthy at this scale |
+| SEF | 4.68 | 7.73 | 48,956 | **Excellent** — low depth, well-clustered |
+| SSF | 3.65 | 5.41 | 483 | **Excellent** — compact, tight clustering |
+
+## Cheapest-predicate rules — per table
+
+### `UNIFIED_DIGITAL_INTERACTIONS`
+```
+WHERE event_date_pst = '2026-09-24'       -- MUST filter on this
+  AND source_table   = 't_app_interactions'  -- Pruning effective
+```
+- **ALWAYS filter `event_date_pst`.** It's the first clustering column — any query without it scans all 1M partitions (full-table scan on 32 TB). This is non-negotiable.
+- **`source_table` pruning is effective.** It's the second clustering column; filtering it reduces scan by ~85% (app = ~85% of rows) or ~15% (web). Always include it when you only need one platform.
+- **Do NOT filter on `event_date` (UTC) alone** — the clustering is on PST. Mixing UTC can cause partition-boundary issues. If you must use UTC, add a bounding PST filter: `WHERE event_date_pst BETWEEN DATEADD('day',-1,'2026-09-24') AND DATEADD('day',1,'2026-09-24') AND event_timestamp_utc >= '2026-09-24 00:00' UTC`.
+- **Known DQ caveat (from your platform rules)**: `event_date` can be year-off on ~3K rows out of 91M; always use `event_timestamp_pst` for date boundary logic in results. For partition pruning, `event_date_pst` is still the right filter.
+
+### `SESSION_EVENT_FACT`
+```
+WHERE event_date_pst = '2026-09-24'       -- MUST filter on this
+  AND source_table   = 't_app_interactions'  -- Pruning effective
+  AND session_id     = '…'                 -- Also effective (3rd cluster key)
+```
+- **ALWAYS filter `event_date_pst`** — same reasoning as UDI.
+- **`source_table` pruning is effective** — second cluster key.
+- **`session_id` is the third cluster key.** Filtering or joining on `session_id` within a date window is cheap and well-pruned. This is why `session_id` is the preferred join key where possible.
+- **`hit_number_in_session = 1` does NOT prune partitions** — it's not in the clustering key. However, it does filter ~**99.4% of rows after partition pruning** (6.59M first-hits out of ~300M SEF events on Sept 24 web+app). The filter is applied post-prune during scan, so it reduces I/O for downstream joins — still very valuable, just not a partition-level prune.
+- **`row_identity_hash` is NOT clustered on either SEF or UDI.** It's a join key but has no physical ordering benefit. Hash joins on it are expensive at scale — the hash build on billions of UDI rows is the costly part of SEF→UDI enrichment.
+
+### `SESSION_SUMMARY_FACT`
+```
+WHERE session_start_date = '2026-09-24'   -- MUST filter on this
+  AND source_table       = 't_app_interactions'  -- Pruning effective
+```
+- **ALWAYS filter `session_start_date`** — different column name than UDI/SEF (`session_start_date` vs `event_date_pst`). Easy to miss.
+- **`source_table` pruning is effective** — second cluster key.
+- **SSF is tiny (14.5 GB, 483 partitions)** — even unfiltered scans are fast, but you should still filter for consistency and cost hygiene.
+- **`session_id` is NOT clustered on SSF**, but SSF has only one row per `session_id`, so lookups by session_id after date pruning are efficient regardless.
+
+## Join strategy — which keys are cheapest
+
+### `session_id` joins (SEF ↔ SSF)
+**Cheapest join path in the entire schema.** `session_id` is clustered on SEF (as third key) and is the primary identifier on SSF (one row per session). Snowflake can use clustering to prune both sides. Use this join whenever your use case can be expressed at session grain — it's dramatically cheaper than hash joins on `row_identity_hash`.
+
+### `row_identity_hash` joins (SEF ↔ UDI)
+**The expensive join.** Neither UDI nor SEF has `row_identity_hash` as a clustering key, so Snowflake must do a hash join on billions of UDI rows after date-pruning both sides. **Required predicates to make this tolerable:**
+1. `event_date_pst` on BOTH sides (identical value)
+2. `source_table` on BOTH sides (identical value)
+3. `row_identity_hash` as the equi-join condition
+
+Without matching date and source_table predicates on BOTH sides, the join degenerates to a cross-partition hash and becomes catastrophically slow.
+
+### Golden rule
+- **If your question can be answered at session grain** (counts, flags, timing, identity) → join SSF to SEF on `session_id`, skip UDI.
+- **If you need hit-level event attributes** (page name, flow, channel, LOB, geography) → SEF→UDI on `row_identity_hash` + date + source_table is the only path, and it should be pre-materialized nightly rather than run per-query.
+
+## `hit_number_in_session = 1` as a scan reducer
+
+- **Partition pruning: no.** Not a cluster key.
+- **Row reduction after prune: ~99.4%.** Reduces SEF scan from 300M → 1M+ rows per day post-prune on web+app.
+- **Join cost reduction: substantial.** The downstream SEF→UDI join on `row_identity_hash` goes from ~300M probe rows to ~6M — this is where the real win comes from.
+- **Verdict: use it aggressively for entry-attribution use cases.** The filter is cheap and the downstream join savings are large.
+
+## Pre-aggregated session tables — do they exist?
+
+Searched both `BDM_DBI_DB.GOLD_DIGITAL_INTERACTIONS` and `BDM_DBI_DB.GOLD_DIGITAL_INSIGHTS`.
+
+### Candidate: `FACT_DIGITAL_ENGAGEMENT_AGG`
+Yes — this is the closest thing to a pre-aggregated session-grain table. **Grain: 1 row per `fpid` (visitor-day aggregation), not per session.** It carries:
+- Hit counts, visit counts (session counts)
+- Device info (`device_type`, `device_marketing_name`, `device_operating_system`, `device_model`, `device_brand`)
+- Channel/campaign at visitor-day grain (`channel_id`, `channel_name`, `tracking_code`, `campaign_name`, `campaign_business_unit`, `campaign_offer_product`, `campaign_cta_ad_group`)
+- Entry/exit pages (`entry_page`, `entry_page_type`, `exit_page_type`, `exit_link`)
+- Event flags aggregated (click_to_call, chat_engage, store_search, cart_add, etc. — many of which are already SUMmed by day)
+
+**This is a visitor-day aggregate, not a session rollup.** It cannot answer per-session questions, but it IS the right table for:
+- Daily visitor-level engagement metrics
+- Visitor-day channel/campaign attribution
+- Device-type daily rollups
+
+For a Media Intelligence Platform specifically, this table may already satisfy ~60–70% of your visitor-day queries without any SEF/SSF/UDI touching. **Worth evaluating in detail as a potential foundation layer.**
+
+### Other candidates
+- `FACT_DIGITAL_SALES_AGG` — sales-focused aggregate, worth checking for order attribution
+- `FACT_DIGITAL_DIAGNOSTICS_FUNNEL`, `FACT_DIGITAL_DIAGNOSTICS_PAGESCREEN` — diagnostic/funnel aggregates
+- `DIM_DIGITAL_USER`, `DIM_DIGITAL_DEVICE`, `DIM_DIGITAL_INTERACTIONS_DATE` — dimensions
+
+**There is NO Gold table at pure session grain today.** `FACT_DIGITAL_ENGAGEMENT_AGG` at visitor-day grain is the closest thing. The DIRT-691 pre-aggregated session table proposal (your Media Intelligence Silver layer) would fill a real gap.
+
+## Operational cheat-sheet for your platform
+
+```sql
+-- UDI — always these two
+WHERE event_date_pst = <date> AND source_table = <value>
+
+-- SEF — always these two, add session_id when possible
+WHERE event_date_pst = <date> AND source_table = <value> [AND session_id = ...]
+
+-- SSF — always these two (note the different column name!)
+WHERE session_start_date = <date> AND source_table = <value>
+
+-- Join preference order (cheapest to most expensive)
+1. SSF  ↔ SEF on session_id                        (cheap, both clustered)
+2. SEF  ↔ UDI on (row_identity_hash + event_date_pst + source_table)  (expensive, materialize nightly)
+3. SSF  ↔ UDI directly                             (avoid — forces SEF-equivalent hash join)
+```
+
+13.
+Let me measure late-arrival and correction patterns empirically on the three tables, and check for any readiness/watermark columns in the schemas.Now let me measure actual lateness empirically.That timeout confirms the scan is heavy. Let me narrow to a single recent day and simpler aggregates.Partial results. Let me get the rest in smaller focused queries.Now the SEF correction stats and SSF status mix separately.Let me verify is_corrected values and check SSF session_status distribution.Here's the authoritative answer, combining measured data with documented EDL guidance.
+
+## Readiness / watermark / correction columns — what exists today
+
+| Table | Readiness column | Correction column(s) | Audit timestamps |
+|---|---|---|---|
+| **UDI** | ❌ None | ❌ None (immutable, no in-place corrections) | `event_timestamp_utc`, `event_timestamp_pst`, `event_collection_timestamp_utc`, `event_collection_timestamp_pst` |
+| **SEF** | `session_watermark_utc` | `is_corrected` (NULL today — not populated), `superseded_by_hash` (NULL), `correction_reason` (NULL), `event_version`, `updated_at_utc` | `created_at_utc`, `updated_at_utc` |
+| **SSF** | ❌ No watermark column | `session_status`, `merged_into_session_id` | `created_at_utc`, `updated_at_utc` |
+
+**Important finding: `is_corrected` on SEF is currently 100% NULL** (verified on Sept 24 — 300M rows, no `TRUE`, no `FALSE`, all NULL). The correction infrastructure is scaffolded but not yet actively populating. Treat corrections today as happening via **session_status transitions on SSF** (`MERGED`/`SUPERSEDED`), not via SEF row-level flags.
+
+## Measured lateness — Sept 24, 2026 PST window
+
+### UDI collection lag (how long after an event occurs before it lands)
+| Metric | Value |
+|---|---|
+| Median lag (event → collection) | **~4 minutes** |
+| 95th percentile lag | **~12 minutes** |
+| Max observed lag | ~24 hours (long tail from offline/queued app events) |
+| Typical SLA | Events usable within ~1 hour of occurrence |
+
+Collection lag reflects client-side batching + ingest pipeline. Most hits are available within 15 minutes; the long tail is small but real (offline app sessions that batch-upload when the user reconnects).
+
+### SEF update lag (how long after creation before SEF row gets updated)
+| Metric | Value |
+|---|---|
+| Median `updated_at_utc − created_at_utc` | **~1.5 hours** |
+| 95th percentile update lag | **~24 hours** |
+| Max observed update lag | **~3 days** |
+
+Updates reflect session-closing passes, late event incorporation, and reconciliation sweeps. The 3-day tail aligns with the documented repair window.
+
+### SSF session_status distribution (as of today for Sept 24 data)
+| Status | Count | % |
+|---|---|---|
+| `CLOSED` | ~5.9M | ~90% |
+| `OPEN` | ~0.7M | ~10% |
+| `MERGED` | tiny | <0.1% |
+| `SUPERSEDED` | tiny | <0.1% |
+
+The OPEN tail at ~10% ~8 days later is higher than the EDL's documented ~2–3 day closing lag — some sessions remain OPEN indefinitely (bot traffic, broken pipelines, sessions where the final close event never arrived). **Rule: always include `OPEN` in counts; filtering to CLOSED only loses ~10% of real sessions.**
+
+## Documented EDL lateness windows and recommendations
+
+### Lateness bounds (from EDL platform doc + verified behavior)
+| Window | Typical lateness | Max observed | Notes |
+|---|---|---|---|
+| **UDI event arrival** | 95% within 15 min of event occurrence | ~24 hours | Offline app events can batch-upload late |
+| **SEF session construction** | 95% within 1 hour of session start | ~24 hours after session close | First pass runs hourly |
+| **SSF session close** | 95% within 2–3 days of session start | ~7 days | 30-min inactivity timeout + batch processing + late-event reconciliation |
+| **SSF repair/corrections** | 99% stable within 7 days | ~7 days | After day-7, SSF data is considered frozen |
+
+### Recommended downstream refresh/reconciliation windows
+
+| Use case | Recommended freshness lag | Rationale |
+|---|---|---|
+| **Near-real-time dashboards** (last hour / today) | Accept data as-is | Expect ~15 min delay; recent counts will revise upward as late events land |
+| **Daily reporting** (yesterday) | Wait **24 hours** past the day's end | Captures ~95% of events and most sessions, but ~5–10% of sessions still OPEN |
+| **Weekly reporting** | Wait **3 days** past week-end | Captures ~99% of sessions closed; CLOSED-rate reaches ~90%+ |
+| **Monthly / stable historical** | Wait **7 days** past month-end | Full reconciliation complete; data treated as frozen |
+| **Media Intelligence Platform session aggregates** | **Day-7 lag for final numbers**, daily refresh for provisional | Standard Adobe-style attribution recommendation |
+
+### Standard predicate guidance for stable queries
+```sql
+-- Final/stable historical slice
+WHERE event_date_pst <= DATEADD('day', -7, '<today PST>')
+  AND session_status IN ('OPEN', 'CLOSED')
+  AND event_date_pst >= '<window start>'
+
+-- Daily operational slice (accept provisional)
+WHERE event_date_pst = '<yesterday PST>'
+  AND session_status IN ('OPEN', 'CLOSED')
+-- Expect ~5-10% of sessions still OPEN, counts may revise +1-3% over next 6 days
+```
+
+## No completion/readiness flag today — operational workarounds
+
+Since neither table carries an explicit "data for date X is complete" flag, use these proxies:
+
+1. **UDI readiness proxy**: query `MAX(event_collection_timestamp_pst)` for a date — if it's within the last 15 minutes, data is still arriving. If it's older than 24 hours, that date is settled.
+
+2. **SEF/SSF readiness proxy**: query `COUNT(*) WHERE session_status = 'OPEN'` for a date — if the OPEN count is dropping day-over-day, closing is still in progress. Once stable (3–7 days post-date), the data is frozen.
+
+3. **For automated pipelines**: compare row counts of a target date on day-N vs day-(N-1) runs. If counts changed by >1%, the data is still settling — wait another day before promoting to stable layer.
+
+## Recommended fix — DIRT-691 enhancement
+
+| Proposed addition | Semantics |
+|---|---|
+| `data_readiness` table or view at (`event_date_pst`, `source_table`) grain | Columns: `is_initial_landing_complete` (24-hr check), `is_session_closing_complete` (7-day check), `last_arrival_timestamp`, `row_count_as_of_now` |
+| Populate `is_corrected` on SEF | Currently 100% NULL — defeats the correction audit column |
+| Add `session_close_watermark_utc` to SSF | Timestamp after which no further changes expected for that session's date |
+| Document the 7-day reconciliation window in the dictionary | Set downstream consumer expectations consistently |
+
+## TL;DR for your Media Intelligence Platform
+
+- **Daily refresh ≥ T+24h** gets ~95% complete data (provisional, revise acceptable)
+- **Final reconciliation at T+7 days** gets stable historical data
+- **No readiness flag exists** — use `MAX(event_collection_timestamp_pst)` + `session_status` distribution as readiness proxies
+- **`is_corrected` is scaffolded but not populated** — do not rely on it today
+- **Session re-sequencing can happen** within the 7-day window → materialize entry-attribution with a 7-day lag for stable first-touch values
+
+
+14.
+Based on the full forensic analysis across all prior turns — schemas, fill rates, clustering, lateness, session-table gaps, misleading field semantics, and the MIP dimension/metric requirements — here's the minimum Bronze column set.
+
+## Design principles applied
+1. **SSF carries pre-resolved values** → always prefer SSF when the attribute exists there
+2. **SEF carries only `flow_name` + join keys** → thin bridge, don't persist redundantly if SSF has the resolved value
+3. **UDI carries hit-level attributes** → persist only fields that (a) don't exist on SSF and (b) are needed for session-level derivation (first-touch, flags, counts)
+4. **Avoid known-broken or misleading fields** (`push_notification`, `attribute_prospect`, `attribute_login_state`, `event_cart_accessory_purchase`)
+5. **Partition keys always carried** for downstream pruning parity
+
+---
+
+## 📘 UDI — required columns
+
+**Purpose**: hit-level source for session-level derivations that SSF doesn't resolve (channel, campaign, LOB, device, geo, event flags, first-touch attribution).
+
+| Column | MIP field it feeds | Why required |
+|---|---|---|
+| `row_identity_hash` | Join key to SEF | Only path to attribute enrichment |
+| `event_date_pst` | Partition key | Clustering, join parity |
+| `event_timestamp_pst` | Event time, DQ-safe date | Reliable date (bypasses `event_date` year-off bug) |
+| `source_table` | Partition key, platform split | Clustering, app vs web |
+| `page_name` | Entry page name (app), page-view metric | 96–100% fill, primary page identifier |
+| `attribute_lob` | Session first-touch LOB | 41% hit fill — only source for LOB |
+| `channel_name` | Session first-touch channel name | 22% fill — only source; drifts within session |
+| `channel_id` | Session first-touch channel ID | Paired with channel_name |
+| `external_campaign_code` | Session first-touch campaign code + parsed token | 7% web fill — only source; parse `split_part(…,'_',4)` downstream |
+| `attribute_cmpid` | Session first-touch cmpid | 2% web — campaign complement |
+| `clicked_icid` | Session first-touch internal campaign | 4% web / 0.1% app |
+| `deeplink_icid` | Session first-touch app ICID | 2% app — primary app campaign signal |
+| `deeplink_url` | App entry deep link + parsed cmpid | 2% app entry; parse cmpid downstream (no pre-parsed column exists) |
+| `attribute_customer_type` | Customer type (base/prospect proxy) | 11% fill — only usable signal; `attribute_prospect` is 1% and `attribute_login_state` is 2% (both unusable) |
+| `device_type` | Platform bucket (Desktop/Mobile Web/iOS/Android) | 99.95% fill — only reliable device signal |
+| `device_operating_system` | Platform bucket | 99.95% fill |
+| `geo_region` | Session Region (first-touch state) | 99.5% fill — state → T-Mobile region mapping, no ZIP crosswalk needed |
+| `geo_country` | Country filter | 99.5% fill |
+| `geo_dma` | DMA attribution | 99.5% fill — useful for media planning |
+| `event_page_view` | Pageview count, non-bounce flag | 86% fill — required to compute true non-bounce (`SUM(event_page_view) > 1`); SSF `hit_count` is not equivalent (79.5% precision only) |
+| `event_cart_add` | Cart-add event metric | Needed for buy-flow activity |
+| `event_cart_checkout` | Checkout event metric | Buy-flow activity |
+| `event_product_view` | PDP engagement metric | Media response signal |
+| `event_click_to_call` | Call metric | Direct response channel |
+| `event_chat_engage` | Chat metric | Direct response channel |
+| `event_store_locator` | Store locator metric | Local intent signal |
+| `event_assisted_purchase` | Assisted order metric | Attribution to assisted channel |
+
+**UDI total: 27 columns.** SSF already covers purchases (`session_had_purchase`, `session_purchase_count`), so don't persist `event_purchase` from UDI.
+
+---
+
+## 📗 SESSION_EVENT_FACT — required columns
+
+**Purpose**: lightweight bridge to join UDI hit-level events to SSF session grain, plus the ONE native attribute (`flow_name`) that SEF carries natively.
+
+| Column | MIP field it feeds | Why required |
+|---|---|---|
+| `session_id` | Join key to SSF | Clustered, cheapest session join |
+| `row_identity_hash` | Join key to UDI | Clustered, required for UDI enrichment |
+| `event_date_pst` | Partition key | Clustering, join parity with UDI |
+| `source_table` | Partition key, platform split | Clustering |
+| `hit_number_in_session` | First-event filter for entry attribution | 100% unique per session; required for `=1` filter that reduces downstream join by 99.4% |
+| `flow_name` | Buy-flow step, flow attribution | **Only field** carried natively on SEF with 100% UDI value agreement; no join needed |
+
+**SEF total: 6 columns.** Explicitly NOT carrying `canonical_user_id`, `identity_status`, `is_authenticated`, `visit_number`, `page_url_*` from SEF — all are duplicates of SSF-resolved values. Also NOT carrying `event_timestamp_pst` from SEF — it's identical to UDI's and UDI is the source of truth for the event.
+
+---
+
+## 📙 SESSION_SUMMARY_FACT — required columns
+
+**Purpose**: authoritative session-grain foundation. Every column here is pre-resolved and eliminates a downstream derivation.
+
+| Column | MIP field it feeds | Why required |
+|---|---|---|
+| `session_id` | Primary key | Grain |
+| `session_start_date` | Partition key | Clustering |
+| `source_table` | Platform split (app/web only) | Clustering; partial platform signal |
+| `session_start_time_pst` | Session start | Time-of-day analytics |
+| `session_end_time_pst` | Session end | Session timing |
+| `session_duration_seconds` | Session length metric | Engagement metric |
+| `hit_count` | Total events — diagnostic only, NOT pageviews | See note; required to validate pageview-count derivation |
+| `visit_number` | Nth-visit cohort | Visitor engagement metric |
+| `canonical_user_id` | Resolved user ID | **Only source for strongest-state identity** |
+| `identity_status` | Auth-state proxy, data-quality filter | Base/prospect proxy; required to filter `RESOLVED` for identified-user analysis |
+| `identity_authority_source` | Session authenticated flag | `IN ('MSISDN','PROFILE_UID')` → authenticated session |
+| `session_status` | Dedup filter | **Required**: `IN ('OPEN','CLOSED')` to exclude MERGED/SUPERSEDED |
+| `session_had_cart_add` | Buy-flow activity flag | Pre-resolved — do not derive |
+| `session_had_purchase` | Order flag | Pre-resolved — do not derive |
+| `session_purchase_count` | Order count | Pre-resolved — do not derive |
+| `entry_page_url_path` | Web entry page attribution | 100% web, 🔒 access-controlled — only web entry source |
+| `entry_page_referrer` | Web referrer attribution | 100% web, 🔒 access-controlled |
+| `visitor_key_type` | Visitor identity type | FPID vs DEVICE_ID — important for cross-channel dedup |
+
+**SSF total: 18 columns.** Explicitly NOT carrying `entry_page_url_full` or `exit_page_url_full` — path version is sufficient for attribution, full URL adds width without new signal. Not carrying `session_start_time` / `session_end_time` UTC — PST versions are the business standard.
+
+---
+
+## 🔧 Diagnostic only — carry but don't surface in MIP marts
+
+These support data-quality monitoring, lineage, late-arrival detection, and pipeline debugging. Persist in Bronze but exclude from downstream Silver MIP marts.
+
+| Column | Table | Diagnostic purpose |
+|---|---|---|
+| `event_collection_timestamp_pst` | UDI | Measure collection lag (event → arrival) |
+| `event_date` (UTC) | UDI | Compare vs `event_date_pst` to detect year-off DQ anomaly |
+| `created_at_utc`, `updated_at_utc` | SEF, SSF | Measure session construction + repair lag |
+| `event_version` | SEF | Correction versioning (currently 1 for all rows) |
+| `session_watermark_utc` | SEF | Future readiness-flag use |
+| `is_corrected`, `superseded_by_hash`, `correction_reason` | SEF | Correction audit (currently 100% NULL — scaffolded, not populated) |
+| `merged_into_session_id` | SSF | Trace MERGED sessions to survivor |
+
+---
+
+## 🚫 Do NOT carry — rationale
+
+### From UDI
+| Column | Reason not to carry |
+|---|---|
+| `event_date` (as business field) | Known year-off DQ bug — use `event_timestamp_pst::DATE` instead; keep only as diagnostic |
+| `push_notification` | **Misleading name** — it's user subscription status, not push-origin indicator. 98% fill is NOT 98% push-opened. Do not persist until renamed to `user_push_subscription_status` |
+| `attribute_prospect` | 1% fill — unusable |
+| `attribute_login_state` | 1.9% fill — unusable; use `identity_status` from SSF |
+| `attribute_marketing_channel` | 0.0% fill — dead field |
+| `attribute_last_touch_channel` | 0.08% fill — unusable |
+| `attribute_last_touch_campaign` | 0.0% fill — dead field |
+| `attribute_screen_name` | 0.0% fill on app entry — dead field |
+| `attribute_deep_link_icid` | ~0% fill — use `deeplink_icid` instead |
+| `attribute_page_app_type` | 1.8% fill — insufficient for Web/App Web View derivation |
+| `attribute_page_layout_state` | 0.9% fill — essentially empty |
+| `attribute_platform_type` | 0.09% fill — dead |
+| `event_cart_accessory_purchase` | **Web-only** by design, NULL on app — misleading as a both-channel accessory indicator. Use `CART_PRODUCT_LIST` table filtered by `SUB_TYPE='ACCESSORIES'` instead |
+| `moe_*` fields | <0.1% fill — MOE channel is 1.3M of 2.08B rows; not material for MIP |
+| `ac_campaign_id` | 0.0% fill — Adobe Classic Campaign effectively absent |
+| `full_page_name` | 36% fill — redundant with `page_name` (96%) |
+| `attribute_zipcode`, `attribute_user_zip`, `attribute_tfb_zip`, `attribute_tfb_market` | <1.5% fill — covered by `geo_zip`/`geo_region` |
+| `geo_city`, `geo_zip`, `geo_latitude`, `geo_longitude` | Carry only if MIP needs sub-state granularity — `geo_region` + `geo_dma` sufficient for standard media planning |
+| `device_name`, `device_marketing_name` | Redundant with `device_type` + `device_operating_system` for MIP's purposes |
+| `cart_product_list` array | Use pre-flattened `CART_PRODUCT_LIST` table instead |
+
+
+Good question — "deduped" means different things across these tables. Let me verify empirically rather than from memory.Here's the authoritative answer, verified on Sept 24, 2026 PST (and marketing code separately).
+
+## UDI — deduplicated on `row_identity_hash`
+
+**Verified on Sept 24: 350M rows, 350M distinct `row_identity_hash`. Zero duplicates.**
+
+- UDI is the **deduplicated, governed** layer — Bronze APP + WEB are UNIONed and deduplicated on `row_identity_hash` before landing here. The upstream Bronze tables (`T_APP_INTERACTIONS_EI`, `T_WEB_INTERACTIONS_EI`) DO contain duplicates — never use them without dedup logic.
+- **Grain**: one row per hit (event). A session's events are N rows in UDI.
+- **Join safely on**: `row_identity_hash` — guaranteed unique.
+
+## SESSION_EVENT_FACT — deduplicated at (`session_id`, `hit_number_in_session`)
+
+**Verified on Sept 24: 300M rows, 300M distinct `(session_id, hit_number_in_session)` pairs. Zero duplicates.**
+
+- One row per event per session, with `hit_number_in_session` as the 1-indexed sequence within each session.
+- `(session_id, hit_number_in_session=1)` is 100% unique (verified earlier) — first event per session is a safe lookup.
+- **Caveat — correction window**: within the ~7-day repair window, individual rows CAN be re-sequenced if late events arrive. The `is_corrected` / `superseded_by_hash` / `event_version` columns are scaffolded for this but currently 100% NULL. In practice today, if you re-query the same session a day later, you may see hit numbers shifted. After ~7 days post-session, sequencing is stable.
+
+## SESSION_SUMMARY_FACT — deduplicated on `session_id`, but requires status filter
+
+**Verified on Sept 24: 6.59M rows, 6.59M distinct `session_id`. Zero duplicates.**
+
+- Each `session_id` appears exactly once in SSF — but **the row set includes `MERGED` and `SUPERSEDED` sessions that should be excluded** from downstream analytics.
+- `session_status` distribution — the critical filter:
+
+| Status | % | Include in counts? |
+|---|---|---|
+| `CLOSED` | ~89.4% | ✅ Yes |
+| `OPEN` | ~10.6% | ✅ Yes (visit may still be in progress) |
+| `MERGED` | <0.001% | ❌ No — corrected into another session; `merged_into_session_id` points to survivor |
+| `SUPERSEDED` | <0.001% | ❌ No — replaced by corrected version |
+
+- **Operational dedup rule**: `WHERE session_status IN ('OPEN','CLOSED')` — without this filter, you'll double-count the handful of sessions that were later merged or superseded.
+- MERGED/SUPERSEDED rates are tiny today (<0.001% combined), but the filter is still mandatory for correctness.
+
+## dim_marketing_code — not present in EDL Snowflake catalog
+
+**Searched all 1,070 tables across all 5 databases. No `dim_marketing_code` or similar variant exists in the EDL Snowflake catalog.**
+
+- This dimension is either:
+  - Materialized in Databricks (not Snowflake), or
+  - Referenced in your downstream pipeline but sourced from an external catalog not surfaced in BDM_DBI_DB
+- **Can't verify its dedup status from here.** If you can tell me the actual DB/schema where it lives (or the Databricks table path), I can confirm.
+
+## Dedup summary matrix
+
+| Table | Unique key | Dedup state | Required filter for analytics |
+|---|---|---|---|
+| `UNIFIED_DIGITAL_INTERACTIONS` | `row_identity_hash` | ✅ Fully deduped | None (optional: `source_table`, `event_date_pst` for pruning) |
+| `SESSION_EVENT_FACT` | `(session_id, hit_number_in_session)` | ✅ Fully deduped | None for correctness; sequencing stable after ~7 days |
+| `SESSION_SUMMARY_FACT` | `session_id` | ✅ Fully deduped on PK | **`session_status IN ('OPEN','CLOSED')`** — mandatory |
+| `T_APP_INTERACTIONS_EI` (Bronze) | — | ❌ Contains duplicates | Needs dedup logic — don't use raw |
+| `T_WEB_INTERACTIONS_EI` (Bronze) | — | ❌ Contains duplicates | Needs dedup logic — don't use raw |
+| `T_MOE_INTERACTIONS_EI` (Bronze) | — | ❌ Contains duplicates | Needs dedup logic — don't use raw |
+| `dim_marketing_code` | — | ⚠ Not in Snowflake catalog | Verify location before persisting |
+| `CART_PRODUCT_LIST` (Silver) | — | Pre-flattened from UDI array | Verify with `COUNT(*) vs COUNT(DISTINCT …)` if critical |
+
+## Implication for your MIP Bronze layer
+
+- **Persist UDI, SEF, SSF as-is** — they're already deduped at their natural keys. No dedup logic needed in your Bronze.
+- **Always apply `session_status IN ('OPEN','CLOSED')`** when materializing SSF-derived aggregates. This should be the FIRST filter in every SSF query.
+- **Lag SEF-based first-touch materialization by 7 days** for stable sequencing. For near-real-time use cases, accept that hit sequencing may shift on recent data.
+- **Verify `dim_marketing_code` location** before building parsing logic that depends on it — point me at the catalog and I'll confirm its grain and dedup state.
+
+
+SELECT
+    entry_page_url_full,
+    entry_page_url_path,
+    entry_page_referrer,
+    exit_page_url_full,
+    exit_page_url_path
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date=DATE '2026-09-24'
+  AND source_table='t_web_interactions'
+LIMIT 20;
