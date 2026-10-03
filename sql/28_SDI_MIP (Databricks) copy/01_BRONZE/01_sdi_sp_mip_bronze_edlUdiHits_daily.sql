@@ -183,3 +183,7 @@ END;
 -- GROUP BY row_identity_hash,event_date,source_table
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC LIMIT 100;
+
+
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `device_type` cannot be resolved. Did you mean one of the following? [`device_info`, `imei_type`, `link_type`, `cart_device_type`, `device_status`]. SQLSTATE: 42703; line 45, pos 12
+
