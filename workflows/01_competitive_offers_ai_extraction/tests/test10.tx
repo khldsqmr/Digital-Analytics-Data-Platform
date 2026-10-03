@@ -13263,3 +13263,33 @@ Good question — "deduped" means different things across these tables. Let me v
 - **Always apply `session_status IN ('OPEN','CLOSED')`** when materializing SSF-derived aggregates. This should be the FIRST filter in every SSF query.
 - **Lag SEF-based first-touch materialization by 7 days** for stable sequencing. For near-real-time use cases, accept that hit sequencing may shift on recent data.
 - **Verify `dim_marketing_code` location** before building parsing logic that depends on it — point me at the catalog and I'll confirm its grain and dedup state.
+
+
+My apologies — I gave you the wrong column name. Let me look up the actual first-party ID column.# Correction — the real column names
+
+I apologize — fpid_id was wrong. Here are the actual identity columns from the Silver schema:
+
+Concept	Correct column	Notes
+First-party ID (web browser cookie)	`fpid`	Not fpid_id
+Experience Cloud ID (web)	`ecid`	Adobe cross-domain visitor ID
+Visitor ID	`visitor_id`	Adobe visitor ID (fallback)
+Device ID (app installation)	`attribute_device_id`	App-side
+Hit-level ID	`hit_id`	Per-event unique ID
+🔧 Fix for your SELECT list
+Replace:
+```
+first_party_id, app_instance_id,
+```
+
+With:
+```
+fpid, ecid, visitor_id, attribute_device_id,
+```
+
+So the identity block becomes:
+```
+row_identity_hash, hit_id, event_date, source_table,
+event_timestamp_utc, event_timestamp_pst,
+customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+fpid, ecid, visitor_id, attribute_device_id,
+```
