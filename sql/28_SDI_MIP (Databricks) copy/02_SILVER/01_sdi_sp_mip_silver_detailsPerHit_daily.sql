@@ -95,9 +95,11 @@ BEGIN
             siteName STRING,
             platform STRING,
             channelType STRING,
-            deviceType STRING,
-            operatingSystem STRING,
-            device STRING,
+            pageLayoutState STRING COMMENT 'UDI page_layout_state; Web responsive form factor',
+            operatingSystem STRING COMMENT 'UDI attribute_os_name; primarily App OS',
+            device STRING COMMENT 'Derived App Web View / iOS App / Android App / App / Desktop / Mobile Web / Web',
+            navigationChannel STRING COMMENT 'Raw UDI channel: site section/top-level navigation bucket',
+            appChannel STRING COMMENT 'Raw UDI attribute_channel: app-side channel grouping',
             geoRegion STRING COMMENT 'Hit-level UDI geo_region: IP-derived state/province, not T-Mobile internal region',
             geoContext STRING COMMENT 'Labeled pipe-delimited geo context: country|region|city|dma|zip|lat|lon',
             pageCategory STRING,
@@ -215,8 +217,10 @@ BEGIN
                 h.app_instance_id,
                 h.site_name,
                 h.page_app_type,
-                h.device_type,
-                h.device_operating_system,
+                h.page_layout_state,
+                h.attribute_os_name,
+                h.channel,
+                h.attribute_channel,
                 h.geo_country,
                 h.geo_region,
                 h.geo_city,
@@ -353,26 +357,32 @@ BEGIN
                 WHEN n.source_table='t_web_interactions' THEN 'Web'
                 ELSE 'Unknown'
             END AS channelType,
-            cast(n.device_type AS STRING) AS deviceType,
-            cast(n.device_operating_system AS STRING) AS operatingSystem,
+            nullif(trim(cast(n.page_layout_state AS STRING)),'') AS pageLayoutState,
+            nullif(trim(cast(n.attribute_os_name AS STRING)),'') AS operatingSystem,
             CASE
                 WHEN n.source_table='t_web_interactions'
                  AND lower(trim(coalesce(cast(n.page_app_type AS STRING),''))) IN ('tlife app','metro app','flagship app')
                     THEN 'App Web View'
                 WHEN n.source_table='t_app_interactions'
-                 AND lower(trim(coalesce(cast(n.device_operating_system AS STRING),'')))='ios'
+                 AND lower(trim(coalesce(cast(n.attribute_os_name AS STRING),'')))='ios'
                     THEN 'iOS App'
                 WHEN n.source_table='t_app_interactions'
-                 AND lower(trim(coalesce(cast(n.device_operating_system AS STRING),'')))='android'
+                 AND lower(trim(coalesce(cast(n.attribute_os_name AS STRING),'')))='android'
                     THEN 'Android App'
+                WHEN n.source_table='t_app_interactions'
+                    THEN 'App'
                 WHEN n.source_table='t_web_interactions'
-                 AND lower(trim(coalesce(cast(n.device_type AS STRING),'')))='desktop'
+                 AND lower(trim(coalesce(cast(n.page_layout_state AS STRING),'')))='desktop'
                     THEN 'Desktop'
                 WHEN n.source_table='t_web_interactions'
-                 AND lower(trim(coalesce(cast(n.device_type AS STRING),''))) IN ('mobile','tablet')
+                 AND lower(trim(coalesce(cast(n.page_layout_state AS STRING),''))) IN ('mobile','tablet')
                     THEN 'Mobile Web'
+                WHEN n.source_table='t_web_interactions'
+                    THEN 'Web'
                 ELSE 'Unknown'
             END AS device,
+            nullif(trim(cast(n.channel AS STRING)),'') AS navigationChannel,
+            nullif(trim(cast(n.attribute_channel AS STRING)),'') AS appChannel,
             n.normalizedGeoRegion AS geoRegion,
             n.geoContext AS geoContext,
             nullif(trim(cast(n.site_sub_section AS STRING)),'') AS pageCategory,
@@ -385,6 +395,8 @@ BEGIN
             n.normalizedCustomerTypeRank AS customerTypeRank,
             n.normalizedAuthState AS authState,
             n.normalizedAuthStateRank AS authStateRank,
+            -- MIP Channel breakout remains channel_name. Do not substitute
+            -- raw channel/attribute_channel; those are navigation/property fields.
             nullif(trim(cast(n.channel_name AS STRING)),'') AS channelName,
             cast(n.external_campaign_code AS STRING) AS externalCampaignCode,
             n.parsedCampaignCode AS campaignCode,
@@ -572,5 +584,5 @@ END;
 --     SUM(isPageView) AS pageViews
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 -- WHERE eventDate = DATE '2026-09-28'
--- GROUP BY sourceTable,platform,device,geoRegion
+-- GROUP BY sourceTable,platform,pageLayoutState,operatingSystem,device,geoRegion
 -- ORDER BY hitRows DESC;
