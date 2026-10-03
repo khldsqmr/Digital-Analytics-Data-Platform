@@ -11,10 +11,12 @@
 --   attribute_os_name = App OS (ios/android).
 --
 -- IDENTITY CONTRACT:
---   Manager-era aliases map to live UDI fields:
---   encrypted BAN/MSISDN -> encrypted_ban / encrypted_msisdn
---   first-party ID       -> fpid_id
---   app-instance ID      -> attribute_device_id (App), with visitor_id fallback.
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   fpid, ecid, visitor_id, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   resolved identity downstream excludes ecid per the manager-approved business
+--   definition; ecid is retained only for diagnostics/future validation.
 --
 -- TEMPORARY GEO CONTRACT:
 --   Web geography = geo_postal_code.
@@ -72,8 +74,8 @@ BEGIN
         COMMENT 'Bronze: MIP projection of UDI. One row per retained UDI source row.'
         AS
         SELECT
-            row_identity_hash,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
-            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid_id,attribute_device_id,visitor_id,
+            row_identity_hash,hit_id,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid,ecid,visitor_id,attribute_device_id,
             site_name,page_app_type,page_layout_state,attribute_os_name,
             page_language,browser_language,app_launch_type,app_launch_status,
             geo_postal_code,attribute_country,
@@ -98,8 +100,8 @@ BEGIN
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
         REPLACE WHERE event_date BETWEEN v_windowStart AND v_windowEnd
         SELECT
-            row_identity_hash,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
-            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid_id,attribute_device_id,visitor_id,
+            row_identity_hash,hit_id,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid,ecid,visitor_id,attribute_device_id,
             site_name,page_app_type,page_layout_state,attribute_os_name,
             page_language,browser_language,app_launch_type,app_launch_status,
             geo_postal_code,attribute_country,

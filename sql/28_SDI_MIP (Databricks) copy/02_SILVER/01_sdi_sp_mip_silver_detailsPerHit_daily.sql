@@ -14,9 +14,11 @@
 --
 -- IDENTITY CONTRACT:
 --   SSF canonical_user_id remains authoritative where present.
---   Hit fallback translates manager-era identity aliases to live UDI fields:
+--   Hit fallback uses live UDI fields:
 --   customer_id -> profile_uid -> encrypted_ban -> encrypted_msisdn ->
---   fpid_id -> source-aware attribute_device_id/visitor_id fallback.
+--   fpid -> source-aware attribute_device_id/visitor_id fallback.
+--   ecid is retained from Bronze for diagnostics but intentionally excluded from
+--   resolvedIdentityId per the manager-approved identity definition.
 --
 -- TEMPORARY GEO CONTRACT:
 --   Web geoRegion = geo_postal_code.
@@ -240,9 +242,10 @@ BEGIN
                 h.profile_uid,
                 h.encrypted_ban,
                 h.encrypted_msisdn,
-                h.fpid_id,
-                h.attribute_device_id,
+                h.fpid,
+                h.ecid,
                 h.visitor_id,
+                h.attribute_device_id,
                 h.site_name,
                 h.page_app_type,
                 h.page_layout_state,
@@ -289,7 +292,7 @@ BEGIN
                     nullif(trim(cast(profile_uid AS STRING)),''),
                     nullif(trim(cast(encrypted_ban AS STRING)),''),
                     nullif(trim(cast(encrypted_msisdn AS STRING)),''),
-                    nullif(trim(cast(fpid_id AS STRING)),''),
+                    nullif(trim(cast(fpid AS STRING)),''),
                     CASE
                         WHEN source_table='t_app_interactions'
                             THEN nullif(trim(cast(attribute_device_id AS STRING)),'')
@@ -370,7 +373,7 @@ BEGIN
                 WHEN nullif(trim(cast(n.profile_uid AS STRING)),'') IS NOT NULL THEN 'profileUid'
                 WHEN nullif(trim(cast(n.encrypted_ban AS STRING)),'') IS NOT NULL THEN 'encryptedBan'
                 WHEN nullif(trim(cast(n.encrypted_msisdn AS STRING)),'') IS NOT NULL THEN 'encryptedMsisdn'
-                WHEN nullif(trim(cast(n.fpid_id AS STRING)),'') IS NOT NULL THEN 'fpidId'
+                WHEN nullif(trim(cast(n.fpid AS STRING)),'') IS NOT NULL THEN 'fpid'
                 WHEN n.source_table='t_app_interactions'
                  AND nullif(trim(cast(n.attribute_device_id AS STRING)),'') IS NOT NULL THEN 'attributeDeviceId'
                 WHEN nullif(trim(cast(n.visitor_id AS STRING)),'') IS NOT NULL THEN 'visitorId'
