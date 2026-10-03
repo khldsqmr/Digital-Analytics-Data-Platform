@@ -68,7 +68,7 @@ BEGIN
             user_account_type,user_account_status,user_account_category,user_role,
             user_credit_class,credit_result,user_engagement_type,customer_indicator,
             carrier_name,attribute_network_device_carrier,attribute_network_connection_type,user_carrier_isp,
-            flow_name,attribute_flow_name,flow_type,external_campaign_code,
+            flow_name,attribute_flow_name,external_campaign_code,
             shipping_method,page_shipping_options,payment_method_type,
             alert_message,page_url_path,page_url_full,
             order_id,product_order_type,order_status,trade_in_status,eip_status,
@@ -95,7 +95,7 @@ BEGIN
             user_account_type,user_account_status,user_account_category,user_role,
             user_credit_class,credit_result,user_engagement_type,customer_indicator,
             carrier_name,attribute_network_device_carrier,attribute_network_connection_type,user_carrier_isp,
-            flow_name,attribute_flow_name,flow_type,external_campaign_code,
+            flow_name,attribute_flow_name,external_campaign_code,
             shipping_method,page_shipping_options,payment_method_type,
             alert_message,page_url_path,page_url_full,
             order_id,product_order_type,order_status,trade_in_status,eip_status,
@@ -149,119 +149,3 @@ END;
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC
 -- LIMIT 100;
-
-
-[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `flow_type` cannot be resolved. Did you mean one of the following? [`flow_name`, `link_type`, `imei_type`, `user_type`, `moe_cid`]. SQLSTATE: 42703; line 42, pos 42
-
-
-I'll check FLOW_NAME coverage across UDI and SEF, split by channel, over the last 7 days.# `FLOW_NAME` Daily Coverage — Last 7 Days
-
-## 📊 UDI (hit-level)
-
-| Date | Channel | Total Rows | Rows w/ FLOW_NAME | % Fill |
-|---|---|---:|---:|---:|
-| 2026-10-02 | WEB | 37.6M | 3.9M | **10.3%** |
-| 2026-10-02 | APP | 196.2M | 55.8M | **28.4%** |
-| 2026-10-01 | WEB | 49.9M | 5.1M | **10.3%** |
-| 2026-10-01 | APP | 261.4M | 73.4M | **28.1%** |
-| 2026-09-30 | WEB | 48.3M | 5.0M | **10.4%** |
-| 2026-09-30 | APP | 258.5M | 73.9M | **28.6%** |
-| 2026-09-29 | WEB | 49.8M | 5.3M | **10.6%** |
-| 2026-09-29 | APP | 474.8M | 115.5M | **24.3%** |
-| 2026-09-28 | WEB | 53.1M | 6.8M | **12.9%** |
-| 2026-09-28 | APP | 315.9M | 74.6M | **23.6%** |
-| 2026-09-27 | WEB | 40.8M | 4.9M | **12.0%** |
-| 2026-09-27 | APP | 223.9M | 64.4M | **28.8%** |
-| 2026-09-26 | WEB | 39.5M | 4.3M | **11.0%** |
-| 2026-09-26 | APP | 208.6M | 59.8M | **28.7%** |
-
-**Averages:** Web ~**11%**, App ~**27%**
-
-## 📊 SEF (session-event level)
-
-| Date | Channel | Total Events | Events w/ FLOW_NAME | % Fill |
-|---|---|---:|---:|---:|
-| 2026-10-02 | WEB | 36.9M | 3.8M | **10.4%** |
-| 2026-10-02 | APP | 196.0M | 55.8M | **28.5%** |
-| 2026-10-01 | WEB | 49.2M | 5.1M | **10.4%** |
-| 2026-10-01 | APP | 261.1M | 73.4M | **28.1%** |
-| 2026-09-30 | WEB | 47.5M | 5.0M | **10.5%** |
-| 2026-09-30 | APP | 258.2M | 73.9M | **28.6%** |
-| 2026-09-29 | WEB | 48.8M | 5.3M | **10.8%** |
-| 2026-09-29 | APP | 474.5M | 115.5M | **24.3%** |
-| 2026-09-28 | WEB | 52.1M | 6.8M | **13.1%** |
-| 2026-09-28 | APP | 315.6M | 74.6M | **23.6%** |
-| 2026-09-27 | WEB | 40.0M | 4.9M | **12.2%** |
-| 2026-09-27 | APP | 223.6M | 64.4M | **28.8%** |
-| 2026-09-26 | WEB | 38.7M | 4.3M | **11.2%** |
-| 2026-09-26 | APP | 208.3M | 59.8M | **28.7%** |
-
-Numbers match UDI almost perfectly (SEF is a 1:1 projection of UDI with slightly fewer rows from session-boundary filtering). **Averages:** Web ~**11%**, App ~**27%**.
-
-## 💡 Why fill is low (and that's expected)
-
-`FLOW_NAME` only fires on **shopping/self-service flow pages** — cart, checkout, AAL funnel, upgrade funnel, accessories, OTP payments, etc. It's intentionally NULL for:
-- Home page, Discover, Tuesdays, Benefits browsing
-- Support/help pages, FAQ, chat
-- Billing views that aren't payment flows
-- Marketing/content pages
-- Login/auth events
-
-So you're seeing roughly **1 in 4 app hits** and **1 in 10 web hits** are inside a tagged commerce/self-service flow. That ratio is **correct behavior**, not a data gap.
-
-## 🎯 Session-level will be much higher
-
-A session only needs **one** hit with a `FLOW_NAME` to be tagged. Rough estimate: **40–55% of sessions** will have at least one flow tag, since most purposeful visits touch a flow page at some point.
-
-Let me check both the Silver schema and the session tables for flow-related columns.# Flow Columns Across UDI, SEF, and SSF
-
-## 📍 Where flow lives in each table
-
-| Table | Flow columns | Notes |
-|---|---|---|
-| **UNIFIED_DIGITAL_INTERACTIONS** | `FLOW_NAME`, `ATTRIBUTE_FLOW_NAME` | Hit-level |
-| **SESSION_EVENT_FACT** | `FLOW_NAME` | Hit-level (one per event) |
-| **SESSION_SUMMARY_FACT** | ❌ none | No flow column — would need to aggregate from SEF |
-
-## 🧾 Column definitions
-
-### `FLOW_NAME` (UDI + SEF)
-**Primary shopping/self-service flow bucket.** Governed, cross-channel. This is the canonical flow column.
-
-**Common values:**
-- `AAL Intent` — Add-A-Line
-- `UPGRADE Intent` — device upgrade
-- `ACTIVATION Intent` — new activation (prospect)
-- `DEFERRED Intent` — deferred activation (prospect, pre-checkout)
-- `ACCESSORIES Intent` — accessories-only cart
-- `AAL Intent|UPGRADE Intent` — **mixed cart** (one concatenated value, not two rows)
-- `PROSPECT`, `Port-In`, `Satellite Sign Up`
-- `AuthPay`, `GuestPay`, `OTP` (One Time Payment)
-- `benefits`, `checkout`, `my-wallet`
-
-### `ATTRIBUTE_FLOW_NAME` (UDI only)
-**App-side raw flow label** from the app analytics attribute payload. Mirrors `FLOW_NAME` for app rows, often NULL on web.
-
-## ⚠️ What's **not** there
-
-- **No `FLOW_TYPE` column** in any of the three tables. The dictionary mentions `FLOW_TYPE` conceptually but it's not a physical column — `FLOW_NAME` is what you query.
-- **No flow column on `SESSION_SUMMARY_FACT`.** If you want "the dominant flow of a session," you have to derive it from SEF — e.g.:
-
-```
--- Pattern: tag each session with its flows
-SELECT
-  session_id,
-  LISTAGG(DISTINCT flow_name, '|') WITHIN GROUP (ORDER BY flow_name) AS session_flows,
-  COUNT(DISTINCT flow_name) AS flow_count
-FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT
-WHERE event_timestamp_pst >= DATEADD('day', -1, CURRENT_TIMESTAMP())
-  AND flow_name IS NOT NULL
-GROUP BY session_id
-```
-
-## 🎯 Rule of thumb
-
-- **Filtering/analytics** → use `FLOW_NAME` (works in UDI and SEF, same values).
-- **Session-level flow attribution** → aggregate SEF's `FLOW_NAME` up to `session_id`, then join to SSF.
-- **Mixed-cart logic** → match the literal concatenated value `'AAL Intent|UPGRADE Intent'`, not Upgrade-only + AAL-only.
-
