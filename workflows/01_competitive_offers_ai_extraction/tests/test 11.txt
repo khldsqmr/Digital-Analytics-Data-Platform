@@ -1849,3 +1849,158 @@ App sessions still won't get state/region from this pattern — only country. To
 - **Option A (near-term):** join `canonical_user_id` → BAN → `BDM_MKTGANALYTICS_DB.MKTGANALYTICS_V.LOCATION_ACCOUNT_ADDRESS` for authenticated app sessions
 - **Option B (long-term):** file a Jira ticket under DIRT-691 to add `ONEMIND_ATTRIBUTE_BOUNDARY_NAME` (app market/region code from Bronze `T_APP_INTERACTIONS_EI`) into Silver
 
+Let me validate every column in your SELECT list against the actual Silver schema.# Column Validation Results
+
+I checked every column in your SELECT list against the live UNIFIED_DIGITAL_INTERACTIONS schema. Most columns are valid, but 6 do not exist and will fail.
+
+❌ Invalid Columns (must be removed or renamed)
+In your query	Status	Correct column (if any)
+encrypted_ban_msisdn	❌ does not exist	Use encrypted_ban and/or encrypted_msisdn (two separate columns)
+first_party_id	❌ does not exist	Use fpid_id
+app_instance_id	❌ does not exist	Use attribute_device_id (app) or visitor_id
+page_shipping_options	❌ does not exist	Closest: shipping_method (already in your list)
+event_click_to_call	❌ does not exist	No direct equivalent — remove or derive from attribute_event_action
+event_chat_engage	❌ does not exist	No direct equivalent — remove or derive from attribute_event_category = 'Chat'
+event_store_search	❌ does not exist	No direct equivalent — remove
+⚠️ One more concern — event_date behaviour
+Your procedure filters on event_date as the partition key:
+```
+WHERE event_date BETWEEN v_windowStart AND v_windowEnd
+```
+
+Per the Silver domain rules, `event_date` has a known DQ bug where a small fraction of rows (~3K out of 91M) have event_date off by exactly one year from when the event actually occurred. For a Bronze projection pipeline, two options:
+
+Filter on `event_timestamp_pst::DATE` instead of event_date to get the true event date, and store that as your partition key.
+Keep `event_date` as-is for partition efficiency, but accept you'll have a tiny mis-partitioned sliver. Document this in the procedure comments.
+Option 1 is safer for a downstream MIP contract.
+
+✅ Columns Confirmed Valid
+All of these exist in Silver exactly as spelled:
+
+row_identity_hash, event_date, source_table, event_timestamp_utc, event_timestamp_pst, customer_id, profile_uid, site_name, page_app_type, page_layout_state, attribute_os_name, page_language, browser_language, app_launch_type, app_launch_status, geo_postal_code, attribute_country, channel, attribute_channel, channel_name, site_sub_section, page_name, full_page_name, link_name, modal_name, page_flow_type, previous_page_name, navigation_intnav, navigation_menu, customer_type, user_type, user_auth_state, user_account_type, user_account_status, user_account_category, user_role, user_credit_class, credit_result, user_engagement_type, customer_indicator, carrier_name, attribute_network_device_carrier, attribute_network_connection_type, user_carrier_isp, flow_name, attribute_flow_name, external_campaign_code, shipping_method, payment_method_type, alert_message, page_url_path, page_url_full, order_id, product_order_type, order_status, trade_in_status, eip_status, cart_device_type, service_plan_tier, current_plan, new_plan, attribute_event_category, attribute_event_type, attribute_event_action, attribute_screen_name, webinteraction_type, link_type, event_page_view, event_purchase, event_cart_add, event_cart_checkout
+
+🔧 Suggested Fix for the SELECT list
+Replace this block:
+```
+customer_id, profile_uid, encrypted_ban_msisdn, first_party_id, app_instance_id,
+...
+page_shipping_options, payment_method_type,
+...
+event_click_to_call, event_chat_engage,
+event_store_search, event_cart_add, event_cart_checkout,
+```
+
+With:
+```
+customer_id, profile_uid, encrypted_ban, encrypted_msisdn, fpid_id, attribute_device_id, visitor_id,
+...
+payment_method_type,
+...
+event_cart_add, event_cart_checkout,
+```
+
+And if you need click-to-call / chat / store-search as flags, derive them in the SELECT:
+```
+CASE WHEN attribute_event_action ILIKE '%click to call%' THEN 1 ELSE 0 END AS event_click_to_call,
+CASE WHEN attribute_event_category = 'Chat' THEN 1 ELSE 0 END AS event_chat_engage,
+CASE WHEN attribute_event_action ILIKE '%store%search%' THEN 1 ELSE 0 END AS event_store_search,
+```
+(Verify those ILIKE patterns against actual values before finalizing — I can run a quick distinct check on attribute_event_action if you want.)
+
+📝 Other Notes
+Databricks vs Snowflake syntax — your procedure uses Databricks SQL (CREATE TABLE ... USING DELTA CLUSTER BY, INSERT ... REPLACE WHERE, COUNT_IF, from_utc_timestamp). The source table in Databricks is prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions, which matches what you have. ✅
+The Snowflake catalog I validated against is the mirror of the same Silver dataset — column names are identical across both platforms.
+Want me to pull sample values from attribute_event_action and attribute_event_category to help you build accurate derivation logic for the three missing event flags?
+
+04:22 AMcopy
+👍
+👎
+🚩
+yes please in detail, including coverage etc
+04:23 AM
+Eddy
+run sql
+I'll pull distinct values and coverage for all three concepts across both channels.Chat flooded the result (hundreds of long action strings). Let me run a tighter query — aggregated at the pattern level with coverage per channel — to give you clean, usable logic.# Derivation Logic + Coverage for the 3 Missing Event Flags
+
+Based on 3 days of UDI (~836M rows total), here's what each concept looks like in actual production data.
+
+📞 1. event_click_to_call — Phone call initiations
+What exists: Very few hits literally use "click to call" / "tap to call" / "call us" phrasing. Click-to-call is not a well-tagged pattern in UDI — most phone-tap behavior is embedded inside support flows and not labeled with a dedicated action.
+
+Coverage (last 3 days)
+Channel	Matching rows	Total rows	% Fill
+App	18,249	702.8M	0.0026%
+Web	2,717	133.4M	0.0020%
+Suggested derivation (best approximation)
+```
+CASE
+WHEN attribute_event_action ILIKE '%click to call%'
+OR attribute_event_action ILIKE '%click-to-call%'
+OR attribute_event_action ILIKE '%tap to call%'
+OR attribute_event_action ILIKE '%call us%'
+THEN 1 ELSE 0
+END AS event_click_to_call
+```
+
+⚠️ Realistic expectation: This flag will fire on ~1 in 50,000 rows. If "click to call" matters to your consumers, flag this as a tagging gap — don't present the derived column as reliable.
+
+💬 2. event_chat_engage — Chat interactions
+What exists: Chat is very well tagged — both via attribute_event_category (whole category) and attribute_event_action (specific chat moments). Key categories: Chat, JourneyBot, Live Agent. Top actions include Chat Topics Viewed, Chatbot Screen Load, Chat Click, Chat Entry Click, Live Agent Chat Initiation.
+
+Coverage (last 3 days)
+Channel	Matching rows	Total rows	% Fill
+App	15,089,657	702.8M	2.15%
+Web	1,128,208	133.4M	0.85%
+Suggested derivation — pick based on intent
+```
+-- Broad: any chat touchpoint (screen view, button click, bot interaction)
+CASE
+WHEN attribute_event_category ILIKE '%chat%'
+OR attribute_event_category ILIKE '%journeybot%'
+OR attribute_event_action ILIKE '%chat%'
+THEN 1 ELSE 0
+END AS event_chat_engage
+```
+
+Narrower alternative — true engagement only (initiated or messaged, not just screen view):
+```
+CASE
+WHEN attribute_event_action IN (
+'Chat Click', 'Chat Entry Click', 'Chat Message Engaged',
+'Live Agent Chat Initiation', 'Chat Session Ended', 'Chat Ended By User'
+)
+OR attribute_event_action ILIKE '%chat with customer care%click%'
+THEN 1 ELSE 0
+END AS event_chat_engage_strict
+```
+
+The broad version matches ~2% of app hits; the strict version will land around 0.3–0.5%. Choose based on whether your downstream consumers want "touched chat" or "actually engaged chat."
+
+🏪 3. event_store_search — Store locator searches
+What exists: Also lightly tagged. Store locator usage mostly fires as page views (page_url_path containing /stores/ or /store-locator), not as a dedicated event action.
+
+Coverage (last 3 days — using action-string match only)
+Channel	Matching rows	Total rows	% Fill
+App	252	702.8M	~0%
+Web	6,114	133.4M	0.0046%
+Suggested derivation — combine action + URL
+```
+CASE
+WHEN attribute_event_action ILIKE '%store locator%'
+OR attribute_event_action ILIKE '%find a store%'
+OR attribute_event_action ILIKE '%find store%'
+OR attribute_event_action ILIKE '%store search%'
+OR page_url_path ILIKE '%/stores/%'
+OR page_url_path ILIKE '%/store-locator%'
+OR page_name ILIKE '%store locator%'
+THEN 1 ELSE 0
+END AS event_store_search
+```
+
+Adding the URL/page_name signals will boost web coverage significantly (likely to 0.1–0.3% of web rows). App store-locator is nearly nonexistent — likely because the T-Life app has very different store discovery UX.
+
+📝 Recommendations for your MIP projection
+Flag	Verdict	Recommendation
+event_click_to_call	🔴 Not reliably tagged (~0.002%)	Include the derivation but flag as low-fidelity in your MIP contract notes. Consider filing a tagging-gap ticket.
+event_chat_engage	🟢 Well tagged (~1–2%)	Include confidently. Pick broad or strict based on consumer need.
+event_store_search	🟡 Partial — mostly URL-based	Use the combined action+URL rule, not action alone. Document it as approximate.
