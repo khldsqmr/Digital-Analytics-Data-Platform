@@ -190,3 +190,37 @@ END;
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC
 -- LIMIT 100;
+
+
+
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `fpid` cannot be resolved. Did you mean one of the following? [`ecid`, `hit_id`, `cart_id`, `kpi_lob`, `moe_cid`]. SQLSTATE: 42703; line 31, pos 67
+
+
+Let me search the schema properly for any FPID-related column.# Found it — the column is `attribute_fpid`
+
+Apologies for the back-and-forth. The actual first-party ID column in Silver is **`attribute_fpid`** (not `fpid` or `fpid_id`).
+
+Confirmed from the schema:
+- `attribute_fpid` — First-party ID (web browser cookie)
+- `ecid` — Adobe Experience Cloud ID
+- `visitor_id` — Adobe visitor ID (fallback)
+- `attribute_device_id` — App installation device ID
+
+## 🔧 Corrected identity block for your SELECT
+
+```
+row_identity_hash, hit_id, event_date, source_table,
+event_timestamp_utc, event_timestamp_pst,
+customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+attribute_fpid, ecid, visitor_id, attribute_device_id,
+```
+
+## 💡 Canonical visitor key (if needed)
+
+```
+COALESCE(encrypted_msisdn, profile_uid, attribute_device_id, attribute_fpid) AS canonical_visitor_key
+```
+
+That should resolve cleanly against Databricks `prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions`.
+
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `fpid` cannot be resolved. Did you mean one of the following? [`ecid`, `hit_id`, `cart_id`, `kpi_lob`, `moe_cid`]. SQLSTATE: 42703; line 31, pos 67
