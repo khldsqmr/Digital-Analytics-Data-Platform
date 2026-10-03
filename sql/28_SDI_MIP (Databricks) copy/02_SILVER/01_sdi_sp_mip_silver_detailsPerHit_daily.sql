@@ -11,6 +11,13 @@
 --   NBV is NOT decided here. A session can cross event-date boundaries, so
 --   non-bounce qualification is resolved once at attributesPerSession using the
 --   complete loaded session hit set: SUM(isPageView) > 1.
+--
+-- TEMPORARY GEO CONTRACT:
+--   Web geoRegion = geo_postal_code.
+--   App geoRegion = attribute_country.
+--   This is a placeholder dimension, not a normalized geographic region.
+--   Missing hit geography remains NULL so session-level first-hit/earliest
+--   fallback can still resolve geography from a later hit.
 -- ============================================================================
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
     IN p_asOfDate DATE DEFAULT NULL,
@@ -100,8 +107,10 @@ BEGIN
             device STRING COMMENT 'Derived App Web View / iOS App / Android App / App / Desktop / Mobile Web / Web',
             navigationChannel STRING COMMENT 'Raw UDI channel: site section/top-level navigation bucket',
             appChannel STRING COMMENT 'Raw UDI attribute_channel: app-side channel grouping',
-            geoRegion STRING COMMENT 'Hit-level UDI geo_region: IP-derived state/province, not T-Mobile internal region',
-            geoContext STRING COMMENT 'Labeled pipe-delimited geo context: country|region|city|dma|zip|lat|lon',
+            geoPostalCode STRING COMMENT 'Raw UDI geo_postal_code; Web geography source',
+            geoCountry STRING COMMENT 'Raw UDI attribute_country; App geography source',
+            geoRegion STRING COMMENT 'Temporary Region placeholder: Web=geo_postal_code, App=attribute_country',
+            geoContext STRING COMMENT 'Temporary labeled context: source=web|postalCode=... or source=app|country=...',
             pageCategory STRING,
             pageName STRING,
             fullPageName STRING,
@@ -221,13 +230,8 @@ BEGIN
                 h.attribute_os_name,
                 h.channel,
                 h.attribute_channel,
-                h.geo_country,
-                h.geo_region,
-                h.geo_city,
-                h.geo_dma,
-                h.geo_zip,
-                h.geo_latitude,
-                h.geo_longitude,
+                h.geo_postal_code,
+                h.attribute_country,
                 h.site_sub_section,
                 h.page_name,
                 h.full_page_name,
@@ -296,26 +300,21 @@ BEGIN
                     WHEN 'ambiguous' THEN 0
                     ELSE -1
                 END AS normalizedAuthStateRank,
-                nullif(trim(cast(geo_region AS STRING)),'') AS normalizedGeoRegion,
+                nullif(trim(cast(geo_postal_code AS STRING)),'') AS normalizedGeoPostalCode,
+                nullif(trim(cast(attribute_country AS STRING)),'') AS normalizedGeoCountry,
                 CASE
-                    WHEN coalesce(
-                        nullif(trim(cast(geo_country AS STRING)),''),
-                        nullif(trim(cast(geo_region AS STRING)),''),
-                        nullif(trim(cast(geo_city AS STRING)),''),
-                        nullif(trim(cast(geo_dma AS STRING)),''),
-                        nullif(trim(cast(geo_zip AS STRING)),''),
-                        nullif(trim(cast(geo_latitude AS STRING)),''),
-                        nullif(trim(cast(geo_longitude AS STRING)),'')
-                    ) IS NULL THEN NULL
-                    ELSE concat_ws('|',
-                        concat('country=',   coalesce(nullif(trim(cast(geo_country AS STRING)),''),'')),
-                        concat('region=',    coalesce(nullif(trim(cast(geo_region AS STRING)),''),'')),
-                        concat('city=',      coalesce(nullif(trim(cast(geo_city AS STRING)),''),'')),
-                        concat('dma=',       coalesce(nullif(trim(cast(geo_dma AS STRING)),''),'')),
-                        concat('zip=',       coalesce(nullif(trim(cast(geo_zip AS STRING)),''),'')),
-                        concat('lat=',       coalesce(nullif(trim(cast(geo_latitude AS STRING)),''),'')),
-                        concat('lon=',       coalesce(nullif(trim(cast(geo_longitude AS STRING)),''),''))
-                    )
+                    WHEN source_table='t_web_interactions' THEN nullif(trim(cast(geo_postal_code AS STRING)),'')
+                    WHEN source_table='t_app_interactions' THEN nullif(trim(cast(attribute_country AS STRING)),'')
+                    ELSE NULL
+                END AS normalizedGeoRegion,
+                CASE
+                    WHEN source_table='t_web_interactions'
+                     AND nullif(trim(cast(geo_postal_code AS STRING)),'') IS NOT NULL
+                        THEN concat('source=web|postalCode=',trim(cast(geo_postal_code AS STRING)))
+                    WHEN source_table='t_app_interactions'
+                     AND nullif(trim(cast(attribute_country AS STRING)),'') IS NOT NULL
+                        THEN concat('source=app|country=',trim(cast(attribute_country AS STRING)))
+                    ELSE NULL
                 END AS geoContext,
                 nullif(trim(split_part(cast(external_campaign_code AS STRING),'_',4)),'') AS parsedCampaignCode
             FROM base b
@@ -383,6 +382,8 @@ BEGIN
             END AS device,
             nullif(trim(cast(n.channel AS STRING)),'') AS navigationChannel,
             nullif(trim(cast(n.attribute_channel AS STRING)),'') AS appChannel,
+            n.normalizedGeoPostalCode AS geoPostalCode,
+            n.normalizedGeoCountry AS geoCountry,
             n.normalizedGeoRegion AS geoRegion,
             n.geoContext AS geoContext,
             nullif(trim(cast(n.site_sub_section AS STRING)),'') AS pageCategory,
@@ -526,7 +527,7 @@ END;
 -- Creates/writes nothing.
 -- --------------------------------------------------------------------------
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
---     p_asOfDate        => DATE '2026-09-28',
+--     p_asOfDate        => DATE '2026-10-02',
 --     p_eventWindowDays => 1,
 --     p_validateOnly    => TRUE
 -- );
@@ -534,7 +535,7 @@ END;
 -- B. EXECUTE / REBUILD ONE EVENT DAY
 -- --------------------------------------------------------------------------
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
---     p_asOfDate        => DATE '2026-09-28',
+--     p_asOfDate        => DATE '2026-10-02',
 --     p_eventWindowDays => 1,
 --     p_validateOnly    => FALSE
 -- );
@@ -553,7 +554,7 @@ END;
 --     SUM(isPageView) AS pageViews,
 --     SUM(isOrder) AS orders
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
--- WHERE eventDate = DATE '2026-09-28'
+-- WHERE eventDate = DATE '2026-10-02'
 -- GROUP BY eventDate;
 -- --------------------------------------------------------------------------
 -- D. VALIDATION 2: JOIN-GRAIN / ROW-EXPLOSION CHECK
@@ -566,7 +567,7 @@ END;
 --     sourceTable,
 --     COUNT(*) AS rowCount
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
--- WHERE eventDate = DATE '2026-09-28'
+-- WHERE eventDate = DATE '2026-10-02'
 -- GROUP BY rowIdentityHash,eventDate,sourceTable
 -- HAVING COUNT(*) > 1
 -- ORDER BY rowCount DESC
@@ -578,11 +579,15 @@ END;
 -- SELECT
 --     sourceTable,
 --     platform,
+--     pageLayoutState,
+--     operatingSystem,
 --     device,
+--     geoPostalCode,
+--     geoCountry,
 --     geoRegion,
 --     COUNT(*) AS hitRows,
 --     SUM(isPageView) AS pageViews
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
--- WHERE eventDate = DATE '2026-09-28'
--- GROUP BY sourceTable,platform,pageLayoutState,operatingSystem,device,geoRegion
+-- WHERE eventDate = DATE '2026-10-02'
+-- GROUP BY sourceTable,platform,pageLayoutState,operatingSystem,device,geoPostalCode,geoCountry,geoRegion
 -- ORDER BY hitRows DESC;
