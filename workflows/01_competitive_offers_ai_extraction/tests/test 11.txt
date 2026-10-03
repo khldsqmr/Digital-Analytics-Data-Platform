@@ -1620,3 +1620,104 @@ NAVIGATION_INTNAV / MENU	Internal nav path	breadcrumb-style strings
 A few things worth flagging:
 - Several columns have both English and Spanish values (CHANNEL, SHIPPING_METHOD, PAYMENT_METHOD_TYPE, ORDER_STATUS) — e.g., Mi Cuenta ↔ My Account, Recoger en la tienda ↔ Pick up in store. Normalize before grouping.
 - ORDER_STATUS and SHIPPING_METHOD are compound strings (`Fulfillment Type:
+
+
+
+Let me check the Silver schema for any geography/country columns.# No `geo_country` — but there are close alternatives
+
+There is **no `geo_country` column** in `BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS`. Here's what exists for geography:
+
+| Column | Scope | Description |
+|---|---|---|
+| **`attribute_country`** | **App only** (NULL on web) | Country the user is connecting from, detected by the OneMind telemetry platform. Closest thing to a "geo country" field. |
+| **`geo_postal_code`** | **Web only** (NULL on app) | Geo-derived postal code from envData — approximate location for regional analysis. |
+| **`coverage_map_country`** | Web only | Up to 5 countries the user submitted in an **international coverage check** form — NOT where the user is located. |
+| **`coverage_map_zip`** | Both | Zip code the user typed into a domestic coverage check — again, user input, not geo-derived. |
+| **`coverage_map_location`** | Both | City/state returned by the coverage map query. |
+
+**Key gaps:**
+- No unified cross-channel country column — `attribute_country` covers app only, and there's no web equivalent.
+- No `geo_region` / `geo_state` / `geo_city` derived from IP on either channel. Only `geo_postal_code` (web only) is populated from geo lookup.
+
+Want me to pull sample `attribute_country` values or check how populated `geo_postal_code` is?
+
+
+Let me check a few angles — the Bronze layer for any geo fields that didn't make it to Silver, and how populated the existing geo columns actually are.Let me check how populated the usable geo fields actually are, and look up Bronze IP/geo fields.# Options for Getting Region in Silver
+
+There is **no clean region/state column** in Silver today. Here's what's actually usable and the gaps:
+
+## ✅ What works today
+
+### 1. **Derive region from `geo_postal_code` (Web only, ~46% fill)**
+Silver has `geo_postal_code` populated for ~**69M of 148M web rows** (46%) over the last 3 days. Join to any ZIP→state/region reference table to get state/region.
+
+```
+-- Example pattern
+SELECT LEFT(geo_postal_code, 5) AS zip5, ...
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS
+WHERE source_table = 't_web_interactions'
+```
+⚠️ **App rows = 0% populated** on this field.
+
+### 2. **`coverage_map_location` — city/state string (both channels, <0.1% fill)**
+Returns something like `"Seattle, WA"` but only fires when a user runs a coverage check. Not useful for general regional segmentation.
+
+### 3. **`attribute_country` — country only (App only, 100% fill)**
+Country-level only, no sub-national region. Useful for US vs. international splits.
+
+## ⚠️ What's in Bronze but NOT yet in Silver
+
+| Bronze field | Table | Status |
+|---|---|---|
+| `DATA_PAGE_PAGEINFO_GEOREGION` | `T_WEB_INTERACTIONS_EI` | **Dead** — 0% coverage (field defined, never fires) |
+| `DATA_STORE_REGION` | `T_WEB_INTERACTIONS_EI` | Not mapped to Silver — would need investigation |
+| `DATA_CART_BILLING_ADDRESS_STATEPROVINCE` | `T_WEB_INTERACTIONS_EI` | Not in Silver — **only fires at checkout** (self-reported, not geo) |
+| `DATA_CART_SHIPPING_ADDRESS_STATEPROVINCE` | `T_WEB_INTERACTIONS_EI` | Same — checkout only |
+| `ONEMIND_ATTRIBUTE_BOUNDARY_NAME` | `T_APP_INTERACTIONS_EI` | App-only market/region code, not in Silver |
+| `MAIN_NATCO_CODE` | `T_APP_INTERACTIONS_EI` | NATCO market code, not in Silver |
+
+## 🎯 Recommendation
+
+**For general regional analytics**, the most practical path is:
+1. Use `geo_postal_code` for web (~46% fill, best coverage)
+2. Join to a ZIP→state reference (e.g., any `DIM_ZIPCODE` or Census crosswalk your team maintains)
+3. Accept that app rows won't have geo until a new field is added
+
+**For a proper Silver `geo_region` / `geo_state` column**, you'd want to file a Jira ticket under DIRT-691 to:
+- Investigate why Bronze `DATA_PAGE_PAGEINFO_GEOREGION` is dead (sourced from Adobe's `geoRegion` dimension — needs upstream tagging)
+- Add app-side equivalent via OneMind geo attributes
+
+Let me check both session tables for any geo/region columns.# No geo/region columns in either session table
+
+Checked both:
+
+| Table | Geo columns? |
+|---|---|
+| `BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT` (48 cols) | ❌ None |
+| `BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT` (32 cols) | ❌ None |
+
+Neither table carries `geo_postal_code`, `attribute_country`, state, region, city, or any location field. They're focused on session identity, timing, flow, and page/URL context — not geography.
+
+## 🎯 How to get region at the session level
+
+Join the session tables back to `UNIFIED_DIGITAL_INTERACTIONS` via `row_identity_hash` (on `SESSION_EVENT_FACT`) or `session_id` and pull `geo_postal_code` from there:
+
+```
+-- Session-level region (web only, ~46% fill)
+SELECT
+  s.session_id,
+  s.session_start_date,
+  s.canonical_user_id,
+  MAX(u.geo_postal_code) AS geo_postal_code   -- or FIRST_VALUE on entry hit
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT s
+JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  ON s.session_id = e.session_id
+JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+  ON e.row_identity_hash = u.row_identity_hash
+WHERE s.session_status IN ('OPEN','CLOSED')
+  AND s.source_table = 't_web_interactions'
+  AND u.geo_postal_code IS NOT NULL
+GROUP BY 1,2,3
+```
+
+Then join the zip to a ZIP→state crosswalk for region. Same ~46% web / 0% app limitation applies.
