@@ -10,12 +10,28 @@
 --   page_layout_state = Web responsive form factor (desktop/mobile/tablet).
 --   attribute_os_name = App OS (ios/android).
 --
+-- IDENTITY CONTRACT:
+--   Manager-era aliases map to live UDI fields:
+--   encrypted BAN/MSISDN -> encrypted_ban / encrypted_msisdn
+--   first-party ID       -> fpid_id
+--   app-instance ID      -> attribute_device_id (App), with visitor_id fallback.
+--
 -- TEMPORARY GEO CONTRACT:
 --   Web geography = geo_postal_code.
 --   App geography = attribute_country.
 --   No ZIP/state/region mapping is applied yet.
 --   Downstream geoRegion is a temporary common field containing Web postal code
 --   or App country so the existing Region pipeline remains intact.
+--
+-- EVENT-DATE CONTRACT:
+--   Keep source event_date unchanged because it is part of the validated
+--   UDI<->SEF composite join key and source partitioning contract. A tiny known
+--   upstream event_date DQ sliver can differ from DATE(event_timestamp_pst);
+--   do not rewrite event_date in Bronze because doing so can break session joins.
+--
+-- ACTION CONTRACT:
+--   Raw dedicated VR call/chat/store-search event columns are not physical UDI
+--   fields. Silver derives those flags from live event/action/page signals.
 -- ============================================================================
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_bronze_edlUdiHits_daily(
     IN p_asOfDate DATE DEFAULT NULL,
@@ -25,7 +41,7 @@ CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_bronze_edlUdiHits_d
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'Bronze MIP projection of EDL unified_digital_interactions using validated device fields and temporary Web-postal/App-country geography.'
+COMMENT 'Bronze MIP projection of EDL unified_digital_interactions using live-schema identity/device/geo fields; VR action flags are derived in Silver.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(p_asOfDate,date_add(to_date(from_utc_timestamp(current_timestamp(),'America/Los_Angeles')),-1));
@@ -57,7 +73,7 @@ BEGIN
         AS
         SELECT
             row_identity_hash,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
-            customer_id,profile_uid,encrypted_ban_msisdn,first_party_id,app_instance_id,
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid_id,attribute_device_id,visitor_id,
             site_name,page_app_type,page_layout_state,attribute_os_name,
             page_language,browser_language,app_launch_type,app_launch_status,
             geo_postal_code,attribute_country,
@@ -69,14 +85,13 @@ BEGIN
             user_credit_class,credit_result,user_engagement_type,customer_indicator,
             carrier_name,attribute_network_device_carrier,attribute_network_connection_type,user_carrier_isp,
             flow_name,attribute_flow_name,external_campaign_code,
-            shipping_method,page_shipping_options,payment_method_type,
+            shipping_method,payment_method_type,
             alert_message,page_url_path,page_url_full,
             order_id,product_order_type,order_status,trade_in_status,eip_status,
             cart_device_type,service_plan_tier,current_plan,new_plan,
             attribute_event_category,attribute_event_type,attribute_event_action,
             attribute_screen_name,webinteraction_type,link_type,
-            event_page_view,event_purchase,event_click_to_call,event_chat_engage,
-            event_store_search,event_cart_add,event_cart_checkout,
+            event_page_view,event_purchase,event_cart_add,event_cart_checkout,
             current_timestamp() AS _ingestedAt
         FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
         WHERE 1=0;
@@ -84,7 +99,7 @@ BEGIN
         REPLACE WHERE event_date BETWEEN v_windowStart AND v_windowEnd
         SELECT
             row_identity_hash,event_date,source_table,event_timestamp_utc,event_timestamp_pst,
-            customer_id,profile_uid,encrypted_ban_msisdn,first_party_id,app_instance_id,
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,fpid_id,attribute_device_id,visitor_id,
             site_name,page_app_type,page_layout_state,attribute_os_name,
             page_language,browser_language,app_launch_type,app_launch_status,
             geo_postal_code,attribute_country,
@@ -96,14 +111,13 @@ BEGIN
             user_credit_class,credit_result,user_engagement_type,customer_indicator,
             carrier_name,attribute_network_device_carrier,attribute_network_connection_type,user_carrier_isp,
             flow_name,attribute_flow_name,external_campaign_code,
-            shipping_method,page_shipping_options,payment_method_type,
+            shipping_method,payment_method_type,
             alert_message,page_url_path,page_url_full,
             order_id,product_order_type,order_status,trade_in_status,eip_status,
             cart_device_type,service_plan_tier,current_plan,new_plan,
             attribute_event_category,attribute_event_type,attribute_event_action,
             attribute_screen_name,webinteraction_type,link_type,
-            event_page_view,event_purchase,event_click_to_call,event_chat_engage,
-            event_store_search,event_cart_add,event_cart_checkout,
+            event_page_view,event_purchase,event_cart_add,event_cart_checkout,
             current_timestamp() AS _ingestedAt
         FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
         WHERE event_date BETWEEN v_windowStart AND v_windowEnd;
@@ -141,7 +155,32 @@ END;
 -- WHERE event_date=DATE '2026-10-02'
 -- GROUP BY source_table
 -- ORDER BY source_table;
--- E. COMPOSITE-GRAIN DIAGNOSTIC
+-- E. ACTION-SIGNAL COVERAGE
+-- SELECT
+--   source_table,
+--   COUNT(*) AS rows,
+--   COUNT_IF(nullif(trim(cast(attribute_event_action AS STRING)),'') IS NOT NULL) AS rowsWithEventAction,
+--   COUNT_IF(nullif(trim(cast(attribute_event_category AS STRING)),'') IS NOT NULL) AS rowsWithEventCategory,
+--   COUNT_IF(lower(coalesce(attribute_event_action,'')) LIKE '%click to call%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%click-to-call%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%tap to call%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%call us%') AS approxVrCallRows,
+--   COUNT_IF(lower(trim(coalesce(attribute_event_action,''))) IN (
+--         'chat click','chat entry click','chat message engaged',
+--         'live agent chat initiation','chat session ended','chat ended by user')
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%chat with customer care%click%') AS strictVrChatRows,
+--   COUNT_IF(lower(coalesce(attribute_event_action,'')) LIKE '%store locator%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%find a store%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%find store%'
+--         OR lower(coalesce(attribute_event_action,'')) LIKE '%store search%'
+--         OR lower(coalesce(page_url_path,'')) LIKE '%/stores/%'
+--         OR lower(coalesce(page_url_path,'')) LIKE '%/store-locator%'
+--         OR lower(coalesce(page_name,'')) LIKE '%store locator%') AS approxStoreLocatorRows
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
+-- WHERE event_date=DATE '2026-10-02'
+-- GROUP BY source_table
+-- ORDER BY source_table;
+-- F. COMPOSITE-GRAIN DIAGNOSTIC
 -- SELECT row_identity_hash,event_date,source_table,COUNT(*) AS rowCount
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
 -- WHERE event_date=DATE '2026-10-02'

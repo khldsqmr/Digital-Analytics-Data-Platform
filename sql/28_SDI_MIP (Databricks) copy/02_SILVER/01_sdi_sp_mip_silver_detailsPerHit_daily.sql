@@ -12,12 +12,29 @@
 --   non-bounce qualification is resolved once at attributesPerSession using the
 --   complete loaded session hit set: SUM(isPageView) > 1.
 --
+-- IDENTITY CONTRACT:
+--   SSF canonical_user_id remains authoritative where present.
+--   Hit fallback translates manager-era identity aliases to live UDI fields:
+--   customer_id -> profile_uid -> encrypted_ban -> encrypted_msisdn ->
+--   fpid_id -> source-aware attribute_device_id/visitor_id fallback.
+--
 -- TEMPORARY GEO CONTRACT:
 --   Web geoRegion = geo_postal_code.
 --   App geoRegion = attribute_country.
 --   This is a placeholder dimension, not a normalized geographic region.
 --   Missing hit geography remains NULL so session-level first-hit/earliest
 --   fallback can still resolve geography from a later hit.
+--
+-- VR ACTION CONTRACT:
+--   Dedicated raw call/chat/store-search event columns are not physical UDI
+--   fields. isVrCall/isVrChat/isStoreLocator are derived here from validated
+--   live fields. VR Call is low-fidelity; Store Locator is approximate; VR Chat
+--   uses the stricter engagement-oriented action set.
+--
+-- ASSISTED ORDER CONTRACT:
+--   Preserve all manager-defined conditions supported by live UDI. The historic
+--   page-shipping-options condition cannot be represented because that physical
+--   field is unavailable; no unverified substitute is invented.
 -- ============================================================================
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
     IN p_asOfDate DATE DEFAULT NULL,
@@ -27,7 +44,7 @@ CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHi
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'Silver canonical MIP hit enrichment for valid sessionized OPEN/CLOSED hits from Bronze UDI + SEF + SSF + Marketing Code.'
+COMMENT 'Silver canonical MIP hit enrichment for valid sessionized OPEN/CLOSED hits with live-schema identity/geo/action derivations.'
 AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
@@ -141,13 +158,13 @@ BEGIN
             productOrderType STRING,
             isPageView INT,
             isOrder INT,
-            isVrCall INT,
-            isVrChat INT,
-            isStoreLocator INT,
+            isVrCall INT COMMENT 'Approximate VR Call derivation from attribute_event_action; known low-fidelity signal',
+            isVrChat INT COMMENT 'Strict VR Chat engagement derivation from attribute_event_action',
+            isStoreLocator INT COMMENT 'Approximate Store Locator derivation from action + URL + page name',
             isConfigure INT,
             isCheckoutStart INT,
             isBuyFlow INT,
-            isAssistedOrder INT,
+            isAssistedOrder INT COMMENT 'Supported live-source Assisted Order conditions; one historic Adobe shipping-options condition is unavailable',
             isTmoNetwork INT,
             silverProcessedAt TIMESTAMP
         )
@@ -221,9 +238,11 @@ BEGIN
                 l.entry_page_url_full,
                 h.customer_id,
                 h.profile_uid,
-                h.encrypted_ban_msisdn,
-                h.first_party_id,
-                h.app_instance_id,
+                h.encrypted_ban,
+                h.encrypted_msisdn,
+                h.fpid_id,
+                h.attribute_device_id,
+                h.visitor_id,
                 h.site_name,
                 h.page_app_type,
                 h.page_layout_state,
@@ -243,7 +262,6 @@ BEGIN
                 h.external_campaign_code,
                 h.user_carrier_isp,
                 h.shipping_method,
-                h.page_shipping_options,
                 h.alert_message,
                 h.page_url_path,
                 h.page_url_full,
@@ -251,9 +269,8 @@ BEGIN
                 h.product_order_type,
                 h.event_page_view,
                 h.event_purchase,
-                h.event_click_to_call,
-                h.event_chat_engage,
-                h.event_store_search,
+                h.attribute_event_category,
+                h.attribute_event_action,
                 h.event_cart_add,
                 h.event_cart_checkout
             FROM validLinks l
@@ -270,9 +287,16 @@ BEGIN
                 coalesce(
                     nullif(trim(cast(customer_id AS STRING)),''),
                     nullif(trim(cast(profile_uid AS STRING)),''),
-                    nullif(trim(cast(encrypted_ban_msisdn AS STRING)),''),
-                    nullif(trim(cast(first_party_id AS STRING)),''),
-                    nullif(trim(cast(app_instance_id AS STRING)),'')
+                    nullif(trim(cast(encrypted_ban AS STRING)),''),
+                    nullif(trim(cast(encrypted_msisdn AS STRING)),''),
+                    nullif(trim(cast(fpid_id AS STRING)),''),
+                    CASE
+                        WHEN source_table='t_app_interactions'
+                            THEN nullif(trim(cast(attribute_device_id AS STRING)),'')
+                        ELSE nullif(trim(cast(visitor_id AS STRING)),'')
+                    END,
+                    nullif(trim(cast(visitor_id AS STRING)),''),
+                    nullif(trim(cast(attribute_device_id AS STRING)),'')
                 ) AS resolvedIdentityId,
                 CASE lower(trim(cast(customer_type AS STRING)))
                     WHEN 'prospect' THEN 'Prospect'
@@ -344,9 +368,13 @@ BEGIN
                 WHEN nullif(trim(cast(n.canonical_user_id AS STRING)),'') IS NOT NULL THEN 'canonicalUserId'
                 WHEN nullif(trim(cast(n.customer_id AS STRING)),'') IS NOT NULL THEN 'customerId'
                 WHEN nullif(trim(cast(n.profile_uid AS STRING)),'') IS NOT NULL THEN 'profileUid'
-                WHEN nullif(trim(cast(n.encrypted_ban_msisdn AS STRING)),'') IS NOT NULL THEN 'encryptedBanMsisdn'
-                WHEN nullif(trim(cast(n.first_party_id AS STRING)),'') IS NOT NULL THEN 'firstPartyId'
-                WHEN nullif(trim(cast(n.app_instance_id AS STRING)),'') IS NOT NULL THEN 'appInstanceId'
+                WHEN nullif(trim(cast(n.encrypted_ban AS STRING)),'') IS NOT NULL THEN 'encryptedBan'
+                WHEN nullif(trim(cast(n.encrypted_msisdn AS STRING)),'') IS NOT NULL THEN 'encryptedMsisdn'
+                WHEN nullif(trim(cast(n.fpid_id AS STRING)),'') IS NOT NULL THEN 'fpidId'
+                WHEN n.source_table='t_app_interactions'
+                 AND nullif(trim(cast(n.attribute_device_id AS STRING)),'') IS NOT NULL THEN 'attributeDeviceId'
+                WHEN nullif(trim(cast(n.visitor_id AS STRING)),'') IS NOT NULL THEN 'visitorId'
+                WHEN nullif(trim(cast(n.attribute_device_id AS STRING)),'') IS NOT NULL THEN 'attributeDeviceId'
                 ELSE NULL
             END AS identitySource,
             cast(n.site_name AS STRING) AS siteName,
@@ -471,9 +499,31 @@ BEGIN
             cast(n.product_order_type AS STRING) AS productOrderType,
             CASE WHEN coalesce(try_cast(n.event_page_view AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isPageView,
             CASE WHEN coalesce(try_cast(n.event_purchase AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isOrder,
-            CASE WHEN coalesce(try_cast(n.event_click_to_call AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isVrCall,
-            CASE WHEN coalesce(try_cast(n.event_chat_engage AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isVrChat,
-            CASE WHEN coalesce(try_cast(n.event_store_search AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isStoreLocator,
+            CASE
+                WHEN lower(coalesce(n.attribute_event_action,'')) LIKE '%click to call%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%click-to-call%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%tap to call%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%call us%'
+                THEN 1 ELSE 0
+            END AS isVrCall,
+            CASE
+                WHEN lower(trim(coalesce(n.attribute_event_action,''))) IN (
+                    'chat click','chat entry click','chat message engaged',
+                    'live agent chat initiation','chat session ended','chat ended by user'
+                )
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%chat with customer care%click%'
+                THEN 1 ELSE 0
+            END AS isVrChat,
+            CASE
+                WHEN lower(coalesce(n.attribute_event_action,'')) LIKE '%store locator%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%find a store%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%find store%'
+                  OR lower(coalesce(n.attribute_event_action,'')) LIKE '%store search%'
+                  OR lower(coalesce(n.page_url_path,'')) LIKE '%/stores/%'
+                  OR lower(coalesce(n.page_url_path,'')) LIKE '%/store-locator%'
+                  OR lower(coalesce(n.page_name,'')) LIKE '%store locator%'
+                THEN 1 ELSE 0
+            END AS isStoreLocator,
             CASE WHEN coalesce(try_cast(n.event_cart_add AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isConfigure,
             CASE WHEN coalesce(try_cast(n.event_cart_checkout AS BIGINT),0)>0 THEN 1 ELSE 0 END AS isCheckoutStart,
             CASE
@@ -492,7 +542,6 @@ BEGIN
                     OR lower(coalesce(n.shipping_method,'')) LIKE '%while in store%'
                     OR lower(coalesce(n.shipping_method,'')) LIKE '%comprar por internet desde una tienda%'
                     OR n.external_campaign_code='MGPO_RS_P_PPMGNWLRSU_9FED46B36BD7D485135485'
-                    OR lower(coalesce(n.page_shipping_options,'')) LIKE '%online while in store%'
                     OR (
                         n.modal_name IN (
                             'Welcome to T-Mobile - Store In Store - Sam''s Club',
@@ -591,3 +640,19 @@ END;
 -- WHERE eventDate = DATE '2026-10-02'
 -- GROUP BY sourceTable,platform,pageLayoutState,operatingSystem,device,geoPostalCode,geoCountry,geoRegion
 -- ORDER BY hitRows DESC;
+-- --------------------------------------------------------------------------
+-- F. VALIDATION 4: DERIVED VR ACTION COVERAGE
+-- --------------------------------------------------------------------------
+-- SELECT
+--     sourceTable,
+--     COUNT(*) AS hitRows,
+--     SUM(isVrCall) AS vrCallRows,
+--     ROUND(100.0*SUM(isVrCall)/COUNT(*),4) AS vrCallPct,
+--     SUM(isVrChat) AS vrChatRows,
+--     ROUND(100.0*SUM(isVrChat)/COUNT(*),4) AS vrChatPct,
+--     SUM(isStoreLocator) AS storeLocatorRows,
+--     ROUND(100.0*SUM(isStoreLocator)/COUNT(*),4) AS storeLocatorPct
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+-- WHERE eventDate=DATE '2026-10-02'
+-- GROUP BY sourceTable
+-- ORDER BY sourceTable;
