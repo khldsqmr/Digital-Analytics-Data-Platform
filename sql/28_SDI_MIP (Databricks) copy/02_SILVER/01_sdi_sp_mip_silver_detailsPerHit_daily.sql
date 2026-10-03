@@ -97,10 +97,9 @@ BEGIN
             channelType STRING,
             deviceType STRING,
             operatingSystem STRING,
-            pageAppTypeContext STRING,
             device STRING,
             geoRegion STRING COMMENT 'Hit-level UDI geo_region: IP-derived state/province, not T-Mobile internal region',
-            geoContext STRING COMMENT 'Labeled pipe-delimited geo context: country|region|city|dma|zip|lat|lon plus sparse user/TFB location signals',
+            geoContext STRING COMMENT 'Labeled pipe-delimited geo context: country|region|city|dma|zip|lat|lon',
             pageCategory STRING,
             pageName STRING,
             fullPageName STRING,
@@ -216,7 +215,6 @@ BEGIN
                 h.app_instance_id,
                 h.site_name,
                 h.page_app_type,
-                h.attribute_page_app_type,
                 h.device_type,
                 h.device_operating_system,
                 h.geo_country,
@@ -226,10 +224,6 @@ BEGIN
                 h.geo_zip,
                 h.geo_latitude,
                 h.geo_longitude,
-                h.attribute_zipcode,
-                h.attribute_user_zip,
-                h.attribute_tfb_zip,
-                h.attribute_tfb_market,
                 h.site_sub_section,
                 h.page_name,
                 h.full_page_name,
@@ -307,11 +301,7 @@ BEGIN
                         nullif(trim(cast(geo_dma AS STRING)),''),
                         nullif(trim(cast(geo_zip AS STRING)),''),
                         nullif(trim(cast(geo_latitude AS STRING)),''),
-                        nullif(trim(cast(geo_longitude AS STRING)),''),
-                        nullif(trim(cast(attribute_zipcode AS STRING)),''),
-                        nullif(trim(cast(attribute_user_zip AS STRING)),''),
-                        nullif(trim(cast(attribute_tfb_zip AS STRING)),''),
-                        nullif(trim(cast(attribute_tfb_market AS STRING)),'')
+                        nullif(trim(cast(geo_longitude AS STRING)),'')
                     ) IS NULL THEN NULL
                     ELSE concat_ws('|',
                         concat('country=',   coalesce(nullif(trim(cast(geo_country AS STRING)),''),'')),
@@ -320,11 +310,7 @@ BEGIN
                         concat('dma=',       coalesce(nullif(trim(cast(geo_dma AS STRING)),''),'')),
                         concat('zip=',       coalesce(nullif(trim(cast(geo_zip AS STRING)),''),'')),
                         concat('lat=',       coalesce(nullif(trim(cast(geo_latitude AS STRING)),''),'')),
-                        concat('lon=',       coalesce(nullif(trim(cast(geo_longitude AS STRING)),''),'')),
-                        concat('inputZip=',  coalesce(nullif(trim(cast(attribute_zipcode AS STRING)),''),'')),
-                        concat('userZip=',   coalesce(nullif(trim(cast(attribute_user_zip AS STRING)),''),'')),
-                        concat('tfbZip=',    coalesce(nullif(trim(cast(attribute_tfb_zip AS STRING)),''),'')),
-                        concat('tfbMarket=', coalesce(nullif(trim(cast(attribute_tfb_market AS STRING)),''),''))
+                        concat('lon=',       coalesce(nullif(trim(cast(geo_longitude AS STRING)),''),''))
                     )
                 END AS geoContext,
                 nullif(trim(split_part(cast(external_campaign_code AS STRING),'_',4)),'') AS parsedCampaignCode
@@ -369,10 +355,9 @@ BEGIN
             END AS channelType,
             cast(n.device_type AS STRING) AS deviceType,
             cast(n.device_operating_system AS STRING) AS operatingSystem,
-            cast(n.attribute_page_app_type AS STRING) AS pageAppTypeContext,
             CASE
-                WHEN n.source_table='t_app_interactions'
-                 AND lower(trim(coalesce(cast(n.attribute_page_app_type AS STRING),'')))='webview'
+                WHEN n.source_table='t_web_interactions'
+                 AND lower(trim(coalesce(cast(n.page_app_type AS STRING),''))) IN ('tlife app','metro app','flagship app')
                     THEN 'App Web View'
                 WHEN n.source_table='t_app_interactions'
                  AND lower(trim(coalesce(cast(n.device_operating_system AS STRING),'')))='ios'
