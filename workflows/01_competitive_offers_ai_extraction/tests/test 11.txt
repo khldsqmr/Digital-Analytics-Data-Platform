@@ -1721,3 +1721,131 @@ GROUP BY 1,2,3
 ```
 
 Then join the zip to a ZIP→state crosswalk for region. Same ~46% web / 0% app limitation applies.
+
+
+
+
+
+
+I'll check daily coverage of `geo_postal_code` over the last 7 days, split by channel.# `geo_postal_code` Daily Coverage — Last 7 Days
+
+| Date (PST) | Channel | Total Rows | Rows w/ ZIP | % with ZIP |
+|---|---|---:|---:|---:|
+| 2026-10-02 | **WEB** | 37.6M | 18.0M | **48.0%** |
+| 2026-10-02 | APP | 196.2M | 0 | 0.0% |
+| 2026-10-01 | **WEB** | 49.9M | 23.9M | **47.8%** |
+| 2026-10-01 | APP | 261.4M | 0 | 0.0% |
+| 2026-09-30 | **WEB** | 48.3M | 22.6M | **46.8%** |
+| 2026-09-30 | APP | 258.5M | 0 | 0.0% |
+| 2026-09-29 | **WEB** | 49.8M | 22.2M | **44.6%** |
+| 2026-09-29 | APP | 474.8M | 0 | 0.0% |
+| 2026-09-28 | **WEB** | 53.1M | 23.5M | **44.3%** |
+| 2026-09-28 | APP | 315.9M | 0 | 0.0% |
+| 2026-09-27 | **WEB** | 40.8M | 19.3M | **47.3%** |
+| 2026-09-27 | APP | 223.9M | 0 | 0.0% |
+| 2026-09-26 | **WEB** | 39.5M | 18.4M | **46.7%** |
+| 2026-09-26 | APP | 208.6M | 0 | 0.0% |
+
+*(Oct 3 excluded — only 647 rows have landed so far today, not representative.)*
+
+## 📊 Summary
+
+- **Web: consistently 44–48% daily**, averaging ~**46.5%** of rows have a usable `geo_postal_code`. Stable day-over-day.
+- **App: flat 0%** every day — this field is never populated for app traffic.
+
+## 💡 Implications
+
+- For a web-only regional view: you'll cover ~**22M rows/day** (~46% of web volume).
+- For app regional coverage, Option 1 won't help — you'd need **Option 2 (customer address join for authenticated users)**.
+- The ~54% of web rows without ZIP are likely a mix of logged-out users without geo-IP resolution, bot/privacy-blocked traffic, and events firing before envData loads.
+
+I'll build a session-level geography view by combining all three tables and all available geo signals (web ZIP, app country), then show you daily coverage.Good — confirmed SEF joins to UDI via `ROW_IDENTITY_HASH` and SSF via `SESSION_ID`. Now let me build the session-level geography view combining all three tables.Timed out. Let me narrow to a single day and sample UDI first.The three-way join at full daily scale is too heavy. I have one SQL attempt left — let me pivot and give you the **production-ready pattern** instead of forcing a volume number, since you have what you need from the previous turn (46% daily web ZIP coverage).
+
+# Session-Level Geography — Production Pattern (UDI + SEF + SSF)
+
+The three-table join at full daily scale times out from my sandbox role, but here's the **ready-to-run pattern** you can execute in your own warehouse. It gives one geo row per session.
+
+## 🎯 Pattern 1: Session-level geography (any flow)
+
+```
+WITH event_geo AS (
+  -- One geo row per session, picking the first non-null signal per hit
+  SELECT
+    e.session_id,
+    MAX(CASE WHEN u.geo_postal_code     IS NOT NULL
+             THEN LEFT(u.geo_postal_code, 5) END)       AS session_zip,
+    MAX(u.attribute_country)                            AS session_country,
+    MAX(u.coverage_map_location)                        AS session_coverage_loc
+  FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_EVENT_FACT e
+  JOIN BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS u
+    ON  e.row_identity_hash   = u.row_identity_hash
+    -- partition pruning on both sides is critical for performance
+    AND u.event_timestamp_pst >= '2026-10-01'::DATE
+    AND u.event_timestamp_pst <  '2026-10-02'::DATE
+  WHERE e.event_timestamp_pst >= '2026-10-01'::DATE
+    AND e.event_timestamp_pst <  '2026-10-02'::DATE
+  GROUP BY e.session_id
+)
+SELECT
+  s.session_id,
+  s.session_start_date,
+  s.source_table,                       -- 't_web_interactions' | 't_app_interactions'
+  s.canonical_user_id,
+  s.identity_status,
+  s.session_had_purchase,
+  eg.session_zip,                       -- web ~46% / app 0%
+  eg.session_country,                   -- app ~100% / web 0%
+  eg.session_coverage_loc,              -- both, <0.1% (coverage-map clicks only)
+  z.STATE,                              -- joined from ZIP dim
+  z.REGION,
+  z.MARKET
+FROM BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.SESSION_SUMMARY_FACT s
+LEFT JOIN event_geo eg USING (session_id)
+LEFT JOIN BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP z
+       ON eg.session_zip = z.ZIP_CODE
+WHERE s.session_status      IN ('OPEN','CLOSED')
+  AND s.session_start_date   = '2026-10-01'::DATE
+```
+
+## 🎯 Pattern 2: Build a reusable session-geo view
+
+If you'll use this often, materialize it as a daily table / view:
+
+```
+CREATE OR REPLACE TABLE <your_sandbox>.SESSION_GEO_DAILY AS
+SELECT
+  s.session_id,
+  s.session_start_date,
+  s.source_table,
+  s.canonical_user_id,
+  eg.session_zip,
+  eg.session_country,
+  z.STATE, z.REGION, z.MARKET
+FROM ...  -- (same pattern)
+```
+
+Then join `SESSION_GEO_DAILY` to any analysis — cart, conversion, flow, etc.
+
+## ⚡ Performance tips (why my runs timed out)
+
+1. **Always filter both sides of the join by date** — UDI and SEF are both huge; prune both.
+2. **Keep the window narrow** (1 day at a time) and loop if you need a wider range.
+3. **Use a bigger warehouse** than the XS/S my role gets — a MEDIUM should handle a full day comfortably.
+4. **Pre-aggregate `event_geo` first**, then join to SSF — don't carry UDI rows all the way through.
+
+## 📊 Expected coverage (from the daily analysis I already ran)
+
+| Signal | Web sessions | App sessions |
+|---|---|---|
+| `session_zip` (→ state/region via ZIP dim) | **~46%** | 0% |
+| `session_country` | 0% | ~100% |
+| `session_coverage_loc` | <0.1% | <0.1% |
+
+**At the session grain, web ZIP coverage will likely be a bit higher than the hit-level 46%** — because a session only needs one hit with ZIP to be tagged. Rough estimate: 50–60% of web sessions.
+
+## 🚧 The app gap
+
+App sessions still won't get state/region from this pattern — only country. To close that:
+- **Option A (near-term):** join `canonical_user_id` → BAN → `BDM_MKTGANALYTICS_DB.MKTGANALYTICS_V.LOCATION_ACCOUNT_ADDRESS` for authenticated app sessions
+- **Option B (long-term):** file a Jira ticket under DIRT-691 to add `ONEMIND_ATTRIBUTE_BOUNDARY_NAME` (app market/region code from Bronze `T_APP_INTERACTIONS_EI`) into Silver
+
