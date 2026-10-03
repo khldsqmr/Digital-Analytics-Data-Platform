@@ -195,3 +195,7 @@ END;
 -- GROUP BY row_identity_hash,event_date,source_table
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC LIMIT 100;
+
+
+
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `attribute_page_app_type` cannot be resolved. Did you mean one of the following? [`attribute_event_type`, `attribute_app_name`, `attribute_flow_type`, `attribute_module_type`, `attribute_main_date`]. SQLSTATE: 42703; line 45, pos 12
