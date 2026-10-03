@@ -1538,3 +1538,85 @@ The App Web View bucket is the one real gap — there's no universal column that
 - They are *semantically related* to form factor (webview, mobile, desktop, tablet) but are **sparsely populated (~1-2%)** and should not be used as primary device/platform signals.
 - The authoritative device fields are `device_type` and `device_operating_system` at ~99.95% fill — use those.
 - `attribute_page_app_type` is still worth carrying for the specific App Web View distinction, even at 2% fill, since no other column captures that split.
+
+
+
+
+
+
+
+
+
+
+🔵 Source & Channel
+Column	Definition	Example Values
+SOURCE_TABLE	Which Bronze pipeline produced the row	t_app_interactions, t_web_interactions
+PAGE_APP_TYPE	Logical property/surface the hit came from	TLife App, Flagship App, Metro App, Web
+SITE_NAME	Branded site identifier	TLife App, TMO, MbyT, T-Mo Prepaid, TFB, Metro App, Expert Assist, TMO Concierge, TRetail App
+CHANNEL	Site section / top-level nav bucket	Account, Shop, Billing, Support, Benefits, Home, Discover, Tuesdays, T-Mobile Money, T-Satellite, HSI (very high-cardinality — ~100 values incl. Spanish)
+CHANNEL_NAME	Simplified channel label	(numeric channel id lookup)
+ATTRIBUTE_CHANNEL	App-side channel grouping	Shop, Me, Home, Benefits, Connect, HSI, Network Pass, Onboarding, Tuesdays, Experience
+👤 User / Identity
+Column	Definition	Example Values
+USER_AUTH_STATE	Login status at hit time	Authenticated, Network Authenticated, loggedOut, ambiguous
+CUSTOMER_TYPE	Prospect vs. existing customer	Customer, Prospect, Care, NA
+USER_TYPE	Same concept, raw casing	customer, prospect, care, Customer, Prospect, NA
+USER_ACCOUNT_TYPE	Account classification code	Individual, Individual/Regular, Individual/SoleProprietor, Prepaid, B, I, IF, IM, IQ, M, MBP, S, SY, Special
+USER_ACCOUNT_STATUS	State of the account	Active, Suspended, Canceled, Open, New, Existing
+USER_ACCOUNT_CATEGORY / SUBTYPE	Finer account grouping	(low fill, varies)
+USER_ROLE	Role on account	PAH, NPAH, TEM, GROUPUSER, ENDUSER, BILLMAN, ORDMAN, NETMAN, ACMAN, numeric codes
+USER_CREDIT_CLASS / CREDIT_RESULT	Credit tier bucket	Prime, Near-Prime, Sub-Prime (bundled in CREDIT_RESULT as `code\	segment\	tier`)
+USER_ENGAGEMENT_TYPE	Engagement classification	(varies)
+CUSTOMER_INDICATOR	High-level customer flag	(binary-style)
+📱 Device / Environment
+Column	Definition	Example Values
+ATTRIBUTE_OS_NAME	Mobile OS	ios, android
+ATTRIBUTE_DEVICE_DEVICE_CATEGORY	Device form factor	Normal Phone, Large Phone, Small Phone, Tablet, iPad, iphone
+ATTRIBUTE_DEVICE_DEVICE_BRAND / MANUFACTURER	Hardware brand	Apple, Samsung, Google, etc.
+CARRIER_NAME / ATTRIBUTE_NETWORK_DEVICE_CARRIER	Mobile carrier	T-Mobile, Verizon, AT&T, etc.
+ATTRIBUTE_NETWORK_CONNECTION_TYPE	Connection used	wifi, cellular, 5G, 4G
+PAGE_LANGUAGE	Page language code	EN, ES, FR, DE, ZH, JA, KO, AR, HI (~90 locales)
+BROWSER_LANGUAGE	Browser's language header	similar locale codes
+APP_LAUNCH_TYPE / APP_LAUNCH_STATUS	How the app was opened	cold, warm, deeplink, push
+🛒 Shopping / Flow / Order
+Column	Definition	Example Values
+FLOW_NAME	Shopping / self-service flow bucket	AAL Intent, UPGRADE Intent, ACTIVATION Intent, DEFERRED Intent, ACCESSORIES Intent, `AAL Intent\	UPGRADE Intent (mixed cart), PROSPECT, Port-In, Satellite Sign Up, AuthPay, GuestPay, OTP, benefits, checkout, my-wallet`
+ATTRIBUTE_FLOW_NAME / FLOW_TYPE	App-side flow label	(mirrors FLOW_NAME)
+PRODUCT_ORDER_TYPE	Product categories in the cart	CELLPHONES, ACCESSORIES, TABLETS, SMARTWATCHES, SIMCARDS, HOTSPOTS, IOT, ISP, HSI (often pipe-concatenated for mixed carts)
+ORDER_STATUS	Fulfillment + lifecycle state	`Fulfillment Type:Ship to me\	Status:Delivered, …\	Status:Order Placed, BOPIS_Completed_Activated, SDD_PickUpComplete_OutForDelivery, SHP_Running_Shipped, …\	Status:Canceled, …\	Status:Returned`
+SHIPPING_METHOD	Delivery option	Ship To Me, Pick up in store, Same-day, Two Day, Next Day, Ground, BOPIS, SDD, Digital, plus store-code variants
+PAYMENT_METHOD_TYPE	Tender used	Card : VISA, Card : MASTERCARD, Card : AMEX, Card : DISCOVER, ApplePay : VISA, Bank, ECheck, CreditCard, PayInStore, Unsecured PA, T-Mobile Visa
+TRADE_IN_STATUS	Trade-in lifecycle	ACCEPTED_COMPLETED_BILL_CREDIT_POSTED, ACCEPTED_DEFERRED_PROCESSING_CUSTOMER_RESPONSE_PENDING, CANCELLED_COMPLETED_CUSTOMER_CANCELLED, `Fulfillment Type:Ship to Me\	Status:Complete`
+EIP_STATUS	Equipment Installment Plan eligibility	`Status:Eligible\	Type:FlexEIP, Status:Eligible\	Type:StandardEIP, Status:Ineligible\	Type:FlexEIP, Status:OptIn\	Type:FlexEIP`
+CART_DEVICE_TYPE	Device category in cart	phone, tablet, watch
+SERVICE_PLAN_TIER / CURRENT_PLAN / NEW_PLAN	Plan identifiers	Magenta, Go5G, Essentials, etc.
+📣 Event Classification
+Column	Definition	Example Values
+ATTRIBUTE_EVENT_CATEGORY	App Analytics category bucket	Shop, Billing, Account, Chat, Authentication, HSI, JourneyBot, Benefits, Scam Shield, Live Agent, Change Plan, Search (~150+ values)
+ATTRIBUTE_EVENT_TYPE	App Analytics type	Event Attribute, Debug Attribute
+ATTRIBUTE_EVENT_ACTION	Specific event action	(very high-cardinality — hundreds of values)
+ATTRIBUTE_SCREEN_NAME	App screen the event fired on	high-cardinality screen labels
+WEBINTERACTION_TYPE	Adobe web interaction class	onclick, nav, formsubmit
+LINK_TYPE	Link type when clicked	internal, exit, download
+🎯 Offers / Marketing
+Column	Definition	Example Values
+OFFER_CATEGORY / OFFER_SUB_CATEGORY	Offer taxonomy	(domain-specific)
+OFFER_PLACEMENT	Where the offer rendered	banner, card, modal
+OFFER_PARTNER	Partner brand for the offer	varies
+MOE_EXPERIENCE_TYPE / OFFERING_TYPE	MOE classification	targeted, control, personalized
+⚠️ Alerts / Errors
+Column	Definition	Example Values
+ALERT_CATEGORY	Alert bucket	network, account, billing
+ATTRIBUTE_ALERTS_EVENT_TYPE	Alert event type	shown, dismissed, clicked
+ATTRIBUTE_ALERTS_SUB_CATEGORY	Alert sub-type	varies
+ATTRIBUTE_ALERTS_STATUS	Status at alert time	active, resolved
+🧭 Navigation / Page
+Column	Definition	Example Values
+PAGE_FLOW_TYPE	Flow context of the page	activation, upgrade, aal
+PAGE_LAYOUT_STATE	Responsive layout state	desktop, mobile, tablet
+SITE_SUB_SECTION	Sub-section under CHANNEL	varies
+PREVIOUS_PAGE_NAME	Prior page	varies
+NAVIGATION_INTNAV / MENU	Internal nav path	breadcrumb-style strings
+A few things worth flagging:
+- Several columns have both English and Spanish values (CHANNEL, SHIPPING_METHOD, PAYMENT_METHOD_TYPE, ORDER_STATUS) — e.g., Mi Cuenta ↔ My Account, Recoger en la tienda ↔ Pick up in store. Normalize before grouping.
+- ORDER_STATUS and SHIPPING_METHOD are compound strings (`Fulfillment Type:
