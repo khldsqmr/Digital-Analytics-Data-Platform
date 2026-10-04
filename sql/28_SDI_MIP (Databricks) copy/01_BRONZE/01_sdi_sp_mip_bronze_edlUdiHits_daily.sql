@@ -192,3 +192,95 @@ END;
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC
 -- LIMIT 100;
+
+
+
+My apologies — I misreported `visitor_id` as valid. Let me run a strict audit against the live schema for every identity-ish column and confirm what's actually there.# Confirmed — `visitor_id` doesn't exist either
+
+I was wrong again — apologies for the compounding errors. Here is what the live Databricks Silver schema **actually** contains for visitor/identity columns:
+
+| Column | Status | Notes |
+|---|---|---|
+| `customer_id` | ✅ exists | Resolved customer ID |
+| `profile_uid` | ✅ exists | Profile ID |
+| `encrypted_ban` | ✅ exists | Encrypted BAN |
+| `encrypted_msisdn` | ✅ exists | Encrypted MSISDN |
+| `ecid` | ✅ exists | Adobe Experience Cloud ID (web visitor) |
+| `attribute_device_id` | ✅ exists | App device ID |
+| `hit_id` | ✅ exists | Hit-level ID |
+| `visitor_id` | ❌ **does not exist** | Not in current schema |
+| `attribute_fpid` | ❌ does not exist | Already removed |
+
+The schema's suggestion list after your error confirms it: `site_id`, `store_id`, `hit_id`, `cart_id`, `customer_id` — no `visitor_id` anywhere.
+
+The Silver layer currently exposes **only `ecid`** as the web visitor identifier. There is no separate `visitor_id` fallback column.
+
+## 🔧 Required Edits — 3 places
+
+### Edit 1 — Header `IDENTITY CONTRACT` block
+
+**Replace:**
+```
+-- IDENTITY CONTRACT:
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   ecid, visitor_id, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   Silver UDI does not expose a dedicated FPID field. ecid is retained as the
+--   closest available Web visitor signal for diagnostics/future validation,
+--   but resolved identity downstream excludes ecid per the manager-approved
+--   business definition.
+```
+
+**With:**
+```
+-- IDENTITY CONTRACT:
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   ecid, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   Silver UDI exposes neither a dedicated FPID nor a visitor_id column.
+--   ecid is retained as the only available Web visitor signal for
+--   diagnostics/future validation, but resolved identity downstream excludes
+--   ecid per the manager-approved business definition.
+```
+
+### Edit 2 — DDL `CREATE TABLE ... WHERE 1=0` SELECT
+
+**Replace:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,visitor_id,attribute_device_id,
+```
+
+**With:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,attribute_device_id,
+```
+
+### Edit 3 — `INSERT ... REPLACE WHERE` SELECT
+
+**Replace:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,visitor_id,attribute_device_id,
+```
+
+**With:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,attribute_device_id,
+```
+
+## 📋 Final identity column set (6 columns + hit_id)
+
+| Column | Scope | Purpose |
+|---|---|---|
+| `customer_id` | Both | Resolved customer identifier |
+| `profile_uid` | App-dominant | Profile-level ID |
+| `encrypted_ban` | Both | Encrypted billing account number |
+| `encrypted_msisdn` | Both | Encrypted mobile number |
+| `ecid` | Web | Adobe Experience Cloud ID — only web visitor signal available |
+| `attribute_device_id` | App | App installation device ID |
+| `hit_id` | Both | Hit-level source identifier (listed earlier in SELECT) |
+
+## ✅ No other changes needed
+
+Diagnostic queries A–F don't reference `visitor_id`, so they're unaffected. After these 3 edits the procedure should compile cleanly.
