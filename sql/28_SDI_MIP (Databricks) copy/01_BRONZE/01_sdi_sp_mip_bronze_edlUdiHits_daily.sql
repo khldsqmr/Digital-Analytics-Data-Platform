@@ -190,3 +190,313 @@ END;
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC
 -- LIMIT 100;
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'sessionized_app_sessions'. SQLSTATE: 42601 line 7, pos 5
+
+== SQL ==
+-- ============================================================
+-- TEST Q:
+-- Do unmatched APP events belong to app_session_ids that
+-- otherwise contain sessionized hits?
+-- ============================================================
+select * from prdrzranalytics.lab42.sdi_vw_mip_control_validationRules_static
+WITH sessionized_app_sessions AS (
+-----^^^
+    SELECT DISTINCT
+        udi.app_session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+
+    JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+        ON  sef.row_identity_hash = udi.row_identity_hash
+        AND sef.event_date        = udi.event_date
+        AND sef.source_table      = udi.source_table
+
+    WHERE sef.event_date = DATE '2026-09-27'
+      AND sef.source_table = 't_app_interactions'
+      AND udi.app_session_id IS NOT NULL
+),
+
+sef_keys AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched_app AS (
+    SELECT
+        udi.app_session_id,
+        udi.page_app_type,
+        udi.site_name,
+        udi.attribute_event_type,
+        udi.event_page_view,
+        udi.event_purchase
+
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+
+    LEFT ANTI JOIN sef_keys sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+
+    WHERE udi.event_date = DATE '2026-09-27'
+      AND udi.source_table = 't_app_interactions'
+)
+
+SELECT
+    page_app_type,
+    site_name,
+    attribute_event_type,
+
+    CASE
+        WHEN sas.app_session_id IS NOT NULL
+            THEN 'App session has other sessionized hits'
+        ELSE 'App session absent from sessionized hits'
+    END AS app_session_status,
+
+    COUNT(*) AS unmatched_hits,
+
+    COUNT(DISTINCT ua.app_session_id)
+        AS distinct_app_sessions,
+
+    SUM(COALESCE(event_page_view, 0))
+        AS pageviews,
+
+    SUM(COALESCE(event_purchase, 0))
+        AS purchases
+
+FROM unmatched_app ua
+
+LEFT JOIN sessionized_app_sessions sas
+    ON ua.app_session_id = sas.app_session_id
+
+GROUP BY
+    page_app_type,
+    site_name,
+    attribute_event_type,
+    CASE
+        WHEN sas.app_session_id IS NOT NULL
+            THEN 'App session has other sessionized hits'
+        ELSE 'App session absent from sessionized hits'
+    END
+
+ORDER BY unmatched_hits DESC
+
+# Corrected Query
+
+Here's your query with the two fixes applied — stray `SELECT` removed and `app_session_id` → `attribute_session_id` throughout:
+
+```sql
+-- ============================================================
+-- TEST Q:
+-- Do unmatched APP events belong to attribute_session_ids that
+-- otherwise contain sessionized hits?
+-- ============================================================
+WITH sessionized_app_sessions AS (
+    SELECT DISTINCT
+        udi.attribute_session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+    JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+        ON  sef.row_identity_hash = udi.row_identity_hash
+        AND sef.event_date        = udi.event_date
+        AND sef.source_table      = udi.source_table
+    WHERE sef.event_date       = DATE '2026-09-27'
+      AND sef.source_table     = 't_app_interactions'
+      AND udi.attribute_session_id IS NOT NULL
+),
+
+sef_keys AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date = DATE '2026-09-27'
+),
+
+unmatched_app AS (
+    SELECT
+        udi.attribute_session_id,
+        udi.page_app_type,
+        udi.site_name,
+        udi.attribute_event_type,
+        udi.event_page_view,
+        udi.event_purchase
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions udi
+    LEFT ANTI JOIN sef_keys sef
+        ON  udi.row_identity_hash = sef.row_identity_hash
+        AND udi.event_date        = sef.event_date
+        AND udi.source_table      = sef.source_table
+    WHERE udi.event_date   = DATE '2026-09-27'
+      AND udi.source_table = 't_app_interactions'
+)
+
+SELECT
+    ua.page_app_type,
+    ua.site_name,
+    ua.attribute_event_type,
+    CASE
+        WHEN sas.attribute_session_id IS NOT NULL
+            THEN 'App session has other sessionized hits'
+        ELSE 'App session absent from sessionized hits'
+    END AS app_session_status,
+    COUNT(*)                                 AS unmatched_hits,
+    COUNT(DISTINCT ua.attribute_session_id)  AS distinct_app_sessions,
+    SUM(COALESCE(ua.event_page_view, 0))     AS pageviews,
+    SUM(COALESCE(ua.event_purchase, 0))      AS purchases
+FROM unmatched_app ua
+LEFT JOIN sessionized_app_sessions sas
+    ON ua.attribute_session_id = sas.attribute_session_id
+GROUP BY
+    ua.page_app_type,
+    ua.site_name,
+    ua.attribute_event_type,
+    CASE
+        WHEN sas.attribute_session_id IS NOT NULL
+            THEN 'App session has other sessionized hits'
+        ELSE 'App session absent from sessionized hits'
+    END
+ORDER BY unmatched_hits DESC;
+```
+
+## 📝 What changed
+
+| # | Fix |
+|---|---|
+| 1 | Removed stray line `select * from prdrzranalytics.lab42.sdi_vw_mip_control_validationRules_static` so `WITH` starts the statement |
+| 2 | Renamed `app_session_id` → `attribute_session_id` (6 occurrences) — this is the actual column in UDI |
+| 3 | Added `ua.` aliases in the final `SELECT` and `GROUP BY` for clarity (optional cosmetic fix) |
+
+All other columns in your query (`page_app_type`, `site_name`, `attribute_event_type`, `event_page_view`, `event_purchase`, `row_identity_hash`, `event_date`, `source_table`) are valid in both UDI and SEF.
+
+Let me validate every column in the SELECT list against the live Silver schema in one pass.# Full Column Validation — All 73 Columns Checked
+
+Ran the exact SELECT list against live Silver. **One column fails: `attribute_fpid` does not exist.** Everything else is valid.
+
+## ❌ Column that will break
+
+| In your SELECT | Issue | Fix |
+|---|---|---|
+| `attribute_fpid` | Column does not exist in `unified_digital_interactions` | **Remove it, or replace with another identifier** |
+
+I apologize — I was wrong twice about this one. The schema has **no FPID-named column at all** in the current Silver UDI build. The web first-party identity signals that ARE present are:
+
+| Column | What it is |
+|---|---|
+| `ecid` | Adobe Experience Cloud ID (web cross-domain visitor) |
+| `visitor_id` | Adobe visitor ID (fallback) |
+
+For first-party browser cookie semantics, `ecid` is the closest equivalent in this schema. If your pipeline consumers specifically need a browser-level FPID distinct from ECID, that signal is either:
+- Still only in Bronze under `DATA_PAGE_PAGEINFO_CORE_FPID` or similar (not yet mapped to Silver), or
+- Rolled up into `ecid`/`visitor_id` during Silver ingestion
+
+**Recommended fix** — just drop `attribute_fpid` from both SELECT lists:
+
+```
+-- Before:
+customer_id,profile_uid,encrypted_ban,encrypted_msisdn,attribute_fpid,ecid,visitor_id,attribute_device_id,
+
+-- After:
+customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,visitor_id,attribute_device_id,
+```
+
+And update your identity contract comment:
+
+```
+-- IDENTITY CONTRACT:
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   ecid, visitor_id, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   Note: Silver does not expose a dedicated attribute_fpid column; ecid is the
+--   closest web visitor identifier available in UDI today.
+```
+
+## ✅ All other 72 columns confirmed valid
+
+Every other column in your SELECT exists verbatim in Silver, including: `row_identity_hash`, `hit_id`, `event_date`, `source_table`, both timestamps, all identity fields (minus `attribute_fpid`), `page_app_type`, `page_layout_state`, `attribute_os_name`, both geo fields, all channel/page/nav fields, all user/account fields, all commerce fields (order_id through new_plan), all event classification fields, and all 4 event flags (`event_page_view`, `event_purchase`, `event_cart_add`, `event_cart_checkout`).
+
+## 📝 Other things worth noting (non-breaking)
+
+1. **Diagnostic Query E references `page_name`** — ✅ valid, confirmed in schema.
+2. **`event_date` DQ note in your header** — your contract already addresses this correctly: keeping source `event_date` unchanged to preserve the UDI↔SEF composite join key is the right call.
+3. **Databricks syntax** (`CLUSTER BY`, `INSERT ... REPLACE WHERE`, `COUNT_IF`, `from_utc_timestamp`) — all valid in Databricks SQL. ✅
+
+Once you drop `attribute_fpid` from both SELECTs and the DDL, the procedure should compile and run cleanly.
+
+# Replacements Summary — Drop `attribute_fpid`
+
+Here are the exact edits to make. Only **3 places** change — both SELECTs and the header contract comment.
+
+## 🔧 Edit 1 — Header `IDENTITY CONTRACT` block (lines ~11–17)
+
+**Replace:**
+```
+-- IDENTITY CONTRACT:
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   attribute_fpid, ecid, visitor_id, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   resolved identity downstream excludes ecid per the manager-approved business
+--   definition; ecid is retained only for diagnostics/future validation.
+```
+
+**With:**
+```
+-- IDENTITY CONTRACT:
+--   Live UDI identity fields retained:
+--   customer_id, profile_uid, encrypted_ban, encrypted_msisdn,
+--   ecid, visitor_id, attribute_device_id.
+--   hit_id is retained as the hit-level source identifier.
+--   Silver does not expose a dedicated attribute_fpid column; ecid is the
+--   closest web visitor identifier available in UDI today and is retained for
+--   diagnostics/future validation. Resolved identity downstream excludes ecid
+--   per the manager-approved business definition.
+```
+
+## 🔧 Edit 2 — DDL `CREATE TABLE ... WHERE 1=0` SELECT (identity line)
+
+**Replace:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,attribute_fpid,ecid,visitor_id,attribute_device_id,
+```
+
+**With:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,visitor_id,attribute_device_id,
+```
+
+## 🔧 Edit 3 — `INSERT ... REPLACE WHERE` SELECT (identity line)
+
+**Replace:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,attribute_fpid,ecid,visitor_id,attribute_device_id,
+```
+
+**With:**
+```
+            customer_id,profile_uid,encrypted_ban,encrypted_msisdn,ecid,visitor_id,attribute_device_id,
+```
+
+---
+
+## 📋 Final identity column set in Bronze (7 columns)
+
+| Column | Scope | Purpose |
+|---|---|---|
+| `customer_id` | Both | Resolved customer identifier |
+| `profile_uid` | App-dominant | Profile-level ID |
+| `encrypted_ban` | Both | Encrypted billing account number |
+| `encrypted_msisdn` | Both | Encrypted mobile number |
+| `ecid` | Web | Adobe Experience Cloud ID — closest FPID proxy |
+| `visitor_id` | Web | Adobe visitor ID fallback |
+| `attribute_device_id` | App | App installation device ID |
+
+Plus `hit_id` kept as the hit-level source identifier (listed earlier in the SELECT, unchanged).
+
+## ✅ No other changes needed
+
+The diagnostic queries (A–F in the comment block) don't reference `attribute_fpid`, so they're all unaffected. Everything else in the procedure stays as-is.
