@@ -31,9 +31,23 @@
 --   - Each pair is bounded to Top100 row values + Other and Top100 column values + Other.
 --   - No cross-pair numeric Other is created.
 --   - Final App table exposes no numerator/denominator ingredients.
---   - Peer-set fields remain NULL until analytical Gold supplies peer-set ingredients.
+--
+-- PEER-SET CONTRACT:
+--   - Analytical Crosstab Gold now supplies a FOUR-WEEK peer counterfactual for
+--     each real raw intersection.
+--   - peerSetValue is that expected current cell value if the cell had moved at
+--     the peer-set four-week rate.
+--   - peerSetAbsoluteDiffValue = actual current cell - counterfactual cell.
+--   - count peer gap = 100 * (current - counterfactual) / cell four-week baseline.
+--   - ratio peer gap = 100 * (current ratio - counterfactual ratio).
+--   - Peer set always uses the four-week basis, independent of comparisonType.
+--   - When Top100 bucketing creates a synthetic row/column '(Other)' intersection,
+--     peer fields are intentionally NULL because peer counterfactuals are
+--     overlapping/non-additive and cannot be summed.
+--
+-- SCHEMA / API COMPATIBILITY:
+--   This is a logic-only correction. Existing App/API columns remain unchanged.
 -- ============================================================================
-
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appCrosstabsRankedPairs_long(
     IN p_asOfDate DATE DEFAULT NULL,
     IN p_weeksToRebuild INT DEFAULT 1,
@@ -53,15 +67,12 @@ BEGIN
     DECLARE v_weekFrom DATE;
     DECLARE v_weekEndTo DATE;
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
-
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_weeksToRebuild must be >= 1.';
     END IF;
-
     SET v_weekTo=date_add(v_asOfDate,1-dayofweek(v_asOfDate));
     SET v_weekFrom=date_add(v_weekTo,-7*(p_weeksToRebuild-1));
     SET v_weekEndTo=date_add(v_weekTo,6);
-
     IF NOT EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long g
@@ -72,7 +83,6 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Crosstab Gold has no eligible Ranked Pairs rows for the requested week range.';
     END IF;
-
     IF NOT EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
@@ -82,15 +92,12 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Overview Gold has no eligible Ranked Pairs metrics for the requested week range.';
     END IF;
-
     IF NOT EXISTS(SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static WHERE isActive LIMIT 1) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Crosstab Catalog has no active pairs.';
     END IF;
-
     IF NOT EXISTS(SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static WHERE isActive AND showOnBreakouts LIMIT 1) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Metric Catalog has no active Ranked Pairs metrics.';
     END IF;
-
     IF NOT EXISTS(
         SELECT 1 FROM prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_static
         WHERE weekStartDate BETWEEN v_weekFrom AND v_weekTo
@@ -98,7 +105,6 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Fiscal Calendar has no rows for the requested week range.';
     END IF;
-
     IF EXISTS(
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static
@@ -108,7 +114,6 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ranked Pairs metric metadata contains unsupported values.';
     END IF;
-
     IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
@@ -192,10 +197,8 @@ BEGIN
         )
         USING DELTA
         COMMENT 'MIP Gold App: Every pair ranked. Wide visible comparison columns with selected-comparator global ranking and impact.';
-
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long
         REPLACE WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
-
         WITH base AS(
             SELECT
                 g.targetWeekStartDate,g.targetWeekEndDate,c.fiscalYear,g.fiscalQuarterLabel,g.fiscalWeekCode,g.weekLabel,c.weekEndingLabel,
@@ -255,7 +258,9 @@ BEGIN
             SELECT
                 b.*,
                 CASE WHEN r.rowRank<=100 THEN b.rowBreakoutValue ELSE '(Other)' END AS displayRowBreakoutValue,
-                CASE WHEN k.columnRank<=100 THEN b.columnBreakoutValue ELSE '(Other)' END AS displayColumnBreakoutValue
+                CASE WHEN k.columnRank<=100 THEN b.columnBreakoutValue ELSE '(Other)' END AS displayColumnBreakoutValue,
+                r.rowRank>100 AS isSyntheticRowOtherMember,
+                k.columnRank>100 AS isSyntheticColumnOtherMember
             FROM base b
             JOIN rowRanks r
               ON r.targetWeekStartDate=b.targetWeekStartDate AND r.filterLob=b.filterLob AND r.filterPlatform=b.filterPlatform
@@ -282,7 +287,18 @@ BEGIN
                 sum(fourWeekTrendNumerator) AS fourWeekNumerator,sum(fourWeekTrendDenominator) AS fourWeekDenominator,
                 max(fourWeekTrendWeekCount) AS fourWeekWeekCount,
                 sum(sameWeekLyNumerator) AS lastYearNumerator,sum(sameWeekLyDenominator) AS lastYearDenominator,
-                sum(peerSetNumerator) AS peerSetNumerator,sum(peerSetDenominator) AS peerSetDenominator,
+                -- Peer counterfactuals are valid only for an unsynthesized raw
+                -- intersection. Do not add them across row/column Other buckets.
+                CASE
+                    WHEN max(CASE WHEN isSyntheticRowOtherMember OR isSyntheticColumnOtherMember THEN 1 ELSE 0 END)=1
+                        THEN cast(NULL AS DOUBLE)
+                    ELSE max(peerSetNumerator)
+                END AS peerSetNumerator,
+                CASE
+                    WHEN max(CASE WHEN isSyntheticRowOtherMember OR isSyntheticColumnOtherMember THEN 1 ELSE 0 END)=1
+                        THEN cast(NULL AS DOUBLE)
+                    ELSE max(peerSetDenominator)
+                END AS peerSetDenominator,
                 min(CASE WHEN thisWeekDataAvailable THEN 1 ELSE 0 END)=1 AS currentDataAvailable,
                 min(CASE WHEN priorWeekDataAvailable THEN 1 ELSE 0 END)=1 AS priorWeekDataAvailable,
                 min(CASE WHEN sameWeekLyDataAvailable THEN 1 ELSE 0 END)=1 AS lastYearDataAvailable
@@ -320,9 +336,9 @@ BEGIN
                      WHEN changeUnit='pp' THEN 100D*(currentValue-lastYearValue)
                      WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,lastYearValue)-1D) END AS lastYearChangeRaw,
                 currentValue-peerSetValue AS peerSetAbsoluteDiffValue,
-                CASE WHEN NOT peerSetDataAvailable OR currentValue IS NULL THEN NULL
+                CASE WHEN NOT peerSetDataAvailable OR currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
                      WHEN changeUnit='pp' THEN 100D*(currentValue-peerSetValue)
-                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,peerSetValue)-1D) END AS peerSetChangeRaw
+                     WHEN changeUnit='pct' THEN 100D*try_divide(currentValue-peerSetValue,fourWeekValue) END AS peerSetChangeRaw
             FROM cellValues
         ),
         toplineBase AS(
@@ -431,74 +447,67 @@ BEGIN
                 CASE
                     WHEN currentValue IS NULL THEN NULL
                     WHEN displayFormat='percent' THEN concat(format_number(100D*currentValue,1),'%')
-                    WHEN abs(currentValue)>=1000000000D THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(currentValue)>=1000000D THEN concat(regexp_replace(format_number(currentValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(currentValue)>=1000D THEN concat(regexp_replace(format_number(currentValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(currentValue)>=1000000000D THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(currentValue)>=1000000D THEN concat(regexp_replace(format_number(currentValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(currentValue)>=1000D THEN concat(regexp_replace(format_number(currentValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE format_number(currentValue,0)
                 END AS currentValueDisplay,
-
                 CASE
                     WHEN priorWeekAbsoluteDiffValue IS NULL THEN NULL
                     WHEN metricKind='ratio' THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*priorWeekAbsoluteDiffValue,1),'pp')
-                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(priorWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(priorWeekAbsoluteDiffValue,0))
                 END AS priorWeekAbsoluteDiffDisplay,
                 CASE WHEN priorWeekChangeValue IS NULL THEN NULL
                      WHEN changeUnit='pp' THEN concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),'pp')
                      ELSE concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),'%') END AS priorWeekChangeDisplay,
-
                 CASE
                     WHEN fourWeekAbsoluteDiffValue IS NULL THEN NULL
                     WHEN metricKind='ratio' THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*fourWeekAbsoluteDiffValue,1),'pp')
-                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(fourWeekAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(fourWeekAbsoluteDiffValue,0))
                 END AS fourWeekAbsoluteDiffDisplay,
                 CASE WHEN fourWeekChangeValue IS NULL THEN NULL
                      WHEN changeUnit='pp' THEN concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),'pp')
                      ELSE concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),'%') END AS fourWeekChangeDisplay,
-
                 CASE
                     WHEN lastYearAbsoluteDiffValue IS NULL THEN NULL
                     WHEN metricKind='ratio' THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*lastYearAbsoluteDiffValue,1),'pp')
-                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(lastYearAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(lastYearAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(lastYearAbsoluteDiffValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(lastYearAbsoluteDiffValue,0))
                 END AS lastYearAbsoluteDiffDisplay,
                 CASE WHEN lastYearChangeValue IS NULL THEN NULL
                      WHEN changeUnit='pp' THEN concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),'pp')
                      ELSE concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),'%') END AS lastYearChangeDisplay,
-
                 CASE
                     WHEN peerSetValue IS NULL THEN NULL
                     WHEN displayFormat='percent' THEN concat(format_number(100D*peerSetValue,1),'%')
-                    WHEN abs(peerSetValue)>=1000000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(peerSetValue)>=1000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(peerSetValue)>=1000D THEN concat(regexp_replace(format_number(peerSetValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(peerSetValue)>=1000000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(peerSetValue)>=1000000D THEN concat(regexp_replace(format_number(peerSetValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(peerSetValue)>=1000D THEN concat(regexp_replace(format_number(peerSetValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE format_number(peerSetValue,0)
                 END AS peerSetValueDisplay,
                 CASE
                     WHEN peerSetAbsoluteDiffValue IS NULL THEN NULL
                     WHEN metricKind='ratio' THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(100D*peerSetAbsoluteDiffValue,1),'pp')
-                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000000D,1),'\\.0$',''),'B')
-                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000D,1),'\\.0$',''),'M')
-                    WHEN abs(peerSetAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000D,1),'\\.0$',''),'K')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000000D,1),'\\\\.0$',''),'B')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000D,1),'\\\\.0$',''),'M')
+                    WHEN abs(peerSetAbsoluteDiffValue)>=1000D THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,regexp_replace(format_number(peerSetAbsoluteDiffValue/1000D,1),'\\\\.0$',''),'K')
                     ELSE concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN '+' ELSE '' END,format_number(peerSetAbsoluteDiffValue,0))
                 END AS peerSetAbsoluteDiffDisplay,
                 CASE WHEN peerSetChangeValue IS NULL THEN NULL
-                     WHEN changeUnit='pp' THEN concat(CASE WHEN peerSetChangeValue>0D THEN '+' ELSE '' END,format_number(peerSetChangeValue,1),'pp')
-                     ELSE concat(CASE WHEN peerSetChangeValue>0D THEN '+' ELSE '' END,format_number(peerSetChangeValue,1),'%') END AS peerSetChangeDisplay,
-
+                     ELSE concat(CASE WHEN peerSetChangeValue>0D THEN '+' ELSE '' END,format_number(peerSetChangeValue,1),'pp') END AS peerSetChangeDisplay,
                 CASE WHEN impactOnToplineValue IS NULL THEN NULL
                      WHEN impactOnToplineUnit='pp' THEN concat(CASE WHEN impactOnToplineValue>0D THEN '+' ELSE '' END,format_number(impactOnToplineValue,1),'pp')
                      ELSE concat(CASE WHEN impactOnToplineValue>0D THEN '+' ELSE '' END,format_number(impactOnToplineValue,1),'%') END AS impactOnToplineDisplay
             FROM rounded
         )
-
         SELECT
             targetWeekStartDate,targetWeekEndDate,fiscalYear,fiscalQuarterLabel,fiscalWeekCode,weekLabel,weekEndingLabel,
             filterLob,filterPlatform,
@@ -522,7 +531,6 @@ BEGIN
             impactOnToplineValue,impactOnToplineDisplay,impactOnToplineUnit,
             v_processedAt AS appProcessedAt
         FROM formatted;
-
         SELECT
             'SUCCESS' AS status,
             v_weekFrom AS rebuiltWeekStartFrom,
@@ -534,24 +542,20 @@ BEGIN
             v_processedAt AS appProcessedAt;
     END IF;
 END;
-
--- ONE-TIME MIGRATION (run separately):
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long;
-
--- Rebuild analytical Crosstab Gold after expanding the pair catalog:
+-- No schema migration is required for this peer-set correction.
+-- Rebuild analytical Crosstab Gold first, then rebuild this App Gold table.
+-- Rebuild analytical Crosstab Gold:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_crosstabMetricIngredientsByWeek_long(
 --     p_asOfDate=>DATE '2026-09-28',
 --     p_weeksToRebuild=>12,
 --     p_validateOnly=>FALSE
 -- );
-
 -- Rebuild App Gold:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appCrosstabsRankedPairs_long(
 --     p_asOfDate=>DATE '2026-09-28',
 --     p_weeksToRebuild=>12,
 --     p_validateOnly=>FALSE
 -- );
-
 -- Screenshot query:
 -- SELECT *
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long
@@ -562,3 +566,10 @@ END;
 --   AND comparisonType='fourWeek'
 --   AND isTop18
 -- ORDER BY globalIntersectionImpactRank;
+
+-- Peer validation:
+-- Synthetic Top100 '(Other)' intersections must have peerSetDataAvailable=FALSE.
+-- SELECT *
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appCrosstabsRankedPairs_long
+-- WHERE (rowBreakoutValue='(Other)' OR columnBreakoutValue='(Other)')
+--   AND peerSetDataAvailable;

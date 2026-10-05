@@ -13,6 +13,7 @@
 --   - forecastRunId is forecasting-model lineage, not MIP orchestration lineage.
 --   - metricName must use the canonical control-catalog key; NBV = 'nbv'.
 --   - Total NBV is a display label from the metric catalog, not a metricName.
+--   - Peer-set and impact-on-topline logic do not change this forecast contract.
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricForecastByWeek_long (
     weekStartDate      DATE,
