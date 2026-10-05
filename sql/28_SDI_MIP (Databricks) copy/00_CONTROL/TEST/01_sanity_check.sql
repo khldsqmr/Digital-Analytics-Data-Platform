@@ -468,3 +468,137 @@ LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHitSessionLinks_daily s
     AND h.source_table      = s.source_table
 
 WHERE h.event_date = DATE '2026-09-28';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- ============================================================================
+-- FILE  : 99_mip_bronze_silver_rebuild_runbook.sql
+-- PURPOSE:
+--   Safe deployment/rebuild order after intentionally deleting MIP Bronze/Silver
+--   tables. Procedures should be deployed first from files 01-05 in this package.
+--
+-- IMPORTANT:
+--   - DROP statements below are COMMENTED OUT intentionally.
+--   - UDI and SEF are independent; SSF depends on SEF.
+--   - Marketing snapshot is independent but required before Silver 01.
+--   - Silver 01 -> Silver 02 -> Silver 03 -> Silver 04/05.
+--   - Peer-set and impact-on-topline are NOT added to these base tables.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 0. OPTIONAL CLEAN REBUILD - uncomment only when you intentionally want to
+--    destroy the persisted base-layer history.
+-- ----------------------------------------------------------------------------
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily;
+
+-- ----------------------------------------------------------------------------
+-- 1. BRONZE EXAMPLE: 10 event days ending 2026-09-29.
+--    Always run preflight before the write call.
+-- ----------------------------------------------------------------------------
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlUdiHits_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlUdiHits_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlSessionEventFact_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlSessionEventFact_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+-- SSF preflight/load MUST follow the completed SEF load.
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlSessionSummaryFact_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlSessionSummaryFact_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlMarketingCodeDim_snapshot(
+    p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlMarketingCodeDim_snapshot(
+    p_validateOnly=>FALSE);
+
+-- Run 10_mip_bronze_sanity_checks.sql before Silver.
+
+-- ----------------------------------------------------------------------------
+-- 2. SILVER DAILY/SESSION EXAMPLE for the same 10-day rebuild.
+-- ----------------------------------------------------------------------------
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerSession_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerSession_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerSessionPageCategory_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerSessionPageCategory_daily(
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
+
+-- ----------------------------------------------------------------------------
+-- 3. WEEKLY SILVER.
+--    With only Sep20-Sep29 daily data, week Sep20-Sep26 is complete; week
+--    Sep27-Oct03 is partial. Build complete production weeks only.
+-- ----------------------------------------------------------------------------
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>FALSE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>FALSE);
+
+-- Run 20_mip_silver_sanity_checks.sql after the loads.
+
+-- ----------------------------------------------------------------------------
+-- 4. BACKFILL-HORIZON WARNING FOR GOLD / FUTURE PEER SET.
+-- ----------------------------------------------------------------------------
+-- A 10-day rebuild is enough only for a short development test. If Bronze/Silver
+-- are deleted and you intend to rebuild production Gold comparisons from scratch:
+--
+--   * target + prior week requires the prior week history;
+--   * target + four-week trend requires target history plus four prior weeks;
+--   * future peer set also ALWAYS uses that four-week trend, so it needs the same
+--     multi-week base history;
+--   * same-week-last-year requires the corresponding prior-year base history.
+--
+-- Therefore backfill the full daily/session history required by the earliest Gold
+-- target week and all of its comparison periods BEFORE rebuilding analytical Gold.
+-- Do not delete historical Bronze/Silver and then expect a 10-day reload to
+-- reproduce multi-week / LY Gold outputs.
