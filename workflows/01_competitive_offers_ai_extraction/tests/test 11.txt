@@ -2139,6 +2139,48 @@ On EDL, step 2 means going back to the visit-level table and counting distinct v
 
 
 
+I wanted to clarify one point on the peer-set definition for unique visitor metrics.
+For example, say Visitor A comes through both Paid Search and Direct during the same week. When calculating the peer set for Paid Search, should Visitor A:
+1. Be excluded from the peer set because they had any Paid Search activity during the week, even though they also used Direct?
+or
+2. Be assigned to one attributed weekly channel first, and only excluded if Paid Search is that attributed channel?
+For example, if we have:
+Paid Search visitors: A, B, C  
+Direct visitors: A, D, E
+For the Paid Search peer set, should we count D and E only, because A touched Paid Search and therefore must be excluded? Or if A's attributed weekly channel is Direct, should A, D, E all be part of the Paid Search peer set?
+I want to confirm because the first definition requires us to retain all channel memberships per visitor/week, whereas the second lets us use the single attributed weekly channel we already have.
+
+
+SELECT
+    siteName,
+    geoCountry,
+    geoRegion,
+    COUNT(*) AS rows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY
+    siteName,
+    geoCountry,
+    geoRegion
+ORDER BY rows DESC;
+
+SELECT
+    eventDate,
+    sourceTable,
+    COUNT(*) AS rows,
+    COUNT(DISTINCT sessionId) AS sessions,
+    COUNT(DISTINCT visitorId) AS visitors
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY
+    eventDate,
+    sourceTable
+ORDER BY
+    eventDate,
+    sourceTable;
+
+
+
 
 rowIdentityHash	eventDate	sourceTable	eventTimestampUtc	eventTimestampPst	sessionId	hitNumberInSession	canonicalUserId	identityStatus	sessionStatus	sessionStartTsUtc	sessionEndTsUtc	sessionStartTsPst	sessionStartDatePst	weekStartDate	weekEndDate	resolvedIdentityId	visitorId	identitySource	siteName	platform	channelType	pageLayoutState	operatingSystem	device	navigationChannel	appChannel	geoPostalCode	geoCountry	geoRegion	geoContext	pageCategory	pageName	fullPageName	linkName	modalName	flowName	customerType	customerTypeRank	authState	authStateRank	channelName	externalCampaignCode	campaignCode	campaignName	campaignCategory	campaignIsActive	lob	buyFlowStep	buyFlowStepOrder	sessionEntryPageUrlPath	sessionEntryPageUrlFull	utmSource	utmMedium	utmCampaign	hitPageUrlPath	hitPageUrlFull	orderId	productOrderType	isPageView	isOrder	isVrCall	isVrChat	isStoreLocator	isConfigure	isCheckoutStart	isBuyFlow	isAssistedOrder	isTmoNetwork	silverProcessedAt
 AYftttmx6hpvZnoG46tZlGUUPfEDdL3gDfKXKLmp9JE=	2026-09-29	t_app_interactions	2026-09-29T19:20:54.746+00:00	2026-09-29T12:20:54.746+00:00	17a160867a2237e46d829e66339761f1aba1261acfcab40440240c518381927c	38	742fffdba861f35e24d4d0bf5742bfba9b341b04eedc0266025d191cd1333a79	RESOLVED	CLOSED	2026-09-29T19:20:36.496+00:00	2026-09-29T19:21:10.822+00:00	2026-09-29T12:20:36.496+00:00	2026-09-29	2026-09-27	2026-10-03	U-233f3d54-aa05-4c01-b561-abac575a58a9	742fffdba861f35e24d4d0bf5742bfba9b341b04eedc0266025d191cd1333a79	canonicalUserId	TLife App	TLife App	App	Native App	android	Android App	Home	null	null	US	US	source=app|country=US	Home	Home	TLife App | Home : Home : Home	componentView	null	null	Customer	3	Authenticated	3	null	null	null	null	null	null	Other	null	null	null	null	(not set)	(not set)	(not set)	null	null	null	null	0	0	0	0	0	0	0	0	0	0	2026-10-05T01:44:04.468+00:00
