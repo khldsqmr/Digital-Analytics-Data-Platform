@@ -4,12 +4,14 @@
 -- PURPOSE:
 --   Crosstab pair universe used by analytical Gold and Crosstabs App Gold.
 --
--- REGION:
---   region = attributed UDI geo_region (IP-derived state/province).
---   Region pairs are enabled for analytical Crosstabs but are not marked as
---   prebuilt shortcut pairs unless explicitly promoted later.
+-- REGION CONTRACT:
+--   Region pairs keep their existing pairKey/orientation for downstream
+--   compatibility. Values follow the temporary mixed geography contract:
+--     Web = geo_postal_code
+--     App = attribute_country
+--   Region pairs stay active analytical pairs but are not shortcut/prebuilt
+--   pairs unless explicitly promoted later.
 -- ============================================================================
-
 CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static
 COMMENT 'Control view: active Crosstab pair universe. isPrebuiltPair identifies shortcut/prebuilt Crosstab pairs.'
 AS
@@ -57,16 +59,24 @@ FROM VALUES
     ('utmMedium__buyFlowStep','utmMedium','buyFlowStep','UTM medium × Buy flow step',true,false,350,''),
     ('utmCampaign__buyFlowStep','utmCampaign','buyFlowStep','UTM campaign × Buy flow step',true,false,360,''),
 
-    -- Region pairs.
-    ('channel__region','channel','region','Channel × Region',true,false,370,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('authState__region','authState','region','Visitor type × Region',true,false,380,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('entryPage__region','entryPage','region','Entry page × Region',true,false,390,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('pageCategory__region','pageCategory','region','Page category × Region',true,false,400,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('device__region','device','region','Device × Region',true,false,410,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('utmSource__region','utmSource','region','UTM source × Region',true,false,420,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('utmMedium__region','utmMedium','region','UTM medium × Region',true,false,430,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('utmCampaign__region','utmCampaign','region','UTM campaign × Region',true,false,440,'Region = attributed UDI geo_region (IP-derived state/province)'),
-    ('region__buyFlowStep','region','buyFlowStep','Region × Buy flow step',true,false,450,'Region = attributed UDI geo_region (IP-derived state/province)')
+    ('channel__region','channel','region','Channel × Region',true,false,370,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('authState__region','authState','region','Visitor type × Region',true,false,380,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('entryPage__region','entryPage','region','Entry page × Region',true,false,390,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('pageCategory__region','pageCategory','region','Page category × Region',true,false,400,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('device__region','device','region','Device × Region',true,false,410,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('utmSource__region','utmSource','region','UTM source × Region',true,false,420,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('utmMedium__region','utmMedium','region','UTM medium × Region',true,false,430,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('utmCampaign__region','utmCampaign','region','UTM campaign × Region',true,false,440,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country'),
+    ('region__buyFlowStep','region','buyFlowStep','Region × Buy flow step',true,false,450,
+     'Region uses temporary mixed geography: Web=geo_postal_code; App=attribute_country')
 AS t(
     pairKey,
     rowBreakoutType,
@@ -77,3 +87,4 @@ AS t(
     sortOrder,
     notes
 );
+

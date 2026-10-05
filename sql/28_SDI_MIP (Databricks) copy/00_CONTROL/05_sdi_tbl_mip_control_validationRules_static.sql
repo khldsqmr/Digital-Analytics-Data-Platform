@@ -3,15 +3,15 @@
 -- LAYER : CONTROL
 -- PURPOSE:
 --   Validation thresholds, criticality, ownership and next-step guidance.
+--
+-- NOTE:
+--   No new Region-specific validation rule is added here so existing validation
+--   and orchestration contracts remain unchanged. Region correctness is covered
+--   by the existing Gold breakout/crosstab topline and duplicate-key checks.
 -- ============================================================================
-
-USE CATALOG prdrzranalytics;
-USE SCHEMA lab42;
-
-CREATE OR REPLACE VIEW sdi_vw_mip_control_validationRules_static
+CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mip_control_validationRules_static
 COMMENT 'Control view: validation thresholds and next-step guidance; validation results live in Validation layer.'
 AS
-
 SELECT *
 FROM VALUES
     ('detailsVsBronzeRowCountPctDiff', 'MAX_ALLOWED', 0.000001D, 0.001D, true,
@@ -85,7 +85,6 @@ FROM VALUES
      'Inspect duplicate Gold serving keys.',
      'Stop pipeline and resolve the duplicate Gold grain.',
      true, '')
-
 AS t(
     checkName,
     thresholdDirection,

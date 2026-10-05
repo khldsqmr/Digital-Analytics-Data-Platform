@@ -8,7 +8,10 @@ CREATE OR REPLACE VIEW prdrzranalytics.lab42.sdi_vw_mip_control_fiscalCalendar_s
 COMMENT 'Control view: Sunday-Saturday reporting weeks and comparison-week relationships.'
 AS
 WITH weeks AS (
-    SELECT weekStartDate,date_add(weekStartDate,6) AS weekEndDate,date_add(weekStartDate,3) AS wednesday
+    SELECT
+        weekStartDate,
+        date_add(weekStartDate,6) AS weekEndDate,
+        date_add(weekStartDate,3) AS wednesday
     FROM (
         SELECT explode(sequence(DATE '2023-12-31',DATE '2029-12-30',INTERVAL 7 DAYS)) AS weekStartDate
     )
@@ -19,10 +22,12 @@ labelled AS (
         weekEndDate,
         year(wednesday) AS fiscalYear,
         quarter(wednesday) AS fiscalQuarter,
-        CAST(row_number() OVER (
-            PARTITION BY year(wednesday),quarter(wednesday)
-            ORDER BY weekStartDate
-        ) AS INT) AS fiscalWeekOfQuarter
+        CAST(
+            row_number() OVER (
+                PARTITION BY year(wednesday),quarter(wednesday)
+                ORDER BY weekStartDate
+            ) AS INT
+        ) AS fiscalWeekOfQuarter
     FROM weeks
 ),
 finalCalendar AS (
@@ -33,12 +38,18 @@ finalCalendar AS (
         cur.fiscalQuarter,
         concat(CAST(cur.fiscalYear AS STRING),' Q',CAST(cur.fiscalQuarter AS STRING)) AS fiscalQuarterLabel,
         cur.fiscalWeekOfQuarter,
-        concat(CAST(cur.fiscalYear AS STRING),'Q',CAST(cur.fiscalQuarter AS STRING),'W',CAST(cur.fiscalWeekOfQuarter AS STRING)) AS fiscalWeekCode,
+        concat(
+            CAST(cur.fiscalYear AS STRING),'Q',
+            CAST(cur.fiscalQuarter AS STRING),'W',
+            CAST(cur.fiscalWeekOfQuarter AS STRING)
+        ) AS fiscalWeekCode,
         concat(
             'W',CAST(cur.fiscalWeekOfQuarter AS STRING),' · ',
-            CASE WHEN month(cur.weekStartDate)=month(cur.weekEndDate)
-                 THEN date_format(cur.weekStartDate,'d')
-                 ELSE date_format(cur.weekStartDate,'d MMM') END,
+            CASE
+                WHEN month(cur.weekStartDate)=month(cur.weekEndDate)
+                    THEN date_format(cur.weekStartDate,'d')
+                ELSE date_format(cur.weekStartDate,'d MMM')
+            END,
             ' to ',date_format(cur.weekEndDate,'d MMM')
         ) AS weekLabel,
         concat('Week ending ',date_format(cur.weekEndDate,'d MMM yyyy')) AS weekEndingLabel,
@@ -53,7 +64,18 @@ finalCalendar AS (
      AND ly.fiscalWeekOfQuarter=cur.fiscalWeekOfQuarter
 )
 SELECT
-    weekStartDate,weekEndDate,fiscalYear,fiscalQuarter,fiscalQuarterLabel,
-    fiscalWeekOfQuarter,fiscalWeekCode,weekLabel,weekEndingLabel,
-    priorWeekStartDate,fourWeekAvgStartDate,fourWeekAvgEndDate,sameWeekLastYearStartDate
+    weekStartDate,
+    weekEndDate,
+    fiscalYear,
+    fiscalQuarter,
+    fiscalQuarterLabel,
+    fiscalWeekOfQuarter,
+    fiscalWeekCode,
+    weekLabel,
+    weekEndingLabel,
+    priorWeekStartDate,
+    fourWeekAvgStartDate,
+    fourWeekAvgEndDate,
+    sameWeekLastYearStartDate
 FROM finalCalendar;
+

@@ -114,7 +114,21 @@ FROM VALUES
      'ratio','orders','nbvCheckoutStart','percent','pp',
      false,true,false,false,'proposed',true,320,'')
 AS t(
-    metricName,metricLabel,metricDescription,metricKind,numeratorMetric,denominatorMetric,
-    displayFormat,changeUnit,showOnOverview,showOnFunnel,showOnBreakouts,hasForecast,
-    definitionStatus,isActive,sortOrder,notes
+    metricName,
+    metricLabel,
+    metricDescription,
+    metricKind,
+    numeratorMetric,
+    denominatorMetric,
+    displayFormat,
+    changeUnit,
+    showOnOverview,
+    showOnFunnel,
+    showOnBreakouts,
+    hasForecast,
+    definitionStatus,
+    isActive,
+    sortOrder,
+    notes
 );
+
