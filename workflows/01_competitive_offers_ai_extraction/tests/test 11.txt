@@ -2138,6 +2138,8 @@ The rest of the channels were flat. SMS fell off a cliff. Nothing systemic is go
 On EDL, step 2 means going back to the visit-level table and counting distinct visitors across all channels except Paid Search. Then repeating that for every channel, every breakout, every metric, every week. Page views is the only metric where the shortcut is valid.
 
 
+In Databricks, the underlying execution engine is Spark regardless of whether we use SQL or PySpark, so switching between them does not inherently improve performance. We keep them separate mainly for maintainability: SQL is cleaner for data transformations, joins, aggregations, and Delta operations, while Python is better suited for orchestration, parameters, validation, logging, and workflow control.
+
 
 I wanted to clarify one point on the peer-set definition for unique visitor metrics.
 For example, say Visitor A comes through both Paid Search and Direct during the same week. When calculating the peer set for Paid Search, should Visitor A:
