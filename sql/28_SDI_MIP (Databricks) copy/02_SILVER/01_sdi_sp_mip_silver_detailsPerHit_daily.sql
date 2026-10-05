@@ -4,9 +4,11 @@
 -- PURPOSE: Canonical MIP hit enrichment from Bronze UDI, SEF, SSF and Marketing Code.
 -- GRAIN: One row per valid sessionized UDI hit for OPEN/CLOSED sessions.
 -- NOTE: NBV is resolved downstream at session grain using SUM(isPageView) > 1.
+-- SESSION HELPERS: Bronze SSF derives Pacific session timestamp/date/reporting week once per session; Silver only propagates them to hits.
 -- UTM: Bronze SSF parses UTM once per session; Silver only propagates values.
+-- MARKETING REFERENCE: Bronze Marketing Code is already one resolved row per MKT_CODE; Silver performs only the direct enrichment join.
+-- PERFORMANCE: Bronze 03 owns SEF->SSF completeness validation, so Silver does not repeat the expensive DISTINCT session anti-join.
 -- ============================================================================
-
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
     IN p_asOfDate DATE DEFAULT NULL,
     IN p_eventWindowDays INT DEFAULT 1,
@@ -27,53 +29,30 @@ BEGIN
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
     DECLARE v_udiDateCount BIGINT DEFAULT 0;
     DECLARE v_sefDateCount BIGINT DEFAULT 0;
-    DECLARE v_missingSsfSessionCount BIGINT DEFAULT 0;
-    DECLARE v_ssfUtmColumnCount BIGINT DEFAULT 0;
-
+    DECLARE v_ssfHelperColumnCount BIGINT DEFAULT 0;
+    DECLARE v_marketingDuplicateCodeCount BIGINT DEFAULT 0;
     IF p_eventWindowDays IS NULL OR p_eventWindowDays < 1 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'p_eventWindowDays must be >= 1.';
     END IF;
-
     SET v_udiDateCount = (
         SELECT COUNT(DISTINCT event_date)
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
         WHERE event_date BETWEEN v_windowStart AND v_windowEnd
     );
-
     IF v_udiDateCount <> p_eventWindowDays THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Bronze UDI does not contain every requested event date. Rebuild Bronze UDI before Silver.';
     END IF;
-
     SET v_sefDateCount = (
         SELECT COUNT(DISTINCT event_date)
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
         WHERE event_date BETWEEN v_windowStart AND v_windowEnd
     );
-
     IF v_sefDateCount <> p_eventWindowDays THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Bronze SESSION_EVENT_FACT does not contain every requested event date. Rebuild Bronze SEF before Silver.';
     END IF;
-
-    SET v_missingSsfSessionCount = (
-        SELECT COUNT(*)
-        FROM (
-            SELECT DISTINCT e.session_id
-            FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
-            LEFT ANTI JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily s
-                ON s.session_id = e.session_id
-            WHERE e.event_date BETWEEN v_windowStart AND v_windowEnd
-              AND e.session_id IS NOT NULL
-        ) missing
-    );
-
-    IF v_missingSsfSessionCount > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Bronze SESSION_SUMMARY_FACT is incomplete for the requested SEF window. Run Bronze SEF first, then Bronze SSF, then rerun Silver.';
-    END IF;
-
     IF NOT EXISTS (
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily
@@ -83,21 +62,17 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Bronze SESSION_SUMMARY_FACT returned no OPEN/CLOSED sessions.';
     END IF;
-
-    SET v_ssfUtmColumnCount = (
+    SET v_ssfHelperColumnCount = (
         SELECT COUNT(DISTINCT lower(column_name))
         FROM prdrzranalytics.information_schema.columns
-        WHERE lower(table_catalog) = 'prdrzranalytics'
-          AND lower(table_schema) = 'lab42'
-          AND lower(table_name) = 'sdi_tbl_mip_bronze_edlsessionsummaryfact_daily'
-          AND lower(column_name) IN ('utm_source', 'utm_medium', 'utm_campaign')
+        WHERE lower(table_catalog)='prdrzranalytics'
+          AND lower(table_schema)='lab42'
+          AND lower(table_name)='sdi_tbl_mip_bronze_edlsessionsummaryfact_daily'
+          AND lower(column_name) IN ('utm_source','utm_medium','utm_campaign','session_start_ts_pst','session_start_date_pst','week_start_date','week_end_date')
     );
-
-    IF v_ssfUtmColumnCount <> 3 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Bronze SESSION_SUMMARY_FACT is missing one or more parsed UTM helper columns. Deploy/run updated Bronze 03 before Silver detailsPerHit.';
+    IF v_ssfHelperColumnCount<>7 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Bronze SESSION_SUMMARY_FACT is missing one or more required session-grain helper columns. Deploy and run the updated Bronze 03 before Silver 01.';
     END IF;
-
     IF NOT EXISTS (
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot
@@ -106,7 +81,18 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Bronze Marketing Code snapshot is empty.';
     END IF;
-
+    SET v_marketingDuplicateCodeCount = (
+        SELECT COUNT(*)
+        FROM (
+            SELECT cast(MKT_CODE AS STRING) AS MKT_CODE
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot
+            GROUP BY cast(MKT_CODE AS STRING)
+            HAVING COUNT(*)>1
+        ) d
+    );
+    IF v_marketingDuplicateCodeCount>0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Bronze Marketing Code snapshot contains duplicate MKT_CODE rows. Rebuild updated Bronze 04 before Silver 01.';
+    END IF;
     IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
@@ -114,8 +100,8 @@ BEGIN
             v_windowEnd AS requestedEventWindowEnd,
             v_udiDateCount AS bronzeUdiDateCount,
             v_sefDateCount AS bronzeSefDateCount,
-            v_missingSsfSessionCount AS missingBronzeSsfSessions,
-            v_ssfUtmColumnCount AS bronzeSsfUtmHelperColumnCount,
+            v_ssfHelperColumnCount AS bronzeSsfHelperColumnCount,
+            v_marketingDuplicateCodeCount AS duplicateBronzeMarketingCodes,
             'Bronze UDI + SEF + SSF + Marketing Code' AS sourceObjects,
             'No Silver table was created or modified.' AS message;
     ELSE
@@ -192,30 +178,9 @@ BEGIN
             silverProcessedAt TIMESTAMP
         )
         USING DELTA
-        CLUSTER BY (eventDate, sessionStartDatePst, sessionId, sourceTable)
-        COMMENT 'Silver: one enriched row per valid sessionized UDI hit. NBV qualification occurs at session grain downstream. Liquid clustering supports event-date rebuilds and downstream session-grain access.';
-
-        ALTER TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-        CLUSTER BY (eventDate, sessionStartDatePst, sessionId, sourceTable);
-
-        WITH marketingCodeResolved AS (
-            SELECT
-                cast(MKT_CODE AS STRING) AS MKT_CODE,
-                max_by(
-                    named_struct(
-                        'campaignName', cast(MKT_CODE_NAME AS STRING),
-                        'campaignCategory', cast(Category AS STRING),
-                        'campaignIsActive', try_cast(is_active AS BOOLEAN)
-                    ),
-                    struct(
-                        CASE WHEN try_cast(is_active AS BOOLEAN) = TRUE THEN 1 ELSE 0 END,
-                        coalesce(cast(MKT_CODE_NAME AS STRING), '')
-                    )
-                ) AS marketing
-            FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot
-            GROUP BY cast(MKT_CODE AS STRING)
-        ),
-        scopedLinks AS (
+        CLUSTER BY (sessionStartDatePst,sourceTable)
+        COMMENT 'Silver: one enriched row per valid sessionized UDI hit. Conservative clustering supports the primary downstream session-date scan and source separation without high-cardinality sessionId clustering.';
+        WITH         scopedLinks AS (
             SELECT
                 row_identity_hash,
                 event_date,
@@ -239,6 +204,10 @@ BEGIN
                 s.session_status,
                 s.session_start_time,
                 s.session_end_time,
+                s.session_start_ts_pst,
+                s.session_start_date_pst,
+                s.week_start_date,
+                s.week_end_date,
                 s.entry_page_url_path,
                 s.entry_page_url_full,
                 s.utm_source,
@@ -264,6 +233,10 @@ BEGIN
                 l.session_status,
                 l.session_start_time,
                 l.session_end_time,
+                l.session_start_ts_pst,
+                l.session_start_date_pst,
+                l.week_start_date,
+                l.week_end_date,
                 l.entry_page_url_path,
                 l.entry_page_url_full,
                 l.utm_source,
@@ -316,7 +289,6 @@ BEGIN
         normalized AS (
             SELECT
                 b.*,
-                from_utc_timestamp(try_cast(session_start_time AS TIMESTAMP), 'America/Los_Angeles') AS sessionStartTsPst,
                 coalesce(
                     nullif(trim(cast(customer_id AS STRING)), ''),
                     nullif(trim(cast(profile_uid AS STRING)), ''),
@@ -384,10 +356,10 @@ BEGIN
             cast(n.session_status AS STRING) AS sessionStatus,
             try_cast(n.session_start_time AS TIMESTAMP) AS sessionStartTsUtc,
             try_cast(n.session_end_time AS TIMESTAMP) AS sessionEndTsUtc,
-            n.sessionStartTsPst,
-            to_date(n.sessionStartTsPst) AS sessionStartDatePst,
-            date_add(to_date(n.sessionStartTsPst), 1 - dayofweek(to_date(n.sessionStartTsPst))) AS weekStartDate,
-            date_add(to_date(n.sessionStartTsPst), 7 - dayofweek(to_date(n.sessionStartTsPst))) AS weekEndDate,
+            try_cast(n.session_start_ts_pst AS TIMESTAMP) AS sessionStartTsPst,
+            try_cast(n.session_start_date_pst AS DATE) AS sessionStartDatePst,
+            try_cast(n.week_start_date AS DATE) AS weekStartDate,
+            try_cast(n.week_end_date AS DATE) AS weekEndDate,
             n.resolvedIdentityId,
             coalesce(nullif(trim(cast(n.canonical_user_id AS STRING)), ''), n.resolvedIdentityId) AS visitorId,
             CASE
@@ -442,9 +414,9 @@ BEGIN
             nullif(trim(cast(n.channel_name AS STRING)), '') AS channelName,
             cast(n.external_campaign_code AS STRING) AS externalCampaignCode,
             n.parsedCampaignCode AS campaignCode,
-            m.marketing.campaignName AS campaignName,
-            m.marketing.campaignCategory AS campaignCategory,
-            m.marketing.campaignIsActive AS campaignIsActive,
+            cast(m.MKT_CODE_NAME AS STRING) AS campaignName,
+            cast(m.Category AS STRING) AS campaignCategory,
+            try_cast(m.is_active AS BOOLEAN) AS campaignIsActive,
             CASE
                 WHEN n.site_name = 'TMO' AND lower(coalesce(n.page_url_path, '')) LIKE '%/home-internet%' THEN 'HSI'
                 WHEN n.site_name = 'TMO' THEN 'Postpaid'
@@ -520,9 +492,8 @@ BEGIN
             CASE WHEN lower(coalesce(n.user_carrier_isp, '')) LIKE 't-mobile%' THEN 1 ELSE 0 END AS isTmoNetwork,
             v_processedAt AS silverProcessedAt
         FROM normalized n
-        LEFT JOIN marketingCodeResolved m
-            ON n.parsedCampaignCode = m.MKT_CODE;
-
+        LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot m
+            ON n.parsedCampaignCode=cast(m.MKT_CODE AS STRING);
         SELECT
             'SUCCESS' AS status,
             v_windowStart AS loadedEventWindowStart,
@@ -530,14 +501,12 @@ BEGIN
             'prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily' AS targetObject;
     END IF;
 END;
-
 -- Validation-only example
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
 --     p_asOfDate => DATE '2026-10-03',
 --     p_eventWindowDays => 10,
 --     p_validateOnly => TRUE
 -- );
-
 -- Execute example
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
 --     p_asOfDate => DATE '2026-10-03',
