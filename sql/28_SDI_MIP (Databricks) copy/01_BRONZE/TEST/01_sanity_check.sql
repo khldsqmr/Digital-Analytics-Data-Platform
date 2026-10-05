@@ -242,3 +242,21 @@ FROM u LEFT JOIN e
   ON u.row_identity_hash=e.row_identity_hash
  AND u.event_date=e.event_date
  AND u.source_table=e.source_table;
+
+
+
+-- ============================================================================
+-- FILE  : 00_mip_drop_existing_bronze_silver_tables.sql
+-- PURPOSE: One-time reset before a clean MIP Bronze/Silver rebuild.
+-- WARNING: This deletes the current persisted Bronze/Silver data tables. Procedures are not dropped.
+-- ORDER: Drop downstream Silver first, then Bronze dependencies.
+-- ============================================================================
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily;
+DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily;
