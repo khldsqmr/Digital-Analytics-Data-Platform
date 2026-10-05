@@ -3178,6 +3178,12 @@ WHERE source_table = 't_app_interactions'
       )
 GROUP BY event_date, site_name, attribute_country
 ORDER BY event_date, rows DESC;
+output:
+event_date	site_name	attribute_country	rows
+2026-09-24	Metro App	METRO	6481679
+2026-09-24	TRetail App	RETAIL	723386
+2026-09-29	Metro App	METRO	9242606
+2026-09-29	TRetail App	RETAIL	786883
 
 SELECT
     event_date,
@@ -3189,6 +3195,16 @@ WHERE source_table = 't_app_interactions'
   AND event_date IN (DATE '2026-09-24', DATE '2026-09-29')
 GROUP BY event_date, site_name, attribute_country
 ORDER BY event_date, rows DESC;
+output:
+event_date	site_name	attribute_country	rows
+2026-09-24	TLife App	US	245864656
+2026-09-24	Metro App	US	13058789
+2026-09-24	Metro App	METRO	6481205
+2026-09-24	TRetail App	RETAIL	723386
+2026-09-29	TLife App	US	464154836
+2026-09-29	Metro App	US	21365270
+2026-09-29	Metro App	METRO	9240267
+2026-09-29	TRetail App	RETAIL	786882
 
 SELECT
     source_table,
@@ -3200,4 +3216,47 @@ WHERE event_date = DATE '2026-09-24'
 GROUP BY source_table, channel_name
 ORDER BY source_table, rows DESC
 LIMIT 200;
-
+output:
+source_table	channel_name	rows
+t_app_interactions	Direct	61372692
+t_app_interactions	SMS	250212
+t_app_interactions	Email - Campaign	183524
+t_app_interactions	Other Campaigns	133676
+t_app_interactions	Natural Search	36767
+t_app_interactions	On Device	24705
+t_app_interactions	Referring Domains	18554
+t_app_interactions	Paid Search: Brand	13390
+t_app_interactions	Paid Search: PLAs	8194
+t_app_interactions	Paid Search: Non-Brand	5684
+t_app_interactions	Display	4393
+t_app_interactions	Affiliate	3191
+t_app_interactions	Retail Store	2416
+t_app_interactions	Direct Mail	1938
+t_app_interactions	Social Network - Campaign	1599
+t_app_interactions	Online Video	1500
+t_app_interactions	Email - Organic	976
+t_app_interactions	Social Network - Natural	486
+t_app_interactions	Performance Max	157
+t_app_interactions	Out Of Home	23
+t_web_interactions	Session Refresh	10115063
+t_web_interactions	Direct	4319941
+t_web_interactions	Natural Search	2190677
+t_web_interactions	Paid Search: Brand	1650940
+t_web_interactions	Social Network - Campaign	727689
+t_web_interactions	Referring Domains	720162
+t_web_interactions	Email - Campaign	666943
+t_web_interactions	Paid Search: Non-Brand	577676
+t_web_interactions	Other Campaigns	564520
+t_web_interactions	SMS	484335
+t_web_interactions	Online Video	424113
+t_web_interactions	Display	323532
+t_web_interactions	Paid Search: PLAs	319587
+t_web_interactions	Affiliate	239061
+t_web_interactions	On Device	114158
+t_web_interactions	Social Network - Natural	92265
+t_web_interactions	Email - Organic	31966
+t_web_interactions	Performance Max	29743
+t_web_interactions	Direct Mail	9478
+t_web_interactions	Retail Store	7420
+t_web_interactions	Direct TV	18
+t_web_interactions	Out Of Home	13
