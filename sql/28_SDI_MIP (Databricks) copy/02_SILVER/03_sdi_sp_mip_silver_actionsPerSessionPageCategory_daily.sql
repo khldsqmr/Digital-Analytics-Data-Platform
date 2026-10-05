@@ -17,6 +17,14 @@
 --   - No arbitrary event-date widening.
 
 --   - detailsPerHit is pruned directly by persisted sessionStartDatePst.
+--
+-- PREFLIGHT / VALIDATION CONTRACT:
+--   p_validateOnly=TRUE verifies complete requested session-start date coverage
+--   in both attributesPerSession and detailsPerHit. No target rows are written.
+--
+-- PEER / IMPACT CONTRACT:
+--   This table stores session x page-category action ingredients only. Peer-set
+--   and impact-on-topline calculations are intentionally downstream.
 
 -- ============================================================================
 
@@ -56,41 +64,45 @@ BEGIN
 
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
+    DECLARE v_attributeDateCount BIGINT DEFAULT 0;
+
+    DECLARE v_detailDateCount BIGINT DEFAULT 0;
+
     IF p_eventWindowDays IS NULL OR p_eventWindowDays<1 THEN
 
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_eventWindowDays must be >= 1.';
 
     END IF;
 
-    IF NOT EXISTS (
+    SET v_attributeDateCount=(
 
-        SELECT 1
+        SELECT COUNT(DISTINCT sessionStartDatePst)
 
         FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
 
         WHERE sessionStartDatePst BETWEEN v_windowStart AND v_windowEnd
 
-        LIMIT 1
+    );
 
-    ) THEN
+    IF v_attributeDateCount<>p_eventWindowDays THEN
 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver attributesPerSession returned no NBV sessions for the requested window.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver attributesPerSession does not contain every requested session-start date.';
 
     END IF;
 
-    IF NOT EXISTS (
+    SET v_detailDateCount=(
 
-        SELECT 1
+        SELECT COUNT(DISTINCT sessionStartDatePst)
 
         FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 
         WHERE sessionStartDatePst BETWEEN v_windowStart AND v_windowEnd
 
-        LIMIT 1
+    );
 
-    ) THEN
+    IF v_detailDateCount<>p_eventWindowDays THEN
 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver detailsPerHit returned no session hits for the requested window.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver detailsPerHit does not contain every requested session-start date.';
 
     END IF;
 
@@ -103,6 +115,10 @@ BEGIN
             v_windowStart AS requestedSessionStartDate,
 
             v_windowEnd AS requestedSessionEndDate,
+
+            v_attributeDateCount AS attributeSessionDateCount,
+
+            v_detailDateCount AS detailSessionDateCount,
 
             'attributesPerSession + detailsPerHit' AS sourceObjects,
 

@@ -15,6 +15,16 @@
 --   Unique-visitor metrics are 0/1 flags at visitor/week grain.
 
 --   Page Views, Order Count and Session Count remain additive counts.
+--
+-- PREFLIGHT / VALIDATION CONTRACT:
+--   p_validateOnly=TRUE verifies that attributesPerSession contains every
+--   requested reporting week and writes nothing.
+--
+-- PEER / IMPACT CONTRACT:
+--   This table stores reusable metric ingredients only. Impact-on-topline is a
+--   Gold/App-Gold comparison calculation. True peer membership will later use a
+--   separate overlapping-membership Silver; do not alter this 1-row-per-visitor
+--   weekly metric contract for peer-set support.
 
 -- ============================================================================
 
@@ -56,6 +66,8 @@ BEGIN
 
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
+    DECLARE v_sourceWeekCount BIGINT DEFAULT 0;
+
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
 
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_weeksToRebuild must be >= 1.';
@@ -68,9 +80,9 @@ BEGIN
 
     SET v_weekEndTo=date_add(v_weekStartTo,6);
 
-    IF NOT EXISTS (
+    SET v_sourceWeekCount=(
 
-        SELECT 1
+        SELECT COUNT(DISTINCT weekStartDate)
 
         FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
 
@@ -78,11 +90,11 @@ BEGIN
 
           AND visitorId IS NOT NULL
 
-        LIMIT 1
+    );
 
-    ) THEN
+    IF v_sourceWeekCount<>p_weeksToRebuild THEN
 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver attributesPerSession returned no NBV visitor/week rows for the requested rebuild.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver attributesPerSession does not contain every requested reporting week.';
 
     END IF;
 
@@ -97,6 +109,8 @@ BEGIN
             v_weekStartTo AS rebuildWeekStartTo,
 
             v_weekEndTo AS latestWeekEndDate,
+
+            v_sourceWeekCount AS sourceWeekCount,
 
             CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
 

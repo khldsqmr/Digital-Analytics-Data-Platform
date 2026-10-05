@@ -1,696 +1,321 @@
 -- ============================================================================
--- MIP SILVER - DEVELOPMENT EXECUTION + SANITY CHECKS
--- TEST DATE: 2026-09-28
+-- FILE  : 20_mip_silver_sanity_checks.sql
+-- PURPOSE:
+--   Development/backfill execution and sanity checks for MIP Silver 01-05.
 --
--- EXECUTION ORDER:
+-- EXAMPLE DAILY WINDOW:
+--   2026-09-20 through 2026-09-29.
 --
---   SILVER 01 - detailsPerHit_daily
---          ↓
---   SILVER 02 - attributesPerSession_daily
---          ↓
---   SILVER 03 - actionsPerSessionPageCategory_daily
---          ↓
---   SILVER 04 - attributesPerVisitorWeek_weekly
---          ↓
---   SILVER 05 - actionsPerVisitorWeek_weekly
+-- IMPORTANT GRAIN NOTE:
+--   Silver 01 is NOT expected to equal all Bronze UDI rows. It contains only UDI
+--   hits that join through Bronze SEF to an OPEN/CLOSED Bronze SSF session. The
+--   correct reconciliation therefore uses that exact join as the expected set.
 --
--- IMPORTANT:
--- We currently loaded only 2026-09-28 in Bronze.
--- Therefore the weekly tables for week starting 2026-09-27 are PARTIAL-WEEK
--- development results, which is fine for logic/grain testing.
+-- WEEKLY NOTE:
+--   A 10-day daily backfill ending 2026-09-29 contains one complete reporting
+--   week (2026-09-20..2026-09-26) plus a partial week beginning 2026-09-27.
+--   Do not treat the partial week as production-complete.
+--
+-- FUTURE VALIDATION LAYER:
+--   CRITICAL checks are strong candidates for automated gates. INFORMATIONAL
+--   checks should receive approved thresholds before becoming fail-fast rules.
 -- ============================================================================
-
-
 
 -- ############################################################################
--- SILVER 01
--- DETAILS PER HIT
+-- A. PREFLIGHT + LOAD ORDER
 -- ############################################################################
-
-
--- ============================================================================
--- 01A. PREFLIGHT
--- No target creation/write.
--- ============================================================================
-
+-- SILVER 01 preflight/load uses event-date partitions.
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => TRUE
-);
-
-
--- ============================================================================
--- 01B. LOAD
--- ============================================================================
-
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => FALSE
-);
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
 
-
--- ============================================================================
--- 01C. VALIDATION 1
--- Bronze hit count vs Silver details count.
---
--- EXPECTED:
--- BRONZE = SILVER
--- because Silver 01 preserves one row per Bronze hit.
--- ============================================================================
-
-SELECT
-    'BRONZE_HITS' AS dataset,
-    COUNT(*) AS rowCount
-FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlHits_daily
-WHERE event_date = DATE '2026-09-28'
-
-UNION ALL
-
-SELECT
-    'SILVER_DETAILS' AS dataset,
-    COUNT(*) AS rowCount
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-WHERE eventDate = DATE '2026-09-28';
-
-
--- ============================================================================
--- 01D. VALIDATION 2
--- Grain check: one Silver row per rowIdentityHash.
---
--- EXPECTED:
--- No rows.
--- ============================================================================
-
-SELECT
-    rowIdentityHash,
-    COUNT(*) AS rowCount
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-WHERE eventDate = DATE '2026-09-28'
-GROUP BY rowIdentityHash
-HAVING COUNT(*) > 1
-ORDER BY rowCount DESC
-LIMIT 100;
-
-
--- ============================================================================
--- 01E. VALIDATION 3
--- Sessionization / identity sanity.
--- This is informational rather than pass/fail for now.
--- ============================================================================
-
-SELECT
-    COUNT(*) AS totalHits,
-
-    SUM(isSessionized) AS sessionizedHits,
-
-    COUNT(*) - SUM(isSessionized) AS nonSessionizedHits,
-
-    ROUND(
-        100.0 * SUM(isSessionized) / COUNT(*),
-        4
-    ) AS sessionizedPct,
-
-    SUM(
-        CASE
-            WHEN visitorId IS NOT NULL THEN 1
-            ELSE 0
-        END
-    ) AS hitsWithVisitorId,
-
-    ROUND(
-        100.0 *
-        SUM(
-            CASE
-                WHEN visitorId IS NOT NULL THEN 1
-                ELSE 0
-            END
-        ) / COUNT(*),
-        4
-    ) AS visitorIdCoveragePct
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-WHERE eventDate = DATE '2026-09-28';
-
-
-
--- ############################################################################
--- SILVER 02
--- ATTRIBUTES PER SESSION
--- ############################################################################
-
-
--- ============================================================================
--- 02A. PREFLIGHT
--- ============================================================================
-
+-- SILVER 02/03 use sessionStartDatePst rebuild windows.
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerSession_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => TRUE
-);
-
-
--- ============================================================================
--- 02B. LOAD
--- ============================================================================
-
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerSession_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => FALSE
-);
-
-
--- ============================================================================
--- 02C. VALIDATION 1
--- Basic session population.
---
--- EXPECTED:
--- rowCount = distinctSessions
--- ============================================================================
-
-SELECT
-    sessionStartDatePst,
-
-    COUNT(*) AS rowCount,
-
-    COUNT(DISTINCT sessionId) AS distinctSessions,
-
-    COUNT(DISTINCT visitorId) AS distinctVisitors,
-
-    SUM(pageViews) AS pageViews,
-
-    SUM(orderCount) AS orderCount
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
-
-WHERE sessionStartDatePst = DATE '2026-09-28'
-
-GROUP BY sessionStartDatePst;
-
-
--- ============================================================================
--- 02D. VALIDATION 2
--- Duplicate session check.
---
--- EXPECTED:
--- No rows.
--- ============================================================================
-
-SELECT
-    sessionId,
-    COUNT(*) AS rowCount
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
-WHERE sessionStartDatePst = DATE '2026-09-28'
-GROUP BY sessionId
-HAVING COUNT(*) > 1
-ORDER BY rowCount DESC
-LIMIT 100;
-
-
--- ============================================================================
--- 02E. VALIDATION 3
--- Session-rule validation.
---
--- This table should contain only:
---   pageViews > 1
---   isNonBounced = 1
---   sessionStatus = OPEN or CLOSED
---
--- EXPECTED:
--- invalidRows = 0
--- ============================================================================
-
-SELECT
-    COUNT(*) AS invalidRows
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
-WHERE sessionStartDatePst = DATE '2026-09-28'
-  AND (
-         pageViews <= 1
-      OR isNonBounced <> 1
-      OR sessionStatus NOT IN ('OPEN', 'CLOSED')
-  );
-
-
-
--- ############################################################################
--- SILVER 03
--- ACTIONS PER SESSION × PAGE CATEGORY
--- ############################################################################
-
-
--- ============================================================================
--- 03A. PREFLIGHT
--- ============================================================================
-
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerSessionPageCategory_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => TRUE
-);
-
-
--- ============================================================================
--- 03B. LOAD
--- ============================================================================
-
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>TRUE);
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerSessionPageCategory_daily(
-    p_asOfDate        => DATE '2026-09-28',
-    p_eventWindowDays => 1,
-    p_validateOnly    => FALSE
-);
+    p_asOfDate=>DATE '2026-09-29',p_eventWindowDays=>10,p_validateOnly=>FALSE);
 
-
--- ============================================================================
--- 03C. VALIDATION 1
--- Basic population.
--- ============================================================================
-
-SELECT
-    sessionStartDatePst,
-
-    COUNT(*) AS rowCount,
-
-    COUNT(DISTINCT sessionId) AS distinctSessions,
-
-    COUNT(DISTINCT visitorId) AS distinctVisitors,
-
-    SUM(pageViews) AS pageViews,
-
-    SUM(orderCount) AS orderCount,
-
-    SUM(vrCallEvents) AS vrCallEvents,
-
-    SUM(vrChatEvents) AS vrChatEvents,
-
-    SUM(storeLocatorEvents) AS storeLocatorEvents
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
-
-WHERE sessionStartDatePst = DATE '2026-09-28'
-
-GROUP BY sessionStartDatePst;
-
-
--- ============================================================================
--- 03D. VALIDATION 2
--- Grain check:
--- one row per sessionId × pageCategory.
---
--- EXPECTED:
--- No rows.
--- ============================================================================
-
-SELECT
-    sessionId,
-    pageCategory,
-    COUNT(*) AS rowCount
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
-WHERE sessionStartDatePst = DATE '2026-09-28'
-GROUP BY
-    sessionId,
-    pageCategory
-HAVING COUNT(*) > 1
-ORDER BY rowCount DESC
-LIMIT 100;
-
-
--- ============================================================================
--- 03E. VALIDATION 3
--- Every row should contain at least one relevant action.
---
--- This matches the HAVING condition used in the procedure.
---
--- EXPECTED:
--- invalidRows = 0
--- ============================================================================
-
-SELECT
-    COUNT(*) AS invalidRows
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
-WHERE sessionStartDatePst = DATE '2026-09-28'
-  AND coalesce(pageViews, 0) = 0
-  AND coalesce(orderCount, 0) = 0
-  AND coalesce(vrCallEvents, 0) = 0
-  AND coalesce(vrChatEvents, 0) = 0
-  AND coalesce(storeLocatorEvents, 0) = 0
-  AND coalesce(assistedOrderEvents, 0) = 0
-  AND coalesce(hasBuyFlow, 0) = 0
-  AND coalesce(configureEvents, 0) = 0
-  AND coalesce(checkoutStartEvents, 0) = 0;
-
-
-
--- ############################################################################
--- SILVER 04
--- ATTRIBUTES PER VISITOR / WEEK
---
--- 2026-09-28 belongs to:
---
--- weekStartDate = 2026-09-27
--- weekEndDate   = 2026-10-03
---
--- With only Sep 28 daily data currently loaded,
--- this is intentionally a PARTIAL WEEK.
--- ############################################################################
-
-
--- ============================================================================
--- 04A. PREFLIGHT
--- ============================================================================
-
+-- WEEKLY EXAMPLE: build only the complete week ending 2026-09-26 from this
+-- 10-day example window. For the partial week starting 2026-09-27, use a later
+-- as-of date only after the full Sunday-Saturday source history is loaded.
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerVisitorWeek_weekly(
-    p_asOfDate       => DATE '2026-09-28',
-    p_weeksToRebuild => 1,
-    p_validateOnly   => TRUE
-);
-
-
--- ============================================================================
--- 04B. LOAD
--- ============================================================================
-
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>TRUE);
 CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerVisitorWeek_weekly(
-    p_asOfDate       => DATE '2026-09-28',
-    p_weeksToRebuild => 1,
-    p_validateOnly   => FALSE
-);
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>FALSE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>TRUE);
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
+    p_asOfDate=>DATE '2026-09-26',p_weeksToRebuild=>1,p_validateOnly=>FALSE);
 
-
--- ============================================================================
--- 04C. VALIDATION 1
--- Basic weekly population.
---
--- EXPECTED:
--- rowCount = distinctVisitors
--- ============================================================================
-
+-- ############################################################################
+-- B. SILVER 01 - detailsPerHit
+-- ############################################################################
+-- CRITICAL: expected valid joined Bronze hit set = Silver 01 by event day/source.
+WITH expected AS (
+    SELECT h.event_date,h.source_table,COUNT(*) AS expectedRows
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily h
+    INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
+      ON h.row_identity_hash=e.row_identity_hash
+     AND h.event_date=e.event_date
+     AND h.source_table=e.source_table
+    INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily s
+      ON s.session_id=e.session_id
+     AND s.session_status IN ('OPEN','CLOSED')
+    WHERE h.event_date BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+    GROUP BY h.event_date,h.source_table
+), actual AS (
+    SELECT eventDate,sourceTable,COUNT(*) AS actualRows
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+    WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+    GROUP BY eventDate,sourceTable
+)
 SELECT
-    weekStartDate,
-    weekEndDate,
+    coalesce(e.event_date,a.eventDate) AS eventDate,
+    coalesce(e.source_table,a.sourceTable) AS sourceTable,
+    coalesce(e.expectedRows,0) AS expectedRows,
+    coalesce(a.actualRows,0) AS actualRows,
+    coalesce(a.actualRows,0)-coalesce(e.expectedRows,0) AS rowDiff
+FROM expected e FULL OUTER JOIN actual a
+  ON e.event_date=a.eventDate AND e.source_table=a.sourceTable
+ORDER BY eventDate,sourceTable;
 
-    COUNT(*) AS rowCount,
-
-    COUNT(DISTINCT visitorId) AS distinctVisitors
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-
-GROUP BY
-    weekStartDate,
-    weekEndDate;
-
-
--- ============================================================================
--- 04D. VALIDATION 2
--- Grain check:
--- one row per visitorId × weekStartDate.
---
--- EXPECTED:
--- No rows.
--- ============================================================================
-
-SELECT
-    visitorId,
-    weekStartDate,
-    COUNT(*) AS rowCount
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-
-GROUP BY
-    visitorId,
-    weekStartDate
-
-HAVING COUNT(*) > 1
-
+-- CRITICAL: expected zero duplicate composite hit keys.
+SELECT rowIdentityHash,eventDate,sourceTable,COUNT(*) AS rowCount
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY rowIdentityHash,eventDate,sourceTable
+HAVING COUNT(*)>1
 ORDER BY rowCount DESC
-
 LIMIT 100;
 
+-- INFORMATIONAL: identity/session coverage.
+SELECT
+    eventDate,sourceTable,COUNT(*) AS rows,
+    COUNT_IF(sessionId IS NULL) AS missingSessionId,
+    COUNT_IF(visitorId IS NULL) AS missingVisitorId,
+    COUNT_IF(canonicalUserId IS NOT NULL) AS canonicalRows,
+    COUNT_IF(identitySource='canonicalUserId') AS canonicalSourceRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY eventDate,sourceTable
+ORDER BY eventDate,sourceTable;
 
--- ============================================================================
--- 04E. VALIDATION 3
--- Required attributed values should not be NULL.
---
--- EXPECTED:
--- nullAttributeRows = 0
--- ============================================================================
+-- INFORMATIONAL: UTM/channel/campaign coverage. Web UTM is expected; App entry URL
+-- and UTM are normally absent. channelName remains exact acquisition taxonomy.
+SELECT
+    sourceTable,COUNT(*) AS rows,
+    COUNT_IF(sessionEntryPageUrlFull IS NOT NULL AND trim(sessionEntryPageUrlFull)<>'') AS rowsWithEntryUrl,
+    COUNT_IF(utmSource<>'(not set)') AS rowsWithUtmSource,
+    COUNT_IF(utmMedium<>'(not set)') AS rowsWithUtmMedium,
+    COUNT_IF(utmCampaign<>'(not set)') AS rowsWithUtmCampaign,
+    COUNT_IF(channelName IS NOT NULL) AS rowsWithChannel,
+    COUNT_IF(externalCampaignCode IS NOT NULL) AS rowsWithExternalCampaign
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY sourceTable ORDER BY sourceTable;
+
+-- INFORMATIONAL: inspect native marketing-channel values; there should be no
+-- MIP-created parent Paid Search bucket unless it exists natively upstream.
+SELECT sourceTable,channelName,COUNT(*) AS rows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate=DATE '2026-09-24' AND channelName IS NOT NULL
+GROUP BY sourceTable,channelName
+ORDER BY sourceTable,rows DESC
+LIMIT 200;
+
+-- INFORMATIONAL: current temporary geography, intentionally not normalized.
+SELECT sourceTable,siteName,geoCountry,geoRegion,COUNT(*) AS rows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE eventDate=DATE '2026-09-24'
+GROUP BY sourceTable,siteName,geoCountry,geoRegion
+ORDER BY rows DESC
+LIMIT 200;
+
+-- ############################################################################
+-- C. SILVER 02 - attributesPerSession
+-- ############################################################################
+-- CRITICAL: one output row per qualifying NBV session (>1 real page view).
+WITH expected AS (
+    SELECT sessionId,sessionStartDatePst
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+    WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+    GROUP BY sessionId,sessionStartDatePst
+    HAVING SUM(CAST(isPageView AS BIGINT))>1
+), actual AS (
+    SELECT sessionId,sessionStartDatePst
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+    WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+)
+SELECT
+    (SELECT COUNT(*) FROM expected) AS expectedNbvSessions,
+    (SELECT COUNT(*) FROM actual) AS actualNbvSessions,
+    (SELECT COUNT(*) FROM actual)-(SELECT COUNT(*) FROM expected) AS rowDiff;
+
+-- CRITICAL: expected zero duplicates and zero invalid NBV rows.
+SELECT sessionId,COUNT(*) AS rowCount
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY sessionId HAVING COUNT(*)>1
+ORDER BY rowCount DESC LIMIT 100;
 
 SELECT
-    COUNT(*) AS nullAttributeRows
+    COUNT(*) AS rowsChecked,
+    COUNT_IF(pageViews<=1) AS invalidNbvRows,
+    COUNT_IF(isNonBounced<>1) AS invalidNonBouncedFlag,
+    COUNT_IF(visitorId IS NULL) AS missingVisitorId
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29';
 
+-- INFORMATIONAL: session-level exact channel taxonomy after interim resolution.
+SELECT channel,COUNT(*) AS sessions
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+WHERE sessionStartDatePst=DATE '2026-09-24'
+GROUP BY channel ORDER BY sessions DESC LIMIT 100;
+
+-- ############################################################################
+-- D. SILVER 03 - actionsPerSessionPageCategory
+-- ############################################################################
+-- CRITICAL: one row per session x pageCategory.
+SELECT sessionId,pageCategory,COUNT(*) AS rowCount
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
+WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+GROUP BY sessionId,pageCategory
+HAVING COUNT(*)>1
+ORDER BY rowCount DESC LIMIT 100;
+
+-- CRITICAL: zero-signal rows should not exist.
+SELECT COUNT(*) AS zeroSignalRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
+WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+  AND pageViews=0 AND orderCount=0 AND vrCallEvents=0 AND vrChatEvents=0
+  AND storeLocatorEvents=0 AND assistedOrderEvents=0 AND hasBuyFlow=0
+  AND configureEvents=0 AND checkoutStartEvents=0;
+
+-- CRITICAL: additive Page Views and orderCount reconcile back to session Silver.
+WITH a AS (
+    SELECT sessionStartDatePst,SUM(pageViews) AS actionPageViews,SUM(orderCount) AS actionOrderCount
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
+    WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+    GROUP BY sessionStartDatePst
+), s AS (
+    SELECT sessionStartDatePst,SUM(pageViews) AS sessionPageViews,SUM(orderCount) AS sessionOrderCount
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+    WHERE sessionStartDatePst BETWEEN DATE '2026-09-20' AND DATE '2026-09-29'
+    GROUP BY sessionStartDatePst
+)
+SELECT coalesce(a.sessionStartDatePst,s.sessionStartDatePst) AS sessionStartDatePst,
+       coalesce(a.actionPageViews,0) AS actionPageViews,coalesce(s.sessionPageViews,0) AS sessionPageViews,
+       coalesce(a.actionPageViews,0)-coalesce(s.sessionPageViews,0) AS pageViewDiff,
+       coalesce(a.actionOrderCount,0) AS actionOrderCount,coalesce(s.sessionOrderCount,0) AS sessionOrderCount,
+       coalesce(a.actionOrderCount,0)-coalesce(s.sessionOrderCount,0) AS orderCountDiff
+FROM a FULL OUTER JOIN s ON a.sessionStartDatePst=s.sessionStartDatePst
+ORDER BY sessionStartDatePst;
+
+-- ############################################################################
+-- E. SILVER 04 - attributesPerVisitorWeek
+-- ############################################################################
+-- Example complete week from the 10-day daily window: 2026-09-20.
+-- CRITICAL: one row per visitor/week.
+SELECT weekStartDate,visitorId,COUNT(*) AS rowCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-  AND (
-         visitorId IS NULL
-      OR lob IS NULL
-      OR platform IS NULL
-      OR prospectVsBase IS NULL
-      OR authState IS NULL
-      OR channel IS NULL
-      OR entryPage IS NULL
-      OR pageCategory IS NULL
-      OR device IS NULL
-      OR buyFlowStep IS NULL
-      OR region IS NULL
-  );
-
-
-
--- ############################################################################
--- SILVER 05
--- ACTIONS PER VISITOR / WEEK
--- ############################################################################
-
-
--- ============================================================================
--- 05A. PREFLIGHT
--- ============================================================================
-
-CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
-    p_asOfDate       => DATE '2026-09-28',
-    p_weeksToRebuild => 1,
-    p_validateOnly   => TRUE
-);
-
-
--- ============================================================================
--- 05B. LOAD
--- ============================================================================
-
-CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
-    p_asOfDate       => DATE '2026-09-28',
-    p_weeksToRebuild => 1,
-    p_validateOnly   => FALSE
-);
-
-
--- ============================================================================
--- 05C. VALIDATION 1
--- Weekly metric sanity.
---
--- EXPECTED:
--- rowCount = distinctVisitors
--- sum(nbv) = distinctVisitors
--- ============================================================================
-
-SELECT
-    weekStartDate,
-    weekEndDate,
-
-    COUNT(*) AS rowCount,
-
-    COUNT(DISTINCT visitorId) AS distinctVisitors,
-
-    SUM(nbv) AS nbv,
-
-    SUM(sessionCount) AS sessionCount,
-
-    SUM(pageViews) AS pageViews,
-
-    SUM(nbvBuyFlow) AS nbvBuyFlow,
-
-    SUM(nbvConfigure) AS nbvConfigure,
-
-    SUM(nbvCheckoutStart) AS nbvCheckoutStart,
-
-    SUM(orders) AS orderingVisitors,
-
-    SUM(ordersAcquisition) AS acquisitionOrderingVisitors,
-
-    SUM(ordersBase) AS baseOrderingVisitors,
-
-    SUM(ordersUnassisted) AS unassistedOrderingVisitors,
-
-    SUM(ordersAssisted) AS assistedOrderingVisitors,
-
-    SUM(orderCount) AS orderCount
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-
-GROUP BY
-    weekStartDate,
-    weekEndDate;
-
-
--- ============================================================================
--- 05D. VALIDATION 2
--- Grain check.
---
--- EXPECTED:
--- No rows.
--- ============================================================================
-
-SELECT
-    visitorId,
-    weekStartDate,
-    COUNT(*) AS rowCount
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-
-GROUP BY
-    visitorId,
-    weekStartDate
-
-HAVING COUNT(*) > 1
-
-ORDER BY rowCount DESC
-
-LIMIT 100;
-
-
--- ============================================================================
--- 05E. VALIDATION 3
--- Visitor metric invariants.
---
--- Expected relationships:
---
--- ordersAcquisition + ordersBase = orders
--- ordersAssisted + ordersUnassisted = orders
---
--- All unique-visitor flags should be 0 or 1.
---
--- EXPECTED:
--- invalidRows = 0
--- ============================================================================
-
-SELECT
-    COUNT(*) AS invalidRows
-
-FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
-
-WHERE weekStartDate = DATE '2026-09-27'
-
-  AND (
-         ordersAcquisition + ordersBase <> orders
-
-      OR ordersAssisted + ordersUnassisted <> orders
-
-      OR nbv NOT IN (0, 1)
-
-      OR nbvBuyFlow NOT IN (0, 1)
-
-      OR nbvConfigure NOT IN (0, 1)
-
-      OR nbvCheckoutStart NOT IN (0, 1)
-
-      OR orders NOT IN (0, 1)
-
-      OR ordersAcquisition NOT IN (0, 1)
-
-      OR ordersBase NOT IN (0, 1)
-
-      OR ordersUnassisted NOT IN (0, 1)
-
-      OR ordersAssisted NOT IN (0, 1)
-
-      OR vrCalls NOT IN (0, 1)
-
-      OR vrChats NOT IN (0, 1)
-
-      OR storeLocator NOT IN (0, 1)
-  );
-
-
-
--- ############################################################################
--- FINAL CROSS-SILVER VALIDATION
--- SILVER 04 vs SILVER 05
---
--- Both weekly tables are intended to have the same visitor/week population.
--- ############################################################################
-
-
--- ============================================================================
--- 06A. KEY COVERAGE
---
--- EXPECTED:
--- mismatchRows = 0
--- ============================================================================
-
-SELECT
-    COUNT(*) AS mismatchRows
-
-FROM (
-
-    SELECT
-        coalesce(a.visitorId, m.visitorId) AS visitorId,
-        coalesce(a.weekStartDate, m.weekStartDate) AS weekStartDate
-
-    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly a
-
-    FULL OUTER JOIN
-        prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly m
-
-        ON  a.visitorId = m.visitorId
-        AND a.weekStartDate = m.weekStartDate
-
-    WHERE coalesce(
-        a.weekStartDate,
-        m.weekStartDate
-    ) = DATE '2026-09-27'
-
-      AND (
-             a.visitorId IS NULL
-          OR m.visitorId IS NULL
-      )
-
-) mismatches;
-
-
--- ============================================================================
--- 06B. SIMPLE SIDE-BY-SIDE WEEKLY ROW COUNTS
---
--- EXPECTED:
--- ATTRIBUTES and ACTIONS row counts should match.
--- ============================================================================
-
-SELECT
-    'ATTRIBUTES' AS dataset,
-    COUNT(*) AS rowCount,
-    COUNT(DISTINCT visitorId) AS distinctVisitors
-
+WHERE weekStartDate=DATE '2026-09-20'
+GROUP BY weekStartDate,visitorId HAVING COUNT(*)>1
+ORDER BY rowCount DESC LIMIT 100;
+
+-- CRITICAL: weekly visitor population equals distinct visitor/week in session Silver.
+WITH expected AS (
+    SELECT DISTINCT visitorId,weekStartDate
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+    WHERE weekStartDate=DATE '2026-09-20' AND visitorId IS NOT NULL
+), actual AS (
+    SELECT visitorId,weekStartDate
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+    WHERE weekStartDate=DATE '2026-09-20'
+)
+SELECT (SELECT COUNT(*) FROM expected) AS expectedVisitors,
+       (SELECT COUNT(*) FROM actual) AS actualVisitors,
+       (SELECT COUNT(*) FROM actual)-(SELECT COUNT(*) FROM expected) AS rowDiff;
+
+-- INFORMATIONAL: exact channel categories remain separate after weekly attribution.
+SELECT channel,COUNT(*) AS visitors
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+WHERE weekStartDate=DATE '2026-09-20'
+GROUP BY channel ORDER BY visitors DESC LIMIT 100;
 
-WHERE weekStartDate = DATE '2026-09-27'
-
-UNION ALL
-
+-- INFORMATIONAL: attribution sanity.
 SELECT
-    'ACTIONS' AS dataset,
-    COUNT(*) AS rowCount,
-    COUNT(DISTINCT visitorId) AS distinctVisitors
+    COUNT(*) AS rowsChecked,
+    COUNT_IF(NOT array_contains(lobList,lob)) AS invalidLobAttribution,
+    COUNT_IF(NOT array_contains(platformList,platform)) AS invalidPlatformAttribution,
+    COUNT_IF(weekEndDate<>date_add(weekStartDate,6)) AS invalidWeekEnd
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+WHERE weekStartDate=DATE '2026-09-20';
 
+-- ############################################################################
+-- F. SILVER 05 - actionsPerVisitorWeek
+-- ############################################################################
+-- CRITICAL: one metric row per visitor/week.
+SELECT weekStartDate,visitorId,COUNT(*) AS rowCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
+WHERE weekStartDate=DATE '2026-09-20'
+GROUP BY weekStartDate,visitorId HAVING COUNT(*)>1
+ORDER BY rowCount DESC LIMIT 100;
 
-WHERE weekStartDate = DATE '2026-09-27';
+-- CRITICAL: Silver 04 and Silver 05 must be 1:1 by visitor/week.
+WITH a AS (
+    SELECT visitorId,weekStartDate
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+    WHERE weekStartDate=DATE '2026-09-20'
+), m AS (
+    SELECT visitorId,weekStartDate
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
+    WHERE weekStartDate=DATE '2026-09-20'
+)
+SELECT
+    COUNT(*) AS unionKeys,
+    COUNT_IF(a.visitorId IS NULL) AS missingAttributeRows,
+    COUNT_IF(m.visitorId IS NULL) AS missingMetricRows
+FROM a FULL OUTER JOIN m
+  ON a.visitorId=m.visitorId AND a.weekStartDate=m.weekStartDate;
+
+-- CRITICAL: additive weekly Page Views / orderCount reconcile to session Silver.
+WITH expected AS (
+    SELECT weekStartDate,SUM(pageViews) AS pageViews,SUM(orderCount) AS orderCount
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+    WHERE weekStartDate=DATE '2026-09-20' AND visitorId IS NOT NULL
+    GROUP BY weekStartDate
+), actual AS (
+    SELECT weekStartDate,SUM(pageViews) AS pageViews,SUM(orderCount) AS orderCount
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
+    WHERE weekStartDate=DATE '2026-09-20'
+    GROUP BY weekStartDate
+)
+SELECT a.weekStartDate,
+       a.pageViews AS actualPageViews,e.pageViews AS expectedPageViews,a.pageViews-e.pageViews AS pageViewDiff,
+       a.orderCount AS actualOrderCount,e.orderCount AS expectedOrderCount,a.orderCount-e.orderCount AS orderCountDiff
+FROM actual a JOIN expected e USING (weekStartDate);
+
+-- CRITICAL: visitor metric flags are binary and derived splits do not exceed orders.
+SELECT
+    COUNT(*) AS rowsChecked,
+    COUNT_IF(nbv<>1) AS invalidNbv,
+    COUNT_IF(nbvBuyFlow NOT IN (0,1)) AS invalidNbvBuyFlow,
+    COUNT_IF(nbvConfigure NOT IN (0,1)) AS invalidNbvConfigure,
+    COUNT_IF(nbvCheckoutStart NOT IN (0,1)) AS invalidNbvCheckoutStart,
+    COUNT_IF(orders NOT IN (0,1)) AS invalidOrders,
+    COUNT_IF(ordersAcquisition NOT IN (0,1)) AS invalidOrdersAcquisition,
+    COUNT_IF(ordersBase NOT IN (0,1)) AS invalidOrdersBase,
+    COUNT_IF(ordersAssisted NOT IN (0,1)) AS invalidOrdersAssisted,
+    COUNT_IF(ordersUnassisted NOT IN (0,1)) AS invalidOrdersUnassisted,
+    COUNT_IF(vrCalls NOT IN (0,1)) AS invalidVrCalls,
+    COUNT_IF(vrChats NOT IN (0,1)) AS invalidVrChats,
+    COUNT_IF(storeLocator NOT IN (0,1)) AS invalidStoreLocator,
+    COUNT_IF(ordersAcquisition>orders) AS acquisitionExceedsOrders,
+    COUNT_IF(ordersAssisted>orders) AS assistedExceedsOrders
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
+WHERE weekStartDate=DATE '2026-09-20';

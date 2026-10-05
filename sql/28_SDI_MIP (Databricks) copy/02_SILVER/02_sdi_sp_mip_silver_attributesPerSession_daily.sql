@@ -23,6 +23,24 @@
 --   - Filters directly on persisted sessionStartDatePst.
 
 --   - Uses one full session aggregation plus one narrow LOB/page-view aggregation.
+--
+-- CHANNEL CONTRACT:
+--   channel is resolved from the exact UDI channel_name values. No marketing
+--   channel categories are rolled together. Because channel_name is currently
+--   non-sticky upstream, this table keeps one interim session value until the
+--   upstream persistence fix lands.
+--
+-- TEMPORARY GEO CONTRACT:
+--   Session region remains the temporary Web postal-code / App country field.
+--   No METRO/RETAIL correction or ZIP-to-region mapping is applied here.
+--
+-- PREFLIGHT / VALIDATION CONTRACT:
+--   p_validateOnly=TRUE verifies that detailsPerHit contains every requested
+--   session-start date before writing. p_eventWindowDays therefore describes the
+--   sessionStartDatePst rebuild window in this session-grain procedure.
+--
+-- PEER / IMPACT CONTRACT:
+--   No peer-set or impact-on-topline calculation is persisted at session grain.
 
 -- ============================================================================
 
@@ -62,25 +80,27 @@ BEGIN
 
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
+    DECLARE v_sourceSessionDateCount BIGINT DEFAULT 0;
+
     IF p_eventWindowDays IS NULL OR p_eventWindowDays<1 THEN
 
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='p_eventWindowDays must be >= 1.';
 
     END IF;
 
-    IF NOT EXISTS (
+    SET v_sourceSessionDateCount=(
 
-        SELECT 1
+        SELECT COUNT(DISTINCT sessionStartDatePst)
 
         FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 
         WHERE sessionStartDatePst BETWEEN v_windowStart AND v_windowEnd
 
-        LIMIT 1
+    );
 
-    ) THEN
+    IF v_sourceSessionDateCount<>p_eventWindowDays THEN
 
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver detailsPerHit returned no valid session hits for the requested session-start window.';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Silver detailsPerHit does not contain every requested session-start date.';
 
     END IF;
 
@@ -93,6 +113,8 @@ BEGIN
             v_windowStart AS requestedSessionStartDate,
 
             v_windowEnd AS requestedSessionEndDate,
+
+            v_sourceSessionDateCount AS sourceSessionStartDateCount,
 
             'prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily' AS sourceObject,
 
@@ -152,7 +174,7 @@ BEGIN
 
             authStateRank INT,
 
-            channel STRING,
+            channel STRING COMMENT 'Resolved exact UDI channel_name value; no channel-category roll-up',
 
             campaignCode STRING,
 
@@ -418,6 +440,8 @@ BEGIN
 
                 max(authStateRank) AS authStateRank,
 
+                -- Temporary single-value resolve while upstream channel_name stickiness is repaired.
+                -- Exact category strings are retained; nothing is rolled into a broader Paid Search bucket.
                 max(channelName) AS channel,
 
                 max_by(
