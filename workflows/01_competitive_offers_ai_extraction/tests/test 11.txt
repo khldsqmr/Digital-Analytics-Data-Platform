@@ -2698,3 +2698,465 @@ For your immediate MIP Bronze projection: keep what you already have (geo_postal
 Channel info: unified_digital_interactions.channel (web) + unified_digital_interactions.attribute_channel (app).
 
 Region info: unified_digital_interactions.geo_postal_code (web, 46%) joined to BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP for state/region, plus unified_digital_interactions.attribute_country (app, 99%) for country, plus a customer-address join for authenticated users to close the app state/region gap.
+
+
+
+so which tables and which columns in them have the info? also, for the regions, can you please tell me how can i get the region populated for app and web? which table, which associated columns, and whats the coverage?
+02:22 AM
+Eddy
+Channel + Region Info — Complete Picture
+📍 CHANNEL INFO
+Tables and Columns
+Table	Column	Scope	Fill Rate
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	channel	Web	~99.9%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	attribute_channel	App	~61.7%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	site_sub_section	Web only (drill-down)	~97.9%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	channel_name	Both (numeric variant)	Web 99.3% / App 7.5%
+Unified channel pattern
+```
+CASE
+WHEN source_table = 't_web_interactions' THEN channel
+WHEN source_table = 't_app_interactions' THEN attribute_channel
+END AS unified_channel
+```
+
+Session tables (session_summary_fact, session_event_fact) do not carry channel columns — you must get channel from UDI.
+
+📍 REGION / GEOGRAPHY INFO
+There is no single column for region. You have to compose it from multiple signals and join to a ZIP dimension. Here's the realistic picture.
+
+Table 1 — unified_digital_interactions (hit level)
+Column	Scope	Sep 24 Fill	Granularity
+geo_postal_code	Web	~46% of web hits	ZIP → join to state/region
+attribute_country	App	~99% of app hits	Country only (US/intl)
+coverage_map_location	Both	<0.1%	City, state string (coverage check only)
+Table 2 — session_summary_fact (session level)
+No geo columns. Must derive region from UDI and roll up to session via session_id.
+
+Table 3 — session_event_fact (session event level)
+No geo columns. Join bridge between SSF and UDI via row_identity_hash + event_date + source_table.
+
+Table 4 — ZIP dimension (for Web region lookup)
+`BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP` (41,829 rows, refreshed daily)
+
+Keyed by ZIP_CODE, provides STATE, REGION, MARKET fields. Let me confirm the column names.My role can't access that database directly, but it exists and your role should. Let me also check if there are address tables for the authenticated-user geography path.---
+
+🎯 THE THREE PATHS TO GET REGION
+🥇 Path 1: Web — ZIP → State/Region (Best coverage: ~46% of web hits)
+Tables: UDI + ZIP dimension
+
+SELECT
+  u.row_identity_hash,
+  u.event_date,
+  u.geo_postal_code,
+  z.STATE,
+  z.REGION,
+  z.MARKET
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+LEFT JOIN BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP z
+  ON LEFT(u.geo_postal_code, 5) = z.ZIP_CODE
+WHERE u.source_table = 't_web_interactions'
+  AND u.event_date = DATE '2026-09-24'
+  AND u.geo_postal_code IS NOT NULL
+Coverage: 46% of web hits → state/region.
+Limitation: Web only. Apps return 0% because geo_postal_code is never populated on app.
+
+🥈 Path 2: App — Country Only (Best coverage: ~99% of app hits)
+Table: UDI only
+
+SELECT
+  row_identity_hash,
+  event_date,
+  attribute_country
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE source_table = 't_app_interactions'
+  AND event_date = DATE '2026-09-24'
+Coverage: ~99% of app hits → country.
+Limitation: Country only. No state, no region, no city.
+
+🥉 Path 3: Authenticated Customer Address Join (Both channels, ~50% of auth'd traffic)
+For authenticated users (user_auth_state = 'Authenticated'), you can join to the account billing address.
+
+Candidate address tables (confirm access with your role):
+- BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP
+- BDM_MKTGANALYTICS_DB.POSTPAID_V.LOCATION_ADDRESS
+- BDM_MKTGANALYTICS_DB.MKTGANALYTICS_V.LOCATION_ACCOUNT_ADDRESS
+
+SELECT
+  u.row_identity_hash,
+  u.customer_id,
+  u.encrypted_ban,
+  addr.state,
+  addr.region,
+  addr.market
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+JOIN <customer_address_table> addr
+  ON u.encrypted_ban = addr.encrypted_ban  -- or canonical_user_id, confirm key with Marketing Analytics team
+WHERE u.user_auth_state = 'Authenticated'
+  AND u.event_date = DATE '2026-09-24'
+Coverage: Works for both app and web, but only for the ~50% of traffic that is authenticated. Fills the app region gap for logged-in customers.
+Limitation: Won't help prospects or logged-out users.
+
+📊 Realistic Combined Region Coverage (if you stack all three)
+Scope	Source	Coverage
+Web hits with state/region	ZIP → GEO_DIM_ZIP	~46%
+Web hits with country	Infer US from ZIP presence	~46%
+App hits with country	attribute_country	~99%
+App hits with state/region	Customer address (auth only)	~30% (half of ~60% auth app traffic)
+Any hit with country	Combined	~85%
+Any hit with state/region	Combined	~40%
+📝 Recommended Bronze projection for region
+```
+-- Add to your Bronze SELECT:
+geo_postal_code, -- raw web ZIP
+attribute_country, -- raw app country
+
+-- Then in a downstream Silver enrichment layer:
+LEFT(geo_postal_code, 5) AS zip5, -- normalized ZIP for join
+COALESCE(z.STATE, auth_addr.state) AS state, -- web ZIP → state, else auth address
+COALESCE(z.REGION, auth_addr.region) AS region,
+COALESCE(z.MARKET, auth_addr.market) AS market,
+CASE
+WHEN geo_postal_code IS NOT NULL THEN 'US' -- ZIP implies US
+ELSE attribute_country
+END AS country
+```
+
+For your immediate MIP Bronze projection: keep what you already have (geo_postal_code + attribute_country). The region enrichment belongs in a Silver layer step with the ZIP + address joins, not Bronze.
+
+🎯 Final answer in one sentence
+Channel info: unified_digital_interactions.channel (web) + unified_digital_interactions.attribute_channel (app).
+
+Region info: unified_digital_interactions.geo_postal_code (web, 46%) joined to BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP for state/region, plus unified_digital_interactions.attribute_country (app, 99%) for country, plus a customer-address join for authenticated users to close the app state/region gap.
+
+Want me to try verifying the exact column names on MKTGANALYTICS_V_GEO_DIM_ZIP using your role, or check the join key for the address table?
+
+02:22 AMcopy
+👍
+👎
+🚩
+currently, what are the categories in each channel columns?
+02:26 AM
+Eddy
+I'll pull the actual values in both channel columns.# Channel Category Values — Sep 24, 2026
+
+🌐 WEB — channel column (Top 50 of ~100 values, 42.5M rows total)
+#	channel	Rows
+1	My Account	20,443,775
+2	TMO Home	6,297,676
+3	Shop	5,208,017
+4	Rate Plans	2,139,480
+5	Support	2,100,432
+6	Benefits	1,251,019
+7	Deals	981,167
+8	Switch	724,116
+9	Business	555,196
+10	5G	432,167
+11	5G Home Internet	332,196
+12	Experiences	322,145
+13	Coverage	308,081
+14	Mi Cuenta	237,197 (ES)
+15	T-Mobile Tuesdays	227,957
+16	Prepaid	196,775
+17	TMO Home-ES	169,816
+18	Shop-ES	123,420
+19	Phones	115,129
+20	5G Home Internet-TFB	112,196
+21	Satellite	93,859
+22	Prepaid-ES	92,893
+23	TPG Home	89,840
+24	Deals-ES	86,180
+25	TMO Account	83,781
+26	Soporte	72,572 (ES)
+27	Business Home	65,620
+28	Rate Plans-ES	60,935
+29	Switch-ES	57,628
+30	Experiences-ES	50,055
+31	Checkout	48,844
+32	Watches	43,340
+33	TMO Home-TFB	42,666
+34	T-Mobile Tuesdays-ES	39,775
+35	TMO Insider	32,866
+36	Coverage-ES	31,973
+37	Business-ES	22,977
+38	Metro Customers	21,772
+39	Watches-ES	19,878
+40	Benefits-ES	19,787
+41	5G Home Internet-ES	15,870
+42	5G-ES	14,933
+43	Tablets	14,837
+44	Satellite-ES	10,944
+45	Business Home-ES	9,805
+46	HSI Pay-As-You-Go	9,598
+47	Checkout-ES	9,598
+48	Internet of Things	6,750
+49	Business Switch	6,595
+50	Deals-TFB	5,586
+Web patterns to know
+- `-ES` suffix = Spanish-language variant of the same channel
+- `-TFB` suffix = T-Mobile for Business variant
+- `My Account` dominates at 48% of web hits
+- TMO Home + Shop = next 27% combined
+- The top 10 values cover ~95% of web hits
+
+📱 APP — attribute_channel column (All distinct values, 234.3M rows total)
+#	attribute_channel	Rows
+1	Me	68,077,929
+2	HSI	32,432,829
+3	Home	24,603,596
+4	Experience	11,045,923
+5	Shop	7,286,432
+6	Benefits	2,041,145
+7	Network Pass	1,160,829
+8	Tuesdays	711,117
+9	Connect	651,862
+10	Onboarding	437,957
+11	Discovery	190,728
+12	Hub	85,923
+13	Rewards	28,220
+14	Shortcut	13,247
+15	Discovery\	Hub	7,420
+16	Expert Assist	6,434
+17	TLife	133
+App patterns to know
+- Only 17 distinct values on app vs ~100 on web — much cleaner vocabulary
+- `Me` dominates at 47% of app hits (equivalent to web's "My Account")
+- HSI is unexpectedly #2 — Home Internet activity is huge on app
+- Discovery|Hub pipe-concatenated value exists (user was in both)
+- No Spanish variants — app handles localization differently
+
+🔗 Cross-Channel Normalization Map
+If you want apples-to-apples reporting across web + app, here's a starter mapping based on the actual values:
+
+Normalized Channel	Web channel values	App attribute_channel values
+MyAccount	My Account, Mi Cuenta, TMO Account	Me
+Home	TMO Home, TMO Home-ES, TPG Home, Business Home, TMO Home-TFB, Business Home-ES	Home
+Shop	Shop, Shop-ES	Shop
+Benefits	Benefits, Benefits-ES	Benefits
+Support	Support, Soporte, Expert Assist	Expert Assist
+Internet / HSI	5G Home Internet, 5G Home Internet-TFB, 5G Home Internet-ES, HSI Pay-As-You-Go	HSI
+Rewards / Tuesdays	T-Mobile Tuesdays, T-Mobile Tuesdays-ES	Tuesdays, Rewards
+Deals	Deals, Deals-ES, Deals-TFB	—
+Rate Plans	Rate Plans, Rate Plans-ES	—
+Switch	Switch, Switch-ES, Business Switch	—
+Prepaid	Prepaid, Prepaid-ES	—
+Business	Business, Business-ES, Business Home	—
+Checkout	Checkout, Checkout-ES	—
+Experience	Experiences, Experiences-ES	Experience
+Discovery	—	Discovery, Hub, Discovery\	Hub
+Onboarding	—	Onboarding
+Connect	—	Connect
+Network Pass	—	Network Pass
+🪤 Key observations
+Web is far more granular (~100 values) because it tags product-line pages distinctly (Phones, Watches, Tablets, 5G, etc.) while app rolls these into Shop.
+Web has brand/language/segment suffixes (-ES, -TFB, TPG Home, Metro Customers); app does not.
+Several web channels have no app equivalent — Deals, Rate Plans, Switch, Prepaid, Business, Checkout are web-only flows.
+Several app channels have no web equivalent — Onboarding, Connect, Network Pass are app-only features.
+Any cross-channel aggregation must normalize first or you'll be double-counting (My Account and Me are the same thing).
+Want me to also pull the top site_sub_section values for web so you can see the drill-down taxonomy beneath each channel?
+
+02:26 AMcopy
+👍
+👎
+🚩
+so there is no paid search?
+02:26 AM
+Eddy
+Correct — No "Paid Search" Channel Value
+Neither channel (web) nor attribute_channel (app) carries a marketing acquisition channel like "Paid Search", "Organic Search", "Direct", "Social", "Email", etc.
+
+🎯 Why — these columns mean something different
+Column	What it actually represents
+channel / attribute_channel	Site section / app tab the user is in — "Shop", "My Account", "HSI". This is a content/navigation dimension.
+"Paid Search" is a traffic source / acquisition dimension — how the user arrived, not where they are on the site. That's a different concept entirely.
+
+🔍 Where acquisition channel actually lives
+Let me verify by checking for any marketing-channel column in the schema.Confirmed — nothing in Silver UDI or the session tables uses the word "channel" to mean marketing/acquisition. The channel columns are purely site-section.
+
+🧭 How to derive acquisition channel yourself
+You can build "Paid Search / Organic / Direct / Email / Social" from signals you already have:
+
+Signals available
+Signal	Column	Source Table	Fill
+UTM parameters (source/medium)	page_url_full / entry_page_url_full	UDI / SSF	Web only, ~10% of sessions
+Adobe campaign code	external_campaign_code	UDI	Web ~6%, App 0.02%
+Referring domain	entry_page_referrer	SSF (access-controlled)	Web only
+Derivation pattern (session-level, web only)
+SELECT
+  session_id,
+  entry_page_url_full,
+  entry_page_referrer,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_medium=([^&#]+)', 1) AS utm_medium,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_source=([^&#]+)', 1) AS utm_source,
+  CASE
+    -- Paid search
+    WHEN LOWER(REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_medium=([^&#]+)', 1))
+           IN ('cpc','ppc','paid','paidsearch','sem')
+      THEN 'Paid Search'
+    -- Paid social
+    WHEN LOWER(REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_medium=([^&#]+)', 1))
+           IN ('paidsocial','social-paid','social_cpc')
+      THEN 'Paid Social'
+    -- Email
+    WHEN LOWER(REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_source=([^&#]+)', 1)) = 'email'
+      OR LOWER(REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_medium=([^&#]+)', 1)) LIKE '%email%'
+      THEN 'Email'
+    -- Organic search
+    WHEN entry_page_referrer ILIKE '%google.com%'
+      OR entry_page_referrer ILIKE '%bing.com%'
+      OR entry_page_referrer ILIKE '%yahoo.com%'
+      OR entry_page_referrer ILIKE '%duckduckgo.com%'
+      THEN 'Organic Search'
+    -- Organic social
+    WHEN entry_page_referrer ILIKE '%facebook.com%'
+      OR entry_page_referrer ILIKE '%instagram.com%'
+      OR entry_page_referrer ILIKE '%twitter.com%'
+      OR entry_page_referrer ILIKE '%t.co%'
+      OR entry_page_referrer ILIKE '%linkedin.com%'
+      OR entry_page_referrer ILIKE '%youtube.com%'
+      OR entry_page_referrer ILIKE '%tiktok.com%'
+      THEN 'Organic Social'
+    -- Referral
+    WHEN entry_page_referrer IS NOT NULL AND entry_page_referrer <> ''
+      THEN 'Referral'
+    -- Direct
+    ELSE 'Direct / Unknown'
+  END AS acquisition_channel
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE source_table = 't_web_interactions'
+  AND session_status IN ('OPEN','CLOSED')
+  AND session_start_date = DATE '2026-09-24'
+Known gaps
+Gap	Reason
+No acquisition channel for App	App has no entry_page_referrer and ~0% UTM. Need Adjust/Branch/AppsFlyer attribution data.
+~90% of web sessions have no UTM	Only ~10% of sessions are UTM-tagged. The rest need to lean on entry_page_referrer to classify.
+`entry_page_referrer` is access-controlled	Confirm your role has r_cdw_snf_dbi_prd_interaction_analyst with URL access group, or it returns REDACTED.
+📝 Bottom line
+"Paid Search" as a Silver column: does not exist.
+To get it for Web: derive from UTM (utm_medium = 'cpc') + entry_page_referrer on session_summary_fact. Reaches maybe 40–60% of web sessions depending on how aggressive your classification is.
+To get it for App: not possible with UDI/SEF/SSF — need marketing attribution partner data.
+If a durable acquisition_channel column matters for your consumers, that's a strong candidate for a Silver enhancement ticket under DIRT-691 — the parsing logic should run once at ingestion, not every time someone queries.
+
+Want me to run the classification above against Sep 24 to show you the acquisition-channel distribution?
+
+02:26 AMcopy
+👍
+👎
+🚩
+what are the unique values in attribute_country column?
+02:28 AM
+Eddy
+I'll pull the distinct values and counts for attribute_country on Sep 24.# attribute_country Values — Sep 24, 2026
+
+#	attribute_country	Rows	% of total
+1	US	231,974,500	99.0%
+2	(empty string)	1,769,942	0.76%
+3	NULL	464,891	0.20%
+4	??	42,257	0.02%
+5	MX (Mexico)	11,595	0.005%
+6	CA (Canada)	11,037	0.005%
+7	GB (United Kingdom)	5,432	0.002%
+8	DE (Germany)	2,935	0.001%
+9	JP (Japan)	2,815	0.001%
+10	IT (Italy)	2,335	0.001%
+11	AU (Australia)	2,186	0.001%
+12	FR (France)	2,170	0.001%
+13	ES (Spain)	1,792	0.001%
+14	IN (India)	1,544	0.001%
+15	TR (Turkey)	1,330	0.001%
+16	NL (Netherlands)	1,315	0.001%
+17	AT (Austria)	1,220	0.001%
+18	IE (Ireland)	1,196	0.001%
+19	GR (Greece)	1,186	0.001%
+20	BR (Brazil)	1,152	0.0005%
+Plus a long tail of 50+ other 2-letter country codes (CH, BE, PT, SE, DK, PL, IL, AE, ZA, SG, HK, TH, etc.) each under 1,100 rows.
+
+Total distinct values: ~90 countries + 3 "unknown" buckets (NULL, empty, `??`).
+
+🧭 Key observations
+99% US-dominant — this is a US-focused app, as expected.
+~1% non-US / unknown combined — includes real international travelers (US customers abroad on roaming, or international prospects) plus data-quality nulls.
+Standard ISO 3166-1 alpha-2 codes — two-letter country codes, uppercase. Join-ready against any standard country dimension.
+`??` (42K rows) is a known OneMind sentinel for "country lookup failed" — treat it as unknown.
+Empty string vs NULL both mean "no country detected." Normalize them together: NULLIF(TRIM(attribute_country), '') IS NULL.
+🔧 Clean normalization pattern
+CASE
+  WHEN NULLIF(TRIM(attribute_country), '') IS NULL THEN 'UNKNOWN'
+  WHEN attribute_country = '??'                     THEN 'UNKNOWN'
+  ELSE UPPER(attribute_country)
+END AS country_code
+💡 Practical implication
+For region derivation on app, attribute_country = 'US' is essentially the whole dataset — you can safely assume US geography for app region work. The ~2.2M non-US/unknown rows are a rounding error for most reporting but important to filter out of US-only KPIs (e.g., "US customers active in app").
+
+Want me to pull the equivalent for geo_postal_code — most common ZIP prefixes or anything that looks non-US?
+
+02:28 AMcopy
+👍
+👎
+🚩
+But i noticed METRO and RETAIL too?
+02:29 AM
+Eddy
+Good catch — let me check if attribute_country actually has values like METRO or RETAIL, or if you're thinking of a different column. I'll search for those values across likely columns.# You're Right — But Those Values Live in site_name, Not attribute_country
+
+attribute_country only has ISO country codes (US, MX, CA, etc.) — no METRO or RETAIL. But those values absolutely do exist in a different column: `site_name`.
+
+📊 site_name Values — Sep 24, 2026
+#	site_name	Rows	%
+1	TLife App	180,275,945	65.1%
+2	TMO	36,787,018	13.3%
+3	`TLife App\	Metro App`	20,869,415	7.5%
+4	`TLife App\	TRetail App`	15,587,180	5.6%
+5	Metro App	10,906,017	3.9%
+6	`TLife App\	TLife App`	2,944,145	1.1%
+7	Expert Assist	2,459,083	0.9%
+8	TRetail App	2,181,672	0.8%
+9	`TLife App\	TMO Concierge`	1,603,014	0.6%
+10	MbyT	1,085,811	0.4%
+11	T-Mo Prepaid	672,018	0.2%
+12	TFB	601,816	0.2%
+13	`TLife App\	Expert Assist`	429,167	0.2%
+14	`TLife App\	TMO`	193,434	0.1%
+15	`TMO\	TLife App`	141,180	0.1%
+16	`TLife App\	CPQ`	123,569	0.04%
+17	TMO Concierge	67,207	0.02%
+18	CPQ	7,345	0.003%
+🧭 What each value means
+Value	What it is
+TLife App	T-Life consumer app (main T-Mobile app)
+TMO	T-Mobile.com web
+`Metro App`	Metro by T-Mobile app (prepaid brand)
+`TRetail App`	T-Mobile retail/store associate app (used in-store by employees)
+MbyT	Metro by T-Mobile web (metrobyt.com)
+T-Mo Prepaid	T-Mobile prepaid web
+TFB	T-Mobile for Business web
+Expert Assist	Customer care expert assist tool
+TMO Concierge	Concierge service
+CPQ	Configure-Price-Quote tool
+🔀 Pipe-concatenated values (A\|B)
+When site_name has a | in it, the hit was tagged with both site identifiers — common when:
+- A user flow spans properties (e.g., prospect lands on TLife App and gets routed through Metro App)
+- An embedded web view inside one app renders content from another property
+- TLife App|TLife App is a tagging artifact where the same value gets emitted twice
+
+💡 So for your "METRO" and "RETAIL" question
+Metro App: site_name = 'Metro App' OR site_name LIKE '%Metro App%' → ~32M hits/day combined (3.9% standalone + 7.5% in combo = ~11% of all app hits touch Metro)
+TRetail App: site_name = 'TRetail App' OR site_name LIKE '%TRetail App%' → ~18M hits/day combined (~6% of all hits involve the retail employee app)
+Metro web: site_name = 'MbyT' → ~1M hits/day
+🔧 Clean property breakdown
+CASE
+  WHEN site_name ILIKE '%Metro App%'    THEN 'Metro App'
+  WHEN site_name ILIKE '%TRetail App%'  THEN 'Retail App'
+  WHEN site_name ILIKE '%TLife App%'    THEN 'T-Life App'
+  WHEN site_name ILIKE '%MbyT%'         THEN 'Metro Web'
+  WHEN site_name ILIKE '%T-Mo Prepaid%' THEN 'Prepaid Web'
+  WHEN site_name ILIKE '%TFB%'          THEN 'TFB Web'
+  WHEN site_name = 'TMO'                THEN 'T-Mobile Web'
+  WHEN site_name ILIKE '%Expert Assist%' THEN 'Expert Assist'
+  WHEN site_name ILIKE '%TMO Concierge%' THEN 'Concierge'
+  ELSE 'Other'
+END AS property
+🪤 Important for your Bronze projection
+Your current MIP pipeline uses source_table + page_app_type to distinguish properties, but site_name is the finer-grained signal — especially for separating TLife vs Metro vs TRetail, which all share source_table = 't_app_interactions'.
+
+If downstream consumers need to split Metro from TLife or exclude retail-employee traffic, add site_name to your projection (it's already in your SELECT list — good) and build the property CASE above in a Silver enrichment step.
