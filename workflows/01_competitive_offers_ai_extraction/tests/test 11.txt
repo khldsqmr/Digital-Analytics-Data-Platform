@@ -2004,3 +2004,135 @@ Flag	Verdict	Recommendation
 event_click_to_call	🔴 Not reliably tagged (~0.002%)	Include the derivation but flag as low-fidelity in your MIP contract notes. Consider filing a tagging-gap ticket.
 event_chat_engage	🟢 Well tagged (~1–2%)	Include confidently. Pick broad or strict based on consumer need.
 event_store_search	🟡 Partial — mostly URL-based	Use the combined action+URL rule, not action alone. Document it as approximate.
+
+
+
+
+Define peer set and topline metrics.
+
+### Impact on topline
+
+**Plain version:** how much of the topline's movement this one value is responsible for. It answers "so what" rather than "how much did this change."
+
+**Formula, counts:**
+
+```
+impact % = (slice current − slice baseline) ÷ topline baseline
+```
+
+The denominator is the topline, not the slice's own base. That's the whole trick.
+
+**Example:**
+
+```
+Paid Search  (493,775 − 446,463) ÷ 1,720,000  =  +2.75%
+SMS          ( 31,094 − 202,108) ÷ 1,720,000  =  −9.94%
+```
+
+Compare against what each did on its own base: Paid Search rose 10.6%, SMS fell 84.6%. Sorted by own change, SMS looks like the story of the week and Paid Search looks minor. Sorted by impact, SMS moved the topline by ten points and Paid Search by three. That ordering is the one you want in the weekly read.
+
+## Versus peer set — worked through step by step
+
+**The question it answers:** did this channel move differently from all the other channels?
+
+### The setup
+
+Channel breakout, Total UPV, week 7 compared to week 6.
+
+Week 6
+
+Week 7
+
+**All channels together (topline)**
+
+1,720,000
+
+1,545,000
+
+**Paid Search**
+
+446,463
+
+493,775
+
+The topline fell. Paid Search rose. That gap is what we're measuring.
+
+### Step 1 — What did Paid Search do?
+
+```
+493,775 − 446,463 = +47,312
++47,312 ÷ 446,463 = +10.6%
+```
+
+**Paid Search went up 10.6%.**
+
+### Step 2 — What did every other channel do?
+
+Take Paid Search out of the topline. What's left is the peer set: organic, direct, email, SMS, display, and the rest, all added together.
+
+```
+Week 6 peers:  1,720,000 − 446,463 = 1,273,537
+Week 7 peers:  1,545,000 − 493,775 = 1,051,225
+```
+
+Now the same change calculation on that combined group:
+
+```
+1,051,225 − 1,273,537 = −222,312
+−222,312 ÷ 1,273,537 = −17.5%
+```
+
+**Every other channel, combined, went down 17.5%.**
+
+### Step 3 — The points gap
+
+```
+Paid Search:   +10.6%
+Peer set:      −17.5%
+Gap:            10.6 − (−17.5) = +28.1 points
+```
+
+**Paid Search finished 28.1 points ahead of the rest of the channel mix.**
+
+### Step 4 — Turn that into volume
+
+Points are hard to act on. So: what would Paid Search have looked like if it had behaved like everything else?
+
+```
+Apply the peer rate to Paid Search's starting point:
+446,463 × (1 − 0.175) = 368,527
+```
+
+That's the counterfactual. Now compare it to reality:
+
+```
+Actual:            493,775
+Would have been:   368,527
+Excess:           +125,248
+```
+
+**125,248 UPV exists only because Paid Search moved against the tide.**
+
+### How to say it out loud
+
+> Every other channel dropped about 17% this week. Paid Search went up 10%. If it had dropped with everything else it would have come in around 369,000. It came in at 494,000. So roughly 125,000 visits are down to something happening specifically in Paid Search.
+
+### The same four steps on SMS, for contrast
+
+```
+1. SMS:        31,094 vs 202,108     →  −84.6%
+2. Peer set:   1,513,906 vs 1,517,892 →   −0.3%
+3. Gap:        −84.6 − (−0.3)         =  −84.4 points
+4. Would have been: 202,108 × 0.997   =  201,577
+   Excess:     31,094 − 201,577       =  −170,483
+```
+
+The rest of the channels were flat. SMS fell off a cliff. Nothing systemic is going on, so the answer is entirely inside SMS.
+
+### Two things the engineers need to know
+
+**The peer set always uses the four-week trend**, whatever comparison the user has picked on screen. The example above uses prior week because it's easier to follow.
+
+**Step 2 cannot be done by subtraction on real data.** It worked here because the sample file was built so the channels add up. Real UPV doesn't: one person visits through search and direct in the same week and counts in both, so the channels sum to more than the topline. Subtracting Paid Search from 1,720,000 would give the wrong peer figure.
+
+On EDL, step 2 means going back to the visit-level table and counting distinct visitors across all channels except Paid Search. Then repeating that for every channel, every breakout, every metric, every week. Page views is the only metric where the shortcut is valid.
