@@ -3160,3 +3160,44 @@ END AS property
 Your current MIP pipeline uses source_table + page_app_type to distinguish properties, but site_name is the finer-grained signal — especially for separating TLife vs Metro vs TRetail, which all share source_table = 't_app_interactions'.
 
 If downstream consumers need to split Metro from TLife or exclude retail-employee traffic, add site_name to your projection (it's already in your SELECT list — good) and build the property CASE above in a Silver enrichment step.
+
+
+SELECT
+    event_date,
+    site_name,
+    attribute_country,
+    COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE source_table = 't_app_interactions'
+  AND event_date IN (DATE '2026-09-24', DATE '2026-09-29')
+  AND (
+        attribute_country IS NULL
+        OR TRIM(attribute_country) = ''
+        OR attribute_country IN ('METRO','RETAIL','??')
+        OR LENGTH(TRIM(attribute_country)) <> 2
+      )
+GROUP BY event_date, site_name, attribute_country
+ORDER BY event_date, rows DESC;
+
+SELECT
+    event_date,
+    site_name,
+    attribute_country,
+    COUNT(*) AS rows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
+WHERE source_table = 't_app_interactions'
+  AND event_date IN (DATE '2026-09-24', DATE '2026-09-29')
+GROUP BY event_date, site_name, attribute_country
+ORDER BY event_date, rows DESC;
+
+SELECT
+    source_table,
+    channel_name,
+    COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-09-24'
+  AND channel_name IS NOT NULL
+GROUP BY source_table, channel_name
+ORDER BY source_table, rows DESC
+LIMIT 200;
+
