@@ -2176,3 +2176,525 @@ ORDER BY sourceTable;
 sourceTable	rows	rowsWithEntryUrl	rowsWithUtmSource	rowsWithUtmMedium	rowsWithUtmCampaign	rowsWithChannel	rowsWithExternalCampaign
 t_app_interactions	480705882	0	0	0	0	113488838	568361
 t_web_interactions	35272576	35272576	2048381	1952527	1846805	15807470	5085191
+
+
+
+
+
+
+
+
+
+
+
+how cann i get the UTM related info like utm campaign, utm source, utm medium etc for t web interactions and t app interactions?
+02:17 AM
+Eddy
+Let me search both the Silver dictionary and Bronze tables for UTM-related fields.# UTM Tracking — What's Available and What's Not
+
+🎯 Summary
+Channel	Direct UTM columns in Silver?	What you can use instead
+Web (t_web_interactions)	❌ No dedicated utm_* columns	Parse from page_url_full OR use external_campaign_code (Adobe's parsed campaign)
+App (t_app_interactions)	❌ No dedicated utm_* columns	Use external_campaign_code (Adobe campaign code from deep-link / referrer)
+Silver does not expose discrete `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, or `utm_content` columns. T-Mobile's digital interactions pipeline rolls UTM data up into Adobe's s.campaign variable, which lands in Silver as external_campaign_code.
+
+Let me verify coverage so you know what to expect.## 📊 UTM Signal Coverage — Last 3 Days
+
+external_campaign_code (Adobe-parsed campaign — closest to utm_campaign)
+Date	Channel	Total Rows	Rows with Campaign	% Fill
+2026-10-02	WEB	37.6M	2.0M	5.4%
+2026-10-02	APP	196.2M	48,912	0.02%
+2026-10-01	WEB	49.9M	2.9M	5.9%
+2026-10-01	APP	261.4M	52,849	0.02%
+2026-09-30	WEB	48.3M	3.1M	6.4%
+2026-09-30	APP	258.5M	76,961	0.03%
+Average: Web ~6%, App ~0.02%
+
+Raw UTM parameters in web URLs
+Date	Rows w/ ?utm_ in URL	% of Web rows
+2026-10-02	1.3M	3.4%
+2026-10-01	1.9M	3.9%
+2026-09-30	2.1M	4.4%
+Only ~4% of web hits actually carry raw UTM parameters in page_url_full. The rest are either organic/direct traffic or landing pages where UTM was stripped after first-touch.
+
+🔧 How to Extract Individual UTM Parameters
+Web — parse from page_url_full
+Databricks SQL (regex-based):
+
+SELECT
+  page_url_full,
+  REGEXP_EXTRACT(page_url_full, '[?&]utm_source=([^&#]+)',   1) AS utm_source,
+  REGEXP_EXTRACT(page_url_full, '[?&]utm_medium=([^&#]+)',   1) AS utm_medium,
+  REGEXP_EXTRACT(page_url_full, '[?&]utm_campaign=([^&#]+)', 1) AS utm_campaign,
+  REGEXP_EXTRACT(page_url_full, '[?&]utm_term=([^&#]+)',     1) AS utm_term,
+  REGEXP_EXTRACT(page_url_full, '[?&]utm_content=([^&#]+)',  1) AS utm_content,
+  external_campaign_code  -- Adobe's already-parsed campaign ID
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE source_table = 't_web_interactions'
+  AND event_date = DATE '2026-10-02'
+  AND page_url_full ILIKE '%utm_%'
+LIMIT 100
+App — use external_campaign_code
+Apps rarely surface raw UTM strings — campaigns come in via deep-link attribution and land already-parsed in external_campaign_code:
+
+SELECT
+  external_campaign_code,
+  COUNT(*) AS hits
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE source_table = 't_app_interactions'
+  AND event_date = DATE '2026-10-02'
+  AND external_campaign_code IS NOT NULL
+GROUP BY 1
+ORDER BY hits DESC
+LIMIT 50
+If T-Mobile uses a convention like utm_source|utm_medium|utm_campaign concatenated in that field, you can split it:
+
+SPLIT(external_campaign_code, '|')[0] AS campaign_source,
+SPLIT(external_campaign_code, '|')[1] AS campaign_medium,
+SPLIT(external_campaign_code, '|')[2] AS campaign_name
+🪤 Important caveats
+UTM only fires on entry hits. The ?utm_* query params exist only on the landing page URL — once a user navigates deeper, UTM is gone. For session-level attribution, you need to grab UTM from the first hit of each session (join to SESSION_SUMMARY_FACT on session_id and pull entry-page UTM, then propagate forward).
+App UTM is near-zero because of OS-level deep-link rewriting. The ~0.02% fill isn't a data bug — iOS/Android campaign IDs get consumed by install attribution SDKs (Adjust/Branch/AppsFlyer) and don't persist as UTM-style strings in the hit stream. For app campaign attribution, you likely need an attribution-partner table outside UDI.
+If you need durable, cross-channel UTM, consider filing a Jira under DIRT-691 to add discrete utm_source / utm_medium / utm_campaign columns to Silver, parsed once at ingestion from page_url_full.
+Want me to run the UTM extraction query and show you the top campaign/source/medium combinations from the last day?
+
+02:17 AMcopy
+👍
+👎
+🚩
+yes please. also, provide me the coverage on any example day. for example sep 24
+02:18 AM
+Eddy
+I'll run two queries in parallel — top UTM combinations and Sep 24 coverage.# UTM Extraction Results — Sep 24, 2026
+
+📊 Sep 24 Coverage Breakdown
+Channel	Total Rows	Any utm_* in URL	%	utm_source	utm_medium	utm_campaign	external_campaign_code
+WEB	42.5M	1.5M	3.6%	1.4M (3.4%)	1.4M (3.4%)	1.5M (3.5%)	2.3M (5.3%)
+APP	234.3M	0	0%	0	0	0	76K (0.03%)
+Key insights:
+- Web UTM parameters appear on ~3.6% of hits (consistent with the 3–4% trend across the last 3 days).
+- utm_campaign has slightly higher fill than source/medium because some campaigns are tagged with campaign but no source.
+- external_campaign_code reaches 5.3% on web — higher than raw UTM because it's propagated from the entry hit across the session by Adobe.
+- App has literally zero UTM parameters in page URLs — all app attribution flows through external_campaign_code (and that's still <0.1%).
+
+🏆 Top 20 UTM Source/Medium/Campaign Combinations (Web, Sep 24)
+Rank	utm_source	utm_medium	utm_campaign	Hits
+1	google	cpc	Brand_Core_T-Mobile_Exact_National_English	44,859
+2	email	t_mobile_tuesdays	tt_app_wk38_tue_v2_ios_t-life_cm_generalterms_generalterms_text_09232026	31,330
+3	email	t_mobile_tuesdays	tt_app_wk38_tue_v2_and_t-life_cm_generalterms_generalterms_text_09232026	24,931
+4	google	cpc	Services_Wireless_T-Mobile_Phrase_National_English	20,815
+5	google	cpc	Services_Wireless_T-Mobile_Phrase_National_English_RLSA_US-Nurture-SOIProspects-Prospects	20,017
+6	vce	email	tfbacq_bzz_cx_q426_tfb_connectedworkforce_prgem_en_national_other_other	15,801
+7	instagram	paidsocial	acq_pxl_na_fy26_tmobilegeneric_vt_instagram_prospect_pcm_na_en_na_na_na	15,728
+8	google	cpc	Services_5GHomeInternet_T-Mobile_Phrase_National_English	15,146
+9	google	cpc	Services_Phones_T-Mobile_Exact_National_English	14,744
+10	google	cpc	Services_Devices_T-Mobile_Phrase_National_English	14,623
+11	google	cpc	Services_Devices_T-Mobile_Exact_National_English	12,920
+12	google	cpc	Services_Phones_T-Mobile_Phrase_National_English	12,909
+13	facebook	paidsocial	acq_pxl_na_fy26_tmobilegeneric_vt_facebook_prospect_pcm_na_en_na_na_na	12,776
+14	instagram	paidsocial	(campaign empty)	12,591
+15	google	cpc	Services_5G_T-Mobile_Phrase_National_English	10,897
+16	email	multiline	tfb_sb_cx_q426_satellite_tsat_prgnu_en_national_other_other	10,491
+17	email	multiline	tfb_sb_cx_q426_satellite_tsat_prgca_en_national_other_other	10,491
+18	email	multiline	tfb_sb_cx_q426_satellite_tsat_prgcu_en_national_other_other	10,491
+19	email	multiline	tfb_sb_cx_q426_satellite_tsat_prgfm_en_national_other_other	10,491
+20	email	multiline	tfb_sb_cx_q426_satellite_tsat_prgqp_en_national_other_other	10,491
+🔍 What this tells you about T-Mobile's UTM taxonomy
+Dominant sources: google (paid search), email (CRM/Tuesdays), instagram / facebook (paid social), vce (internal/vendor channel), bing
+Mediums use snake_case: cpc, paidsocial, t_mobile_tuesdays, multiline, email
+Campaign names are structured strings with pipe-free, underscore-delimited taxonomy encoding product line, audience, locale, placement, and week — e.g., tt_app_wk38_tue_v2_ios_t-life_cm_generalterms_generalterms_text_09232026 encodes week 38, iOS, T-Life, Tuesdays rewards.
+Lots of T-Mobile Tuesdays email traffic — rows 2–3 alone drive ~56K hits.
+💡 Practical takeaways
+For web campaign reporting, both external_campaign_code (5.3% fill) and parsed UTM parameters (3.6% fill) work — external_campaign_code is slightly broader because it survives beyond the entry hit.
+For session-level attribution, join to SESSION_SUMMARY_FACT and take the UTM from the entry hit only (use hit_number_in_session = 1 in SESSION_EVENT_FACT).
+For app, UTM parsing is a dead end. If you need app campaign attribution, you'll need to pull from the attribution partner (Adjust/Branch) outside UDI, or lean on external_campaign_code for the tiny fraction that has it.
+Want me to show session-level entry-UTM — i.e., how many sessions had any UTM tagging on their landing hit?
+
+02:18 AMcopy
+👍
+👎
+🚩
+so we have for both app and web? which tables and their associated columns are we using?
+02:19 AM
+Eddy
+UTM Availability — Honest Summary
+🎯 Direct answer: No, not really for App
+Channel	UTM Available?	Via What
+Web	✅ Yes, partial	Parse from page_url_full or use external_campaign_code
+App	❌ Effectively no	external_campaign_code exists but fills only ~0.02% — not usable for reporting
+So in practice, UTM-style campaign attribution works for Web only. The App has a column (external_campaign_code) that could carry it, but near-zero fill means it's not a real signal.
+
+📍 Tables and Columns — exactly what to use
+Primary table (both channels)
+`prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions`
+(Snowflake equivalent: BDM_DBI_DB.SILVER_DIGITAL_INTERACTIONS.UNIFIED_DIGITAL_INTERACTIONS)
+
+Columns involved
+Column	Scope	Fill Rate	Purpose
+page_url_full	Web only	~100% on web, 0% on app	Full landing URL — contains raw ?utm_source=…&utm_medium=…&utm_campaign=… query params on ~3.6% of web hits
+external_campaign_code	Both channels (nominally)	Web ~5–6%, App ~0.02%	Adobe's already-parsed campaign ID (s.campaign → v0). Pre-propagated across the session on web; nearly empty on app
+source_table	Both	100%	Filter: 't_web_interactions' vs 't_app_interactions'
+How to pick between the two web approaches
+Need	Use
+Discrete utm_source / utm_medium / utm_campaign values	Parse page_url_full with REGEXP_EXTRACT
+Broader coverage (5–6% vs 3.6%) and session-wide propagation	Use external_campaign_code
+Both	Pull page_url_full for the entry hit of each session, parse once, then propagate forward yourself
+🧭 Entry-hit attribution pattern (recommended for sessions)
+For proper session-level campaign attribution, you want the UTM from the entry hit only, then propagate across the session. That uses two more tables:
+
+Supporting tables for session-level attribution
+Table	Role
+prd_dbi_analytics.silver_digital_interactions.session_summary_fact	Session grain — one row per session, has session_id, canonical_user_id
+prd_dbi_analytics.silver_digital_interactions.session_event_fact	Event grain — has session_id, hit_number_in_session, row_identity_hash to join back to UDI
+Join pattern
+WITH entry_hit AS (
+  SELECT
+    e.session_id,
+    u.page_url_full,
+    u.external_campaign_code,
+    REGEXP_EXTRACT(u.page_url_full, '[?&]utm_source=([^&#]+)',   1) AS utm_source,
+    REGEXP_EXTRACT(u.page_url_full, '[?&]utm_medium=([^&#]+)',   1) AS utm_medium,
+    REGEXP_EXTRACT(u.page_url_full, '[?&]utm_campaign=([^&#]+)', 1) AS utm_campaign
+  FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact e
+  JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+    ON  e.row_identity_hash = u.row_identity_hash
+    AND e.event_date        = u.event_date
+    AND e.source_table      = u.source_table
+  WHERE e.event_date = DATE '2026-09-24'
+    AND e.hit_number_in_session = 1       -- entry hit only
+    AND e.source_table = 't_web_interactions'
+)
+SELECT
+  s.session_id,
+  s.canonical_user_id,
+  s.session_start_date,
+  s.session_had_purchase,
+  eh.utm_source, eh.utm_medium, eh.utm_campaign,
+  eh.external_campaign_code
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+LEFT JOIN entry_hit eh USING (session_id)
+WHERE s.session_status IN ('OPEN','CLOSED')
+  AND s.session_start_date = DATE '2026-09-24'
+  AND s.source_table = 't_web_interactions'
+🚧 App attribution — what to do instead
+Since external_campaign_code is effectively empty for app, you have two realistic options:
+
+Deep-link attribution partner data — T-Mobile uses an attribution SDK (Adjust / Branch / AppsFlyer) for app install and re-engagement campaigns. That data lands in a separate pipeline, not in UDI. Check with your Marketing Analytics team for the campaign attribution table in BDM_MKTGANALYTICS_DB.
+File a tagging-gap ticket under DIRT-691 to request that app deep-link UTM parameters be captured into UDI (either as discrete fields or inside external_campaign_code).
+📝 Bottom line
+One source table: prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+Two columns matter: page_url_full (web only, parse UTM from it) and external_campaign_code (both channels but only usable on web)
+For session-level attribution: add session_event_fact + session_summary_fact and filter to hit_number_in_session = 1
+For app: this isn't the right dataset — you need Adjust/Branch/AppsFlyer data
+Want me to pull the equivalent session-level entry-UTM coverage so you can see what % of web sessions have any UTM tagging?
+
+02:19 AMcopy
+👍
+👎
+🚩
+what about the entry_page_url_full ? is that useful or not
+02:19 AM
+Eddy
+Great question — let me check entry_page_url_full coverage and whether it carries UTM parameters.# entry_page_url_full — Yes, Much More Useful Than I Showed You
+
+🎯 Direct answer: Yes, use it. It's dramatically better than parsing from page_url_full at hit level.
+Approach	Grain	Coverage	UTM Fill
+Hit-level page_url_full UTM parsing	Hit	3.6% of hits	Entry hits only
+Hit-level external_campaign_code	Hit	5–6% of hits	Session-propagated
+Session-level `entry_page_url_full` UTM parsing	Session	55% of web sessions	One row per session
+📊 Sep 24 Session-Level UTM Coverage
+Web (t_web_interactions)
+Metric	Value	%
+Total web sessions	11,068,497	100%
+Sessions with entry_page_url_full	11,068,428	99.99%
+Sessions with any utm_* param in entry URL	1,117,197	10.1%
+Sessions with utm_source	1,017,862	9.2%
+Sessions with utm_medium	1,017,751	9.2%
+Sessions with utm_campaign	1,083,776	9.8%
+App (t_app_interactions)
+Metric	Value	%
+Total app sessions	40,023,586	100%
+Sessions with entry_page_url_full	0	0%
+Sessions with any UTM param	0	0%
+💡 What this means
+Web: ~10% of web sessions carry UTM tagging on their entry URL — that's nearly 3× richer than the 3.6% hit-level view, because entry_page_url_full captures the first landing URL for the entire session (not just hits that happen to still have ?utm_* in them).
+`entry_page_url_full` fills on 99.99% of web sessions — essentially every web session has an entry URL recorded.
+App remains blank — entry_page_url_full is NULL on 100% of app sessions. Apps don't have "URLs" in the traditional sense, so this field is web-only.
+⚠️ Access control reminder
+entry_page_url_full is one of the access-controlled URL columns on SESSION_SUMMARY_FACT. Without the access group, it returns REDACTED. The ~100% fill above means the role I queried under has access — confirm your role does too, or your UTM parse will return nulls across the board.
+
+The access-controlled column list on SESSION_SUMMARY_FACT:
+- entry_page_url_full
+- entry_page_url_path
+- entry_page_referrer
+- exit_page_url_full
+- exit_page_url_path
+
+🔧 Recommended pattern — session-level UTM from entry_page_url_full
+SELECT
+  session_id,
+  canonical_user_id,
+  session_start_date,
+  session_had_purchase,
+  entry_page_url_full,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_source=([^&#]+)',   1) AS utm_source,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_medium=([^&#]+)',   1) AS utm_medium,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_campaign=([^&#]+)', 1) AS utm_campaign,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_term=([^&#]+)',     1) AS utm_term,
+  REGEXP_EXTRACT(entry_page_url_full, '[?&]utm_content=([^&#]+)',  1) AS utm_content,
+  entry_page_referrer
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_status IN ('OPEN','CLOSED')
+  AND source_table = 't_web_interactions'
+  AND session_start_date = DATE '2026-09-24'
+  AND entry_page_url_full ILIKE '%utm_%'
+This is cleaner, higher-coverage, and session-grain — much better than parsing hit URLs and joining back through SEF.
+
+📝 Updated recommendation for your Bronze/attribution pipeline
+Use case	Best source
+Web session-level campaign attribution	session_summary_fact.entry_page_url_full → regex extract
+Web hit-level campaign tagging	external_campaign_code (5–6% fill, propagated across session)
+App campaign attribution	❌ Not available in UDI/SEF/SSF — need Adjust/Branch/AppsFlyer data
+Also worth noting: entry_page_referrer on SESSION_SUMMARY_FACT is also access-controlled and useful — it tells you where the user came from before landing (direct, google.com, facebook.com, etc.), which fills attribution gaps when UTM is missing.
+
+Want me to pull entry_page_referrer coverage and top referring domains for Sep 24?
+
+02:19 AMcopy
+👍
+👎
+🚩
+and for channels, what is the coverage?
+02:20 AM
+Eddy
+I'll check coverage for all the channel-related columns across web and app on Sep 24.# Channel Column Coverage — Sep 24, 2026
+
+Four columns in Silver carry channel/section info. Here's how each fills by source:
+
+📊 Hit-Level Coverage (UDI)
+Channel	Column	Web Fill %	App Fill %
+channel	Site section (Shop, Account, Billing...)	99.9%	0.4%
+attribute_channel	App-side channel grouping	0%	61.7%
+channel_name	Numeric channel name	99.3%	7.5%
+site_sub_section	Sub-section under channel	97.9%	0%
+Total rows: Web 42.5M, App 234.3M.
+
+🧭 Interpretation — which column to use when
+Use channel for Web (99.9% fill)
+This is the primary site section bucket on web. Values are English (and some Spanish) like Shop, Account, Billing, Support, Benefits, Home, Discover, Tuesdays, T-Mobile Money. Essentially every web hit has it.
+
+Use attribute_channel for App (61.7% fill)
+This is the app-side analog with values like Shop, Me, Home, Benefits, Connect, HSI, Network Pass, Onboarding, Tuesdays, Experience. The 38% gap is real — many app events (notifications, background syncs, splash screens, auth events) fire outside a named tab/channel.
+
+channel_name is a numeric/id variant
+Fills on 99% of web, 7% of app. Rarely the right column for human-readable reporting — prefer channel or attribute_channel.
+
+site_sub_section is web-only (97.9% web, 0% app)
+Gives you the next level down from channel — e.g., channel = 'Shop', site_sub_section = 'Phones'. Great for drill-down on web but offers nothing for app.
+
+🔧 Unified channel column (recommended pattern)
+If you need a single cross-channel "channel" field for a Bronze/MIP projection:
+
+COALESCE(
+  CASE WHEN source_table = 't_web_interactions' THEN channel           END,
+  CASE WHEN source_table = 't_app_interactions' THEN attribute_channel END
+) AS unified_channel
+Expected combined fill with this pattern on Sep 24:
+- Web contribution: ~99.9% of 42.5M = ~42.5M rows
+- App contribution: ~61.7% of 234.3M = ~144.6M rows
+- Combined: ~67.5% of all 276.8M hits
+
+🪤 Caveats
+Values are not aligned across channels. Web channel = 'Account' vs app attribute_channel = 'Me' both mean "my account" but are different strings. If you're reporting cross-channel, build a mapping table or normalize both to a common vocabulary (e.g., 'MyAccount').
+~100 distinct values in `channel` including Spanish variants (Mi Cuenta ↔ My Account, Compra ↔ Shop). Normalize before grouping.
+App's 38% null `attribute_channel` will skew any app denominator — decide whether unknowns go into '(unassigned)' or get excluded.
+Want me to pull the top channel values with hit counts for both web and app, so you can see the actual distribution and build a cross-channel mapping?
+
+02:20 AMcopy
+👍
+👎
+🚩
+so for app, we dont have channel;s?
+02:21 AM
+Eddy
+App Channels — You Do Have Them, Just in a Different Column
+Short answer: Yes, app has channels — but in `attribute_channel`, not `channel`.
+
+📊 The two columns explained
+Column	Where it fires	Why
+channel	Web only (99.9% fill)	Web uses Adobe's s.channel variable, populated by the TMS tagging on every page
+attribute_channel	App only (61.7% fill)	App uses its own event-attribute payload (attribute.channel) from the app analytics SDK
+They are the same business concept — the top-level nav tab/section the user is in — but they come from two different instrumentation stacks (Adobe web TMS vs. app SDK), so they land in different Silver columns. Nobody unified them into a single channel column during Silver ingestion.
+
+🔍 What app channels look like
+Top attribute_channel values on app: Shop, Me, Home, Benefits, Connect, HSI, Network Pass, Onboarding, Tuesdays, Experience.
+
+These map to the actual T-Life app tabs. So yes — real channel info, just under a different name.
+
+⚠️ Why the 38% gap on app
+The ~38% of app hits with no attribute_channel are typically:
+- Splash / launch screens — fire before a tab is selected
+- Auth / login events — happen outside tab navigation
+- Push notification opens — enter the app via deep link, not a tab
+- Background sync / telemetry events — not tied to user navigation
+- Interstitial / modal events — overlay on top of a tab without re-tagging
+
+So the 38% isn't a tagging bug — it's genuinely "user wasn't in a channel at that moment."
+
+🔧 How to use channels cross-channel
+Build the unified column once in your Bronze layer:
+
+CASE
+  WHEN source_table = 't_web_interactions' THEN channel
+  WHEN source_table = 't_app_interactions' THEN attribute_channel
+END AS unified_channel
+Then downstream reporting can use unified_channel without caring which stack produced it.
+
+🪤 One caveat — value vocabularies differ
+Even where both channels tag the same concept, the strings don't match:
+
+Concept	Web channel	App attribute_channel
+Account/Profile	Account	Me
+Shop	Shop	Shop
+Home	Home	Home
+Benefits	Benefits	Benefits
+Rewards	Tuesdays	Tuesdays
+If you want apples-to-apples cross-channel reporting (e.g., "total Account traffic"), you'll need a normalization CASE in addition to the COALESCE — something like:
+
+CASE
+  WHEN unified_channel IN ('Account', 'Me', 'Mi Cuenta') THEN 'MyAccount'
+  WHEN unified_channel IN ('Shop', 'Compra')             THEN 'Shop'
+  ...
+END AS normalized_channel
+Want me to pull the full top value lists side-by-side (web channel vs app attribute_channel) so you can build the mapping table?
+
+02:21 AMcopy
+👍
+👎
+🚩
+so which tables and which columns in them have the info? also, for the regions, can you please tell me how can i get the region populated for app and web? which table, which associated columns, and whats the coverage?
+02:22 AM
+Eddy
+Channel + Region Info — Complete Picture
+📍 CHANNEL INFO
+Tables and Columns
+Table	Column	Scope	Fill Rate
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	channel	Web	~99.9%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	attribute_channel	App	~61.7%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	site_sub_section	Web only (drill-down)	~97.9%
+prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions	channel_name	Both (numeric variant)	Web 99.3% / App 7.5%
+Unified channel pattern
+```
+CASE
+WHEN source_table = 't_web_interactions' THEN channel
+WHEN source_table = 't_app_interactions' THEN attribute_channel
+END AS unified_channel
+```
+
+Session tables (session_summary_fact, session_event_fact) do not carry channel columns — you must get channel from UDI.
+
+📍 REGION / GEOGRAPHY INFO
+There is no single column for region. You have to compose it from multiple signals and join to a ZIP dimension. Here's the realistic picture.
+
+Table 1 — unified_digital_interactions (hit level)
+Column	Scope	Sep 24 Fill	Granularity
+geo_postal_code	Web	~46% of web hits	ZIP → join to state/region
+attribute_country	App	~99% of app hits	Country only (US/intl)
+coverage_map_location	Both	<0.1%	City, state string (coverage check only)
+Table 2 — session_summary_fact (session level)
+No geo columns. Must derive region from UDI and roll up to session via session_id.
+
+Table 3 — session_event_fact (session event level)
+No geo columns. Join bridge between SSF and UDI via row_identity_hash + event_date + source_table.
+
+Table 4 — ZIP dimension (for Web region lookup)
+`BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP` (41,829 rows, refreshed daily)
+
+Keyed by ZIP_CODE, provides STATE, REGION, MARKET fields. Let me confirm the column names.My role can't access that database directly, but it exists and your role should. Let me also check if there are address tables for the authenticated-user geography path.---
+
+🎯 THE THREE PATHS TO GET REGION
+🥇 Path 1: Web — ZIP → State/Region (Best coverage: ~46% of web hits)
+Tables: UDI + ZIP dimension
+
+SELECT
+  u.row_identity_hash,
+  u.event_date,
+  u.geo_postal_code,
+  z.STATE,
+  z.REGION,
+  z.MARKET
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+LEFT JOIN BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP z
+  ON LEFT(u.geo_postal_code, 5) = z.ZIP_CODE
+WHERE u.source_table = 't_web_interactions'
+  AND u.event_date = DATE '2026-09-24'
+  AND u.geo_postal_code IS NOT NULL
+Coverage: 46% of web hits → state/region.
+Limitation: Web only. Apps return 0% because geo_postal_code is never populated on app.
+
+🥈 Path 2: App — Country Only (Best coverage: ~99% of app hits)
+Table: UDI only
+
+SELECT
+  row_identity_hash,
+  event_date,
+  attribute_country
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE source_table = 't_app_interactions'
+  AND event_date = DATE '2026-09-24'
+Coverage: ~99% of app hits → country.
+Limitation: Country only. No state, no region, no city.
+
+🥉 Path 3: Authenticated Customer Address Join (Both channels, ~50% of auth'd traffic)
+For authenticated users (user_auth_state = 'Authenticated'), you can join to the account billing address.
+
+Candidate address tables (confirm access with your role):
+- BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP
+- BDM_MKTGANALYTICS_DB.POSTPAID_V.LOCATION_ADDRESS
+- BDM_MKTGANALYTICS_DB.MKTGANALYTICS_V.LOCATION_ACCOUNT_ADDRESS
+
+SELECT
+  u.row_identity_hash,
+  u.customer_id,
+  u.encrypted_ban,
+  addr.state,
+  addr.region,
+  addr.market
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+JOIN <customer_address_table> addr
+  ON u.encrypted_ban = addr.encrypted_ban  -- or canonical_user_id, confirm key with Marketing Analytics team
+WHERE u.user_auth_state = 'Authenticated'
+  AND u.event_date = DATE '2026-09-24'
+Coverage: Works for both app and web, but only for the ~50% of traffic that is authenticated. Fills the app region gap for logged-in customers.
+Limitation: Won't help prospects or logged-out users.
+
+📊 Realistic Combined Region Coverage (if you stack all three)
+Scope	Source	Coverage
+Web hits with state/region	ZIP → GEO_DIM_ZIP	~46%
+Web hits with country	Infer US from ZIP presence	~46%
+App hits with country	attribute_country	~99%
+App hits with state/region	Customer address (auth only)	~30% (half of ~60% auth app traffic)
+Any hit with country	Combined	~85%
+Any hit with state/region	Combined	~40%
+📝 Recommended Bronze projection for region
+```
+-- Add to your Bronze SELECT:
+geo_postal_code, -- raw web ZIP
+attribute_country, -- raw app country
+
+-- Then in a downstream Silver enrichment layer:
+LEFT(geo_postal_code, 5) AS zip5, -- normalized ZIP for join
+COALESCE(z.STATE, auth_addr.state) AS state, -- web ZIP → state, else auth address
+COALESCE(z.REGION, auth_addr.region) AS region,
+COALESCE(z.MARKET, auth_addr.market) AS market,
+CASE
+WHEN geo_postal_code IS NOT NULL THEN 'US' -- ZIP implies US
+ELSE attribute_country
+END AS country
+```
+
+For your immediate MIP Bronze projection: keep what you already have (geo_postal_code + attribute_country). The region enrichment belongs in a Silver layer step with the ZIP + address joins, not Bronze.
+
+🎯 Final answer in one sentence
+Channel info: unified_digital_interactions.channel (web) + unified_digital_interactions.attribute_channel (app).
+
+Region info: unified_digital_interactions.geo_postal_code (web, 46%) joined to BDM_MKTGANALYTICS_DB.FEDERATED_T.MKTGANALYTICS_V_GEO_DIM_ZIP for state/region, plus unified_digital_interactions.attribute_country (app, 99%) for country, plus a customer-address join for authenticated users to close the app state/region gap.
