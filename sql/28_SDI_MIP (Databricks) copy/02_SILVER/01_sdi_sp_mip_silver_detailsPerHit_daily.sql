@@ -47,17 +47,32 @@
 --   event_cart_add, event_cart_checkout.
 
 --   Assisted-order logic retains page_shipping_options.
+
 --
+
 -- CHANNEL CONTRACT:
+
 --   channelName = exact UDI channel_name acquisition value. Values such as
+
 --   Paid Search: Brand, Paid Search: PLAs and Paid Search: Non-Brand remain
+
 --   separate. navigationChannel/appChannel are different navigation-context
+
 --   fields and are not substituted for the marketing Channel breakout.
+
 --
+
 -- UTM CONTRACT:
---   Web utmSource/utmMedium/utmCampaign are parsed from SSF entry_page_url_full
---   and propagated to the session's hits. App entry URLs are normally NULL, so
---   App UTM values legitimately remain (not set).
+
+--   Bronze SESSION_SUMMARY_FACT parses raw utm_source/utm_medium/utm_campaign
+
+--   ONCE per session from entry_page_url_full. This hit layer only propagates
+
+--   those helpers to session hits and maps NULL/blank to '(not set)'.
+
+--   No URL parsing is repeated at hit grain. Exact raw UTM values are preserved;
+
+--   no normalization or marketing-channel remapping is applied here.
 
 --
 
@@ -72,16 +87,45 @@
 --   Missing hit geography remains NULL so session-level first-hit/earliest
 
 --   fallback can still resolve geography from a later hit. Source values such
+
 --   as METRO/RETAIL are intentionally preserved until the upstream geo solution
+
 --   changes them.
+
 --
+
 -- PREFLIGHT / VALIDATION CONTRACT:
+
 --   p_validateOnly=TRUE verifies complete Bronze UDI/SEF date coverage, exact
---   SEF->SSF session availability and the marketing snapshot before writing.
+
+--   SEF->SSF session availability, presence of all three Bronze UTM helper
+
+--   columns, and the marketing snapshot before writing.
+
 --
+
+-- PHYSICAL DESIGN / COST CONTRACT:
+
+--   Liquid clustering intentionally uses the Databricks maximum of four columns:
+
+--     eventDate           -> daily REPLACE WHERE / historical backfill
+
+--     sessionStartDatePst -> Silver 02/03 session-window filters
+
+--     sessionId           -> downstream session joins
+
+--     sourceTable         -> Web/App pruning and diagnostics
+
+--   No OPTIMIZE is forced inside this high-volume procedure.
+
+--
+
 -- PEER / IMPACT CONTRACT:
+
 --   No peer-set or impact-on-topline calculation belongs at hit grain. Exact
+
 --   hit-level channelName is retained so a future peer-membership Silver can be
+
 --   derived later without changing this source contract.
 
 -- ============================================================================
@@ -127,6 +171,8 @@ BEGIN
     DECLARE v_sefDateCount BIGINT DEFAULT 0;
 
     DECLARE v_missingSsfSessionCount BIGINT DEFAULT 0;
+
+    DECLARE v_ssfUtmColumnCount BIGINT DEFAULT 0;
 
     IF p_eventWindowDays IS NULL OR p_eventWindowDays<1 THEN
 
@@ -210,6 +256,26 @@ BEGIN
 
     END IF;
 
+    SET v_ssfUtmColumnCount=(
+
+        SELECT COUNT(*)
+
+        FROM prdrzranalytics.information_schema.columns
+
+        WHERE table_schema='lab42'
+
+          AND table_name='sdi_tbl_mip_bronze_edlSessionSummaryFact_daily'
+
+          AND column_name IN ('utm_source','utm_medium','utm_campaign')
+
+    );
+
+    IF v_ssfUtmColumnCount<>3 THEN
+
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Bronze SESSION_SUMMARY_FACT is missing one or more parsed UTM helper columns. Deploy/run updated Bronze 03 before Silver detailsPerHit.';
+
+    END IF;
+
     IF NOT EXISTS (
 
         SELECT 1
@@ -239,6 +305,8 @@ BEGIN
             v_sefDateCount AS bronzeSefDateCount,
 
             v_missingSsfSessionCount AS missingBronzeSsfSessions,
+
+            v_ssfUtmColumnCount AS bronzeSsfUtmHelperColumnCount,
 
             'Bronze UDI + SEF + SSF + Marketing Code' AS sourceObjects,
 
@@ -392,9 +460,14 @@ BEGIN
 
         USING DELTA
 
-        CLUSTER BY (sessionStartDatePst,sourceTable)
+        CLUSTER BY (eventDate,sessionStartDatePst,sessionId,sourceTable)
 
-        COMMENT 'Silver: one enriched row per valid sessionized UDI hit. NBV qualification occurs at session grain downstream.';
+        COMMENT 'Silver: one enriched row per valid sessionized UDI hit. NBV qualification occurs at session grain downstream. Liquid clustering supports event-date rebuilds and downstream session-grain access.';
+
+        -- Enforce the current four-column liquid-clustering contract for an
+        -- already-existing table as well. Existing files are not force-rewritten.
+        ALTER TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+        CLUSTER BY (eventDate,sessionStartDatePst,sessionId,sourceTable);
 
         WITH marketingCodeResolved AS (
 
@@ -480,7 +553,13 @@ BEGIN
 
                 s.entry_page_url_path,
 
-                s.entry_page_url_full
+                s.entry_page_url_full,
+
+                s.utm_source,
+
+                s.utm_medium,
+
+                s.utm_campaign
 
             FROM scopedLinks l
 
@@ -525,6 +604,12 @@ BEGIN
                 l.entry_page_url_path,
 
                 l.entry_page_url_full,
+
+                l.utm_source,
+
+                l.utm_medium,
+
+                l.utm_campaign,
 
                 h.customer_id,
 
@@ -952,71 +1037,11 @@ BEGIN
 
             cast(n.entry_page_url_full AS STRING) AS sessionEntryPageUrlFull,
 
-            coalesce(
+            coalesce(nullif(trim(cast(n.utm_source AS STRING)),''),'(not set)') AS utmSource,
 
-                nullif(try_parse_url(
+            coalesce(nullif(trim(cast(n.utm_medium AS STRING)),''),'(not set)') AS utmMedium,
 
-                    CASE
-
-                        WHEN lower(coalesce(n.entry_page_url_full,'')) LIKE 'http%' THEN n.entry_page_url_full
-
-                        WHEN nullif(trim(n.entry_page_url_full),'') IS NOT NULL THEN concat('https://',n.entry_page_url_full)
-
-                        ELSE NULL
-
-                    END,
-
-                    'QUERY','utm_source'
-
-                ),''),
-
-                '(not set)'
-
-            ) AS utmSource,
-
-            coalesce(
-
-                nullif(try_parse_url(
-
-                    CASE
-
-                        WHEN lower(coalesce(n.entry_page_url_full,'')) LIKE 'http%' THEN n.entry_page_url_full
-
-                        WHEN nullif(trim(n.entry_page_url_full),'') IS NOT NULL THEN concat('https://',n.entry_page_url_full)
-
-                        ELSE NULL
-
-                    END,
-
-                    'QUERY','utm_medium'
-
-                ),''),
-
-                '(not set)'
-
-            ) AS utmMedium,
-
-            coalesce(
-
-                nullif(try_parse_url(
-
-                    CASE
-
-                        WHEN lower(coalesce(n.entry_page_url_full,'')) LIKE 'http%' THEN n.entry_page_url_full
-
-                        WHEN nullif(trim(n.entry_page_url_full),'') IS NOT NULL THEN concat('https://',n.entry_page_url_full)
-
-                        ELSE NULL
-
-                    END,
-
-                    'QUERY','utm_campaign'
-
-                ),''),
-
-                '(not set)'
-
-            ) AS utmCampaign,
+            coalesce(nullif(trim(cast(n.utm_campaign AS STRING)),''),'(not set)') AS utmCampaign,
 
             cast(n.page_url_path AS STRING) AS hitPageUrlPath,
 
@@ -1269,3 +1294,20 @@ END;
 -- GROUP BY sourceTable,platform,pageLayoutState,operatingSystem,device,geoPostalCode,geoCountry,geoRegion
 
 -- ORDER BY hitRows DESC;
+
+-- --------------------------------------------------------------------------
+-- F. VALIDATION 4: BRONZE->SILVER UTM PROPAGATION
+-- Expected: every hit in a session carries one consistent session-entry value.
+-- --------------------------------------------------------------------------
+-- SELECT
+--     sessionId,
+--     COUNT(DISTINCT utmSource) AS distinctUtmSourceValues,
+--     COUNT(DISTINCT utmMedium) AS distinctUtmMediumValues,
+--     COUNT(DISTINCT utmCampaign) AS distinctUtmCampaignValues
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+-- WHERE sessionStartDatePst = DATE '2026-10-02'
+-- GROUP BY sessionId
+-- HAVING distinctUtmSourceValues>1
+--     OR distinctUtmMediumValues>1
+--     OR distinctUtmCampaignValues>1
+-- LIMIT 100;
