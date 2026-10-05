@@ -406,4 +406,3 @@ END;
 --     COUNT_IF(metricName='nbv' AND metricLabel<>'Total NBV') AS invalidNbvLabelRows
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
 -- WHERE targetWeekStartDate = DATE '2026-09-27';
-
