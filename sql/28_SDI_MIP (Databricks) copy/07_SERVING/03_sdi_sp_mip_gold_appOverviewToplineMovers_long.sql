@@ -40,6 +40,11 @@
 --   - Synthetic Top100 remainder '(Other)' buckets do NOT receive a peer value;
 --     peer counterfactuals are overlapping/non-additive and must never be summed.
 --
+-- FOUR-WEEK COMPLETENESS CONTRACT:
+--   - A 4-wk trend is usable only when fourWeekTrendWeekCount = 4.
+--   - Partial 1-3 week baselines never produce a fourWeekValue, impact or rank.
+--   - No persisted/API-facing columns are added, removed, renamed or reordered.
+--
 -- IMPACT-ON-TOPLINE CONTRACT:
 --   comparisonType controls impact:
 --     count -> 100 * (slice current - slice comparison) / topline comparison
@@ -319,9 +324,9 @@ BEGIN
                     ELSE priorWeekNumerator
                 END AS toplinePriorWeekValue,
                 CASE
+                    WHEN fourWeekTrendWeekCount<>4 THEN NULL
                     WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
-                    WHEN fourWeekTrendWeekCount>0 THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
-                    ELSE NULL
+                    ELSE try_divide(fourWeekTrendNumerator,4D)
                 END AS toplineFourWeekValue,
                 CASE
                     WHEN metricKind='ratio' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
@@ -343,9 +348,9 @@ BEGIN
                     ELSE priorWeekNumerator
                 END AS priorWeekValue,
                 CASE
-                    WHEN fourWeekTrendWeekCount<=0 THEN NULL
+                    WHEN fourWeekTrendWeekCount<>4 THEN NULL
                     WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
-                    ELSE try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
+                    ELSE try_divide(fourWeekTrendNumerator,4D)
                 END AS fourWeekValue,
                 CASE
                     WHEN NOT sameWeekLyDataAvailable THEN NULL
@@ -375,7 +380,7 @@ BEGIN
                 'fourWeek' AS comparisonType,
                 '4-wk trend' AS comparisonLabel,
                 20 AS comparisonSortOrder,
-                r.fourWeekTrendWeekCount>0 AS comparisonDataAvailable,
+                r.fourWeekTrendWeekCount=4 AS comparisonDataAvailable,
                 r.fourWeekValue AS selectedComparisonValue,
                 r.fourWeekTrendNumerator AS selectedComparisonNumerator,
                 r.fourWeekTrendDenominator AS selectedComparisonDenominator
@@ -574,9 +579,9 @@ BEGIN
                     ELSE priorWeekNumerator
                 END AS priorWeekValue,
                 CASE
+                    WHEN fourWeekTrendWeekCount<>4 THEN NULL
                     WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
-                    WHEN fourWeekTrendWeekCount>0 THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
-                    ELSE NULL
+                    ELSE try_divide(fourWeekTrendNumerator,4D)
                 END AS fourWeekValue,
                 CASE
                     WHEN metricKind='ratio' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)

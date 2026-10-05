@@ -45,6 +45,12 @@
 --     peer fields are intentionally NULL because peer counterfactuals are
 --     overlapping/non-additive and cannot be summed.
 --
+-- FOUR-WEEK COMPLETENESS CONTRACT:
+--   - fourWeekDataAvailable retains its API meaning: at least one baseline week exists.
+--   - fourWeekWindowComplete requires exactly four baseline weeks.
+--   - A four-week value/comparison/impact/rank is emitted only when BOTH the
+--     intersection and topline have complete four-week windows.
+--
 -- SCHEMA / API COMPATIBILITY:
 --   This is a logic-only correction. Existing App/API columns remain unchanged.
 -- ============================================================================
@@ -312,8 +318,8 @@ BEGIN
                 CASE WHEN NOT priorWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(priorWeekNumerator,priorWeekDenominator) ELSE priorWeekNumerator END AS priorWeekValue,
                 fourWeekWeekCount>0 AS fourWeekDataAvailable,
                 fourWeekWeekCount=4 AS fourWeekWindowComplete,
-                CASE WHEN fourWeekWeekCount<=0 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekNumerator,fourWeekDenominator)
-                     ELSE try_divide(fourWeekNumerator,cast(fourWeekWeekCount AS DOUBLE)) END AS fourWeekValue,
+                CASE WHEN fourWeekWeekCount<>4 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekNumerator,fourWeekDenominator)
+                     ELSE try_divide(fourWeekNumerator,4D) END AS fourWeekValue,
                 CASE WHEN NOT lastYearDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(lastYearNumerator,lastYearDenominator) ELSE lastYearNumerator END AS lastYearValue,
                 CASE WHEN metricKind='ratio' THEN try_divide(peerSetNumerator,peerSetDenominator) ELSE peerSetNumerator END AS peerSetValue,
                 CASE WHEN metricKind='ratio' THEN peerSetNumerator IS NOT NULL AND nullif(peerSetDenominator,0D) IS NOT NULL
@@ -357,8 +363,8 @@ BEGIN
                 *,
                 CASE WHEN NOT thisWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(thisWeekNumerator,thisWeekDenominator) ELSE thisWeekNumerator END AS toplineCurrentValue,
                 CASE WHEN NOT priorWeekDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(priorWeekNumerator,priorWeekDenominator) ELSE priorWeekNumerator END AS toplinePriorWeekValue,
-                CASE WHEN fourWeekTrendWeekCount<=0 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
-                     ELSE try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE)) END AS toplineFourWeekValue,
+                CASE WHEN fourWeekTrendWeekCount<>4 THEN NULL WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                     ELSE try_divide(fourWeekTrendNumerator,4D) END AS toplineFourWeekValue,
                 CASE WHEN NOT sameWeekLyDataAvailable THEN NULL WHEN metricKind='ratio' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator) ELSE sameWeekLyNumerator END AS toplineLastYearValue
             FROM toplineBase
         ),
@@ -388,7 +394,7 @@ BEGIN
             UNION ALL
             SELECT
                 j.*,'fourWeek','4-wk trend',20,
-                j.fourWeekDataAvailable AND j.toplineFourWeekWeekCount>0,
+                j.fourWeekWindowComplete AND j.toplineFourWeekWeekCount=4,
                 j.fourWeekWindowComplete AND j.toplineFourWeekWeekCount=4,
                 j.fourWeekAbsoluteDiffValue,j.fourWeekNumerator,j.fourWeekDenominator,
                 j.toplineFourWeekValue,j.toplineFourWeekDenominator

@@ -34,6 +34,12 @@
 --   - Peer set is always four-week based regardless of which comparator the UI
 --     chooses for ranking / impact on topline.
 --
+-- FOUR-WEEK COMPLETENESS CONTRACT:
+--   - fourWeekDataAvailable retains its API meaning: at least one baseline week exists.
+--   - fourWeekWindowComplete requires exactly four baseline weeks.
+--   - four-week values, impact and ranks are NULL unless both the intersection
+--     and topline have complete four-week windows.
+--
 -- SCHEMA / API COMPATIBILITY:
 --   Existing App/API columns are unchanged.
 -- ============================================================================
@@ -305,9 +311,9 @@ BEGIN
                      ELSE b.priorWeekNumerator END AS priorWeekValue,
                 b.fourWeekTrendWeekCount>0 AS fourWeekDataAvailable,
                 b.fourWeekTrendWeekCount=4 AS fourWeekWindowComplete,
-                CASE WHEN b.fourWeekTrendWeekCount<=0 THEN NULL
+                CASE WHEN b.fourWeekTrendWeekCount<>4 THEN NULL
                      WHEN b.metricKind='ratio' THEN try_divide(b.fourWeekTrendNumerator,b.fourWeekTrendDenominator)
-                     ELSE try_divide(b.fourWeekTrendNumerator,cast(b.fourWeekTrendWeekCount AS DOUBLE)) END AS fourWeekValue,
+                     ELSE try_divide(b.fourWeekTrendNumerator,4D) END AS fourWeekValue,
                 CASE WHEN NOT b.sameWeekLyDataAvailable THEN NULL
                      WHEN b.metricKind='ratio' THEN try_divide(b.sameWeekLyNumerator,b.sameWeekLyDenominator)
                      ELSE b.sameWeekLyNumerator END AS lastYearValue,
@@ -321,9 +327,9 @@ BEGIN
                 CASE WHEN NOT t.priorWeekDataAvailable THEN NULL
                      WHEN t.metricKind='ratio' THEN try_divide(t.priorWeekNumerator,t.priorWeekDenominator)
                      ELSE t.priorWeekNumerator END AS toplinePriorWeekValue,
-                CASE WHEN t.fourWeekTrendWeekCount<=0 THEN NULL
+                CASE WHEN t.fourWeekTrendWeekCount<>4 THEN NULL
                      WHEN t.metricKind='ratio' THEN try_divide(t.fourWeekTrendNumerator,t.fourWeekTrendDenominator)
-                     ELSE try_divide(t.fourWeekTrendNumerator,cast(t.fourWeekTrendWeekCount AS DOUBLE)) END AS toplineFourWeekValue,
+                     ELSE try_divide(t.fourWeekTrendNumerator,4D) END AS toplineFourWeekValue,
                 CASE WHEN NOT t.sameWeekLyDataAvailable THEN NULL
                      WHEN t.metricKind='ratio' THEN try_divide(t.sameWeekLyNumerator,t.sameWeekLyDenominator)
                      ELSE t.sameWeekLyNumerator END AS toplineLastYearValue,
@@ -358,7 +364,7 @@ BEGIN
                 CASE WHEN currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
                      WHEN changeUnit='pp' THEN 100D*(currentValue-fourWeekValue)
                      WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D) END AS fourWeekChangeRaw,
-                CASE WHEN NOT fourWeekDataAvailable OR toplineFourWeekWeekCount<=0 OR currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
+                CASE WHEN NOT fourWeekWindowComplete OR toplineFourWeekWeekCount<>4 OR currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
                      WHEN metricKind='count' THEN 100D*try_divide(currentValue-fourWeekValue,toplineFourWeekValue)
                      WHEN metricKind='ratio' THEN 100D*(
                          try_divide(thisWeekNumerator,toplineCurrentDenominator)
