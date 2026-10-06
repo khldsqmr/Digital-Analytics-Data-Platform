@@ -3292,3 +3292,30 @@ t_web_interactions	Direct Mail	9478
 t_web_interactions	Retail Store	7420
 t_web_interactions	Direct TV	18
 t_web_interactions	Out Of Home	13
+
+
+
+SELECT
+    MAX(timestampdiff(MINUTE,session_start_time,session_end_time)) AS maxSessionMinutes,
+    percentile_approx(
+        timestampdiff(MINUTE,session_start_time,session_end_time),
+        array(0.50,0.90,0.95,0.99,0.999)
+    ) AS sessionDurationPercentiles
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date = DATE '2026-09-24'
+  AND source_table='t_web_interactions'
+  AND session_status IN ('OPEN','CLOSED');
+
+SELECT
+    session_id,
+    session_start_time,
+    session_end_time,
+    timestampdiff(MINUTE,session_start_time,session_end_time) AS sessionMinutes
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date BETWEEN DATE '2026-09-20' AND DATE '2026-09-24'
+  AND source_table='t_web_interactions'
+  AND session_status='CLOSED'
+  AND timestampdiff(MINUTE,session_start_time,session_end_time)>30
+ORDER BY sessionMinutes DESC
+LIMIT 100;
+
