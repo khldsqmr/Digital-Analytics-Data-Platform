@@ -3309,6 +3309,27 @@ output:
 maxSessionMinutes	sessionDurationPercentiles
 6846	[0,10,21,49,142]
 
+WITH scoped AS (
+    SELECT DISTINCT
+        session_id,
+        event_date
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
+    WHERE event_date BETWEEN DATE '2026-09-24' AND DATE '2026-10-03'
+)
+SELECT
+    datediff(
+        s.event_date,
+        ssf.session_start_date_pst
+    ) AS daysAfterSessionStart,
+    COUNT(*) AS sessionDatePairs
+FROM scoped s
+JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily ssf
+  ON ssf.session_id=s.session_id
+WHERE ssf.session_status IN ('OPEN','CLOSED')
+GROUP BY
+    datediff(s.event_date,ssf.session_start_date_pst)
+ORDER BY daysAfterSessionStart DESC;
+
 SELECT
     session_id,
     session_start_time,
