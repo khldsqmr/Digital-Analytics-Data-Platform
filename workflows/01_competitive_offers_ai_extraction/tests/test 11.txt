@@ -3347,6 +3347,13 @@ daysAfterSessionStart	sessionDatePairs
 2	101
 1	16561335
 0	56408932
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_silver_detailsPerHit_daily(
+    p_asOfDate        => DATE '2026-10-03',
+    p_eventWindowDays => 34,
+    p_validateOnly    => FALSE
+);
+
 SELECT
     session_id,
     session_start_time,
