@@ -1032,3 +1032,6 @@ END;
 --     p_validateOnly => FALSE
 
 -- );
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near 'USING': missing 'WHERE'. SQLSTATE: 42601
