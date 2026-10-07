@@ -3854,19 +3854,23 @@ SELECT COUNT(*)
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date = DATE '2026-10-05';
 
+
+
+
 ================================================================================================
 MIP S01 | SILVER detailsPerHit
-runId             : MAN_20261007T172154Z_F331761A
-objectRunId       : S01_20261007T172154Z_1861A057
-asOfDate          : 2026-10-03
+runId            : MAN_20261007T174031Z_A3AC40BF
+objectRunId      : S01_20261007T174031Z_0F9BBED7
+asOfDate         : 2026-10-03
 eventWindowDays  : 2
+scopeType        : eventDate
 scopeStart       : 2026-10-02
 scopeEnd         : 2026-10-03
 ================================================================================================
-FAILED | objectRunId=S01_20261007T172154Z_1861A057 | duration=0.53 minutes
+FAILED | objectRunId=S01_20261007T174031Z_0F9BBED7 | duration=0.44 minutes
 
 [PARSE_SYNTAX_ERROR] Syntax error at or near ')'. SQLSTATE: 42601
-== SQL (line 677, position 9) ==
+== SQL (line 532, position 9) ==
         EXECUTE IMMEDIATE v_writeSql;
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
