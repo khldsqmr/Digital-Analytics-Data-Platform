@@ -1,6 +1,6 @@
 # Databricks notebook source
 # ============================================================================
-# FILE   : 01b_sdi_nb_mip_bronze_edlUdiHitsRunner_daily.py new
+# FILE   : 01b_sdi_nb_mip_bronze_edlUdiHitsRunner_daily.py
 # NAME   : sdi_nb_mip_bronze_edlUdiHitsRunner_daily
 # OBJECT : B01
 # LAYER  : BRONZE
@@ -14,9 +14,9 @@
 #   runId           : optional; blank = generate a MAN_* run ID
 #
 # IMPORTANT:
-#   Scalar values passed into SQL use Spark named parameter binding rather than
-#   f-string literal construction. Fixed catalog/schema/table names remain
-#   constants in code.
+#   Normal DML uses Spark named parameter binding. The stored-procedure CALL
+#   uses validated DATE/INT literals because this Databricks runtime requires
+#   CALL arguments to be foldable at analysis time.
 #
 # MANUAL:
 #   Fill the widgets and Run All.
@@ -251,20 +251,26 @@ print("=" * 96)
 started = time.perf_counter()
 
 try:
-    # Typed parameter binding avoids manual quoting/conversion inside the notebook.
-    result = spark.sql(
-        f"""
+    # IMPORTANT:
+    # Databricks stored-procedure CALL arguments must be foldable in this
+    # runtime. Spark parameter markers supplied through args= are not accepted
+    # by CALL here ("requirement failed: args must be foldable").
+    #
+    # These two values are safe to render as SQL literals because:
+    #   - as_of_date was parsed strictly as YYYY-MM-DD into a Python date
+    #   - event_window_days was parsed/validated as an integer >= 1
+    #
+    # Keep parameter binding for the surrounding DML statements; only CALL
+    # requires literal rendering in this notebook/runtime.
+    call_sql = f"""
         CALL {PROC}(
-            p_asOfDate        => :asOfDate,
-            p_eventWindowDays => :eventWindowDays,
+            p_asOfDate        => DATE '{as_of_date.isoformat()}',
+            p_eventWindowDays => {int(event_window_days)},
             p_validateOnly    => FALSE
         )
-        """,
-        args={
-            "asOfDate": as_of_date,
-            "eventWindowDays": event_window_days,
-        },
-    ).collect()
+    """
+
+    result = spark.sql(call_sql).collect()
 
     elapsed_seconds = time.perf_counter() - started
 

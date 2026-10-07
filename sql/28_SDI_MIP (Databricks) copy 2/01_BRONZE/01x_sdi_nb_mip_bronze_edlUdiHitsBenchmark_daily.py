@@ -52,19 +52,16 @@ PROC = "prdrzranalytics.lab42.sdi_sp_mip_bronze_edlUdiHits_daily"
 def call_proc(session, day, window_days):
     started = time.perf_counter()
     try:
-        session.sql(
-            f"""
+        # Same CALL rule as the production Runner: render only the already-typed
+        # Python date/int as SQL literals because CALL requires foldable args.
+        call_sql = f"""
             CALL {PROC}(
-                p_asOfDate        => :asOfDate,
-                p_eventWindowDays => :eventWindowDays,
+                p_asOfDate        => DATE '{day.isoformat()}',
+                p_eventWindowDays => {int(window_days)},
                 p_validateOnly    => FALSE
             )
-            """,
-            args={
-                "asOfDate": day,
-                "eventWindowDays": window_days,
-            },
-        ).collect()
+        """
+        session.sql(call_sql).collect()
         return {
             "day": str(day),
             "windowDays": window_days,
