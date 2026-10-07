@@ -3746,3 +3746,26 @@ org.apache.spark.sql.catalyst.ExtendedAnalysisException
 	at scala.util.Using$.resource(Using.scala:296)
 	at com.databricks.unity.HandleImpl.runWithAndClose(UCSHandle.scala:114)
 	at org.apache.spark.sql.connect.execution.ExecuteThreadRunner$ExecutionThread.run(ExecuteThreadRunner.scala:625)
+
+
+
+  ================================================================================================
+MIP B01 | BRONZE UDI HITS
+runId            : MAN_20261007T082946Z_4E88F576
+objectRunId      : B01_20261007T082946Z_23F214A1
+asOfDate         : 2026-10-05
+eventWindowDays  : 1
+windowStart      : 2026-10-05
+windowEnd        : 2026-10-05
+================================================================================================
+Row(status='SUCCESS', loadedWindowStart=datetime.date(2026, 10, 5), loadedWindowEnd=datetime.date(2026, 10, 5), sourceDateCount=1, targetObject='prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily')
+{
+  "runId": "MAN_20261007T082946Z_4E88F576",
+  "objectRunId": "B01_20261007T082946Z_23F214A1",
+  "status": "SUCCEEDED",
+  "asOfDate": "2026-10-05",
+  "eventWindowDays": 1,
+  "windowStart": "2026-10-05",
+  "windowEnd": "2026-10-05",
+  "durationSeconds": 243.789
+}
