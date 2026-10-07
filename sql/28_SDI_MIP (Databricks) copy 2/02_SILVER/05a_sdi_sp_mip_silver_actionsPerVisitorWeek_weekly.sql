@@ -5,11 +5,17 @@
 -- LAYER : SILVER
 
 -- RUNTIME WRITE NOTE:
---   The scoped overwrite is executed through dynamic SQL using make_date(...)
---   expressions generated from validated local DATE values. This is the same
---   runtime-safe pattern proven in Bronze and avoids local-variable resolution
---   and DATE-binding issues inside REPLACE WHERE.
---   The transformation query remains unchanged and inserts BY NAME.
+--   S05 uses static SQL with a scoped MERGE.
+--   No EXECUTE IMMEDIATE, REPLACE WHERE, REPLACE USING, or dynamic DATE
+--   rendering is used for the write.
+--   Procedure-local DATE variables are used directly in normal source filters
+--   and in the bounded MERGE delete condition.
+--   This is the Silver execution pattern already proven in S01.
+--
+-- CALL COMPATIBILITY:
+--   - Manual SQL: CALL with DATE / INT literals.
+--   - Notebook: render only already-validated Python date/int values as SQL
+--     literals in CALL because this runtime requires foldable CALL arguments.
 --
 -- PURPOSE:
 
@@ -146,10 +152,12 @@ BEGIN
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
     DECLARE v_sourceWeekCount BIGINT DEFAULT 0;
-    DECLARE v_writeSql STRING;
-    DECLARE v_scopeStartSql STRING;
-    DECLARE v_scopeEndSql STRING;
 
+    DECLARE v_writeSql STRING;
+
+    DECLARE v_scopeStartSql STRING;
+
+    DECLARE v_scopeEndSql STRING;
 
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
 
@@ -287,180 +295,311 @@ BEGIN
 
         COMMENT 'Silver: one NBV metric ingredient row per visitor/week; 0/1 visitor flags plus additive event/session counts.';
 
-        
         -- Evolve the known weekly helper column if this target predates the current schema.
+
         IF NOT EXISTS (
+
             SELECT 1
+
             FROM prdrzranalytics.information_schema.columns
+
             WHERE lower(table_catalog) = 'prdrzranalytics'
+
               AND lower(table_schema) = 'lab42'
+
               AND lower(table_name) = 'sdi_tbl_mip_silver_actionspervisitorweek_weekly'
+
               AND lower(column_name) = 'channelmetricmemberships'
+
         ) THEN
+
             ALTER TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly
+
             ADD COLUMNS (
+
                 channelMetricMemberships ARRAY<STRUCT<
+
                     channel:STRING,
+
                     firstTouchTs:TIMESTAMP,
+
                     nbv:INT,
+
                     sessionCount:BIGINT,
+
                     pageViews:BIGINT,
+
                     nbvBuyFlow:INT,
+
                     nbvConfigure:INT,
+
                     nbvCheckoutStart:INT,
+
                     orders:INT,
+
                     ordersAcquisition:INT,
+
                     ordersBase:INT,
+
                     ordersUnassisted:INT,
+
                     ordersAssisted:INT,
+
                     vrCalls:INT,
+
                     vrChats:INT,
+
                     storeLocator:INT,
+
                     orderCount:BIGINT
+
                 >>
+
                 COMMENT 'Per-channel visitor/week metric ingredients for peer-set calculations; ordered by first resolved session-channel touch'
+
             );
+
         END IF;
 
         -- --------------------------------------------------------------------
+
         -- Atomic selective overwrite for the requested Silver scope.
+
         -- --------------------------------------------------------------------
-        SET v_scopeStartSql = concat(
-            'make_date(',
-            cast(year(v_weekStartFrom) AS STRING), ',',
-            cast(month(v_weekStartFrom) AS STRING), ',',
-            cast(day(v_weekStartFrom) AS STRING),
-            ')'
-        );
 
-        SET v_scopeEndSql = concat(
-            'make_date(',
-            cast(year(v_weekStartTo) AS STRING), ',',
-            cast(month(v_weekStartTo) AS STRING), ',',
-            cast(day(v_weekStartTo) AS STRING),
-            ')'
-        );
+        -- --------------------------------------------------------------------
+        -- Static scoped rebuild using the Silver MERGE execution pattern.
+        --
+        -- Grain / MERGE key:
+        --   weekStartDate + visitorId
+        --
+        -- The bounded NOT MATCHED BY SOURCE clause removes stale rows only
+        -- inside the requested rebuild weeks.
+        -- --------------------------------------------------------------------
+        WITH channelAgg AS (
 
-        SET v_writeSql = concat(
-            'WITH channelAgg AS (
             SELECT
+
                 visitorId,
+
                 weekStartDate,
-                coalesce(channel,''(not set)'') AS channel,
+
+                coalesce(channel,'(not set)') AS channel,
+
                 MIN(sessionStartTsUtc) AS firstTouchTs,
+
                 COUNT(*) AS sessionCount,
+
                 SUM(pageViews) AS pageViews,
+
                 MAX(hasBuyFlow) AS nbvBuyFlow,
+
                 MAX(hasConfigure) AS nbvConfigure,
+
                 MAX(hasCheckoutStart) AS nbvCheckoutStart,
+
                 MAX(hasOrder) AS orders,
+
                 MAX(hasAcquisitionOrder) AS ordersAcquisition,
+
                 MAX(hasAssistedOrder) AS ordersAssisted,
+
                 MAX(hasVrCall) AS vrCalls,
+
                 MAX(hasVrChat) AS vrChats,
+
                 MAX(hasStoreLocator) AS storeLocator,
+
                 SUM(orderCount) AS orderCount
+
             FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
-            WHERE weekStartDate BETWEEN ',
-            v_scopeStartSql,
-            ' AND ',
-            v_scopeEndSql,
-            '
+
+            WHERE weekStartDate BETWEEN v_weekStartFrom AND v_weekStartTo
+
               AND visitorId IS NOT NULL
-            GROUP BY visitorId,weekStartDate,coalesce(channel,''(not set)'')
+
+            GROUP BY visitorId,weekStartDate,coalesce(channel,'(not set)')
+
         ),
+
         agg AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 date_add(weekStartDate,6) AS weekEndDate,
+
                 SUM(sessionCount) AS sessionCount,
+
                 SUM(pageViews) AS pageViews,
+
                 MAX(nbvBuyFlow) AS nbvBuyFlow,
+
                 MAX(nbvConfigure) AS nbvConfigure,
+
                 MAX(nbvCheckoutStart) AS nbvCheckoutStart,
+
                 MAX(orders) AS orders,
+
                 MAX(ordersAcquisition) AS ordersAcquisition,
+
                 MAX(ordersAssisted) AS ordersAssisted,
+
                 MAX(vrCalls) AS vrCalls,
+
                 MAX(vrChats) AS vrChats,
+
                 MAX(storeLocator) AS storeLocator,
+
                 SUM(orderCount) AS orderCount
+
             FROM channelAgg
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         channelMembershipResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 transform(
+
                     array_sort(
+
                         collect_list(
+
                             named_struct(
-                                ''sortTs'',firstTouchTs,
-                                ''sortChannel'',channel,
-                                ''membership'',named_struct(
-                                    ''channel'',channel,
-                                    ''firstTouchTs'',firstTouchTs,
-                                    ''nbv'',1,
-                                    ''sessionCount'',sessionCount,
-                                    ''pageViews'',pageViews,
-                                    ''nbvBuyFlow'',nbvBuyFlow,
-                                    ''nbvConfigure'',nbvConfigure,
-                                    ''nbvCheckoutStart'',nbvCheckoutStart,
-                                    ''orders'',orders,
-                                    ''ordersAcquisition'',ordersAcquisition,
-                                    ''ordersBase'',greatest(orders-ordersAcquisition,0),
-                                    ''ordersUnassisted'',greatest(orders-ordersAssisted,0),
-                                    ''ordersAssisted'',ordersAssisted,
-                                    ''vrCalls'',vrCalls,
-                                    ''vrChats'',vrChats,
-                                    ''storeLocator'',storeLocator,
-                                    ''orderCount'',orderCount
+
+                                'sortTs',firstTouchTs,
+
+                                'sortChannel',channel,
+
+                                'membership',named_struct(
+
+                                    'channel',channel,
+
+                                    'firstTouchTs',firstTouchTs,
+
+                                    'nbv',1,
+
+                                    'sessionCount',sessionCount,
+
+                                    'pageViews',pageViews,
+
+                                    'nbvBuyFlow',nbvBuyFlow,
+
+                                    'nbvConfigure',nbvConfigure,
+
+                                    'nbvCheckoutStart',nbvCheckoutStart,
+
+                                    'orders',orders,
+
+                                    'ordersAcquisition',ordersAcquisition,
+
+                                    'ordersBase',greatest(orders-ordersAcquisition,0),
+
+                                    'ordersUnassisted',greatest(orders-ordersAssisted,0),
+
+                                    'ordersAssisted',ordersAssisted,
+
+                                    'vrCalls',vrCalls,
+
+                                    'vrChats',vrChats,
+
+                                    'storeLocator',storeLocator,
+
+                                    'orderCount',orderCount
+
                                 )
+
                             )
+
                         )
+
                     ),
+
                     x -> x.membership
+
                 ) AS channelMetricMemberships
+
             FROM channelAgg
+
             GROUP BY visitorId,weekStartDate
-        )
-        INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly BY NAME
-        REPLACE WHERE weekStartDate BETWEEN ',
-            v_scopeStartSql,
-            ' AND ',
-            v_scopeEndSql,
-            '
-        SELECT
+
+        ),
+        sourceRows AS (
+            SELECT
+
             a.weekStartDate,
+
             a.weekEndDate,
+
             a.visitorId,
+
             1 AS nbv,
+
             a.sessionCount,
+
             a.pageViews,
+
             a.nbvBuyFlow,
+
             a.nbvConfigure,
+
             a.nbvCheckoutStart,
+
             a.orders,
+
             a.ordersAcquisition,
+
             greatest(a.orders-a.ordersAcquisition,0) AS ordersBase,
+
             greatest(a.orders-a.ordersAssisted,0) AS ordersUnassisted,
+
             a.ordersAssisted,
+
             a.vrCalls,
+
             a.vrChats,
+
             a.storeLocator,
+
             a.orderCount,
+
             c.channelMetricMemberships,
+
             current_timestamp() AS silverProcessedAt
+
         FROM agg a
+
         INNER JOIN channelMembershipResolved c
+
           ON c.visitorId=a.visitorId
-         AND c.weekStartDate=a.weekStartDate'
-        );
 
-        EXECUTE IMMEDIATE v_writeSql;
+         AND c.weekStartDate=a.weekStartDate
+        )
+        MERGE INTO prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly AS t
+        USING sourceRows AS s
+          ON t.weekStartDate = s.weekStartDate
+         AND t.visitorId = s.visitorId
 
+        WHEN MATCHED THEN
+            UPDATE SET *
+
+        WHEN NOT MATCHED THEN
+            INSERT *
+
+        WHEN NOT MATCHED BY SOURCE
+         AND t.weekStartDate BETWEEN v_weekStartFrom AND v_weekStartTo
+        THEN DELETE;
 
         SELECT
 
@@ -887,3 +1026,20 @@ END;
 --     SUM(metricMismatch) AS metricMismatchRows
 
 -- FROM compared;
+
+-- ============================================================================
+-- NOTEBOOK CALL EXAMPLE
+-- ============================================================================
+-- as_of_date: Python datetime.date
+-- weeks_to_rebuild: validated Python int >= 1
+--
+-- call_sql = f"""
+--     CALL prdrzranalytics.lab42.sdi_sp_mip_silver_actionsPerVisitorWeek_weekly(
+--         p_asOfDate       => DATE '{as_of_date.isoformat()}',
+--         p_weeksToRebuild => {int(weeks_to_rebuild)},
+--         p_validateOnly   => FALSE
+--     )
+-- """
+-- result = spark.sql(call_sql).collect()
+-- ============================================================================
+
