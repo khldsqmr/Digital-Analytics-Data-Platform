@@ -3468,3 +3468,18 @@ ab338a5a81a41c9f9272410f70a6581c81ef3a61d958b14482ba296b0a58491f	2026-09-22T14:4
 7dc689fe48dbb224b554b36758569dacc4579e883afaffacf54a3dea4bed7f65	2026-09-20T19:18:56.526+00:00	2026-09-21T06:00:26.954+00:00	641
 abcf64a8d314455e639d3fa6c9bd97001e80e5a3efccafbdf43cc969592e52cb	2026-09-23T05:41:00.698+00:00	2026-09-23T16:19:58.270+00:00	638
 f962ec5534c66b601e487f49529d6e491097e6950bc1ee142cbb2e99f2daf7df	2026-09-24T13:47:50.471+00:00	2026-09-25T00:26:38.815+00:00	638
+
+
+
+Query Insights
+Data spill to disk on the inner join of row_identity_hash, event_date, and source_table. → Increase the warehouse t‑shirt size or reduce the row count, column count, or size of large columns (e.g., long strings, arrays).
+Data spill to disk on the shuffle of row_identity_hash, event_date, and source_table. → Increase the warehouse t‑shirt size or reduce the row count, column count, or size of large columns.
+Metrics & Scan Patterns
+Scanned ≈ 1.49 TB and ≈ 45 B rows with 0 bytes and 0 files pruned. → Verify that the source tables are partitioned on event_date (and possibly source_table) and that the WHERE event_date = … filter is applied to enable partition pruning.
+readPartitionsCount = 0 despite a date filter indicates no partition pruning occurred. → Adjust table definitions or use additional partition columns in the filter to limit the data read.
+Other Observations
+The full‑outer join between unified_digital_interactions and session_event_fact processes the entire filtered datasets, driving the spill. → If one side is significantly smaller after filtering, consider broadcasting it or pre‑aggregating keys before the join.
+Multiple UNION ALL blocks each count rows from the same tables for the same date, causing repeated full scans. → Consolidate these counts into a single scan (e.g., SELECT table_name, COUNT(*) FROM (SELECT ... UNION ALL SELECT ...) GROUP BY table_name).
+Metrics referenced from the Query Profile (readBytes ≈ 1.49 TB, rowsReadCount ≈ 45 B, prunedBytes = 0)【Query Profile】.
+
+
