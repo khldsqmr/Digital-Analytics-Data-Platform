@@ -5,11 +5,12 @@
 -- LAYER : SILVER
 
 -- RUNTIME WRITE NOTE:
---   S01 intentionally does NOT use EXECUTE IMMEDIATE.
---   The transformation remains static SQL and uses REPLACE USING (eventDate).
---   This avoids procedure-local variables inside REPLACE WHERE and avoids
---   converting the large Silver CTE/business logic into an escaped SQL string.
---   Source filtering continues to use validated local DATE variables normally.
+--   S01 intentionally does NOT use EXECUTE IMMEDIATE or REPLACE USING.
+--   The transformation remains static SQL and uses a scoped MERGE.
+--   MATCHED rows are refreshed, new rows are inserted, and stale target rows
+--   inside the requested eventDate window are deleted with NOT MATCHED BY SOURCE.
+--   This preserves selective-refresh semantics without dynamic SQL or
+--   version-sensitive REPLACE USING syntax.
 --
 
 -- PURPOSE: Canonical MIP hit enrichment from Bronze UDI, SEF, SSF and Marketing Code.
@@ -367,7 +368,7 @@ BEGIN
 
         COMMENT 'Silver: one enriched row per valid sessionized UDI hit. Conservative clustering supports the primary downstream session-date scan and source separation without high-cardinality sessionId clustering.';
 
-        -- Static transformation; no dynamic SQL string is constructed.
+        -- Static transformation + scoped MERGE; no dynamic SQL string is constructed.
         WITH scopedLinks AS (
 
             SELECT
@@ -688,10 +689,9 @@ BEGIN
 
             FROM base b
 
-        )
+        ),
 
-        INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily BY NAME
-        REPLACE USING (eventDate)
+        sourceRows AS (
 
         SELECT
 
@@ -993,7 +993,20 @@ BEGIN
 
         LEFT JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlMarketingCodeDim_snapshot m
 
-            ON n.parsedCampaignCode=cast(m.MKT_CODE AS STRING);
+            ON n.parsedCampaignCode=cast(m.MKT_CODE AS STRING)
+
+        )
+
+        MERGE INTO prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily AS t
+        USING sourceRows AS s
+          ON t.rowIdentityHash = s.rowIdentityHash
+         AND t.eventDate = s.eventDate
+         AND t.sourceTable = s.sourceTable
+        WHEN MATCHED THEN UPDATE SET *
+        WHEN NOT MATCHED THEN INSERT *
+        WHEN NOT MATCHED BY SOURCE
+         AND t.eventDate BETWEEN v_windowStart AND v_windowEnd
+        THEN DELETE;
 
         SELECT
 
@@ -1032,6 +1045,3 @@ END;
 --     p_validateOnly => FALSE
 
 -- );
-
-
-[PARSE_SYNTAX_ERROR] Syntax error at or near 'USING': missing 'WHERE'. SQLSTATE: 42601
