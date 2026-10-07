@@ -3774,3 +3774,24 @@ HEALTHY  | dateCoverage | expected=1.0 | actual=1.0
 HEALTHY  | targetPopulation | expected=1.0 | actual=1.0
 HEALTHY  | ingestionMarker | expected=1.0 | actual=1.0
 B01 lightweight validation completed successfully.
+
+================================================================================================
+MIP B01 | BRONZE UDI HITS
+runId            : MAN_20261007T152919Z_E30A47A3
+objectRunId      : B01_20261007T152919Z_77F2F158
+asOfDate         : 2026-10-04
+eventWindowDays  : 1
+windowStart      : 2026-10-04
+windowEnd        : 2026-10-04
+================================================================================================
+Row(status='SUCCESS', loadedWindowStart=datetime.date(2026, 10, 4), loadedWindowEnd=datetime.date(2026, 10, 4), sourceDateCount=1, targetObject='prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily')
+{
+  "runId": "MAN_20261007T152919Z_E30A47A3",
+  "objectRunId": "B01_20261007T152919Z_77F2F158",
+  "status": "SUCCEEDED",
+  "asOfDate": "2026-10-04",
+  "eventWindowDays": 1,
+  "windowStart": "2026-10-04",
+  "windowEnd": "2026-10-04",
+  "durationSeconds": 277.049
+}
