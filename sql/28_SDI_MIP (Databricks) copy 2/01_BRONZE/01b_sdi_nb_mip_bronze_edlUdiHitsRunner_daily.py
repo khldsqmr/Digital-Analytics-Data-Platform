@@ -1,33 +1,29 @@
 # Databricks notebook source
 # ============================================================================
-# FILE   : 01b_sdi_nb_mip_bronze_edlUdiHitsRunner_daily.py
+# FILE   : 01b_sdi_nb_mip_bronze_edlUdiHitsRunner_daily.py new
 # NAME   : sdi_nb_mip_bronze_edlUdiHitsRunner_daily
 # OBJECT : B01
 # LAYER  : BRONZE
+#
 # PURPOSE:
-#   Production Runner for Bronze01 UDI hits.
+#   Thin production/development Runner for the B01 stored procedure.
 #
-# RESPONSIBILITIES:
-#   1. Resolve runtime parameters.
-#   2. Create/ensure the run-level validation header exists.
-#   3. Generate one human-readable objectRunId for this execution attempt.
-#   4. Register the object execution as RUNNING.
-#   5. Call the Bronze01 stored procedure.
-#   6. Mark the object execution SUCCEEDED/FAILED.
-#   7. Publish task values for the downstream Validator.
+# VISIBLE INPUTS:
+#   asOfDate        : YYYY-MM-DD; blank = previous Pacific day
+#   eventWindowDays : >= 1
+#   runId           : optional; blank = generate a MAN_* run ID
 #
-# OBJECT-RUN ID:
-#   B01_<UTC timestamp>_<8-char token>
-#   Example: B01_20261007T061945Z_7F3A91C2
+# IMPORTANT:
+#   Scalar values passed into SQL use Spark named parameter binding rather than
+#   f-string literal construction. Fixed catalog/schema/table names remain
+#   constants in code.
 #
-# PERFORMANCE:
-#   This notebook does not perform source/target reconciliation. The stored
-#   procedure performs the required hard source-window preflight itself.
+# MANUAL:
+#   Fill the widgets and Run All.
 #
-# CONCURRENCY:
-#   Production concurrency is intentionally NOT implemented here. Keep one
-#   Runner invocation = one transformation invocation. Use the temporary B01
-#   Benchmark notebook to test chunking/concurrency before configuring Lakeflow.
+# LAKEFLOW:
+#   Pass asOfDate/eventWindowDays/runId as notebook task parameters. The Runner
+#   publishes objectRunId and scope values as task values for the Validator.
 # ============================================================================
 
 # COMMAND ----------
@@ -38,37 +34,23 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 # COMMAND ----------
-# Runtime parameters.
+# Keep the interactive UI intentionally small.
 dbutils.widgets.text("asOfDate", "")
 dbutils.widgets.text("eventWindowDays", "1")
 dbutils.widgets.text("runId", "")
-dbutils.widgets.dropdown("executionType", "MAN", ["MAN", "JOB", "BCK", "RPR", "RTY", "TST"])
-dbutils.widgets.dropdown("triggerType", "MANUAL", ["MANUAL", "SCHEDULED", "API", "UPSTREAM", "RETRY", "BACKFILL"])
-dbutils.widgets.text("databricksJobId", "")
-dbutils.widgets.text("databricksJobRunId", "")
-dbutils.widgets.text("databricksTaskRunId", "")
-dbutils.widgets.text("databricksJobName", "")
-dbutils.widgets.text("databricksTaskName", "")
-dbutils.widgets.text("notebookPath", "")
 
 as_of_date_raw = dbutils.widgets.get("asOfDate").strip()
-event_window_days = int(dbutils.widgets.get("eventWindowDays"))
-run_id = dbutils.widgets.get("runId").strip()
-execution_type = dbutils.widgets.get("executionType").strip().upper()
-trigger_type = dbutils.widgets.get("triggerType").strip().upper()
+event_window_days_raw = dbutils.widgets.get("eventWindowDays").strip()
+provided_run_id = dbutils.widgets.get("runId").strip()
 
-job_id = dbutils.widgets.get("databricksJobId").strip()
-job_run_id = dbutils.widgets.get("databricksJobRunId").strip()
-task_run_id = dbutils.widgets.get("databricksTaskRunId").strip()
-job_name = dbutils.widgets.get("databricksJobName").strip()
-task_name = dbutils.widgets.get("databricksTaskName").strip()
-notebook_path = dbutils.widgets.get("notebookPath").strip()
+try:
+    event_window_days = int(event_window_days_raw)
+except Exception as exc:
+    raise ValueError("eventWindowDays must be an integer >= 1.") from exc
 
 if event_window_days < 1:
-    raise ValueError("eventWindowDays must be >= 1")
+    raise ValueError("eventWindowDays must be >= 1.")
 
-# Resolve the effective date ONCE so Runner, SP, object-run record and Validator
-# all operate on exactly the same date scope.
 if as_of_date_raw:
     as_of_date = datetime.strptime(as_of_date_raw, "%Y-%m-%d").date()
 else:
@@ -80,13 +62,19 @@ else:
 window_end = as_of_date
 window_start = as_of_date - timedelta(days=event_window_days - 1)
 
-if not run_id:
+if provided_run_id:
+    run_id = provided_run_id
+    fallback_execution_type = "JOB"
+    fallback_trigger_type = "UPSTREAM"
+else:
     run_id = (
         "MAN_"
         + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         + "_"
         + uuid.uuid4().hex[:8].upper()
     )
+    fallback_execution_type = "MAN"
+    fallback_trigger_type = "MANUAL"
 
 object_run_id = (
     "B01_"
@@ -100,144 +88,154 @@ TARGET = "prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily"
 RUN_DETAILS = "prdrzranalytics.lab42.sdi_tbl_mip_validation_runDetails_perRun"
 OBJECT_RUNS = "prdrzranalytics.lab42.sdi_tbl_mip_validation_objectRuns_perRun"
 
-def qs(value):
-    """SQL-quote a nullable scalar string."""
-    if value is None or value == "":
-        return "NULL"
-    return "'" + str(value).replace("'", "''") + "'"
-
 # COMMAND ----------
 # Ensure a run-level header exists.
 #
-# In the future, an end-to-end Lakeflow run-start task can create this row.
-# Keeping this MERGE makes B01 independently runnable during development.
-spark.sql(f"""
-MERGE INTO {RUN_DETAILS} t
-USING (
-    SELECT
-        {qs(run_id)} AS runId,
-        {qs(execution_type)} AS executionType,
-        {qs(trigger_type)} AS triggerType
-) s
-ON t.runId = s.runId
-WHEN NOT MATCHED THEN INSERT (
-    runId,
-    executionType,
-    triggerType,
-    databricksJobId,
-    databricksJobRunId,
-    databricksTaskRunId,
-    databricksJobName,
-    notebookPath,
-    orchestrationProcedure,
-    asOfDate,
-    eventWindowStart,
-    eventWindowEnd,
-    weekWindowStart,
-    weekWindowEnd,
-    runStartedAt,
-    runFinishedAt,
-    runStatus,
-    warningCount,
-    failureCount,
-    errorSqlState,
-    errorCondition,
-    errorLine,
-    errorMessage,
-    createdAt,
-    updatedAt
+# In a future full Lakeflow orchestration, a dedicated run-start task can own
+# this row. WHEN NOT MATCHED keeps this Runner independently runnable now.
+spark.sql(
+    f"""
+    MERGE INTO {RUN_DETAILS} t
+    USING (
+        SELECT
+            :runId AS runId,
+            :executionType AS executionType,
+            :triggerType AS triggerType
+    ) s
+    ON t.runId = s.runId
+    WHEN NOT MATCHED THEN INSERT (
+        runId,
+        executionType,
+        triggerType,
+        databricksJobId,
+        databricksJobRunId,
+        databricksTaskRunId,
+        databricksJobName,
+        notebookPath,
+        orchestrationProcedure,
+        asOfDate,
+        eventWindowStart,
+        eventWindowEnd,
+        weekWindowStart,
+        weekWindowEnd,
+        runStartedAt,
+        runFinishedAt,
+        runStatus,
+        warningCount,
+        failureCount,
+        errorSqlState,
+        errorCondition,
+        errorLine,
+        errorMessage,
+        createdAt,
+        updatedAt
+    )
+    VALUES (
+        s.runId,
+        s.executionType,
+        s.triggerType,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        :asOfDate,
+        :windowStart,
+        :windowEnd,
+        NULL,
+        NULL,
+        current_timestamp(),
+        NULL,
+        'RUNNING',
+        0,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        current_timestamp(),
+        current_timestamp()
+    )
+    """,
+    args={
+        "runId": run_id,
+        "executionType": fallback_execution_type,
+        "triggerType": fallback_trigger_type,
+        "asOfDate": as_of_date,
+        "windowStart": window_start,
+        "windowEnd": window_end,
+    },
 )
-VALUES (
-    s.runId,
-    s.executionType,
-    s.triggerType,
-    {qs(job_id)},
-    {qs(job_run_id)},
-    {qs(task_run_id)},
-    {qs(job_name)},
-    {qs(notebook_path)},
-    NULL,
-    DATE '{as_of_date}',
-    DATE '{window_start}',
-    DATE '{window_end}',
-    NULL,
-    NULL,
-    current_timestamp(),
-    NULL,
-    'RUNNING',
-    0,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    current_timestamp(),
-    current_timestamp()
-)
-""")
 
 # One row per B01 execution attempt.
-spark.sql(f"""
-INSERT INTO {OBJECT_RUNS} (
-    objectRunId,
-    runId,
-    layerName,
-    procedureName,
-    targetObject,
-    databricksTaskRunId,
-    scopeType,
-    scopeStart,
-    scopeEnd,
-    objectRunStartedAt,
-    objectRunFinishedAt,
-    objectRunStatus,
-    rowsInScope,
-    sourceWatermark,
-    errorSqlState,
-    errorCondition,
-    errorLine,
-    errorMessage,
-    notes
+spark.sql(
+    f"""
+    INSERT INTO {OBJECT_RUNS} (
+        objectRunId,
+        runId,
+        layerName,
+        procedureName,
+        targetObject,
+        databricksTaskRunId,
+        scopeType,
+        scopeStart,
+        scopeEnd,
+        objectRunStartedAt,
+        objectRunFinishedAt,
+        objectRunStatus,
+        rowsInScope,
+        sourceWatermark,
+        errorSqlState,
+        errorCondition,
+        errorLine,
+        errorMessage,
+        notes
+    )
+    VALUES (
+        :objectRunId,
+        :runId,
+        'BRONZE',
+        :procedureName,
+        :targetObject,
+        NULL,
+        'eventDate',
+        :scopeStart,
+        :scopeEnd,
+        current_timestamp(),
+        NULL,
+        'RUNNING',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        :notes
+    )
+    """,
+    args={
+        "objectRunId": object_run_id,
+        "runId": run_id,
+        "procedureName": PROC,
+        "targetObject": TARGET,
+        "scopeStart": str(window_start),
+        "scopeEnd": str(window_end),
+        "notes": "B01 Bronze UDI execution.",
+    },
 )
-VALUES (
-    {qs(object_run_id)},
-    {qs(run_id)},
-    'BRONZE',
-    {qs(PROC)},
-    {qs(TARGET)},
-    {qs(task_run_id)},
-    'eventDate',
-    {qs(str(window_start))},
-    {qs(str(window_end))},
-    current_timestamp(),
-    NULL,
-    'RUNNING',
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    {qs(
-        "B01 Bronze UDI execution; "
-        f"taskName={task_name or 'N/A'}; "
-        f"notebookPath={notebook_path or 'N/A'}"
-    )}
-)
-""")
 
-# Publish identifiers immediately so a downstream task can retrieve the exact
-# execution attempt after the Runner succeeds.
-try:
-    dbutils.jobs.taskValues.set(key="runId", value=run_id)
-    dbutils.jobs.taskValues.set(key="objectRunId", value=object_run_id)
-    dbutils.jobs.taskValues.set(key="asOfDate", value=str(as_of_date))
-    dbutils.jobs.taskValues.set(key="eventWindowDays", value=event_window_days)
-    dbutils.jobs.taskValues.set(key="windowStart", value=str(window_start))
-    dbutils.jobs.taskValues.set(key="windowEnd", value=str(window_end))
-except Exception:
-    # Direct interactive notebook execution does not require task values.
-    pass
+# Publish values for a downstream Validator task.
+# Outside a Databricks Job, taskValues.set() is a no-op.
+for key, value in {
+    "runId": run_id,
+    "objectRunId": object_run_id,
+    "asOfDate": str(as_of_date),
+    "eventWindowDays": event_window_days,
+    "windowStart": str(window_start),
+    "windowEnd": str(window_end),
+}.items():
+    dbutils.jobs.taskValues.set(key=key, value=value)
 
 # COMMAND ----------
 print("=" * 96)
@@ -253,36 +251,50 @@ print("=" * 96)
 started = time.perf_counter()
 
 try:
-    result = spark.sql(f"""
+    # Typed parameter binding avoids manual quoting/conversion inside the notebook.
+    result = spark.sql(
+        f"""
         CALL {PROC}(
-            p_asOfDate        => DATE '{as_of_date}',
-            p_eventWindowDays => {event_window_days},
+            p_asOfDate        => :asOfDate,
+            p_eventWindowDays => :eventWindowDays,
             p_validateOnly    => FALSE
         )
-    """).collect()
+        """,
+        args={
+            "asOfDate": as_of_date,
+            "eventWindowDays": event_window_days,
+        },
+    ).collect()
 
     elapsed_seconds = time.perf_counter() - started
 
-    spark.sql(f"""
+    spark.sql(
+        f"""
         UPDATE {OBJECT_RUNS}
         SET
             objectRunFinishedAt = current_timestamp(),
             objectRunStatus = 'SUCCEEDED',
+            errorSqlState = NULL,
+            errorCondition = NULL,
+            errorLine = NULL,
+            errorMessage = NULL,
             notes = concat(
-                coalesce(notes,''),
-                {qs(f'; durationSeconds={elapsed_seconds:.3f}')}
+                coalesce(notes, ''),
+                :durationNote
             )
-        WHERE objectRunId = {qs(object_run_id)}
-    """)
+        WHERE objectRunId = :objectRunId
+        """,
+        args={
+            "durationNote": f"; durationSeconds={elapsed_seconds:.3f}",
+            "objectRunId": object_run_id,
+        },
+    )
 
-    try:
-        dbutils.jobs.taskValues.set(key="status", value="SUCCEEDED")
-        dbutils.jobs.taskValues.set(
-            key="durationSeconds",
-            value=round(elapsed_seconds, 3)
-        )
-    except Exception:
-        pass
+    dbutils.jobs.taskValues.set(key="status", value="SUCCEEDED")
+    dbutils.jobs.taskValues.set(
+        key="durationSeconds",
+        value=round(elapsed_seconds, 3),
+    )
 
     payload = {
         "runId": run_id,
@@ -304,27 +316,31 @@ except Exception as exc:
     elapsed_seconds = time.perf_counter() - started
     error_message = str(exc)
 
-    spark.sql(f"""
+    spark.sql(
+        f"""
         UPDATE {OBJECT_RUNS}
         SET
             objectRunFinishedAt = current_timestamp(),
             objectRunStatus = 'FAILED',
-            errorMessage = {qs(error_message)},
+            errorMessage = :errorMessage,
             notes = concat(
-                coalesce(notes,''),
-                {qs(f'; durationSeconds={elapsed_seconds:.3f}')}
+                coalesce(notes, ''),
+                :durationNote
             )
-        WHERE objectRunId = {qs(object_run_id)}
-    """)
+        WHERE objectRunId = :objectRunId
+        """,
+        args={
+            "errorMessage": error_message,
+            "durationNote": f"; durationSeconds={elapsed_seconds:.3f}",
+            "objectRunId": object_run_id,
+        },
+    )
 
-    try:
-        dbutils.jobs.taskValues.set(key="status", value="FAILED")
-        dbutils.jobs.taskValues.set(
-            key="durationSeconds",
-            value=round(elapsed_seconds, 3)
-        )
-    except Exception:
-        pass
+    dbutils.jobs.taskValues.set(key="status", value="FAILED")
+    dbutils.jobs.taskValues.set(
+        key="durationSeconds",
+        value=round(elapsed_seconds, 3),
+    )
 
     print(
         f"FAILED | objectRunId={object_run_id} | "
