@@ -3795,3 +3795,39 @@ Row(status='SUCCESS', loadedWindowStart=datetime.date(2026, 10, 4), loadedWindow
   "windowEnd": "2026-10-04",
   "durationSeconds": 277.049
 }
+
+detail:string
+failedCalls:long
+scenario:string
+speedupVsWindow:double
+sumCallMinutes:double
+wallMinutes:double
+================================================================================================
+B01 BENCHMARK
+dates                 : ['2026-10-04', '2026-10-05']
+testDays              : 2
+requestedConcurrency  : 2
+effectiveConcurrency  : 2
+================================================================================================
+detail	failedCalls	scenario	speedupVsWindow	sumCallMinutes	wallMinutes
+[{'date': '2026-10-04', 'windowDays': 1, 'status': 'SUCCEEDED', 'durationSeconds': 336.1579362949997, 'error': None}, {'date': '2026-10-05', 'windowDays': 1, 'status': 'SUCCEEDED', 'durationSeconds': 292.1186362699991, 'error': None}]	0	DAILY_PARALLEL_C2	1.566	10.471	5.603
+[{'date': '2026-10-04', 'windowDays': 1, 'status': 'SUCCEEDED', 'durationSeconds': 206.9992094120007, 'error': None}, {'date': '2026-10-05', 'windowDays': 1, 'status': 'SUCCEEDED', 'durationSeconds': 177.20022263200008, 'error': None}]	0	DAILY_SEQUENTIAL	1.37	6.403	6.403
+{'date': '2026-10-05', 'windowDays': 2, 'status': 'SUCCEEDED', 'durationSeconds': 526.4125276030009, 'error': None}	0	WINDOW_2D	1	8.774	8.774
+
+================================================================================================
+DECISION GUIDE
+
+1. DAILY_SEQUENTIAL faster than WINDOW:
+   Daily chunking reduces the working set even without concurrency.
+
+2. DAILY_PARALLEL materially faster with failedCalls=0:
+   Daily chunking + concurrency is promising. Re-test that pattern in Lakeflow
+   before adopting it for production.
+
+3. DAILY_PARALLEL reports concurrent-write/Delta conflicts:
+   Keep concurrency low or use sequential daily chunks.
+
+4. WINDOW remains fastest:
+   Keep multi-day window execution for B01; concurrency is not helping here.
+
+For the default two-day test, concurrency above 2 cannot be evaluated.
