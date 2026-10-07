@@ -4145,3 +4145,26 @@ org.apache.spark.sql.catalyst.parser.ParseException
 	at scala.util.Using$.resource(Using.scala:296)
 	at com.databricks.unity.HandleImpl.runWithAndClose(UCSHandle.scala:114)
 	at org.apache.spark.sql.connect.execution.ExecuteThreadRunner$ExecutionThread.run(ExecuteThreadRunner.scala:625)
+
+
+
+  ================================================================================================
+MIP S01 | SILVER detailsPerHit
+runId            : MAN_20261007T182357Z_13F9D79D
+objectRunId      : S01_20261007T182357Z_94EEDA2C
+asOfDate         : 2026-10-03
+eventWindowDays  : 2
+windowStart      : 2026-10-02
+windowEnd        : 2026-10-03
+================================================================================================
+Row(status='SUCCESS', loadedEventWindowStart=datetime.date(2026, 10, 2), loadedEventWindowEnd=datetime.date(2026, 10, 3), targetObject='prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily')
+{
+  "runId": "MAN_20261007T182357Z_13F9D79D",
+  "objectRunId": "S01_20261007T182357Z_94EEDA2C",
+  "status": "SUCCEEDED",
+  "asOfDate": "2026-10-03",
+  "eventWindowDays": 2,
+  "windowStart": "2026-10-02",
+  "windowEnd": "2026-10-03",
+  "durationSeconds": 1333.08
+}
