@@ -18,7 +18,7 @@
 -- IMPORTANT WRITE DETAIL:
 --   REPLACE WHERE cannot resolve procedure-local variables directly in the
 --   replacement predicate. The write is therefore executed through
---   EXECUTE IMMEDIATE with typed named parameter markers.
+--   EXECUTE IMMEDIATE with make_date(...) literals generated from validated DATE locals.
 --
 -- DEFAULT DATE:
 --   Previous Pacific calendar day when p_asOfDate is NULL.
@@ -185,83 +185,105 @@ BEGIN
         --    EXECUTE IMMEDIATE. The same markers are used in REPLACE WHERE and
         --    in the source filter, guaranteeing identical scope.
         -- --------------------------------------------------------------------
-        SET v_replaceSql = '
-            INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
-            REPLACE WHERE event_date BETWEEN :windowStart AND :windowEnd
-            SELECT
-                row_identity_hash,
-                event_date,
-                source_table,
-                event_timestamp_utc,
-                event_timestamp_pst,
-                load_datetime_pst,
-                pipeline_batch_id,
-                source_datalakeLoadDate,
-                customer_id,
-                profile_uid,
-                encrypted_ban_msisdn,
-                first_party_id,
-                app_instance_id,
-                attribute_device_id,
-                app_session_id,
-                site_name,
-                page_app_type,
-                page_domain,
-                page_layout_state,
-                page_language,
-                channel,
-                attribute_channel,
-                site_sub_section,
-                page_name,
-                full_page_name,
-                link_name,
-                modal_name,
-                flow_name,
-                customer_type,
-                user_auth_state,
-                user_account_category,
-                imei_type,
-                channel_id,
-                channel_name,
-                external_campaign_code,
-                kpi_lob,
-                kpi_name,
-                user_agent,
-                demand_base_details,
-                user_carrier_isp,
-                attribute_event_type,
-                attribute_os_name,
-                geo_postal_code,
-                attribute_country,
-                shipping_method,
-                page_shipping_options,
-                alert_message,
-                page_url_path,
-                page_url_full,
-                order_id,
-                product_order_type,
-                cart_is_hint_order,
-                event_page_view,
-                event_purchase,
-                event_click_to_call,
-                event_chat_engage,
-                event_store_search,
-                event_cart_add,
-                event_cart_checkout,
-                event_product_view,
-                event_bopis_selected,
-                event_quality_traffic,
-                event_engaged_visit,
-                current_timestamp() AS _ingestedAt
-            FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-            WHERE event_date BETWEEN :windowStart AND :windowEnd
-        ';
+        -- --------------------------------------------------------------------
+        -- 5. Atomic selective overwrite.
+        --
+        --    Runtime compatibility note:
+        --    Binding DATE locals through EXECUTE IMMEDIATE USING can surface as
+        --    Spark's internal day-number INT on some notebook/runtime paths.
+        --    To keep SQL-editor and notebook behavior identical, the dynamic
+        --    statement is built with make_date(year, month, day), which returns
+        --    an actual DATE without requiring quoted date-string concatenation.
+        -- --------------------------------------------------------------------
+        SET v_replaceSql = concat(
+            'INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily ',
+            'REPLACE WHERE event_date BETWEEN make_date(',
+            cast(year(v_windowStart) AS STRING), ',',
+            cast(month(v_windowStart) AS STRING), ',',
+            cast(day(v_windowStart) AS STRING),
+            ') AND make_date(',
+            cast(year(v_windowEnd) AS STRING), ',',
+            cast(month(v_windowEnd) AS STRING), ',',
+            cast(day(v_windowEnd) AS STRING),
+            ') ',
+            'SELECT ',
+                'row_identity_hash, ',
+                'event_date, ',
+                'source_table, ',
+                'event_timestamp_utc, ',
+                'event_timestamp_pst, ',
+                'load_datetime_pst, ',
+                'pipeline_batch_id, ',
+                'source_datalakeLoadDate, ',
+                'customer_id, ',
+                'profile_uid, ',
+                'encrypted_ban_msisdn, ',
+                'first_party_id, ',
+                'app_instance_id, ',
+                'attribute_device_id, ',
+                'app_session_id, ',
+                'site_name, ',
+                'page_app_type, ',
+                'page_domain, ',
+                'page_layout_state, ',
+                'page_language, ',
+                'channel, ',
+                'attribute_channel, ',
+                'site_sub_section, ',
+                'page_name, ',
+                'full_page_name, ',
+                'link_name, ',
+                'modal_name, ',
+                'flow_name, ',
+                'customer_type, ',
+                'user_auth_state, ',
+                'user_account_category, ',
+                'imei_type, ',
+                'channel_id, ',
+                'channel_name, ',
+                'external_campaign_code, ',
+                'kpi_lob, ',
+                'kpi_name, ',
+                'user_agent, ',
+                'demand_base_details, ',
+                'user_carrier_isp, ',
+                'attribute_event_type, ',
+                'attribute_os_name, ',
+                'geo_postal_code, ',
+                'attribute_country, ',
+                'shipping_method, ',
+                'page_shipping_options, ',
+                'alert_message, ',
+                'page_url_path, ',
+                'page_url_full, ',
+                'order_id, ',
+                'product_order_type, ',
+                'cart_is_hint_order, ',
+                'event_page_view, ',
+                'event_purchase, ',
+                'event_click_to_call, ',
+                'event_chat_engage, ',
+                'event_store_search, ',
+                'event_cart_add, ',
+                'event_cart_checkout, ',
+                'event_product_view, ',
+                'event_bopis_selected, ',
+                'event_quality_traffic, ',
+                'event_engaged_visit, ',
+                'current_timestamp() AS _ingestedAt ',
+            'FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions ',
+            'WHERE event_date BETWEEN make_date(',
+            cast(year(v_windowStart) AS STRING), ',',
+            cast(month(v_windowStart) AS STRING), ',',
+            cast(day(v_windowStart) AS STRING),
+            ') AND make_date(',
+            cast(year(v_windowEnd) AS STRING), ',',
+            cast(month(v_windowEnd) AS STRING), ',',
+            cast(day(v_windowEnd) AS STRING),
+            ')'
+        );
 
-        EXECUTE IMMEDIATE v_replaceSql
-            USING (
-                v_windowStart AS windowStart,
-                v_windowEnd   AS windowEnd
-            );
+        EXECUTE IMMEDIATE v_replaceSql;
 
         SELECT
             'SUCCESS'      AS status,
