@@ -3849,3 +3849,7 @@ detail	failedCalls	scenario	speedupVsWindow	sumCallMinutes	wallMinutes
 
 [INSUFFICIENT_PERMISSIONS] Insufficient privileges:
 Table 'unified_digital_interactions' does not have sufficient privilege to execute because the owner of one of the underlying resources failed an authorization check. SQLSTATE: 42501
+
+SELECT COUNT(*)
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date = DATE '2026-10-05';
