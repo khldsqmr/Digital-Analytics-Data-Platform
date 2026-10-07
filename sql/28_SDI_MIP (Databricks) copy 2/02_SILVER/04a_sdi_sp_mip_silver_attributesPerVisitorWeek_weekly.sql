@@ -5,11 +5,17 @@
 -- LAYER : SILVER
 
 -- RUNTIME WRITE NOTE:
---   The scoped overwrite is executed through dynamic SQL using make_date(...)
---   expressions generated from validated local DATE values. This is the same
---   runtime-safe pattern proven in Bronze and avoids local-variable resolution
---   and DATE-binding issues inside REPLACE WHERE.
---   The transformation query remains unchanged and inserts BY NAME.
+--   S04 uses static SQL with a scoped MERGE.
+--   No EXECUTE IMMEDIATE, REPLACE WHERE, REPLACE USING, or dynamic DATE
+--   rendering is used for the write.
+--   Procedure-local DATE variables are used directly in normal source filters
+--   and in the bounded MERGE delete condition.
+--   This is the same static MERGE execution pattern proven by Silver S01.
+--
+-- CALL COMPATIBILITY:
+--   - Manual SQL: CALL with DATE / INT literals.
+--   - Notebook: render only already-validated Python date/int values as SQL
+--     literals in CALL because this runtime requires foldable CALL arguments.
 --
 -- PURPOSE:
 
@@ -140,10 +146,12 @@ BEGIN
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
     DECLARE v_sourceWeekCount BIGINT DEFAULT 0;
-    DECLARE v_writeSql STRING;
-    DECLARE v_scopeStartSql STRING;
-    DECLARE v_scopeEndSql STRING;
 
+    DECLARE v_writeSql STRING;
+
+    DECLARE v_scopeStartSql STRING;
+
+    DECLARE v_scopeEndSql STRING;
 
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild<1 THEN
 
@@ -255,329 +263,596 @@ BEGIN
 
         COMMENT 'Silver: one attributed attribute row per NBV visitor/week; 1:1 with actionsPerVisitorWeek.';
 
-        
         -- Evolve the known weekly helper column if this target predates the current schema.
+
         IF NOT EXISTS (
+
             SELECT 1
+
             FROM prdrzranalytics.information_schema.columns
+
             WHERE lower(table_catalog) = 'prdrzranalytics'
+
               AND lower(table_schema) = 'lab42'
+
               AND lower(table_name) = 'sdi_tbl_mip_silver_attributespervisitorweek_weekly'
+
               AND lower(column_name) = 'channellist'
+
         ) THEN
+
             ALTER TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly
+
             ADD COLUMNS (
+
                 channelList ARRAY<STRING>
+
                 COMMENT 'All distinct resolved session channels touched by the visitor/week, ordered by first session touch; exact values preserved'
+
             );
+
         END IF;
 
         -- --------------------------------------------------------------------
+
         -- Atomic selective overwrite for the requested Silver scope.
+
         -- --------------------------------------------------------------------
-        SET v_scopeStartSql = concat(
-            'make_date(',
-            cast(year(v_weekStartFrom) AS STRING), ',',
-            cast(month(v_weekStartFrom) AS STRING), ',',
-            cast(day(v_weekStartFrom) AS STRING),
-            ')'
-        );
 
-        SET v_scopeEndSql = concat(
-            'make_date(',
-            cast(year(v_weekStartTo) AS STRING), ',',
-            cast(month(v_weekStartTo) AS STRING), ',',
-            cast(day(v_weekStartTo) AS STRING),
-            ')'
-        );
+        -- --------------------------------------------------------------------
+        -- Static scoped rebuild using the same MERGE pattern proven in S01.
+        --
+        -- Grain / MERGE key:
+        --   weekStartDate + visitorId
+        --
+        -- The bounded NOT MATCHED BY SOURCE clause removes stale rows only
+        -- inside the requested rebuild weeks.
+        -- --------------------------------------------------------------------
+        WITH weekSessions AS (
 
-        SET v_writeSql = concat(
-            'WITH weekSessions AS (
             SELECT
+
                 sessionId,
+
                 visitorId,
+
                 identitySource,
+
                 weekStartDate,
+
                 pageViews,
+
                 lobList,
+
                 lobPageViews,
+
                 platform,
+
                 device,
+
                 region,
+
                 geoContext,
+
                 prospectVsBase,
+
                 prospectVsBaseRank,
+
                 authState,
+
                 authStateRank,
+
                 channel,
+
                 campaignCode,
+
                 campaignName,
+
                 entryPage,
+
                 utmSource,
+
                 utmMedium,
+
                 utmCampaign,
+
                 deepestBuyFlowStep,
+
                 deepestBuyFlowStepOrder,
+
                 isTmoNetworkSession,
+
                 sessionStartTsUtc
+
             FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
-            WHERE weekStartDate BETWEEN ',
-            v_scopeStartSql,
-            ' AND ',
-            v_scopeEndSql,
-            '
+
+            WHERE weekStartDate BETWEEN v_weekStartFrom AND v_weekStartTo
+
               AND visitorId IS NOT NULL
+
         ),
+
         lobPv AS (
+
             SELECT
+
                 s.visitorId,
+
                 s.weekStartDate,
+
                 x.lobKey AS lob,
+
                 SUM(x.lobValue) AS pageViews
+
             FROM weekSessions s
+
             LATERAL VIEW explode(s.lobPageViews) x AS lobKey,lobValue
+
             GROUP BY s.visitorId,s.weekStartDate,x.lobKey
+
         ),
+
         lobResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 max_by(lob,struct(pageViews,lob)) AS lob
+
             FROM lobPv
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         platformResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 max_by(platform,struct(pageViews,platform)) AS platform
+
             FROM (
+
                 SELECT
+
                     visitorId,
+
                     weekStartDate,
-                    coalesce(platform,''(not set)'') AS platform,
+
+                    coalesce(platform,'(not set)') AS platform,
+
                     SUM(pageViews) AS pageViews
+
                 FROM weekSessions
-                GROUP BY visitorId,weekStartDate,coalesce(platform,''(not set)'')
+
+                GROUP BY visitorId,weekStartDate,coalesce(platform,'(not set)')
+
             )
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         deviceResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 max_by(device,struct(pageViews,device)) AS device
+
             FROM (
+
                 SELECT
+
                     visitorId,
+
                     weekStartDate,
-                    coalesce(device,''Unknown'') AS device,
+
+                    coalesce(device,'Unknown') AS device,
+
                     SUM(pageViews) AS pageViews
+
                 FROM weekSessions
-                GROUP BY visitorId,weekStartDate,coalesce(device,''Unknown'')
+
+                GROUP BY visitorId,weekStartDate,coalesce(device,'Unknown')
+
             )
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         regionResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 max_by(region,struct(pageViews,region)) AS region
+
             FROM (
+
                 SELECT
+
                     visitorId,
+
                     weekStartDate,
-                    coalesce(region,''(not available)'') AS region,
+
+                    coalesce(region,'(not available)') AS region,
+
                     SUM(pageViews) AS pageViews
+
                 FROM weekSessions
-                GROUP BY visitorId,weekStartDate,coalesce(region,''(not available)'')
+
+                GROUP BY visitorId,weekStartDate,coalesce(region,'(not available)')
+
             )
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         geoContextResolved AS (
+
             SELECT
+
                 s.visitorId,
+
                 s.weekStartDate,
+
                 max_by(
+
                     s.geoContext,
+
                     struct(s.pageViews,s.sessionStartTsUtc,s.sessionId)
+
                 ) FILTER (WHERE s.geoContext IS NOT NULL) AS geoContext
+
             FROM weekSessions s
+
             INNER JOIN regionResolved r
+
               ON r.visitorId=s.visitorId
+
              AND r.weekStartDate=s.weekStartDate
-             AND r.region=coalesce(s.region,''(not available)'')
+
+             AND r.region=coalesce(s.region,'(not available)')
+
             GROUP BY s.visitorId,s.weekStartDate
+
         ),
+
         categoryResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 max_by(pageCategory,struct(pageViews,pageCategory)) AS pageCategory
+
             FROM (
+
                 SELECT
+
                     visitorId,
+
                     weekStartDate,
+
                     pageCategory,
+
                     SUM(pageViews) AS pageViews
+
                 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily
-                WHERE weekStartDate BETWEEN ',
-            v_scopeStartSql,
-            ' AND ',
-            v_scopeEndSql,
-            '
+
+                WHERE weekStartDate BETWEEN v_weekStartFrom AND v_weekStartTo
+
                   AND visitorId IS NOT NULL
+
                 GROUP BY visitorId,weekStartDate,pageCategory
+
             )
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         channelFirstTouch AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
-                coalesce(channel,''(not set)'') AS channel,
+
+                coalesce(channel,'(not set)') AS channel,
+
                 MIN(sessionStartTsUtc) AS firstTouchTs
+
             FROM weekSessions
-            GROUP BY visitorId,weekStartDate,coalesce(channel,''(not set)'')
+
+            GROUP BY visitorId,weekStartDate,coalesce(channel,'(not set)')
+
         ),
+
         channelListResolved AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 transform(
+
                     array_sort(
+
                         collect_list(
+
                             named_struct(
-                                ''firstTouchTs'',firstTouchTs,
-                                ''channel'',channel
+
+                                'firstTouchTs',firstTouchTs,
+
+                                'channel',channel
+
                             )
+
                         )
+
                     ),
+
                     x -> x.channel
+
                 ) AS channelList
+
             FROM channelFirstTouch
+
             GROUP BY visitorId,weekStartDate
+
         ),
+
         agg AS (
+
             SELECT
+
                 visitorId,
+
                 weekStartDate,
+
                 min_by(identitySource,sessionStartTsUtc)
+
                     FILTER (WHERE identitySource IS NOT NULL) AS identitySource,
+
                 array_sort(
+
                     array_distinct(
+
                         flatten(
+
                             collect_list(
+
                                 coalesce(lobList,cast(array() AS ARRAY<STRING>))
+
                             )
+
                         )
+
                     )
+
                 ) AS lobList,
-                array_sort(collect_set(coalesce(platform,''(not set)''))) AS platformList,
+
+                array_sort(collect_set(coalesce(platform,'(not set)'))) AS platformList,
+
                 max_by(
+
                     prospectVsBase,
+
                     struct(prospectVsBaseRank,sessionStartTsUtc,sessionId)
+
                 ) AS prospectVsBase,
+
                 max_by(
+
                     authState,
+
                     struct(authStateRank,sessionStartTsUtc,sessionId)
+
                 ) AS authState,
+
                 max_by(
+
                     named_struct(
-                        ''channel'',channel,
-                        ''campaignCode'',campaignCode,
-                        ''campaignName'',campaignName,
-                        ''entryPage'',entryPage,
-                        ''utmSource'',utmSource,
-                        ''utmMedium'',utmMedium,
-                        ''utmCampaign'',utmCampaign
+
+                        'channel',channel,
+
+                        'campaignCode',campaignCode,
+
+                        'campaignName',campaignName,
+
+                        'entryPage',entryPage,
+
+                        'utmSource',utmSource,
+
+                        'utmMedium',utmMedium,
+
+                        'utmCampaign',utmCampaign
+
                     ),
+
                     struct(
+
                         CASE
+
                             WHEN channel IS NOT NULL
-                             AND channel NOT IN (''(not set)'',''Session Refresh'') THEN 1
+
+                             AND channel NOT IN ('(not set)','Session Refresh') THEN 1
+
                             ELSE 0
+
                         END,
+
                         sessionStartTsUtc,
+
                         sessionId
+
                     )
+
                 ) AS attributedTouch,
+
                 max_by(
+
                     deepestBuyFlowStep,
+
                     struct(
+
                         coalesce(deepestBuyFlowStepOrder,-1),
+
                         sessionStartTsUtc,
-                        coalesce(deepestBuyFlowStep,'''')
+
+                        coalesce(deepestBuyFlowStep,'')
+
                     )
+
                 ) FILTER (WHERE deepestBuyFlowStep IS NOT NULL) AS deepestBuyFlowStep,
+
                 max(isTmoNetworkSession) AS isTmoNetwork
+
             FROM weekSessions
+
             GROUP BY visitorId,weekStartDate
-        )
-        INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitor',
-            'Week_weekly BY NAME
-        REPLACE WHERE weekStartDate BETWEEN ',
-            v_scopeStartSql,
-            ' AND ',
-            v_scopeEndSql,
-            '
-        SELECT
+
+        ),
+        sourceRows AS (
+            SELECT
+
             a.weekStartDate,
+
             date_add(a.weekStartDate,6) AS weekEndDate,
+
             a.visitorId,
+
             a.identitySource,
-            coalesce(l.lob,''Other'') AS lob,
+
+            coalesce(l.lob,'Other') AS lob,
+
             a.lobList,
-            coalesce(p.platform,''(not set)'') AS platform,
+
+            coalesce(p.platform,'(not set)') AS platform,
+
             a.platformList,
-            coalesce(a.prospectVsBase,''Unknown'') AS prospectVsBase,
-            coalesce(a.authState,''(not set)'') AS authState,
-            coalesce(a.attributedTouch.channel,''(not set)'') AS channel,
-            coalesce(cl.channelList,array(coalesce(a.attributedTouch.channel,''(not set)''))) AS channelList,
+
+            coalesce(a.prospectVsBase,'Unknown') AS prospectVsBase,
+
+            coalesce(a.authState,'(not set)') AS authState,
+
+            coalesce(a.attributedTouch.channel,'(not set)') AS channel,
+
+            coalesce(cl.channelList,array(coalesce(a.attributedTouch.channel,'(not set)'))) AS channelList,
+
             CASE
-                WHEN a.attributedTouch.campaignCode IS NULL THEN ''(not set)''
+
+                WHEN a.attributedTouch.campaignCode IS NULL THEN '(not set)'
+
                 WHEN a.attributedTouch.campaignName IS NOT NULL
-                    THEN concat(a.attributedTouch.campaignCode,'' · '',a.attributedTouch.campaignName)
+
+                    THEN concat(a.attributedTouch.campaignCode,' · ',a.attributedTouch.campaignName)
+
                 ELSE a.attributedTouch.campaignCode
+
             END AS campaign,
+
             a.attributedTouch.campaignCode AS campaignCode,
-            coalesce(a.attributedTouch.entryPage,''(not set)'') AS entryPage,
-            coalesce(a.attributedTouch.utmSource,''(not set)'') AS utmSource,
-            coalesce(a.attributedTouch.utmMedium,''(not set)'') AS utmMedium,
-            coalesce(a.attributedTouch.utmCampaign,''(not set)'') AS utmCampaign,
-            coalesce(c.pageCategory,''(not set)'') AS pageCategory,
-            coalesce(d.device,''Unknown'') AS device,
-            coalesce(a.deepestBuyFlowStep,''Did not enter buy flow'') AS buyFlowStep,
-            coalesce(r.region,''(not available)'') AS region,
+
+            coalesce(a.attributedTouch.entryPage,'(not set)') AS entryPage,
+
+            coalesce(a.attributedTouch.utmSource,'(not set)') AS utmSource,
+
+            coalesce(a.attributedTouch.utmMedium,'(not set)') AS utmMedium,
+
+            coalesce(a.attributedTouch.utmCampaign,'(not set)') AS utmCampaign,
+
+            coalesce(c.pageCategory,'(not set)') AS pageCategory,
+
+            coalesce(d.device,'Unknown') AS device,
+
+            coalesce(a.deepestBuyFlowStep,'Did not enter buy flow') AS buyFlowStep,
+
+            coalesce(r.region,'(not available)') AS region,
+
             g.geoContext AS geoContext,
+
             coalesce(a.isTmoNetwork,0) AS isTmoNetwork,
+
             current_timestamp() AS silverProcessedAt
+
         FROM agg a
+
         LEFT JOIN channelListResolved cl
+
           ON cl.visitorId=a.visitorId
+
          AND cl.weekStartDate=a.weekStartDate
+
         LEFT JOIN lobResolved l
+
           ON l.visitorId=a.visitorId
+
          AND l.weekStartDate=a.weekStartDate
+
         LEFT JOIN platformResolved p
+
           ON p.visitorId=a.visitorId
+
          AND p.weekStartDate=a.weekStartDate
+
         LEFT JOIN deviceResolved d
+
           ON d.visitorId=a.visitorId
+
          AND d.weekStartDate=a.weekStartDate
+
         LEFT JOIN regionResolved r
+
           ON r.visitorId=a.visitorId
+
          AND r.weekStartDate=a.weekStartDate
+
         LEFT JOIN geoContextResolved g
+
           ON g.visitorId=a.visitorId
+
          AND g.weekStartDate=a.weekStartDate
+
         LEFT JOIN categoryResolved c
+
           ON c.visitorId=a.visitorId
-         AND c.weekStartDate=a.weekStartDate'
-        );
 
-        EXECUTE IMMEDIATE v_writeSql;
-
+         AND c.weekStartDate=a.weekStartDate
+        )
+        MERGE INTO prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly AS t
+        USING sourceRows AS s
+          ON t.weekStartDate = s.weekStartDate
+         AND t.visitorId = s.visitorId
+        WHEN MATCHED THEN
+            UPDATE SET *
+        WHEN NOT MATCHED THEN
+            INSERT *
+        WHEN NOT MATCHED BY SOURCE
+         AND t.weekStartDate BETWEEN v_weekStartFrom AND v_weekStartTo
+        THEN DELETE;
 
         SELECT
 
@@ -810,3 +1085,20 @@ END;
 --  AND e.weekStartDate=a.weekStartDate
 
 -- WHERE a.weekStartDate = DATE '2026-09-27';
+
+-- ============================================================================
+-- NOTEBOOK CALL EXAMPLE
+-- ============================================================================
+-- as_of_date: Python datetime.date
+-- weeks_to_rebuild: validated Python int >= 1
+--
+-- call_sql = f"""
+--     CALL prdrzranalytics.lab42.sdi_sp_mip_silver_attributesPerVisitorWeek_weekly(
+--         p_asOfDate       => DATE '{as_of_date.isoformat()}',
+--         p_weeksToRebuild => {int(weeks_to_rebuild)},
+--         p_validateOnly   => FALSE
+--     )
+-- """
+-- result = spark.sql(call_sql).collect()
+-- ============================================================================
+
