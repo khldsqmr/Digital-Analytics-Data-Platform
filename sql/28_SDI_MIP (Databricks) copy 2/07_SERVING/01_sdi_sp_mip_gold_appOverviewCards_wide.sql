@@ -5,21 +5,27 @@
 -- SECTION: Overview Cards
 -- PURPOSE:
 --   Application-ready Overview cards.
+--
+-- GRAIN:
 --   One row per reporting week x filter context x active Overview metric.
---   Analytical numerator/denominator ingredients stay upstream in Gold.
---   App table contains reporting metadata, metric metadata, finished values,
---   comparison changes and display-ready values only.
+--
+-- DESIGN:
+--   - Keeps the existing App/API output schema unchanged.
+--   - Reads analytical ingredients from Gold Overview.
+--   - Reads metric metadata from the control Metric Catalog.
+--   - Reads reporting metadata from the control Fiscal Calendar.
+--   - Reads the latest available forecast from Forecast Gold.
+--   - Uses a static scoped MERGE, matching the Silver/analytical-Gold write pattern.
+--   - p_weeksToRebuild controls TARGET weeks only.
+--   - Comparison/lookback periods are read dependencies; they are not rewritten.
+--   - A 4-week comparison is emitted only when all 4 prior reporting weeks exist.
+--   - NBV label comes directly from Metric Catalog ("Total NBV"); no App override.
 -- ============================================================================
 
--- ONE-TIME MIGRATION ONLY:
--- Existing table has the previous schema. Run this manually ONCE before first
--- execution of the redesigned procedure:
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide;
-
 CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
-    IN p_asOfDate DATE DEFAULT NULL,
-    IN p_weeksToRebuild INT DEFAULT 1,
-    IN p_validateOnly BOOLEAN DEFAULT FALSE
+    IN p_asOfDate       DATE    DEFAULT NULL,
+    IN p_weeksToRebuild INT     DEFAULT 1,
+    IN p_validateOnly   BOOLEAN DEFAULT FALSE
 )
 LANGUAGE SQL
 SQL SECURITY INVOKER
@@ -29,16 +35,19 @@ AS
 BEGIN
     DECLARE v_asOfDate DATE DEFAULT coalesce(
         p_asOfDate,
-        date_add(to_date(from_utc_timestamp(current_timestamp(),'America/Los_Angeles')),-1)
+        date_add(
+            to_date(from_utc_timestamp(current_timestamp(),'America/Los_Angeles')),
+            -1
+        )
     );
     DECLARE v_weekTo DATE;
     DECLARE v_weekFrom DATE;
     DECLARE v_weekEndTo DATE;
     DECLARE v_processedAt TIMESTAMP DEFAULT current_timestamp();
 
-    -- =========================================================================
+    -- ========================================================================
     -- 1. Parameters
-    -- =========================================================================
+    -- ========================================================================
     IF p_weeksToRebuild IS NULL OR p_weeksToRebuild < 1 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'p_weeksToRebuild must be >= 1.';
@@ -48,9 +57,9 @@ BEGIN
     SET v_weekFrom = date_add(v_weekTo,-7*(p_weeksToRebuild-1));
     SET v_weekEndTo = date_add(v_weekTo,6);
 
-    -- =========================================================================
-    -- 2. Source validation
-    -- =========================================================================
+    -- ========================================================================
+    -- 2. Source / control validation
+    -- ========================================================================
     IF NOT EXISTS (
         SELECT 1
         FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
@@ -109,9 +118,9 @@ BEGIN
             SET MESSAGE_TEXT = 'Metric Catalog contains unsupported metricKind, displayFormat or changeUnit values.';
     END IF;
 
-    -- =========================================================================
+    -- ========================================================================
     -- 3. Validation-only mode
-    -- =========================================================================
+    -- ========================================================================
     IF p_validateOnly THEN
         SELECT
             'VALIDATION_ONLY' AS status,
@@ -122,46 +131,44 @@ BEGIN
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide' AS targetObject,
             'Validation passed. No Gold App table was created or modified.' AS message;
     ELSE
-        -- =====================================================================
-        -- 4. App table
-        -- =====================================================================
+        -- ====================================================================
+        -- 4. App target
+        -- ====================================================================
         CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide(
-            targetWeekStartDate DATE,
-            targetWeekEndDate DATE,
-            fiscalQuarterLabel STRING,
-            fiscalWeekCode STRING,
-            weekLabel STRING,
-            weekEndingLabel STRING,
-            filterLob STRING,
-            filterPlatform STRING,
-            metricName STRING,
-            metricLabel STRING,
-            metricDescription STRING,
-            metricKind STRING,
-            displayFormat STRING,
-            changeUnit STRING,
-            sortOrder INT,
-            currentValue DOUBLE,
-            currentValueDisplay STRING,
-            priorWeekChangeValue DOUBLE,
-            priorWeekChangeDisplay STRING,
-            fourWeekChangeValue DOUBLE,
-            fourWeekChangeDisplay STRING,
-            lastYearChangeValue DOUBLE,
-            lastYearChangeDisplay STRING,
-            forecastValue DOUBLE,
-            forecastValueDisplay STRING,
-            appProcessedAt TIMESTAMP
+            targetWeekStartDate       DATE,
+            targetWeekEndDate         DATE,
+            fiscalQuarterLabel        STRING,
+            fiscalWeekCode            STRING,
+            weekLabel                 STRING,
+            weekEndingLabel           STRING,
+            filterLob                 STRING,
+            filterPlatform            STRING,
+            metricName                STRING,
+            metricLabel               STRING,
+            metricDescription         STRING,
+            metricKind                STRING,
+            displayFormat             STRING,
+            changeUnit                STRING,
+            sortOrder                 INT,
+            currentValue              DOUBLE,
+            currentValueDisplay       STRING,
+            priorWeekChangeValue      DOUBLE,
+            priorWeekChangeDisplay    STRING,
+            fourWeekChangeValue       DOUBLE,
+            fourWeekChangeDisplay     STRING,
+            lastYearChangeValue       DOUBLE,
+            lastYearChangeDisplay     STRING,
+            forecastValue             DOUBLE,
+            forecastValueDisplay      STRING,
+            appProcessedAt            TIMESTAMP
         )
         USING DELTA
         CLUSTER BY (targetWeekStartDate,metricName)
         COMMENT 'MIP Gold App: Overview Cards with reporting metadata, metric metadata, finished comparison values and display-ready values.';
 
-        -- =====================================================================
-        -- 5. Rebuild requested reporting weeks
-        -- =====================================================================
-        INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
-        REPLACE WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        -- ====================================================================
+        -- 5. Rebuild requested TARGET reporting weeks
+        -- ====================================================================
         WITH scopeOverview AS (
             SELECT
                 targetWeekStartDate,
@@ -212,32 +219,47 @@ BEGIN
                 g.filterLob,
                 g.filterPlatform,
                 g.metricName,
-                CASE WHEN g.metricName='nbv' THEN 'Total UPV' ELSE m.metricLabel END AS metricLabel,
+                m.metricLabel AS metricLabel,
                 m.metricDescription,
                 m.metricKind,
                 m.displayFormat,
                 m.changeUnit,
                 m.sortOrder,
+
                 CASE
                     WHEN NOT g.thisWeekDataAvailable THEN NULL
-                    WHEN m.metricKind='ratio' THEN try_divide(g.thisWeekNumerator,g.thisWeekDenominator)
+                    WHEN m.metricKind='ratio'
+                        THEN try_divide(g.thisWeekNumerator,g.thisWeekDenominator)
                     ELSE g.thisWeekNumerator
                 END AS currentValue,
+
                 CASE
                     WHEN NOT g.priorWeekDataAvailable THEN NULL
-                    WHEN m.metricKind='ratio' THEN try_divide(g.priorWeekNumerator,g.priorWeekDenominator)
+                    WHEN m.metricKind='ratio'
+                        THEN try_divide(g.priorWeekNumerator,g.priorWeekDenominator)
                     ELSE g.priorWeekNumerator
                 END AS priorWeekValue,
+
                 CASE
-                    WHEN g.fourWeekTrendWeekCount IS NULL OR g.fourWeekTrendWeekCount<=0 THEN NULL
-                    WHEN m.metricKind='ratio' THEN try_divide(g.fourWeekTrendNumerator,g.fourWeekTrendDenominator)
-                    ELSE try_divide(g.fourWeekTrendNumerator,cast(g.fourWeekTrendWeekCount AS DOUBLE))
+                    WHEN g.fourWeekTrendWeekCount <> 4 THEN NULL
+                    WHEN m.metricKind='ratio'
+                        THEN try_divide(
+                            g.fourWeekTrendNumerator,
+                            g.fourWeekTrendDenominator
+                        )
+                    ELSE try_divide(
+                        g.fourWeekTrendNumerator,
+                        4D
+                    )
                 END AS fourWeekValue,
+
                 CASE
                     WHEN NOT g.sameWeekLyDataAvailable THEN NULL
-                    WHEN m.metricKind='ratio' THEN try_divide(g.sameWeekLyNumerator,g.sameWeekLyDenominator)
+                    WHEN m.metricKind='ratio'
+                        THEN try_divide(g.sameWeekLyNumerator,g.sameWeekLyDenominator)
                     ELSE g.sameWeekLyNumerator
                 END AS lastYearValue,
+
                 f.forecastValue
             FROM scopeOverview g
             JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static m
@@ -261,12 +283,14 @@ BEGIN
                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D)
                     ELSE NULL
                 END AS priorWeekChangeRaw,
+
                 CASE
                     WHEN currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
                     WHEN changeUnit='pp' THEN 100D*(currentValue-fourWeekValue)
                     WHEN changeUnit='pct' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D)
                     ELSE NULL
                 END AS fourWeekChangeRaw,
+
                 CASE
                     WHEN currentValue IS NULL OR lastYearValue IS NULL THEN NULL
                     WHEN changeUnit='pp' THEN 100D*(currentValue-lastYearValue)
@@ -300,104 +324,160 @@ BEGIN
                 *,
                 CASE
                     WHEN currentValue IS NULL THEN NULL
-                    WHEN displayFormat='percent' THEN concat(format_number(100D*currentValue,1),'%')
-                    WHEN displayFormat='number' THEN format_number(currentValue,0)
+                    WHEN displayFormat='percent'
+                        THEN concat(format_number(100D*currentValue,1),'%')
+                    WHEN displayFormat='number'
+                        THEN format_number(currentValue,0)
                     ELSE cast(round(currentValue,2) AS STRING)
                 END AS currentValueDisplay,
+
                 CASE
                     WHEN priorWeekChangeValue IS NULL THEN NULL
-                    WHEN changeUnit='pp' THEN concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),' pp')
-                    WHEN changeUnit='pct' THEN concat(CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,format_number(priorWeekChangeValue,1),'%')
+                    WHEN changeUnit='pp'
+                        THEN concat(
+                            CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(priorWeekChangeValue,1),
+                            ' pp'
+                        )
+                    WHEN changeUnit='pct'
+                        THEN concat(
+                            CASE WHEN priorWeekChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(priorWeekChangeValue,1),
+                            '%'
+                        )
                     ELSE cast(priorWeekChangeValue AS STRING)
                 END AS priorWeekChangeDisplay,
+
                 CASE
                     WHEN fourWeekChangeValue IS NULL THEN NULL
-                    WHEN changeUnit='pp' THEN concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),' pp')
-                    WHEN changeUnit='pct' THEN concat(CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,format_number(fourWeekChangeValue,1),'%')
+                    WHEN changeUnit='pp'
+                        THEN concat(
+                            CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(fourWeekChangeValue,1),
+                            ' pp'
+                        )
+                    WHEN changeUnit='pct'
+                        THEN concat(
+                            CASE WHEN fourWeekChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(fourWeekChangeValue,1),
+                            '%'
+                        )
                     ELSE cast(fourWeekChangeValue AS STRING)
                 END AS fourWeekChangeDisplay,
+
                 CASE
                     WHEN lastYearChangeValue IS NULL THEN NULL
-                    WHEN changeUnit='pp' THEN concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),' pp')
-                    WHEN changeUnit='pct' THEN concat(CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,format_number(lastYearChangeValue,1),'%')
+                    WHEN changeUnit='pp'
+                        THEN concat(
+                            CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(lastYearChangeValue,1),
+                            ' pp'
+                        )
+                    WHEN changeUnit='pct'
+                        THEN concat(
+                            CASE WHEN lastYearChangeValue>0D THEN '+' ELSE '' END,
+                            format_number(lastYearChangeValue,1),
+                            '%'
+                        )
                     ELSE cast(lastYearChangeValue AS STRING)
                 END AS lastYearChangeDisplay,
+
                 CASE
                     WHEN forecastValue IS NULL THEN NULL
-                    WHEN displayFormat='percent' THEN concat(format_number(100D*forecastValue,1),'%')
-                    WHEN displayFormat='number' THEN format_number(forecastValue,0)
+                    WHEN displayFormat='percent'
+                        THEN concat(format_number(100D*forecastValue,1),'%')
+                    WHEN displayFormat='number'
+                        THEN format_number(forecastValue,0)
                     ELSE cast(round(forecastValue,2) AS STRING)
                 END AS forecastValueDisplay
             FROM roundedValues
+        ),
+        sourceRows AS (
+            SELECT
+                targetWeekStartDate,
+                targetWeekEndDate,
+                fiscalQuarterLabel,
+                fiscalWeekCode,
+                weekLabel,
+                weekEndingLabel,
+                filterLob,
+                filterPlatform,
+                metricName,
+                metricLabel,
+                metricDescription,
+                metricKind,
+                displayFormat,
+                changeUnit,
+                sortOrder,
+                currentValue,
+                currentValueDisplay,
+                priorWeekChangeValue,
+                priorWeekChangeDisplay,
+                fourWeekChangeValue,
+                fourWeekChangeDisplay,
+                lastYearChangeValue,
+                lastYearChangeDisplay,
+                forecastValue,
+                forecastValueDisplay,
+                v_processedAt AS appProcessedAt
+            FROM displayValues
         )
-        SELECT
-            targetWeekStartDate,
-            targetWeekEndDate,
-            fiscalQuarterLabel,
-            fiscalWeekCode,
-            weekLabel,
-            weekEndingLabel,
-            filterLob,
-            filterPlatform,
-            metricName,
-            metricLabel,
-            metricDescription,
-            metricKind,
-            displayFormat,
-            changeUnit,
-            sortOrder,
-            currentValue,
-            currentValueDisplay,
-            priorWeekChangeValue,
-            priorWeekChangeDisplay,
-            fourWeekChangeValue,
-            fourWeekChangeDisplay,
-            lastYearChangeValue,
-            lastYearChangeDisplay,
-            forecastValue,
-            forecastValueDisplay,
-            v_processedAt AS appProcessedAt
-        FROM displayValues;
+        MERGE INTO prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide AS t
+        USING sourceRows AS s
+          ON t.targetWeekStartDate = s.targetWeekStartDate
+         AND t.filterLob = s.filterLob
+         AND t.filterPlatform = s.filterPlatform
+         AND t.metricName = s.metricName
+        WHEN MATCHED THEN UPDATE SET *
+        WHEN NOT MATCHED THEN INSERT *
+        WHEN NOT MATCHED BY SOURCE
+         AND t.targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
+        THEN DELETE;
 
-        -- =====================================================================
+        -- ====================================================================
         -- 6. Success
-        -- =====================================================================
+        -- ====================================================================
         SELECT
             'SUCCESS' AS status,
             v_weekFrom AS rebuiltWeekStartFrom,
             v_weekTo AS rebuiltWeekStartTo,
             v_weekEndTo AS latestWeekEndDate,
-            CASE WHEN v_asOfDate<v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
+            CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
             'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide' AS targetObject,
             v_processedAt AS appProcessedAt;
     END IF;
 END;
 
+
 -- ============================================================================
--- DEVELOPMENT EXAMPLES
+-- MANUAL CALL EXAMPLES
 -- ============================================================================
 
 -- Validation only:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
---     p_asOfDate => DATE '2026-09-28',
+--     p_asOfDate       => DATE '2026-10-03',
 --     p_weeksToRebuild => 1,
---     p_validateOnly => TRUE
+--     p_validateOnly   => TRUE
 -- );
 
--- Rebuild:
+-- Rebuild one TARGET reporting week:
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
---     p_asOfDate => DATE '2026-09-28',
+--     p_asOfDate       => DATE '2026-10-03',
 --     p_weeksToRebuild => 1,
---     p_validateOnly => FALSE
+--     p_validateOnly   => FALSE
 -- );
+
+-- Rebuild four TARGET reporting weeks:
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
+--     p_asOfDate       => DATE '2026-10-03',
+--     p_weeksToRebuild => 4,
+--     p_validateOnly   => FALSE
+-- );
+
 
 -- ============================================================================
 -- VALIDATION QUERIES
 -- ============================================================================
-
--- SELECT *
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
--- ORDER BY targetWeekStartDate DESC,filterLob,filterPlatform,sortOrder;
 
 -- Duplicate check; expected zero rows:
 -- SELECT targetWeekStartDate,filterLob,filterPlatform,metricName,count(*) AS rowCount
@@ -405,34 +485,23 @@ END;
 -- GROUP BY targetWeekStartDate,filterLob,filterPlatform,metricName
 -- HAVING count(*)>1;
 
--- API-style read:
--- SELECT
---     targetWeekStartDate,
---     targetWeekEndDate,
---     fiscalQuarterLabel,
---     fiscalWeekCode,
---     weekLabel,
---     weekEndingLabel,
---     filterLob,
---     filterPlatform,
---     metricName,
---     metricLabel,
---     metricDescription,
---     metricKind,
---     displayFormat,
---     changeUnit,
---     currentValue,
---     currentValueDisplay,
---     priorWeekChangeValue,
---     priorWeekChangeDisplay,
---     fourWeekChangeValue,
---     fourWeekChangeDisplay,
---     lastYearChangeValue,
---     lastYearChangeDisplay,
---     forecastValue,
---     forecastValueDisplay
+-- Confirm NBV label comes from Metric Catalog:
+-- SELECT targetWeekStartDate,metricName,metricLabel,currentValueDisplay
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
--- WHERE targetWeekStartDate=DATE '2026-09-27'
---   AND filterLob='All'
---   AND filterPlatform='All'
--- ORDER BY sortOrder;
+-- WHERE metricName='nbv'
+-- ORDER BY targetWeekStartDate DESC;
+
+-- Strict 4-week validation:
+-- SELECT
+--     a.targetWeekStartDate,
+--     a.metricName,
+--     g.fourWeekTrendWeekCount,
+--     a.fourWeekChangeValue,
+--     a.fourWeekChangeDisplay
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide a
+-- JOIN prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+--   ON g.targetWeekStartDate=a.targetWeekStartDate
+--  AND g.filterLob=a.filterLob
+--  AND g.filterPlatform=a.filterPlatform
+--  AND g.metricName=a.metricName
+-- ORDER BY a.targetWeekStartDate DESC,a.metricName;
