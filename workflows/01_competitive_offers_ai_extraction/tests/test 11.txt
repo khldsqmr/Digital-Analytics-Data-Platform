@@ -4316,3 +4316,12 @@ GROUP BY
     site_name,
     coalesce(channel_name,'(not set)')
 ORDER BY hits DESC;
+
+SELECT
+    session_id,
+    COUNT(*) AS rows,
+    COUNT(DISTINCT source_table) AS sourceTables
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+GROUP BY session_id
+HAVING COUNT(*) > 1
+LIMIT 100;
