@@ -4275,3 +4275,44 @@ targetWeekStartDate	targetWeekEndDate	fiscalQuarterLabel	fiscalWeekCode	weekLabe
 
 
 I am a bit skeptical on the joins we have. UDI has an average of 300MM rows per day, sessions fact also have average of 300MM rows per day, whereas sessions summary only has 300MM in total. I ran our query just for 3 days, but the join shows we read more than 15B rows. I wonder if we are missing a join criteria. The initial query ran more than 2 hours and hasn't completed so I just cancelled it.
+
+
+WITH base AS (
+    SELECT
+        u.event_date,
+        ss.session_start_date,
+        u.site_name,
+        u.channel_name,
+        ss.canonical_user_id,
+        u.event_page_view,
+        u.event_purchase,
+        u.event_click_to_call,
+        u.event_chat_engage
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+    INNER JOIN prd_dbi_analytics.silver_digital_interactions.session_event_fact sef
+        ON u.row_identity_hash = sef.row_identity_hash
+       AND u.event_date = sef.event_date
+       AND u.source_table = sef.source_table
+    INNER JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact ss
+        ON sef.session_id = ss.session_id
+    WHERE u.event_date BETWEEN DATE '2026-09-20' AND DATE '2026-10-03'
+)
+ 
+SELECT
+    session_start_date,
+    site_name,
+    coalesce(channel_name,'(not set)') AS channel_name,
+ 
+    COUNT(*) AS hits,
+    COUNT(DISTINCT canonical_user_id) AS visitors,
+    SUM(coalesce(event_page_view,0)) AS page_views,
+    SUM(coalesce(event_purchase,0)) AS orders,
+    SUM(coalesce(event_click_to_call,0)) AS vr_calls,
+    SUM(coalesce(event_chat_engage,0)) AS vr_chats
+ 
+FROM base
+GROUP BY
+    session_start_date,
+    site_name,
+    coalesce(channel_name,'(not set)')
+ORDER BY hits DESC;
