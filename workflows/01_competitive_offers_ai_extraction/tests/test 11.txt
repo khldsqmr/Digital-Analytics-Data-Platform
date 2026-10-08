@@ -4271,3 +4271,7 @@ targetWeekStartDate	targetWeekEndDate	fiscalQuarterLabel	fiscalWeekCode	weekLabe
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	Week ending 12 Sep 2026	All	All	pageViews	Page Views	Total page-view events from non-bounced sessions.	count	number	pct	20	506097731	506,097,731	null	null	null	null	null	null	null	null	2026-10-08T08:13:00.473+00:00
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	Week ending 12 Sep 2026	All	All	ordersAssisted	Assisted Orders	Unique ordering visitors with at least one assisted purchase event in the week.	count	number	pct	60	125987	125,987	null	null	null	null	null	null	null	null	2026-10-08T08:13:00.473+00:00
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	Week ending 12 Sep 2026	All	All	ordersPerNbv	Orders / NBV	Share of NB visitors who ordered.	ratio	percent	pp	220	0.01824535848141906	1.8%	null	null	null	null	null	null	null	null	2026-10-08T08:13:00.473+00:00
+
+
+
+I am a bit skeptical on the joins we have. UDI has an average of 300MM rows per day, sessions fact also have average of 300MM rows per day, whereas sessions summary only has 300MM in total. I ran our query just for 3 days, but the join shows we read more than 15B rows. I wonder if we are missing a join criteria. The initial query ran more than 2 hours and hasn't completed so I just cancelled it.
