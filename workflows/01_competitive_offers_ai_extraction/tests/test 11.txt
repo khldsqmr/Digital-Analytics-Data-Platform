@@ -4193,3 +4193,10 @@ detail	failedCalls	scenario	speedupVsWindow	sumCallMinutes	wallMinutes
 [{"seconds":"1692.9864602960006","windowDays":"2","error":null,"status":"SUCCEEDED","day":"2026-10-03"}]	0	WINDOW	1	28.216	28.216
 [{"seconds":"1117.614396945999","windowDays":"1","error":null,"status":"SUCCEEDED","day":"2026-10-02"},{"seconds":"700.7532743680022","windowDays":"1","error":null,"status":"SUCCEEDED","day":"2026-10-03"}]	0	DAILY_SEQUENTIAL	0.931	30.306	30.306
 [{"seconds":"1130.3967262639999","windowDays":"1","error":null,"status":"SUCCEEDED","day":"2026-10-03"},{"seconds":"1643.1359761109998","windowDays":"1","error":null,"status":"SUCCEEDED","day":"2026-10-02"}]	0	DAILY_PARALLEL_C2	1.03	46.226	27.386
+
+
+
+[PARSE_SYNTAX_ERROR] Syntax error at or near '\'. SQLSTATE: 42601
+
+== SQL ==
+-- ============================================================================
