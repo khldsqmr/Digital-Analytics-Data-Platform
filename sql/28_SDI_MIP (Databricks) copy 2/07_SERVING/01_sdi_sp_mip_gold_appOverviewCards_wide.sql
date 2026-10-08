@@ -18,7 +18,7 @@
 --   - Uses a static scoped MERGE, matching the Silver/analytical-Gold write pattern.
 --   - p_weeksToRebuild controls TARGET weeks only.
 --   - Comparison/lookback periods are read dependencies; they are not rewritten.
---   - A 4-week comparison is emitted only when all 4 prior reporting weeks exist.
+--   - Preserves current partial 4-week trend behavior when 1-4 prior weeks are available.
 --   - NBV label comes directly from Metric Catalog ("Total NBV"); no App override.
 -- ============================================================================
 
@@ -241,7 +241,7 @@ BEGIN
                 END AS priorWeekValue,
 
                 CASE
-                    WHEN g.fourWeekTrendWeekCount <> 4 THEN NULL
+                    WHEN g.fourWeekTrendWeekCount IS NULL OR g.fourWeekTrendWeekCount<=0 THEN NULL
                     WHEN m.metricKind='ratio'
                         THEN try_divide(
                             g.fourWeekTrendNumerator,
@@ -249,7 +249,7 @@ BEGIN
                         )
                     ELSE try_divide(
                         g.fourWeekTrendNumerator,
-                        4D
+                        cast(g.fourWeekTrendWeekCount AS DOUBLE)
                     )
                 END AS fourWeekValue,
 
@@ -491,7 +491,7 @@ END;
 -- WHERE metricName='nbv'
 -- ORDER BY targetWeekStartDate DESC;
 
--- Strict 4-week validation:
+-- Current partial-window 4-week behavior validation:
 -- SELECT
 --     a.targetWeekStartDate,
 --     a.metricName,
