@@ -2028,7 +2028,7 @@ targetWeekStartDate         DATE,
 
                             try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
 
-                            \+ (
+                            + (
 
                                 try_divide(peerCurrentNumerator,peerCurrentDenominator)
 
