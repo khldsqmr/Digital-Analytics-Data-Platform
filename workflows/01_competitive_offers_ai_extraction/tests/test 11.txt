@@ -4466,3 +4466,7 @@ as it is unclear which source row should be used to update or delete the matchin
 target row. You can preprocess the source table to eliminate the possibility of
 multiple matches. Please refer to
 https://docs.microsoft.com/azure/databricks/delta/merge#merge-error
+
+Quick update: the Gold App sections are now populated with the available comparison data and the demo outputs are looking good.
+
+For now, the 4-wk comparison is flexible and uses the available historical weeks if fewer than 4 are present, while still showing the label as “4-wk trend.” Once the historical backfill is complete, we’ll switch it back to the strict 4-week requirement. Peer Set and Same Week LY may still be unavailable for some weeks until the required historical data is present.
