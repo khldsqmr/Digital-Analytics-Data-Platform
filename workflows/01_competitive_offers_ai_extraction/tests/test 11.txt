@@ -4585,3 +4585,6 @@ HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
 
+
+I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it looks like the 4-week trend is a total of those weeks instead of an average trend of those weeks. Can you resolve this in the table? Might be an issue in the breakouts tables too
+ 
