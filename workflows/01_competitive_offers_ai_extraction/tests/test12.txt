@@ -791,3 +791,34 @@ event_date	source_table	udiRows	rowsWithCampaignCode	unresolvedCampaignRows
 --     into every daily production procedure. Separate source-contract tests
 --     from lightweight recurring job-health checks.
 -- ============================================================================
+
+
+WITH campaignSample AS (
+    SELECT
+        source_table,
+        NULLIF(
+            TRIM(SPLIT_PART(
+                CAST(external_campaign_code AS STRING),
+                '_', 4
+            )),
+            ''
+        ) AS parsedCampaignCode
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date = DATE '2026-10-03'
+      AND external_campaign_code IS NOT NULL
+      AND PMOD(XXHASH64(CAST(row_identity_hash AS STRING)),101)=0
+)
+SELECT
+    c.source_table,
+    COUNT(*) AS sampledCampaignRows,
+    COUNT_IF(c.parsedCampaignCode IS NULL) AS missingParsedCode,
+    COUNT_IF(m.MKT_CODE IS NOT NULL) AS matchedMarketingCode,
+    COUNT_IF(
+        c.parsedCampaignCode IS NOT NULL
+        AND m.MKT_CODE IS NULL
+    ) AS unmatchedParsedCode
+FROM campaignSample c
+LEFT JOIN prdrzranalytics.lab42.dim_marketing_code m
+    ON c.parsedCampaignCode=CAST(m.MKT_CODE AS STRING)
+GROUP BY c.source_table;
+
