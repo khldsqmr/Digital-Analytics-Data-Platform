@@ -50,6 +50,20 @@
 --     peer fields are intentionally NULL because peer counterfactuals are
 --     overlapping/non-additive and cannot be summed.
 --
+-- APP/API SCHEMA FREEZE - FOUR-WEEK VALUE CONTRACT:
+--   - NO persisted/API-facing columns are added, removed, renamed or reordered.
+--   - fiscalWeekCode logic is intentionally unchanged.
+--   - Analytical Gold fourWeekTrendNumerator remains a SUM ingredient.
+--   - App Gold converts count metrics to an average before comparison:
+--         fourWeekTrendNumerator / actual available historical week count.
+--   - Ratio metrics remain ratio-of-sums:
+--         fourWeekTrendNumerator / fourWeekTrendDenominator.
+--   - Existing App columns continue to carry the corrected results. No API
+--     contract change is required.
+--   - Temporary demo behavior still allows 1-4 available historical weeks.
+--     After full history is available, restore the strict completeness gates
+--     already marked "STRICT AFTER BACKFILL".
+--
 -- TEMPORARY DEMO FOUR-WEEK OVERRIDE:
 --   - DEMO ONLY: keep the UI/API label as "4-wk trend", but allow the value to
 --     use whatever historical baseline is currently available (1-4 weeks).
@@ -423,7 +437,15 @@ BEGIN
                 j.fourWeekDataAvailable AND j.toplineFourWeekWeekCount>0,
                 -- Completeness remains strict/truthful.
                 j.fourWeekWindowComplete AND j.toplineFourWeekWeekCount=4,
-                j.fourWeekAbsoluteDiffValue,j.fourWeekNumerator,j.fourWeekDenominator,
+                j.fourWeekAbsoluteDiffValue,
+                -- Count metrics carry the averaged comparator internally; ratio
+                -- metrics retain the summed numerator/denominator ingredients.
+                CASE
+                    WHEN j.metricKind='count' AND j.fourWeekWeekCount>0
+                        THEN try_divide(j.fourWeekNumerator,cast(j.fourWeekWeekCount AS DOUBLE))
+                    ELSE j.fourWeekNumerator
+                END,
+                CASE WHEN j.metricKind='count' THEN NULL ELSE j.fourWeekDenominator END,
                 j.toplineFourWeekValue,j.toplineFourWeekDenominator
             FROM joined j
             UNION ALL
