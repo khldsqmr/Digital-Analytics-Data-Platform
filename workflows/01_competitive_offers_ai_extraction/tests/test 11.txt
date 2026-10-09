@@ -4481,6 +4481,8 @@ GROUP BY session_id
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+output:
+No rows to display
 
 WITH sefSessions AS (
     SELECT DISTINCT session_id
@@ -4500,6 +4502,8 @@ GROUP BY s.session_id
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+output:
+No rows returned
 
 -- Silver target
 SELECT
@@ -4513,6 +4517,8 @@ GROUP BY rowIdentityHash,eventDate,sourceTable
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+output:
+/no rows returned
 
 -- SEF
 SELECT
@@ -4526,6 +4532,8 @@ GROUP BY row_identity_hash,event_date,source_table
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+output:
+No rows returned
 
 -- UDI
 SELECT
@@ -4539,6 +4547,8 @@ GROUP BY row_identity_hash,event_date,source_table
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+output:
+No rows returned
 
 WITH scopedLinks AS (
     SELECT
@@ -4584,7 +4594,8 @@ GROUP BY row_identity_hash,event_date,source_table
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
-
+output:
+No rows returned
 
 I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it looks like the 4-week trend is a total of those weeks instead of an average trend of those weeks. Can you resolve this in the table? Might be an issue in the breakouts tables too
  
