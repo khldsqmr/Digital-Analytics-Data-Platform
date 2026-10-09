@@ -930,3 +930,99 @@ t_web_interactions	DR179W3L7E845263	2	CEM_SS_18INTLTRVL_DR179W3L7E845263	0
 t_web_interactions	2CNTTMOEVGN	2	MTPR_PG_P_2CNTTMOEVGN_16640560_142756602668_	0
 t_app_interactions	JKMOUG34K9111750	2	CRM_SS_THRSHLDMSS_JKMOUG34K9111750	0
 t_web_interactions	0E8B0023704937065M225	2	EM_C_HINTLDN_0E8B0023704937065M225	0
+
+-- CHECK: uniqueness after normalization
+SELECT
+    UPPER(TRIM(CAST(MKT_CODE AS STRING))) AS normalizedCode,
+    COUNT(*) AS sourceRows,
+    COUNT(DISTINCT CAST(MKT_CODE AS STRING)) AS originalCodes,
+    COUNT(DISTINCT COALESCE(CAST(Category AS STRING),'(null)')) AS categories
+FROM prdrzranalytics.lab42.dim_marketing_code
+GROUP BY UPPER(TRIM(CAST(MKT_CODE AS STRING)))
+HAVING COUNT(*) > 1
+ORDER BY sourceRows DESC;
+
+
+-- ============================================================================
+-- MIP SOURCE AUDIT: EXACT VS NORMALIZED MARKETING CODE COVERAGE
+-- DATE   : 2026-10-03
+-- SAMPLE : ~1%, deterministic by row_identity_hash
+-- PURPOSE: Quantify recovery using uppercase/trim normalization.
+-- WRITES : NONE
+-- ============================================================================
+
+WITH marketingCodes AS (
+    SELECT
+        CAST(MKT_CODE AS STRING) AS marketingCode,
+        UPPER(TRIM(CAST(MKT_CODE AS STRING))) AS normalizedCode
+    FROM prdrzranalytics.lab42.dim_marketing_code
+),
+normalizedCodes AS (
+    SELECT
+        normalizedCode,
+        COUNT(*) AS referenceRows
+    FROM marketingCodes
+    GROUP BY normalizedCode
+),
+campaignSample AS (
+    SELECT
+        source_table,
+        NULLIF(
+            TRIM(SPLIT_PART(
+                CAST(external_campaign_code AS STRING),
+                '_',4
+            )),
+            ''
+        ) AS parsedCode
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date=DATE '2026-10-03'
+      AND external_campaign_code IS NOT NULL
+      AND PMOD(XXHASH64(CAST(row_identity_hash AS STRING)),101)=0
+),
+resolved AS (
+    SELECT
+        c.source_table,
+        c.parsedCode,
+        e.marketingCode AS exactMatch,
+        n.normalizedCode AS normalizedMatch,
+        n.referenceRows
+    FROM campaignSample c
+    LEFT JOIN marketingCodes e
+      ON c.parsedCode=e.marketingCode
+    LEFT JOIN normalizedCodes n
+      ON UPPER(TRIM(c.parsedCode))=n.normalizedCode
+)
+SELECT
+    source_table,
+    COUNT(*) AS sampledRows,
+    COUNT_IF(parsedCode IS NULL) AS missingParsedCode,
+    COUNT_IF(exactMatch IS NOT NULL) AS exactMatches,
+    COUNT_IF(
+        exactMatch IS NULL
+        AND normalizedMatch IS NOT NULL
+    ) AS recoveredByNormalization,
+    COUNT_IF(
+        parsedCode IS NOT NULL
+        AND normalizedMatch IS NULL
+    ) AS stillUnmatched,
+    COUNT_IF(referenceRows>1) AS ambiguousNormalizedRows,
+    ROUND(
+        100.0*COUNT_IF(exactMatch IS NOT NULL)/
+        NULLIF(COUNT_IF(parsedCode IS NOT NULL),0),2
+    ) AS exactMatchPct,
+    ROUND(
+        100.0*COUNT_IF(normalizedMatch IS NOT NULL)/
+        NULLIF(COUNT_IF(parsedCode IS NOT NULL),0),2
+    ) AS normalizedMatchPct
+FROM resolved
+GROUP BY source_table
+ORDER BY source_table;
+
+-- ============================================================================
+-- EXPECTED:
+-- recoveredByNormalization > 0
+-- ambiguousNormalizedRows = 0
+-- stillUnmatched may remain > 0 due to missing reference codes,
+-- encoded values, or source-specific naming conventions.
+-- ============================================================================
+
