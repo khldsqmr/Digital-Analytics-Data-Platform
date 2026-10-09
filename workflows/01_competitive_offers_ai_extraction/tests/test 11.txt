@@ -4458,3 +4458,11 @@ targetWeekStartDate	targetWeekEndDate	fiscalYear	fiscalQuarterLabel	fiscalWeekCo
 2026-09-13	2026-09-19	2026	2026 Q3	2026Q3W37	W37 · 13 to 19 Sep	Week ending 19 Sep 2026	All	All	nbv	Total UPV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	campaign	Campaign	120	fourWeek	4-wk trend	20	true	false	all	All	100	30	25HSIBND55 · 2025 HSI Bundle 55+	false	64	increase	10	33	10033	4478	4.5K	5739	5.7K	28.2	+28.2%	1261	+1.3K	number	0	0.0%	pct	21615847	21617108	20990544	21M	640709	+640.7K	49	-209998	-210K	52	430711	+430.7K	2.1	+2.1%	21421255	21.4M	430711	0	2026-10-09T03:45:25.139+00:00
 2026-09-13	2026-09-19	2026	2026 Q3	2026Q3W37	W37 · 13 to 19 Sep	Week ending 19 Sep 2026	All	All	nbv	Total UPV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	campaign	Campaign	120	fourWeek	4-wk trend	20	true	false	all	All	100	30	26PPAW3002 · 2026 Q2 Postpaid BTS Apple Watch S11 / SE3 $300 Off	false	67	increase	10	34	10034	1750	1.8K	2921	2.9K	66.9	+66.9%	1171	+1.2K	number	0	0.0%	pct	21617108	21618279	20990544	21M	640709	+640.7K	49	-209998	-210K	52	430711	+430.7K	2.1	+2.1%	21421255	21.4M	430711	0	2026-10-09T03:45:25.139+00:00
 2026-09-13	2026-09-19	2026	2026 Q3	2026Q3W37	W37 · 13 to 19 Sep	Week ending 19 Sep 2026	All	All	nbv	Total UPV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	campaign	Campaign	120	fourWeek	4-wk trend	20	true	false	all	All	100	30	SVCCRM · CRM Service Message	false	68	increase	10	35	10035	30207	30.2K	31368	31.4K	3.8	+3.8%	1161	+1.2K	number	0	0.0%	pct	21618279	21619440	20990544	21M	640709	+640.7K	49	-209998	-210K	52	430711	+430.7K	2.1	+2.1%	21421255	21.4M	430711	0	2026-10-09T03:45:25.139+00:00
+
+[DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same
+target row in the Delta table in possibly conflicting ways. By SQL semantics of Merge,
+when multiple source rows match on the same target row, the result may be ambiguous
+as it is unclear which source row should be used to update or delete the matching
+target row. You can preprocess the source table to eliminate the possibility of
+multiple matches. Please refer to
+https://docs.microsoft.com/azure/databricks/delta/merge#merge-error
