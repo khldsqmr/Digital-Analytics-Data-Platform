@@ -4592,3 +4592,7 @@ I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it l
  So in this version, all of them have fiscalWeekCode are 37, 38, 39. I updated the previous approach because the quarter end date may fall mid week 
 
  In this overview topline movers table, your week numbers in fiscalWeekCode are 37, 38, 39, etc. But in most (if not all) the other tables, the weeks were numbered by the quarter (12, 13, 14). This just needs to be consistent.
+
+ Yep, updated both items. The 4-wk trend is now based on the average of the available historical weeks for count metrics rather than the total, without changing the existing API/table schema.
+
+I also standardized `fiscalWeekCode` across the current App Gold tables to use the fiscal-year week numbering, so they now consistently show 37, 38, 39, etc. instead of resetting within the quarter to 12, 13, 14. I changed the previous approach because a reporting week can span a quarter-end, so keeping the week number independent of the quarter avoids inconsistencies while quarter attribution is handled separately.
