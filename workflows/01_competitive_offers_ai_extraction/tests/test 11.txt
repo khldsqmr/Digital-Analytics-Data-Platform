@@ -4470,50 +4470,118 @@ https://docs.microsoft.com/azure/databricks/delta/merge#merge-error
 Quick update: the Gold App sections are now populated with the available comparison data and the demo outputs are looking good.
 
 For now, the 4-wk comparison is flexible and uses the available historical weeks if fewer than 4 are present, while still showing the label as “4-wk trend.” Once the historical backfill is complete, we’ll switch it back to the strict 4-week requirement. Peer Set and Same Week LY may still be unavailable for some weeks until the required historical data is present.
+SELECT
+    session_id,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT source_table) AS sourceTableCount,
+    COLLECT_SET(session_status) AS sessionStatuses
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily
+WHERE session_status IN ('OPEN','CLOSED')
+GROUP BY session_id
+HAVING COUNT(*) > 1
+ORDER BY rowCount DESC
+LIMIT 100;
 
+WITH sefSessions AS (
+    SELECT DISTINCT session_id
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
+    WHERE event_date = DATE '2026-10-03'
+)
+SELECT
+    s.session_id,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT s.source_table) AS sourceTableCount,
+    COLLECT_SET(s.session_status) AS sessionStatuses
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily s
+JOIN sefSessions e
+  ON e.session_id = s.session_id
+WHERE s.session_status IN ('OPEN','CLOSED')
+GROUP BY s.session_id
+HAVING COUNT(*) > 1
+ORDER BY rowCount DESC
+LIMIT 100;
+
+-- Silver target
 SELECT
     rowIdentityHash,
     eventDate,
     sourceTable,
     COUNT(*) AS rowCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-WHERE eventDate = DATE '2026-10-03'
-GROUP BY
-    rowIdentityHash,
-    eventDate,
-    sourceTable
+WHERE eventDate BETWEEN DATE '2026-10-02' AND DATE '2026-10-03'
+GROUP BY rowIdentityHash,eventDate,sourceTable
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
 
--- Bronze SEF
+-- SEF
 SELECT
     row_identity_hash,
     event_date,
     source_table,
     COUNT(*) AS rowCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
-WHERE event_date = DATE '2026-10-03'
-GROUP BY
-    row_identity_hash,
-    event_date,
-    source_table
+WHERE event_date BETWEEN DATE '2026-10-02' AND DATE '2026-10-03'
+GROUP BY row_identity_hash,event_date,source_table
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
 
--- Bronze UDI
+-- UDI
 SELECT
     row_identity_hash,
     event_date,
     source_table,
     COUNT(*) AS rowCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily
-WHERE event_date = DATE '2026-10-03'
-GROUP BY
-    row_identity_hash,
-    event_date,
-    source_table
+WHERE event_date BETWEEN DATE '2026-10-02' AND DATE '2026-10-03'
+GROUP BY row_identity_hash,event_date,source_table
 HAVING COUNT(*) > 1
 ORDER BY rowCount DESC
 LIMIT 100;
+
+WITH scopedLinks AS (
+    SELECT
+        row_identity_hash,
+        event_date,
+        source_table,
+        session_id,
+        hit_number_in_session,
+        flow_name
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
+    WHERE event_date BETWEEN DATE '2026-10-02' AND DATE '2026-10-03'
+),
+validLinks AS (
+    SELECT
+        l.row_identity_hash,
+        l.event_date,
+        l.source_table,
+        l.session_id
+    FROM scopedLinks l
+    INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily s
+      ON s.session_id = l.session_id
+    WHERE s.session_status IN ('OPEN','CLOSED')
+),
+joined AS (
+    SELECT
+        h.row_identity_hash,
+        h.event_date,
+        h.source_table
+    FROM validLinks l
+    INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily h
+      ON h.row_identity_hash = l.row_identity_hash
+     AND h.event_date = l.event_date
+     AND h.source_table = l.source_table
+    WHERE h.event_date BETWEEN DATE '2026-10-02' AND DATE '2026-10-03'
+)
+SELECT
+    row_identity_hash,
+    event_date,
+    source_table,
+    COUNT(*) AS rowCount
+FROM joined
+GROUP BY row_identity_hash,event_date,source_table
+HAVING COUNT(*) > 1
+ORDER BY rowCount DESC
+LIMIT 100;
+
