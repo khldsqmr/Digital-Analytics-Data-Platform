@@ -72,6 +72,17 @@ GROUP BY event_date,source_table
 ORDER BY event_date,source_table;
 -- Interpretation: check each requested day is present and whether null session
 -- identities occur. Presence of a day does NOT prove ingestion completion.
+output:
+event_date	source_table	eventRows	nullHitIdentity	nullSessionId	nullHitOrdinal	nullEventTimestamp	rowsWithFlowName
+2026-10-01	t_app_interactions	254682933	0	0	0	0	13436708
+2026-10-01	t_web_interactions	35537377	0	0	0	0	10333274
+2026-10-02	t_app_interactions	246581307	0	0	0	0	13967754
+2026-10-02	t_web_interactions	34208479	0	0	0	0	10092551
+2026-10-03	t_app_interactions	219925839	0	0	0	0	14299890
+2026-10-03	t_web_interactions	29570167	0	0	0	0	9111254
+2026-10-04	t_app_interactions	198482902	0	0	0	0	11771537
+2026-10-04	t_web_interactions	27047984	0	0	0	0	8483124
+
 
 -- Q03 [FOUR-DAY SCAN / LOW SHUFFLE] UDI: coverage, key NULLs, page/order signals.
 -- Show raw signal counts without imposing a new metric definition.
@@ -88,6 +99,17 @@ FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table
 ORDER BY event_date,source_table;
+output:
+event_date	source_table	eventRows	nullHitIdentity	nullEventTimestamp	nullChannelName	rowsWithOrderId	rowsWithPageViewField	rowsWithPurchaseField	earliestLoadDateTimePst	latestLoadDateTimePst
+2026-10-01	t_app_interactions	265787552	0	0	203591601	1010742	61995596	47931	2026-09-30T17:00:52.445+00:00	2026-10-09T15:30:32.786+00:00
+2026-10-01	t_web_interactions	49886577	0	0	27711345	27724	16006526	14016	2026-09-30T17:00:52.366+00:00	2026-10-09T08:00:31.795+00:00
+2026-10-02	t_app_interactions	252760584	0	0	193603185	972893	59002806	50275	2026-10-01T17:30:15.422+00:00	2026-10-09T15:30:32.786+00:00
+2026-10-02	t_web_interactions	47681624	0	0	26381611	27332	15059591	14107	2026-10-01T17:30:15.131+00:00	2026-10-09T14:00:38.812+00:00
+2026-10-03	t_app_interactions	224884658	0	0	171995885	734253	52735226	59465	2026-10-02T17:00:25.090+00:00	2026-10-09T15:30:32.786+00:00
+2026-10-03	t_web_interactions	40979301	0	0	22596074	26645	12764536	13606	2026-10-02T17:00:24.801+00:00	2026-10-09T15:30:42.077+00:00
+2026-10-04	t_app_interactions	202917193	0	0	154862383	616469	47909416	44780	2026-10-03T17:00:39.582+00:00	2026-10-09T15:30:32.786+00:00
+2026-10-04	t_web_interactions	37345131	0	0	20416585	22757	11589756	11557	2026-10-03T17:00:38.910+00:00	2026-10-09T15:30:42.077+00:00
+
 
 -- Q04 [FOUR-DAY SCAN / LOW SHUFFLE] Inspect actual raw flag encodings: do not
 -- blindly convert booleans, 0/1 integers or string event fields prematurely.
@@ -102,18 +124,50 @@ GROUP BY event_date,source_table,
 ORDER BY event_date,source_table,rows DESC;
 -- Q04 may output many rows if these fields contain unexpected rich payloads.
 -- Review the Q01 data types first.
+output:
+event_date	source_table	rawPageViewFlag	rawPurchaseFlag	rows
+2026-10-01	t_app_interactions	null	null	203791956
+2026-10-01	t_app_interactions	1	null	61947665
+2026-10-01	t_app_interactions	1	1	47931
+2026-10-01	t_web_interactions	null	null	33880051
+2026-10-01	t_web_interactions	1	null	15992510
+2026-10-01	t_web_interactions	1	1	14016
+2026-10-02	t_app_interactions	null	null	193757778
+2026-10-02	t_app_interactions	1	null	58952531
+2026-10-02	t_app_interactions	1	1	50275
+2026-10-02	t_web_interactions	null	null	32622033
+2026-10-02	t_web_interactions	1	null	15045484
+2026-10-02	t_web_interactions	1	1	14107
+2026-10-03	t_app_interactions	null	null	172149432
+2026-10-03	t_app_interactions	1	null	52675761
+2026-10-03	t_app_interactions	1	1	59465
+2026-10-03	t_web_interactions	null	null	28214765
+2026-10-03	t_web_interactions	1	null	12750930
+2026-10-03	t_web_interactions	1	1	13606
+2026-10-04	t_app_interactions	null	null	155007777
+2026-10-04	t_app_interactions	1	null	47864636
+2026-10-04	t_app_interactions	1	1	44780
+2026-10-04	t_web_interactions	null	null	25755375
+2026-10-04	t_web_interactions	1	null	11578199
+2026-10-04	t_web_interactions	1	1	11557
 
 -- Q05 [SMALL SOURCE / LIGHT] Marketing reference: NULL codes, duplicates and
 -- conflicting values. Duplicates may be intentional; Bronze resolves one/code.
 SELECT COUNT(*) AS rawMarketingRows,COUNT(DISTINCT MKT_CODE) AS nonNullCodes,
        COUNT_IF(MKT_CODE IS NULL) AS nullCodeRows
 FROM prdrzranalytics.lab42.dim_marketing_code;
+output:
+rawMarketingRows	nonNullCodes	nullCodeRows
+4169	4169	0
+
 SELECT MKT_CODE,COUNT(*) AS sourceRows,
        COUNT(DISTINCT coalesce(cast(MKT_CODE_NAME AS STRING),'(null)')) AS distinctNames,
        COUNT(DISTINCT coalesce(cast(Category AS STRING),'(null)')) AS distinctCategories
 FROM prdrzranalytics.lab42.dim_marketing_code
 GROUP BY MKT_CODE HAVING COUNT(*)>1
 ORDER BY sourceRows DESC LIMIT 100;
+output:
+No rows returned
 
 -- Q06 [SMALL SOURCE / LIGHT] Does existing max_by(...) choice have a TIE with
 -- different payload? A tied highest-priority name/category creates ambiguity.
@@ -135,6 +189,8 @@ JOIN winners w ON c.MKT_CODE <=> w.MKT_CODE AND c.priority=w.topPriority
 GROUP BY c.MKT_CODE HAVING COUNT(DISTINCT c.payload)>1
 ORDER BY rowsWithTopPriority DESC LIMIT 100;
 -- Expected zero if current marketing snapshot tie-breaking is deterministic.
+output:
+No rows returned
 
 -- ==========================================================================
 -- PHASE B: SOURCE UNIQUENESS AND EXACT UDI <-> SEF BRIDGE CARDINALITY
@@ -172,6 +228,24 @@ ORDER BY src,event_date,source_table;
 -- Repeated SEF/UDI keys require investigation; do not fix with random dedup.
 -- Because row_identity_hash is part of the source bridge, this sample is
 -- reproducible across both datasets for UDI-to-SEF matching.
+output:
+src	event_date	source_table	sampledCompositeKeys	sampledRows	repeatedCompositeKeys	maximumRowsPerKey	ambiguousSessionMappings
+SEF	2026-10-01	t_app_interactions	254752	254752	0	1	0
+SEF	2026-10-01	t_web_interactions	35564	35564	0	1	0
+SEF	2026-10-02	t_app_interactions	247155	247155	0	1	0
+SEF	2026-10-02	t_web_interactions	34278	34278	0	1	0
+SEF	2026-10-03	t_app_interactions	220207	220207	0	1	0
+SEF	2026-10-03	t_web_interactions	29795	29795	0	1	0
+SEF	2026-10-04	t_app_interactions	198235	198235	0	1	0
+SEF	2026-10-04	t_web_interactions	27117	27117	0	1	0
+UDI	2026-10-01	t_app_interactions	265718	265718	0	1	0
+UDI	2026-10-01	t_web_interactions	49742	49742	0	1	0
+UDI	2026-10-02	t_app_interactions	253330	253330	0	1	0
+UDI	2026-10-02	t_web_interactions	47634	47634	0	1	0
+UDI	2026-10-03	t_app_interactions	225345	225345	0	1	0
+UDI	2026-10-03	t_web_interactions	41195	41195	0	1	0
+UDI	2026-10-04	t_app_interactions	202709	202709	0	1	0
+UDI	2026-10-04	t_web_interactions	37568	37568	0	1	0
 
 -- Q08 [OPTIONAL VERY HEAVY / EXACT FOUR-DAY PROOF] SEF composite-key duplicates.
 -- Shuffle may be large; run only when you need exact evidence for the 4 days.
@@ -182,6 +256,8 @@ WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table,row_identity_hash
 HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
 -- Note: NULL-key rows are flagged separately by Q02.
+output:
+No rows returned
 
 -- Q09 [OPTIONAL VERY HEAVY / EXACT FOUR-DAY PROOF] UDI composite-key duplicates.
 SELECT event_date,source_table,row_identity_hash,COUNT(*) AS rowsForKey
@@ -189,6 +265,8 @@ FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table,row_identity_hash
 HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
+output:
+No rows returned
 
 -- Q10 [TWO FOUR-DAY SCANS / SMALL HASH SAMPLE JOIN] UDI-SEF exact composite-key
 -- cardinality at the source. Pre-aggregate sampled keys BEFORE joining: this
@@ -227,6 +305,16 @@ FROM pairs GROUP BY event_date,source_table
 ORDER BY event_date,source_table;
 -- IMPORTANT: UDI-only events might legitimately be unsessionized. Confirm
 -- source semantics before requiring complete UDI->SEF coverage.
+output:
+event_date	source_table	sampledUnionKeys	matchedKeys	sefKeysWithoutUdi	udiKeysWithoutSef	repeatedSefKeys	repeatedUdiKeys	sampledSefRows	sampledUdiRows	projectedJoinRows
+2026-10-01	t_app_interactions	265718	254752	0	10966	0	0	254752	265718	254752
+2026-10-01	t_web_interactions	49742	35564	0	14178	0	0	35564	49742	35564
+2026-10-02	t_app_interactions	253330	247155	0	6175	0	0	247155	253330	247155
+2026-10-02	t_web_interactions	47634	34278	0	13356	0	0	34278	47634	34278
+2026-10-03	t_app_interactions	225345	220207	0	5138	0	0	220207	225345	220207
+2026-10-03	t_web_interactions	41195	29795	0	11400	0	0	29795	41195	29795
+2026-10-04	t_app_interactions	202709	198235	0	4474	0	0	198235	202709	198235
+2026-10-04	t_web_interactions	37568	27117	0	10451	0	0	27117	37568	27117
 
 -- ==========================================================================
 -- PHASE C: SSF UNIQUE SESSION GRAIN AND JOIN MULTIPLICATION
@@ -242,6 +330,52 @@ WHERE session_start_date BETWEEN date_add(DATE '2026-10-01',-2)
                              AND date_add(DATE '2026-10-04',2)
 GROUP BY source_table,session_status,session_start_date
 ORDER BY session_start_date,source_table,session_status;
+output:
+source_table	session_status	session_start_date	ssfRows	nullSessionId	distinctNonNullSessionIds
+t_app_interactions	CLOSED	2026-09-29	9537048	0	9537048
+t_app_interactions	MERGED	2026-09-29	625	0	625
+t_app_interactions	OPEN	2026-09-29	31	0	31
+t_web_interactions	CLOSED	2026-09-29	2588762	0	2588762
+t_web_interactions	MERGED	2026-09-29	107	0	107
+t_web_interactions	OPEN	2026-09-29	1	0	1
+t_app_interactions	CLOSED	2026-09-30	5021312	0	5021312
+t_app_interactions	MERGED	2026-09-30	246	0	246
+t_app_interactions	OPEN	2026-09-30	36	0	36
+t_web_interactions	CLOSED	2026-09-30	2356150	0	2356150
+t_web_interactions	MERGED	2026-09-30	39	0	39
+t_web_interactions	OPEN	2026-09-30	4	0	4
+t_app_interactions	CLOSED	2026-10-01	4637503	0	4637503
+t_app_interactions	MERGED	2026-10-01	268	0	268
+t_app_interactions	OPEN	2026-10-01	35	0	35
+t_web_interactions	CLOSED	2026-10-01	2257008	0	2257008
+t_web_interactions	MERGED	2026-10-01	124	0	124
+t_app_interactions	CLOSED	2026-10-02	4408625	0	4408625
+t_app_interactions	MERGED	2026-10-02	265	0	265
+t_app_interactions	OPEN	2026-10-02	42	0	42
+t_web_interactions	CLOSED	2026-10-02	2177830	0	2177830
+t_web_interactions	MERGED	2026-10-02	23	0	23
+t_app_interactions	CLOSED	2026-10-03	3790095	0	3790095
+t_app_interactions	MERGED	2026-10-03	225	0	225
+t_app_interactions	OPEN	2026-10-03	50	0	50
+t_web_interactions	CLOSED	2026-10-03	1978065	0	1978065
+t_web_interactions	MERGED	2026-10-03	240	0	240
+t_app_interactions	CLOSED	2026-10-04	3465720	0	3465720
+t_app_interactions	MERGED	2026-10-04	216	0	216
+t_app_interactions	OPEN	2026-10-04	63	0	63
+t_web_interactions	CLOSED	2026-10-04	1836869	0	1836869
+t_web_interactions	MERGED	2026-10-04	254	0	254
+t_app_interactions	CLOSED	2026-10-05	4451630	0	4451630
+t_app_interactions	MERGED	2026-10-05	235	0	235
+t_app_interactions	OPEN	2026-10-05	169	0	169
+t_web_interactions	CLOSED	2026-10-05	2104647	0	2104647
+t_web_interactions	MERGED	2026-10-05	111	0	111
+t_web_interactions	OPEN	2026-10-05	2	0	2
+t_app_interactions	CLOSED	2026-10-06	8449381	0	8449381
+t_app_interactions	MERGED	2026-10-06	418	0	418
+t_app_interactions	OPEN	2026-10-06	1029719	0	1029719
+t_web_interactions	CLOSED	2026-10-06	2123457	0	2123457
+t_web_interactions	MERGED	2026-10-06	9	0	9
+t_web_interactions	OPEN	2026-10-06	1875	0	1875
 
 -- Q11B [DATE-BOUNDED SSF / MODERATE] Actual repeated session_ids across
 -- statuses, source tables and dates inside the bounded SSF scan.
@@ -256,6 +390,8 @@ WHERE session_start_date BETWEEN date_add(DATE '2026-10-01',-2)
 GROUP BY session_id HAVING COUNT(*)>1
 ORDER BY eligibleRows DESC LIMIT 100;
 -- This only diagnoses the bounded SSF population; Q12 tests actual SEF IDs.
+output:
+No rows returned
 
 -- Q12 [SSF JOIN / IMPORTANT] Check exact session_id-only join in Silver01,
 -- using a reproducible sample of SEF sessions and NO SSF start-date restriction.
@@ -287,6 +423,10 @@ SELECT source_table,COUNT(*) AS sampledReferencedSessions,
 FROM ssfBySession GROUP BY source_table ORDER BY source_table;
 -- If multiMatchedSessionIds > 0, session_id-only enrichment is unsafe.
 -- Do not blindly replace the join key without checking source semantics.
+output:
+source_table	sampledReferencedSessions	missingEligibleSsf	oneEligibleSsf	multiMatchedSessionIds	wrongSourceMatchedSessions	maximumEligibleMatches
+t_app_interactions	16450	0	16450	0	0	1
+t_web_interactions	8258	0	8258	0	0	1
 
 -- Q13 [SSF JOIN / IMPORTANT DETAIL] Show exact sampled offending sessions.
 -- Same scan as Q12; run only if Q12 reports misses/multiple/wrong-source rows.
@@ -311,6 +451,8 @@ GROUP BY r.session_id,r.source_table
 HAVING COUNT(s.session_id)<>1
     OR COUNT_IF(s.session_id IS NOT NULL AND NOT(s.source_table <=> r.source_table))>0
 ORDER BY eligibleSsfMatches DESC LIMIT 100;
+output:
+No rows returned
 
 -- ==========================================================================
 -- PHASE D: EARLY-AGGREGATION SAFETY (SEQUENCE, DAYS, CONTEXT, ORDER)
@@ -341,6 +483,10 @@ FROM perSession GROUP BY source_table ORDER BY source_table;
 -- session-start reporting-week crossover. The true week is derived from
 -- authoritative SSF session_start_time in America/Los_Angeles; retain it.
 -- If event_date buckets cross Sunday, never reassign a session per hit week.
+output:
+source_table	sampledSessions	multiEventDateSessions	crossEventDateSundayBuckets	maxObservedDays	maxEventsInSession
+t_app_interactions	16450	79	22	2	3008
+t_web_interactions	8258	14	3	2	2844
 
 -- Q15 [SEF FOUR-DAY SCAN / SAMPLED SESSION GROUPING] Hit ordinal re-use.
 -- Repeated (session_id, hit_number_in_session) can reflect multiple events at
@@ -355,6 +501,8 @@ WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
   AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
 GROUP BY session_id,source_table,hit_number_in_session
 HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
+output:
+No rows returned
 
 -- Q16 [SEF FOUR-DAY SCAN / SAMPLED SESSION GROUPING] Ordering ties when both
 -- timestamp and hit ordinal are identical. Preserve row_identity_hash as a
@@ -367,6 +515,8 @@ WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
   AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
 GROUP BY session_id,source_table,hit_number_in_session,event_timestamp_utc
 HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
+output:
+No rows returned
 
 -- Q17 [SAMPLED SEF->UDI JOIN / HIGHER COST] Do sessions really contain multiple
 -- channel/device/page values? We match exact hit identities; no cross-product
@@ -404,6 +554,10 @@ SELECT source_table,COUNT(*) AS sampledMatchedSessions,
 FROM sessionContext GROUP BY source_table ORDER BY source_table;
 -- page_name is a raw event field, NOT the final derived Silver pageCategory.
 -- A weekly nested structure must preserve observed contexts and attribution.
+output:
+source_table	sampledMatchedSessions	multiChannelSessions	multiDeviceSessions	multiPageSessions	multiPairSessions	maximumChannels	maximumPairs
+t_app_interactions	16450	15774	0	15937	15774	5	5
+t_web_interactions	8258	5259	14	3374	5259	5	6
 
 -- Q18 [UDI FOUR-DAY SCAN / HASHED ORDER-ID SAMPLE] Repeated order IDs across
 -- source events. Repeated order_id is NOT proof of duplicate orders. Sample by
@@ -422,6 +576,108 @@ GROUP BY source_table,order_id HAVING COUNT(*)>1
 ORDER BY eventRowsWithOrderId DESC LIMIT 100;
 -- In weekly aggregation retain the metric's canonical order_count definition,
 -- order attribution and ordered event information where required.
+output:
+source_table	order_id	eventRowsWithOrderId	distinctHitIdentities	eventDays	firstEventTime	lastEventTime	distinctPurchaseFlagValues
+t_app_interactions	S572396304	39	39	3	2026-10-01T01:07:45.004+00:00	2026-10-03T16:58:39.412+00:00	0
+t_app_interactions	81651463619	30	30	1	2026-10-01T01:15:17.124+00:00	2026-10-01T23:11:26.852+00:00	0
+t_app_interactions	71171351333	18	18	2	2026-10-03T23:02:45.502+00:00	2026-10-04T14:36:16.731+00:00	0
+t_app_interactions	71171810636	18	18	1	2026-10-04T14:04:13.019+00:00	2026-10-04T18:23:31.474+00:00	0
+t_app_interactions	71173932871	18	18	1	2026-10-04T10:45:38.589+00:00	2026-10-04T15:45:11.169+00:00	1
+t_app_interactions	81651780450	17	17	1	2026-10-04T02:50:29.461+00:00	2026-10-04T03:40:37.326+00:00	1
+t_app_interactions	71172393607	15	15	3	2026-10-02T22:12:27.759+00:00	2026-10-04T20:05:06.226+00:00	0
+t_app_interactions	71171312628	15	15	3	2026-10-01T22:12:17.346+00:00	2026-10-04T21:19:54.616+00:00	0
+t_app_interactions	71173980127	14	14	1	2026-10-04T21:24:10.532+00:00	2026-10-04T22:24:36.090+00:00	1
+t_app_interactions	81649864345	14	14	3	2026-10-01T01:31:20.165+00:00	2026-10-03T23:45:59.761+00:00	0
+t_app_interactions	71173581422	13	13	3	2026-10-01T13:46:10.790+00:00	2026-10-03T00:04:55.938+00:00	1
+t_app_interactions	S549515636	12	12	3	2026-10-01T00:17:08.864+00:00	2026-10-04T20:11:49.142+00:00	0
+t_app_interactions	71172196964	12	12	1	2026-10-01T03:33:35.608+00:00	2026-10-01T18:18:15.558+00:00	0
+t_app_interactions	S571673892	11	11	2	2026-10-01T15:33:38.787+00:00	2026-10-02T14:46:19.354+00:00	0
+t_app_interactions	81651797703	11	11	1	2026-10-04T15:37:30.786+00:00	2026-10-04T15:42:24.923+00:00	1
+t_app_interactions	S550137885	11	11	2	2026-10-03T02:07:41.652+00:00	2026-10-04T22:37:58.477+00:00	0
+t_app_interactions	71171715314	11	11	1	2026-10-01T22:20:40.756+00:00	2026-10-01T22:29:10.545+00:00	0
+t_app_interactions	#990773357	11	11	1	2026-10-02T12:54:04.279+00:00	2026-10-02T12:54:39.981+00:00	0
+t_app_interactions	81651775635	10	10	1	2026-10-04T02:31:59.927+00:00	2026-10-04T18:09:15.480+00:00	1
+t_app_interactions	81651627371	10	10	3	2026-10-02T19:19:16.408+00:00	2026-10-04T15:23:19.526+00:00	1
+t_app_interactions	71173363109	10	10	1	2026-10-01T19:47:06.872+00:00	2026-10-01T20:09:14.600+00:00	0
+t_app_interactions	71173546712	9	9	2	2026-10-01T01:38:48.997+00:00	2026-10-03T21:06:54.803+00:00	1
+t_app_interactions	81651626341	9	9	3	2026-10-02T23:31:36.235+00:00	2026-10-04T23:20:36.180+00:00	1
+t_app_interactions	81651607274	9	9	3	2026-10-02T16:48:32.030+00:00	2026-10-04T17:21:25.230+00:00	1
+t_app_interactions	81651444148	9	9	3	2026-10-01T00:04:28.231+00:00	2026-10-03T04:59:31.581+00:00	0
+t_app_interactions	71173205061	9	9	2	2026-10-01T00:04:51.760+00:00	2026-10-02T01:42:08.772+00:00	0
+t_app_interactions	81651172292	9	9	1	2026-10-02T11:39:59.145+00:00	2026-10-02T13:44:41.513+00:00	0
+t_app_interactions	81651723525	9	9	2	2026-10-03T18:26:53.753+00:00	2026-10-04T17:44:13.916+00:00	1
+t_app_interactions	71172293925	8	8	2	2026-10-01T03:34:21.797+00:00	2026-10-03T17:39:12.594+00:00	0
+t_app_interactions	81649732345	8	8	4	2026-10-01T19:39:49.533+00:00	2026-10-04T08:16:13.284+00:00	0
+t_app_interactions	71171857756	8	8	2	2026-10-01T15:01:17.554+00:00	2026-10-02T15:44:42.407+00:00	0
+t_app_interactions	81651205115	8	8	4	2026-10-01T13:20:22.732+00:00	2026-10-04T05:32:23.444+00:00	0
+t_app_interactions	81651546907	7	7	4	2026-10-01T04:20:12.025+00:00	2026-10-04T16:09:45.571+00:00	0
+t_app_interactions	81649095239	7	7	1	2026-10-03T02:02:25.964+00:00	2026-10-03T02:04:03.340+00:00	0
+t_app_interactions	81651533440	7	7	4	2026-10-01T15:06:32.642+00:00	2026-10-04T14:30:14.736+00:00	0
+t_app_interactions	81651645226	7	7	1	2026-10-02T21:36:12.484+00:00	2026-10-02T23:32:07.163+00:00	1
+t_app_interactions	81651722101	7	7	1	2026-10-03T18:14:08.124+00:00	2026-10-03T22:54:13.876+00:00	1
+t_app_interactions	71173511276	7	7	2	2026-10-02T08:10:14.275+00:00	2026-10-04T01:34:37.897+00:00	1
+t_app_interactions	81651111406	7	7	3	2026-10-01T15:12:54.574+00:00	2026-10-03T00:27:05.287+00:00	0
+t_app_interactions	81651516082	7	7	2	2026-10-03T13:17:34.701+00:00	2026-10-04T22:35:21.007+00:00	0
+t_app_interactions	71171146893	6	6	1	2026-10-01T19:58:30.587+00:00	2026-10-01T19:58:54.024+00:00	0
+t_app_interactions	71173654635	6	6	3	2026-10-01T20:06:19.105+00:00	2026-10-03T14:51:57.036+00:00	1
+t_app_interactions	81650079301	6	6	1	2026-10-01T05:02:52.723+00:00	2026-10-01T05:04:03.848+00:00	0
+t_app_interactions	71172276356	6	6	2	2026-10-01T15:34:03.065+00:00	2026-10-02T12:38:34.346+00:00	0
+t_app_interactions	71173541487	6	6	1	2026-10-01T00:37:35.495+00:00	2026-10-01T10:10:54.511+00:00	1
+t_app_interactions	81651407167	6	6	1	2026-10-01T14:45:40.369+00:00	2026-10-01T18:17:14.918+00:00	0
+t_app_interactions	71173119292	6	6	2	2026-10-01T00:50:23.311+00:00	2026-10-02T20:01:28.185+00:00	0
+t_app_interactions	81651523181	6	6	3	2026-10-01T08:37:46.332+00:00	2026-10-03T09:29:09.405+00:00	0
+t_app_interactions	71173374439	6	6	2	2026-10-02T07:15:45.343+00:00	2026-10-04T00:41:42.696+00:00	0
+t_app_interactions	71171672279	6	6	2	2026-10-01T12:36:42.326+00:00	2026-10-04T14:33:43.789+00:00	0
+t_app_interactions	#990604819	5	5	1	2026-10-02T00:17:06.249+00:00	2026-10-02T00:17:35.477+00:00	0
+t_app_interactions	71172562334	5	5	1	2026-10-03T08:30:01.128+00:00	2026-10-03T08:30:53.367+00:00	0
+t_app_interactions	S551487152	5	5	3	2026-10-01T05:47:14.966+00:00	2026-10-04T15:48:19.019+00:00	0
+t_app_interactions	71171927696	5	5	1	2026-10-02T21:59:13.767+00:00	2026-10-02T22:30:58.389+00:00	0
+t_app_interactions	81649836444	5	5	2	2026-10-01T05:42:10.166+00:00	2026-10-04T16:41:02.619+00:00	0
+t_app_interactions	81651413652	5	5	3	2026-10-01T19:03:15.066+00:00	2026-10-03T00:45:25.174+00:00	0
+t_app_interactions	71173079489	5	5	1	2026-10-02T10:55:03.759+00:00	2026-10-02T10:58:40.998+00:00	0
+t_app_interactions	71173123306	5	5	2	2026-10-01T15:06:49.616+00:00	2026-10-02T19:32:08.488+00:00	0
+t_app_interactions	71173645417	4	4	1	2026-10-01T19:37:09.727+00:00	2026-10-01T23:21:42.686+00:00	0
+t_app_interactions	81650338902	4	4	3	2026-10-01T09:16:23.332+00:00	2026-10-04T13:34:52.503+00:00	0
+t_app_interactions	S569983421	4	4	1	2026-10-04T06:49:39.795+00:00	2026-10-04T06:49:53.650+00:00	0
+t_app_interactions	71173899998	4	4	2	2026-10-03T21:46:39.427+00:00	2026-10-04T23:13:30.471+00:00	1
+t_app_interactions	81651436199	4	4	1	2026-10-02T02:33:21.632+00:00	2026-10-02T22:19:14.473+00:00	0
+t_app_interactions	81651734878	4	4	1	2026-10-03T19:39:58.288+00:00	2026-10-03T19:43:00.421+00:00	1
+t_app_interactions	71172711537	4	4	1	2026-10-02T22:20:28.832+00:00	2026-10-02T22:20:59.096+00:00	0
+t_app_interactions	81649699106	4	4	1	2026-10-01T00:29:31.511+00:00	2026-10-01T14:39:35.497+00:00	0
+t_app_interactions	71171646461	4	4	1	2026-10-02T01:14:35.976+00:00	2026-10-02T22:11:59.861+00:00	0
+t_app_interactions	71173850198	4	4	1	2026-10-03T15:38:17.318+00:00	2026-10-03T15:39:13.314+00:00	1
+t_app_interactions	81649959551	4	4	2	2026-10-01T04:34:17.871+00:00	2026-10-02T01:57:50.561+00:00	0
+t_app_interactions	81650342231	4	4	2	2026-10-01T19:21:26.214+00:00	2026-10-02T19:53:21.481+00:00	0
+t_app_interactions	71171878933	4	4	1	2026-10-04T00:12:53.637+00:00	2026-10-04T18:19:16.987+00:00	0
+t_app_interactions	S572275666	4	4	2	2026-10-02T15:40:35.487+00:00	2026-10-03T20:04:20.301+00:00	0
+t_app_interactions	81650214529	4	4	1	2026-10-04T13:07:54.260+00:00	2026-10-04T13:08:52.521+00:00	0
+t_web_interactions	81651768986	4	4	1	2026-10-04T00:16:18.846+00:00	2026-10-04T00:16:19.125+00:00	1
+t_app_interactions	81651638038	4	4	2	2026-10-02T21:03:08.702+00:00	2026-10-03T15:49:32.556+00:00	1
+t_app_interactions	81650601563	4	4	1	2026-10-02T13:21:31.379+00:00	2026-10-02T13:21:40.939+00:00	0
+t_app_interactions	81651541939	4	4	3	2026-10-01T00:39:25.022+00:00	2026-10-03T16:57:34.016+00:00	1
+t_app_interactions	71173642443	4	4	2	2026-10-01T19:05:41.132+00:00	2026-10-02T06:34:27.191+00:00	1
+t_app_interactions	71172175240	4	4	1	2026-10-01T23:19:37.615+00:00	2026-10-01T23:20:08.259+00:00	0
+t_app_interactions	71172140103	4	4	1	2026-10-04T20:33:28.453+00:00	2026-10-04T20:33:43.448+00:00	0
+t_web_interactions	71173731294	4	4	1	2026-10-02T02:40:19.230+00:00	2026-10-02T02:40:19.507+00:00	1
+t_app_interactions	81651153874	4	4	2	2026-10-03T22:22:19.101+00:00	2026-10-04T19:51:22.248+00:00	0
+t_app_interactions	71171079890	4	4	1	2026-10-02T22:03:29.063+00:00	2026-10-02T22:03:39.996+00:00	0
+t_web_interactions	71173873046	4	4	1	2026-10-03T18:32:22.319+00:00	2026-10-03T18:32:22.586+00:00	1
+t_app_interactions	81647633968	4	4	1	2026-10-01T13:47:32.868+00:00	2026-10-01T22:40:45.298+00:00	0
+t_app_interactions	81651432165	4	4	1	2026-10-02T01:24:26.574+00:00	2026-10-02T01:24:45.795+00:00	0
+t_web_interactions	71173932462	3	3	1	2026-10-04T09:49:40.299+00:00	2026-10-04T09:49:40.731+00:00	1
+t_app_interactions	81651648234	3	3	2	2026-10-02T21:49:58.384+00:00	2026-10-03T03:09:58.805+00:00	1
+t_app_interactions	71173811688	3	3	1	2026-10-02T23:17:05.212+00:00	2026-10-02T23:18:35.034+00:00	1
+t_app_interactions	71173912851	3	3	2	2026-10-03T23:42:14.058+00:00	2026-10-04T00:01:11.997+00:00	1
+t_app_interactions	81651244539	3	3	2	2026-10-02T07:13:08.463+00:00	2026-10-03T18:21:41.270+00:00	0
+t_app_interactions	990175878	3	3	1	2026-10-01T00:56:49.599+00:00	2026-10-01T00:57:27.518+00:00	0
+t_app_interactions	81649482251	3	3	1	2026-10-04T22:43:16.303+00:00	2026-10-04T22:43:39.722+00:00	0
+t_app_interactions	71173386703	3	3	1	2026-10-01T00:31:05.199+00:00	2026-10-01T22:20:41.299+00:00	0
+t_app_interactions	990344520	3	3	1	2026-10-01T12:55:55.301+00:00	2026-10-01T12:58:30.257+00:00	0
+t_app_interactions	71171193200	3	3	1	2026-10-02T12:16:36.887+00:00	2026-10-02T12:16:41.467+00:00	0
+t_app_interactions	71173295144	3	3	2	2026-10-02T00:29:03.561+00:00	2026-10-03T16:16:17.146+00:00	0
+t_app_interactions	S551732857	3	3	1	2026-10-04T14:39:06.017+00:00	2026-10-04T14:39:59.922+00:00	0
+t_web_interactions	81651696099	3	3	1	2026-10-03T14:46:56.139+00:00	2026-10-03T14:46:56.661+00:00	1
+t_web_interactions	71173576931	3	3	1	2026-10-01T13:01:20.092+00:00	2026-10-01T13:01:20.390+00:00	1
 
 -- ==========================================================================
 -- PHASE E: SOURCE-TO-SOURCE SEMANTICS AND DELIVERY READINESS
@@ -448,6 +704,16 @@ JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions 
  AND l.source_table=u.source_table
  AND u.event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY l.event_date,l.source_table ORDER BY l.event_date,l.source_table;
+output:
+event_date	source_table	joinedEventRows	nullSefFlow	nullUdiFlow	flowDisagreements	nonNullDisagreements
+2026-10-01	t_app_interactions	254752	241249	241204	45	0
+2026-10-01	t_web_interactions	35564	25230	24730	500	0
+2026-10-02	t_app_interactions	247155	233225	233171	54	0
+2026-10-02	t_web_interactions	34278	24003	23522	481	0
+2026-10-03	t_app_interactions	220207	205813	205756	57	0
+2026-10-03	t_web_interactions	29795	20509	20076	433	0
+2026-10-04	t_app_interactions	198235	186568	186525	43	0
+2026-10-04	t_web_interactions	27117	18716	18326	390	0
 
 -- Q20 [UDI FOUR-DAY SCAN / LOW SHUFFLE] Ingest freshness by source date.
 -- Four dates appearing is not a readiness/completeness guarantee. This shows
@@ -460,6 +726,16 @@ SELECT event_date,source_table,COUNT(*) AS rows,
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table ORDER BY event_date,source_table;
+output:
+event_date	source_table	rows	minLoadPst	maxLoadPst	minLakeLoadDate	maxLakeLoadDate
+2026-10-01	t_app_interactions	265788636	2026-09-30T17:00:52.445+00:00	2026-10-09T16:00:36.607+00:00	2026-09-30	2026-10-09
+2026-10-01	t_web_interactions	49886577	2026-09-30T17:00:52.366+00:00	2026-10-09T08:00:31.795+00:00	2026-09-30	2026-10-09
+2026-10-02	t_app_interactions	252761929	2026-10-01T17:30:15.422+00:00	2026-10-09T16:00:36.607+00:00	2026-10-01	2026-10-09
+2026-10-02	t_web_interactions	47681624	2026-10-01T17:30:15.131+00:00	2026-10-09T14:00:38.812+00:00	2026-10-01	2026-10-09
+2026-10-03	t_app_interactions	224885786	2026-10-02T17:00:25.090+00:00	2026-10-09T16:00:36.607+00:00	2026-10-02	2026-10-09
+2026-10-03	t_web_interactions	40979307	2026-10-02T17:00:24.801+00:00	2026-10-09T16:00:26.955+00:00	2026-10-02	2026-10-09
+2026-10-04	t_app_interactions	202919027	2026-10-03T17:00:39.582+00:00	2026-10-09T16:00:36.607+00:00	2026-10-03	2026-10-09
+2026-10-04	t_web_interactions	37345131	2026-10-03T17:00:38.910+00:00	2026-10-09T15:30:42.077+00:00	2026-10-03	2026-10-09
 
 -- Q21 [UDI->REFERENCE SMALL JOIN / FOUR-DAY SCAN] How many campaign codes lack
 -- marketing reference coverage? First collapse reference to code presence ONLY,
@@ -478,6 +754,16 @@ LEFT JOIN codes
   ON cast(u.external_campaign_code AS STRING)=cast(codes.MKT_CODE AS STRING)
 WHERE u.event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY u.event_date,u.source_table ORDER BY u.event_date,u.source_table;
+output:
+event_date	source_table	udiRows	rowsWithCampaignCode	unresolvedCampaignRows
+2026-10-01	t_app_interactions	265788636	550483	548739
+2026-10-01	t_web_interactions	49886577	5286484	5286432
+2026-10-02	t_app_interactions	252761929	385628	384689
+2026-10-02	t_web_interactions	47681624	5225282	5225271
+2026-10-03	t_app_interactions	224885786	419079	418145
+2026-10-03	t_web_interactions	40979307	4779319	4779305
+2026-10-04	t_app_interactions	202919027	396528	395748
+2026-10-04	t_web_interactions	37345131	4698011	4698008
 
 -- ==========================================================================
 -- RESULTS / WHAT THEY IMPLY FOR THE 21-TABLE PIPELINE
