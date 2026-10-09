@@ -4588,3 +4588,5 @@ LIMIT 100;
 
 I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it looks like the 4-week trend is a total of those weeks instead of an average trend of those weeks. Can you resolve this in the table? Might be an issue in the breakouts tables too
  
+
+ So in this version, all of them have fiscalWeekCode are 37, 38, 39. I updated the previous approach because the quarter end date may fall mid week 
