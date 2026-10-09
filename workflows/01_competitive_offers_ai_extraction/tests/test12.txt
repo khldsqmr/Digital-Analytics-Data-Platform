@@ -1,13 +1,11 @@
-[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `session`.`mip_start_date` cannot be resolved. Did you mean one of the following? [`u`.`eip_status`, `u`.`benefit_status`, `u`.`event_cart_save`, `u`.`event_date`, `u`.`order_status`]. SQLSTATE: 42703; line 16, pos 27
-
 -- ============================================================================
--- FILE   : MIP_EDL_Source_4Day_Audit.sql
+-- FILE   : MIP_EDL_Source_4Day_Audit_NoSessionVars.sql
 -- PROJECT: Media Intelligence Platform (MIP)
 -- PURPOSE: Read-only audits against SOURCE EDL and source marketing reference,
 --          before optimizing Bronze/Silver/weekly-first aggregation.
 -- SCOPE  : No MIP Bronze, Silver or Gold tables are read or modified.
 --          No CREATE TABLE, INSERT, MERGE, DELETE, REPLACE or OPTIMIZE.
---          The only setup writes TEMPORARY SESSION VARIABLES (not data).
+--          No DECLARE/SET variables: every diagnostic query is independent.
 -- SOURCES:
 --   UDI: prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
 --   SEF: prd_dbi_analytics.silver_digital_interactions.session_event_fact
@@ -15,13 +13,17 @@
 --   MKT: prdrzranalytics.lab42.dim_marketing_code
 -- DEFAULT: 2026-10-01 through 2026-10-04 (4 contiguous days, crosses Sun boundary).
 -- EXECUTION:
---   1. Run CONFIG once in the SAME SQL SESSION as subsequent queries.
---   2. Execute one numbered query at a time (recommended Q01-Q07, Q10-Q11,
---      Q14-Q18, Q20-Q21 first; exact Q08-Q09 and join Q12-Q13 separately).
---   3. To use three days, change mip_start_date to DATE '2026-10-02'.
---   4. To select another window, change only the two variables below.
---   5. If a query fails with UNRESOLVED_VARIABLE, rerun the CONFIG in that
---      SQL session / notebook connection. Avoid executing in a new session.
+--   1. Queries are SELF-CONTAINED: run any Q## independently on the EDS warehouse.
+--   2. Recommended initial sequence: Q00-Q07, Q10-Q11, Q14-Q18, Q20-Q21.
+--      Exact Q08/Q09 and SSF join Q12/Q13 may be expensive; run separately.
+--   3. Default window is 2026-10-01 through 2026-10-04, inclusive (4 days).
+--   4. To change dates, FIND/REPLACE EVERY instance of DATE '2026-10-01'
+--      and DATE '2026-10-04' throughout this file, consistently.
+--   5. For 3 days, replace DATE '2026-10-01' with DATE '2026-10-02'.
+--   6. Sampling divisor is 997 (~0.1% of hash keys); to change the sample,
+--      replace function argument ",997)" with ",251)" (~0.4%) or ",101)"
+--      (~1%). This is NOT a ROW LIMIT; source reads may remain substantial.
+--   7. No session variables, temporary views, or cross-query state are needed.
 -- COST:
 --   - Source queries run on the selected EDS/EDL SQL warehouse/compute; they do
 --     not consume lab42 cluster resources unless that cluster executes them.
@@ -36,18 +38,14 @@
 -- ============================================================================
 
 -- ==========================================================================
--- CONFIG: run first, once per SQL session. Requires DBSQL / DBR >= 14.1.
+-- STATIC AUDIT SCOPE: no session variables required.
+-- Window: 2026-10-01 .. 2026-10-04 inclusive; hash sampling divisor: 997.
+-- To change the window, replace BOTH date literals globally in the file.
 -- ==========================================================================
-DECLARE OR REPLACE VARIABLE mip_start_date DATE DEFAULT DATE '2026-10-01';
-DECLARE OR REPLACE VARIABLE mip_end_date   DATE DEFAULT DATE '2026-10-04';
-DECLARE OR REPLACE VARIABLE mip_sample_divisor INT DEFAULT 997;
--- pmod(xxhash64(key), 997)=0 gives ~0.10% reproducible key-based sample.
--- For larger samples change 997 to 251 (~0.40%) or 101 (~0.99%).
-
--- Q00 [TRIVIAL] Confirm configuration.
-SELECT session.mip_start_date AS startDate,session.mip_end_date AS endDate,
-       datediff(session.mip_end_date,session.mip_start_date)+1 AS eventDays,
-       session.mip_sample_divisor AS hashSampleDivisor;
+-- Q00 [TRIVIAL] Confirm window and sampling settings used in other queries.
+SELECT DATE '2026-10-01' AS startDate,DATE '2026-10-04' AS endDate,
+       datediff(DATE '2026-10-04',DATE '2026-10-01')+1 AS eventDays,
+       997 AS hashSampleDivisor;
 
 -- Q01 [METADATA / LIGHT] Check actual names/types used by the Bronze projection.
 -- DESCRIBE can be run individually. No assumptions about data types are needed.
@@ -69,7 +67,7 @@ SELECT event_date,source_table,COUNT(*) AS eventRows,
        COUNT_IF(event_timestamp_utc IS NULL) AS nullEventTimestamp,
        COUNT_IF(flow_name IS NOT NULL) AS rowsWithFlowName
 FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table
 ORDER BY event_date,source_table;
 -- Interpretation: check each requested day is present and whether null session
@@ -87,7 +85,7 @@ SELECT event_date,source_table,COUNT(*) AS eventRows,
        MIN(load_datetime_pst) AS earliestLoadDateTimePst,
        MAX(load_datetime_pst) AS latestLoadDateTimePst
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table
 ORDER BY event_date,source_table;
 
@@ -98,7 +96,7 @@ SELECT event_date,source_table,
        cast(event_purchase AS STRING) AS rawPurchaseFlag,
        COUNT(*) AS rows
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table,
          cast(event_page_view AS STRING),cast(event_purchase AS STRING)
 ORDER BY event_date,source_table,rows DESC;
@@ -148,15 +146,15 @@ ORDER BY rowsWithTopPriority DESC LIMIT 100;
 WITH sampled AS (
     SELECT 'SEF' AS src,event_date,source_table,row_identity_hash,session_id
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),997)=0
     UNION ALL
     SELECT 'UDI' AS src,event_date,source_table,row_identity_hash,cast(NULL AS STRING) AS session_id
     FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),997)=0
 ), byKey AS (
     SELECT src,event_date,source_table,row_identity_hash,
            COUNT(*) AS rowsForKey,COUNT(DISTINCT session_id) AS distinctSessions
@@ -180,7 +178,7 @@ ORDER BY src,event_date,source_table;
 SELECT event_date,source_table,row_identity_hash,COUNT(*) AS rowsForKey,
        COUNT(DISTINCT session_id) AS distinctSessions
 FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table,row_identity_hash
 HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
 -- Note: NULL-key rows are flagged separately by Q02.
@@ -188,7 +186,7 @@ HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
 -- Q09 [OPTIONAL VERY HEAVY / EXACT FOUR-DAY PROOF] UDI composite-key duplicates.
 SELECT event_date,source_table,row_identity_hash,COUNT(*) AS rowsForKey
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table,row_identity_hash
 HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
 
@@ -198,16 +196,16 @@ HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
 WITH sefKeys AS (
     SELECT event_date,source_table,row_identity_hash,COUNT(*) AS sefRows
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),997)=0
     GROUP BY event_date,source_table,row_identity_hash
 ), udiKeys AS (
     SELECT event_date,source_table,row_identity_hash,COUNT(*) AS udiRows
     FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),997)=0
     GROUP BY event_date,source_table,row_identity_hash
 ), pairs AS (
     SELECT coalesce(e.event_date,u.event_date) AS event_date,
@@ -240,8 +238,8 @@ SELECT source_table,session_status,session_start_date,
        COUNT(*) AS ssfRows,COUNT_IF(session_id IS NULL) AS nullSessionId,
        COUNT(DISTINCT session_id) AS distinctNonNullSessionIds
 FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
-WHERE session_start_date BETWEEN date_add(session.mip_start_date,-2)
-                             AND date_add(session.mip_end_date,2)
+WHERE session_start_date BETWEEN date_add(DATE '2026-10-01',-2)
+                             AND date_add(DATE '2026-10-04',2)
 GROUP BY source_table,session_status,session_start_date
 ORDER BY session_start_date,source_table,session_status;
 
@@ -252,8 +250,8 @@ SELECT session_id,COUNT(*) AS eligibleRows,
        COUNT(DISTINCT session_status) AS distinctEligibleStatuses,
        MIN(session_start_date) AS minStartDate,MAX(session_start_date) AS maxStartDate
 FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
-WHERE session_start_date BETWEEN date_add(session.mip_start_date,-2)
-                             AND date_add(session.mip_end_date,2)
+WHERE session_start_date BETWEEN date_add(DATE '2026-10-01',-2)
+                             AND date_add(DATE '2026-10-04',2)
   AND session_status IN ('OPEN','CLOSED')
 GROUP BY session_id HAVING COUNT(*)>1
 ORDER BY eligibleRows DESC LIMIT 100;
@@ -265,9 +263,9 @@ ORDER BY eligibleRows DESC LIMIT 100;
 WITH referencedSessions AS (
     SELECT session_id,source_table
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND session_id IS NOT NULL
-      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
     GROUP BY session_id,source_table
 ), ssfBySession AS (
     SELECT r.session_id,r.source_table,
@@ -295,9 +293,9 @@ FROM ssfBySession GROUP BY source_table ORDER BY source_table;
 WITH referencedSessions AS (
     SELECT session_id,source_table
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND session_id IS NOT NULL
-      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
     GROUP BY session_id,source_table
 )
 SELECT r.session_id,r.source_table AS sefSourceTable,
@@ -328,9 +326,9 @@ WITH perSession AS (
            MAX(date_add(event_date,1-dayofweek(event_date))) AS maxEventDateSundayBucket,
            COUNT(*) AS eventRows,COUNT(DISTINCT event_date) AS daysObserved
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND session_id IS NOT NULL
-      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
     GROUP BY session_id,source_table
 )
 SELECT source_table,COUNT(*) AS sampledSessions,
@@ -352,9 +350,9 @@ SELECT session_id,source_table,hit_number_in_session,
        MIN(event_timestamp_utc) AS earliestEventTime,
        MAX(event_timestamp_utc) AS latestEventTime
 FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
   AND session_id IS NOT NULL AND hit_number_in_session IS NOT NULL
-  AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+  AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
 GROUP BY session_id,source_table,hit_number_in_session
 HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
 
@@ -364,9 +362,9 @@ HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
 SELECT session_id,source_table,hit_number_in_session,event_timestamp_utc,
        COUNT(*) AS eventRows,COUNT(DISTINCT row_identity_hash) AS distinctHitKeys
 FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
   AND session_id IS NOT NULL
-  AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+  AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
 GROUP BY session_id,source_table,hit_number_in_session,event_timestamp_utc
 HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
 
@@ -376,10 +374,10 @@ HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
 WITH selectedSef AS (
     SELECT row_identity_hash,event_date,source_table,session_id,hit_number_in_session
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND session_id IS NOT NULL AND row_identity_hash IS NOT NULL
       AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(session_id AS STRING)),997)=0
 ), sessionContext AS (
     SELECT l.session_id,l.source_table,
            COUNT(*) AS joinedRows,
@@ -394,7 +392,7 @@ WITH selectedSef AS (
     INNER JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
       ON l.row_identity_hash=u.row_identity_hash AND l.event_date=u.event_date
      AND l.source_table=u.source_table
-     AND u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+     AND u.event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
     GROUP BY l.session_id,l.source_table
 )
 SELECT source_table,COUNT(*) AS sampledMatchedSessions,
@@ -417,9 +415,9 @@ SELECT source_table,order_id,COUNT(*) AS eventRowsWithOrderId,
        MAX(event_timestamp_utc) AS lastEventTime,
        COUNT(DISTINCT cast(event_purchase AS STRING)) AS distinctPurchaseFlagValues
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
   AND order_id IS NOT NULL
-  AND pmod(xxhash64(cast(order_id AS STRING)),session.mip_sample_divisor)=0
+  AND pmod(xxhash64(cast(order_id AS STRING)),997)=0
 GROUP BY source_table,order_id HAVING COUNT(*)>1
 ORDER BY eventRowsWithOrderId DESC LIMIT 100;
 -- In weekly aggregation retain the metric's canonical order_count definition,
@@ -434,9 +432,9 @@ ORDER BY eventRowsWithOrderId DESC LIMIT 100;
 WITH sefSample AS (
     SELECT row_identity_hash,event_date,source_table,flow_name AS sefFlowName
     FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
-    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
       AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
-      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),997)=0
 )
 SELECT l.event_date,l.source_table,COUNT(*) AS joinedEventRows,
        COUNT_IF(l.sefFlowName IS NULL) AS nullSefFlow,
@@ -448,7 +446,7 @@ FROM sefSample l
 JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
   ON l.row_identity_hash=u.row_identity_hash AND l.event_date=u.event_date
  AND l.source_table=u.source_table
- AND u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+ AND u.event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY l.event_date,l.source_table ORDER BY l.event_date,l.source_table;
 
 -- Q20 [UDI FOUR-DAY SCAN / LOW SHUFFLE] Ingest freshness by source date.
@@ -460,7 +458,7 @@ SELECT event_date,source_table,COUNT(*) AS rows,
        MIN(source_datalakeLoadDate) AS minLakeLoadDate,
        MAX(source_datalakeLoadDate) AS maxLakeLoadDate
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
-WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY event_date,source_table ORDER BY event_date,source_table;
 
 -- Q21 [UDI->REFERENCE SMALL JOIN / FOUR-DAY SCAN] How many campaign codes lack
@@ -478,7 +476,7 @@ SELECT u.event_date,u.source_table,
 FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
 LEFT JOIN codes
   ON cast(u.external_campaign_code AS STRING)=cast(codes.MKT_CODE AS STRING)
-WHERE u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+WHERE u.event_date BETWEEN DATE '2026-10-01' AND DATE '2026-10-04'
 GROUP BY u.event_date,u.source_table ORDER BY u.event_date,u.source_table;
 
 -- ==========================================================================
