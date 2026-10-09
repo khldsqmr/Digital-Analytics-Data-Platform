@@ -941,7 +941,7 @@ FROM prdrzranalytics.lab42.dim_marketing_code
 GROUP BY UPPER(TRIM(CAST(MKT_CODE AS STRING)))
 HAVING COUNT(*) > 1
 ORDER BY sourceRows DESC;
-
+output: No rows returned
 
 -- ============================================================================
 -- MIP SOURCE AUDIT: EXACT VS NORMALIZED MARKETING CODE COVERAGE
@@ -1026,3 +1026,7 @@ ORDER BY source_table;
 -- encoded values, or source-specific naming conventions.
 -- ============================================================================
 
+output:
+source_table	sampledRows	missingParsedCode	exactMatches	recoveredByNormalization	stillUnmatched	ambiguousNormalizedRows	exactMatchPct	normalizedMatchPct
+t_app_interactions	4119	12	2371	1427	309	0	57.73	92.48
+t_web_interactions	47472	121	41307	1163	4881	0	87.24	89.69
