@@ -1,3 +1,5 @@
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `session`.`mip_start_date` cannot be resolved. Did you mean one of the following? [`u`.`eip_status`, `u`.`benefit_status`, `u`.`event_cart_save`, `u`.`event_date`, `u`.`order_status`]. SQLSTATE: 42703; line 16, pos 27
+
 -- ============================================================================
 -- FILE   : MIP_EDL_Source_4Day_Audit.sql
 -- PROJECT: Media Intelligence Platform (MIP)
