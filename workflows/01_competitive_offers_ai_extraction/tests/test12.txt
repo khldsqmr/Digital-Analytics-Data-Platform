@@ -1,0 +1,507 @@
+-- ============================================================================
+-- FILE   : MIP_EDL_Source_4Day_Audit.sql
+-- PROJECT: Media Intelligence Platform (MIP)
+-- PURPOSE: Read-only audits against SOURCE EDL and source marketing reference,
+--          before optimizing Bronze/Silver/weekly-first aggregation.
+-- SCOPE  : No MIP Bronze, Silver or Gold tables are read or modified.
+--          No CREATE TABLE, INSERT, MERGE, DELETE, REPLACE or OPTIMIZE.
+--          The only setup writes TEMPORARY SESSION VARIABLES (not data).
+-- SOURCES:
+--   UDI: prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+--   SEF: prd_dbi_analytics.silver_digital_interactions.session_event_fact
+--   SSF: prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+--   MKT: prdrzranalytics.lab42.dim_marketing_code
+-- DEFAULT: 2026-10-01 through 2026-10-04 (4 contiguous days, crosses Sun boundary).
+-- EXECUTION:
+--   1. Run CONFIG once in the SAME SQL SESSION as subsequent queries.
+--   2. Execute one numbered query at a time (recommended Q01-Q07, Q10-Q11,
+--      Q14-Q18, Q20-Q21 first; exact Q08-Q09 and join Q12-Q13 separately).
+--   3. To use three days, change mip_start_date to DATE '2026-10-02'.
+--   4. To select another window, change only the two variables below.
+--   5. If a query fails with UNRESOLVED_VARIABLE, rerun the CONFIG in that
+--      SQL session / notebook connection. Avoid executing in a new session.
+-- COST:
+--   - Source queries run on the selected EDS/EDL SQL warehouse/compute; they do
+--     not consume lab42 cluster resources unless that cluster executes them.
+--   - Date predicates prune UDI/SEF event partitions where the source allows.
+--   - SSF should NOT be arbitrarily date-pruned for actual join-cardinality tests.
+--   - Hash samples reduce JOIN/GROUP BY shuffle, but may still READ source files.
+--   - LIMIT after GROUP BY does NOT limit input scans/shuffle.
+--   - Four-day exact composite-key GROUP BY is deliberately OPTIONAL/HEAVY.
+--   - Sample success is evidence, NOT proof of global uniqueness or readiness.
+-- ACCURACY: No DISTINCT or ROW_NUMBER is applied to modify source facts. GROUP BY
+--           in audit diagnostics is only for checking multiplicity/relationships.
+-- ============================================================================
+
+-- ==========================================================================
+-- CONFIG: run first, once per SQL session. Requires DBSQL / DBR >= 14.1.
+-- ==========================================================================
+DECLARE OR REPLACE VARIABLE mip_start_date DATE DEFAULT DATE '2026-10-01';
+DECLARE OR REPLACE VARIABLE mip_end_date   DATE DEFAULT DATE '2026-10-04';
+DECLARE OR REPLACE VARIABLE mip_sample_divisor INT DEFAULT 997;
+-- pmod(xxhash64(key), 997)=0 gives ~0.10% reproducible key-based sample.
+-- For larger samples change 997 to 251 (~0.40%) or 101 (~0.99%).
+
+-- Q00 [TRIVIAL] Confirm configuration.
+SELECT session.mip_start_date AS startDate,session.mip_end_date AS endDate,
+       datediff(session.mip_end_date,session.mip_start_date)+1 AS eventDays,
+       session.mip_sample_divisor AS hashSampleDivisor;
+
+-- Q01 [METADATA / LIGHT] Check actual names/types used by the Bronze projection.
+-- DESCRIBE can be run individually. No assumptions about data types are needed.
+DESCRIBE TABLE prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions;
+DESCRIBE TABLE prd_dbi_analytics.silver_digital_interactions.session_event_fact;
+DESCRIBE TABLE prd_dbi_analytics.silver_digital_interactions.session_summary_fact;
+DESCRIBE TABLE prdrzranalytics.lab42.dim_marketing_code;
+
+-- ==========================================================================
+-- PHASE A: FOUR-DAY SOURCE COVERAGE, KEY NULLS AND RAW SIGNALS
+-- ==========================================================================
+
+-- Q02 [FOUR-DAY SCAN / LOW SHUFFLE] SEF: coverage, null hit/session keys and
+-- ordering fields. One row per source_table and event_date.
+SELECT event_date,source_table,COUNT(*) AS eventRows,
+       COUNT_IF(row_identity_hash IS NULL) AS nullHitIdentity,
+       COUNT_IF(session_id IS NULL) AS nullSessionId,
+       COUNT_IF(hit_number_in_session IS NULL) AS nullHitOrdinal,
+       COUNT_IF(event_timestamp_utc IS NULL) AS nullEventTimestamp,
+       COUNT_IF(flow_name IS NOT NULL) AS rowsWithFlowName
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table
+ORDER BY event_date,source_table;
+-- Interpretation: check each requested day is present and whether null session
+-- identities occur. Presence of a day does NOT prove ingestion completion.
+
+-- Q03 [FOUR-DAY SCAN / LOW SHUFFLE] UDI: coverage, key NULLs, page/order signals.
+-- Show raw signal counts without imposing a new metric definition.
+SELECT event_date,source_table,COUNT(*) AS eventRows,
+       COUNT_IF(row_identity_hash IS NULL) AS nullHitIdentity,
+       COUNT_IF(event_timestamp_utc IS NULL) AS nullEventTimestamp,
+       COUNT_IF(channel_name IS NULL) AS nullChannelName,
+       COUNT_IF(order_id IS NOT NULL) AS rowsWithOrderId,
+       COUNT_IF(event_page_view IS NOT NULL) AS rowsWithPageViewField,
+       COUNT_IF(event_purchase IS NOT NULL) AS rowsWithPurchaseField,
+       MIN(load_datetime_pst) AS earliestLoadDateTimePst,
+       MAX(load_datetime_pst) AS latestLoadDateTimePst
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table
+ORDER BY event_date,source_table;
+
+-- Q04 [FOUR-DAY SCAN / LOW SHUFFLE] Inspect actual raw flag encodings: do not
+-- blindly convert booleans, 0/1 integers or string event fields prematurely.
+SELECT event_date,source_table,
+       cast(event_page_view AS STRING) AS rawPageViewFlag,
+       cast(event_purchase AS STRING) AS rawPurchaseFlag,
+       COUNT(*) AS rows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table,
+         cast(event_page_view AS STRING),cast(event_purchase AS STRING)
+ORDER BY event_date,source_table,rows DESC;
+-- Q04 may output many rows if these fields contain unexpected rich payloads.
+-- Review the Q01 data types first.
+
+-- Q05 [SMALL SOURCE / LIGHT] Marketing reference: NULL codes, duplicates and
+-- conflicting values. Duplicates may be intentional; Bronze resolves one/code.
+SELECT COUNT(*) AS rawMarketingRows,COUNT(DISTINCT MKT_CODE) AS nonNullCodes,
+       COUNT_IF(MKT_CODE IS NULL) AS nullCodeRows
+FROM prdrzranalytics.lab42.dim_marketing_code;
+SELECT MKT_CODE,COUNT(*) AS sourceRows,
+       COUNT(DISTINCT coalesce(cast(MKT_CODE_NAME AS STRING),'(null)')) AS distinctNames,
+       COUNT(DISTINCT coalesce(cast(Category AS STRING),'(null)')) AS distinctCategories
+FROM prdrzranalytics.lab42.dim_marketing_code
+GROUP BY MKT_CODE HAVING COUNT(*)>1
+ORDER BY sourceRows DESC LIMIT 100;
+
+-- Q06 [SMALL SOURCE / LIGHT] Does existing max_by(...) choice have a TIE with
+-- different payload? A tied highest-priority name/category creates ambiguity.
+WITH candidates AS (
+    SELECT MKT_CODE,
+           named_struct('activeRank',CASE WHEN try_cast(is_active AS BOOLEAN)=TRUE THEN 1 ELSE 0 END,
+                        'nameRank',coalesce(cast(MKT_CODE_NAME AS STRING),'')) AS priority,
+           to_json(named_struct('name',MKT_CODE_NAME,'category',Category,
+                                'active',cast(is_active AS STRING))) AS payload
+    FROM prdrzranalytics.lab42.dim_marketing_code
+), winners AS (
+    SELECT MKT_CODE,max(priority) AS topPriority
+    FROM candidates GROUP BY MKT_CODE
+)
+SELECT c.MKT_CODE,COUNT(*) AS rowsWithTopPriority,
+       COUNT(DISTINCT c.payload) AS competingPayloads
+FROM candidates c
+JOIN winners w ON c.MKT_CODE <=> w.MKT_CODE AND c.priority=w.topPriority
+GROUP BY c.MKT_CODE HAVING COUNT(DISTINCT c.payload)>1
+ORDER BY rowsWithTopPriority DESC LIMIT 100;
+-- Expected zero if current marketing snapshot tie-breaking is deterministic.
+
+-- ==========================================================================
+-- PHASE B: SOURCE UNIQUENESS AND EXACT UDI <-> SEF BRIDGE CARDINALITY
+-- ==========================================================================
+
+-- Q07 [FOUR-DAY SCAN / SAMPLED SHUFFLE] Composite-key duplicates from both
+-- sources. Deterministic sampling retains ALL rows for any selected hit key;
+-- unlike LIMIT 100000, this does not split a sampled key's duplicate rows.
+WITH sampled AS (
+    SELECT 'SEF' AS src,event_date,source_table,row_identity_hash,session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+    UNION ALL
+    SELECT 'UDI' AS src,event_date,source_table,row_identity_hash,cast(NULL AS STRING) AS session_id
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+), byKey AS (
+    SELECT src,event_date,source_table,row_identity_hash,
+           COUNT(*) AS rowsForKey,COUNT(DISTINCT session_id) AS distinctSessions
+    FROM sampled GROUP BY src,event_date,source_table,row_identity_hash
+)
+SELECT src,event_date,source_table,
+       COUNT(*) AS sampledCompositeKeys,
+       SUM(rowsForKey) AS sampledRows,
+       COUNT_IF(rowsForKey>1) AS repeatedCompositeKeys,
+       MAX(rowsForKey) AS maximumRowsPerKey,
+       COUNT_IF(rowsForKey>1 AND distinctSessions>1) AS ambiguousSessionMappings
+FROM byKey
+GROUP BY src,event_date,source_table
+ORDER BY src,event_date,source_table;
+-- Repeated SEF/UDI keys require investigation; do not fix with random dedup.
+-- Because row_identity_hash is part of the source bridge, this sample is
+-- reproducible across both datasets for UDI-to-SEF matching.
+
+-- Q08 [OPTIONAL VERY HEAVY / EXACT FOUR-DAY PROOF] SEF composite-key duplicates.
+-- Shuffle may be large; run only when you need exact evidence for the 4 days.
+SELECT event_date,source_table,row_identity_hash,COUNT(*) AS rowsForKey,
+       COUNT(DISTINCT session_id) AS distinctSessions
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table,row_identity_hash
+HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
+-- Note: NULL-key rows are flagged separately by Q02.
+
+-- Q09 [OPTIONAL VERY HEAVY / EXACT FOUR-DAY PROOF] UDI composite-key duplicates.
+SELECT event_date,source_table,row_identity_hash,COUNT(*) AS rowsForKey
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table,row_identity_hash
+HAVING COUNT(*)>1 ORDER BY rowsForKey DESC LIMIT 100;
+
+-- Q10 [TWO FOUR-DAY SCANS / SMALL HASH SAMPLE JOIN] UDI-SEF exact composite-key
+-- cardinality at the source. Pre-aggregate sampled keys BEFORE joining: this
+-- avoids a huge hit-row join and explicitly exposes 1:N/N:M multiplication.
+WITH sefKeys AS (
+    SELECT event_date,source_table,row_identity_hash,COUNT(*) AS sefRows
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+    GROUP BY event_date,source_table,row_identity_hash
+), udiKeys AS (
+    SELECT event_date,source_table,row_identity_hash,COUNT(*) AS udiRows
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+    GROUP BY event_date,source_table,row_identity_hash
+), pairs AS (
+    SELECT coalesce(e.event_date,u.event_date) AS event_date,
+           coalesce(e.source_table,u.source_table) AS source_table,
+           coalesce(e.sefRows,0) AS sefRows,coalesce(u.udiRows,0) AS udiRows
+    FROM sefKeys e FULL OUTER JOIN udiKeys u
+      ON e.event_date=u.event_date AND e.source_table=u.source_table
+     AND e.row_identity_hash=u.row_identity_hash
+)
+SELECT event_date,source_table,COUNT(*) AS sampledUnionKeys,
+       COUNT_IF(sefRows>0 AND udiRows>0) AS matchedKeys,
+       COUNT_IF(sefRows>0 AND udiRows=0) AS sefKeysWithoutUdi,
+       COUNT_IF(sefRows=0 AND udiRows>0) AS udiKeysWithoutSef,
+       COUNT_IF(sefRows>1) AS repeatedSefKeys,
+       COUNT_IF(udiRows>1) AS repeatedUdiKeys,
+       SUM(sefRows) AS sampledSefRows,SUM(udiRows) AS sampledUdiRows,
+       SUM(cast(sefRows AS BIGINT)*cast(udiRows AS BIGINT)) AS projectedJoinRows
+FROM pairs GROUP BY event_date,source_table
+ORDER BY event_date,source_table;
+-- IMPORTANT: UDI-only events might legitimately be unsessionized. Confirm
+-- source semantics before requiring complete UDI->SEF coverage.
+
+-- ==========================================================================
+-- PHASE C: SSF UNIQUE SESSION GRAIN AND JOIN MULTIPLICATION
+-- ==========================================================================
+
+-- Q11 [DATE-BOUNDED SSF / MODERATE] SSF uniqueness over nearby START dates.
+-- A session may start outside this bound yet emit an event inside audit window.
+SELECT source_table,session_status,session_start_date,
+       COUNT(*) AS ssfRows,COUNT_IF(session_id IS NULL) AS nullSessionId,
+       COUNT(DISTINCT session_id) AS distinctNonNullSessionIds
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date BETWEEN date_add(session.mip_start_date,-2)
+                             AND date_add(session.mip_end_date,2)
+GROUP BY source_table,session_status,session_start_date
+ORDER BY session_start_date,source_table,session_status;
+
+-- Q11B [DATE-BOUNDED SSF / MODERATE] Actual repeated session_ids across
+-- statuses, source tables and dates inside the bounded SSF scan.
+SELECT session_id,COUNT(*) AS eligibleRows,
+       COUNT(DISTINCT source_table) AS sourceTableCount,
+       COUNT(DISTINCT session_status) AS distinctEligibleStatuses,
+       MIN(session_start_date) AS minStartDate,MAX(session_start_date) AS maxStartDate
+FROM prd_dbi_analytics.silver_digital_interactions.session_summary_fact
+WHERE session_start_date BETWEEN date_add(session.mip_start_date,-2)
+                             AND date_add(session.mip_end_date,2)
+  AND session_status IN ('OPEN','CLOSED')
+GROUP BY session_id HAVING COUNT(*)>1
+ORDER BY eligibleRows DESC LIMIT 100;
+-- This only diagnoses the bounded SSF population; Q12 tests actual SEF IDs.
+
+-- Q12 [SSF JOIN / IMPORTANT] Check exact session_id-only join in Silver01,
+-- using a reproducible sample of SEF sessions and NO SSF start-date restriction.
+-- SSF may need a broad scan; execute separately. This tests OPEN/CLOSED matches.
+WITH referencedSessions AS (
+    SELECT session_id,source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND session_id IS NOT NULL
+      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+    GROUP BY session_id,source_table
+), ssfBySession AS (
+    SELECT r.session_id,r.source_table,
+           COUNT(s.session_id) AS eligibleMatches,
+           COUNT_IF(s.session_id IS NOT NULL AND NOT(s.source_table <=> r.source_table)) AS wrongSourceMatches,
+           MIN(s.session_start_time) AS minSessionStart,
+           MAX(s.session_start_time) AS maxSessionStart
+    FROM referencedSessions r
+    LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+      ON s.session_id=r.session_id AND s.session_status IN ('OPEN','CLOSED')
+    GROUP BY r.session_id,r.source_table
+)
+SELECT source_table,COUNT(*) AS sampledReferencedSessions,
+       COUNT_IF(eligibleMatches=0) AS missingEligibleSsf,
+       COUNT_IF(eligibleMatches=1) AS oneEligibleSsf,
+       COUNT_IF(eligibleMatches>1) AS multiMatchedSessionIds,
+       COUNT_IF(wrongSourceMatches>0) AS wrongSourceMatchedSessions,
+       MAX(eligibleMatches) AS maximumEligibleMatches
+FROM ssfBySession GROUP BY source_table ORDER BY source_table;
+-- If multiMatchedSessionIds > 0, session_id-only enrichment is unsafe.
+-- Do not blindly replace the join key without checking source semantics.
+
+-- Q13 [SSF JOIN / IMPORTANT DETAIL] Show exact sampled offending sessions.
+-- Same scan as Q12; run only if Q12 reports misses/multiple/wrong-source rows.
+WITH referencedSessions AS (
+    SELECT session_id,source_table
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND session_id IS NOT NULL
+      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+    GROUP BY session_id,source_table
+)
+SELECT r.session_id,r.source_table AS sefSourceTable,
+       COUNT(s.session_id) AS eligibleSsfMatches,
+       COUNT_IF(s.session_id IS NOT NULL AND NOT(s.source_table <=> r.source_table)) AS wrongSourceSsfRows,
+       MIN(s.session_start_date) AS minSsfStartDate,
+       MAX(s.session_start_date) AS maxSsfStartDate,
+       COUNT(DISTINCT s.session_status) AS distinctEligibleStatuses
+FROM referencedSessions r
+LEFT JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+  ON s.session_id=r.session_id AND s.session_status IN ('OPEN','CLOSED')
+GROUP BY r.session_id,r.source_table
+HAVING COUNT(s.session_id)<>1
+    OR COUNT_IF(s.session_id IS NOT NULL AND NOT(s.source_table <=> r.source_table))>0
+ORDER BY eligibleSsfMatches DESC LIMIT 100;
+
+-- ==========================================================================
+-- PHASE D: EARLY-AGGREGATION SAFETY (SEQUENCE, DAYS, CONTEXT, ORDER)
+-- ==========================================================================
+
+-- Q14 [SEF FOUR-DAY SCAN / SMALL HASHED SESSION GROUPING] Sessions spanning
+-- several event dates and/or reporting-week boundaries. This four-day window
+-- is NOT necessarily the entire lifetime of the session.
+WITH perSession AS (
+    SELECT session_id,source_table,MIN(event_date) AS minEventDate,
+           MAX(event_date) AS maxEventDate,
+           MIN(date_add(event_date,1-dayofweek(event_date))) AS minEventDateSundayBucket,
+           MAX(date_add(event_date,1-dayofweek(event_date))) AS maxEventDateSundayBucket,
+           COUNT(*) AS eventRows,COUNT(DISTINCT event_date) AS daysObserved
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND session_id IS NOT NULL
+      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+    GROUP BY session_id,source_table
+)
+SELECT source_table,COUNT(*) AS sampledSessions,
+       COUNT_IF(daysObserved>1) AS multiEventDateSessions,
+       COUNT_IF(minEventDateSundayBucket<>maxEventDateSundayBucket) AS crossEventDateSundayBuckets,
+       MAX(daysObserved) AS maxObservedDays,
+       MAX(eventRows) AS maxEventsInSession
+FROM perSession GROUP BY source_table ORDER BY source_table;
+-- This is an event_date Sunday-bucket diagnostic, NOT proof of Pacific
+-- session-start reporting-week crossover. The true week is derived from
+-- authoritative SSF session_start_time in America/Los_Angeles; retain it.
+-- If event_date buckets cross Sunday, never reassign a session per hit week.
+
+-- Q15 [SEF FOUR-DAY SCAN / SAMPLED SESSION GROUPING] Hit ordinal re-use.
+-- Repeated (session_id, hit_number_in_session) can reflect multiple events at
+-- one hit. Investigate BEFORE using hit ordinal as a unique record key.
+SELECT session_id,source_table,hit_number_in_session,
+       COUNT(*) AS eventRows,COUNT(DISTINCT row_identity_hash) AS hitKeys,
+       MIN(event_timestamp_utc) AS earliestEventTime,
+       MAX(event_timestamp_utc) AS latestEventTime
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+  AND session_id IS NOT NULL AND hit_number_in_session IS NOT NULL
+  AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+GROUP BY session_id,source_table,hit_number_in_session
+HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
+
+-- Q16 [SEF FOUR-DAY SCAN / SAMPLED SESSION GROUPING] Ordering ties when both
+-- timestamp and hit ordinal are identical. Preserve row_identity_hash as a
+-- deterministic tie-breaker, but don't assume ties are semantically identical.
+SELECT session_id,source_table,hit_number_in_session,event_timestamp_utc,
+       COUNT(*) AS eventRows,COUNT(DISTINCT row_identity_hash) AS distinctHitKeys
+FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+  AND session_id IS NOT NULL
+  AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+GROUP BY session_id,source_table,hit_number_in_session,event_timestamp_utc
+HAVING COUNT(*)>1 ORDER BY eventRows DESC LIMIT 100;
+
+-- Q17 [SAMPLED SEF->UDI JOIN / HIGHER COST] Do sessions really contain multiple
+-- channel/device/page values? We match exact hit identities; no cross-product
+-- of independent channel and device arrays is allowed for future crosstabs.
+WITH selectedSef AS (
+    SELECT row_identity_hash,event_date,source_table,session_id,hit_number_in_session
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND session_id IS NOT NULL AND row_identity_hash IS NOT NULL
+      AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(session_id AS STRING)),session.mip_sample_divisor)=0
+), sessionContext AS (
+    SELECT l.session_id,l.source_table,
+           COUNT(*) AS joinedRows,
+           COUNT(DISTINCT coalesce(cast(u.channel_name AS STRING),'(not set)')) AS channels,
+           COUNT(DISTINCT coalesce(cast(u.attribute_device_id AS STRING),'(not set)')) AS devices,
+           COUNT(DISTINCT coalesce(cast(u.page_name AS STRING),'(not set)')) AS pages,
+           COUNT(DISTINCT named_struct(
+               'channel',coalesce(cast(u.channel_name AS STRING),'(not set)'),
+               'device',coalesce(cast(u.attribute_device_id AS STRING),'(not set)')
+           )) AS observedChannelDevicePairs
+    FROM selectedSef l
+    INNER JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+      ON l.row_identity_hash=u.row_identity_hash AND l.event_date=u.event_date
+     AND l.source_table=u.source_table
+     AND u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+    GROUP BY l.session_id,l.source_table
+)
+SELECT source_table,COUNT(*) AS sampledMatchedSessions,
+       COUNT_IF(channels>1) AS multiChannelSessions,
+       COUNT_IF(devices>1) AS multiDeviceSessions,
+       COUNT_IF(pages>1) AS multiPageSessions,
+       COUNT_IF(observedChannelDevicePairs>1) AS multiPairSessions,
+       MAX(channels) AS maximumChannels,MAX(observedChannelDevicePairs) AS maximumPairs
+FROM sessionContext GROUP BY source_table ORDER BY source_table;
+-- page_name is a raw event field, NOT the final derived Silver pageCategory.
+-- A weekly nested structure must preserve observed contexts and attribution.
+
+-- Q18 [UDI FOUR-DAY SCAN / HASHED ORDER-ID SAMPLE] Repeated order IDs across
+-- source events. Repeated order_id is NOT proof of duplicate orders. Sample by
+-- order_id rather than hit to retain ALL rows for selected order IDs.
+SELECT source_table,order_id,COUNT(*) AS eventRowsWithOrderId,
+       COUNT(DISTINCT row_identity_hash) AS distinctHitIdentities,
+       COUNT(DISTINCT event_date) AS eventDays,
+       MIN(event_timestamp_utc) AS firstEventTime,
+       MAX(event_timestamp_utc) AS lastEventTime,
+       COUNT(DISTINCT cast(event_purchase AS STRING)) AS distinctPurchaseFlagValues
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+  AND order_id IS NOT NULL
+  AND pmod(xxhash64(cast(order_id AS STRING)),session.mip_sample_divisor)=0
+GROUP BY source_table,order_id HAVING COUNT(*)>1
+ORDER BY eventRowsWithOrderId DESC LIMIT 100;
+-- In weekly aggregation retain the metric's canonical order_count definition,
+-- order attribution and ordered event information where required.
+
+-- ==========================================================================
+-- PHASE E: SOURCE-TO-SOURCE SEMANTICS AND DELIVERY READINESS
+-- ==========================================================================
+
+-- Q19 [SAMPLED SEF->UDI JOIN] Does SEF flow_name match UDI flow_name for the
+-- SAME composite event key? A difference may be intentional transformation.
+WITH sefSample AS (
+    SELECT row_identity_hash,event_date,source_table,flow_name AS sefFlowName
+    FROM prd_dbi_analytics.silver_digital_interactions.session_event_fact
+    WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+      AND row_identity_hash IS NOT NULL AND source_table IS NOT NULL
+      AND pmod(xxhash64(cast(row_identity_hash AS STRING)),session.mip_sample_divisor)=0
+)
+SELECT l.event_date,l.source_table,COUNT(*) AS joinedEventRows,
+       COUNT_IF(l.sefFlowName IS NULL) AS nullSefFlow,
+       COUNT_IF(u.flow_name IS NULL) AS nullUdiFlow,
+       COUNT_IF(NOT(l.sefFlowName <=> u.flow_name)) AS flowDisagreements,
+       COUNT_IF(NOT(l.sefFlowName <=> u.flow_name)
+                    AND l.sefFlowName IS NOT NULL AND u.flow_name IS NOT NULL) AS nonNullDisagreements
+FROM sefSample l
+JOIN prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+  ON l.row_identity_hash=u.row_identity_hash AND l.event_date=u.event_date
+ AND l.source_table=u.source_table
+ AND u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY l.event_date,l.source_table ORDER BY l.event_date,l.source_table;
+
+-- Q20 [UDI FOUR-DAY SCAN / LOW SHUFFLE] Ingest freshness by source date.
+-- Four dates appearing is not a readiness/completeness guarantee. This shows
+-- source load timestamps, but an upstream publication watermark is preferable.
+SELECT event_date,source_table,COUNT(*) AS rows,
+       MIN(load_datetime_pst) AS minLoadPst,
+       MAX(load_datetime_pst) AS maxLoadPst,
+       MIN(source_datalakeLoadDate) AS minLakeLoadDate,
+       MAX(source_datalakeLoadDate) AS maxLakeLoadDate
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+WHERE event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY event_date,source_table ORDER BY event_date,source_table;
+
+-- Q21 [UDI->REFERENCE SMALL JOIN / FOUR-DAY SCAN] How many campaign codes lack
+-- marketing reference coverage? First collapse reference to code presence ONLY,
+-- so raw reference duplicates cannot multiply UDI hits in this audit.
+WITH codes AS (
+    SELECT MKT_CODE
+    FROM prdrzranalytics.lab42.dim_marketing_code
+    GROUP BY MKT_CODE
+)
+SELECT u.event_date,u.source_table,
+       COUNT(*) AS udiRows,
+       COUNT_IF(u.external_campaign_code IS NOT NULL) AS rowsWithCampaignCode,
+       COUNT_IF(u.external_campaign_code IS NOT NULL AND codes.MKT_CODE IS NULL) AS unresolvedCampaignRows
+FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions u
+LEFT JOIN codes
+  ON cast(u.external_campaign_code AS STRING)=cast(codes.MKT_CODE AS STRING)
+WHERE u.event_date BETWEEN session.mip_start_date AND session.mip_end_date
+GROUP BY u.event_date,u.source_table ORDER BY u.event_date,u.source_table;
+
+-- ==========================================================================
+-- RESULTS / WHAT THEY IMPLY FOR THE 21-TABLE PIPELINE
+-- ==========================================================================
+-- 1. Q07/Q08/Q09: If hit identity is unique, avoid costly arbitrary dedup.
+--    If not unique, determine exact source grain. DO NOT use random ROW_NUMBER.
+-- 2. Q10: If SEF->UDI is 1:1 on the composite key, we still require the
+--    identity join BEFORE aggregation into session metric ingredients.
+-- 3. Q12/Q13: If one SEF session_id maps to several SSF rows, Silver01's
+--    session_id-only join multiplies events. Fix source join contract first.
+-- 4. Q14-Q16: Preserve session-start week, hit ordinals, event timestamps and
+--    row identity tie-breakers; do not depend on unsorted COLLECT_LIST order.
+-- 5. Q17: Never CROSS JOIN independent channel/device arrays to invent pairs.
+--    Preserve observed pairs, metric-specific memberships and attribution.
+-- 6. Q18: Repeated order IDs are not automatically duplicate orders. Keep
+--    raw order references/events until canonical order metrics are derived.
+-- 7. Q05/Q06: If marketing resolution ties differ in payload, specify stable
+--    source-backed tie policy rather than non-deterministic max_by results.
+-- 8. Q20: Date existence and latest load timestamp alone are not formal
+--    source readiness. Request EDL freshness/watermark contract if available.
+-- 9. All results here are READ-ONLY observations. They cannot prove WoW,
+--    4-week, LY, Peer Set or topline impact; those need end-to-end weekly
+--    Silver/Gold/App validation against the same source snapshot.
+-- 10. For the 2-6 worker lab42 cluster, do NOT transplant heavy audit scans
+--     into every daily production procedure. Separate source-contract tests
+--     from lightweight recurring job-health checks.
+-- ============================================================================
