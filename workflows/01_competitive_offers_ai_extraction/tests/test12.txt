@@ -826,3 +826,65 @@ output:
 source_table	sampledCampaignRows	missingParsedCode	matchedMarketingCode	unmatchedParsedCode
 t_app_interactions	4119	12	2371	1736
 t_web_interactions	47472	121	41307	6044
+
+
+-- ============================================================================
+-- MIP SOURCE AUDIT: MARKETING CODE MISMATCH DIAGNOSTIC
+-- SOURCE DATE : 2026-10-03
+-- SAMPLE      : ~1% deterministic hash sample
+-- PURPOSE     : Identify why parsed campaign codes fail reference lookup.
+-- WRITES      : None
+-- ============================================================================
+
+WITH marketingCodes AS (
+    SELECT
+        CAST(MKT_CODE AS STRING) AS marketingCode,
+        UPPER(TRIM(CAST(MKT_CODE AS STRING))) AS normalizedCode
+    FROM prdrzranalytics.lab42.dim_marketing_code
+),
+normalizedCodes AS (
+    SELECT normalizedCode
+    FROM marketingCodes
+    GROUP BY normalizedCode
+),
+campaignSample AS (
+    SELECT
+        source_table,
+        CAST(external_campaign_code AS STRING) AS rawCampaignCode,
+        NULLIF(
+            TRIM(SPLIT_PART(CAST(external_campaign_code AS STRING),'_',4)),
+            ''
+        ) AS parsedCampaignCode
+    FROM prd_dbi_analytics.silver_digital_interactions.unified_digital_interactions
+    WHERE event_date = DATE '2026-10-03'
+      AND external_campaign_code IS NOT NULL
+      AND PMOD(XXHASH64(CAST(row_identity_hash AS STRING)),101)=0
+),
+unmatched AS (
+    SELECT s.*
+    FROM campaignSample s
+    LEFT JOIN marketingCodes m
+      ON s.parsedCampaignCode=m.marketingCode
+    WHERE s.parsedCampaignCode IS NOT NULL
+      AND m.marketingCode IS NULL
+)
+SELECT
+    u.source_table,
+    u.parsedCampaignCode,
+    COUNT(*) AS sampledUnmatchedRows,
+    MIN(u.rawCampaignCode) AS exampleRawCampaignCode,
+    MAX(
+        CASE WHEN n.normalizedCode IS NOT NULL THEN 1 ELSE 0 END
+    ) AS matchesAfterCaseTrim
+FROM unmatched u
+LEFT JOIN normalizedCodes n
+  ON UPPER(TRIM(u.parsedCampaignCode))=n.normalizedCode
+GROUP BY u.source_table,u.parsedCampaignCode
+ORDER BY sampledUnmatchedRows DESC
+LIMIT 40;
+
+-- INTERPRETATION:
+-- matchesAfterCaseTrim = 1 : capitalization/whitespace mismatch.
+-- matchesAfterCaseTrim = 0 : code genuinely missing under this extraction.
+-- Inspect exampleRawCampaignCode to verify the fourth-token convention.
+-- ============================================================================
