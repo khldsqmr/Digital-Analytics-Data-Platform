@@ -822,3 +822,7 @@ LEFT JOIN prdrzranalytics.lab42.dim_marketing_code m
     ON c.parsedCampaignCode=CAST(m.MKT_CODE AS STRING)
 GROUP BY c.source_table;
 
+output:
+source_table	sampledCampaignRows	missingParsedCode	matchedMarketingCode	unmatchedParsedCode
+t_app_interactions	4119	12	2371	1736
+t_web_interactions	47472	121	41307	6044
