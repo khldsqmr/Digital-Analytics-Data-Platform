@@ -4607,3 +4607,6 @@ I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it l
  Yep, updated both items. The 4-wk trend is now based on the average of the available historical weeks for count metrics rather than the total, without changing the existing API/table schema.
 
 I also standardized `fiscalWeekCode` across the current App Gold tables to use the fiscal-year week numbering, so they now consistently show 37, 38, 39, etc. instead of resetting within the quarter to 12, 13, 14. I changed the previous approach because a reporting week can span a quarter-end, so keeping the week number independent of the quarter avoids inconsistencies while quarter attribution is handled separately.
+
+
+I think the breakouts waterfall table also has the same 4-week sum vs average problem
