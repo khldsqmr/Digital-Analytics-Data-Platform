@@ -4590,3 +4590,5 @@ I'm looking at the sdi_tbl_mip_gold_appOverviewToplineMovers_long table and it l
  
 
  So in this version, all of them have fiscalWeekCode are 37, 38, 39. I updated the previous approach because the quarter end date may fall mid week 
+
+ In this overview topline movers table, your week numbers in fiscalWeekCode are 37, 38, 39, etc. But in most (if not all) the other tables, the weeks were numbered by the quarter (12, 13, 14). This just needs to be consistent.
