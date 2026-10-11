@@ -4610,3 +4610,61 @@ I also standardized `fiscalWeekCode` across the current App Gold tables to use t
 
 
 I think the breakouts waterfall table also has the same 4-week sum vs average problem
+
+SELECT
+    targetWeekStartDate,
+    metricName,
+    breakoutType,
+    breakoutValue,
+    fourWeekTrendWeekCount,
+    fourWeekTrendNumerator,
+    fourWeekTrendDenominator,
+    peerSetNumerator,
+    peerSetDenominator
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate BETWEEN DATE '2026-09-06' AND DATE '2026-09-27'
+ORDER BY
+    targetWeekStartDate DESC,
+    metricName,
+    breakoutType,
+    breakoutValue;
+
+SELECT
+    targetWeekStartDate,
+    metricName,
+    pairKey,
+    rowBreakoutValue,
+    columnBreakoutValue,
+    fourWeekTrendWeekCount,
+    peerSetNumerator,
+    peerSetDenominator
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+WHERE targetWeekStartDate BETWEEN DATE '2026-09-06' AND DATE '2026-09-27'
+ORDER BY
+    targetWeekStartDate DESC,
+    metricName,
+    pairKey;
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewToplineMovers_long(
+    p_asOfDate       => DATE '2026-10-03',
+    p_weeksToRebuild => 4,
+    p_validateOnly   => FALSE
+);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appBreakoutsComparisonTable_long(
+    p_asOfDate       => DATE '2026-10-03',
+    p_weeksToRebuild => 4,
+    p_validateOnly   => FALSE
+);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appCrosstabsRankedPairs_long(
+    p_asOfDate       => DATE '2026-10-03',
+    p_weeksToRebuild => 4,
+    p_validateOnly   => FALSE
+);
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
+    p_asOfDate       => DATE '2026-10-03',
+    p_weeksToRebuild => 4,
+    p_validateOnly   => FALSE
+);
