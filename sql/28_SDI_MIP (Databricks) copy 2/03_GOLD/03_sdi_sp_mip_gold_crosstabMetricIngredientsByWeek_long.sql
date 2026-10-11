@@ -3,11 +3,11 @@
 -- LAYER : GOLD
 --
 -- RUNTIME WRITE NOTE:
---   Uses the same runtime-safe atomic scoped-overwrite pattern proven in Silver 02/03.
---   Local DATE values are rendered as make_date(...) expressions only for the write SQL.
---   The transformation remains one query and inserts BY NAME with REPLACE WHERE.
---   Only targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo is replaced.
---   Prior/available-4-week/LY weeks are read dependencies and are never rewritten.
+--   Uses the runtime-safe scoped-overwrite pattern proven in Silver 02/03.
+--   Only validated target-week DATE values are rendered into REPLACE WHERE.
+--   Embedded SQL literals are backslash-escaped so EXECUTE IMMEDIATE preserves them.
+--   The transformation inserts BY NAME and replaces only v_weekFrom..v_weekTo.
+--   Prior/available-4-week/LY weeks remain read-only dependencies.
 --
 -- CALL COMPATIBILITY:
 --   - Manual SQL: CALL with DATE / INT / BOOLEAN literals.
@@ -192,7 +192,7 @@ targetWeekStartDate         DATE,
         CLUSTER BY (targetWeekStartDate, pairKey, metricName)
         COMMENT 'Gold Crosstabs: supported attributed breakout-pair cells with safe comparison ingredients.';
         -- --------------------------------------------------------------------
-        -- 5. Rebuild requested target weeks with atomic scoped replacement
+        -- 5. Rebuild requested target weeks with scoped replacement
         -- --------------------------------------------------------------------
         SET v_scopeStartSql=concat('make_date(',cast(year(v_weekFrom) AS STRING),',',cast(month(v_weekFrom) AS STRING),',',cast(day(v_weekFrom) AS STRING),')');
         SET v_scopeEndSql=concat('make_date(',cast(year(v_weekTo) AS STRING),',',cast(month(v_weekTo) AS STRING),',',cast(day(v_weekTo) AS STRING),')');
@@ -257,20 +257,20 @@ targetWeekStartDate         DATE,
                 x.storeLocator,
                 x.orderCount,
                 map(
-                    ''lob'',            coalesce(a.lob,''Other''),
-                    ''platform'',       coalesce(a.platform,''(not set)''),
-                    ''prospectVsBase'', coalesce(a.prospectVsBase,''Unknown''),
-                    ''authState'',      coalesce(a.authState,''(not set)''),
-                    ''channel'',        coalesce(a.channel,''(not set)''),
-                    ''campaign'',       coalesce(a.campaign,''(not set)''),
-                    ''entryPage'',      coalesce(a.entryPage,''(not set)''),
-                    ''pageCategory'',   coalesce(a.pageCategory,''(not set)''),
-                    ''device'',         coalesce(a.device,''Unknown''),
-                    ''region'',         coalesce(a.region,''(not available)''),
-                    ''utmSource'',      coalesce(a.utmSource,''(not set)''),
-                    ''utmMedium'',      coalesce(a.utmMedium,''(not set)''),
-                    ''utmCampaign'',    coalesce(a.utmCampaign,''(not set)''),
-                    ''buyFlowStep'',    coalesce(a.buyFlowStep,''Did not enter buy flow'')
+                    \'lob\',            coalesce(a.lob,\'Other\'),
+                    \'platform\',       coalesce(a.platform,\'(not set)\'),
+                    \'prospectVsBase\', coalesce(a.prospectVsBase,\'Unknown\'),
+                    \'authState\',      coalesce(a.authState,\'(not set)\'),
+                    \'channel\',        coalesce(a.channel,\'(not set)\'),
+                    \'campaign\',       coalesce(a.campaign,\'(not set)\'),
+                    \'entryPage\',      coalesce(a.entryPage,\'(not set)\'),
+                    \'pageCategory\',   coalesce(a.pageCategory,\'(not set)\'),
+                    \'device\',         coalesce(a.device,\'Unknown\'),
+                    \'region\',         coalesce(a.region,\'(not available)\'),
+                    \'utmSource\',      coalesce(a.utmSource,\'(not set)\'),
+                    \'utmMedium\',      coalesce(a.utmMedium,\'(not set)\'),
+                    \'utmCampaign\',    coalesce(a.utmCampaign,\'(not set)\'),
+                    \'buyFlowStep\',    coalesce(a.buyFlowStep,\'Did not enter buy flow\')
                 ) AS dimensionMap
             FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerVisitorWeek_weekly a
             INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerVisitorWeek_weekly x
@@ -347,21 +347,21 @@ targetWeekStartDate         DATE,
             FROM weeklyWide
             LATERAL VIEW stack(
                 15,
-                ''nbv'',               cast(nbv AS DOUBLE),
-                ''sessionCount'',      cast(sessionCount AS DOUBLE),
-                ''pageViews'',         cast(pageViews AS DOUBLE),
-                ''nbvBuyFlow'',        cast(nbvBuyFlow AS DOUBLE),
-                ''nbvConfigure'',      cast(nbvConfigure AS DOUBLE),
-                ''nbvCheckoutStart'',  cast(nbvCheckoutStart AS DOUBLE),
-                ''orders'',            cast(orders AS DOUBLE),
-                ''ordersAcquisition'', cast(ordersAcquisition AS DOUBLE),
-                ''ordersBase'',        cast(ordersBase AS DOUBLE),
-                ''ordersUnassisted'',  cast(ordersUnassisted AS DOUBLE),
-                ''ordersAssisted'',    cast(ordersAssisted AS DOUBLE),
-                ''vrCalls'',           cast(vrCalls AS DOUBLE),
-                ''vrChats'',           cast(vrChats AS DOUBLE),
-                ''storeLocator'',      cast(storeLocator AS DOUBLE),
-                ''orderCount'',        cast(orderCount AS DOUBLE)
+                \'nbv\',               cast(nbv AS DOUBLE),
+                \'sessionCount\',      cast(sessionCount AS DOUBLE),
+                \'pageViews\',         cast(pageViews AS DOUBLE),
+                \'nbvBuyFlow\',        cast(nbvBuyFlow AS DOUBLE),
+                \'nbvConfigure\',      cast(nbvConfigure AS DOUBLE),
+                \'nbvCheckoutStart\',  cast(nbvCheckoutStart AS DOUBLE),
+                \'orders\',            cast(orders AS DOUBLE),
+                \'ordersAcquisition\', cast(ordersAcquisition AS DOUBLE),
+                \'ordersBase\',        cast(ordersBase AS DOUBLE),
+                \'ordersUnassisted\',  cast(ordersUnassisted AS DOUBLE),
+                \'ordersAssisted\',    cast(ordersAssisted AS DOUBLE),
+                \'vrCalls\',           cast(vrCalls AS DOUBLE),
+                \'vrChats\',           cast(vrChats AS DOUBLE),
+                \'storeLocator\',      cast(storeLocator AS DOUBLE),
+                \'orderCount\',        cast(orderCount AS DOUBLE)
             ) s AS metricName,metricValue
         ),
         weeklyIngredients AS (
@@ -379,7 +379,7 @@ targetWeekStartDate         DATE,
             FROM weeklyCounts c
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static m
               ON m.metricName=c.metricName
-             AND m.metricKind=''count''
+             AND m.metricKind=\'count\'
              AND m.isActive
             UNION ALL
             SELECT
@@ -395,7 +395,7 @@ targetWeekStartDate         DATE,
                 MAX(CASE WHEN n.metricName=r.denominatorMetric THEN n.metricValue END) AS denominatorValue
             FROM weeklyCounts n
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static r
-              ON r.metricKind=''ratio''
+              ON r.metricKind=\'ratio\'
              AND r.isActive
              AND n.metricName IN (r.numeratorMetric,r.denominatorMetric)
             GROUP BY n.weekStartDate,n.pairKey,n.rowBreakoutValue,n.columnBreakoutValue,r.metricName
@@ -420,13 +420,13 @@ targetWeekStartDate         DATE,
                 visitorId,
                 weekStartDate,
                 pageViews,
-                coalesce(authState,''(not set)'') AS authState,
-                coalesce(channel,''(not set)'') AS channel,
-                coalesce(entryPage,''(not set)'') AS entryPage,
-                coalesce(utmSource,''(not set)'') AS utmSource,
-                coalesce(utmMedium,''(not set)'') AS utmMedium,
-                coalesce(utmCampaign,''(not set)'') AS utmCampaign,
-                coalesce(device,''Unknown'') AS device,
+                coalesce(authState,\'(not set)\') AS authState,
+                coalesce(channel,\'(not set)\') AS channel,
+                coalesce(entryPage,\'(not set)\') AS entryPage,
+                coalesce(utmSource,\'(not set)\') AS utmSource,
+                coalesce(utmMedium,\'(not set)\') AS utmMedium,
+                coalesce(utmCampaign,\'(not set)\') AS utmCampaign,
+                coalesce(device,\'Unknown\') AS device,
                 deepestBuyFlowStep AS buyFlowStep,
                 hasBuyFlow,
                 hasConfigure,
@@ -439,14 +439,14 @@ targetWeekStartDate         DATE,
                 hasStoreLocator,
                 orderCount,
                 map(
-                    ''authState'',   coalesce(authState,''(not set)''),
-                    ''channel'',     coalesce(channel,''(not set)''),
-                    ''entryPage'',   coalesce(entryPage,''(not set)''),
-                    ''utmSource'',   coalesce(utmSource,''(not set)''),
-                    ''utmMedium'',   coalesce(utmMedium,''(not set)''),
-                    ''utmCampaign'', coalesce(utmCampaign,''(not set)''),
-                    ''device'',      coalesce(device,''Unknown''),
-                    ''buyFlowStep'', coalesce(deepestBuyFlowStep,''Did not enter buy flow'')
+                    \'authState\',   coalesce(authState,\'(not set)\'),
+                    \'channel\',     coalesce(channel,\'(not set)\'),
+                    \'entryPage\',   coalesce(entryPage,\'(not set)\'),
+                    \'utmSource\',   coalesce(utmSource,\'(not set)\'),
+                    \'utmMedium\',   coalesce(utmMedium,\'(not set)\'),
+                    \'utmCampaign\', coalesce(utmCampaign,\'(not set)\'),
+                    \'device\',      coalesce(device,\'Unknown\'),
+                    \'buyFlowStep\', coalesce(deepestBuyFlowStep,\'Did not enter buy flow\')
                 ) AS dimensionMap
             FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
             WHERE weekStartDate IN (SELECT weekStartDate FROM requiredWeeks)
@@ -478,19 +478,19 @@ targetWeekStartDate         DATE,
             FROM peerSessionBase s
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_crosstabCatalog_static p
               ON p.isActive
-             AND p.pairKey<>''buyFlowStep__authState''
+             AND p.pairKey<>\'buyFlowStep__authState\'
         ),
         peerBuyFlowMapped AS (
             SELECT
                 a.sessionId,
                 a.visitorId,
                 a.weekStartDate,
-                ''buyFlowStep__authState'' AS pairKey,
-                ''Buy flow step × Visitor type'' AS pairLabel,
-                ''buyFlowStep'' AS rowBreakoutType,
-                coalesce(a.buyFlowStep,''(buy flow - step not mapped)'') AS rowBreakoutValue,
-                ''authState'' AS columnBreakoutType,
-                coalesce(s.authState,''(not set)'') AS columnBreakoutValue,
+                \'buyFlowStep__authState\' AS pairKey,
+                \'Buy flow step × Visitor type\' AS pairLabel,
+                \'buyFlowStep\' AS rowBreakoutType,
+                coalesce(a.buyFlowStep,\'(buy flow - step not mapped)\') AS rowBreakoutValue,
+                \'authState\' AS columnBreakoutType,
+                coalesce(s.authState,\'(not set)\') AS columnBreakoutValue,
                 cast(1 AS BIGINT) AS sessionCount,
                 SUM(a.pageViews) AS pageViews,
                 MAX(a.hasBuyFlow) AS hasBuyFlow,
@@ -498,7 +498,7 @@ targetWeekStartDate         DATE,
                 MAX(CASE WHEN a.checkoutStartEvents>0 THEN 1 ELSE 0 END) AS hasCheckoutStart,
                 MAX(CASE WHEN a.orderCount>0 THEN 1 ELSE 0 END) AS hasOrder,
                 MAX(CASE
-                    WHEN a.orderCount>0 AND lower(trim(coalesce(a.orderCustomerType,'''')))=''prospect'' THEN 1
+                    WHEN a.orderCount>0 AND lower(trim(coalesce(a.orderCustomerType,\'\')))=\'prospect\' THEN 1
                     ELSE 0
                 END) AS hasAcquisitionOrder,
                 MAX(CASE WHEN a.assistedOrderEvents>0 THEN 1 ELSE 0 END) AS hasAssistedOrder,
@@ -515,8 +515,8 @@ targetWeekStartDate         DATE,
               AND a.buyFlowStep IS NOT NULL
             GROUP BY
                 a.sessionId,a.visitorId,a.weekStartDate,
-                coalesce(a.buyFlowStep,''(buy flow - step not mapped)''),
-                coalesce(s.authState,''(not set)'')
+                coalesce(a.buyFlowStep,\'(buy flow - step not mapped)\'),
+                coalesce(s.authState,\'(not set)\')
         ),
         peerBuyFlowMappedSessions AS (
             SELECT DISTINCT sessionId,weekStartDate
@@ -527,16 +527,16 @@ targetWeekStartDate         DATE,
                 s.sessionId,
                 s.visitorId,
                 s.weekStartDate,
-                ''buyFlowStep__authState'' AS pairKey,
-                ''Buy flow step × Visitor type'' AS pairLabel,
-                ''buyFlowStep'' AS rowBreakoutType,
+                \'buyFlowStep__authState\' AS pairKey,
+                \'Buy flow step × Visitor type\' AS pairLabel,
+                \'buyFlowStep\' AS rowBreakoutType,
                 CASE
-                    WHEN s.hasBuyFlow=0 THEN ''Did not enter buy flow''
-                    WHEN s.buyFlowStep IS NULL THEN ''(buy flow - step not mapped)''
+                    WHEN s.hasBuyFlow=0 THEN \'Did not enter buy flow\'
+                    WHEN s.buyFlowStep IS NULL THEN \'(buy flow - step not mapped)\'
                     ELSE s.buyFlowStep
                 END AS rowBreakoutValue,
-                ''authState'' AS columnBreakoutType,
-                coalesce(s.authState,''(not set)'') AS columnBreakoutValue,
+                \'authState\' AS columnBreakoutType,
+                coalesce(s.authState,\'(not set)\') AS columnBreakoutValue,
                 cast(1 AS BIGINT) AS sessionCount,
                 s.pageViews,
                 s.hasBuyFlow,
@@ -607,18 +607,18 @@ targetWeekStartDate         DATE,
             FROM peerVisitorPair
             LATERAL VIEW stack(
                 12,
-                ''nbv'',               cast(nbv AS INT),
-                ''nbvBuyFlow'',        cast(nbvBuyFlow AS INT),
-                ''nbvConfigure'',      cast(nbvConfigure AS INT),
-                ''nbvCheckoutStart'',  cast(nbvCheckoutStart AS INT),
-                ''orders'',            cast(orders AS INT),
-                ''ordersAcquisition'', cast(ordersAcquisition AS INT),
-                ''ordersBase'',        cast(ordersBase AS INT),
-                ''ordersUnassisted'',  cast(ordersUnassisted AS INT),
-                ''ordersAssisted'',    cast(ordersAssisted AS INT),
-                ''vrCalls'',           cast(vrCalls AS INT),
-                ''vrChats'',           cast(vrChats AS INT),
-                ''storeLocator'',      cast(storeLocator AS INT)
+                \'nbv\',               cast(nbv AS INT),
+                \'nbvBuyFlow\',        cast(nbvBuyFlow AS INT),
+                \'nbvConfigure\',      cast(nbvConfigure AS INT),
+                \'nbvCheckoutStart\',  cast(nbvCheckoutStart AS INT),
+                \'orders\',            cast(orders AS INT),
+                \'ordersAcquisition\', cast(ordersAcquisition AS INT),
+                \'ordersBase\',        cast(ordersBase AS INT),
+                \'ordersUnassisted\',  cast(ordersUnassisted AS INT),
+                \'ordersAssisted\',    cast(ordersAssisted AS INT),
+                \'vrCalls\',           cast(vrCalls AS INT),
+                \'vrChats\',           cast(vrChats AS INT),
+                \'storeLocator\',      cast(storeLocator AS INT)
             ) m AS metricName,metricFlag
         ),
         peerPairUniverse AS (
@@ -628,7 +628,7 @@ targetWeekStartDate         DATE,
         ),
         peerWeekGrid AS (
             SELECT
-                w\.weekStartDate,
+                w\\.weekStartDate,
                 u.pairKey,
                 u.rowBreakoutValue,
                 u.columnBreakoutValue
@@ -824,13 +824,13 @@ targetWeekStartDate         DATE,
             SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,metricName,metricValue
             FROM peerUniqueByCell
             UNION ALL
-            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,''sessionCount'',metricValue
+            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,\'sessionCount\',metricValue
             FROM peerSessionByCell
             UNION ALL
-            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,''pageViews'',metricValue
+            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,\'pageViews\',metricValue
             FROM peerPageViewByCell
             UNION ALL
-            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,''orderCount'',metricValue
+            SELECT weekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,\'orderCount\',metricValue
             FROM peerOrderByCell
         ),
         peerWeeklyIngredients AS (
@@ -845,7 +845,7 @@ targetWeekStartDate         DATE,
             FROM peerWeeklyCounts c
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static m
               ON m.metricName=c.metricName
-             AND m.metricKind=''count''
+             AND m.metricKind=\'count\'
              AND m.isActive
             UNION ALL
             SELECT
@@ -858,7 +858,7 @@ targetWeekStartDate         DATE,
                 MAX(CASE WHEN n.metricName=r.denominatorMetric THEN n.metricValue END) AS denominatorValue
             FROM peerWeeklyCounts n
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static r
-              ON r.metricKind=''ratio''
+              ON r.metricKind=\'ratio\'
              AND r.isActive
              AND n.metricName IN (r.numeratorMetric,r.denominatorMetric)
             GROUP BY
@@ -880,14 +880,14 @@ targetWeekStartDate         DATE,
             SELECT
                 t.*,
                 (cur.weekStartDate IS NOT NULL) AS thisWeekDataAvailable,
-                (pw\.weekStartDate IS NOT NULL) AS priorWeekDataAvailable,
+                (pw\\.weekStartDate IS NOT NULL) AS priorWeekDataAvailable,
                 cast(coalesce(fwa.fourWeekTrendWeekCount,0) AS INT) AS fourWeekTrendWeekCount,
                 (ly.weekStartDate IS NOT NULL) AS sameWeekLyDataAvailable
             FROM targetCalendar t
             LEFT JOIN availableWeeks cur
               ON cur.weekStartDate=t.weekStartDate
             LEFT JOIN availableWeeks pw
-              ON pw\.weekStartDate=t.priorWeekStartDate
+              ON pw\\.weekStartDate=t.priorWeekStartDate
             LEFT JOIN fourWeekAvailability fwa
               ON fwa.targetWeekStartDate=t.weekStartDate
             LEFT JOIN availableWeeks ly
@@ -916,8 +916,8 @@ targetWeekStartDate         DATE,
                 t.fiscalQuarterLabel,
                 t.fiscalWeekCode,
                 t.weekLabel,
-                ''All'' AS filterLob,
-                ''All'' AS filterPlatform,
+                \'All\' AS filterLob,
+                \'All\' AS filterPlatform,
                 v.pairKey,
                 v.pairLabel,
                 v.rowBreakoutType,
@@ -930,21 +930,21 @@ targetWeekStartDate         DATE,
                 m.displayFormat,
                 m.changeUnit,
                 CASE WHEN t.thisWeekDataAvailable THEN coalesce(cur.numeratorValue,0D) END AS thisWeekNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.thisWeekDataAvailable THEN coalesce(cur.denominatorValue,0D) END AS thisWeekDenominator,
-                CASE WHEN t.priorWeekDataAvailable THEN coalesce(pw\.numeratorValue,0D) END AS priorWeekNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.priorWeekDataAvailable THEN coalesce(pw\.denominatorValue,0D) END AS priorWeekDenominator,
-                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\.numeratorValue),0D) END AS fourWeekTrendNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\.denominatorValue),0D) END AS fourWeekTrendDenominator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.thisWeekDataAvailable THEN coalesce(cur.denominatorValue,0D) END AS thisWeekDenominator,
+                CASE WHEN t.priorWeekDataAvailable THEN coalesce(pw\\.numeratorValue,0D) END AS priorWeekNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.priorWeekDataAvailable THEN coalesce(pw\\.denominatorValue,0D) END AS priorWeekDenominator,
+                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\\.numeratorValue),0D) END AS fourWeekTrendNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\\.denominatorValue),0D) END AS fourWeekTrendDenominator,
                 CASE WHEN t.sameWeekLyDataAvailable THEN coalesce(ly.numeratorValue,0D) END AS sameWeekLyNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.sameWeekLyDataAvailable THEN coalesce(ly.denominatorValue,0D) END AS sameWeekLyDenominator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.sameWeekLyDataAvailable THEN coalesce(ly.denominatorValue,0D) END AS sameWeekLyDenominator,
                 t.thisWeekDataAvailable,
                 t.priorWeekDataAvailable,
                 t.fourWeekTrendWeekCount,
                 t.sameWeekLyDataAvailable,
                 CASE WHEN t.thisWeekDataAvailable THEN coalesce(peerCur.numeratorValue,0D) END AS peerCurrentNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.thisWeekDataAvailable THEN coalesce(peerCur.denominatorValue,0D) END AS peerCurrentDenominator,
-                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\.numeratorValue),0D) END AS peerFourWeekNumerator,
-                CASE WHEN m.metricKind=''ratio'' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\.denominatorValue),0D) END AS peerFourWeekDenominator
+                CASE WHEN m.metricKind=\'ratio\' AND t.thisWeekDataAvailable THEN coalesce(peerCur.denominatorValue,0D) END AS peerCurrentDenominator,
+                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\\.numeratorValue),0D) END AS peerFourWeekNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\\.denominatorValue),0D) END AS peerFourWeekDenominator
             FROM targetWeeks t
             INNER JOIN candidatePairs v
               ON v.targetWeekStartDate=t.weekStartDate
@@ -957,17 +957,17 @@ targetWeekStartDate         DATE,
              AND cur.columnBreakoutValue=v.columnBreakoutValue
              AND cur.metricName=m.metricName
             LEFT JOIN weeklyIngredients pw
-              ON pw\.weekStartDate=t.priorWeekStartDate
-             AND pw\.pairKey=v.pairKey
-             AND pw\.rowBreakoutValue=v.rowBreakoutValue
-             AND pw\.columnBreakoutValue=v.columnBreakoutValue
-             AND pw\.metricName=m.metricName
+              ON pw\\.weekStartDate=t.priorWeekStartDate
+             AND pw\\.pairKey=v.pairKey
+             AND pw\\.rowBreakoutValue=v.rowBreakoutValue
+             AND pw\\.columnBreakoutValue=v.columnBreakoutValue
+             AND pw\\.metricName=m.metricName
             LEFT JOIN weeklyIngredients fw
-              ON fw\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
-             AND fw\.pairKey=v.pairKey
-             AND fw\.rowBreakoutValue=v.rowBreakoutValue
-             AND fw\.columnBreakoutValue=v.columnBreakoutValue
-             AND fw\.metricName=m.metricName
+              ON fw\\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
+             AND fw\\.pairKey=v.pairKey
+             AND fw\\.rowBreakoutValue=v.rowBreakoutValue
+             AND fw\\.columnBreakoutValue=v.columnBreakoutValue
+             AND fw\\.metricName=m.metricName
             LEFT JOIN weeklyIngredients ly
               ON ly.weekStartDate=t.sameWeekLastYearStartDate
              AND ly.pairKey=v.pairKey
@@ -981,18 +981,18 @@ targetWeekStartDate         DATE,
              AND peerCur.columnBreakoutValue=v.columnBreakoutValue
              AND peerCur.metricName=m.metricName
             LEFT JOIN peerWeeklyIngredients peerFw
-              ON peerFw\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
-             AND peerFw\.pairKey=v.pairKey
-             AND peerFw\.rowBreakoutValue=v.rowBreakoutValue
-             AND peerFw\.columnBreakoutValue=v.columnBreakoutValue
-             AND peerFw\.metricName=m.metricName
+              ON peerFw\\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
+             AND peerFw\\.pairKey=v.pairKey
+             AND peerFw\\.rowBreakoutValue=v.rowBreakoutValue
+             AND peerFw\\.columnBreakoutValue=v.columnBreakoutValue
+             AND peerFw\\.metricName=m.metricName
             GROUP BY
                 t.weekStartDate,t.weekEndDate,t.fiscalQuarterLabel,t.fiscalWeekCode,t.weekLabel,
                 v.pairKey,v.pairLabel,v.rowBreakoutType,v.rowBreakoutValue,
                 v.columnBreakoutType,v.columnBreakoutValue,
                 m.metricName,m.metricLabel,m.metricKind,m.displayFormat,m.changeUnit,
                 t.thisWeekDataAvailable,t.priorWeekDataAvailable,t.fourWeekTrendWeekCount,t.sameWeekLyDataAvailable,
-                cur.numeratorValue,cur.denominatorValue,pw\.numeratorValue,pw\.denominatorValue,
+                cur.numeratorValue,cur.denominatorValue,pw\\.numeratorValue,pw\\.denominatorValue,
                 ly.numeratorValue,ly.denominatorValue,peerCur.numeratorValue,peerCur.denominatorValue
         ),
         finalRows AS (
@@ -1030,14 +1030,14 @@ targetWeekStartDate         DATE,
                 CASE
                     -- TEMPORARY FLEXIBLE PEER WINDOW; STRICT AFTER BACKFILL: change <=0 back to <>4.
                     WHEN fourWeekTrendWeekCount<=0 THEN cast(NULL AS DOUBLE)
-                    WHEN metricKind=''count''
+                    WHEN metricKind=\'count\'
                      AND peerFourWeekNumerator>0
                         THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
                              * try_divide(
                                    peerCurrentNumerator,
                                    try_divide(peerFourWeekNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
                                )
-                    WHEN metricKind=''ratio''
+                    WHEN metricKind=\'ratio\'
                      AND nullif(fourWeekTrendDenominator,0D) IS NOT NULL
                      AND nullif(peerCurrentDenominator,0D) IS NOT NULL
                      AND nullif(peerFourWeekDenominator,0D) IS NOT NULL
@@ -1053,7 +1053,7 @@ targetWeekStartDate         DATE,
                 CASE
                     -- TEMPORARY FLEXIBLE PEER WINDOW; STRICT AFTER BACKFILL: change >0 back to =4.
                     WHEN fourWeekTrendWeekCount>0
-                     AND metricKind=''ratio''
+                     AND metricKind=\'ratio\'
                      AND nullif(fourWeekTrendDenominator,0D) IS NOT NULL
                      AND nullif(peerCurrentDenominator,0D) IS NOT NULL
                      AND nullif(peerFourWeekDenominator,0D) IS NOT NULL
@@ -1143,8 +1143,7 @@ END;
 -- SELECT
 --     COUNT_IF(fourWeekTrendWeekCount<=0 AND peerSetNumerator IS NOT NULL) AS peerWithNoHistoricalWindow,
 --     COUNT_IF(metricKind='count' AND peerSetDenominator IS NOT NULL) AS countPeerWithDenominator,
---     COUNT_IF(metricKind='ratio' AND peerSetNumerator IS NOT NULL AND peerSetDenominator IS NULL) AS ratioPeerMissingDenominator,
---     COUNT_IF(fourWeekTrendWeekCount BETWEEN 1 AND 3 AND peerSetNumerator IS NOT NULL) AS partialWindowPeerRows
+--     COUNT_IF(metricKind='ratio' AND peerSetNumerator IS NOT NULL AND peerSetDenominator IS NULL) AS ratioPeerMissingDenominator
 -- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
 -- WHERE targetWeekStartDate = DATE '2026-09-27';
 -- --------------------------------------------------------------------------
@@ -1162,7 +1161,7 @@ END;
 
 -- --------------------------------------------------------------------------
 -- FLEXIBLE 4-WEEK / SUM-vs-AVERAGE CHECK
--- Analytical Gold intentionally stores fourWeekTrendNumerator as a SUM ingredient.
+-- Analytical Gold stores fourWeekTrendNumerator as a SUM ingredient.
 -- Count App baseline = SUM / actual available week count; ratios = ratio-of-sums.
 -- --------------------------------------------------------------------------
 -- SELECT
