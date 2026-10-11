@@ -4872,3 +4872,8 @@ CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appExploreRankedPairs_long(
     p_weeksToRebuild => 4,
     p_validateOnly   => FALSE
 );
+
+
+I'm still seeing 4-wk trend issues on the per line/category basis. The toplines look right, but not the breakdowns.
+
+Same with Overview "what moved topline"
