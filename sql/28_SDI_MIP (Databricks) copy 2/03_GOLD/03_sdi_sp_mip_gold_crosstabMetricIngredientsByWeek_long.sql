@@ -3,10 +3,10 @@
 -- LAYER : GOLD
 --
 -- RUNTIME WRITE NOTE:
---   Uses the runtime-safe scoped-overwrite pattern proven in Silver 02/03.
---   Only validated target-week DATE values are rendered into REPLACE WHERE.
---   Embedded SQL literals are backslash-escaped so EXECUTE IMMEDIATE preserves them.
---   The transformation inserts BY NAME and replaces only v_weekFrom..v_weekTo.
+--   Uses runtime-safe atomic scoped replacement, following the proven Silver 02/03 pattern.
+--   Markdown transport escapes are removed only outside SQL string literals.
+--   Embedded SQL literals/backslashes are encoded so EXECUTE IMMEDIATE round-trips exactly.
+--   Only targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo is replaced.
 --   Prior/available-4-week/LY weeks remain read-only dependencies.
 --
 -- CALL COMPATIBILITY:
@@ -34,7 +34,7 @@
 --     row/column orientation.
 --   - Peer membership is rebuilt from session/page-category Silver for the required
 --     weeks only; no hit-level scan is required.
---   - PEER BASIS: same historical window as fourWeekTrend, independent of screen comparator.
+--   - PEER BASIS: same available historical window as fourWeekTrend, independent of screen comparator.
 --     TEMPORARY FLEXIBLE CONTRACT: 1-4 actually available historical weeks are valid.
 --     Missing weeks are never fabricated; fourWeekTrendWeekCount remains the true count.
 --     STRICT AFTER BACKFILL: restore the full-4-week peer gate where marked below.
@@ -628,7 +628,7 @@ targetWeekStartDate         DATE,
         ),
         peerWeekGrid AS (
             SELECT
-                w\\.weekStartDate,
+                w.weekStartDate,
                 u.pairKey,
                 u.rowBreakoutValue,
                 u.columnBreakoutValue
@@ -880,14 +880,14 @@ targetWeekStartDate         DATE,
             SELECT
                 t.*,
                 (cur.weekStartDate IS NOT NULL) AS thisWeekDataAvailable,
-                (pw\\.weekStartDate IS NOT NULL) AS priorWeekDataAvailable,
+                (pw.weekStartDate IS NOT NULL) AS priorWeekDataAvailable,
                 cast(coalesce(fwa.fourWeekTrendWeekCount,0) AS INT) AS fourWeekTrendWeekCount,
                 (ly.weekStartDate IS NOT NULL) AS sameWeekLyDataAvailable
             FROM targetCalendar t
             LEFT JOIN availableWeeks cur
               ON cur.weekStartDate=t.weekStartDate
             LEFT JOIN availableWeeks pw
-              ON pw\\.weekStartDate=t.priorWeekStartDate
+              ON pw.weekStartDate=t.priorWeekStartDate
             LEFT JOIN fourWeekAvailability fwa
               ON fwa.targetWeekStartDate=t.weekStartDate
             LEFT JOIN availableWeeks ly
@@ -931,10 +931,10 @@ targetWeekStartDate         DATE,
                 m.changeUnit,
                 CASE WHEN t.thisWeekDataAvailable THEN coalesce(cur.numeratorValue,0D) END AS thisWeekNumerator,
                 CASE WHEN m.metricKind=\'ratio\' AND t.thisWeekDataAvailable THEN coalesce(cur.denominatorValue,0D) END AS thisWeekDenominator,
-                CASE WHEN t.priorWeekDataAvailable THEN coalesce(pw\\.numeratorValue,0D) END AS priorWeekNumerator,
-                CASE WHEN m.metricKind=\'ratio\' AND t.priorWeekDataAvailable THEN coalesce(pw\\.denominatorValue,0D) END AS priorWeekDenominator,
-                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\\.numeratorValue),0D) END AS fourWeekTrendNumerator,
-                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw\\.denominatorValue),0D) END AS fourWeekTrendDenominator,
+                CASE WHEN t.priorWeekDataAvailable THEN coalesce(pw.numeratorValue,0D) END AS priorWeekNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.priorWeekDataAvailable THEN coalesce(pw.denominatorValue,0D) END AS priorWeekDenominator,
+                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw.numeratorValue),0D) END AS fourWeekTrendNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(fw.denominatorValue),0D) END AS fourWeekTrendDenominator,
                 CASE WHEN t.sameWeekLyDataAvailable THEN coalesce(ly.numeratorValue,0D) END AS sameWeekLyNumerator,
                 CASE WHEN m.metricKind=\'ratio\' AND t.sameWeekLyDataAvailable THEN coalesce(ly.denominatorValue,0D) END AS sameWeekLyDenominator,
                 t.thisWeekDataAvailable,
@@ -943,8 +943,8 @@ targetWeekStartDate         DATE,
                 t.sameWeekLyDataAvailable,
                 CASE WHEN t.thisWeekDataAvailable THEN coalesce(peerCur.numeratorValue,0D) END AS peerCurrentNumerator,
                 CASE WHEN m.metricKind=\'ratio\' AND t.thisWeekDataAvailable THEN coalesce(peerCur.denominatorValue,0D) END AS peerCurrentDenominator,
-                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\\.numeratorValue),0D) END AS peerFourWeekNumerator,
-                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw\\.denominatorValue),0D) END AS peerFourWeekDenominator
+                CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw.numeratorValue),0D) END AS peerFourWeekNumerator,
+                CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(SUM(peerFw.denominatorValue),0D) END AS peerFourWeekDenominator
             FROM targetWeeks t
             INNER JOIN candidatePairs v
               ON v.targetWeekStartDate=t.weekStartDate
@@ -957,17 +957,17 @@ targetWeekStartDate         DATE,
              AND cur.columnBreakoutValue=v.columnBreakoutValue
              AND cur.metricName=m.metricName
             LEFT JOIN weeklyIngredients pw
-              ON pw\\.weekStartDate=t.priorWeekStartDate
-             AND pw\\.pairKey=v.pairKey
-             AND pw\\.rowBreakoutValue=v.rowBreakoutValue
-             AND pw\\.columnBreakoutValue=v.columnBreakoutValue
-             AND pw\\.metricName=m.metricName
+              ON pw.weekStartDate=t.priorWeekStartDate
+             AND pw.pairKey=v.pairKey
+             AND pw.rowBreakoutValue=v.rowBreakoutValue
+             AND pw.columnBreakoutValue=v.columnBreakoutValue
+             AND pw.metricName=m.metricName
             LEFT JOIN weeklyIngredients fw
-              ON fw\\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
-             AND fw\\.pairKey=v.pairKey
-             AND fw\\.rowBreakoutValue=v.rowBreakoutValue
-             AND fw\\.columnBreakoutValue=v.columnBreakoutValue
-             AND fw\\.metricName=m.metricName
+              ON fw.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
+             AND fw.pairKey=v.pairKey
+             AND fw.rowBreakoutValue=v.rowBreakoutValue
+             AND fw.columnBreakoutValue=v.columnBreakoutValue
+             AND fw.metricName=m.metricName
             LEFT JOIN weeklyIngredients ly
               ON ly.weekStartDate=t.sameWeekLastYearStartDate
              AND ly.pairKey=v.pairKey
@@ -981,18 +981,18 @@ targetWeekStartDate         DATE,
              AND peerCur.columnBreakoutValue=v.columnBreakoutValue
              AND peerCur.metricName=m.metricName
             LEFT JOIN peerWeeklyIngredients peerFw
-              ON peerFw\\.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
-             AND peerFw\\.pairKey=v.pairKey
-             AND peerFw\\.rowBreakoutValue=v.rowBreakoutValue
-             AND peerFw\\.columnBreakoutValue=v.columnBreakoutValue
-             AND peerFw\\.metricName=m.metricName
+              ON peerFw.weekStartDate BETWEEN t.fourWeekAvgStartDate AND t.fourWeekAvgEndDate
+             AND peerFw.pairKey=v.pairKey
+             AND peerFw.rowBreakoutValue=v.rowBreakoutValue
+             AND peerFw.columnBreakoutValue=v.columnBreakoutValue
+             AND peerFw.metricName=m.metricName
             GROUP BY
                 t.weekStartDate,t.weekEndDate,t.fiscalQuarterLabel,t.fiscalWeekCode,t.weekLabel,
                 v.pairKey,v.pairLabel,v.rowBreakoutType,v.rowBreakoutValue,
                 v.columnBreakoutType,v.columnBreakoutValue,
                 m.metricName,m.metricLabel,m.metricKind,m.displayFormat,m.changeUnit,
                 t.thisWeekDataAvailable,t.priorWeekDataAvailable,t.fourWeekTrendWeekCount,t.sameWeekLyDataAvailable,
-                cur.numeratorValue,cur.denominatorValue,pw\\.numeratorValue,pw\\.denominatorValue,
+                cur.numeratorValue,cur.denominatorValue,pw.numeratorValue,pw.denominatorValue,
                 ly.numeratorValue,ly.denominatorValue,peerCur.numeratorValue,peerCur.denominatorValue
         ),
         finalRows AS (
@@ -1158,24 +1158,6 @@ END;
 -- GROUP BY targetWeekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,metricName
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC;
-
--- --------------------------------------------------------------------------
--- FLEXIBLE 4-WEEK / SUM-vs-AVERAGE CHECK
--- Analytical Gold stores fourWeekTrendNumerator as a SUM ingredient.
--- Count App baseline = SUM / actual available week count; ratios = ratio-of-sums.
--- --------------------------------------------------------------------------
--- SELECT
---     targetWeekStartDate,metricName,pairKey,rowBreakoutValue,columnBreakoutValue,
---     metricKind,fourWeekTrendWeekCount,fourWeekTrendNumerator,fourWeekTrendDenominator,
---     CASE
---         WHEN fourWeekTrendWeekCount<=0 THEN NULL
---         WHEN metricKind='ratio' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
---         ELSE try_divide(fourWeekTrendNumerator,CAST(fourWeekTrendWeekCount AS DOUBLE))
---     END AS expectedAppFourWeekValue,
---     peerSetNumerator,peerSetDenominator
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
--- WHERE targetWeekStartDate=DATE '2026-09-27'
--- ORDER BY metricName;
 -- ============================================================================
 -- NOTEBOOK CALL EXAMPLE
 -- ============================================================================
