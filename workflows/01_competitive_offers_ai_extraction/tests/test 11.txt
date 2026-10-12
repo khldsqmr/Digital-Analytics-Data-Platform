@@ -8720,3 +8720,35 @@ TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	QTD
 TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
 TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
 TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+
+
+WITH layers AS (
+  SELECT '1_archive_bronze' AS layer,
+         COUNT(*) AS row_cnt,
+         MAX(TRY_CAST(WeekEnding AS DATE)) AS max_week
+  FROM prdrzranalytics.lab42.sdi_tbl_qgpArchive_bronze_retained_weekly
+  WHERE UPPER(TRIM(MetricID))    = 'STORETRAFFICPOSTPAIDAUTOMATED'
+    AND UPPER(TRIM(MetricType))  = 'QGP'
+    AND UPPER(TRIM(DateContext)) = 'NORMAL'
+    AND UPPER(TRIM(Page))        = 'BRANDED RETAIL TOTAL'
+
+  UNION ALL
+  SELECT '2_pulsetms_bronze', COUNT(*), MAX(week_ending)
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly
+  WHERE LOWER(TRIM(metric_name_label)) = 'store traffic (excl store-in-store)'
+    AND UPPER(TRIM(metric_type))  = 'QGP'
+    AND UPPER(TRIM(date_context)) = 'NORMAL'
+    AND UPPER(TRIM(page))         = 'BRANDED RETAIL TOTAL'
+
+  UNION ALL
+  SELECT '3_pulsetms_silver', COUNT(metric_value), MAX(CASE WHEN metric_value IS NOT NULL THEN qgp_date END)
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+  WHERE metric_name = 'storeTraffic' AND metric_type = 'QGP_TARGET'
+
+  UNION ALL
+  SELECT '4_gold_long', COUNT(metric_value), MAX(CASE WHEN metric_value IS NOT NULL THEN qgp_date END)
+  FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+  WHERE data_source = 'QGP_SCORECARD'
+    AND metric_name = 'storeTraffic' AND metric_type = 'QGP_TARGET'
+)
+SELECT * FROM layers ORDER BY layer;
