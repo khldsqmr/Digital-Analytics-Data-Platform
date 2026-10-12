@@ -8074,3 +8074,14 @@ targetWeekStartDate	metricName	pairKey	rowBreakoutValue	columnBreakoutValue	four
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone-plans/international-roaming-plans/results/customer-credit/v1/jwks	3	null	null
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-clermont-fl-34714-561d/apple-watch-series-11-46mm	3	null	null
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/privacy-center/privacy-rights-request/authenticated-form/missing-email	3	null	null
+
+
+
+I've attached the SQL query for programmatic UPV spend, which includes:
+Filters to exclude agency and OTT campaigns.
+Allocation logic to distribute consolidation campaign spend between Postpaid and HINT based on impression share.
+While we've validated both components, the query results will remain inaccurate until the underlying data quality issues in the GCP table are resolved:
+Missing Blis spend: Over 80% of Blis spend is still missing from the table.
+Intermittent data gaps: Several other campaigns have missing data on certain days. When data is present, spend aligns perfectly with Elsa's file, but there are unexplained gaps on other days. (QA file attached for refernece)
+One last caveat to call out is that the logic allocates consolidation spend based on impression share at the campaign level. This is consistent with the logic in Richard's workbook, but differs from Elsa's as she allocates it based on impression share at the ad set level, which is not available in the GCP table. However, this should not make a significant difference for the purpose of UPV spend. 
+ 
