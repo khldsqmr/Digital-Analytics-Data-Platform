@@ -9094,3 +9094,16 @@ ORDER BY
   date,
   --DSP,
   lob;
+
+
+  Hi, quick check before I change the Programmatic spend logic in PulseTMS.
+
+[Colleague] calculates Programmatic spend differently from us:
+1. Only includes campaigns starting with TMO or MBTM
+2. Excludes Initiative (-INI) and OTT campaigns
+3. Only counts positive spend
+4. Splits one mixed DV360 campaign between Postpaid and HSI based on impression share (placements with HINT or FIBER count as HSI)
+
+Right now we take all Postpaid and HSI spend as labelled, with none of these rules, so our numbers won't match theirs.
+
+Should I update our pipeline to use their logic?
