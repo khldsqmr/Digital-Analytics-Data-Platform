@@ -8757,3 +8757,16 @@ layer	row_cnt	max_week
 2_pulsetms_bronze	56	2026-12-31
 3_pulsetms_silver	42	2026-09-30
 4_gold_long	42	2026-09-30
+
+SELECT b.week_ending, b.amount AS bronze_amount, s.metric_value AS silver_value
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_qgp_weekly b
+LEFT JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly s
+  ON  s.qgp_date = b.week_ending
+  AND s.metric_name = 'storeTraffic'
+  AND s.metric_type = 'QGP_TARGET'
+WHERE LOWER(TRIM(b.metric_name_label)) = 'store traffic (excl store-in-store)'
+  AND UPPER(TRIM(b.metric_type))  = 'QGP'
+  AND UPPER(TRIM(b.date_context)) = 'NORMAL'
+  AND UPPER(TRIM(b.page))         = 'BRANDED RETAIL TOTAL'
+  AND b.week_ending >= DATE'2026-10-01'
+ORDER BY b.week_ending;
