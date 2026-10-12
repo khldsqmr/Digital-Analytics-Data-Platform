@@ -37,6 +37,7 @@
 --   - PEER BASIS: same available historical window as fourWeekTrend, independent of screen comparator.
 --     TEMPORARY FLEXIBLE CONTRACT: 1-4 actually available historical weeks are valid.
 --     Missing weeks are never fabricated; fourWeekTrendWeekCount remains the true count.
+--     Ratio counterfactual rates are bounded to [0,1] before conversion back to ingredients.
 --     STRICT AFTER BACKFILL: restore the full-4-week peer gate where marked below.
 --   - peerSetNumerator/peerSetDenominator store the selected cell's COUNTERFACTUAL
 --     current value if it had moved at the peer-set rate.
@@ -1041,12 +1042,16 @@ targetWeekStartDate         DATE,
                      AND nullif(fourWeekTrendDenominator,0D) IS NOT NULL
                      AND nullif(peerCurrentDenominator,0D) IS NOT NULL
                      AND nullif(peerFourWeekDenominator,0D) IS NOT NULL
-                        THEN (
-                            try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
-                            + (
-                                try_divide(peerCurrentNumerator,peerCurrentDenominator)
-                                - try_divide(peerFourWeekNumerator,peerFourWeekDenominator)
-                              )
+                        THEN greatest(
+                            0D,
+                            least(
+                                1D,
+                                try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                                + (
+                                    try_divide(peerCurrentNumerator,peerCurrentDenominator)
+                                    - try_divide(peerFourWeekNumerator,peerFourWeekDenominator)
+                                  )
+                            )
                         ) * fourWeekTrendDenominator
                     ELSE cast(NULL AS DOUBLE)
                 END AS peerSetNumerator,
@@ -1158,6 +1163,20 @@ END;
 -- GROUP BY targetWeekStartDate,pairKey,rowBreakoutValue,columnBreakoutValue,metricName
 -- HAVING COUNT(*)>1
 -- ORDER BY rowCount DESC;
+
+-- --------------------------------------------------------------------------
+-- PEER RATIO BOUNDS
+-- Expected: invalidPeerRatioRows = 0.
+-- --------------------------------------------------------------------------
+-- SELECT COUNT(*) AS invalidPeerRatioRows
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+-- WHERE metricKind='ratio'
+--   AND peerSetNumerator IS NOT NULL
+--   AND peerSetDenominator IS NOT NULL
+--   AND (
+--       try_divide(peerSetNumerator,peerSetDenominator)<0D
+--       OR try_divide(peerSetNumerator,peerSetDenominator)>1D
+--   );
 -- ============================================================================
 -- NOTEBOOK CALL EXAMPLE
 -- ============================================================================
