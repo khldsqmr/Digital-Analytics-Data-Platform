@@ -8920,3 +8920,13 @@ week_ending	page	display_type	amount
 2026-12-26	Hero - Core Postpaid KP2	Target	null
 2026-12-31	Branded Retail Total	Forecast	null
 2026-12-31	Hero - Core Postpaid KP2	Target	null
+SELECT TRIM(Page) AS page,
+       TRIM(DateContext) AS date_context,
+       COUNT(*) AS q4_rows,
+       COUNT(TRY_CAST(Amount AS DOUBLE)) AS q4_rows_with_value
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE UPPER(TRIM(MetricID))   = 'STORETRAFFICPOSTPAIDAUTOMATED'
+  AND UPPER(TRIM(MetricType)) = 'QGP'
+  AND TRY_CAST(WeekEnding AS DATE) >= DATE'2026-10-01'
+GROUP BY ALL
+ORDER BY page, date_context;
