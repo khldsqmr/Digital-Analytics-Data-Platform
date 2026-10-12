@@ -8930,3 +8930,39 @@ WHERE UPPER(TRIM(MetricID))   = 'STORETRAFFICPOSTPAIDAUTOMATED'
   AND TRY_CAST(WeekEnding AS DATE) >= DATE'2026-10-01'
 GROUP BY ALL
 ORDER BY page, date_context;
+page	date_context	q4_rows	q4_rows_with_value
+Branded Retail Total	Monthly Normal	3	0
+Branded Retail Total	Normal	14	0
+Branded Retail Total	PQWA	1	1
+Branded Retail Total	QTD	1	0
+Branded Retail Total	QTR	1	0
+Branded Retail Total	ROQ	1	0
+Branded Retail Total	WoW	1	0
+Branded Retail Total Outcomes	Monthly Normal	3	0
+Branded Retail Total Outcomes	Normal	14	0
+Branded Retail Total Outcomes	PQWA	1	1
+Branded Retail Total Outcomes	QTD	1	0
+Branded Retail Total Outcomes	QTR	1	0
+Branded Retail Total Outcomes	ROQ	1	0
+Branded Retail Total Outcomes	WoW	1	0
+Hero - Core Postpaid KP2	Monthly Normal	3	0
+Hero - Core Postpaid KP2	Normal	14	0
+Hero - Core Postpaid KP2	PQWA	1	1
+Hero - Core Postpaid KP2	QTD	1	0
+Hero - Core Postpaid KP2	QTR	1	0
+Hero - Core Postpaid KP2	ROQ	1	0
+Hero - Core Postpaid KP2	WoW	1	0
+Hero - Core Prepaid KP2	Monthly Normal	3	0
+Hero - Core Prepaid KP2	Normal	14	0
+Hero - Core Prepaid KP2	PQWA	1	1
+Hero - Core Prepaid KP2	QTD	1	0
+Hero - Core Prepaid KP2	QTR	1	0
+Hero - Core Prepaid KP2	ROQ	1	0
+Hero - Core Prepaid KP2	WoW	1	0
+TMO Prepaid & Connect	Monthly Normal	3	0
+TMO Prepaid & Connect	Normal	14	0
+TMO Prepaid & Connect	PQWA	1	1
+TMO Prepaid & Connect	QTD	1	0
+TMO Prepaid & Connect	QTR	1	0
+TMO Prepaid & Connect	ROQ	1	0
+TMO Prepaid & Connect	WoW	1	0
