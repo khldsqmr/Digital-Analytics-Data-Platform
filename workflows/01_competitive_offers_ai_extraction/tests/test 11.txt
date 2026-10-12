@@ -8752,3 +8752,8 @@ WITH layers AS (
     AND metric_name = 'storeTraffic' AND metric_type = 'QGP_TARGET'
 )
 SELECT * FROM layers ORDER BY layer;
+layer	row_cnt	max_week
+1_archive_bronze	56	2026-12-31
+2_pulsetms_bronze	56	2026-12-31
+3_pulsetms_silver	42	2026-09-30
+4_gold_long	42	2026-09-30
