@@ -8973,3 +8973,124 @@ MetricID: StoreTrafficPostpaidAutomated
 MetricName: Store Traffic (excl Store-In-Store)
 
 Q3 is there, but nothing for October to December yet. Do you know when it will be added? Thanks!
+
+
+DECLARE exception_campaign STRING DEFAULT
+'TMO_PostpaidHINT_VoiceHINTFiber_X_PSTPHINTPro_Perf_VINT_X_EL_DIS_2026_Multi-Opt_PR-OEX_DV360_X_US_DSP-CMP-001';
+
+WITH base AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    campaign_name,
+    placement,
+    spend,
+    impressions
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.pbi_programmatic_browsers_currentyr`
+  WHERE date >= "2026-09-01"
+    AND spend > 0
+    AND (campaign_name LIKE 'TMO%' OR campaign_name LIKE 'MBTM%')
+    AND campaign_name NOT LIKE '%-INI%'
+    AND campaign_name NOT LIKE '%-OTT%'
+    AND campaign_name NOT LIKE r'%\_OTT%'
+),
+
+normal_campaigns AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    SUM(spend) AS spend
+  FROM base
+  WHERE campaign_name != exception_campaign
+  GROUP BY
+    DSP,
+    date,
+    lob
+),
+
+exception_total_spend AS (
+  SELECT
+    DSP,
+    date,
+    SUM(spend) AS total_spend
+  FROM base
+  WHERE campaign_name = exception_campaign
+  GROUP BY
+    DSP,
+    date
+),
+
+exception_delivery AS (
+  SELECT
+    DSP,
+    date,
+    CASE
+      WHEN REGEXP_CONTAINS(UPPER(placement), r'HINT|FIBER') THEN 'HSI'
+      ELSE 'Postpaid'
+    END AS lob,
+    SUM(impressions) AS lob_impressions
+  FROM base
+  WHERE campaign_name = exception_campaign
+  GROUP BY
+    DSP,
+    date,
+    lob
+),
+
+exception_delivery_share AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    lob_impressions,
+    SAFE_DIVIDE(
+      lob_impressions,
+      SUM(lob_impressions) OVER (PARTITION BY DSP, date)
+    ) AS impression_share
+  FROM exception_delivery
+),
+
+exception_reallocated_spend AS (
+  SELECT
+    s.DSP,
+    s.date,
+    d.lob,
+    s.total_spend * d.impression_share AS spend
+  FROM exception_total_spend s
+  JOIN exception_delivery_share d
+    ON s.DSP = d.DSP
+   AND s.date = d.date
+),
+
+combined AS (
+  SELECT * FROM normal_campaigns
+  UNION ALL
+  SELECT * FROM exception_reallocated_spend
+),
+
+final AS (
+  SELECT
+    date,
+    DSP,
+    lob,
+    SUM(spend) AS spend
+  FROM combined
+ -- WHERE lob IN ('Postpaid', 'HSI')
+  GROUP BY
+    date,
+    DSP,
+    lob
+)
+
+SELECT
+  date,
+  --DSP,
+  lob,
+  spend
+FROM final
+ORDER BY
+  date,
+  --DSP,
+  lob;
