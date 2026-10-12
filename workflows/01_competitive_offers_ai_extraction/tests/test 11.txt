@@ -8870,3 +8870,53 @@ WHERE UPPER(TRIM(MetricID))    = 'STORETRAFFICPOSTPAIDAUTOMATED'
   AND UPPER(TRIM(Page)) IN ('BRANDED RETAIL TOTAL', 'HERO - CORE POSTPAID KP2')
   AND TRY_CAST(WeekEnding AS DATE) >= DATE'2026-08-01'
 ORDER BY week_ending, page;
+
+week_ending	page	display_type	amount
+2026-08-01	Branded Retail Total	Forecast	3630486.000001
+2026-08-01	Hero - Core Postpaid KP2	Target	3630486.000001
+2026-08-08	Branded Retail Total	Forecast	3578031.999997
+2026-08-08	Hero - Core Postpaid KP2	Target	3578031.999997
+2026-08-15	Branded Retail Total	Forecast	4121040.999999
+2026-08-15	Hero - Core Postpaid KP2	Target	4121040.999999
+2026-08-22	Branded Retail Total	Forecast	3576201.000001
+2026-08-22	Hero - Core Postpaid KP2	Target	3576201.000001
+2026-08-29	Branded Retail Total	Forecast	3510871
+2026-08-29	Hero - Core Postpaid KP2	Target	3510871
+2026-09-05	Branded Retail Total	Forecast	3596782.999999
+2026-09-05	Hero - Core Postpaid KP2	Target	3596782.999999
+2026-09-12	Branded Retail Total	Forecast	3242411.000003
+2026-09-12	Hero - Core Postpaid KP2	Target	3242411.000003
+2026-09-19	Branded Retail Total	Forecast	3513935.000002
+2026-09-19	Hero - Core Postpaid KP2	Target	3513935.000002
+2026-09-26	Branded Retail Total	Forecast	3557027.000002
+2026-09-26	Hero - Core Postpaid KP2	Target	3557027.000002
+2026-09-30	Branded Retail Total	Forecast	2001315
+2026-09-30	Hero - Core Postpaid KP2	Target	2001315
+2026-10-03	Branded Retail Total	Forecast	null
+2026-10-03	Hero - Core Postpaid KP2	Target	null
+2026-10-10	Branded Retail Total	Forecast	null
+2026-10-10	Hero - Core Postpaid KP2	Target	null
+2026-10-17	Branded Retail Total	Forecast	null
+2026-10-17	Hero - Core Postpaid KP2	Target	null
+2026-10-24	Branded Retail Total	Forecast	null
+2026-10-24	Hero - Core Postpaid KP2	Target	null
+2026-10-31	Branded Retail Total	Forecast	null
+2026-10-31	Hero - Core Postpaid KP2	Target	null
+2026-11-07	Branded Retail Total	Forecast	null
+2026-11-07	Hero - Core Postpaid KP2	Target	null
+2026-11-14	Branded Retail Total	Forecast	null
+2026-11-14	Hero - Core Postpaid KP2	Target	null
+2026-11-21	Branded Retail Total	Forecast	null
+2026-11-21	Hero - Core Postpaid KP2	Target	null
+2026-11-28	Branded Retail Total	Forecast	null
+2026-11-28	Hero - Core Postpaid KP2	Target	null
+2026-12-05	Branded Retail Total	Forecast	null
+2026-12-05	Hero - Core Postpaid KP2	Target	null
+2026-12-12	Branded Retail Total	Forecast	null
+2026-12-12	Hero - Core Postpaid KP2	Target	null
+2026-12-19	Branded Retail Total	Forecast	null
+2026-12-19	Hero - Core Postpaid KP2	Target	null
+2026-12-26	Branded Retail Total	Forecast	null
+2026-12-26	Hero - Core Postpaid KP2	Target	null
+2026-12-31	Branded Retail Total	Forecast	null
+2026-12-31	Hero - Core Postpaid KP2	Target	null
