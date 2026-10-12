@@ -8101,3 +8101,622 @@ WHERE (UPPER(MetricID) LIKE '%STORETRAFFIC%'
        OR LOWER(MetricName) LIKE '%store traffic%')
 GROUP BY ALL
 ORDER BY metric_type, page, date_context;
+
+
+page	metric_id	metric_name	metric_type	display_metric_type	date_context	row_cnt	min_week	max_week
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRSameStoreARNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	ConsumerBRStoreARNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRStoreTrafficExpVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	ConsumerBRSameStoreTrafficExpVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodAutomated	Same Store Traffic	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRStoreNeighborhoodVarToPYAutomated	Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	ConsumerBRSameStoreNeighborhoodVarToPYAutomated	Same Store Traffic	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalStoreTrafficVarToPYAutomated	Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRTotalSameStoreTrafficVarToPYAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	ConsumerBRSameAllStoreAutomated	Same Store Traffic (excl Store-In-Store)	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	SAMEStoreTrafficMETROVartoPYAutomated	Authorized Retailer Store Traffic	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYT100Automated	Store Traffic (BR) | Top 100	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	Actuals	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvT100Automated	Traffic Conversion (BR) | Top 100	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvSMRAVarToPYAUTOMATED	Traffic Conversion (BR) | SMRA	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidConvSMRAAutomated	Traffic Conversion (BR) | SMRA	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	Actuals	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100VartoPYAutomated	Metro Store Traffic | Top 100	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100ConversionAutomated	Traffic Conversion | Top 100	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	SAMEStoreTrafficPostpaidVartoPYSMRAAutomated	Store Traffic (BR) | SMRA	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAVartoPYAutomated	Metro Store Traffic | SMRA	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAConversionAutomated	Traffic Conversion | SMRA	Actuals	Actuals	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	ConsumerPostpaidStoreTrafficConvT100VarToPYAUTOMATED	Traffic Conversion (BR) | Top 100	Actuals	Variance to PY	WoW	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	Monthly Normal	6	2026-07-31	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	Monthly Normal	6	2026-07-31	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	Normal	42	2026-04-04	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	Normal	42	2026-04-04	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	PQWA	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	PQWA	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	QTD	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	QTD	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	QTR	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	QTR	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	ROQ	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	ROQ	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	TMOPrepaidandConnectStoreTrafficConversionRateAutomated	Company Owned Retail + Authorized Retailer	Actuals	Conversion Rate	WoW	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	SAMEStoreTrafficPostpaidVartoPYAutomated	Store Traffic	Actuals	Var to PY (Same Store)	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Monthly Normal	6	2026-07-31	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	Normal	42	2026-04-04	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	PQWA	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTD	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	QTR	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	ROQ	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	Actuals/Outlook	Actuals/Outlook	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail ARN Outcomes	StoreformatTrafficARNeighborhoodAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Experience Outcomes	StoreformatTrafficExpAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Neighborhood Outcomes	StoreformatTrafficNeighborhoodAutomated	Store Traffic	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+Branded Retail Total Outcomes	StoreTrafficPostpaidAutomated	Store Traffic (excl Store-In-Store)	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	Normal	42	2026-04-04	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	QTD	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	QTR	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+FinancialQGP	ConsumerPostpaidStoreTrafficPhoneConversionRateAutomated	Postpaid Phone Store Conv - AUTO	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Hero - Broadband KPI 1	ConsumerPostpaidStoreTrafficHSIConversionRateAutomated	Retail Conversion Rate	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	CORStoreTrafficAutomatedV2	Corporate Owned Retail	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Hero - Core Postpaid KP2	StoreTrafficPostpaidAutomated	Retail Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficMETROAutomated	Metro Authorized Retail Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Hero - Core Prepaid KP2	StoreTrafficPostpaidAutomated	T-Mobile Retail Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile AR 2	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+Metro by T-Mobile Outcomes	StoreTrafficMETROAutomated	Authorized Retailer Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	Monthly Normal	6	2026-07-31	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	Normal	42	2026-04-04	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	PQWA	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	QTD	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	QTR	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	ROQ	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidSMRAAutomated	Store Traffic (BR) | SMRA	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROSMRAAutomated	Metro Store Traffic | SMRA	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficPostpaidT100Automated	Store Traffic (BR) | Top 100	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+SMRAOutcomes	StoreTrafficMETROT100Automated	Metro Store Traffic | Top 100	QGP	Forecast	WoW	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	Monthly Normal	6	2026-07-31	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	Normal	42	2026-04-04	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	PQWA	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	QTD	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	QTR	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	ROQ	2	2026-09-30	2026-12-31
+TMO Prepaid & Connect	StoreTrafficPostpaidAutomated	Store Traffic	QGP	Target	WoW	2	2026-09-30	2026-12-31
