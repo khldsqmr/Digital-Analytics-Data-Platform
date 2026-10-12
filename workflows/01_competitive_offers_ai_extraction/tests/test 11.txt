@@ -7869,3 +7869,208 @@ WITH targetCalendar AS (
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
               ON cur.weekStartDate=t.weekStartDate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...(truncated)
+
+
+targetWeekStartDate	metricName	breakoutType	breakoutValue	fourWeekTrendWeekCount	fourWeekTrendNumerator	fourWeekTrendDenominator	peerSetNumerator	peerSetDenominator
+2026-09-27	buyFlowToConfigureRate	authState	(not set)	3	4845	509913	6054.191520692442	509913
+2026-09-27	buyFlowToConfigureRate	authState	Ambiguous	3	3254967	15649248	3344140.586698105	15649248
+2026-09-27	buyFlowToConfigureRate	authState	Authenticated	3	6684741	33137163	6817088.794839344	33137163
+2026-09-27	buyFlowToConfigureRate	authState	LoggedOut	3	423153	1275336	424071.4478235556	1275336
+2026-09-27	buyFlowToConfigureRate	authState	Network Authenticated	3	53646	522462	54618.48314728489	522462
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Accessories add-on	3	258462	920469	260880.92808471355	920469
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Cart	3	3777063	5440662	3841409.8189195073	5440662
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Checkout	3	5171418	6058521	5156726.266147538	6058521
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Confirmation	3	15	66	15.164958896867502	66
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Did not enter buy flow	3	180636	33971715	-701464.4505530291	33971715
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Plan select	3	1033131	4701756	1027999.8130770699	4701756
+2026-09-27	buyFlowToConfigureRate	buyFlowStep	Trade-in	3	627	933	629.3311763551391	933
+2026-09-27	buyFlowToConfigureRate	campaign	%20SVCPRD	3	279	1530	282.8305411456704	1530
+2026-09-27	buyFlowToConfigureRate	campaign	(not set)	3	7785720	39467373	8011295.616663459	39467373
+2026-09-27	buyFlowToConfigureRate	campaign	0	3	30	297	30.742329836863508	297
+2026-09-27	buyFlowToConfigureRate	campaign	0BZOG21LK2241684	3	0	6	0.014996249372446646	6
+2026-09-27	buyFlowToConfigureRate	campaign	0E8B0023704937065M225	3	48	75	48.18745838254483	75
+2026-09-27	buyFlowToConfigureRate	campaign	0U9RKV3018OXTAJYP47664	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	1.22E 13	3	0	15	0.03749008452125488	15
+2026-09-27	buyFlowToConfigureRate	campaign	1.22E+13	3	3	30	3.074979450495817	30
+2026-09-27	buyFlowToConfigureRate	campaign	18INTLTRVL · International Travel	3	1671	14496	1707.291266937113	14496
+2026-09-27	buyFlowToConfigureRate	campaign	18SVCMSG · Generic Service Message code	3	3	9	3.0224943740586703	9
+2026-09-27	buyFlowToConfigureRate	campaign	19ADDALINE · 2019 Add a Line campaign	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	19AFRDONUS · 2019 Affordable Smartphone On Us	3	0	9	0.022495246810161296	9
+2026-09-27	buyFlowToConfigureRate	campaign	19AWARENSS · 2019 TFB Awareness	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	19ESSENTALS	3	3	18	3.0449901283591063	18
+2026-09-27	buyFlowToConfigureRate	campaign	19HOL · 2019 Holiday Campaign	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	19HOLMGTFR · 2019 Holiday Magenta Friday	3	0	6	0.014996435998652802	6
+2026-09-27	buyFlowToConfigureRate	campaign	19IHEART5G · 2019 iHeart TFB Podcast 5G Network	3	0	6	0.014996507853292707	6
+2026-09-27	buyFlowToConfigureRate	campaign	19JDPOWER · 2019 JD POWER	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	19MLB · 2019 MLB	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	19MONEY · T-Mobile Money	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	19NURTURE · 2019 Nurture	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	19SMSGBOGO · Samsung BOGO	3	3	3	3.007498476977278	3
+2026-09-27	buyFlowToConfigureRate	campaign	19TESTDRV · 2019 Test Drive	3	3	6	3.0149966735181115	6
+2026-09-27	buyFlowToConfigureRate	campaign	1L25OQC3HQ9781	3	0	6	0.014996177517806741	6
+2026-09-27	buyFlowToConfigureRate	campaign	1N2LT6UB5OE8277	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	1RU76COWBU42353	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	1STRSPNDRS · Evergreen First Responders	3	57	879	59.20487636267559	879
+2026-09-27	buyFlowToConfigureRate	campaign	200683556	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	201PLUS8 · 2020 One Plus 8	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	203220395	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	208873244	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20APPLNPI · 2020 Apple NPI	3	0	12	0.02999221132631702	12
+2026-09-27	buyFlowToConfigureRate	campaign	20APPLWTCH · 2020 Appl Watch	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	20COVID19 · 2020 Covid-19 Response	3	3	18	3.044989996626076	18
+2026-09-27	buyFlowToConfigureRate	campaign	20ENGAGE · 2020 TFB Engage	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20FBPG · 2020 TFB Facebook Page	3	21	66	21.164978218973076	66
+2026-09-27	buyFlowToConfigureRate	campaign	20FRBSMKT · 2020 TFB Forbes Content Marketing	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	20LEADGEN · 2020 TFB Lead Gen	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20MLB · 2020 MLB	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20NEWTMO · 2020 New TMO media/communication	3	3	42	3.1049864601730963	42
+2026-09-27	buyFlowToConfigureRate	campaign	20NURTURE · 2020 TFB Nurture	3	0	21	0.052488077905701924	21
+2026-09-27	buyFlowToConfigureRate	campaign	20SAVEBIG · 2020 Save Big, Switch from AT&T or Verizon and Save	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20TENMM · Ten million project	3	114	2133	119.331294571257	2133
+2026-09-27	buyFlowToConfigureRate	campaign	20TFB · 2020 TFB Generic	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20TFBEVRGN · 2020 TFB Evergreen	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	20hmeint20	3	57	780	58.948690351678884	780
+2026-09-27	buyFlowToConfigureRate	campaign	211PLUSN10 · 2021 OnePlus N10 5G Free	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	212781859	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	21AFRDONUS · 2021 Affordable Smartphone on Us	3	0	21	0.052486268538645825	21
+2026-09-27	buyFlowToConfigureRate	campaign	21APPLNPI · 2021 Apple NPI	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21FRBSMKT · 2021 TFB Forbes Content Marketing	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21HMEINT · 2021 Home Internet	3	21	144	21.35983684036782	144
+2026-09-27	buyFlowToConfigureRate	campaign	21HOLIDAY · 2021 Holiday	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	21IPH12OUS · 2021 iPhone 12 on us	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	21LEADGEN · 2021 TFB Lead Gen	3	3	3	3.0074983008317506	3
+2026-09-27	buyFlowToConfigureRate	campaign	21MLB · 2021 MLB	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21PSABM · 2021 Public Sector Account Based Marketing	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21PSSLNY · 2021 Public Sector Account Based Marketing (State/Local) - New York	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21SVE20PCT · 2021 Save 20% Campaign	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	21WTCHSOUS · 2021 Watch for Every Wrist (Smartwatches On Us)	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	221474013	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	223325039	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22AMZECHUS · 2022 Home Internet Amazon Echo Show 8 On Us	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22APPLNPI · 2022 Apple NPI	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22CNTTMO10 · 2022 Connect by T-Mobile Plans Starting at $10/Month	3	0	3	0.007498196540850405	3
+2026-09-27	buyFlowToConfigureRate	campaign	22FFHLDOUT	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22HOLIDAY · 2022 Holiday	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22MOTSTYEP · 2022 Motorola Stylus 5G Employee Purchase Program	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22MTR4F120 · 2022 Metro 4 Lines for $120 Rate Plan (incl. UNL LTE data, 15GB hotspot, Google One, Amazon Prime)	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	22NSO · 2022 New Store Openings	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22PRSCNB55 · 2022 Prescreen Below 55 Test	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22SG22FTMX · 2022 Samsung Galaxy S22 Free w/ Trade on Magenta Max	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22SGZFL800 · 2022 $800 Off Samsung Galaxy Z Flip4/Z Fold4 w/ AAL on Magenta Max	3	0	6	0.014996249372446646	6
+2026-09-27	buyFlowToConfigureRate	campaign	22SMBUPGR · 2022 TFB SMB Upgrade	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	22TBIPSEUS · 2022 TFB iPhone SE On Us w/ Adv or Ult Plan AAL	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	23APPLNPI · 2023 Apple NPI	3	0	6	0.014996321227077891	6
+2026-09-27	buyFlowToConfigureRate	campaign	23APPLW200 · 2023 $200 off Apple Watches (SE2, S8, Ultra)	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	23BNFTACT · 2023 T-Mobile Benefits Activation Campaign (Mahogany D0ve)	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	23BTSDMCMP · 2023 BTS Insert for DM Campaigns	3	0	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	campaign	23CFDGRP2B · 2023 Centerfield Test Group 2B	3	0	9	0.022494653997979203	9
+2026-09-27	buyFlowToConfigureRate	campaign	23ESYUNLK · 2023 Easy Unlock Campaign	3	3	63	3.157620710068808	63
+2026-09-27	buyFlowToConfigureRate	campaign	23FXWBYAWA · 2023 FoxWallaby Awareness Campaign	3	0	3	0.007498196540850405	3
+2026-09-27	buyFlowToConfigureRate	campaign	23FXWLBYDM · 2023 FoxWallaby Direct Mail Campaign	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	23FXWLBYPM · 2023 FoxWallaby Prospect Email Campaign	3	6	6	6.014996745372713	6
+2026-09-27	buyFlowToConfigureRate	campaign	23GLXYW350 · 2023 Samsung Galaxy Watch (6, 5, 5pro, 4) $350 off	3	0	0	null	null
+2026-09-27	buyFlowToConfigureRate	campaign	23GONXTUPS · 2023 Go5G Plus Next Base Rate Plan Upsell Campaign (FairryWinggs)	3	3	9	3.022496130035475	9
+2026-09-27	buyFlowToConfigureRate	campaign	23HOLI4L25 · 2023 Holiday Contingency 4 iPhone 15 + 4/$25	3	3	3	3.007498336759056	3
+2026-09-27	buyFlowToConfigureRate	campaign	23HOLIDAY · 2023 Holiday	3	0	0	null	null
+
+targetWeekStartDate	metricName	pairKey	rowBreakoutValue	columnBreakoutValue	fourWeekTrendWeekCount	peerSetNumerator	peerSetDenominator
+2026-09-27	buyFlowToConfigureRate	authState__device	Network Authenticated	App Web View	3	505.6542159008886	5463
+2026-09-27	buyFlowToConfigureRate	authState__device	Authenticated	Desktop	3	247758.09720285618	1250553
+2026-09-27	buyFlowToConfigureRate	authState__device	LoggedOut	Desktop	3	229.72434207266286	690
+2026-09-27	buyFlowToConfigureRate	authState__device	Authenticated	Android App	3	1307211.146663326	10192149
+2026-09-27	buyFlowToConfigureRate	authState__device	Ambiguous	Web	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__device	LoggedOut	Mobile Web	3	3050.0368492074986	6816
+2026-09-27	buyFlowToConfigureRate	authState__device	Ambiguous	Mobile Web	3	2503076.74051583	11598594
+2026-09-27	buyFlowToConfigureRate	authState__device	Network Authenticated	Mobile Web	3	1081.3092988600094	5325
+2026-09-27	buyFlowToConfigureRate	authState__device	LoggedOut	iOS App	3	301909.5421862648	786480
+2026-09-27	buyFlowToConfigureRate	authState__device	Authenticated	Mobile Web	3	241289.19758361718	1409016
+2026-09-27	buyFlowToConfigureRate	authState__device	Authenticated	iOS App	3	4984827.047040031	20250267
+2026-09-27	buyFlowToConfigureRate	authState__device	Ambiguous	Desktop	3	759503.6330328783	3897729
+2026-09-27	buyFlowToConfigureRate	authState__device	Ambiguous	Android App	3	1973.6873715924314	33483
+2026-09-27	buyFlowToConfigureRate	authState__device	Network Authenticated	iOS App	3	49863.959571002866	405276
+2026-09-27	buyFlowToConfigureRate	authState__device	Network Authenticated	Android App	3	3124.692368518093	105624
+2026-09-27	buyFlowToConfigureRate	authState__device	LoggedOut	App Web View	3	962.0892896325494	4437
+2026-09-27	buyFlowToConfigureRate	authState__device	Network Authenticated	Desktop	3	130.9345347075394	774
+2026-09-27	buyFlowToConfigureRate	authState__device	(not set)	Android App	3	6054.191520692442	509913
+2026-09-27	buyFlowToConfigureRate	authState__device	Ambiguous	App Web View	3	25053.33416796465	119442
+2026-09-27	buyFlowToConfigureRate	authState__device	LoggedOut	Android App	3	119071.76480393905	476913
+2026-09-27	buyFlowToConfigureRate	authState__device	Authenticated	App Web View	3	7370.784432826378	35178
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/commerce/pre-screen	3	45.434844304716776	174
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-fresno-ca-93726-2saq	3	0.007498289853961976	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/iot-devices/syncup-drive-connected-car	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-dev02.t-mobile.com/shop/smart-watches	3	3.0074981965408503	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-las-vegas-nv-89149-8065/apple-iphone-17-pro-max	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-corona-ca-92881-2saa	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-dayville-ct-06241-317d	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-dev.t-mobile.com/marketing/manrique-test-page	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/home-internet/the-signal/isp/what-is-ssid-how-to-find-ssid	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/home-internet/the-signal/isp/how-to-get-internet-without-wi-fi	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/business/account-services	3	3.037491144885636	15
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone/apple-iphone-16-pro-max	3	0.44240240054160906	177
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/content/digx/tmobile/us/en/landing-pages/broadband-facts/t-mobile-fcc-broadband-facts.html	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phones/deals/5g-trade	3	0.014996177517806741	6
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	account.t-mobile.com/forgotpassword/v2/changepassword	3	12.14244017448859	57
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-barceloneta-pr-00617-9699/samsung-galaxy-s26-plus	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/brand/cHJvamVjdC	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/al/attalla	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/ia/decorah	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.promotions.t-mobile.com/thanks	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/g	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-aventura-fl-33180-121e/apple-iphone-17-pro	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-dev.t-mobile.com/marketing/responsibility/consumer-info/policies/terms-of-use	3	0.007498196540850405	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/al/athens	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/NE	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/home-internet/fiber/city/mo/st-joseph	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-decatur-al-35601-6000	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone-plan/international-roaming-plans/results/italy	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-greenwood-sc-29649-2snh/samsung-galaxy-watch9-44mm	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/orders/order-status	3	118.3347940228885	534
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-lombard-il-60148-5029/samsung-galaxy-tab-a9-plus-5g	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-chelsea-ma-02150-3sme	3	0.007498289853961976	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/home-internet/fiber/city/tx/laredo	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/id/hailey	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-caguas-pr-00725-9457	3	0.029992871997305603	12
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-el-paso-tx-79912-1shm/apple-iphone-18-pro-max	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone-plans/international-roaming-plans/results/thailand	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-dallas-tx-75240-7838/apple-iphone-17-pro	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/news/comunidad/la-historia-de-hometown-grants-de-t-mobile	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-eagle-pass-tx-78852-221d/apple-iphone-18-pro-max	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	carrierfreedom.promos.t-mobile.com/FinalBillUpload-3	3	0.022494589622551214	9
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone/samsung-galaxy-s25-ultra	3	3.1349587631958777	54
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/resources/bring-your-own-phone	3	330.41576938239893	3765
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/dialed-in/tips-tricks/what-safe-mode-phones	3	0.014996507853292707	6
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-raleigh-nc-27612-9820	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-qlab03.t-mobile.com/shop/coverage/satellite-phone-service/standalone-sign-up	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/account/odf/Msisdn:5158257225/DataService:ALL/Service:ALL/DataPass:ALL	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/oh/boston-heights	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/news/ofertas/t-mobile-invita-un-slurpee-de-7-eleven-gratis	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-miami-fl-33127-8788	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-rochester-ny-14621-3srv	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/dialed-in/accessories/best-apple-headphones-for-you	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/news/press/introducing-t-mobile-essentials	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-cleveland-tn-37312-5bsw/samsung-galaxy-watch9-44mm	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/privacy-center/privacy-notices/childrens-privacy-notice	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-maple-grove-mn-55369-1c34	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/devices/new-apple-iphone-release	3	6.464794988019831	186
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-qlab03.t-mobile.com/support/account/close-or-change-ownership	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-barceloneta-pr-00617-9699/apple-ipad-mini-a17-pro	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-west-saint-paul-mn-55118-7856	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-canoga-park-ca-91304-9793/samsung-galaxy-z-flip8	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-lone-tree-co-80124-1shv/apple-watch-series-12-42mm	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/ct/guilford	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/privacy-center/faq	3	3.0074984659994786	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	alpha.t-mobile.com/shop/line-selector	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-jacksonville-fl-32210-2135/apple-iphone-18-pro	3	0.007498160613538946	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/in/camby	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/nj/shrewsbury	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/nc/waynesville	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/il/west-dundee	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-bergenfield-nj-07621-868d	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/nj/paterson	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone/samsung-galaxy-s10-plus	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	digital-dev.t-mobile.com/coverage/international-roaming-plans/results/azores	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-concord-ca-94521-2646	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-el-centro-ca-92243-1sqe/apple-iphone-18-pro	3	0.007498289853961976	3
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone-plans/international-roaming-plans/results/customer-credit/v1/jwks	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-clermont-fl-34714-561d/apple-watch-series-11-46mm	3	null	null
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/privacy-center/privacy-rights-request/authenticated-form/missing-email	3	null	null
