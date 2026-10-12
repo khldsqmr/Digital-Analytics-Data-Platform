@@ -8796,3 +8796,26 @@ week_ending	bronze_amount	silver_value
 2026-12-19	null	null
 2026-12-26	null	null
 2026-12-31	null	null
+
+SELECT
+  TRY_CAST(WeekEnding AS DATE)          AS week_ending,
+  TRIM(DateContext)                     AS date_context,
+  Amount,
+  DisplayAmount,
+  TRIM(IsFuture)                        AS is_future,
+  TRY_CAST(InsertDateTime AS TIMESTAMP) AS insert_datetime
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE UPPER(TRIM(MetricID))   = 'STORETRAFFICPOSTPAIDAUTOMATED'
+  AND UPPER(TRIM(MetricType)) = 'QGP'
+  AND UPPER(TRIM(Page))       = 'BRANDED RETAIL TOTAL'
+  AND UPPER(TRIM(DateContext)) IN ('NORMAL', 'QTR', 'MONTHLY NORMAL')
+  AND TRY_CAST(WeekEnding AS DATE) >= DATE'2026-09-26'
+ORDER BY date_context, week_ending;
+
+SELECT metric_name,
+       COUNT(metric_value) AS q4_target_weeks_with_value
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+WHERE metric_type = 'QGP_TARGET'
+  AND qgp_date >= DATE'2026-10-01'
+GROUP BY metric_name
+ORDER BY metric_name;
