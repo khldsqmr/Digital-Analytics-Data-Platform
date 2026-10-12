@@ -8857,3 +8857,16 @@ storeTraffic	0
 vrCalls	14
 vrChats	14
 vrPostpaidActivations	14
+
+SELECT
+  TRY_CAST(WeekEnding AS DATE)   AS week_ending,
+  TRIM(Page)                     AS page,
+  TRIM(DisplayMetricType)        AS display_type,
+  TRY_CAST(Amount AS DOUBLE)     AS amount
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE UPPER(TRIM(MetricID))    = 'STORETRAFFICPOSTPAIDAUTOMATED'
+  AND UPPER(TRIM(MetricType))  = 'QGP'
+  AND UPPER(TRIM(DateContext)) = 'NORMAL'
+  AND UPPER(TRIM(Page)) IN ('BRANDED RETAIL TOTAL', 'HERO - CORE POSTPAID KP2')
+  AND TRY_CAST(WeekEnding AS DATE) >= DATE'2026-08-01'
+ORDER BY week_ending, page;
