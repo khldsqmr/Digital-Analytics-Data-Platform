@@ -8966,3 +8966,10 @@ TMO Prepaid & Connect	QTD	1	0
 TMO Prepaid & Connect	QTR	1	0
 TMO Prepaid & Connect	ROQ	1	0
 TMO Prepaid & Connect	WoW	1	0
+
+Hi team, the Store Traffic target for Q4 is still empty in the QGP raw source (prdrzrlakehouse.qgp_restricted.qgpweeklyview).
+
+MetricID: StoreTrafficPostpaidAutomated
+MetricName: Store Traffic (excl Store-In-Store)
+
+Q3 is there, but nothing for October to December yet. Do you know when it will be added? Thanks!
