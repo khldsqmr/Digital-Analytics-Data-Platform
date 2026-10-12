@@ -8085,3 +8085,19 @@ Missing Blis spend: Over 80% of Blis spend is still missing from the table.
 Intermittent data gaps: Several other campaigns have missing data on certain days. When data is present, spend aligns perfectly with Elsa's file, but there are unexplained gaps on other days. (QA file attached for refernece)
 One last caveat to call out is that the logic allocates consolidation spend based on impression share at the campaign level. This is consistent with the logic in Richard's workbook, but differs from Elsa's as she allocates it based on impression share at the ad set level, which is not available in the GCP table. However, this should not make a significant difference for the purpose of UPV spend. 
  
+
+ SELECT
+  TRIM(Page)              AS page,
+  TRIM(MetricID)          AS metric_id,
+  TRIM(MetricName)        AS metric_name,
+  TRIM(MetricType)        AS metric_type,
+  TRIM(DisplayMetricType) AS display_metric_type,
+  TRIM(DateContext)       AS date_context,
+  COUNT(*)                AS row_cnt,
+  MIN(WeekEnding)         AS min_week,
+  MAX(WeekEnding)         AS max_week
+FROM prdrzrlakehouse.qgp_restricted.qgpweeklyview
+WHERE (UPPER(MetricID) LIKE '%STORETRAFFIC%'
+       OR LOWER(MetricName) LIKE '%store traffic%')
+GROUP BY ALL
+ORDER BY metric_type, page, date_context;
