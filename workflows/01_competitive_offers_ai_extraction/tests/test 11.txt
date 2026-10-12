@@ -8819,3 +8819,41 @@ WHERE metric_type = 'QGP_TARGET'
   AND qgp_date >= DATE'2026-10-01'
 GROUP BY metric_name
 ORDER BY metric_name;
+
+week_ending	date_context	Amount	DisplayAmount	is_future	insert_datetime
+2026-09-30	Monthly Normal	null	null	IsFuture	-
+2026-10-31	Monthly Normal	null	null	IsFuture	-
+2026-11-30	Monthly Normal	null	null	IsFuture	-
+2026-12-31	Monthly Normal	null	null	IsFuture	-
+2026-09-26	Normal	3557027.000002	3,557	Is Past	2026-10-05T23:51:23.810+00:00
+2026-09-30	Normal	2001315	2,001	Is Past	2026-10-05T23:51:23.810+00:00
+2026-10-03	Normal	null	null	Is Past	-
+2026-10-10	Normal	null	null	Is Past	-
+2026-10-17	Normal	null	null	Is Future	-
+2026-10-24	Normal	null	null	Is Future	-
+2026-10-31	Normal	null	null	Is Future	-
+2026-11-07	Normal	null	null	Is Future	-
+2026-11-14	Normal	null	null	Is Future	-
+2026-11-21	Normal	null	null	Is Future	-
+2026-11-28	Normal	null	null	Is Future	-
+2026-12-05	Normal	null	null	Is Future	-
+2026-12-12	Normal	null	null	Is Future	-
+2026-12-19	Normal	null	null	Is Future	-
+2026-12-26	Normal	null	null	Is Future	-
+2026-12-31	Normal	null	null	Is Future	-
+2026-09-30	QTR	47700001.000002	47,700	IsFuture	2026-10-05T23:51:23.810+00:00
+2026-12-31	QTR	null	null	IsFuture	-
+
+metric_name	q4_target_weeks_with_value
+activationsBopis	14
+activationsBopisOnly	0
+activationsNewAalNoAssistance	14
+activationsNonBopisOnly	0
+digitalPctAssistanceActivations	0
+digitalPctConsumerPostpaidActivationsTotalInclAssisted	0
+digitalPctNoAssistanceActivations	0
+digitalPctPhoneNewActsNoAssistPlusAssist	14
+storeTraffic	0
+vrCalls	14
+vrChats	14
+vrPostpaidActivations	14
