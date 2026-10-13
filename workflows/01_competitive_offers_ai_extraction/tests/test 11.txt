@@ -9310,4 +9310,14 @@ targetWeekStartDate	metricName	pairKey	rowBreakoutValue	columnBreakoutValue	four
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/pd/t-mobile-mesquite-tx-75150-1sbd/franklin-jextream-rg3100-5g-mobile-hotspot	3	null	null
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/home-internet/fiber/city/fl/orlando	3	null	null
 2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/stores/bd/t-mobile-palm-springs-fl-33461-2694	3	null	null
-2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone/apple-iphone-15-pro-max	3	0.2474544340008274	99
+2026-09-27	buyFlowToConfigureRate	authState__entryPage	Ambiguous	es.t-mobile.com/cell-phone/apple-iphone-15-pro-max	3	0.2474544340008274	99\\
+
+SELECT COUNT(*) AS invalidPeerRatioRows
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE metricKind='ratio'
+  AND peerSetNumerator IS NOT NULL
+  AND peerSetDenominator IS NOT NULL
+  AND (
+      try_divide(peerSetNumerator,peerSetDenominator)<0D
+      OR try_divide(peerSetNumerator,peerSetDenominator)>1D
+  );
