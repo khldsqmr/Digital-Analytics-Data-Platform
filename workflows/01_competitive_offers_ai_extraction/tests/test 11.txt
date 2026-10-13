@@ -9331,3 +9331,7 @@ WHERE metricKind='ratio'
   Hi Derian, thanks for the info. Makes sense to test. One thing to keep in mind is that the App/serving Gold tables aren’t only there for performance; some of them also handle Top-N/Other, comparator calculations, ranking, impact, and other display-ready logic.
 
 If Analytical Gold performs comparably with the larger compute, we should also evaluate how much of that logic would need to move downstream into the API. A localhost test should be useful for validating the approach and functionality, but production performance may still differ once we account for API/server load and concurrent users.
+
+
+Think it’ll be a great idea to think about which areas to stress test
+think the worry is that we’ll end up with 30 tables once we cover every single thing Briana wanted to achieve
