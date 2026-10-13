@@ -9335,3 +9335,8 @@ If Analytical Gold performs comparably with the larger compute, we should also e
 
 Think it’ll be a great idea to think about which areas to stress test
 think the worry is that we’ll end up with 30 tables once we cover every single thing Briana wanted to achieve
+
+
+Yeah, agreed. We can stress test a few representative areas, maybe a simple Overview/Trend use case and a heavier Crosstab/Waterfall case.
+
+If Analytical Gold performs well, we could keep serving tables only where they materially help with latency or complex logic. My only concern with a mixed approach is maintainability. If some APIs hit Analytical Gold directly while others use serving tables, it may become harder to track dependencies and upstream changes could unexpectedly break a section. We should factor contract stability and dependency management into the decision as well.
