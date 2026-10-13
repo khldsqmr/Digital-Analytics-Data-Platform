@@ -9327,3 +9327,7 @@ WHERE metricKind='ratio'
   Makes sense to test. One thing to keep in mind is that the App/serving Gold tables aren't only there for performance; some of them also own Top-N/Other, comparator conversion, ranking, impact and display-ready calculations. If Analytical Gold performs comparably with the larger compute, we should also compare how much of that logic would have to move downstream into the API
 
   Hi Derian, thanks for the info. Makes sense to test. One thing to keep in mind is that the App/serving Gold tables aren't only there for performance; some of them also own Top-N/Other, comparator conversion, ranking, impact and display-ready calculations. If Gold performs comparably with the larger compute, we should also compare how much of that logic would have to move downstream into the API. For a local test on local host, it might be okay, as our local machine would be serving as the server for the frontend.
+
+  Hi Derian, thanks for the info. Makes sense to test. One thing to keep in mind is that the App/serving Gold tables aren’t only there for performance; some of them also handle Top-N/Other, comparator calculations, ranking, impact, and other display-ready logic.
+
+If Analytical Gold performs comparably with the larger compute, we should also evaluate how much of that logic would need to move downstream into the API. A localhost test should be useful for validating the approach and functionality, but production performance may still differ once we account for API/server load and concurrent users.
