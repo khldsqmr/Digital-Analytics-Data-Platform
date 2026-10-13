@@ -9321,3 +9321,5 @@ WHERE metricKind='ratio'
       try_divide(peerSetNumerator,peerSetDenominator)<0D
       OR try_divide(peerSetNumerator,peerSetDenominator)>1D
   );
+
+  just a heads up, post meeting with Briana yesterday, I asked Cody to perform a short stresstest if we were to hit the gold layer table you created instead of the serving layer, we are working on getting a bigger compute size (hopefully) so if we can do things equally fast by hitting gold layers instead of serving layers, we may be able to reduce the tech debt for the MIP project
