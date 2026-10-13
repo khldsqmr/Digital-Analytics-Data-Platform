@@ -9340,3 +9340,16 @@ think the worry is that we’ll end up with 30 tables once we cover every single
 Yeah, agreed. We can stress test a few representative areas, maybe a simple Overview/Trend use case and a heavier Crosstab/Waterfall case.
 
 If Analytical Gold performs well, we could keep serving tables only where they materially help with latency or complex logic. My only concern with a mixed approach is maintainability. If some APIs hit Analytical Gold directly while others use serving tables, it may become harder to track dependencies and upstream changes could unexpectedly break a section. We should factor contract stability and dependency management into the decision as well.
+
+
+
+Hey Cody, just a heads up that I’ve refreshed the Analytical Gold and dependent App tables with the latest fixes.
+
+Main updates:
+- 4-week trend now correctly uses the actual available 1–4 week history for breakdowns, not just topline.
+- Count metrics use the weekly average, while ratio metrics use ratio-of-sums.
+- Peer Set now works with the same available historical window instead of requiring all 4 weeks.
+- Ratio Peer Set values are bounded to valid 0–100% rates, while the actual change/gap can still be negative.
+- Dependent App tables have been rebuilt so the serving outputs are aligned with the corrected Analytical Gold values.
+
+Should be good to use these refreshed tables for the stress test.
