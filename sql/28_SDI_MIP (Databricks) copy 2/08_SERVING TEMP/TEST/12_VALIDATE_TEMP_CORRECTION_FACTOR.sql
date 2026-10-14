@@ -116,3 +116,59 @@ targetWeekStartDate	metricName	breakoutType	breakoutValue	fourWeekTrendWeekCount
 2026-09-27	storeLocator	campaign	252STALNCH	3	0	0	0
 2026-09-20	nbv	campaign	253494331	2	2	1	0.5
 2026-09-27	nbv	campaign	253494331	3	6	2	0.6666666666666666
+
+
+WITH g02 AS (
+    SELECT
+        targetWeekStartDate,
+        metricName,
+        breakoutType,
+        MAX(fourWeekTrendWeekCount) AS weekCount,
+        SUM(
+            try_divide(
+                fourWeekTrendNumerator,
+                CAST(fourWeekTrendWeekCount AS DOUBLE)
+            )
+        ) AS correctedBreakoutHistoricalSum
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+    WHERE targetWeekStartDate IN (DATE '2026-09-20', DATE '2026-09-27')
+      AND metricKind='count'
+      AND fourWeekTrendWeekCount>0
+    GROUP BY
+        targetWeekStartDate,
+        metricName,
+        breakoutType
+),
+g01 AS (
+    SELECT
+        targetWeekStartDate,
+        metricName,
+        fourWeekTrendWeekCount AS weekCount,
+        fourWeekTrendNumerator AS toplineHistoricalSum
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
+    WHERE targetWeekStartDate IN (DATE '2026-09-20', DATE '2026-09-27')
+      AND metricKind='count'
+      AND fourWeekTrendWeekCount>0
+)
+SELECT
+    b.targetWeekStartDate,
+    b.metricName,
+    b.breakoutType,
+    b.weekCount,
+    b.correctedBreakoutHistoricalSum,
+    t.toplineHistoricalSum,
+    b.correctedBreakoutHistoricalSum-t.toplineHistoricalSum AS ingredientResidual,
+    try_divide(b.correctedBreakoutHistoricalSum,CAST(b.weekCount AS DOUBLE))
+        AS breakoutFourWeekAverage,
+    try_divide(t.toplineHistoricalSum,CAST(t.weekCount AS DOUBLE))
+        AS toplineFourWeekAverage
+FROM g02 b
+JOIN g01 t
+  ON t.targetWeekStartDate=b.targetWeekStartDate
+ AND t.metricName=b.metricName
+WHERE b.weekCount=t.weekCount
+ORDER BY
+    ABS(b.correctedBreakoutHistoricalSum-t.toplineHistoricalSum) DESC,
+    b.targetWeekStartDate,
+    b.metricName,
+    b.breakoutType;
