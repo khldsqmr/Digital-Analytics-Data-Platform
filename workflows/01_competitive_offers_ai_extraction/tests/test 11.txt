@@ -9353,3 +9353,20 @@ Main updates:
 - Dependent App tables have been rebuilt so the serving outputs are aligned with the corrected Analytical Gold values.
 
 Should be good to use these refreshed tables for the stress test.
+
+
+SELECT
+    targetWeekStartDate,
+    metricName,
+    breakoutType,
+    displaySize,
+    min(waterfallStartValue) AS fourWeekAverageTopline,
+    min(waterfallEndValue) AS thisWeekTopline,
+    min(netChangeValue) AS netChangeValue,
+    min(displayedWaterfallDeltaSum) AS displayedWaterfallDeltaSum,
+    max(abs(waterfallReconciliationResidual)) AS maxAbsResidual
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appBreakoutsWaterfall_long
+WHERE targetWeekStartDate IN (DATE '2026-09-20', DATE '2026-09-27')
+  AND comparisonType='fourWeek'
+GROUP BY targetWeekStartDate,metricName,breakoutType,displaySize
+ORDER BY targetWeekStartDate,metricName,breakoutType,displaySize;
