@@ -10484,3 +10484,23 @@ targetWeekStartDate	targetWeekEndDate	fiscalYear	fiscalQuarterLabel	fiscalWeekCo
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W39	W39 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	nbv	Total NBV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	region	Region	70	fourWeek	4-wk trend	20	true	false	all	All	100	30	94043	false	75	decrease	20	39	20039	1123.3333333333333	1.1K	571	571	-49.2	-49.2%	-552.3333333333333	-552	number	0	0.0%	pct	21061393.333332814	21060840.99999948	21233398.333333332	21.2M	208885.00000000003	+208.9K	47	-388899.3333338527	-388.9K	54	-180014.3333333321	-180.0K	-0.8	-0.8%	21053384	21.1M	-180014.33333385258	5.204929038882256e-7	2026-10-15T17:54:40.112+00:00
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W39	W39 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	nbv	Total NBV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	region	Region	70	fourWeek	4-wk trend	20	true	false	all	All	100	30	94520	false	76	decrease	20	40	20040	1481	1.5K	930	930	-37.2	-37.2%	-551	-551	number	0	0.0%	pct	21060840.99999948	21060289.99999948	21233398.333333332	21.2M	208885.00000000003	+208.9K	47	-388899.3333338527	-388.9K	54	-180014.3333333321	-180.0K	-0.8	-0.8%	21053384	21.1M	-180014.33333385258	5.204929038882256e-7	2026-10-15T17:54:40.112+00:00
 2026-09-27	2026-10-03	2026	2026 Q3	2026Q3W39	W39 · 27 Sep to 3 Oct	Week ending 3 Oct 2026	All	All	nbv	Total NBV	Unique visitors with at least one non-bounced session (2+ real page views) in the week.	count	number	pct	10	region	Region	70	fourWeek	4-wk trend	20	true	false	all	All	100	30	60306	false	79	decrease	20	41	20041	1249	1.2K	721	721	-42.3	-42.3%	-528	-528	number	0	0.0%	pct	21060289.99999948	21059761.99999948	21233398.333333332	21.2M	208885.00000000003	+208.9K	47	-388899.3333338527	-388.9K	54	-180014.3333333321	-180.0K	-0.8	-0.8%	21053384	21.1M	-180014.33333385258	5.204929038882256e-7	2026-10-15T17:54:40.112+00:00
+
+
+
+SELECT
+    targetWeekStartDate,
+    metricName,
+    breakoutType,
+    breakoutValue,
+    fourWeekTrendWeekCount,
+    fourWeekTrendNumerator,
+    try_divide(
+        fourWeekTrendNumerator,
+        CAST(fourWeekTrendWeekCount AS DOUBLE)
+    ) AS expectedAppFourWeekValue
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate = DATE '2026-09-27'
+  AND metricName = 'nbv'
+  AND breakoutType = 'region'
+  AND breakoutValue = 'US';
+
