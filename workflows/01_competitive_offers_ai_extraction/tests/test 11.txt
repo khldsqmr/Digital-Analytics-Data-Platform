@@ -10507,3 +10507,28 @@ WHERE targetWeekStartDate = DATE '2026-09-27'
 output:
 targetWeekStartDate	metricName	breakoutType	breakoutValue	fourWeekTrendWeekCount	fourWeekTrendNumerator	expectedAppFourWeekValue
 2026-09-27	nbv	region	US	3	48299746	16099915.333333334
+
+
+SELECT
+    targetWeekStartDate,
+    metricName,
+    pairKey,
+    rowBreakoutType,
+    rowBreakoutValue,
+    columnBreakoutType,
+    columnBreakoutValue,
+    fourWeekTrendWeekCount,
+    fourWeekTrendNumerator,
+    try_divide(
+        fourWeekTrendNumerator,
+        CAST(fourWeekTrendWeekCount AS DOUBLE)
+    ) AS expectedAppFourWeekValue
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_crosstabMetricIngredientsByWeek_long
+WHERE targetWeekStartDate = DATE '2026-09-27'
+  AND metricName = 'nbv'
+  AND fourWeekTrendWeekCount > 0
+ORDER BY
+    pairKey,
+    rowBreakoutValue,
+    columnBreakoutValue
+LIMIT 100;
