@@ -10532,3 +10532,105 @@ ORDER BY
     rowBreakoutValue,
     columnBreakoutValue
 LIMIT 100;
+output:
+targetWeekStartDate	metricName	pairKey	rowBreakoutType	rowBreakoutValue	columnBreakoutType	columnBreakoutValue	fourWeekTrendWeekCount	fourWeekTrendNumerator	expectedAppFourWeekValue
+2026-09-27	nbv	authState__device	authState	(not set)	device	Android App	3	2539781	846593.6666666666
+2026-09-27	nbv	authState__device	authState	Ambiguous	device	Android App	3	31336	10445.333333333334
+2026-09-27	nbv	authState__device	authState	Ambiguous	device	App Web View	3	193798	64599.333333333336
+2026-09-27	nbv	authState__device	authState	Ambiguous	device	Desktop	3	2737230	912410
+2026-09-27	nbv	authState__device	authState	Ambiguous	device	Mobile Web	3	8214081	2738027
+2026-09-27	nbv	authState__device	authState	Ambiguous	device	Web	3	1	0.3333333333333333
+2026-09-27	nbv	authState__device	authState	Authenticated	device	Android App	3	12067068	4022356
+2026-09-27	nbv	authState__device	authState	Authenticated	device	App Web View	3	166610	55536.666666666664
+2026-09-27	nbv	authState__device	authState	Authenticated	device	Desktop	3	1268477	422825.6666666667
+2026-09-27	nbv	authState__device	authState	Authenticated	device	Mobile Web	3	1508387	502795.6666666667
+2026-09-27	nbv	authState__device	authState	Authenticated	device	iOS App	3	29150537	9716845.666666666
+2026-09-27	nbv	authState__device	authState	LoggedOut	device	Android App	3	914274	304758
+2026-09-27	nbv	authState__device	authState	LoggedOut	device	App Web View	3	8821	2940.3333333333335
+2026-09-27	nbv	authState__device	authState	LoggedOut	device	Desktop	3	619	206.33333333333334
+2026-09-27	nbv	authState__device	authState	LoggedOut	device	Mobile Web	3	4444	1481.3333333333333
+2026-09-27	nbv	authState__device	authState	LoggedOut	device	iOS App	3	1219083	406361
+2026-09-27	nbv	authState__device	authState	Network Authenticated	device	Android App	3	1487557	495852.3333333333
+2026-09-27	nbv	authState__device	authState	Network Authenticated	device	App Web View	3	11694	3898
+2026-09-27	nbv	authState__device	authState	Network Authenticated	device	Desktop	3	735	245
+2026-09-27	nbv	authState__device	authState	Network Authenticated	device	Mobile Web	3	3949	1316.3333333333333
+2026-09-27	nbv	authState__device	authState	Network Authenticated	device	iOS App	3	2171713	723904.3333333334
+2026-09-27	nbv	authState__entryPage	authState	(not set)	entryPage	(not set)	3	2539781	846593.6666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	(not set)	3	23124	7708
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/accountinfo	3	1264	421.3333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/changepassword	3	75	25
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/choosedevice	3	348	116
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/choosemethod	3	909	303
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/emailverify	3	4420	1473.3333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/chooseid	3	11	3.6666666666666665
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/ivlanding	3	10	3.3333333333333335
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/legal	3	8	2.6666666666666665
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/scanid	3	24	8
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/scanselfie	3	5	1.6666666666666667
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/selectstate	3	5	1.6666666666666667
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/idverify/verificationconfirmation	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/passkeyoffer	3	32	10.666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/forgotpassword/v2/phoneverify	3	4632	1544
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/accountchooser	3	804	268
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/account-chooser	3	7	2.3333333333333335
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/account-chooser-business-app	3	12	4
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/autoClaimPahConfirmation	3	15	5
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/bioPushStatus	3	37	12.333333333333334
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/choose-service	3	16	5.333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/choosemethod	3	12352	4117.333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/claimPahPin	3	17	5.666666666666667
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/confirm	3	79	26.333333333333332
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/confirm/verify	3	18	6
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/consent	3	16	5.333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/gaNotification	3	17	5.666666666666667
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/gaVerification	3	7	2.3333333333333335
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/gaqrcode	3	3	1
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/linkPhone	3	1630	543.3333333333334
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/missing-security-questions	3	136	45.333333333333336
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/missingName	3	9	3
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/phoneverify	3	1138	379.3333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/secondFactorEmailVerification	3	3417	1139
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/secondFactorGaVerification	3	25	8.333333333333334
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/secondFactorSqVerification	3	4	1.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/security-dashboard	3	3	1
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/security-dashboard/gaNotification	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/security-dashboard/gaqrcode	3	0	0
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/update-email	3	57	19
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/verify-email	3	9522	3174
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/actions/weakPassword	3	1962	654
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/chooseid	3	11	3.6666666666666665
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/ivlanding	3	188	62.666666666666664
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/legal	3	3642	1214
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/scanid	3	28	9.333333333333334
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/scanqrcode	3	481	160.33333333333334
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/scanselfie	3	103	34.333333333333336
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/selectstate	3	6624	2208
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/idv/verificationconfirmation	3	53	17.666666666666668
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/app/security-dashboard	3	109	36.333333333333336
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/bioPushStatus	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/choosemethod	3	13	4.333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/details	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/disable-wifi-notification	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/gaqrcode	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/phoneverify	3	8	2.6666666666666665
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/secondFactorEmailVerification	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/security-dashboard	3	139	46.333333333333336
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/security-dashboard/gaNotification	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/security-dashboard/gaVerification	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/profile/security-dashboard/gaqrcode	3	0	0
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/sap/v2/validateEmail	3	14834	4944.666666666667
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signin/v2/	3	505131	168377
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signin/v2/enterPhoneNumber	3	72	24
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signin/v2/fedLogin	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signin/v2/forgotLoginInfo	3	9	3
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signin/v2/login	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/confirm-password	3	2	0.6666666666666666
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/createaccount	3	8587	2862.3333333333335
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/email_pop	3	81	27
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/gateway-plug-in	3	3	1
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/invitationreg	3	2916	972
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/phone-otp-verify	3	75	25
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/update-phone-number	3	1	0.3333333333333333
+2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/verify_pin	3	14	4.666666666666667
