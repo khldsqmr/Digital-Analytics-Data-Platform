@@ -10504,3 +10504,6 @@ WHERE targetWeekStartDate = DATE '2026-09-27'
   AND breakoutType = 'region'
   AND breakoutValue = 'US';
 
+output:
+targetWeekStartDate	metricName	breakoutType	breakoutValue	fourWeekTrendWeekCount	fourWeekTrendNumerator	expectedAppFourWeekValue
+2026-09-27	nbv	region	US	3	48299746	16099915.333333334
