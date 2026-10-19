@@ -10634,3 +10634,137 @@ targetWeekStartDate	metricName	pairKey	rowBreakoutType	rowBreakoutValue	columnBr
 2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/phone-otp-verify	3	75	25
 2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/update-phone-number	3	1	0.3333333333333333
 2026-09-27	nbv	authState__entryPage	authState	Ambiguous	entryPage	account.t-mobile.com/signup/v2/verify_pin	3	14	4.666666666666667
+
+
+
+
+
+Happy Monday team!
+ 
+Garcia, Briana Qamar, Khalid, I've attached the SQL query for programmatic UPV spend, which includes:
+Filters to exclude agency and OTT campaigns.
+Allocation logic to distribute consolidation campaign spend between Postpaid and HINT based on impression share.
+While we've validated both components, the query results will remain inaccurate until the underlying data quality issues in the GCP table are resolved:
+Missing Blis spend: Over 80% of Blis spend is still missing from the table.
+Intermittent data gaps: Several other campaigns have missing data on certain days. When data is present, spend aligns perfectly with Elsa's file, but there are unexplained gaps on other days. (QA file attached for refernece)
+One last caveat to call out is that the logic allocates consolidation spend based on impression share at the campaign level. This is consistent with the logic in Richard's workbook, but differs from Elsa's as she allocates it based on impression share at the ad set level, which is not available in the GCP table. However, this should not make a significant difference for the purpose of UPV spend. 
+
+DECLARE exception_campaign STRING DEFAULT
+'TMO_PostpaidHINT_VoiceHINTFiber_X_PSTPHINTPro_Perf_VINT_X_EL_DIS_2026_Multi-Opt_PR-OEX_DV360_X_US_DSP-CMP-001';
+
+WITH base AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    campaign_name,
+    placement,
+    spend,
+    impressions
+  FROM `prj-dbi-prd-1.ds_dbi_digitalmedia_automation.pbi_programmatic_browsers_currentyr`
+  WHERE date >= "2026-09-01"
+    AND spend > 0
+    AND (campaign_name LIKE 'TMO%' OR campaign_name LIKE 'MBTM%')
+    AND campaign_name NOT LIKE '%-INI%'
+    AND campaign_name NOT LIKE '%-OTT%'
+    AND campaign_name NOT LIKE r'%\_OTT%'
+),
+
+normal_campaigns AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    SUM(spend) AS spend
+  FROM base
+  WHERE campaign_name != exception_campaign
+  GROUP BY
+    DSP,
+    date,
+    lob
+),
+
+exception_total_spend AS (
+  SELECT
+    DSP,
+    date,
+    SUM(spend) AS total_spend
+  FROM base
+  WHERE campaign_name = exception_campaign
+  GROUP BY
+    DSP,
+    date
+),
+
+exception_delivery AS (
+  SELECT
+    DSP,
+    date,
+    CASE
+      WHEN REGEXP_CONTAINS(UPPER(placement), r'HINT|FIBER') THEN 'HSI'
+      ELSE 'Postpaid'
+    END AS lob,
+    SUM(impressions) AS lob_impressions
+  FROM base
+  WHERE campaign_name = exception_campaign
+  GROUP BY
+    DSP,
+    date,
+    lob
+),
+
+exception_delivery_share AS (
+  SELECT
+    DSP,
+    date,
+    lob,
+    lob_impressions,
+    SAFE_DIVIDE(
+      lob_impressions,
+      SUM(lob_impressions) OVER (PARTITION BY DSP, date)
+    ) AS impression_share
+  FROM exception_delivery
+),
+
+exception_reallocated_spend AS (
+  SELECT
+    s.DSP,
+    s.date,
+    d.lob,
+    s.total_spend * d.impression_share AS spend
+  FROM exception_total_spend s
+  JOIN exception_delivery_share d
+    ON s.DSP = d.DSP
+   AND s.date = d.date
+),
+
+combined AS (
+  SELECT * FROM normal_campaigns
+  UNION ALL
+  SELECT * FROM exception_reallocated_spend
+),
+
+final AS (
+  SELECT
+    date,
+    DSP,
+    lob,
+    SUM(spend) AS spend
+  FROM combined
+ -- WHERE lob IN ('Postpaid', 'HSI')
+  GROUP BY
+    date,
+    DSP,
+    lob
+)
+
+SELECT
+  date,
+  --DSP,
+  lob,
+  spend
+FROM final
+ORDER BY
+  date,
+  --DSP,
+  lob;
