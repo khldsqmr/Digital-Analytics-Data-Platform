@@ -10771,15 +10771,15 @@ ORDER BY
 
 
 
-  SELECT
+SELECT
     datediff(eventDate, sessionStartDatePst) AS eventVsSessionStartLagDays,
     COUNT(*) AS hitCount,
     COUNT(DISTINCT sessionId) AS sessionCount
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 WHERE sessionStartDatePst IS NOT NULL
+  AND eventDate BETWEEN DATE '2026-09-27' AND DATE '2026-10-03'
 GROUP BY datediff(eventDate, sessionStartDatePst)
 ORDER BY eventVsSessionStartLagDays;
-
 
 SELECT
     percentile_approx(
@@ -10788,4 +10788,5 @@ SELECT
     ) AS lagPercentiles,
     MAX(datediff(eventDate, sessionStartDatePst)) AS maxObservedLagDays
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
-WHERE sessionStartDatePst IS NOT NULL;
+WHERE sessionStartDatePst IS NOT NULL
+  AND eventDate BETWEEN DATE '2026-09-27' AND DATE '2026-10-03';
