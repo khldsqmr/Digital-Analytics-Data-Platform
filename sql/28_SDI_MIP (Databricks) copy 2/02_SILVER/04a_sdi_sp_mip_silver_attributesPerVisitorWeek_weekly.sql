@@ -1102,3 +1102,6 @@ END;
 -- result = spark.sql(call_sql).collect()
 -- ============================================================================
 
+
+
+[USER_RAISED_EXCEPTION] Silver attributesPerSession does not contain every requested reporting week. SQLSTATE: 45000
