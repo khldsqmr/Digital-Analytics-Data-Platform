@@ -10780,6 +10780,22 @@ WHERE sessionStartDatePst IS NOT NULL
   AND eventDate BETWEEN DATE '2026-09-27' AND DATE '2026-10-03'
 GROUP BY datediff(eventDate, sessionStartDatePst)
 ORDER BY eventVsSessionStartLagDays;
+output:
+eventVsSessionStartLagDays	hitCount	sessionCount
+0	1677906276	40937689
+1	476137677	11458121
+2	11095	64
+3	2313	14
+4	2183	12
+5	984	6
+6	450	2
+7	225	1
+8	55	1
+11	96	1
+12	95	1
+13	95	1
+14	96	1
+15	24	1
 
 SELECT
     percentile_approx(
@@ -10790,3 +10806,6 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
 WHERE sessionStartDatePst IS NOT NULL
   AND eventDate BETWEEN DATE '2026-09-27' AND DATE '2026-10-03';
+  output:
+  lagPercentiles	maxObservedLagDays
+[1,1,1]	15
