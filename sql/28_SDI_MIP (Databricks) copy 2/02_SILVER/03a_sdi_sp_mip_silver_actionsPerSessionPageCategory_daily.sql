@@ -5,12 +5,20 @@
 -- LAYER : SILVER
 
 -- RUNTIME WRITE NOTE:
+
 --   The scoped overwrite is executed through dynamic SQL using make_date(...)
+
 --   expressions generated from validated local DATE values. This is the same
+
 --   runtime-safe pattern proven in Bronze and avoids local-variable resolution
+
 --   and DATE-binding issues inside REPLACE WHERE.
+
 --   The transformation query remains unchanged and inserts BY NAME.
+--   Inner SQL string literals use Databricks backslash escaping (\') so quotes survive EXECUTE IMMEDIATE.
+
 --
+
 -- PURPOSE:
 
 --   One row per NBV session x page category with measurable action metrics.
@@ -84,10 +92,12 @@ BEGIN
     DECLARE v_attributeDateCount BIGINT DEFAULT 0;
 
     DECLARE v_detailDateCount BIGINT DEFAULT 0;
-    DECLARE v_writeSql STRING;
-    DECLARE v_scopeStartSql STRING;
-    DECLARE v_scopeEndSql STRING;
 
+    DECLARE v_writeSql STRING;
+
+    DECLARE v_scopeStartSql STRING;
+
+    DECLARE v_scopeEndSql STRING;
 
     IF p_eventWindowDays IS NULL OR p_eventWindowDays<1 THEN
 
@@ -196,122 +206,230 @@ BEGIN
         COMMENT 'Silver: one row per NBV session x page category with at least one measurable MIP signal.';
 
                 -- --------------------------------------------------------------------
+
         -- Atomic selective overwrite for the requested Silver scope.
+
         -- --------------------------------------------------------------------
+
         SET v_scopeStartSql = concat(
+
             'make_date(',
+
             cast(year(v_windowStart) AS STRING), ',',
+
             cast(month(v_windowStart) AS STRING), ',',
+
             cast(day(v_windowStart) AS STRING),
+
             ')'
+
         );
 
         SET v_scopeEndSql = concat(
+
             'make_date(',
+
             cast(year(v_windowEnd) AS STRING), ',',
+
             cast(month(v_windowEnd) AS STRING), ',',
+
             cast(day(v_windowEnd) AS STRING),
+
             ')'
+
         );
 
         SET v_writeSql = concat(
+
             'WITH windowSessions AS (
+
             SELECT
+
                 sessionId,
+
                 canonicalUserId,
+
                 visitorId,
+
                 sessionStartDatePst,
+
                 weekStartDate,
+
                 weekEndDate
+
             FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_attributesPerSession_daily
+
             WHERE sessionStartDatePst BETWEEN ',
+
             v_scopeStartSql,
+
             ' AND ',
+
             v_scopeEndSql,
+
             '
+
         ),
+
         sessionHits AS (
+
             SELECT
+
                 s.sessionId,
+
                 s.canonicalUserId,
+
                 s.visitorId,
+
                 s.sessionStartDatePst,
+
                 s.weekStartDate,
+
                 s.weekEndDate,
+
                 h.eventTimestampUtc,
-                coalesce(h.pageCategory,''(not set)'') AS pageCategory,
+
+                coalesce(h.pageCategory,\'(not set)\') AS pageCategory,
+
                 h.buyFlowStep,
+
                 h.buyFlowStepOrder,
+
                 h.customerType,
+
                 h.isPageView,
+
                 h.isOrder,
+
                 h.isVrCall,
+
                 h.isVrChat,
+
                 h.isStoreLocator,
+
                 h.isAssistedOrder,
+
                 h.isBuyFlow,
+
                 h.isConfigure,
+
                 h.isCheckoutStart
+
             FROM windowSessions s
+
             INNER JOIN prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily h
+
               ON h.sessionId=s.sessionId
+
              AND h.sessionStartDatePst=s.sessionStartDatePst
+
             WHERE h.sessionStartDatePst BETWEEN ',
+
             v_scopeStartSql,
+
             ' AND ',
+
             v_scopeEndSql,
+
             '
+
         )
+
         INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_silver_actionsPerSessionPageCategory_daily BY NAME
+
         REPLACE WHERE sessionStartDatePst BETWEEN ',
+
             v_scopeStartSql,
+
             ' AND ',
+
             v_scopeEndSql,
+
             '
+
         SELECT
+
             sessionId,
+
             max(canonicalUserId) AS canonicalUserId,
+
             max(visitorId) AS visitorId,
+
             max(sessionStartDatePst) AS sessionStartDatePst,
+
             max(weekStartDate) AS weekStartDate,
+
             max(weekEndDate) AS weekEndDate,
+
             pageCategory,
+
             max_by(
+
                 buyFlowStep,
-                struct(coalesce(buyFlowStepOrder,-1),eventTimestampUtc,coalesce(buyFlowStep,''''))
+
+                struct(coalesce(buyFlowStepOrder,-1),eventTimestampUtc,coalesce(buyFlowStep,\'\'))
+
             ) FILTER (WHERE buyFlowStep IS NOT NULL) AS buyFlowStep,
+
             SUM(CAST(isPageView AS BIGINT)) AS pageViews,
+
             SUM(CAST(isOrder AS BIGINT)) AS orderCount,
+
             CASE
-                WHEN max(CASE WHEN isOrder=1 AND customerType=''Prospect'' THEN 1 ELSE 0 END)=1 THEN ''Prospect''
-                WHEN max(CASE WHEN isOrder=1 AND customerType=''Care'' THEN 1 ELSE 0 END)=1 THEN ''Care''
-                WHEN max(CASE WHEN isOrder=1 AND customerType=''Customer'' THEN 1 ELSE 0 END)=1 THEN ''Customer''
+
+                WHEN max(CASE WHEN isOrder=1 AND customerType=\'Prospect\' THEN 1 ELSE 0 END)=1 THEN \'Prospect\'
+
+                WHEN max(CASE WHEN isOrder=1 AND customerType=\'Care\' THEN 1 ELSE 0 END)=1 THEN \'Care\'
+
+                WHEN max(CASE WHEN isOrder=1 AND customerType=\'Customer\' THEN 1 ELSE 0 END)=1 THEN \'Customer\'
+
                 ELSE NULL
+
             END AS orderCustomerType,
+
             SUM(CAST(isVrCall AS BIGINT)) AS vrCallEvents,
+
             SUM(CAST(isVrChat AS BIGINT)) AS vrChatEvents,
+
             SUM(CAST(isStoreLocator AS BIGINT)) AS storeLocatorEvents,
+
             SUM(CAST(isAssistedOrder AS BIGINT)) AS assistedOrderEvents,
+
             max(isBuyFlow) AS hasBuyFlow,
+
             SUM(CAST(isConfigure AS BIGINT)) AS configureEvents,
+
             SUM(CAST(isCheckoutStart AS BIGINT)) AS checkoutStartEvents,
+
             current_timestamp() AS silverProcessedAt
+
         FROM sessionHits
+
         GROUP BY sessionId,pageCategory
+
         HAVING
+
                SUM(CAST(isPageView AS BIGINT))>0
+
             OR SUM(CAST(isOrder AS BIGINT))>0
+
             OR SUM(CAST(isVrCall AS BIGINT))>0
+
             OR SUM(CAST(isVrChat AS BIGINT))>0
+
             OR SUM(CAST(isStoreLocator AS BIGINT))>0
+
             OR SUM(CAST(isAssistedOrder AS BIGINT))>0
+
             OR max(isBuyFlow)>0
+
             OR SUM(CAST(isConfigure AS BIGINT))>0
+
             OR SUM(CAST(isCheckoutStart AS BIGINT))>0'
+
         );
 
         EXECUTE IMMEDIATE v_writeSql;
-
 
         SELECT
 
