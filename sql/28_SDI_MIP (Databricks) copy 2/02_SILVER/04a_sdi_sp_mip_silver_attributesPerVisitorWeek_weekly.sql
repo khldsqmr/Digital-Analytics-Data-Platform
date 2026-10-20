@@ -1105,3 +1105,10 @@ END;
 
 
 [USER_RAISED_EXCEPTION] Silver attributesPerSession does not contain every requested reporting week. SQLSTATE: 45000
+
+weekStartDate	rows
+2026-09-06	39675348
+2026-09-13	39825228
+2026-09-20	39767731
+2026-09-27	39768196
+2026-10-04	36882256
