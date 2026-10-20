@@ -10904,3 +10904,51 @@ f5ce527892af9d7fda0e17e19ba7c1f3e4887c1abf2934b832646f9ff1fdb0cc	2026-09-25	2026
 97ef80087331db1b0b081741eb82bc5ef6bb80a6778dcf5d004c345d124f2cb6	2026-09-25	2026-09-27	2026-09-27	2	75	2026-09-25T14:36:16.842+00:00	2026-09-27T07:39:41.075+00:00
 5a8ba06bbfabdf058cb44819996e865b3750c486f2263320bae98eba42ef32c6	2026-09-25	2026-09-27	2026-09-27	2	54	2026-09-26T00:19:28.113+00:00	2026-09-27T02:08:00.311+00:00
 63fee152217e16154ccc596db460028ab447d4a76d053327cca00afb7442dd7c	2026-09-25	2026-09-27	2026-09-27	2	35	2026-09-25T07:02:47.060+00:00	2026-09-27T03:20:50.385+00:00
+
+
+WITH hits AS (
+    SELECT
+        sessionId,
+        eventTimestampUtc,
+        eventDate,
+        LAG(eventTimestampUtc) OVER (
+            PARTITION BY sessionId
+            ORDER BY eventTimestampUtc
+        ) AS previousHitTs
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+    WHERE sessionId =
+      '50dbd7b79465f58e66e9628e34f19db35558a544c0f62bb3527d75388a4fb6e7'
+)
+SELECT
+    eventDate,
+    eventTimestampUtc,
+    previousHitTs,
+    timestampdiff(MINUTE, previousHitTs, eventTimestampUtc) AS gapMinutes
+FROM hits
+ORDER BY eventTimestampUtc;
+
+
+WITH hits AS (
+    SELECT
+        sessionId,
+        eventTimestampUtc,
+        LAG(eventTimestampUtc) OVER (
+            PARTITION BY sessionId
+            ORDER BY eventTimestampUtc
+        ) AS previousHitTs
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+    WHERE sessionId =
+      '50dbd7b79465f58e66e9628e34f19db35558a544c0f62bb3527d75388a4fb6e7'
+)
+SELECT
+    COUNT(*) AS hitCount,
+    MAX(timestampdiff(MINUTE,previousHitTs,eventTimestampUtc)) AS maxGapMinutes,
+    COUNT_IF(
+        timestampdiff(MINUTE,previousHitTs,eventTimestampUtc) > 30
+    ) AS gapsOver30Minutes,
+    COUNT_IF(
+        timestampdiff(HOUR,previousHitTs,eventTimestampUtc) >= 24
+    ) AS gapsOver24Hours
+FROM hits;
+
+
