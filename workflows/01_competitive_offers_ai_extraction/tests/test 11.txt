@@ -10809,3 +10809,21 @@ WHERE sessionStartDatePst IS NOT NULL
   output:
   lagPercentiles	maxObservedLagDays
 [1,1,1]	15
+
+
+SELECT
+    sessionId,
+    MIN(sessionStartDatePst) AS sessionStartDate,
+    MIN(eventDate) AS firstEventDate,
+    MAX(eventDate) AS lastEventDate,
+    datediff(MAX(eventDate),MIN(sessionStartDatePst)) AS maxLagDays,
+    COUNT(*) AS hitCount,
+    MIN(sessionStartTsUtc) AS sessionStartTsUtc,
+    MAX(sessionEndTsUtc) AS sessionEndTsUtc
+FROM prdrzranalytics.lab42.sdi_tbl_mip_silver_detailsPerHit_daily
+WHERE sessionStartDatePst IS NOT NULL
+  AND eventDate BETWEEN DATE '2026-09-27' AND DATE '2026-10-03'
+GROUP BY sessionId
+HAVING datediff(MAX(eventDate),MIN(sessionStartDatePst)) >= 2
+ORDER BY maxLagDays DESC,hitCount DESC
+LIMIT 100;
