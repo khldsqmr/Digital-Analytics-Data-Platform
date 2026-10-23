@@ -191,7 +191,9 @@ SELECT
     (SELECT SUM(sefRows) FROM missing) AS missingSsfRows,
     100D * (SELECT SUM(sefRows) FROM missing)
          / NULLIF((SELECT SUM(sefRows) FROM requested),0) AS missingSefRowPct;
-
+output:
+totalSefSessions	missingSsfSessions	missingSessionPct	totalSefRows	missingSsfRows	missingSefRowPct
+52585126	156	0.0002966618355159974	2076119067	939	0.00004522861982847923
 
          WITH missingSessions AS (
     SELECT DISTINCT e.session_id
@@ -212,6 +214,13 @@ JOIN missingSessions m
 WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17'
 GROUP BY e.event_date,e.source_table
 ORDER BY e.event_date,e.source_table;
+output:
+event_date	source_table	missingSefRows	missingSessions
+2026-10-13	t_app_interactions	127	47
+2026-10-14	t_app_interactions	90	16
+2026-10-15	t_app_interactions	259	36
+2026-10-16	t_app_interactions	140	34
+2026-10-17	t_app_interactions	323	23
 
 WITH missingSessions AS (
     SELECT DISTINCT e.session_id
@@ -233,3 +242,7 @@ JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily u
  AND u.event_date=e.event_date
  AND u.source_table=e.source_table
 WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17';
+
+output:
+missingSessionHits	missingPurchaseHits
+939	0
