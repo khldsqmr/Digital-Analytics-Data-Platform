@@ -163,3 +163,73 @@ END;
 output:
 
 [USER_RAISED_EXCEPTION] SESSION_SUMMARY_FACT does not contain every session_id referenced by Bronze SEF for the requested event window. Bronze SSF was not refreshed. SQLSTATE: 45000
+
+
+WITH requested AS (
+    SELECT
+        session_id,
+        MIN(event_date) AS firstEventDate,
+        MAX(event_date) AS lastEventDate,
+        COUNT(*) AS sefRows
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily
+    WHERE event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17'
+      AND session_id IS NOT NULL
+    GROUP BY session_id
+),
+missing AS (
+    SELECT r.*
+    FROM requested r
+    LEFT ANTI JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+      ON s.session_id = r.session_id
+)
+SELECT
+    (SELECT COUNT(*) FROM requested) AS totalSefSessions,
+    (SELECT COUNT(*) FROM missing) AS missingSsfSessions,
+    100D * (SELECT COUNT(*) FROM missing)
+         / NULLIF((SELECT COUNT(*) FROM requested),0) AS missingSessionPct,
+    (SELECT SUM(sefRows) FROM requested) AS totalSefRows,
+    (SELECT SUM(sefRows) FROM missing) AS missingSsfRows,
+    100D * (SELECT SUM(sefRows) FROM missing)
+         / NULLIF((SELECT SUM(sefRows) FROM requested),0) AS missingSefRowPct;
+
+
+         WITH missingSessions AS (
+    SELECT DISTINCT e.session_id
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
+    LEFT ANTI JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+      ON s.session_id=e.session_id
+    WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17'
+      AND e.session_id IS NOT NULL
+)
+SELECT
+    e.event_date,
+    e.source_table,
+    COUNT(*) AS missingSefRows,
+    COUNT(DISTINCT e.session_id) AS missingSessions
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
+JOIN missingSessions m
+  ON m.session_id=e.session_id
+WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17'
+GROUP BY e.event_date,e.source_table
+ORDER BY e.event_date,e.source_table;
+
+WITH missingSessions AS (
+    SELECT DISTINCT e.session_id
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
+    LEFT ANTI JOIN prd_dbi_analytics.silver_digital_interactions.session_summary_fact s
+      ON s.session_id=e.session_id
+    WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17'
+      AND e.session_id IS NOT NULL
+)
+SELECT
+    COUNT(*) AS missingSessionHits,
+    SUM(CASE WHEN COALESCE(TRY_CAST(u.event_purchase AS BIGINT),0)>0
+             THEN 1 ELSE 0 END) AS missingPurchaseHits
+FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionEventFact_daily e
+JOIN missingSessions m
+  ON m.session_id=e.session_id
+JOIN prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlUdiHits_daily u
+  ON u.row_identity_hash=e.row_identity_hash
+ AND u.event_date=e.event_date
+ AND u.source_table=e.source_table
+WHERE e.event_date BETWEEN DATE '2026-10-11' AND DATE '2026-10-17';
