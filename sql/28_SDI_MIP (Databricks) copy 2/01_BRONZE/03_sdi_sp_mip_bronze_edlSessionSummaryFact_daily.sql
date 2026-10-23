@@ -157,3 +157,9 @@ END;
 -- CALL prdrzranalytics.lab42.sdi_sp_mip_bronze_edlSessionSummaryFact_daily(p_asOfDate=>DATE '2026-10-03',p_eventWindowDays=>10,p_validateOnly=>FALSE);
 -- SELECT session_id,COUNT(*) AS rowCount FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily GROUP BY session_id HAVING COUNT(*)>1 LIMIT 100;
 -- SELECT source_table,COUNT(*) AS sessions,COUNT_IF(utm_source IS NOT NULL) AS sessionsWithUtmSource,COUNT_IF(session_start_date_pst IS NULL) AS missingSessionStartDatePst FROM prdrzranalytics.lab42.sdi_tbl_mip_bronze_edlSessionSummaryFact_daily GROUP BY source_table;
+
+
+
+output:
+
+[USER_RAISED_EXCEPTION] SESSION_SUMMARY_FACT does not contain every session_id referenced by Bronze SEF for the requested event window. Bronze SSF was not refreshed. SQLSTATE: 45000
