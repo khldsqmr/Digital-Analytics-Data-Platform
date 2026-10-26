@@ -12759,3 +12759,1632 @@ I’ve also added the new `filterProspectVsBase` column and currently populated 
 The API/frontend can start using `filterProspectVsBase` now with `All`.
 
 Next steps are to generate the `Prospect`, `Base`, and `Unknown` contexts, rebuild the affected Gold/App history, and validate the `All` results against the existing outputs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MinimizeMaximizeClose
+
+Qamar, Khalid
+
+Think deeper
+
+
+
+
+how can i have the knowledge graph with vector index etc?
+
+
+I mean i have an interface where each team inputs some sort of narrative.
+
+Reasoned for 1s
+You can turn each team’s narrative into a hybrid knowledge system: retain the original narrative, create searchable chunks and embeddings, then extract entities and relationships into a knowledge graph.
+
+Recommended architecture
+
+
+Team narrative interface
+        │
+        ▼
+Backend API
+        │
+        ▼
+Bronze: Original narrative
+        │
+        ├──► Silver: Searchable chunks ──► Vector index
+        │
+        └──► Silver: Entities + relationships ──► Knowledge graph
+                                                    │
+User question ──► Hybrid retriever ─────────────────┤
+                 Vector search + graph traversal    │
+                                                    ▼
+                                             LLM-generated answer
+                                             with source citations
+For your environment, I would use:
+
+Databricks Delta tables as the governed system of record.
+Databricks AI Search, previously Vector Search, for semantic and hybrid retrieval.
+Neo4j for the knowledge graph if you need real graph traversal.
+A Python backend that orchestrates retrieval and feeds the results to your React interface.
+Databricks AI Search can create a synchronized index from a Delta table and supports semantic search, keyword search, metadata filtering, reranking, and access controls.
+databricks
++2
+
+1. Store the submitted narrative
+Do not immediately convert the submission into only graph data. Keep the original narrative as the authoritative source.
+
+team_narratives
+Column	Example
+narrative_id	NAR-1042
+team_id	digital_media
+title	Q4 campaign performance update
+narrative_text	Full user submission
+author_email	Submitter
+submitted_at	Timestamp
+reporting_period	2026-Q4
+status	draft, approved, archived
+visibility_group	Team or security group
+version	3
+Add structured fields to the interface where possible. For example, ask teams to select:
+
+Reporting period
+Project or initiative
+Topic
+Products affected
+Status
+Confidentiality level
+This metadata significantly improves filtering and reduces the amount of information the LLM must infer.
+
+2. Create chunks and a vector index
+Split each narrative into meaningful sections, usually around 300 to 700 tokens, with approximately 50 to 100 tokens of overlap. Prefer heading- or paragraph-aware splitting instead of cutting text at arbitrary character counts.
+
+narrative_chunks
+
+
+chunk_id
+narrative_id
+team_id
+chunk_text
+section_name
+reporting_period
+visibility_group
+source_url
+embedding
+Create an AI Search index over chunk_text. Databricks supports Delta-sync indexes, meaning updates to the source Delta table can be synchronized into the search index. For a standard endpoint, the source generally needs Change Data Feed or row tracking enabled.
+databricks
++1
+
+Use hybrid search rather than vector-only search:
+
+
+
+results = index.similarity_search(
+    query_text="Which teams reported issues with the QGP pipeline?",
+    columns=[
+        "chunk_id",
+        "narrative_id",
+        "team_id",
+        "chunk_text",
+        "reporting_period"
+    ],
+    query_type="hybrid",
+    num_results=15
+)
+Hybrid retrieval is important because business narratives contain exact identifiers such as:
+
+Table names
+Pipeline names
+Metric IDs
+Project codes
+Product names
+Acronyms such as QGP, EDL, BQ, UC
+Vector similarity can interpret meaning, while keyword retrieval preserves exact matches. Databricks specifically positions hybrid search for content containing identifiers and specialized terminology.
+databricks
++1
+
+3. Define a controlled graph model
+Do not allow the LLM to invent unlimited node and relationship types. Start with a controlled ontology.
+
+Suggested nodes
+
+
+Team
+Person
+Narrative
+Project
+System
+Dataset
+Table
+Pipeline
+Metric
+Issue
+Decision
+Action
+Risk
+BusinessObjective
+ReportingPeriod
+Suggested relationships
+
+
+(Team)-[:SUBMITTED]->(Narrative)
+(Person)-[:AUTHORED]->(Narrative)
+(Narrative)-[:MENTIONS]->(System)
+(Narrative)-[:REPORTS]->(Issue)
+(Issue)-[:AFFECTS]->(Pipeline)
+(Issue)-[:AFFECTS]->(Table)
+(Issue)-[:IMPACTS]->(Metric)
+(Decision)-[:ADDRESSES]->(Issue)
+(Action)-[:RESOLVES]->(Issue)
+(Action)-[:ASSIGNED_TO]->(Person)
+(Project)-[:DEPENDS_ON]->(Dataset)
+(Table)-[:FEEDS]->(Dashboard)
+(Narrative)-[:FOR_PERIOD]->(ReportingPeriod)
+Example
+Narrative:
+
+The Digital Media team identified that the BQ-to-UC pipeline failure caused incorrect QGP forecast values. Sharan is investigating the issue.
+
+Extracted graph:
+
+
+
+(:Team {name: "Digital Media"})
+   -[:REPORTED]->
+(:Issue {name: "Incorrect QGP forecast values"})
+ 
+(:Issue)
+   -[:CAUSED_BY]->
+(:Pipeline {name: "BQ-to-UC pipeline"})
+ 
+(:Issue)
+   -[:IMPACTS]->
+(:MetricGroup {name: "QGP forecasts"})
+ 
+(:Person {name: "Sharan"})
+   -[:INVESTIGATING]->
+(:Issue)
+Every extracted node or relationship should carry provenance:
+
+
+
+source_narrative_id
+source_chunk_id
+extraction_timestamp
+extraction_model
+confidence_score
+valid_from
+valid_to
+review_status
+This lets the interface show exactly which narrative supports a relationship.
+
+4. Extract graph facts through an LLM
+After a narrative is submitted:
+
+Save the full narrative.
+Split it into chunks.
+Generate embeddings.
+Run entity and relationship extraction.
+Validate extracted output against your ontology.
+Resolve extracted entities to existing canonical entities.
+Write approved nodes and relationships into the graph.
+Require structured JSON from the extraction model:
+
+
+
+{
+  "entities": [
+    {
+      "temporary_id": "e1",
+      "type": "Pipeline",
+      "name": "BQ-to-UC pipeline",
+      "confidence": 0.96
+    },
+    {
+      "temporary_id": "e2",
+      "type": "Issue",
+      "name": "Incorrect QGP forecast values",
+      "confidence": 0.91
+    }
+  ],
+  "relationships": [
+    {
+      "source_id": "e2",
+      "type": "CAUSED_BY",
+      "target_id": "e1",
+      "confidence": 0.88,
+      "evidence": "caused by the BQ-to-UC pipeline failure"
+    }
+  ]
+}
+A practical acceptance rule might be:
+
+0.90 or higher: automatically accept low-risk factual links.
+0.70 to 0.89: accept provisionally or send for review.
+Below 0.70: do not write into the production graph.
+Always review sensitive relationships involving people, ownership, blame, compliance, or performance.
+5. Resolve duplicate entities
+Entity resolution will be one of the hardest parts.
+
+The following must not become separate graph nodes:
+
+
+
+BQ to UC
+BQ-to-UC
+BigQuery → Unity Catalog
+BigQuery to UC pipeline
+Create an entity registry:
+
+canonical_entities
+entity_id	entity_type	canonical_name	aliases
+PIPE-017	Pipeline	BQ-to-UC Pipeline	BQ to UC, BigQuery to UC
+Resolve an extracted entity using:
+
+Exact normalized-name match
+Alias match
+Vector similarity against known entity names and descriptions
+Context, such as associated team or workspace
+Human review if multiple candidates remain
+Avoid automatically merging entities based only on vector similarity. Two similarly described pipelines may still be different production assets.
+
+6. Combine graph and vector retrieval
+A user question should not query just one index.
+
+Example question
+What downstream metrics were affected by the recent BQ-to-UC failure, and which teams mentioned it?
+
+Retrieval process
+Vector search retrieves narrative chunks mentioning the failure.
+Entity resolution identifies the canonical BQ-to-UC Pipeline node.
+Graph traversal finds:
+Issues caused by the pipeline
+Metrics impacted
+Teams that reported those issues
+Actions and owners
+Retrieve the original supporting chunks.
+Send both text evidence and graph results to the LLM.
+Return an answer with links to the original submissions.
+A graph-enhanced vector pattern retrieves similar chunks and then uses graph traversal to expand from those chunks to connected entities. Neo4j documents this as a Vector plus Cypher retriever pattern.
+neo4j
++1
+
+Example Cypher:
+
+
+
+MATCH (p:Pipeline {canonical_name: $pipeline})
+      <-[:CAUSED_BY]-(i:Issue)
+      -[:IMPACTS]->(m:Metric)
+MATCH (t:Team)-[:REPORTED]->(i)
+RETURN
+    i.name AS issue,
+    collect(DISTINCT m.name) AS impacted_metrics,
+    collect(DISTINCT t.name) AS reporting_teams
+7. Where each part should reside
+Databricks
+Keep these in Delta/Unity Catalog:
+
+Original narratives
+Narrative versions
+Chunks
+Submission metadata
+Permissions
+Extracted candidate entities
+Extraction audit records
+Retrieval logs
+User feedback
+Evaluation results
+Create the vector index through Databricks AI Search. It supports querying through Python, REST, or the SQL vector_search() function.
+databricks
+
+Neo4j
+Keep these in the graph:
+
+Canonical entities
+Relationships
+Aliases
+Provenance links
+Temporal relationships
+Graph-level permissions where required
+Neo4j can also store embeddings directly on graph nodes and create a vector index over those properties.
+neo4j
+
+My recommendation
+Initially:
+
+Keep narrative embeddings in Databricks AI Search.
+Keep entity relationships in Neo4j.
+Keep the complete authoritative data and audit history in Delta tables.
+This separates responsibilities cleanly. Databricks handles governed data and semantic retrieval, while Neo4j handles multi-hop relationships. The two platforms provide integrations such as the Neo4j Spark connector for moving graph data to and from Databricks.
+neo4j
+
+8. MVP implementation
+Phase 1: Vector RAG, approximately 2 to 4 weeks
+Build:
+
+Narrative submission form
+Delta narrative table
+Chunking pipeline
+Databricks AI Search index
+Hybrid search API
+Answers with source citations
+Team and date filters
+Do this before implementing the graph. It provides immediate value and gives you real narratives from which to learn the ontology.
+
+Phase 2: Graph extraction, approximately 3 to 6 weeks
+Add:
+
+Entity and relationship extraction
+Controlled ontology
+Canonical entity registry
+Human review screen
+Neo4j graph
+Provenance tracking
+Phase 3: GraphRAG, approximately 2 to 4 weeks
+Add:
+
+Vector plus graph retrieval
+Multi-hop questions
+Timeline queries
+Conflict detection
+Entity pages
+Retrieval evaluation and monitoring
+The exact timeline depends mainly on enterprise provisioning, security approvals, service principals, and whether your Databricks workspace already has serverless compute and AI Search enabled.
+
+Most important design decision
+Do not treat every sentence as an unquestionable fact.
+
+Narratives can contain:
+
+Opinions
+Predictions
+Conflicting reports
+Outdated information
+Unconfirmed causes
+Different terminology for the same asset
+Model claims explicitly when needed:
+
+
+
+(Team)-[:ASSERTED]->(Claim)
+(Claim)-[:ABOUT]->(Pipeline)
+(Claim)-[:SUPPORTED_BY]->(NarrativeChunk)
+(Claim)-[:CONTRADICTS]->(Claim)
+That structure is safer than writing every extracted statement directly as a permanent graph fact. The original narrative remains available for verification, which is also a core advantage of RAG systems with source citations.
+databricks
+
+Practical first version
+For your interface, the best starting flow is:
+
+
+
+Narrative submission
+    → Delta table
+    → chunking
+    → Databricks AI Search
+    → hybrid search assistant
+    → entity extraction into candidate tables
+    → reviewed entities and relationships
+    → Neo4j
+    → GraphRAG
+This avoids overengineering the graph before you know what teams actually write, while keeping the design ready for knowledge-graph retrieval.
+
+
+
+
+
+Favicon typeFavicon typeFavicon type
+Sources
+
+Please make me understand using the real examples
+Let’s make this concrete using a realistic example from your environment: teams submit weekly narratives about pipelines, tables, metrics, dashboards, and issues.
+
+Real example: a team submits a narrative
+Suppose the Digital Media team enters this in your interface:
+
+The BQ-to-UC pipeline failed on October 23. Because of this, the QGP Gold table contained zero values for BOPIS activations. The Pulse dashboard was not published. Sharan is investigating the pipeline, and Khalid will validate the table after the pipeline is restored.
+
+This single paragraph contains several kinds of information:
+
+An event occurred
+A pipeline failed
+A table was affected
+A metric became incorrect
+A dashboard was not published
+Two people have responsibilities
+Your system processes this narrative in two complementary ways:
+
+Vector index: Helps find narratives with similar meaning.
+Knowledge graph: Records how the people, systems, tables, metrics, and issues are connected.
+1. What is stored initially?
+First, save the submission exactly as written.
+
+Narrative table
+narrative_id	team	submitted_at	narrative_text
+N-1001	Digital Media	2026-10-23	The BQ-to-UC pipeline failed...
+This is the source of truth.
+
+The system should never discard or overwrite the original narrative.
+
+2. What does the vector index do?
+The narrative is converted into a list of numbers called an embedding.
+
+Conceptually:
+
+
+
+"The BQ-to-UC pipeline failed and QGP values became zero"
+ 
+        ↓ Embedding model
+ 
+[0.018, -0.224, 0.731, 0.092, ...]
+The numbers represent the meaning of the text. You do not interpret them directly.
+
+Your system places this embedding in a vector index, such as Databricks AI Search. It can keep the vector index synchronized with a Delta source table and supports semantic, keyword, and hybrid retrieval.
+databricks
++1
+
+Why this is useful
+Later, a user asks:
+
+Why are the BOPIS numbers wrong?
+
+The original narrative does not contain the exact phrase“numbers wrong.” It says:
+
+“contained zero values for BOPIS activations”
+
+A normal keyword search may not connect these phrases. Vector search recognizes that they have similar meanings:
+
+
+
+User question:
+"Why are the BOPIS numbers wrong?"
+ 
+Similar narrative:
+"QGP Gold table contained zero values for BOPIS activations."
+The vector index returns narrative N-1001.
+
+Another example
+User asks:
+
+Were any dashboards delayed by a data infrastructure problem?
+
+The original paragraph says:
+
+Pipeline failed
+Dashboard was not published
+It does not use the words:
+
+Delayed
+Data infrastructure problem
+Vector similarity can still find it because the concepts are related.
+
+3. Why isn't the vector index enough?
+A vector index finds relevant text, but it does not reliably maintain an exact map of all dependencies.
+
+For example, suppose you ask:
+
+Which dashboard was affected by the BQ-to-UC pipeline through the QGP Gold table?
+
+Answering this requires following a chain:
+
+
+
+BQ-to-UC Pipeline
+    → affects QGP Gold Table
+        → provides BOPIS Activation Metric
+            → appears in Pulse Dashboard
+A vector search may retrieve the paragraph, but it does not inherently understand or enforce this dependency chain.
+
+That is where the knowledge graph helps.
+
+4. What goes into the knowledge graph?
+The extraction process identifies the “things” in the narrative.
+
+Entities extracted
+Type	Extracted entity
+Team	Digital Media
+Pipeline	BQ-to-UC Pipeline
+Table	QGP Gold
+Metric	BOPIS Activations
+Dashboard	Pulse
+Person	Sharan
+Person	Khalid
+Issue	Zero BOPIS values
+Event	Pipeline failure
+Each entity becomes a node.
+
+
+
+(Pipeline: BQ-to-UC)
+(Table: QGP Gold)
+(Metric: BOPIS Activations)
+(Dashboard: Pulse)
+(Person: Sharan)
+(Person: Khalid)
+(Issue: Zero BOPIS values)
+ 
+The extraction process then identifies relationships.
+
+
+
+BQ-to-UC Pipeline ──FAILED_ON──> October 23
+BQ-to-UC Pipeline ──AFFECTED──> QGP Gold
+QGP Gold ──CONTAINS──> BOPIS Activations
+BOPIS Activations ──DISPLAYED_IN──> Pulse Dashboard
+Zero BOPIS Values ──CAUSED_BY──> BQ-to-UC Pipeline
+Sharan ──INVESTIGATING──> Pipeline Failure
+Khalid ──VALIDATES──> QGP Gold
+Digital Media ──SUBMITTED──> Narrative N-1001
+Visually:
+
+
+
+                    ┌────────────────────┐
+                    │ BQ-to-UC Pipeline  │
+                    └──────────┬─────────┘
+                               │ AFFECTED
+                               ▼
+                    ┌────────────────────┐
+                    │    QGP Gold Table  │
+                    └──────────┬─────────┘
+                               │ CONTAINS
+                               ▼
+                    ┌────────────────────┐
+                    │ BOPIS Activations  │
+                    └──────────┬─────────┘
+                               │ DISPLAYED_IN
+                               ▼
+                    ┌────────────────────┐
+                    │  Pulse Dashboard   │
+                    └────────────────────┘
+ 
+Sharan ──INVESTIGATING──> Pipeline Failure
+Khalid ──VALIDATES───────> QGP Gold Table
+That connected structure is your knowledge graph.
+
+5. How vector search and the graph work together
+Suppose a manager asks:
+
+What happened to the Pulse dashboard, and who is handling it?
+
+Step A: Vector search
+The question is converted to an embedding.
+
+The vector index searches the narrative chunks and returns:
+
+
+
+Narrative N-1001
+Similarity score: 0.89
+It found the narrative because it mentions:
+
+Pulse dashboard
+Pipeline failure
+Investigation
+Validation
+Step B: Identify graph entities
+The system recognizes:
+
+
+
+Pulse dashboard → Dashboard node: DASH-021
+Step C: Traverse the graph
+The system runs a graph query equivalent to:
+
+
+
+Start at Pulse Dashboard
+← find metrics displayed in it
+← find tables supplying those metrics
+← find pipelines affecting those tables
+← find issues associated with those pipelines
+← find people assigned to those issues
+The result is:
+
+
+
+Pulse Dashboard
+← BOPIS Activations
+← QGP Gold Table
+← BQ-to-UC Pipeline
+← Pipeline Failure
+ 
+Sharan → investigating pipeline failure
+Khalid → validating QGP Gold after recovery
+Step D: Generate the final answer
+The assistant responds:
+
+The Pulse dashboard was not published because the BQ-to-UC pipeline failure caused the QGP Gold table to contain zero BOPIS activation values. Sharan is investigating the pipeline issue, and Khalid will validate the Gold table after service is restored.
+
+Source: Digital Media narrative submitted October 23.
+
+This is GraphRAG:
+
+
+
+Vector retrieval
+    +
+Graph traversal
+    +
+Original source text
+    +
+LLM-generated response
+Neo4j describes a similar pattern where vector search finds relevant chunk nodes and a Cypher query retrieves the connected graph context.
+neo4j
+
+6. Example with multiple team narratives
+The graph becomes more valuable when different teams submit related information.
+
+Narrative from the Data Engineering team
+The BQ-to-UC pipeline failed because the service principal token expired. The QGP Gold and App Serving tables were not refreshed. The token was renewed at 3:00 PM.
+
+Narrative from the Digital Media team
+BOPIS activation values are showing zero in QGP Gold. The Pulse dashboard will remain unpublished until validation is complete.
+
+Narrative from the Reporting team
+The Pulse dashboard refresh was skipped because the App Serving table was stale.
+
+Now you have three separate narratives.
+
+Vector search may retrieve all three because they are semantically related.
+
+The graph connects them:
+
+
+
+Expired Service Principal Token
+               │
+               │ CAUSED
+               ▼
+      BQ-to-UC Pipeline Failure
+               │
+        ┌──────┴────────┐
+        │               │
+        ▼               ▼
+   QGP Gold       App Serving Table
+        │               │
+        ▼               ▼
+Zero BOPIS Values    Stale Data
+        │               │
+        └──────┬────────┘
+               ▼
+      Pulse Dashboard Not Published
+Now a leader can ask:
+
+What was the root cause of the Pulse dashboard delay?
+
+The system can walk backward through the graph:
+
+
+
+Pulse dashboard not published
+    ← stale or incorrect serving data
+        ← tables not refreshed
+            ← BQ-to-UC pipeline failed
+                ← service principal token expired
+The response can say:
+
+The Pulse dashboard delay ultimately originated from an expired service principal token. That caused the BQ-to-UC pipeline to fail, which prevented the QGP Gold and App Serving tables from refreshing. As a result, the dashboard had zero or stale values and was not published.
+
+A plain vector system might show three related paragraphs. The knowledge graph assembles the causal chain.
+
+7. What happens when narratives conflict?
+Suppose one team writes:
+
+The Pulse dashboard failed because the QGP calculation was incorrect.
+
+Another team writes:
+
+The calculation was correct. The actual cause was an expired pipeline token.
+
+You should not immediately write both as established graph facts:
+
+
+
+Incorrect Calculation ──CAUSED──> Dashboard Failure
+Expired Token ──CAUSED──> Dashboard Failure
+Instead, create claims:
+
+
+
+Narrative N-1005
+    ──ASSERTS──>
+Claim: Incorrect calculation caused failure
+ 
+Narrative N-1006
+    ──ASSERTS──>
+Claim: Expired token caused failure
+Then track claim status:
+
+Claim	Status	Confidence
+Incorrect calculation caused failure	Disputed	0.40
+Expired token caused failure	Confirmed	0.98
+After the investigation, someone can mark the second claim as confirmed.
+
+This is important because team narratives are not always verified facts.
+
+8. What your actual tables could look like
+Table 1: team_narratives
+
+
+narrative_id: N-1001
+team_id: digital_media
+author: khalid
+submitted_at: 2026-10-23 14:00
+status: approved
+text: "The BQ-to-UC pipeline failed..."
+Table 2: narrative_chunks
+
+
+chunk_id: C-1001-01
+narrative_id: N-1001
+chunk_text: "The BQ-to-UC pipeline failed..."
+team_id: digital_media
+period: 2026-W43
+visibility_group: digital_media_users
+This is the table you index in Databricks AI Search.
+
+Table 3: extracted_entities
+
+
+entity_id: PIPELINE-014
+entity_type: Pipeline
+canonical_name: BQ-to-UC Pipeline
+source_chunk_id: C-1001-01
+confidence: 0.98
+Table 4: extracted_relationships
+
+
+source_entity: PIPELINE-014
+relationship: AFFECTED
+target_entity: TABLE-022
+source_chunk_id: C-1001-01
+confidence: 0.94
+review_status: approved
+Graph representation
+
+
+(:Pipeline {id: "PIPELINE-014", name: "BQ-to-UC Pipeline"})
+-[:AFFECTED {
+    source_chunk_id: "C-1001-01",
+    confidence: 0.94
+}]->
+(:Table {id: "TABLE-022", name: "QGP Gold"})
+9. What the user experiences in your interface
+Your interface could have two main areas.
+
+Team submission screen
+
+
+Team: Digital Media
+Reporting week: October 23, 2026
+Related systems: BQ-to-UC Pipeline, QGP, Pulse
+ 
+Narrative:
+[The BQ-to-UC pipeline failed...]
+ 
+[Save draft] [Submit]
+After submission, the system could suggest:
+
+
+
+Detected entities:
+✓ BQ-to-UC Pipeline
+✓ QGP Gold
+✓ BOPIS Activations
+✓ Pulse Dashboard
+✓ Sharan
+✓ Khalid
+ 
+Detected relationship:
+BQ-to-UC Pipeline → affected → QGP Gold
+ 
+Is this correct?
+[Approve] [Edit]
+This human confirmation makes the graph substantially more reliable.
+
+Search and assistant screen
+A user asks:
+
+Show all issues affecting Pulse this month.
+
+The system returns:
+
+
+
+1. BQ-to-UC pipeline failure
+   Impact: Zero BOPIS values
+   Status: Under investigation
+   Owner: Sharan
+ 
+2. App Serving table stale
+   Impact: Dashboard refresh skipped
+   Status: Resolved
+ 
+3. QGP validation delayed
+   Impact: Dashboard publication held
+   Owner: Khalid
+The user can click each result to see:
+
+Original narrative
+Submitting team
+Date
+Connected tables and metrics
+Current status
+Supporting evidence
+10. The simplest way to understand the components
+Think of them as three different capabilities:
+
+Component	Simple meaning	Example
+Delta table	Stores what teams wrote	“QGP has zero BOPIS values”
+Vector index	Finds text with similar meaning	“Why are BOPIS numbers wrong?”
+Knowledge graph	Connects business objects	Pipeline → Table → Metric → Dashboard
+And the assistant uses all three:
+
+
+
+Question:
+"Why was Pulse not published?"
+ 
+Vector index:
+Finds relevant narratives
+ 
+Knowledge graph:
+Builds dependency and cause chain
+ 
+Delta table:
+Provides exact evidence and source
+ 
+LLM:
+Writes a concise answer
+My practical recommendation
+Do not begin by building the full graph.
+
+Start with one focused domain:
+
+
+
+Team
+Narrative
+Pipeline
+Table
+Metric
+Dashboard
+Issue
+Person
+And only these relationships:
+
+
+
+Team ──SUBMITTED──> Narrative
+Narrative ──MENTIONS──> Entity
+Pipeline ──FEEDS──> Table
+Table ──SUPPLIES──> Metric
+Metric ──DISPLAYED_IN──> Dashboard
+Issue ──AFFECTS──> Entity
+Person ──OWNS──> Issue
+Build the vector search first. Then process approximately 100 to 300 real narratives and determine which entities and relationships occur consistently before expanding the ontology. This limits duplicate entities, invented relationships, and an unmaintainable graph.
+
+
+
+
+
+Favicon typeFavicon type
+Sources
+
+give edxample using pulse dashboard which has metrics like UPV etc. Also, media spend using MFC source or QGP data using QGP source. We do have source of truth tables in databricks gold tables. Now we would also have their narratives in the interface. then how do we connect everything? similarly if two teams report the same metric having different numbers, then we should be able to send or create a ticket to those teams to verify and fix
+
+Below is a concrete design using the Pulse dashboard, UPV, Media Spend from MFC, QGP metrics, Databricks Gold tables, and team-submitted narratives.
+
+Assumption: UPV means Unique Product Views. If your UPV definition differs, the architecture remains the same, but its metric contract would change.
+
+1. Separate facts, definitions, and narratives
+Your system will contain three interconnected knowledge types:
+
+Knowledge type	Example	Authority
+Measured fact	UPV = 12,450,000 for week ending Oct 23	Gold table
+Metric definition	UPV is distinct product-detail-page views	Metric registry
+Narrative or claim	Digital team says UPV declined because tracking failed	Team narrative
+The key principle is:
+
+Gold tables provide the official numbers. Narratives explain, question, or add context to those numbers.
+
+A narrative should not overwrite the source-of-truth value.
+
+2. Example source-of-truth data
+Suppose the Pulse dashboard displays these metrics:
+
+Metric	Official source	Example Gold table
+UPV	Web analytics Gold	gold.pulse_web_metrics
+Media Spend	MFC	gold.mfc_media_spend
+QGP Forecast	QGP	gold.qgp_metrics
+BOPIS Activations	QGP	gold.qgp_metrics
+For one reporting week, the official records might look like this:
+
+Pulse web metrics
+
+
+metric_date:       2026-10-23
+metric_id:         UPV
+metric_value:      12,450,000
+source_system:     Adobe Analytics
+gold_table:        gold.pulse_web_metrics
+data_status:       certified
+load_timestamp:    2026-10-24 05:10:00
+Media spend
+
+
+metric_date:       2026-10-23
+metric_id:         MEDIA_SPEND
+metric_value:      3,850,000
+currency:          USD
+source_system:     MFC
+gold_table:        gold.mfc_media_spend
+data_status:       certified
+load_timestamp:    2026-10-24 06:20:00
+QGP forecast
+
+
+metric_date:       2026-10-23
+metric_id:         BOPIS_ACTIVATIONS_FORECAST
+metric_value:      82,500
+source_system:     QGP
+gold_table:        gold.qgp_metrics
+data_status:       certified
+load_timestamp:    2026-10-24 07:00:00
+Those Gold-table values are the system’s official observations.
+
+3. Create a metric registry
+Before connecting narratives, you need a central record describing each metric.
+
+metric_registry
+Field	UPV example
+metric_id	UPV
+metric_name	Unique Product Views
+dashboard	Pulse
+business_definition	Distinct product views during the reporting period
+source_system	Adobe Analytics
+gold_table	gold.pulse_web_metrics
+value_column	metric_value
+date_column	metric_date
+metric_owner_team	Digital Analytics
+data_owner_team	Data Engineering
+tolerance_type	Percentage
+tolerance_value	0.5%
+certification_status	Certified
+The corresponding records for Media Spend and QGP could be:
+
+
+
+MEDIA_SPEND
+  Source system: MFC
+  Gold table: gold.mfc_media_spend
+  Business owner: Media Finance
+  Data owner: Media Data Engineering
+  Tolerance: $1,000 or 0.1%
+ 
+BOPIS_ACTIVATIONS_FORECAST
+  Source system: QGP
+  Gold table: gold.qgp_metrics
+  Business owner: QGP Planning
+  Data owner: QGP Data Engineering
+  Tolerance: 1%
+This registry tells the system:
+
+What a metric means
+Where the official value resides
+Which team owns it
+Which team should investigate
+What difference constitutes a discrepancy
+4. How the knowledge graph connects everything
+The graph would contain these nodes:
+
+
+
+Dashboard: Pulse
+ 
+Metric: UPV
+Metric: Media Spend
+Metric: BOPIS Activations Forecast
+ 
+Source System: Adobe Analytics
+Source System: MFC
+Source System: QGP
+ 
+Gold Table: gold.pulse_web_metrics
+Gold Table: gold.mfc_media_spend
+Gold Table: gold.qgp_metrics
+ 
+Team: Digital Analytics
+Team: Media Finance
+Team: QGP Planning
+Team: Data Engineering
+ 
+Narrative: N-2001
+Narrative: N-2002
+ 
+Metric Observation:
+UPV, 2026-10-23, 12,450,000
+The relationships would be:
+
+
+
+Pulse ──DISPLAYS──> UPV
+Pulse ──DISPLAYS──> Media Spend
+Pulse ──DISPLAYS──> BOPIS Activations Forecast
+ 
+UPV ──SOURCED_FROM──> Adobe Analytics
+UPV ──STORED_IN──> gold.pulse_web_metrics
+ 
+Media Spend ──SOURCED_FROM──> MFC
+Media Spend ──STORED_IN──> gold.mfc_media_spend
+ 
+BOPIS Activations Forecast ──SOURCED_FROM──> QGP
+BOPIS Activations Forecast ──STORED_IN──> gold.qgp_metrics
+ 
+Digital Analytics ──OWNS──> UPV
+Media Finance ──OWNS──> Media Spend
+QGP Planning ──OWNS──> BOPIS Activations Forecast
+Visually:
+
+
+
+                         ┌────────────────┐
+                         │ Pulse Dashboard│
+                         └───────┬────────┘
+                                 │ DISPLAYS
+               ┌─────────────────┼──────────────────┐
+               ▼                 ▼                  ▼
+             UPV            Media Spend       BOPIS Forecast
+               │                 │                  │
+       SOURCED_FROM      SOURCED_FROM        SOURCED_FROM
+               ▼                 ▼                  ▼
+      Adobe Analytics           MFC                 QGP
+               │                 │                  │
+          STORED_IN         STORED_IN          STORED_IN
+               ▼                 ▼                  ▼
+     pulse_web_metrics   mfc_media_spend      qgp_metrics
+The graph stores the connections, while the actual millions of daily observations remain in Databricks tables.
+
+Do not create a graph node for every data row unless there is a strong use case. Store only important observations, discrepancies, claims, incidents, and references in the graph.
+
+5. Connect a narrative to the metric and official value
+Suppose the Digital Analytics team submits:
+
+UPV for the week ending October 23 was 12.1 million, down 8% week over week. We believe the decline is related to missing product-page tracking on the mobile application.
+
+The interface stores the original narrative:
+
+team_narratives
+
+
+narrative_id:       N-2001
+team_id:            DIGITAL_ANALYTICS
+reporting_week:     2026-10-23
+narrative_text:     "UPV for the week ending..."
+submitted_by:       digital_analyst@company.com
+submitted_value:    12,100,000
+submitted_metric:   UPV
+status:              submitted
+An extraction model identifies:
+
+
+
+{
+  "metric": "UPV",
+  "period_end": "2026-10-23",
+  "reported_value": 12100000,
+  "unit": "views",
+  "direction": "down",
+  "change_percentage": -8,
+  "possible_cause": "Missing mobile product-page tracking"
+}
+The graph then connects the narrative:
+
+
+
+Digital Analytics
+    ──SUBMITTED──> Narrative N-2001
+ 
+Narrative N-2001
+    ──ABOUT_METRIC──> UPV
+ 
+Narrative N-2001
+    ──FOR_PERIOD──> 2026-10-23
+ 
+Narrative N-2001
+    ──CLAIMS_VALUE──> 12,100,000
+ 
+Narrative N-2001
+    ──CLAIMS_CAUSE──> Missing Mobile Tracking
+But the official Gold value is:
+
+
+
+UPV = 12,450,000
+Therefore, the system compares:
+
+
+
+Narrative value: 12,100,000
+Gold value:      12,450,000
+Difference:        -350,000
+Difference %:         -2.81%
+If the configured tolerance is 0.5%, this becomes a discrepancy.
+
+6. Create a discrepancy instead of changing the metric
+The system creates a discrepancy record:
+
+metric_discrepancies
+
+
+discrepancy_id:       DISC-1042
+metric_id:            UPV
+reporting_period:     2026-10-23
+gold_value:           12,450,000
+reported_value:       12,100,000
+absolute_difference:  -350,000
+percent_difference:   -2.81%
+tolerance_percent:    0.50%
+gold_table:           gold.pulse_web_metrics
+narrative_id:         N-2001
+reported_by_team:     Digital Analytics
+metric_owner_team:    Digital Analytics
+data_owner_team:      Data Engineering
+status:                Open
+severity:              Medium
+Graph relationships:
+
+
+
+Narrative N-2001
+    ──TRIGGERED──> Discrepancy DISC-1042
+ 
+Discrepancy DISC-1042
+    ──AFFECTS──> UPV
+ 
+Discrepancy DISC-1042
+    ──COMPARES_AGAINST──> Gold Observation 12,450,000
+ 
+Discrepancy DISC-1042
+    ──ASSIGNED_TO──> Digital Analytics
+ 
+Discrepancy DISC-1042
+    ──REQUIRES_SUPPORT_FROM──> Data Engineering
+This preserves both values without pretending that both are official.
+
+7. When two teams report different UPV numbers
+Suppose two submissions arrive for the same week.
+
+Team A: Digital Analytics
+UPV was 12.1 million for the week ending October 23.
+
+Team B: Ecommerce Reporting
+UPV was 12.8 million for the week ending October 23.
+
+Gold table
+
+
+UPV = 12.45 million
+Your comparison table becomes:
+
+Reporter	Reported UPV	Difference from Gold	Difference %
+Digital Analytics	12.10M	-350K	-2.81%
+Ecommerce Reporting	12.80M	+350K	+2.81%
+Gold source of truth	12.45M	0	0%
+The system detects two conditions:
+
+Condition 1: Narrative versus Gold discrepancy
+Both narratives exceed the 0.5% tolerance.
+
+Condition 2: Cross-team disagreement
+
+
+12.80M - 12.10M = 700,000
+The teams differ by approximately 5.79% relative to 12.10M.
+
+The system should create one parent discrepancy, not two unrelated tickets:
+
+
+
+Parent discrepancy:
+DISC-1042: Conflicting UPV values for 2026-10-23
+ 
+Associated claims:
+Digital Analytics: 12.10M
+Ecommerce Reporting: 12.80M
+Gold: 12.45M
+This prevents duplicate ticket noise.
+
+8. Ticket workflow
+A workflow job can send the parent discrepancy to Asana, Jira, or ServiceNow.
+
+Example ticket
+Title
+
+
+
+[Pulse][UPV][2026-10-23] Conflicting reported values
+Description
+
+
+
+A discrepancy was detected for Pulse metric UPV.
+ 
+Reporting period:
+Week ending 2026-10-23
+ 
+Certified Gold value:
+12,450,000
+ 
+Gold source:
+gold.pulse_web_metrics
+ 
+Team-reported values:
+- Digital Analytics: 12,100,000
+- Ecommerce Reporting: 12,800,000
+ 
+Maximum difference from Gold:
+350,000 or 2.81%
+ 
+Difference between team submissions:
+700,000
+ 
+Configured tolerance:
+0.50%
+ 
+Requested actions:
+1. Confirm that all teams are using the same UPV definition.
+2. Confirm the date range and timezone.
+3. Confirm whether mobile and web traffic are both included.
+4. Confirm whether bot filtering is applied.
+5. Update the narrative or raise a Gold-table data issue.
+Assignments
+
+
+
+Primary owner: UPV metric owner
+Collaborators:
+- Digital Analytics representative
+- Ecommerce Reporting representative
+- Data Engineering owner
+ 
+Target response: 1 business day
+Target resolution: 3 business days
+Ticket creation rule
+Do not create a ticket for every tiny difference.
+
+For example:
+
+
+
+Create ticket when:
+absolute percentage difference > metric tolerance
+ 
+OR:
+two teams report values differing by > cross-team tolerance
+ 
+OR:
+certified metric changes after narrative approval
+ 
+OR:
+a narrative alleges missing, stale, failed, or incomplete data
+Recommended starting thresholds:
+
+Metric	Suggested tolerance
+UPV	0.5%
+Media Spend	Greater of $1,000 or 0.1%
+QGP forecast	1%
+Activation counts	0.5%
+Percentage metrics	0.1 percentage point
+These should be configured per metric, not hard-coded globally.
+
+9. Media Spend example using MFC
+Suppose Media Finance submits:
+
+Media Spend was $3.92 million for the week ending October 23. Spend was above plan because of increased paid social investment.
+
+The MFC Gold table contains:
+
+
+
+MFC Media Spend = $3.85 million
+Comparison:
+
+
+
+Narrative value: $3,920,000
+MFC Gold value:  $3,850,000
+Difference:         $70,000
+Difference %:          1.82%
+If the tolerance is the greater of $1,000 or 0.1%, the submission fails validation.
+
+But the system should check dimensions before opening a ticket:
+
+
+
+Currency:         USD versus CAD
+Spend type:       Actual versus committed
+Channels:         All media versus paid social only
+Date range:       Calendar week versus fiscal week
+Fees included:    Yes versus no
+Source version:   Latest MFC load versus prior load
+The ticket might reveal that the narrative includes committed spend, while Pulse displays settled actual spend.
+
+That means the values are both potentially correct but represent different measures:
+
+
+
+MFC_ACTUAL_SPEND:    $3.85M
+MFC_COMMITTED_SPEND: $3.92M
+The resolution should be:
+
+Map the narrative to MFC_COMMITTED_SPEND, or
+Change the narrative to use actual spend, or
+Show both metrics in Pulse with clear labels.
+This is why each metric requires a metric ID, definition, grain, unit, and dimensions.
+
+10. QGP example
+Suppose the QGP team submits:
+
+BOPIS activations are forecast at 85,000 for the week ending October 23.
+
+The certified QGP Gold table contains:
+
+
+
+BOPIS_ACTIVATIONS_FORECAST = 82,500
+Difference:
+
+
+
+85,000 - 82,500 = 2,500
+Difference % = 3.03%
+The graph connects:
+
+
+
+Pulse
+  ──DISPLAYS──> BOPIS Activations Forecast
+ 
+BOPIS Activations Forecast
+  ──SOURCED_FROM──> QGP
+ 
+QGP
+  ──PUBLISHES_TO──> gold.qgp_metrics
+ 
+QGP Narrative
+  ──CLAIMS_VALUE──> 85,000
+ 
+Gold Observation
+  ──HAS_VALUE──> 82,500
+ 
+Discrepancy
+  ──COMPARES──> Both values
+Before ticketing, compare the correct scenario and forecast version:
+
+
+
+Scenario:       Baseline versus stretch
+Forecast run:   Monday run versus Friday run
+Period:         Fiscal week versus calendar week
+Version:        Current versus archived forecast
+Metric:         BOPIS-only versus all activations
+A frequent issue is not bad data, but teams using different forecast versions.
+
+11. How the vector index participates
+The vector index is not responsible for numerical validation. SQL is.
+
+Use the components as follows:
+
+SQL and Delta tables
+Use for:
+
+Exact value comparison
+Date and period matching
+Tolerance calculations
+Duplicate detection
+Ticket-triggering rules
+Knowledge graph
+Use for:
+
+Pulse displays UPV
+UPV comes from a specific Gold table
+Digital Analytics owns UPV
+A discrepancy affects Pulse
+Multiple narratives refer to the same issue
+A prior incident affected the same metric and pipeline
+Vector index
+Use for semantic questions and causes:
+
+Has anyone previously reported missing mobile tracking affecting UPV?
+
+It finds narratives such as:
+
+“Product-page events were absent from the app.”
+“Mobile PDP instrumentation stopped firing.”
+“UPV declined after the application release.”
+These may not contain the exact phrase “missing mobile tracking,” but they express similar concepts.
+
+12. Recommended end-to-end processing flow
+
+
+1. Team submits narrative
+          │
+          ▼
+2. Save original narrative in Delta
+          │
+          ├──► Create chunks and embeddings
+          │           │
+          │           ▼
+          │      Vector index
+          │
+          ├──► Extract metric, period, value and claims
+          │
+          ▼
+3. Resolve metric against metric_registry
+          │
+          ▼
+4. Query certified Gold table
+          │
+          ▼
+5. Compare submitted value with Gold value
+          │
+          ├── Within tolerance
+          │       └── Mark narrative as validated
+          │
+          └── Outside tolerance
+                  └── Create or update discrepancy
+                             │
+                             ▼
+                       Create ticket
+                             │
+                             ▼
+                   Notify affected teams
+                             │
+                             ▼
+                  Teams verify and resolve
+                             │
+                             ▼
+                  Update ticket and graph
+13. Improve the narrative interface
+Do not ask teams to enter everything in an unstructured text box. Use both structured fields and narrative text.
+
+Suggested submission form
+
+
+Team:               [Digital Analytics]
+Reporting period:   [Week ending 2026-10-23]
+Dashboard:          [Pulse]
+Metric:             [UPV]
+Reported value:     [12,100,000]
+Unit:               [Views]
+Source used:        [Adobe Analytics]
+Data version:       [Final]
+Narrative:
+[UPV declined 8% because...]
+ 
+Is data provisional? [Yes / No]
+The structured selections provide reliable connections:
+
+
+
+metric_id + reporting_period + dimensions
+The narrative provides the explanation.
+
+Do not rely on an LLM to extract numbers and metric names when users can select them directly from the metric registry.
+
+14. Minimum tables to build
+I would start with these seven Delta tables:
+
+
+
+1. metric_registry
+2. metric_source_mapping
+3. metric_observations_gold
+4. team_narratives
+5. narrative_metric_claims
+6. metric_discrepancies
+7. discrepancy_tickets
+Important keys:
+
+
+
+metric_key =
+metric_id
++ period_start
++ period_end
++ geography
++ channel
++ platform
++ scenario
++ currency
++ forecast_version
+UPV for web-only is not necessarily comparable to UPV for web plus mobile. Media actual spend is not comparable to committed spend. QGP baseline is not comparable to the stretch scenario.
+
+15. The complete conceptual connection
+
+
+                        Pulse Dashboard
+                              │
+                           DISPLAYS
+                              │
+               ┌──────────────┼──────────────┐
+               ▼              ▼              ▼
+              UPV        Media Spend     QGP Forecast
+               │              │              │
+            Gold table     MFC Gold       QGP Gold
+               │              │              │
+       Certified values and observations
+               ▲              ▲              ▲
+               │              │              │
+       Validate narrative metric claims
+               ▲              ▲              ▲
+               │              │              │
+        Team narratives stored in interface
+                              │
+                   Extract context and causes
+                              │
+                        Vector index
+                              │
+                    Knowledge graph links
+                              │
+              Discrepancy and ticket workflow
+The core design is:
+
+A narrative connects to a registered metric and reporting period. The metric registry identifies the certified Gold source. SQL validates any claimed number. The graph stores ownership and relationships. The vector index makes explanations searchable. A discrepancy workflow creates one coordinated ticket when values do not agree.
+
+
+
+
+
+
+
+Turn this into a solution architecture diagram
+
+Create the Databricks table schemas
+
+
+
+Message Copilot
+
+
+AI-generated content may be incorrect
