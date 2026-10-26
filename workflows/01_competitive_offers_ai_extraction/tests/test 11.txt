@@ -12735,3 +12735,13 @@ WITH scopedHits AS (
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
           ON lp.sessionId=a.sessionId
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
+objectName	rowCount	nullRows	nonAllRows	filterValues
+goldOverview	126	0	0	All
+goldBreakouts	15481641	0	0	All
+appOverviewCards	72	0	0	All
+appOverviewTrend	216	0	0	All
+appOverviewToplineMovers	157257	0	0	All
+appOverviewConversionFunnel	72	0	0	All
