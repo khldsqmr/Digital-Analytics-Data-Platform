@@ -12745,3 +12745,17 @@ appOverviewCards	72	0	0	All
 appOverviewTrend	216	0	0	All
 appOverviewToplineMovers	157257	0	0	All
 appOverviewConversionFunnel	72	0	0	All
+
+Quick update: additional MIP data has now been backfilled from Oct 10 through Oct 17.
+
+I’ve also added the new `filterProspectVsBase` column and currently populated it as `All` across:
+- `sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long`
+- `sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long`
+- `sdi_tbl_mip_gold_appOverviewCards_wide`
+- `sdi_tbl_mip_gold_appOverviewTrend_long`
+- `sdi_tbl_mip_gold_appOverviewToplineMovers_long`
+- `sdi_tbl_mip_gold_appOverviewConversionFunnel_long`
+
+The API/frontend can start using `filterProspectVsBase` now with `All`.
+
+Next steps are to generate the `Prospect`, `Base`, and `Unknown` contexts, rebuild the affected Gold/App history, and validate the `All` results against the existing outputs.
