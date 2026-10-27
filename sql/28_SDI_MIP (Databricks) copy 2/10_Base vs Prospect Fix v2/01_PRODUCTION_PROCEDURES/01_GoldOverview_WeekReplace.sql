@@ -661,3 +661,5 @@ END;
 -- result = spark.sql(call_sql).collect()
 -- ============================================================================
 
+
+[UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `Prospect` cannot be resolved. Did you mean one of the following? [`a`.`lob`, `x`.`nbv`, `a`.`device`, `x`.`orders`, `a`.`lobList`]. SQLSTATE: 42703; line 25, pos 48
