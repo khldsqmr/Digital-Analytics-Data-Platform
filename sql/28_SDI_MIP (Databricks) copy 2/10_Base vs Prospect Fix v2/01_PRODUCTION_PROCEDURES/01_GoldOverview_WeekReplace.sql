@@ -1169,3 +1169,38 @@ targetWeekStartDate	targetWeekEndDate	fiscalQuarterLabel	fiscalWeekCode	weekLabe
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	All	All	Prospect	ordersAcquisition	Orders Acquisition	count	number	pct	57947	null	null	null	null	null	null	null	true	false	0	false	null	null	2026-10-27T16:44:45.909+00:00
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	All	All	All	checkoutToOrderRate	Checkout start → Order	ratio	percent	pp	382980	584984	null	null	null	null	null	null	true	false	0	false	null	null	2026-10-27T16:44:45.909+00:00
 2026-09-06	2026-09-12	2026 Q3	2026Q3W36	W36 · 6 to 12 Sep	All	All	Prospect	vrCalls	VR Call	count	number	pct	92978	null	null	null	null	null	null	null	true	false	0	false	null	null	2026-10-27T16:44:45.909+00:00
+
+
+
+WITH checks AS (
+    SELECT
+        targetWeekStartDate,
+        metricName,
+        filterProspectVsBase,
+        thisWeekNumerator,
+        thisWeekDenominator
+    FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
+    WHERE targetWeekStartDate BETWEEN DATE '2026-09-06'
+                                  AND DATE '2026-10-11'
+),
+reconciled AS (
+    SELECT
+        targetWeekStartDate,
+        metricName,
+        MAX(CASE WHEN filterProspectVsBase='All'
+            THEN thisWeekNumerator END) AS allNumerator,
+        SUM(CASE WHEN filterProspectVsBase<>'All'
+            THEN thisWeekNumerator ELSE 0 END) AS segmentedNumerator,
+        MAX(CASE WHEN filterProspectVsBase='All'
+            THEN thisWeekDenominator END) AS allDenominator,
+        SUM(CASE WHEN filterProspectVsBase<>'All'
+            THEN thisWeekDenominator ELSE 0 END) AS segmentedDenominator
+    FROM checks
+    GROUP BY targetWeekStartDate,metricName
+)
+SELECT *,
+       allNumerator-segmentedNumerator AS numeratorDifference,
+       allDenominator-segmentedDenominator AS denominatorDifference
+FROM reconciled
+WHERE ABS(COALESCE(allNumerator,0)-COALESCE(segmentedNumerator,0))>0.000001
+   OR ABS(COALESCE(allDenominator,0)-COALESCE(segmentedDenominator,0))>0.000001;
