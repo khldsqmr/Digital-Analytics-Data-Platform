@@ -10,7 +10,7 @@
 --   Uses atomic whole-week Delta scoped REPLACE WHERE; no row-level MERGE.
 --   Runtime scope dates are rendered into EXECUTE IMMEDIATE using make_date().
 --   Procedure-local week DATE variables are used directly in normal source filters
---   and in the bounded MERGE delete condition.
+--   and in the scoped REPLACE WHERE predicate.
 --
 -- CALL COMPATIBILITY:
 --   - Manual SQL: CALL with DATE / INT / BOOLEAN literals.
@@ -310,7 +310,7 @@ targetWeekStartDate         DATE,
             FROM targetCalendar
         ),
         visitorWeek AS (
-            -- Action-driven so filterProspectVsBase=''All'' preserves the exact existing
+            -- Action-driven so filterProspectVsBase=\'All\' preserves the exact existing
             -- Overview topline even if an attribute row is unexpectedly absent. Any
             -- unmatched attribute row is visible under Unknown rather than dropping data.
             SELECT
@@ -318,9 +318,9 @@ targetWeekStartDate         DATE,
                 x.weekEndDate,
                 x.visitorId,
                 CASE
-                    WHEN trim(a.prospectVsBase)=''Prospect'' THEN ''Prospect''
-                    WHEN trim(a.prospectVsBase) IN (''Customer'',''Care'') THEN ''Base''
-                    ELSE ''Unknown''
+                    WHEN trim(a.prospectVsBase)=\'Prospect\' THEN \'Prospect\'
+                    WHEN trim(a.prospectVsBase) IN (\'Customer\',\'Care\') THEN \'Base\'
+                    ELSE \'Unknown\'
                 END AS prospectVsBase,
                 x.nbv,
                 x.sessionCount,
@@ -349,7 +349,7 @@ targetWeekStartDate         DATE,
                 fview.filterProspectVsBase
             FROM visitorWeek v
             LATERAL VIEW explode(
-                array_distinct(array(''All'',v.prospectVsBase))
+                array_distinct(array(\'All\',v.prospectVsBase))
             ) fview AS filterProspectVsBase
         ),
         filterContexts AS (
@@ -389,21 +389,21 @@ targetWeekStartDate         DATE,
             FROM weeklyWide
             LATERAL VIEW stack(
               15,
-              ''nbv'',               cast(nbv AS DOUBLE),
-              ''sessionCount'',      cast(sessionCount AS DOUBLE),
-              ''pageViews'',         cast(pageViews AS DOUBLE),
-              ''nbvBuyFlow'',        cast(nbvBuyFlow AS DOUBLE),
-              ''nbvConfigure'',      cast(nbvConfigure AS DOUBLE),
-              ''nbvCheckoutStart'',  cast(nbvCheckoutStart AS DOUBLE),
-              ''orders'',            cast(orders AS DOUBLE),
-              ''ordersAcquisition'', cast(ordersAcquisition AS DOUBLE),
-              ''ordersBase'',        cast(ordersBase AS DOUBLE),
-              ''ordersUnassisted'',  cast(ordersUnassisted AS DOUBLE),
-              ''ordersAssisted'',    cast(ordersAssisted AS DOUBLE),
-              ''vrCalls'',           cast(vrCalls AS DOUBLE),
-              ''vrChats'',           cast(vrChats AS DOUBLE),
-              ''storeLocator'',      cast(storeLocator AS DOUBLE),
-              ''orderCount'',        cast(orderCount AS DOUBLE)
+              \'nbv\',               cast(nbv AS DOUBLE),
+              \'sessionCount\',      cast(sessionCount AS DOUBLE),
+              \'pageViews\',         cast(pageViews AS DOUBLE),
+              \'nbvBuyFlow\',        cast(nbvBuyFlow AS DOUBLE),
+              \'nbvConfigure\',      cast(nbvConfigure AS DOUBLE),
+              \'nbvCheckoutStart\',  cast(nbvCheckoutStart AS DOUBLE),
+              \'orders\',            cast(orders AS DOUBLE),
+              \'ordersAcquisition\', cast(ordersAcquisition AS DOUBLE),
+              \'ordersBase\',        cast(ordersBase AS DOUBLE),
+              \'ordersUnassisted\',  cast(ordersUnassisted AS DOUBLE),
+              \'ordersAssisted\',    cast(ordersAssisted AS DOUBLE),
+              \'vrCalls\',           cast(vrCalls AS DOUBLE),
+              \'vrChats\',           cast(vrChats AS DOUBLE),
+              \'storeLocator\',      cast(storeLocator AS DOUBLE),
+              \'orderCount\',        cast(orderCount AS DOUBLE)
             ) s AS metricName,metricValue
         ),
         weeklyIngredients AS (
@@ -417,7 +417,7 @@ targetWeekStartDate         DATE,
             FROM weeklyCounts c
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static m
               ON m.metricName=c.metricName
-             AND m.metricKind=''count''
+             AND m.metricKind=\'count\'
              AND m.isActive
             UNION ALL
             SELECT
@@ -429,7 +429,7 @@ targetWeekStartDate         DATE,
               max(CASE WHEN n.metricName=r.denominatorMetric THEN n.metricValue END) AS denominatorValue
             FROM weeklyCounts n
             INNER JOIN prdrzranalytics.lab42.sdi_vw_mip_control_metricCatalog_static r
-              ON r.metricKind=''ratio''
+              ON r.metricKind=\'ratio\'
              AND r.isActive
              AND n.metricName IN (r.numeratorMetric,r.denominatorMetric)
             GROUP BY n.weekStartDate,n.filterProspectVsBase,r.metricName
@@ -467,8 +467,8 @@ targetWeekStartDate         DATE,
               t.fiscalQuarterLabel,
               t.fiscalWeekCode,
               t.weekLabel,
-              ''All'' AS filterLob,
-              ''All'' AS filterPlatform,
+              \'All\' AS filterLob,
+              \'All\' AS filterPlatform,
               f.filterProspectVsBase,
               m.metricName,
               m.metricLabel,
@@ -476,13 +476,13 @@ targetWeekStartDate         DATE,
               m.displayFormat,
               m.changeUnit,
               CASE WHEN t.thisWeekDataAvailable THEN coalesce(cur.numeratorValue,0D) END AS thisWeekNumerator,
-              CASE WHEN m.metricKind=''ratio'' AND t.thisWeekDataAvailable THEN coalesce(cur.denominatorValue,0D) END AS thisWeekDenominator,
+              CASE WHEN m.metricKind=\'ratio\' AND t.thisWeekDataAvailable THEN coalesce(cur.denominatorValue,0D) END AS thisWeekDenominator,
               CASE WHEN t.priorWeekDataAvailable THEN coalesce(pw.numeratorValue,0D) END AS priorWeekNumerator,
-              CASE WHEN m.metricKind=''ratio'' AND t.priorWeekDataAvailable THEN coalesce(pw.denominatorValue,0D) END AS priorWeekDenominator,
+              CASE WHEN m.metricKind=\'ratio\' AND t.priorWeekDataAvailable THEN coalesce(pw.denominatorValue,0D) END AS priorWeekDenominator,
               CASE WHEN t.fourWeekTrendWeekCount>0 THEN coalesce(sum(fw.numeratorValue),0D) END AS fourWeekTrendNumerator,
-              CASE WHEN m.metricKind=''ratio'' AND t.fourWeekTrendWeekCount>0 THEN coalesce(sum(fw.denominatorValue),0D) END AS fourWeekTrendDenominator,
+              CASE WHEN m.metricKind=\'ratio\' AND t.fourWeekTrendWeekCount>0 THEN coalesce(sum(fw.denominatorValue),0D) END AS fourWeekTrendDenominator,
               CASE WHEN t.sameWeekLyDataAvailable THEN coalesce(ly.numeratorValue,0D) END AS sameWeekLyNumerator,
-              CASE WHEN m.metricKind=''ratio'' AND t.sameWeekLyDataAvailable THEN coalesce(ly.denominatorValue,0D) END AS sameWeekLyDenominator,
+              CASE WHEN m.metricKind=\'ratio\' AND t.sameWeekLyDataAvailable THEN coalesce(ly.denominatorValue,0D) END AS sameWeekLyDenominator,
               t.thisWeekDataAvailable,
               t.priorWeekDataAvailable,
               t.fourWeekTrendWeekCount,

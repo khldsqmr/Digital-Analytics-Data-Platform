@@ -927,11 +927,11 @@ BEGIN
 
 
 
-                ''priorWeek'' AS comparisonType,
+                \'priorWeek\' AS comparisonType,
 
 
 
-                ''Prior week'' AS comparisonLabel,
+                \'Prior week\' AS comparisonLabel,
 
 
 
@@ -967,11 +967,11 @@ BEGIN
 
 
 
-                ''fourWeek'' AS comparisonType,
+                \'fourWeek\' AS comparisonType,
 
 
 
-                ''4-wk trend'' AS comparisonLabel,
+                \'4-wk trend\' AS comparisonLabel,
 
 
 
@@ -987,7 +987,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''count'' AND fourWeekTrendWeekCount>0
+                    WHEN metricKind=\'count\' AND fourWeekTrendWeekCount>0
 
 
 
@@ -1007,7 +1007,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''count'' THEN NULL
+                    WHEN metricKind=\'count\' THEN NULL
 
 
 
@@ -1035,11 +1035,11 @@ BEGIN
 
 
 
-                ''lastYear'' AS comparisonType,
+                \'lastYear\' AS comparisonType,
 
 
 
-                ''Same wk LY'' AS comparisonLabel,
+                \'Same wk LY\' AS comparisonLabel,
 
 
 
@@ -1087,7 +1087,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''ratio'' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
 
 
 
@@ -1107,7 +1107,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''ratio'' THEN try_divide(comparisonNumerator,comparisonDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(comparisonNumerator,comparisonDenominator)
 
 
 
@@ -1163,11 +1163,11 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-comparisonValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-comparisonValue)
 
 
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
 
 
 
@@ -1247,23 +1247,23 @@ BEGIN
 
 
 
-                    WHEN displayFormat=''percent'' THEN concat(format_number(100D*currentValue,1),''%'')
+                    WHEN displayFormat=\'percent\' THEN concat(format_number(100D*currentValue,1),\'%\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(currentValue)>=1000000000D THEN concat(format_number(currentValue/1000000000D,1),''B'')
+                    WHEN displayFormat=\'number\' AND abs(currentValue)>=1000000000D THEN concat(format_number(currentValue/1000000000D,1),\'B\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(currentValue)>=1000000D THEN concat(format_number(currentValue/1000000D,1),''M'')
+                    WHEN displayFormat=\'number\' AND abs(currentValue)>=1000000D THEN concat(format_number(currentValue/1000000D,1),\'M\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(currentValue)>=1000D THEN concat(format_number(currentValue/1000D,0),''K'')
+                    WHEN displayFormat=\'number\' AND abs(currentValue)>=1000D THEN concat(format_number(currentValue/1000D,0),\'K\')
 
 
 
-                    WHEN displayFormat=''number'' THEN format_number(currentValue,0)
+                    WHEN displayFormat=\'number\' THEN format_number(currentValue,0)
 
 
 
@@ -1283,23 +1283,23 @@ BEGIN
 
 
 
-                    WHEN displayFormat=''percent'' THEN concat(format_number(100D*comparisonValue,1),''%'')
+                    WHEN displayFormat=\'percent\' THEN concat(format_number(100D*comparisonValue,1),\'%\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(comparisonValue)>=1000000000D THEN concat(format_number(comparisonValue/1000000000D,1),''B'')
+                    WHEN displayFormat=\'number\' AND abs(comparisonValue)>=1000000000D THEN concat(format_number(comparisonValue/1000000000D,1),\'B\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(comparisonValue)>=1000000D THEN concat(format_number(comparisonValue/1000000D,1),''M'')
+                    WHEN displayFormat=\'number\' AND abs(comparisonValue)>=1000000D THEN concat(format_number(comparisonValue/1000000D,1),\'M\')
 
 
 
-                    WHEN displayFormat=''number'' AND abs(comparisonValue)>=1000D THEN concat(format_number(comparisonValue/1000D,0),''K'')
+                    WHEN displayFormat=\'number\' AND abs(comparisonValue)>=1000D THEN concat(format_number(comparisonValue/1000D,0),\'K\')
 
 
 
-                    WHEN displayFormat=''number'' THEN format_number(comparisonValue,0)
+                    WHEN displayFormat=\'number\' THEN format_number(comparisonValue,0)
 
 
 
@@ -1319,11 +1319,11 @@ BEGIN
 
 
 
-                    WHEN metricKind=''ratio'' THEN concat(
+                    WHEN metricKind=\'ratio\' THEN concat(
 
 
 
-                        CASE WHEN 100D*absoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN 100D*absoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1331,7 +1331,7 @@ BEGIN
 
 
 
-                        '' pp''
+                        \' pp\'
 
 
 
@@ -1343,7 +1343,7 @@ BEGIN
 
 
 
-                        CASE WHEN absoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN absoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1351,7 +1351,7 @@ BEGIN
 
 
 
-                        ''B''
+                        \'B\'
 
 
 
@@ -1363,7 +1363,7 @@ BEGIN
 
 
 
-                        CASE WHEN absoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN absoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1371,7 +1371,7 @@ BEGIN
 
 
 
-                        ''M''
+                        \'M\'
 
 
 
@@ -1383,7 +1383,7 @@ BEGIN
 
 
 
-                        CASE WHEN absoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN absoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1391,7 +1391,7 @@ BEGIN
 
 
 
-                        ''K''
+                        \'K\'
 
 
 
@@ -1403,7 +1403,7 @@ BEGIN
 
 
 
-                        CASE WHEN absoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN absoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1427,11 +1427,11 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pp'' THEN concat(
+                    WHEN changeUnit=\'pp\' THEN concat(
 
 
 
-                        CASE WHEN changeValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN changeValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1439,7 +1439,7 @@ BEGIN
 
 
 
-                        '' pp''
+                        \' pp\'
 
 
 
@@ -1447,11 +1447,11 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pct'' THEN concat(
+                    WHEN changeUnit=\'pct\' THEN concat(
 
 
 
-                        CASE WHEN changeValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN changeValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -1459,7 +1459,7 @@ BEGIN
 
 
 
-                        ''%''
+                        \'%\'
 
 
 

@@ -481,7 +481,7 @@ BEGIN
 
                     WHEN NOT g.thisWeekDataAvailable THEN NULL
 
-                    WHEN m.metricKind=''ratio''
+                    WHEN m.metricKind=\'ratio\'
 
                         THEN try_divide(g.thisWeekNumerator,g.thisWeekDenominator)
 
@@ -495,7 +495,7 @@ BEGIN
 
                     WHEN NOT g.priorWeekDataAvailable THEN NULL
 
-                    WHEN m.metricKind=''ratio''
+                    WHEN m.metricKind=\'ratio\'
 
                         THEN try_divide(g.priorWeekNumerator,g.priorWeekDenominator)
 
@@ -509,7 +509,7 @@ BEGIN
 
                     WHEN g.fourWeekTrendWeekCount IS NULL OR g.fourWeekTrendWeekCount<=0 THEN NULL
 
-                    WHEN m.metricKind=''ratio''
+                    WHEN m.metricKind=\'ratio\'
 
                         THEN try_divide(
 
@@ -535,7 +535,7 @@ BEGIN
 
                     WHEN NOT g.sameWeekLyDataAvailable THEN NULL
 
-                    WHEN m.metricKind=''ratio''
+                    WHEN m.metricKind=\'ratio\'
 
                         THEN try_divide(g.sameWeekLyNumerator,g.sameWeekLyDenominator)
 
@@ -569,7 +569,7 @@ BEGIN
 
              AND f.filterPlatform=g.filterPlatform
 
-             AND g.filterProspectVsBase=''All''
+             AND g.filterProspectVsBase=\'All\'
 
              AND f.metricName=g.metricName
 
@@ -585,9 +585,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR priorWeekValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-priorWeekValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-priorWeekValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D)
 
                     ELSE NULL
 
@@ -599,9 +599,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-fourWeekValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-fourWeekValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D)
 
                     ELSE NULL
 
@@ -613,9 +613,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR lastYearValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-lastYearValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-lastYearValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,lastYearValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,lastYearValue)-1D)
 
                     ELSE NULL
 
@@ -675,11 +675,11 @@ BEGIN
 
                     WHEN currentValue IS NULL THEN NULL
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
-                        THEN concat(format_number(100D*currentValue,1),''%'')
+                        THEN concat(format_number(100D*currentValue,1),\'%\')
 
-                    WHEN displayFormat=''number''
+                    WHEN displayFormat=\'number\'
 
                         THEN format_number(currentValue,0)
 
@@ -693,27 +693,27 @@ BEGIN
 
                     WHEN priorWeekChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
                         THEN concat(
 
-                            CASE WHEN priorWeekChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN priorWeekChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(priorWeekChangeValue,1),
 
-                            '' pp''
+                            \' pp\'
 
                         )
 
-                    WHEN changeUnit=''pct''
+                    WHEN changeUnit=\'pct\'
 
                         THEN concat(
 
-                            CASE WHEN priorWeekChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN priorWeekChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(priorWeekChangeValue,1),
 
-                            ''%''
+                            \'%\'
 
                         )
 
@@ -727,27 +727,27 @@ BEGIN
 
                     WHEN fourWeekChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
                         THEN concat(
 
-                            CASE WHEN fourWeekChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN fourWeekChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(fourWeekChangeValue,1),
 
-                            '' pp''
+                            \' pp\'
 
                         )
 
-                    WHEN changeUnit=''pct''
+                    WHEN changeUnit=\'pct\'
 
                         THEN concat(
 
-                            CASE WHEN fourWeekChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN fourWeekChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(fourWeekChangeValue,1),
 
-                            ''%''
+                            \'%\'
 
                         )
 
@@ -761,27 +761,27 @@ BEGIN
 
                     WHEN lastYearChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
                         THEN concat(
 
-                            CASE WHEN lastYearChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN lastYearChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(lastYearChangeValue,1),
 
-                            '' pp''
+                            \' pp\'
 
                         )
 
-                    WHEN changeUnit=''pct''
+                    WHEN changeUnit=\'pct\'
 
                         THEN concat(
 
-                            CASE WHEN lastYearChangeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN lastYearChangeValue>0D THEN \'+\' ELSE \'\' END,
 
                             format_number(lastYearChangeValue,1),
 
-                            ''%''
+                            \'%\'
 
                         )
 
@@ -795,11 +795,11 @@ BEGIN
 
                     WHEN forecastValue IS NULL THEN NULL
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
-                        THEN concat(format_number(100D*forecastValue,1),''%'')
+                        THEN concat(format_number(100D*forecastValue,1),\'%\')
 
-                    WHEN displayFormat=''number''
+                    WHEN displayFormat=\'number\'
 
                         THEN format_number(forecastValue,0)
 

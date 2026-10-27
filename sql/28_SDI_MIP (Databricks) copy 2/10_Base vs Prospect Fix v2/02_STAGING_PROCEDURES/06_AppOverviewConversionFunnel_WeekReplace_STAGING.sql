@@ -897,19 +897,19 @@ BEGIN
 
 
 
-                (''nbvBuyFlowPerNbv'',        ''Total NBV → buy flow'',          10),
+                (\'nbvBuyFlowPerNbv\',        \'Total NBV → buy flow\',          10),
 
 
 
-                (''buyFlowToConfigureRate'',  ''Buy flow → configure'',          20),
+                (\'buyFlowToConfigureRate\',  \'Buy flow → configure\',          20),
 
 
 
-                (''configureToCheckoutRate'', ''Configure → checkout start'',    30),
+                (\'configureToCheckoutRate\', \'Configure → checkout start\',    30),
 
 
 
-                (''checkoutToOrderRate'',     ''Checkout start → order placed'', 40)
+                (\'checkoutToOrderRate\',     \'Checkout start → order placed\', 40)
 
 
 
@@ -1033,27 +1033,27 @@ BEGIN
 
 
 
-                  ''nbv'',
+                  \'nbv\',
 
 
 
-                  ''orders'',
+                  \'orders\',
 
 
 
-                  ''nbvBuyFlowPerNbv'',
+                  \'nbvBuyFlowPerNbv\',
 
 
 
-                  ''buyFlowToConfigureRate'',
+                  \'buyFlowToConfigureRate\',
 
 
 
-                  ''configureToCheckoutRate'',
+                  \'configureToCheckoutRate\',
 
 
 
-                  ''checkoutToOrderRate''
+                  \'checkoutToOrderRate\'
 
 
 
@@ -1241,11 +1241,11 @@ BEGIN
 
 
 
-                ''priorWeek'' AS comparisonType,
+                \'priorWeek\' AS comparisonType,
 
 
 
-                ''Prior week'' AS comparisonLabel,
+                \'Prior week\' AS comparisonLabel,
 
 
 
@@ -1293,11 +1293,11 @@ BEGIN
 
 
 
-                ''fourWeek'' AS comparisonType,
+                \'fourWeek\' AS comparisonType,
 
 
 
-                ''4-wk trend'' AS comparisonLabel,
+                \'4-wk trend\' AS comparisonLabel,
 
 
 
@@ -1317,7 +1317,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''count'' AND fourWeekTrendWeekCount>0
+                    WHEN metricKind=\'count\' AND fourWeekTrendWeekCount>0
 
 
 
@@ -1337,7 +1337,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''count'' THEN NULL
+                    WHEN metricKind=\'count\' THEN NULL
 
 
 
@@ -1373,11 +1373,11 @@ BEGIN
 
 
 
-                ''lastYear'' AS comparisonType,
+                \'lastYear\' AS comparisonType,
 
 
 
-                ''Same wk LY'' AS comparisonLabel,
+                \'Same wk LY\' AS comparisonLabel,
 
 
 
@@ -1433,7 +1433,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''ratio'' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
 
 
 
@@ -1457,7 +1457,7 @@ BEGIN
 
 
 
-                    WHEN metricKind=''ratio'' THEN try_divide(comparisonNumerator,comparisonDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(comparisonNumerator,comparisonDenominator)
 
 
 
@@ -1501,11 +1501,11 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-comparisonValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-comparisonValue)
 
 
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,comparisonValue)-1D)
 
 
 
@@ -1557,11 +1557,11 @@ BEGIN
 
 
 
-                max(CASE WHEN metricName=''nbv'' THEN currentValue END) AS currentTraffic,
+                max(CASE WHEN metricName=\'nbv\' THEN currentValue END) AS currentTraffic,
 
 
 
-                max(CASE WHEN metricName=''nbv'' THEN comparisonValue END) AS comparisonTraffic,
+                max(CASE WHEN metricName=\'nbv\' THEN comparisonValue END) AS comparisonTraffic,
 
 
 
@@ -1569,11 +1569,11 @@ BEGIN
 
 
 
-                max(CASE WHEN metricName=''orders'' THEN currentValue END) AS currentOrders,
+                max(CASE WHEN metricName=\'orders\' THEN currentValue END) AS currentOrders,
 
 
 
-                max(CASE WHEN metricName=''orders'' THEN comparisonValue END) AS comparisonOrders
+                max(CASE WHEN metricName=\'orders\' THEN comparisonValue END) AS comparisonOrders
 
 
 
@@ -1949,11 +1949,11 @@ BEGIN
 
 
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
 
 
-                        THEN concat(format_number(100D*currentValue,1),''%'')
+                        THEN concat(format_number(100D*currentValue,1),\'%\')
 
 
 
@@ -1961,7 +1961,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),''\\\\\\\\.0$'',''''),''B'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),\'\\\\\\\\.0$\',\'\'),\'B\')
 
 
 
@@ -1969,7 +1969,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000000D,1),''\\\\\\\\.0$'',''''),''M'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000000D,1),\'\\\\\\\\.0$\',\'\'),\'M\')
 
 
 
@@ -1977,7 +1977,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000D,1),''\\\\\\\\.0$'',''''),''K'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000D,1),\'\\\\\\\\.0$\',\'\'),\'K\')
 
 
 
@@ -2001,11 +2001,11 @@ BEGIN
 
 
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
 
 
-                        THEN concat(format_number(100D*comparisonValue,1),''%'')
+                        THEN concat(format_number(100D*comparisonValue,1),\'%\')
 
 
 
@@ -2013,7 +2013,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(comparisonValue/1000000000D,1),''\\\\\\\\.0$'',''''),''B'')
+                        THEN concat(regexp_replace(format_number(comparisonValue/1000000000D,1),\'\\\\\\\\.0$\',\'\'),\'B\')
 
 
 
@@ -2021,7 +2021,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(comparisonValue/1000000D,1),''\\\\\\\\.0$'',''''),''M'')
+                        THEN concat(regexp_replace(format_number(comparisonValue/1000000D,1),\'\\\\\\\\.0$\',\'\'),\'M\')
 
 
 
@@ -2029,7 +2029,7 @@ BEGIN
 
 
 
-                        THEN concat(regexp_replace(format_number(comparisonValue/1000D,1),''\\\\\\\\.0$'',''''),''K'')
+                        THEN concat(regexp_replace(format_number(comparisonValue/1000D,1),\'\\\\\\\\.0$\',\'\'),\'K\')
 
 
 
@@ -2053,7 +2053,7 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
 
 
@@ -2061,7 +2061,7 @@ BEGIN
 
 
 
-                            CASE WHEN changeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN changeValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -2069,7 +2069,7 @@ BEGIN
 
 
 
-                            ''pp''
+                            \'pp\'
 
 
 
@@ -2077,7 +2077,7 @@ BEGIN
 
 
 
-                    WHEN changeUnit=''pct''
+                    WHEN changeUnit=\'pct\'
 
 
 
@@ -2085,7 +2085,7 @@ BEGIN
 
 
 
-                            CASE WHEN changeValue>0D THEN ''+'' ELSE '''' END,
+                            CASE WHEN changeValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -2093,7 +2093,7 @@ BEGIN
 
 
 
-                            ''%''
+                            \'%\'
 
 
 
@@ -2125,7 +2125,7 @@ BEGIN
 
 
 
-                        CASE WHEN orderChangeValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN orderChangeValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -2169,7 +2169,7 @@ BEGIN
 
 
 
-                        CASE WHEN trafficEffectValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN trafficEffectValue>0D THEN \'+\' ELSE \'\' END,
 
 
 
@@ -2213,7 +2213,7 @@ BEGIN
 
 
 
-                        CASE WHEN conversionEffectValue>0D THEN ''+'' ELSE '''' END,
+                        CASE WHEN conversionEffectValue>0D THEN \'+\' ELSE \'\' END,
 
 
 

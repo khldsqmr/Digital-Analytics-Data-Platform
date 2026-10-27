@@ -560,7 +560,7 @@ BEGIN
             ' AND ',
             v_scopeEndSql,
             '
-              AND (filterProspectVsBase=''All'' OR breakoutType<>''prospectVsBase'')
+              AND (filterProspectVsBase=\'All\' OR breakoutType<>\'prospectVsBase\')
 
         ),
 
@@ -718,7 +718,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
 
                     ELSE thisWeekNumerator
 
@@ -726,7 +726,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
 
                     ELSE priorWeekNumerator
 
@@ -738,7 +738,7 @@ BEGIN
 
                     WHEN fourWeekTrendWeekCount<=0 THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
 
                     -- STRICT AFTER BACKFILL: ELSE try_divide(fourWeekTrendNumerator,4D)
 
@@ -748,7 +748,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
 
                     ELSE sameWeekLyNumerator
 
@@ -768,7 +768,7 @@ BEGIN
 
                     WHEN NOT thisWeekDataAvailable THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(thisWeekNumerator,thisWeekDenominator)
 
                     ELSE thisWeekNumerator
 
@@ -778,7 +778,7 @@ BEGIN
 
                     WHEN NOT priorWeekDataAvailable THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
 
                     ELSE priorWeekNumerator
 
@@ -790,7 +790,7 @@ BEGIN
 
                     WHEN fourWeekTrendWeekCount<=0 THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
 
                     -- STRICT AFTER BACKFILL: ELSE try_divide(fourWeekTrendNumerator,4D)
 
@@ -802,7 +802,7 @@ BEGIN
 
                     WHEN NOT sameWeekLyDataAvailable THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
 
                     ELSE sameWeekLyNumerator
 
@@ -810,7 +810,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(peerSetNumerator,peerSetDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(peerSetNumerator,peerSetDenominator)
 
                     ELSE peerSetNumerator
 
@@ -826,9 +826,9 @@ BEGIN
 
                 r.*,
 
-                ''priorWeek'' AS comparisonType,
+                \'priorWeek\' AS comparisonType,
 
-                ''Prior week'' AS comparisonLabel,
+                \'Prior week\' AS comparisonLabel,
 
                 10 AS comparisonSortOrder,
 
@@ -848,9 +848,9 @@ BEGIN
 
                 r.*,
 
-                ''fourWeek'' AS comparisonType,
+                \'fourWeek\' AS comparisonType,
 
-                ''4-wk trend'' AS comparisonLabel,
+                \'4-wk trend\' AS comparisonLabel,
 
                 20 AS comparisonSortOrder,
 
@@ -868,7 +868,7 @@ BEGIN
 
                 CASE
 
-                    WHEN r.metricKind=''count'' AND r.fourWeekTrendWeekCount>0
+                    WHEN r.metricKind=\'count\' AND r.fourWeekTrendWeekCount>0
 
                         THEN try_divide(r.fourWeekTrendNumerator,cast(r.fourWeekTrendWeekCount AS DOUBLE))
 
@@ -878,7 +878,7 @@ BEGIN
 
                 CASE
 
-                    WHEN r.metricKind=''count'' THEN NULL
+                    WHEN r.metricKind=\'count\' THEN NULL
 
                     ELSE r.fourWeekTrendDenominator
 
@@ -892,9 +892,9 @@ BEGIN
 
                 r.*,
 
-                ''lastYear'' AS comparisonType,
+                \'lastYear\' AS comparisonType,
 
-                ''Same wk LY'' AS comparisonLabel,
+                \'Same wk LY\' AS comparisonLabel,
 
                 30 AS comparisonSortOrder,
 
@@ -934,21 +934,21 @@ BEGIN
 
                 CASE c.comparisonType
 
-                    WHEN ''priorWeek'' THEN t.toplinePriorWeekValue
+                    WHEN \'priorWeek\' THEN t.toplinePriorWeekValue
 
-                    WHEN ''fourWeek'' THEN t.toplineFourWeekValue
+                    WHEN \'fourWeek\' THEN t.toplineFourWeekValue
 
-                    WHEN ''lastYear'' THEN t.toplineLastYearValue
+                    WHEN \'lastYear\' THEN t.toplineLastYearValue
 
                 END AS selectedToplineComparisonValue,
 
                 CASE c.comparisonType
 
-                    WHEN ''priorWeek'' THEN t.priorWeekDenominator
+                    WHEN \'priorWeek\' THEN t.priorWeekDenominator
 
-                    WHEN ''fourWeek'' THEN t.fourWeekTrendDenominator
+                    WHEN \'fourWeek\' THEN t.fourWeekTrendDenominator
 
-                    WHEN ''lastYear'' THEN t.sameWeekLyDenominator
+                    WHEN \'lastYear\' THEN t.sameWeekLyDenominator
 
                 END AS selectedToplineComparisonDenominator
 
@@ -984,9 +984,9 @@ BEGIN
 
                       OR selectedComparisonValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-selectedComparisonValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-selectedComparisonValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,selectedComparisonValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,selectedComparisonValue)-1D)
 
                 END AS selectedChangeValue,
 
@@ -998,11 +998,11 @@ BEGIN
 
                       OR selectedComparisonValue IS NULL THEN NULL
 
-                    WHEN metricKind=''count'' THEN
+                    WHEN metricKind=\'count\' THEN
 
                         100D*try_divide(currentValue-selectedComparisonValue,selectedToplineComparisonValue)
 
-                    WHEN metricKind=''ratio'' THEN
+                    WHEN metricKind=\'ratio\' THEN
 
                         100D*(
 
@@ -1016,9 +1016,9 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''count'' THEN ''pct''
+                    WHEN metricKind=\'count\' THEN \'pct\'
 
-                    WHEN metricKind=''ratio'' THEN ''pp''
+                    WHEN metricKind=\'ratio\' THEN \'pp\'
 
                 END AS impactOnToplineUnit
 
@@ -1070,9 +1070,9 @@ BEGIN
 
                     WHEN impactRankWithinBreakout<=100
 
-                        THEN concat(''VALUE::'',coalesce(breakoutValue,''(null)''))
+                        THEN concat(\'VALUE::\',coalesce(breakoutValue,\'(null)\'))
 
-                    ELSE ''OTHER::REMAINDER''
+                    ELSE \'OTHER::REMAINDER\'
 
                 END AS displayBucketKey,
 
@@ -1080,7 +1080,7 @@ BEGIN
 
                     WHEN impactRankWithinBreakout<=100 THEN breakoutValue
 
-                    ELSE ''(Other)''
+                    ELSE \'(Other)\'
 
                 END AS displayBreakoutValue,
 
@@ -1162,7 +1162,7 @@ BEGIN
 
                 -- Peer counterfactuals are valid only for a real raw member.
 
-                -- A synthetic ''(Other)'' bucket can contain multiple overlapping
+                -- A synthetic \'(Other)\' bucket can contain multiple overlapping
 
                 -- populations, so its peer counterfactual is intentionally NULL.
 
@@ -1264,7 +1264,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(currentNumerator,currentDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(currentNumerator,currentDenominator)
 
                     ELSE currentNumerator
 
@@ -1272,7 +1272,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(priorWeekNumerator,priorWeekDenominator)
 
                     ELSE priorWeekNumerator
 
@@ -1284,7 +1284,7 @@ BEGIN
 
                     WHEN fourWeekTrendWeekCount<=0 THEN NULL
 
-                    WHEN metricKind=''ratio'' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(fourWeekTrendNumerator,fourWeekTrendDenominator)
 
                     -- STRICT AFTER BACKFILL: ELSE try_divide(fourWeekTrendNumerator,4D)
 
@@ -1294,7 +1294,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(sameWeekLyNumerator,sameWeekLyDenominator)
 
                     ELSE sameWeekLyNumerator
 
@@ -1302,7 +1302,7 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''ratio'' THEN try_divide(peerSetNumerator,peerSetDenominator)
+                    WHEN metricKind=\'ratio\' THEN try_divide(peerSetNumerator,peerSetDenominator)
 
                     ELSE peerSetNumerator
 
@@ -1320,23 +1320,23 @@ BEGIN
 
                 CASE comparisonType
 
-                    WHEN ''priorWeek'' THEN priorWeekValue
+                    WHEN \'priorWeek\' THEN priorWeekValue
 
-                    WHEN ''fourWeek'' THEN fourWeekValue
+                    WHEN \'fourWeek\' THEN fourWeekValue
 
-                    WHEN ''lastYear'' THEN lastYearValue
+                    WHEN \'lastYear\' THEN lastYearValue
 
                 END AS selectedComparisonValue,
 
                 CASE comparisonType
 
-                    WHEN ''priorWeek'' THEN priorWeekNumerator
+                    WHEN \'priorWeek\' THEN priorWeekNumerator
 
-                    WHEN ''fourWeek'' THEN
+                    WHEN \'fourWeek\' THEN
 
                         CASE
 
-                            WHEN metricKind=''count'' AND fourWeekTrendWeekCount>0
+                            WHEN metricKind=\'count\' AND fourWeekTrendWeekCount>0
 
                                 THEN try_divide(fourWeekTrendNumerator,cast(fourWeekTrendWeekCount AS DOUBLE))
 
@@ -1344,27 +1344,27 @@ BEGIN
 
                         END
 
-                    WHEN ''lastYear'' THEN sameWeekLyNumerator
+                    WHEN \'lastYear\' THEN sameWeekLyNumerator
 
                 END AS selectedComparisonNumerator,
 
                 CASE comparisonType
 
-                    WHEN ''priorWeek'' THEN toplinePriorWeekValue
+                    WHEN \'priorWeek\' THEN toplinePriorWeekValue
 
-                    WHEN ''fourWeek'' THEN toplineFourWeekValue
+                    WHEN \'fourWeek\' THEN toplineFourWeekValue
 
-                    WHEN ''lastYear'' THEN toplineLastYearValue
+                    WHEN \'lastYear\' THEN toplineLastYearValue
 
                 END AS selectedToplineComparisonValue,
 
                 CASE comparisonType
 
-                    WHEN ''priorWeek'' THEN toplinePriorWeekDenominator
+                    WHEN \'priorWeek\' THEN toplinePriorWeekDenominator
 
-                    WHEN ''fourWeek'' THEN toplineFourWeekDenominator
+                    WHEN \'fourWeek\' THEN toplineFourWeekDenominator
 
-                    WHEN ''lastYear'' THEN toplineLastYearDenominator
+                    WHEN \'lastYear\' THEN toplineLastYearDenominator
 
                 END AS selectedToplineComparisonDenominator
 
@@ -1384,9 +1384,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR priorWeekValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-priorWeekValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-priorWeekValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,priorWeekValue)-1D)
 
                 END AS priorWeekChangeRaw,
 
@@ -1396,9 +1396,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR fourWeekValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-fourWeekValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-fourWeekValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,fourWeekValue)-1D)
 
                 END AS fourWeekChangeRaw,
 
@@ -1408,9 +1408,9 @@ BEGIN
 
                     WHEN currentValue IS NULL OR lastYearValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-lastYearValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-lastYearValue)
 
-                    WHEN changeUnit=''pct'' THEN 100D*(try_divide(currentValue,lastYearValue)-1D)
+                    WHEN changeUnit=\'pct\' THEN 100D*(try_divide(currentValue,lastYearValue)-1D)
 
                 END AS lastYearChangeRaw,
 
@@ -1422,15 +1422,15 @@ BEGIN
 
                     -- Ratio metrics are already proportions; the gap is in percentage points.
 
-                    WHEN changeUnit=''pp'' THEN 100D*(currentValue-peerSetValue)
+                    WHEN changeUnit=\'pp\' THEN 100D*(currentValue-peerSetValue)
 
                     -- Count metrics: compare the actual-vs-counterfactual excess to
 
-                    -- the selected slice''s OWN four-week baseline. This equals:
+                    -- the selected slice\'s OWN four-week baseline. This equals:
 
                     -- slice 4-week change % - peer-set 4-week change %.
 
-                    WHEN changeUnit=''pct'' THEN 100D*try_divide(currentValue-peerSetValue,fourWeekValue)
+                    WHEN changeUnit=\'pct\' THEN 100D*try_divide(currentValue-peerSetValue,fourWeekValue)
 
                 END AS peerSetChangeRaw,
 
@@ -1438,11 +1438,11 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''count'' THEN
+                    WHEN metricKind=\'count\' THEN
 
                         100D*try_divide(currentValue-selectedComparisonValue,selectedToplineComparisonValue)
 
-                    WHEN metricKind=''ratio'' THEN
+                    WHEN metricKind=\'ratio\' THEN
 
                         100D*(
 
@@ -1456,9 +1456,9 @@ BEGIN
 
                 CASE
 
-                    WHEN metricKind=''count'' THEN ''pct''
+                    WHEN metricKind=\'count\' THEN \'pct\'
 
-                    WHEN metricKind=''ratio'' THEN ''pp''
+                    WHEN metricKind=\'ratio\' THEN \'pp\'
 
                 END AS impactOnToplineUnit
 
@@ -1574,21 +1574,21 @@ BEGIN
 
                     WHEN currentValue IS NULL THEN NULL
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
-                        THEN concat(format_number(100D*currentValue,1),''%'')
+                        THEN concat(format_number(100D*currentValue,1),\'%\')
 
                     WHEN abs(currentValue)>=1000000000D
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(currentValue)>=1000000D
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(currentValue)>=1000D
 
-                        THEN concat(regexp_replace(format_number(currentValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                        THEN concat(regexp_replace(format_number(currentValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
                     ELSE format_number(currentValue,0)
 
@@ -1598,31 +1598,31 @@ BEGIN
 
                     WHEN priorWeekAbsoluteDiffValue IS NULL THEN NULL
 
-                    WHEN metricKind=''ratio''
+                    WHEN metricKind=\'ratio\'
 
-                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    format_number(100D*priorWeekAbsoluteDiffValue,1),''pp'')
+                                    format_number(100D*priorWeekAbsoluteDiffValue,1),\'pp\')
 
                     WHEN abs(priorWeekAbsoluteDiffValue)>=1000000000D
 
-                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(priorWeekAbsoluteDiffValue)>=1000000D
 
-                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(priorWeekAbsoluteDiffValue)>=1000D
 
-                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                                    regexp_replace(format_number(priorWeekAbsoluteDiffValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
-                    ELSE concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                    ELSE concat(CASE WHEN priorWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
                                 format_number(priorWeekAbsoluteDiffValue,0))
 
@@ -1632,11 +1632,11 @@ BEGIN
 
                     WHEN priorWeekChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
-                        THEN concat(CASE WHEN priorWeekChangeValue>0D THEN ''+'' ELSE '''' END,format_number(priorWeekChangeValue,1),''pp'')
+                        THEN concat(CASE WHEN priorWeekChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(priorWeekChangeValue,1),\'pp\')
 
-                    ELSE concat(CASE WHEN priorWeekChangeValue>0D THEN ''+'' ELSE '''' END,format_number(priorWeekChangeValue,1),''%'')
+                    ELSE concat(CASE WHEN priorWeekChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(priorWeekChangeValue,1),\'%\')
 
                 END AS priorWeekChangeDisplay,
 
@@ -1644,31 +1644,31 @@ BEGIN
 
                     WHEN fourWeekAbsoluteDiffValue IS NULL THEN NULL
 
-                    WHEN metricKind=''ratio''
+                    WHEN metricKind=\'ratio\'
 
-                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    format_number(100D*fourWeekAbsoluteDiffValue,1),''pp'')
+                                    format_number(100D*fourWeekAbsoluteDiffValue,1),\'pp\')
 
                     WHEN abs(fourWeekAbsoluteDiffValue)>=1000000000D
 
-                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(fourWeekAbsoluteDiffValue)>=1000000D
 
-                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(fourWeekAbsoluteDiffValue)>=1000D
 
-                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                                    regexp_replace(format_number(fourWeekAbsoluteDiffValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
-                    ELSE concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                    ELSE concat(CASE WHEN fourWeekAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
                                 format_number(fourWeekAbsoluteDiffValue,0))
 
@@ -1678,11 +1678,11 @@ BEGIN
 
                     WHEN fourWeekChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
-                        THEN concat(CASE WHEN fourWeekChangeValue>0D THEN ''+'' ELSE '''' END,format_number(fourWeekChangeValue,1),''pp'')
+                        THEN concat(CASE WHEN fourWeekChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(fourWeekChangeValue,1),\'pp\')
 
-                    ELSE concat(CASE WHEN fourWeekChangeValue>0D THEN ''+'' ELSE '''' END,format_number(fourWeekChangeValue,1),''%'')
+                    ELSE concat(CASE WHEN fourWeekChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(fourWeekChangeValue,1),\'%\')
 
                 END AS fourWeekChangeDisplay,
 
@@ -1690,31 +1690,31 @@ BEGIN
 
                     WHEN lastYearAbsoluteDiffValue IS NULL THEN NULL
 
-                    WHEN metricKind=''ratio''
+                    WHEN metricKind=\'ratio\'
 
-                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    format_number(100D*lastYearAbsoluteDiffValue,1),''pp'')
+                                    format_number(100D*lastYearAbsoluteDiffValue,1),\'pp\')
 
                     WHEN abs(lastYearAbsoluteDiffValue)>=1000000000D
 
-                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(lastYearAbsoluteDiffValue)>=1000000D
 
-                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(lastYearAbsoluteDiffValue)>=1000D
 
-                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                                    regexp_replace(format_number(lastYearAbsoluteDiffValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
-                    ELSE concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                    ELSE concat(CASE WHEN lastYearAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
                                 format_number(lastYearAbsoluteDiffValue,0))
 
@@ -1724,11 +1724,11 @@ BEGIN
 
                     WHEN lastYearChangeValue IS NULL THEN NULL
 
-                    WHEN changeUnit=''pp''
+                    WHEN changeUnit=\'pp\'
 
-                        THEN concat(CASE WHEN lastYearChangeValue>0D THEN ''+'' ELSE '''' END,format_number(lastYearChangeValue,1),''pp'')
+                        THEN concat(CASE WHEN lastYearChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(lastYearChangeValue,1),\'pp\')
 
-                    ELSE concat(CASE WHEN lastYearChangeValue>0D THEN ''+'' ELSE '''' END,format_number(lastYearChangeValue,1),''%'')
+                    ELSE concat(CASE WHEN lastYearChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(lastYearChangeValue,1),\'%\')
 
                 END AS lastYearChangeDisplay,
 
@@ -1736,21 +1736,21 @@ BEGIN
 
                     WHEN peerSetValue IS NULL THEN NULL
 
-                    WHEN displayFormat=''percent''
+                    WHEN displayFormat=\'percent\'
 
-                        THEN concat(format_number(100D*peerSetValue,1),''%'')
+                        THEN concat(format_number(100D*peerSetValue,1),\'%\')
 
                     WHEN abs(peerSetValue)>=1000000000D
 
-                        THEN concat(regexp_replace(format_number(peerSetValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                        THEN concat(regexp_replace(format_number(peerSetValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(peerSetValue)>=1000000D
 
-                        THEN concat(regexp_replace(format_number(peerSetValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                        THEN concat(regexp_replace(format_number(peerSetValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(peerSetValue)>=1000D
 
-                        THEN concat(regexp_replace(format_number(peerSetValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                        THEN concat(regexp_replace(format_number(peerSetValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
                     ELSE format_number(peerSetValue,0)
 
@@ -1760,31 +1760,31 @@ BEGIN
 
                     WHEN peerSetAbsoluteDiffValue IS NULL THEN NULL
 
-                    WHEN metricKind=''ratio''
+                    WHEN metricKind=\'ratio\'
 
-                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    format_number(100D*peerSetAbsoluteDiffValue,1),''pp'')
+                                    format_number(100D*peerSetAbsoluteDiffValue,1),\'pp\')
 
                     WHEN abs(peerSetAbsoluteDiffValue)>=1000000000D
 
-                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''B'')
+                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'B\')
 
                     WHEN abs(peerSetAbsoluteDiffValue)>=1000000D
 
-                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''M'')
+                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'M\')
 
                     WHEN abs(peerSetAbsoluteDiffValue)>=1000D
 
-                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                        THEN concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
-                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000D,1),''\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$'',''''),''K'')
+                                    regexp_replace(format_number(peerSetAbsoluteDiffValue/1000D,1),\'\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\.0$\',\'\'),\'K\')
 
-                    ELSE concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN ''+'' ELSE '''' END,
+                    ELSE concat(CASE WHEN peerSetAbsoluteDiffValue>0D THEN \'+\' ELSE \'\' END,
 
                                 format_number(peerSetAbsoluteDiffValue,0))
 
@@ -1798,7 +1798,7 @@ BEGIN
 
                     -- therefore its display unit is percentage points.
 
-                    ELSE concat(CASE WHEN peerSetChangeValue>0D THEN ''+'' ELSE '''' END,format_number(peerSetChangeValue,1),''pp'')
+                    ELSE concat(CASE WHEN peerSetChangeValue>0D THEN \'+\' ELSE \'\' END,format_number(peerSetChangeValue,1),\'pp\')
 
                 END AS peerSetChangeDisplay,
 
@@ -1806,11 +1806,11 @@ BEGIN
 
                     WHEN impactOnToplineValue IS NULL THEN NULL
 
-                    WHEN impactOnToplineUnit=''pp''
+                    WHEN impactOnToplineUnit=\'pp\'
 
-                        THEN concat(CASE WHEN impactOnToplineValue>0D THEN ''+'' ELSE '''' END,format_number(impactOnToplineValue,1),''pp'')
+                        THEN concat(CASE WHEN impactOnToplineValue>0D THEN \'+\' ELSE \'\' END,format_number(impactOnToplineValue,1),\'pp\')
 
-                    ELSE concat(CASE WHEN impactOnToplineValue>0D THEN ''+'' ELSE '''' END,format_number(impactOnToplineValue,1),''%'')
+                    ELSE concat(CASE WHEN impactOnToplineValue>0D THEN \'+\' ELSE \'\' END,format_number(impactOnToplineValue,1),\'%\')
 
                 END AS impactOnToplineDisplay
 
