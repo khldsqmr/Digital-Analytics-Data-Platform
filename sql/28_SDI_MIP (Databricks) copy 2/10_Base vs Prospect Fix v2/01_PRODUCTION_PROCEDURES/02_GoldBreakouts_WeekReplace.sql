@@ -1,3 +1,5 @@
+-- PERMANENT PRODUCTION PROCEDURE. Deploy only after validating staging and scheduling cutover.
+-- This file DOES NOT execute the procedure; executing its CREATE OR REPLACE updates procedure metadata.
 -- ============================================================================
 -- PERMANENT FOUR-WEEK JOIN-MULTIPLICATION FIX
 --

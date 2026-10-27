@@ -1,3 +1,5 @@
+-- PERMANENT PRODUCTION PROCEDURE. Deploy only after validating staging and scheduling cutover.
+-- This file DOES NOT execute the procedure; executing its CREATE OR REPLACE updates procedure metadata.
 -- ============================================================================
 
 -- FILE  : 01_sdi_sp_mip_gold_overviewMetricIngredientsByWeek_long.sql
@@ -5,8 +7,8 @@
 -- LAYER : GOLD
 --
 -- RUNTIME WRITE NOTE:
---   Uses static SQL with a scoped MERGE, matching the proven Silver execution pattern.
---   No EXECUTE IMMEDIATE, REPLACE WHERE, REPLACE USING, or dynamic DATE rendering.
+--   Uses atomic whole-week Delta scoped REPLACE WHERE; no row-level MERGE.
+--   Runtime scope dates are rendered into EXECUTE IMMEDIATE using make_date().
 --   Procedure-local week DATE variables are used directly in normal source filters
 --   and in the bounded MERGE delete condition.
 --

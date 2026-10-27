@@ -1,3 +1,5 @@
+-- PERMANENT PRODUCTION PROCEDURE. Deploy only after validating staging and scheduling cutover.
+-- This file DOES NOT execute the procedure; executing its CREATE OR REPLACE updates procedure metadata.
 -- ============================================================================
 
 -- RUNTIME-SAFE WRITE REVISION:
@@ -7,7 +9,7 @@
 
 --   - Original comparison formulas retained, including existing 4-week behavior.
 
---   - Scoped INSERT ... REPLACE WHERE replaced with static MERGE.
+--   - Uses atomic reporting-week INSERT ... BY NAME REPLACE WHERE.
 
 --   - Metric Catalog is authoritative for metricLabel; NBV displays as Total NBV.
 

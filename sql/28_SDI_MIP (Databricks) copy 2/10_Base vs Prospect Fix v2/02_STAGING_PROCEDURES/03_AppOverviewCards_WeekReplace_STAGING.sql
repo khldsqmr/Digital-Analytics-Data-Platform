@@ -1,3 +1,5 @@
+-- ISOLATED STAGING PROCEDURE; reads the staged Overview Gold, and only writes staged tables.
+-- Create six staged tables first with 00_CreateStagingClones.sql. Normal Silver and controls are read-only.
 -- ============================================================================
 
 -- FILE  : 01_sdi_sp_mip_gold_appOverviewCards_wide.sql
@@ -33,7 +35,7 @@
 
 --   - Reads the latest available forecast from Forecast Gold.
 
---   - Uses a static scoped MERGE, matching the Silver/analytical-Gold write pattern.
+--   - Uses week-scoped Delta INSERT BY NAME REPLACE WHERE.
 
 --   - p_weeksToRebuild controls TARGET weeks only.
 
@@ -47,7 +49,7 @@
 
 
 
-CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
+CREATE OR REPLACE PROCEDURE prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide_stg(
 
     IN p_asOfDate       DATE    DEFAULT NULL,
 
@@ -130,7 +132,7 @@ BEGIN
 
         SELECT 1
 
-        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long_stg
 
         WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
 
@@ -190,7 +192,7 @@ BEGIN
 
         SELECT 1
 
-        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
+        FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long_stg
 
         WHERE targetWeekStartDate BETWEEN v_weekFrom AND v_weekTo
 
@@ -262,7 +264,7 @@ BEGIN
 
             CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
 
-            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide' AS targetObject,
+            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg' AS targetObject,
 
             'Validation passed. No Gold App table was created or modified.' AS message;
 
@@ -274,7 +276,7 @@ BEGIN
 
         -- ====================================================================
 
-        CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide(
+        CREATE TABLE IF NOT EXISTS prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg(
 
             targetWeekStartDate       DATE,
 
@@ -395,7 +397,7 @@ BEGIN
 
                 sameWeekLyDataAvailable
 
-            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long
+            FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long_stg
 
             WHERE targetWeekStartDate BETWEEN ',
             v_scopeStartSql,
@@ -870,7 +872,7 @@ BEGIN
             FROM displayValues
 
         )
-INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide BY NAME
+INSERT INTO TABLE prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg BY NAME
 REPLACE WHERE targetWeekStartDate BETWEEN ',
             v_scopeStartSql,
             ' AND ',
@@ -900,7 +902,7 @@ SELECT * FROM sourceRows'
 
             CASE WHEN v_asOfDate < v_weekEndTo THEN TRUE ELSE FALSE END AS latestWeekIsPartial,
 
-            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide' AS targetObject,
+            'prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg' AS targetObject,
 
             v_processedAt AS appProcessedAt;
 
@@ -922,7 +924,7 @@ END;
 
 -- Validation only:
 
--- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide_stg(
 
 --     p_asOfDate       => DATE '2026-10-03',
 
@@ -936,7 +938,7 @@ END;
 
 -- Rebuild one TARGET reporting week:
 
--- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide_stg(
 
 --     p_asOfDate       => DATE '2026-10-03',
 
@@ -950,7 +952,7 @@ END;
 
 -- Rebuild four TARGET reporting weeks:
 
--- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide(
+-- CALL prdrzranalytics.lab42.sdi_sp_mip_gold_appOverviewCards_wide_stg(
 
 --     p_asOfDate       => DATE '2026-10-03',
 
@@ -976,7 +978,7 @@ END;
 
 -- SELECT targetWeekStartDate,filterLob,filterPlatform,filterProspectVsBase,metricName,count(*) AS rowCount
 
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg
 
 -- GROUP BY targetWeekStartDate,filterLob,filterPlatform,filterProspectVsBase,metricName
 
@@ -988,7 +990,7 @@ END;
 
 -- SELECT targetWeekStartDate,metricName,metricLabel,currentValueDisplay
 
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg
 
 -- WHERE metricName='nbv'
 
@@ -1010,9 +1012,9 @@ END;
 
 --     a.fourWeekChangeDisplay
 
--- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide a
+-- FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_appOverviewCards_wide_stg a
 
--- JOIN prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long g
+-- JOIN prdrzranalytics.lab42.sdi_tbl_mip_gold_overviewMetricIngredientsByWeek_long_stg g
 
 --   ON g.targetWeekStartDate=a.targetWeekStartDate
 
