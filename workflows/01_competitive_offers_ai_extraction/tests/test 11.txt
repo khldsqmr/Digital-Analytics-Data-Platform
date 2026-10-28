@@ -14403,7 +14403,16 @@ WHERE targetWeekStartDate IN (
 )
 GROUP BY targetWeekStartDate, filterProspectVsBase
 ORDER BY targetWeekStartDate, filterProspectVsBase;
-
+output:
+targetWeekStartDate	filterProspectVsBase	rowCount	breakoutTypes	metrics
+2026-10-04	All	3273480	14	21
+2026-10-04	Base	1042839	13	21
+2026-10-04	Prospect	3072111	13	21
+2026-10-04	Unknown	8862	13	21
+2026-10-11	All	3210690	14	21
+2026-10-11	Base	1042818	13	21
+2026-10-11	Prospect	3010938	13	21
+2026-10-11	Unknown	8904	13	21
 SELECT
     targetWeekStartDate,
     filterLob,
@@ -14428,6 +14437,7 @@ GROUP BY
     metricName
 HAVING COUNT(*) > 1
 LIMIT 25;
+output: No rows written
 
 SELECT
     targetWeekStartDate,
@@ -14443,3 +14453,7 @@ GROUP BY
     targetWeekEndDate,
     filterProspectVsBase
 ORDER BY filterProspectVsBase;
+output:
+targetWeekStartDate	targetWeekEndDate	filterProspectVsBase	rowCount	breakoutTypes	metrics
+2026-09-27	2026-10-03	All	2953398	14	21
+
