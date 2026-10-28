@@ -14457,3 +14457,16 @@ output:
 targetWeekStartDate	targetWeekEndDate	filterProspectVsBase	rowCount	breakoutTypes	metrics
 2026-09-27	2026-10-03	All	2953398	14	21
 
+
+SELECT
+    targetWeekStartDate,
+    filterProspectVsBase,
+    breakoutType,
+    breakoutValue,
+    thisWeekNumerator
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate = DATE '2026-10-11'
+  AND filterProspectVsBase = 'All'
+  AND breakoutType = 'prospectVsBase'
+  AND metricName = 'nbv'
+ORDER BY breakoutValue;
