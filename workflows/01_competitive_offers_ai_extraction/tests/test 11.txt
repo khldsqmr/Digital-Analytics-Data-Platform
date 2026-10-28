@@ -14476,3 +14476,17 @@ targetWeekStartDate	filterProspectVsBase	breakoutType	breakoutValue	thisWeekNume
 2026-10-11	All	prospectVsBase	Customer	15292018
 2026-10-11	All	prospectVsBase	Prospect	4136638
 2026-10-11	All	prospectVsBase	Unknown	843097
+
+
+CALL prdrzranalytics.lab42.sdi_sp_mip_gold_breakoutMetricIngredientsByWeek_long(
+    p_asOfDate       => DATE '2026-10-03',
+    p_weeksToRebuild => 4,
+    p_validateOnly   => FALSE
+);
+
+
+**Gold 02 Update:** `prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long`
+
+- **Completed:** Backfilled the last two weeks (Oct 4–10 and Oct 11–17) with `All`, `Prospect`, `Base`, and `Unknown` segments. Initial validation passed with no duplicate records.
+- **In progress:** Backfilling the remaining historical weeks (Sep 6–Oct 3).
+- **Note for developer:** Ensure existing API queries explicitly filter `filterProspectVsBase = 'All'` to prevent inflated dashboard numbers. Apply this consistently across joins and aggregations. Earlier weeks currently have only `All`, so don't treat missing segment data as zero. Keep the new global filter disabled until the backfill is complete.
