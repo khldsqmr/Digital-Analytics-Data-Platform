@@ -14470,3 +14470,9 @@ WHERE targetWeekStartDate = DATE '2026-10-11'
   AND breakoutType = 'prospectVsBase'
   AND metricName = 'nbv'
 ORDER BY breakoutValue;
+output:
+targetWeekStartDate	filterProspectVsBase	breakoutType	breakoutValue	thisWeekNumerator
+2026-10-11	All	prospectVsBase	Care	3748
+2026-10-11	All	prospectVsBase	Customer	15292018
+2026-10-11	All	prospectVsBase	Prospect	4136638
+2026-10-11	All	prospectVsBase	Unknown	843097
