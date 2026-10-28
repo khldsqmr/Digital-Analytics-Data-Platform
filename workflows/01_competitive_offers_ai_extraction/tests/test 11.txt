@@ -14388,3 +14388,58 @@ Message Copilot
 
 
 AI-generated content may be incorrect
+
+
+SELECT
+    targetWeekStartDate,
+    filterProspectVsBase,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT breakoutType) AS breakoutTypes,
+    COUNT(DISTINCT metricName) AS metrics
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate IN (
+    DATE '2026-10-04',
+    DATE '2026-10-11'
+)
+GROUP BY targetWeekStartDate, filterProspectVsBase
+ORDER BY targetWeekStartDate, filterProspectVsBase;
+
+SELECT
+    targetWeekStartDate,
+    filterLob,
+    filterPlatform,
+    filterProspectVsBase,
+    breakoutType,
+    breakoutValue,
+    metricName,
+    COUNT(*) AS rowCount
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate IN (
+    DATE '2026-10-04',
+    DATE '2026-10-11'
+)
+GROUP BY
+    targetWeekStartDate,
+    filterLob,
+    filterPlatform,
+    filterProspectVsBase,
+    breakoutType,
+    breakoutValue,
+    metricName
+HAVING COUNT(*) > 1
+LIMIT 25;
+
+SELECT
+    targetWeekStartDate,
+    targetWeekEndDate,
+    filterProspectVsBase,
+    COUNT(*) AS rowCount,
+    COUNT(DISTINCT breakoutType) AS breakoutTypes,
+    COUNT(DISTINCT metricName) AS metrics
+FROM prdrzranalytics.lab42.sdi_tbl_mip_gold_breakoutMetricIngredientsByWeek_long
+WHERE targetWeekStartDate = DATE '2026-09-27'
+GROUP BY
+    targetWeekStartDate,
+    targetWeekEndDate,
+    filterProspectVsBase
+ORDER BY filterProspectVsBase;
