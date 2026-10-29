@@ -28,7 +28,7 @@ WHERE r.target_metric_key IS NOT NULL
    3. Registry vs Gold: active slices that match NOTHING in Gold (typo in name / type / lob)
       Checked across all weeks, so a slice that is simply empty this week is not flagged.
    ------------------------------------------------------------------------------------------------- */
-SELECT r.metric_key, r.data_source, r.metric_name, r.metric_type, r.true_lob, r.channel_group
+SELECT r.metric_key, r.data_source, r.metric_name, r.metric_type, r.source_lob, r.channel_group
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static r
 WHERE  r.is_active = TRUE
   AND NOT EXISTS (
@@ -37,7 +37,7 @@ WHERE  r.is_active = TRUE
     WHERE g.data_source   =   r.data_source
       AND g.metric_name   =   r.metric_name
       AND g.metric_type   <=> r.metric_type
-      AND g.true_lob      <=> r.true_lob
+      AND ((r.source_lob IS NULL AND g.true_lob IS NULL) OR array_contains(r.source_lob, g.true_lob))
       AND g.channel_group <=> r.channel_group
   );
 
@@ -54,7 +54,7 @@ CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_long(NULL, '
    5. Look at what the AI will see: headline rows for the latest week
    ------------------------------------------------------------------------------------------------- */
 SELECT
-  week_end, report_section, report_lob_label, display_name, unit,
+  week_end, report_section, metric_lob, display_name, unit,
   week_value, wow_pct, yoy_pct,
   target_week_value, vs_target_abs, vs_target_pct, is_target_same_as_actual,
   avg_prior_4wk, avg_prior_13wk, avg_prior_52wk, zscore_prior_13wk, prior_52wk_weeks,
@@ -64,7 +64,7 @@ SELECT
 FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
 WHERE row_role = 'HEADLINE'
   AND week_end = (SELECT MAX(week_end) FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long)
-ORDER BY report_lob, sort_order;
+ORDER BY metric_lob, sort_order;
 
 
 /* -------------------------------------------------------------------------------------------------
@@ -114,30 +114,40 @@ WHERE  is_active = TRUE
 
 
 /* -------------------------------------------------------------------------------------------------
-   9. LOB: report_lob outside the agreed vocabulary
+   9. LOB: metric_lob with an unknown LOB code, or several LOBs not in the fixed order
+      (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO). NULL is allowed (metric has no LOB).
    ------------------------------------------------------------------------------------------------- */
-SELECT metric_key, report_lob
-FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
-WHERE  report_lob IS NULL
-   OR  report_lob NOT IN ('POSTPAID', 'BROADBAND', 'BYOD', 'FIBER', 'TFB', 'METRO', 'TOTAL', 'NOT_LOB_SPECIFIC');
+WITH Lobs AS (
+  SELECT metric_key, metric_lob,
+         transform(split(metric_lob, ' \\+ '),
+                   x -> array_position(array('POSTPAID', 'BROADBAND', 'BYOD', 'FIBER', 'TFB', 'METRO'), x)) AS pos
+  FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
+  WHERE metric_lob IS NOT NULL
+)
+SELECT metric_key, metric_lob
+FROM   Lobs
+WHERE  array_contains(pos, 0)
+   OR  pos <> array_sort(pos)
+   OR  size(pos) <> size(array_distinct(pos));
 
 
 /* -------------------------------------------------------------------------------------------------
-   10. LOB: rollups on non-additive units, or rollups that also set a single true_lob
+   10. LOB: source_lob that sums several LOBs on a non-additive unit (PCT), or an empty array
+       (use NULL, not [], for a source with no LOB)
    ------------------------------------------------------------------------------------------------- */
-SELECT metric_key, unit, true_lob, lob_rollup
+SELECT metric_key, unit, source_lob
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
-WHERE  lob_rollup IS NOT NULL
-  AND  (unit = 'PCT' OR true_lob IS NOT NULL);
+WHERE  size(source_lob) = 0
+   OR  (size(source_lob) > 1 AND unit = 'PCT');
 
 
 /* -------------------------------------------------------------------------------------------------
-   11. LOB: rollup member LOBs that never appear in PulseTMS Gold for that metric (typo or
+   11. LOB: source_lob values that never appear in PulseTMS Gold for that metric (typo or
        a LOB PulseTMS does not carry yet, e.g. METRO)
    ------------------------------------------------------------------------------------------------- */
 SELECT r.metric_key, m.member_lob
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static r
-LATERAL VIEW explode(r.lob_rollup) m AS member_lob
+LATERAL VIEW explode(r.source_lob) m AS member_lob
 WHERE  r.is_active = TRUE
   AND  NOT EXISTS (
     SELECT 1
@@ -150,9 +160,9 @@ WHERE  r.is_active = TRUE
 
 
 /* -------------------------------------------------------------------------------------------------
-   12. LOB: partial rollup totals in the latest snapshot (a member LOB missing this week)
+   12. LOB: partial summed totals in the latest snapshot (one of the source_lob values missing this week)
    ------------------------------------------------------------------------------------------------- */
-SELECT week_end, metric_key, channel_group, lob_rollup_members, true_lob AS lobs_found
+SELECT week_end, metric_key, channel_group, source_lob
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
 WHERE  is_lob_rollup_complete = FALSE;
 
@@ -183,12 +193,11 @@ ORDER BY week_end DESC, metric_key;
 /* -------------------------------------------------------------------------------------------------
    15. Naming convention: codes must be UPPER_SNAKE, labels must not be empty
    ------------------------------------------------------------------------------------------------- */
-SELECT metric_key, report_lob, unit, source_project, report_lob_label, report_section
+SELECT metric_key, metric_lob, unit, source_project, report_section
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
-WHERE  NOT report_lob     RLIKE '^[A-Z][A-Z0-9_]*$'
+WHERE  NOT COALESCE(metric_lob, 'NULL') RLIKE '^[A-Z][A-Z0-9_]*( \\+ [A-Z][A-Z0-9_]*)*$'
    OR  NOT unit           RLIKE '^[A-Z][A-Z0-9_]*$'
    OR  NOT source_project RLIKE '^[A-Z][A-Z0-9_]*$'
-   OR  NULLIF(TRIM(report_lob_label), '') IS NULL
    OR  NULLIF(TRIM(report_section), '')   IS NULL;
 
 
@@ -221,7 +230,7 @@ HAVING COUNT(*) > 1;
    18. What moved: highlights for the latest week, in rank order (eyeball against the report)
    ------------------------------------------------------------------------------------------------- */
 SELECT
-  highlight_rank, report_section, report_lob_label, display_name,
+  highlight_rank, report_section, metric_lob, display_name,
   highlight_reasons, ROUND(highlight_score, 2) AS score,
   direction, wow_sentiment, target_position, target_sentiment,
   top_driver_channel, ROUND(top_driver_share_of_change, 2) AS driver_share,
@@ -235,7 +244,7 @@ ORDER BY highlight_rank;
 /* -------------------------------------------------------------------------------------------------
    19. What moved: rows blocked by the data quality gate in the latest week
    ------------------------------------------------------------------------------------------------- */
-SELECT display_name, report_lob_label, data_quality_issue, highlight_reasons
+SELECT display_name, metric_lob, data_quality_issue, highlight_reasons
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_whatMoved_long
 WHERE  week_end = (SELECT MAX(week_end) FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_whatMoved_long)
   AND  data_quality_issue IS NOT NULL

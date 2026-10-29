@@ -39,8 +39,7 @@ CREATE OR REPLACE VIEW
   metric_key           COMMENT 'Registry primary key of the metric slice.',
   display_name         COMMENT 'Report-facing metric name.',
   report_section       COMMENT 'Report section display label (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
-  report_lob           COMMENT 'Report-facing LOB: POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO, TOTAL or NOT_LOB_SPECIFIC. Use this to group the report by LOB.',
-  report_lob_label     COMMENT 'Display label of report_lob for the narrative text (Postpaid, Broadband, ...). Filter on report_lob, write with report_lob_label.',
+  metric_lob           COMMENT 'LOB(s) the metric covers, from the registry: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO) or several joined with + (e.g. POSTPAID + BROADBAND). NULL = metric has no LOB (e.g. total site UPV, store traffic). Group the report by this.',
   sort_order           COMMENT 'Report display order.',
   row_role             COMMENT 'HEADLINE, DRIVER (other channel_group of a headline metric), REFERENCE (forecast or target), REFERENCE_DRIVER (channel-level forecast or target).',
 
@@ -50,10 +49,8 @@ CREATE OR REPLACE VIEW
   data_source          COMMENT 'PulseTMS Gold data_source the row came from.',
   metric_name          COMMENT 'PulseTMS Gold metric_name the row came from.',
   metric_type          COMMENT 'PulseTMS Gold metric_type the row came from.',
-  source_lob           COMMENT 'PulseTMS Gold lob column as-is.',
-  true_lob             COMMENT 'PulseTMS Gold true_lob. NULL where PulseTMS Gold has no LOB concept. For LOB rollups, the member LOBs found.',
-  lob_rollup_members   COMMENT 'For LOB rollup rows, the LOBs summed (e.g. POSTPAID + BROADBAND). NULL otherwise.',
-  is_lob_rollup_complete COMMENT 'For LOB rollup rows, FALSE = a member LOB is missing this week, so the total is partial.',
+  source_lob           COMMENT 'PulseTMS Gold true_lob value(s) read. NULL = source has no LOB. Several joined with + = summed total.',
+  is_lob_rollup_complete COMMENT 'Only for summed totals (several source_lob values): FALSE = a LOB is missing this week, so the total is partial. NULL otherwise.',
   channel_group        COMMENT 'PulseTMS Gold channel_group. NULL for QGP_SCORECARD.',
 
   unit                 COMMENT 'COUNT | USD | PCT. PCT values are ratios (0.31 = 31%).',
@@ -119,8 +116,7 @@ SELECT
   h.metric_key,
   h.display_name,
   h.report_section,
-  h.report_lob,
-  h.report_lob_label,
+  h.metric_lob,
   h.sort_order,
   h.row_role,
 
@@ -131,8 +127,6 @@ SELECT
   h.metric_name,
   h.metric_type,
   h.source_lob,
-  h.true_lob,
-  h.lob_rollup_members,
   h.is_lob_rollup_complete,
   h.channel_group,
 

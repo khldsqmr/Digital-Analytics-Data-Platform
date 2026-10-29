@@ -49,7 +49,7 @@ TOP DRIVER:
 
 NAMING CONVENTION:
   Codes UPPER_SNAKE (highlight_reasons, direction, target_position, *_sentiment,
-  data_quality_issue). Labels come from the registry (display_name, report_lob_label).
+  data_quality_issue). Labels come from the registry (display_name; LOB code in metric_lob).
 
 ================================================================================================= */
 
@@ -63,8 +63,7 @@ CREATE OR REPLACE VIEW
   metric_key                  COMMENT 'Registry key of the metric, e.g. pulseTms.upvTotalAdobe.',
   display_name                COMMENT 'Metric name to use in the narrative (sentence case).',
   report_section              COMMENT 'Report section label (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
-  report_lob                  COMMENT 'LOB code: POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO, TOTAL, NOT_LOB_SPECIFIC.',
-  report_lob_label            COMMENT 'LOB label to use in the narrative (Postpaid, Broadband, ...).',
+  metric_lob                  COMMENT 'LOB(s) the metric covers: one LOB, several joined with + (e.g. POSTPAID + BROADBAND), or NULL when the metric has no LOB.',
   sort_order                  COMMENT 'Registry display order.',
   unit                        COMMENT 'COUNT | USD | PCT. PCT values are ratios (0.31 = 31%).',
   higher_is_better            COMMENT 'TRUE = increase is good, FALSE = decrease is good, NULL = neutral.',
@@ -313,8 +312,7 @@ SELECT
   f.metric_key,
   f.display_name,
   f.report_section,
-  f.report_lob,
-  f.report_lob_label,
+  f.metric_lob,
   f.sort_order,
   f.unit,
   f.higher_is_better,

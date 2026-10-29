@@ -51,11 +51,14 @@ WEEK VALUE (boundary-safe):
   The raw metric_value is kept alongside for traceability.
 
 LINE OF BUSINESS:
-  report_lob (from the registry) gives every row one LOB vocabulary across sources:
-  POSTPAID | BROADBAND | BYOD | FIBER | TFB | METRO | TOTAL | NOT_LOB_SPECIFIC.
-  Registry rows with lob_rollup (e.g. MFC [POSTPAID, BROADBAND]) are SUMMED across their
-  member true_lob values for every week in the window; WoW / YoY are recomputed from the
-  summed numerators and denominators, and is_lob_rollup_complete flags a partial total.
+  Two columns, both from the registry:
+    metric_lob  the LOB the metric is about, one vocabulary across sources:
+                one LOB (POSTPAID), several joined with + (POSTPAID + BROADBAND), or NULL
+                when the metric has no LOB. LOB codes: POSTPAID | BROADBAND | BYOD | FIBER | TFB | METRO
+    source_lob  the PulseTMS Gold true_lob value(s) read. When it lists several LOBs
+                (e.g. MFC POSTPAID + BROADBAND) they are SUMMED for every week in the window;
+                WoW / YoY are recomputed from the summed numerators and denominators, and
+                is_lob_rollup_complete flags a partial total.
   Scaling to TFB / METRO = registry rows only; no change to this procedure.
 
 ROW ROLES:
@@ -108,9 +111,9 @@ VALIDATION LINEAGE:
   Warning / Failed instead of writing confidently about it.
 
 NAMING CONVENTION (same as the registry):
-  Codes (filter / join / branch) UPPER_SNAKE: report_lob, unit, source_project, row_role,
-  run_type, plus PulseTMS codes kept as-is. Labels for the report text in their own columns:
-  display_name, report_section, report_lob_label. Upstream PulseTMS values are never re-cased.
+  Codes (filter / join / branch) UPPER_SNAKE: metric_lob, source_lob, unit, source_project,
+  row_role, run_type, plus PulseTMS codes kept as-is. Labels for the report text in their own
+  columns: display_name, report_section. Upstream PulseTMS values are never re-cased.
 
 METADATA:
   Every column carries a COMMENT in the CREATE TABLE below. CREATE TABLE IF NOT EXISTS does
@@ -248,8 +251,7 @@ BEGIN
     metric_key           STRING     COMMENT 'Registry primary key of the metric slice.',
     display_name         STRING     COMMENT 'Report-facing metric name from the registry.',
     report_section       STRING     COMMENT 'Report section display label from the registry (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
-    report_lob           STRING     COMMENT 'Code (UPPER_SNAKE) of the report-facing line of business from the registry: POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO, TOTAL or NOT_LOB_SPECIFIC. One vocabulary across all sources; use this (not true_lob) to group the report by LOB.',
-    report_lob_label     STRING     COMMENT 'Display label of report_lob for the narrative text (Postpaid, Broadband, BYOD, Fiber, TFB, Metro, Total, Not LOB specific). Filter on report_lob, write with report_lob_label.',
+    metric_lob           STRING     COMMENT 'LOB(s) the metric covers, from the registry: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO) or several joined with + (e.g. POSTPAID + BROADBAND). NULL = metric has no LOB (e.g. total site UPV, store traffic). Group the report by this.',
     sort_order           INT        COMMENT 'Report display order from the registry.',
     row_role             STRING     COMMENT 'HEADLINE = reportable metric at its headline channel. DRIVER = same metric at another channel_group, used to explain moves. REFERENCE = forecast or target row. REFERENCE_DRIVER = channel-level forecast or target.',
 
@@ -259,10 +261,8 @@ BEGIN
     data_source          STRING     COMMENT 'PulseTMS Gold data_source the row came from.',
     metric_name          STRING     COMMENT 'PulseTMS Gold metric_name the row came from.',
     metric_type          STRING     COMMENT 'PulseTMS Gold metric_type the row came from.',
-    source_lob           STRING     COMMENT 'PulseTMS Gold lob column as-is (business-facing grouping, e.g. Postpaid + Broadband, Biddable, POSTPAID).',
-    true_lob             STRING     COMMENT 'PulseTMS Gold true_lob (canonical or reporting LOB). NULL where PulseTMS Gold has no LOB concept. For lob_rollup rows, the comma-separated member LOBs actually found, e.g. BROADBAND, POSTPAID.',
-    lob_rollup_members   STRING     COMMENT 'For LOB rollup rows: the LOBs the registry says to sum, e.g. POSTPAID + BROADBAND. NULL for single-LOB rows.',
-    is_lob_rollup_complete BOOLEAN  COMMENT 'For LOB rollup rows: TRUE when every member LOB had a value this week. FALSE means the total is partial (a member LOB is missing) and must not be reported as a full total. NULL for single-LOB rows.',
+    source_lob           STRING     COMMENT 'PulseTMS Gold true_lob value(s) read for this row, from the registry. NULL = source has no LOB (ADOBE, UPV_FORECAST, some QGP). One value = single LOB. Several joined with + (e.g. POSTPAID + BROADBAND) = summed total.',
+    is_lob_rollup_complete BOOLEAN  COMMENT 'Only when source_lob lists several LOBs: TRUE when every one had a value this week. FALSE means the total is partial and must not be reported as a full total. NULL for single-LOB or no-LOB rows.',
     channel_group        STRING     COMMENT 'PulseTMS Gold channel_group. Headline rows are normally All Channels; DRIVER rows carry the individual channel. NULL for QGP_SCORECARD.',
 
     unit                 STRING     COMMENT 'COUNT | USD | PCT. PCT values are ratios (0.31 = 31%).',
@@ -334,7 +334,7 @@ BEGIN
   /* PulseTMS Gold for week_end and the 53 weeks before it (never after week_end). */
   GoldHist AS (
     SELECT
-      data_source, metric_name, metric_type, lob, true_lob, channel_group,
+      data_source, metric_name, metric_type, true_lob, channel_group,
       qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period,
       metric_value, wow_numerator, wow_denominator, wow_pct,
       yoy_numerator, yoy_denominator, yoy_pct, max_date
@@ -347,7 +347,7 @@ BEGIN
 
 
   /* Every PulseTMS Gold row that belongs to a registry slice, for every date in the window.
-       true_lob : single-LOB slice (NULL-safe) OR member of lob_rollup
+       true_lob : NULL when source_lob is NULL, otherwise one of the source_lob values
        channel  : headline channel_group (HEADLINE / REFERENCE)
                   OR another channel allowed by driver_channel_like (DRIVER / REFERENCE_DRIVER) */
   Matched AS (
@@ -357,7 +357,7 @@ BEGIN
         WHEN g.channel_group <=> r.channel_group THEN CASE WHEN r.is_headline THEN 'HEADLINE' ELSE 'REFERENCE' END
         ELSE                                          CASE WHEN r.is_headline THEN 'DRIVER'   ELSE 'REFERENCE_DRIVER' END
       END                                                     AS row_role,
-      CASE WHEN r.lob_rollup IS NOT NULL THEN TRUE ELSE FALSE END AS is_rollup,
+      COALESCE(size(r.source_lob) > 1, FALSE)                AS is_rollup,
       g.*
     FROM Reg r
     JOIN GoldHist g
@@ -365,8 +365,8 @@ BEGIN
       AND g.metric_name = r.metric_name
       AND g.metric_type <=> r.metric_type
       AND (
-            (r.lob_rollup IS NULL     AND g.true_lob <=> r.true_lob)
-         OR (r.lob_rollup IS NOT NULL AND array_contains(r.lob_rollup, g.true_lob))
+            (r.source_lob IS NULL AND g.true_lob IS NULL)
+         OR array_contains(r.source_lob, g.true_lob)
           )
       AND (
             g.channel_group <=> r.channel_group
@@ -379,7 +379,7 @@ BEGIN
 
 
   /* One row per metric_key x channel_group x qgp_date. Single-LOB slices pass through
-     (one Gold row each); lob_rollup slices are summed across their member LOBs. */
+     (one Gold row each); multi-LOB source_lob slices are summed across their member LOBs. */
   Agg AS (
     SELECT
       metric_key,
@@ -391,8 +391,6 @@ BEGIN
       MAX(qgp_quarter)                                                     AS qgp_quarter,
       MAX(days_in_period)                                                  AS days_in_period,
       MAX(CAST(is_complete_period AS INT)) = 1                             AS is_complete_period,
-      NULLIF(array_join(sort_array(collect_set(lob)), ', '), '')           AS source_lob,
-      NULLIF(array_join(sort_array(collect_set(true_lob)), ', '), '')      AS true_lob,
       COUNT(DISTINCT CASE WHEN metric_value IS NOT NULL THEN true_lob END) AS lobs_with_value,
       SUM(metric_value)                                                    AS metric_value,
       SUM(COALESCE(wow_numerator, metric_value))                           AS week_value,
@@ -409,17 +407,16 @@ BEGIN
 
 
   /* Current week rows + registry attributes. WoW / YoY: PulseTMS values for single-LOB
-     slices; recomputed from summed numerators / denominators for lob_rollup slices. */
+     slices; recomputed from summed numerators / denominators for multi-LOB slices. */
   AllRows AS (
     SELECT
-      r.registry_version, r.metric_key, r.display_name, r.report_section, r.report_lob, r.report_lob_label,
+      r.registry_version, r.metric_key, r.display_name, r.report_section, r.metric_lob,
       r.sort_order, r.unit, r.higher_is_better, r.target_metric_key,
       r.source_project, r.source_object,
       r.data_source, r.metric_name, r.metric_type,
-      CASE WHEN r.lob_rollup IS NOT NULL THEN array_join(r.lob_rollup, ' + ') END       AS lob_rollup_members,
-      CASE WHEN r.lob_rollup IS NOT NULL THEN a.lobs_with_value = size(r.lob_rollup) END AS is_lob_rollup_complete,
+      array_join(r.source_lob, ' + ')                                                AS source_lob,
+      CASE WHEN size(r.source_lob) > 1 THEN a.lobs_with_value = size(r.source_lob) END AS is_lob_rollup_complete,
       a.row_role, a.channel_group, a.week_type, a.qgp_quarter, a.days_in_period, a.is_complete_period,
-      a.source_lob, a.true_lob,
       a.metric_value, a.week_value, a.prior_week_value, a.ly_week_value, a.max_date,
       CASE WHEN a.is_rollup THEN try_divide(a.wow_numerator, a.prior_week_value) - 1
            ELSE a.source_wow_pct END                                                    AS wow_pct,
@@ -521,10 +518,9 @@ BEGIN
   (
     snapshot_id, snapshot_ts, run_type, job_run_id,
     week_end, week_type, qgp_quarter, days_in_period, is_complete_period,
-    registry_version, metric_key, display_name, report_section, report_lob, report_lob_label, sort_order, row_role,
+    registry_version, metric_key, display_name, report_section, metric_lob, sort_order, row_role,
     source_project, source_object,
-    data_source, metric_name, metric_type, source_lob, true_lob,
-    lob_rollup_members, is_lob_rollup_complete,
+    data_source, metric_name, metric_type, source_lob, is_lob_rollup_complete,
     channel_group,
     unit, higher_is_better,
     metric_value, week_value, prior_week_value, wow_pct, ly_week_value, yoy_pct,
@@ -554,8 +550,7 @@ BEGIN
     w.metric_key,
     w.display_name,
     w.report_section,
-    w.report_lob,
-    w.report_lob_label,
+    w.metric_lob,
     CAST(w.sort_order AS INT),
     w.row_role,
 
@@ -566,8 +561,6 @@ BEGIN
     w.metric_name,
     w.metric_type,
     w.source_lob,
-    w.true_lob,
-    w.lob_rollup_members,
     w.is_lob_rollup_complete,
     w.channel_group,
 
