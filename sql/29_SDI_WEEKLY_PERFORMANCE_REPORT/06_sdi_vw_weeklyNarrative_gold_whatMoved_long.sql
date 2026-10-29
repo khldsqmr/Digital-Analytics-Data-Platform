@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE:           06_sdi_vw_weeklyNarrative_gold_whatMoved_weekly.sql
+FILE:           06_sdi_vw_weeklyNarrative_gold_whatMoved_long.sql
 PLATFORM:       Databricks
 LAYER:          Gold view
 CATALOG.SCHEMA: prdrzranalytics.lab42
-VIEW:           sdi_vw_weeklyNarrative_gold_whatMoved_weekly
+VIEW:           sdi_vw_weeklyNarrative_gold_whatMoved_long
 
 PURPOSE:
   Decides which metrics are worth talking about each week. The history table holds every
@@ -15,7 +15,7 @@ PURPOSE:
   (Thresholds CTE below), and the backtest can check the rules against past reports.
 
 SOURCE:
-  sdi_vw_weeklyNarrative_gold_factsLatest_weekly (newest snapshot per week).
+  sdi_vw_weeklyNarrative_gold_factsLatest_long (newest snapshot per week).
   For a published report, the same rules must be applied to its pinned snapshot_id.
 
 GRAIN:
@@ -54,7 +54,7 @@ NAMING CONVENTION:
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_whatMoved_weekly
+  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_whatMoved_long
 (
   week_end                    COMMENT 'Reporting week end date (Saturday). The week runs Sunday to Saturday.',
   snapshot_id                 COMMENT 'Facts snapshot these numbers come from (newest snapshot for the week).',
@@ -109,7 +109,7 @@ CREATE OR REPLACE VIEW
   highlight_rank              COMMENT 'Rank among this week highlights, 1 = most newsworthy. NULL when not a highlight.',
   section_highlight_rank      COMMENT 'Rank among this week highlights within the same report_section. NULL when not a highlight.'
 )
-COMMENT 'Weekly narrative report: rule-based highlight picker over sdi_vw_weeklyNarrative_gold_factsLatest_weekly (numbers from PulseTMS Gold). One row per headline metric per week with the rules it triggered, a score, data quality gate and top channel driver. Thresholds live in the Thresholds CTE.'
+COMMENT 'Weekly narrative report: rule-based highlight picker over sdi_vw_weeklyNarrative_gold_factsLatest_long (numbers from PulseTMS Gold). One row per headline metric per week with the rules it triggered, a score, data quality gate and top channel driver. Thresholds live in the Thresholds CTE.'
 AS
 
 WITH
@@ -140,7 +140,7 @@ Headline AS (
     MAX(f.week_value)   OVER w13 AS max_prior_13wk,
     MIN(f.week_value)   OVER w13 AS min_prior_13wk,
     COUNT(f.week_value) OVER w13 AS prior_13wk_weeks_seen
-  FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_weekly f
+  FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long f
   WHERE f.row_role = 'HEADLINE'
   WINDOW w13 AS (
     PARTITION BY f.metric_key
@@ -160,7 +160,7 @@ Drivers AS (
     d.metric_key,
     d.channel_group,
     d.week_value - d.prior_week_value AS wow_change
-  FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_weekly d
+  FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long d
   WHERE d.row_role = 'DRIVER'
     AND d.week_value       IS NOT NULL
     AND d.prior_week_value IS NOT NULL

@@ -1,13 +1,13 @@
 /* =================================================================================================
-FILE:           05_sdi_sp_weeklyNarrative_gold_factsHistory_backfill.sql
+FILE:           05_sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.sql
 PLATFORM:       Databricks
-LAYER:          Gold (one-off / on-demand backfill)
+LAYER:          Orchestration (one-off / on-demand backfill)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-PROCEDURE:      sdi_sp_weeklyNarrative_gold_factsHistory_backfill
+PROCEDURE:      sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun
 
 PURPOSE:
-  Fills sdi_tbl_weeklyNarrative_gold_factsHistory_perRun for a range of past weeks by calling
-  sdi_sp_weeklyNarrative_gold_factsHistory_perRun once per Saturday, oldest week first.
+  Fills sdi_tbl_weeklyNarrative_gold_factsHistory_long for a range of past weeks by calling
+  sdi_sp_weeklyNarrative_gold_factsHistory_long once per Saturday, oldest week first.
 
   Needed once before go-live so that:
     - the What moved view has prior weeks to compare against (13-week highs / lows), and
@@ -37,12 +37,12 @@ FAILURE / RESUME:
 
 EXAMPLE:
   -- two years up to the latest completed week
-  CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_backfill(DATE'2024-11-02', NULL, TRUE);
+  CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun(DATE'2024-11-02', NULL, TRUE);
 
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_backfill
+  prdrzranalytics.lab42.sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun
 (
   IN p_start_week_end DATE,
   IN p_end_week_end   DATE    DEFAULT NULL,
@@ -52,7 +52,7 @@ CREATE OR REPLACE PROCEDURE
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'Weekly narrative report: backfills sdi_tbl_weeklyNarrative_gold_factsHistory_perRun one Saturday at a time by calling sdi_sp_weeklyNarrative_gold_factsHistory_perRun. Resume-safe when p_skip_existing = TRUE.'
+COMMENT 'Weekly narrative report: backfills sdi_tbl_weeklyNarrative_gold_factsHistory_long one Saturday at a time by calling sdi_sp_weeklyNarrative_gold_factsHistory_long. Resume-safe when p_skip_existing = TRUE.'
 
 AS
 BEGIN
@@ -72,8 +72,8 @@ BEGIN
      VALIDATE PARAMETERS
      =============================================================================================== */
 
-  IF sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_start_week_end IS NULL
-     OR DAYOFWEEK(sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_start_week_end) <> 7 THEN
+  IF sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_start_week_end IS NULL
+     OR DAYOFWEEK(sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_start_week_end) <> 7 THEN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT = 'Backfill: p_start_week_end is required and must be a Saturday.';
   END IF;
@@ -81,7 +81,7 @@ BEGIN
 
   SET v_end =
     COALESCE(
-      sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_end_week_end,
+      sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_end_week_end,
       (
         SELECT cal.qgp_date
         FROM   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
@@ -100,7 +100,7 @@ BEGIN
   END IF;
 
 
-  IF v_end < sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_start_week_end THEN
+  IF v_end < sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_start_week_end THEN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT = 'Backfill: p_end_week_end is earlier than p_start_week_end.';
   END IF;
@@ -110,7 +110,7 @@ BEGIN
      LOOP OVER SATURDAYS, OLDEST FIRST
      =============================================================================================== */
 
-  SET v_week = sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_start_week_end;
+  SET v_week = sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_start_week_end;
 
   WHILE v_week <= v_end DO
 
@@ -121,22 +121,22 @@ BEGIN
       SELECT COUNT(*)
       FROM   prdrzranalytics.information_schema.tables
       WHERE  table_schema = 'lab42'
-        AND  table_name   = 'sdi_tbl_weeklynarrative_gold_factshistory_perrun'
+        AND  table_name   = 'sdi_tbl_weeklynarrative_gold_factshistory_long'
     );
 
     SET v_existing = 0;
 
-    IF sdi_sp_weeklyNarrative_gold_factsHistory_backfill.p_skip_existing AND v_table_exists > 0 THEN
+    IF sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun.p_skip_existing AND v_table_exists > 0 THEN
       SET v_existing =
       (
         SELECT COUNT(*)
-        FROM   prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_perRun
+        FROM   prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long
         WHERE  week_end = v_week
       );
     END IF;
 
     IF v_existing = 0 THEN
-      CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_perRun(v_week, 'MANUAL', v_batch_id);
+      CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_long(v_week, 'MANUAL', v_batch_id);
     END IF;
 
     SET v_week = date_add(v_week, 7);

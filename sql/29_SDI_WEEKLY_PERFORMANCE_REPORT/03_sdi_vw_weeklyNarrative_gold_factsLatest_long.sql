@@ -1,28 +1,28 @@
 /* =================================================================================================
-FILE:           03_sdi_vw_weeklyNarrative_gold_factsLatest_weekly.sql
+FILE:           03_sdi_vw_weeklyNarrative_gold_factsLatest_long.sql
 PLATFORM:       Databricks
 LAYER:          Gold view
 CATALOG.SCHEMA: prdrzranalytics.lab42
-VIEW:           sdi_vw_weeklyNarrative_gold_factsLatest_weekly
+VIEW:           sdi_vw_weeklyNarrative_gold_factsLatest_long
 
 PURPOSE:
   Newest facts snapshot per reporting week (one snapshot_id per week_end).
 
   Used while a week is being DRAFTED. Once a report is published it must read its pinned
-  snapshot_id from sdi_tbl_weeklyNarrative_gold_factsHistory_perRun, never this view, so a
+  snapshot_id from sdi_tbl_weeklyNarrative_gold_factsHistory_long, never this view, so a
   later re-snapshot cannot change a published week.
 
 GRAIN:
   week_end x metric_key x channel_group  (for the latest snapshot of that week)
 
 METADATA:
-  Column comments mirror sdi_tbl_weeklyNarrative_gold_factsHistory_perRun. The column list
+  Column comments mirror sdi_tbl_weeklyNarrative_gold_factsHistory_long. The column list
   is explicit (no h.*) so a new history column must be added here deliberately.
 
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_weekly
+  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
 (
   snapshot_id          COMMENT 'Snapshot identifier of the newest snapshot for this week_end.',
   snapshot_ts          COMMENT 'When the snapshot was taken (UTC).',
@@ -100,7 +100,7 @@ CREATE OR REPLACE VIEW
 
   created_ts           COMMENT 'Row insert timestamp.'
 )
-COMMENT 'Weekly narrative report (project weeklyNarrative, numbers sourced from PulseTMS Gold): newest facts snapshot per Sunday-Saturday week from sdi_tbl_weeklyNarrative_gold_factsHistory_perRun. For drafting only; published reports read their pinned snapshot_id from the history table.'
+COMMENT 'Weekly narrative report (project weeklyNarrative, numbers sourced from PulseTMS Gold): newest facts snapshot per Sunday-Saturday week from sdi_tbl_weeklyNarrative_gold_factsHistory_long. For drafting only; published reports read their pinned snapshot_id from the history table.'
 AS
 
 SELECT
@@ -180,7 +180,7 @@ SELECT
 
   h.created_ts
 
-FROM prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_perRun h
+FROM prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long h
 
 QUALIFY
   DENSE_RANK() OVER (

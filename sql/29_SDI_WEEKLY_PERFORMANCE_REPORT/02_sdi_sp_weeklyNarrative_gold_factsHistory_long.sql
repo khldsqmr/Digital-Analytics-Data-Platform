@@ -1,10 +1,10 @@
 /* =================================================================================================
-FILE:           02_sdi_sp_weeklyNarrative_gold_factsHistory_perRun.sql
+FILE:           02_sdi_sp_weeklyNarrative_gold_factsHistory_long.sql
 PLATFORM:       Databricks
 LAYER:          Gold (frozen facts for the weekly narrative report)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-PROCEDURE:      sdi_sp_weeklyNarrative_gold_factsHistory_perRun
-TABLE:          sdi_tbl_weeklyNarrative_gold_factsHistory_perRun
+PROCEDURE:      sdi_sp_weeklyNarrative_gold_factsHistory_long
+TABLE:          sdi_tbl_weeklyNarrative_gold_factsHistory_long
 
 SOURCE LINEAGE (this project is separate from PulseTMS):
   Upstream project : PulseTMS
@@ -32,7 +32,7 @@ WHY APPEND-ONLY (same pattern as the PulseTMS validation history):
   - Every run writes a new snapshot_id. Nothing is ever updated or deleted.
   - The published report pins the snapshot_id it was written from, so a published week
     never changes when Gold restates, and any restatement is visible by comparing snapshots.
-  - sdi_vw_weeklyNarrative_gold_factsLatest_weekly returns the newest snapshot per week.
+  - sdi_vw_weeklyNarrative_gold_factsLatest_long returns the newest snapshot per week.
 
 WEEK SELECTION:
   p_week_end = NULL  -> latest completed Saturday from the PulseTMS QGP calendar
@@ -130,14 +130,14 @@ CHANGE LOG:
 ORCHESTRATION:
   Run as a separate Databricks Job task that depends on the PulseTMS orchestration task,
   so a failure here never blocks the PulseTMS dashboards. Example SQL task:
-    CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_perRun(
+    CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_long(
       NULL, 'JOB', '{{job.run_id}}'
     );
 
 ================================================================================================= */
 
 CREATE OR REPLACE PROCEDURE
-  prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_perRun
+  prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_long
 (
   IN p_week_end   DATE   DEFAULT NULL,
   IN p_run_type   STRING DEFAULT NULL,
@@ -147,7 +147,7 @@ CREATE OR REPLACE PROCEDURE
 LANGUAGE SQL
 SQL SECURITY INVOKER
 MODIFIES SQL DATA
-COMMENT 'Weekly narrative report: appends one frozen snapshot of PulseTMS-sourced registry metrics for one Sunday-Saturday week from sdi_vw_dashboardPulseTms_gold_unified_long into sdi_tbl_weeklyNarrative_gold_factsHistory_perRun. p_week_end NULL = latest completed Saturday.'
+COMMENT 'Weekly narrative report: appends one frozen snapshot of PulseTMS-sourced registry metrics for one Sunday-Saturday week from sdi_vw_dashboardPulseTms_gold_unified_long into sdi_tbl_weeklyNarrative_gold_factsHistory_long. p_week_end NULL = latest completed Saturday.'
 
 AS
 BEGIN
@@ -171,7 +171,7 @@ BEGIN
 
   SET v_run_type =
     CASE
-      WHEN UPPER(TRIM(COALESCE(sdi_sp_weeklyNarrative_gold_factsHistory_perRun.p_run_type, ''))) = 'JOB'
+      WHEN UPPER(TRIM(COALESCE(sdi_sp_weeklyNarrative_gold_factsHistory_long.p_run_type, ''))) = 'JOB'
         THEN 'JOB'
       ELSE 'MANUAL'
     END;
@@ -179,7 +179,7 @@ BEGIN
 
   SET v_job_run_id =
     COALESCE(
-      NULLIF(TRIM(sdi_sp_weeklyNarrative_gold_factsHistory_perRun.p_job_run_id), ''),
+      NULLIF(TRIM(sdi_sp_weeklyNarrative_gold_factsHistory_long.p_job_run_id), ''),
       v_snapshot_id
     );
 
@@ -187,7 +187,7 @@ BEGIN
   /* Week: explicit parameter, else latest completed Saturday. */
   SET v_week_end =
     COALESCE(
-      sdi_sp_weeklyNarrative_gold_factsHistory_perRun.p_week_end,
+      sdi_sp_weeklyNarrative_gold_factsHistory_long.p_week_end,
       (
         SELECT cal.qgp_date
         FROM   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
@@ -231,7 +231,7 @@ BEGIN
      =============================================================================================== */
 
   CREATE TABLE IF NOT EXISTS
-    prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_perRun
+    prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long
   (
     snapshot_id          STRING     COMMENT 'Snapshot identifier, WKNARR_FACTS_yyyyMMdd_HHmmss_SSS. One per procedure run. Published reports pin this value.',
     snapshot_ts          TIMESTAMP  COMMENT 'When the snapshot was taken (UTC).',
@@ -244,7 +244,7 @@ BEGIN
     days_in_period       INT        COMMENT 'Days in the QGP period ending on week_end: 7 for NORMAL, fewer for BOUNDARY_FIRST. Explains why metric_value can be partial.',
     is_complete_period   BOOLEAN    COMMENT 'Calendar completeness flag from the PulseTMS QGP calendar. Does NOT guarantee every source has settled; see is_data_current and source_validation_status.',
 
-    registry_version     STRING     COMMENT 'registry_version of sdi_vw_weeklyNarrative_control_metricRegistry used for this snapshot.',
+    registry_version     STRING     COMMENT 'registry_version of sdi_vw_weeklyNarrative_control_metricRegistry_static used for this snapshot.',
     metric_key           STRING     COMMENT 'Registry primary key of the metric slice.',
     display_name         STRING     COMMENT 'Report-facing metric name from the registry.',
     report_section       STRING     COMMENT 'Report section display label from the registry (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
@@ -311,7 +311,7 @@ BEGIN
   )
   USING DELTA
   CLUSTER BY (week_end, metric_key)
-  COMMENT 'Weekly narrative report (project weeklyNarrative, separate from PulseTMS): append-only frozen snapshots of registry metrics read from PulseTMS Gold (sdi_vw_dashboardPulseTms_gold_unified_long); every row stamps source_project and source_object. One row per snapshot_id x metric_key x channel_group. Published reports pin a snapshot_id. Written by sdi_sp_weeklyNarrative_gold_factsHistory_perRun.';
+  COMMENT 'Weekly narrative report (project weeklyNarrative, separate from PulseTMS): append-only frozen snapshots of registry metrics read from PulseTMS Gold (sdi_vw_dashboardPulseTms_gold_unified_long); every row stamps source_project and source_object. One row per snapshot_id x metric_key x channel_group. Published reports pin a snapshot_id. Written by sdi_sp_weeklyNarrative_gold_factsHistory_long.';
 
 
   /* ===============================================================================================
@@ -322,10 +322,10 @@ BEGIN
 
   Reg AS (
     SELECT *
-    FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry
+    FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
     WHERE  is_active = TRUE
       /* PulseTMS adapter: this procedure only reads PulseTMS Gold. Rows for any other
-         source_object are ignored here and flagged by check 8 in 04_checks_step1.sql. */
+         source_object are ignored here and flagged by check 8 in 04_sdi_weeklyNarrative_validation_checks_adhoc.sql. */
       AND  source_project = 'PULSE_TMS'
       AND  source_object  = 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long'
   ),
@@ -517,7 +517,7 @@ BEGIN
 
 
   INSERT INTO
-    prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_perRun
+    prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long
   (
     snapshot_id, snapshot_ts, run_type, job_run_id,
     week_end, week_type, qgp_quarter, days_in_period, is_complete_period,
@@ -660,7 +660,7 @@ BEGIN
   SET v_row_count =
   (
     SELECT COUNT(*)
-    FROM   prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_perRun
+    FROM   prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long
     WHERE  snapshot_id = v_snapshot_id
   );
 

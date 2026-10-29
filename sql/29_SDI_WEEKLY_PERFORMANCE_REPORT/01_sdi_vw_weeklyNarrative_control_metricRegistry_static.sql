@@ -1,9 +1,9 @@
 /* =================================================================================================
-FILE:           01_sdi_vw_weeklyNarrative_control_metricRegistry.sql
+FILE:           01_sdi_vw_weeklyNarrative_control_metricRegistry_static.sql
 PLATFORM:       Databricks
 LAYER:          Control (static configuration)
 CATALOG.SCHEMA: prdrzranalytics.lab42
-VIEW:           sdi_vw_weeklyNarrative_control_metricRegistry
+VIEW:           sdi_vw_weeklyNarrative_control_metricRegistry_static
 
 SOURCE LINEAGE:
   This project (weeklyNarrative) is separate from PulseTMS. It does not recompute any metric;
@@ -84,6 +84,17 @@ GOLD MATCHING RULES (used by the facts snapshot procedure):
                  against their own channel totals (see Biddable Silver contract)
 
 NAMING CONVENTION (applies to every weeklyNarrative object):
+  Objects sdi_<tbl|vw|sp>_weeklyNarrative_<layer>_<purpose>_<cadence>
+          layer   bronze | silver | gold | control | validation | orchestration
+          cadence gold = wide | long; static config = static; orchestration / run logs =
+                  perRun; bronze / silver = daily | weekly
+          Current objects:
+            sdi_vw_weeklyNarrative_control_metricRegistry_static
+            sdi_sp_weeklyNarrative_gold_factsHistory_long      (writes the table below)
+            sdi_tbl_weeklyNarrative_gold_factsHistory_long
+            sdi_vw_weeklyNarrative_gold_factsLatest_long
+            sdi_vw_weeklyNarrative_gold_whatMoved_long
+            sdi_sp_weeklyNarrative_orchestration_factsHistoryBackfill_perRun
   Codes   UPPER_SNAKE. Any value used to filter, join or branch logic:
           report_lob, unit, source_project, row_role, run_type (and PulseTMS codes kept as-is:
           data_source, metric_type, true_lob, week_type).
@@ -112,7 +123,7 @@ OPEN ITEMS (fill in, then bump registry_version):
 ================================================================================================= */
 
 CREATE OR REPLACE VIEW
-  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry
+  prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
 (
   registry_version         COMMENT 'Version of this registry definition (yyyy-mm-dd.n). Bumped on every change. Stamped onto every facts snapshot so past weeks can be traced to the registry they used.',
   metric_key               COMMENT 'Primary key. Stable identifier for one reportable metric slice, prefixed with the source project and named after the PulseTMS wide-view column where one exists, e.g. pulseTms.upvTotalAdobe, pulseTms.mfcSpendActualPostpaid. Never reuse or rename a key once snapshots exist.',
