@@ -19,7 +19,7 @@ SOURCE:
   For a published report, the same rules must be applied to its pinned snapshot_id.
 
 GRAIN:
-  week_end x metric_key, HEADLINE rows only (one row per reportable metric per week,
+  week_end x metric_key, row_role = ACTUAL only (one row per reportable metric per week,
   highlighted or not, so it is always visible why a metric was or was not picked).
 
 RULES (each scored so that 1.0 = exactly at threshold):
@@ -42,7 +42,7 @@ first matching reason wins):
   SOURCE_VALIDATION_FAILED  PulseTMS validation status Failed for the data source
 
 TOP DRIVER:
-  For metrics with channel DRIVER rows, the channel with the largest week-over-week change
+  For metrics with channel ACTUAL_DRIVER rows, the channel with the largest week-over-week change
   in the same direction as the headline (falls back to the largest change in any direction).
   top_driver_share_of_change = that channel change / headline change. Adobe channel_groups
   plus All Channels may not sum exactly, so treat the share as indicative.
@@ -130,7 +130,7 @@ Thresholds AS (
 
 
 /* ===============================================================================================
-   HEADLINE ROWS + 13-WEEK HIGH / LOW FROM EARLIER SNAPSHOTS
+   ACTUAL ROWS + 13-WEEK HIGH / LOW FROM EARLIER SNAPSHOTS
    =============================================================================================== */
 
 Headline AS (
@@ -140,7 +140,7 @@ Headline AS (
     MIN(f.week_value)   OVER w13 AS min_prior_13wk,
     COUNT(f.week_value) OVER w13 AS prior_13wk_weeks_seen
   FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long f
-  WHERE f.row_role = 'HEADLINE'
+  WHERE f.row_role = 'ACTUAL'
   WINDOW w13 AS (
     PARTITION BY f.metric_key
     ORDER BY unix_date(f.week_end)            -- days since epoch, so the frame is in days
@@ -160,7 +160,7 @@ Drivers AS (
     d.channel_group,
     d.week_value - d.prior_week_value AS wow_change
   FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long d
-  WHERE d.row_role = 'DRIVER'
+  WHERE d.row_role = 'ACTUAL_DRIVER'
     AND d.week_value       IS NOT NULL
     AND d.prior_week_value IS NOT NULL
 ),

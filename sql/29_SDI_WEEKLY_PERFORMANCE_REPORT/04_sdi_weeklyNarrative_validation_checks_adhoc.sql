@@ -62,7 +62,7 @@ SELECT
   qtd_total, qtd_target_total, qtd_vs_target,
   is_data_current, source_validation_status
 FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
-WHERE row_role = 'HEADLINE'
+WHERE row_role = 'ACTUAL'
   AND week_end = (SELECT MAX(week_end) FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long)
 ORDER BY metric_lob, sort_order;
 
@@ -71,14 +71,14 @@ ORDER BY metric_lob, sort_order;
    6. Registry slices missing from the latest snapshot (expected on weeks where a source lags,
       e.g. QGP actuals reporting lag; investigate anything else)
    ------------------------------------------------------------------------------------------------- */
-SELECT r.metric_key, r.display_name, r.is_headline
+SELECT r.metric_key, r.display_name, r.metric_role
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static r
 WHERE  r.is_active = TRUE
   AND NOT EXISTS (
     SELECT 1
     FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long f
     WHERE f.metric_key = r.metric_key
-      AND f.row_role IN ('HEADLINE', 'REFERENCE')
+      AND f.row_role IN ('ACTUAL', 'TARGET')
       AND f.week_end = (SELECT MAX(week_end) FROM prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long)
   );
 
@@ -98,7 +98,7 @@ JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_wide w
   ON  w.qgp_date      = f.week_end
   AND w.channel_group = 'All Channels'
 WHERE f.metric_key = 'pulseTms.upvTotalAdobe'
-  AND f.row_role   = 'HEADLINE'
+  AND f.row_role   = 'ACTUAL'
   AND ABS(COALESCE(f.week_value - w.upvTotalAdobe, 0)) > 0.01;
 
 
@@ -186,16 +186,17 @@ WHERE  f.metric_key = 'pulseTms.mfcSpendActualTotal'
 SELECT week_end, metric_key, channel_group, week_value, target_week_value
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
 WHERE  is_target_same_as_actual = TRUE
-  AND  row_role = 'HEADLINE'
+  AND  row_role = 'ACTUAL'
 ORDER BY week_end DESC, metric_key;
 
 
 /* -------------------------------------------------------------------------------------------------
    15. Naming convention: codes must be UPPER_SNAKE, labels must not be empty
    ------------------------------------------------------------------------------------------------- */
-SELECT metric_key, metric_lob, unit, source_project, report_section
+SELECT metric_key, metric_lob, metric_role, unit, source_project, report_section
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
 WHERE  NOT COALESCE(metric_lob, 'NULL') RLIKE '^[A-Z][A-Z0-9_]*( \\+ [A-Z][A-Z0-9_]*)*$'
+   OR  metric_role IS NULL OR metric_role NOT IN ('ACTUAL', 'TARGET')
    OR  NOT unit           RLIKE '^[A-Z][A-Z0-9_]*$'
    OR  NOT source_project RLIKE '^[A-Z][A-Z0-9_]*$'
    OR  NULLIF(TRIM(report_section), '')   IS NULL;

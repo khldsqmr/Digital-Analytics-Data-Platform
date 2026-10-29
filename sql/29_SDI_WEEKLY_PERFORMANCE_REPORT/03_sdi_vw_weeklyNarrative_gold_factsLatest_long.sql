@@ -41,7 +41,7 @@ CREATE OR REPLACE VIEW
   report_section       COMMENT 'Report section display label (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
   metric_lob           COMMENT 'LOB(s) the metric covers, from the registry: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO) or several joined with + (e.g. POSTPAID + BROADBAND). NULL = metric has no LOB (e.g. total site UPV, store traffic). Group the report by this.',
   sort_order           COMMENT 'Report display order.',
-  row_role             COMMENT 'HEADLINE, DRIVER (other channel_group of a headline metric), REFERENCE (forecast or target), REFERENCE_DRIVER (channel-level forecast or target).',
+  row_role             COMMENT 'ACTUAL (the metric the report writes about), ACTUAL_DRIVER (same metric at another channel_group), TARGET (forecast or QGP target), TARGET_DRIVER (channel-level forecast or target).',
 
   source_project       COMMENT 'Code of the upstream project the numbers come from: PULSE_TMS.',
   source_object        COMMENT 'Upstream object read: prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long (PulseTMS Gold).',

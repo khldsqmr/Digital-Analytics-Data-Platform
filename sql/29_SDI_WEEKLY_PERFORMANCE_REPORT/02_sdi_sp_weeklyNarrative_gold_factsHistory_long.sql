@@ -62,10 +62,10 @@ LINE OF BUSINESS:
   Scaling to TFB / METRO = registry rows only; no change to this procedure.
 
 ROW ROLES:
-  HEADLINE          registry is_headline = TRUE, headline channel_group
-  DRIVER            same metric, other channel_group (registry include_channel_drivers)
-  REFERENCE         registry is_headline = FALSE (a target row: forecast or QGP target)
-  REFERENCE_DRIVER  channel-level reference rows (e.g. MFC forecast per channel)
+  ACTUAL         registry metric_role = ACTUAL, at the metric's own channel_group
+  ACTUAL_DRIVER  same actual at another channel_group (registry include_channel_drivers)
+  TARGET         registry metric_role = TARGET (forecast or QGP target)
+  TARGET_DRIVER  target at another channel_group (e.g. MFC forecast per channel)
 
 TARGET COMPARISON:
   Target = the forecast for MFC spend and UPV, and the QGP target for QGP scorecard metrics.
@@ -253,7 +253,7 @@ BEGIN
     report_section       STRING     COMMENT 'Report section display label from the registry (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
     metric_lob           STRING     COMMENT 'LOB(s) the metric covers, from the registry: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO) or several joined with + (e.g. POSTPAID + BROADBAND). NULL = metric has no LOB (e.g. total site UPV, store traffic). Group the report by this.',
     sort_order           INT        COMMENT 'Report display order from the registry.',
-    row_role             STRING     COMMENT 'HEADLINE = reportable metric at its headline channel. DRIVER = same metric at another channel_group, used to explain moves. REFERENCE = forecast or target row. REFERENCE_DRIVER = channel-level forecast or target.',
+    row_role             STRING     COMMENT 'ACTUAL = the metric at its own channel_group (what the report writes about). ACTUAL_DRIVER = same metric at another channel_group, used to explain moves. TARGET = forecast or QGP target row. TARGET_DRIVER = channel-level forecast or target.',
 
     source_project       STRING     COMMENT 'Code of the upstream project the numbers come from: PULSE_TMS. weeklyNarrative only reads these values, it never recomputes them.',
     source_object        STRING     COMMENT 'Fully qualified upstream object read for this row: prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long (PulseTMS Gold).',
@@ -263,7 +263,7 @@ BEGIN
     metric_type          STRING     COMMENT 'PulseTMS Gold metric_type the row came from.',
     source_lob           STRING     COMMENT 'PulseTMS Gold true_lob value(s) read for this row, from the registry. NULL = source has no LOB (ADOBE, UPV_FORECAST, some QGP). One value = single LOB. Several joined with + (e.g. POSTPAID + BROADBAND) = summed total.',
     is_lob_rollup_complete BOOLEAN  COMMENT 'Only when source_lob lists several LOBs: TRUE when every one had a value this week. FALSE means the total is partial and must not be reported as a full total. NULL for single-LOB or no-LOB rows.',
-    channel_group        STRING     COMMENT 'PulseTMS Gold channel_group. Headline rows are normally All Channels; DRIVER rows carry the individual channel. NULL for QGP_SCORECARD.',
+    channel_group        STRING     COMMENT 'PulseTMS Gold channel_group. Headline rows are normally All Channels; ACTUAL_DRIVER rows carry the individual channel. NULL for QGP_SCORECARD.',
 
     unit                 STRING     COMMENT 'COUNT | USD | PCT. PCT values are ratios (0.31 = 31%).',
     higher_is_better     BOOLEAN    COMMENT 'Direction of good performance from the registry. NULL = neutral.',
@@ -348,14 +348,14 @@ BEGIN
 
   /* Every PulseTMS Gold row that belongs to a registry slice, for every date in the window.
        true_lob : NULL when source_lob is NULL, otherwise one of the source_lob values
-       channel  : headline channel_group (HEADLINE / REFERENCE)
-                  OR another channel allowed by driver_channel_like (DRIVER / REFERENCE_DRIVER) */
+       channel  : headline channel_group (ACTUAL / TARGET)
+                  OR another channel allowed by driver_channel_like (ACTUAL_DRIVER / TARGET_DRIVER) */
   Matched AS (
     SELECT
       r.metric_key,
       CASE
-        WHEN g.channel_group <=> r.channel_group THEN CASE WHEN r.is_headline THEN 'HEADLINE' ELSE 'REFERENCE' END
-        ELSE                                          CASE WHEN r.is_headline THEN 'DRIVER'   ELSE 'REFERENCE_DRIVER' END
+        WHEN g.channel_group <=> r.channel_group THEN CASE WHEN r.metric_role = 'ACTUAL' THEN 'ACTUAL'        ELSE 'TARGET'        END
+        ELSE                                          CASE WHEN r.metric_role = 'ACTUAL' THEN 'ACTUAL_DRIVER' ELSE 'TARGET_DRIVER' END
       END                                                     AS row_role,
       COALESCE(size(r.source_lob) > 1, FALSE)                AS is_rollup,
       g.*
