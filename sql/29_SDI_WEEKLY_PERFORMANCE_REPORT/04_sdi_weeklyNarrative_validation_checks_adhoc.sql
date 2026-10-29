@@ -54,7 +54,7 @@ CALL prdrzranalytics.lab42.sdi_sp_weeklyNarrative_gold_factsHistory_long(NULL, '
    5. Look at what the AI will see: headline rows for the latest week
    ------------------------------------------------------------------------------------------------- */
 SELECT
-  week_end, report_section, metric_lob, display_name, unit,
+  week_end, metric_lob, display_name, unit,
   week_value, wow_pct, yoy_pct,
   target_week_value, vs_target_abs, vs_target_pct, is_target_same_as_actual,
   avg_prior_4wk, avg_prior_13wk, avg_prior_52wk, zscore_prior_13wk, prior_52wk_weeks,
@@ -191,15 +191,14 @@ ORDER BY week_end DESC, metric_key;
 
 
 /* -------------------------------------------------------------------------------------------------
-   15. Naming convention: codes must be UPPER_SNAKE, labels must not be empty
+   15. Naming convention: codes must be UPPER_SNAKE, metric_role must be ACTUAL or TARGET
    ------------------------------------------------------------------------------------------------- */
-SELECT metric_key, metric_lob, metric_role, unit, source_project, report_section
+SELECT metric_key, metric_lob, metric_role, unit, source_project
 FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_control_metricRegistry_static
 WHERE  NOT COALESCE(metric_lob, 'NULL') RLIKE '^[A-Z][A-Z0-9_]*( \\+ [A-Z][A-Z0-9_]*)*$'
    OR  metric_role IS NULL OR metric_role NOT IN ('ACTUAL', 'TARGET')
    OR  NOT unit           RLIKE '^[A-Z][A-Z0-9_]*$'
-   OR  NOT source_project RLIKE '^[A-Z][A-Z0-9_]*$'
-   OR  NULLIF(TRIM(report_section), '')   IS NULL;
+   OR  NOT source_project RLIKE '^[A-Z][A-Z0-9_]*$';
 
 
 /* -------------------------------------------------------------------------------------------------
@@ -231,7 +230,7 @@ HAVING COUNT(*) > 1;
    18. What moved: highlights for the latest week, in rank order (eyeball against the report)
    ------------------------------------------------------------------------------------------------- */
 SELECT
-  highlight_rank, report_section, metric_lob, display_name,
+  highlight_rank, metric_lob, display_name,
   highlight_reasons, ROUND(highlight_score, 2) AS score,
   direction, wow_sentiment, target_position, target_sentiment,
   top_driver_channel, ROUND(top_driver_share_of_change, 2) AS driver_share,

@@ -32,7 +32,7 @@ PURPOSE:
   One row per reportable metric slice. Each row says:
     - WHERE the number lives in PulseTMS Gold
         (data_source + metric_name + metric_type + source_lob + channel_group)
-    - WHAT it is called in the report (display_name, report_section, metric_lob, aliases)
+    - WHAT it is called in the report (display_name, metric_lob, aliases)
     - WHAT it is compared against (target_metric_key). Target means the forecast for MFC
       spend and UPV, and the QGP target for QGP scorecard metrics.
     - WHETHER channel-level driver rows should also be captured for the "why"
@@ -106,7 +106,6 @@ NAMING CONVENTION (applies to every weeklyNarrative object):
           kept as-is: data_source, metric_type, week_type).
           e.g. POSTPAID, POSTPAID + BROADBAND, PCT, PULSE_TMS, ACTUAL, TARGET.
   Labels  Human-readable text for the report, in their own columns:
-          report_section  Title Case (used as headings: Virtual Retail)
           display_name    Sentence case (used inside sentences: MFC spend, Postpaid)
           Filter on the code, write with the label. Never compare on a label.
   Keys    camelCase identifiers, matching PulseTMS metric and column names:
@@ -133,7 +132,6 @@ CREATE OR REPLACE VIEW
   registry_version         COMMENT 'Version of this registry definition (yyyy-mm-dd.n). Bumped on every change. Stamped onto every facts snapshot so past weeks can be traced to the registry they used.',
   metric_key               COMMENT 'Primary key. Stable identifier for one reportable metric slice, prefixed with the source project and named after the PulseTMS wide-view column where one exists, e.g. pulseTms.upvTotalAdobe, pulseTms.mfcSpendActualPostpaid. Never reuse or rename a key once snapshots exist.',
   display_name             COMMENT 'Display label (sentence case) of the metric, used inside narrative sentences and on review screens. Acronyms stay as written (UPV, MFC, QGP, BYOD).',
-  report_section           COMMENT 'Display label (Title Case) of the report section: Traffic, Funnel, Spend, Activations, Retail, Virtual Retail.',
   metric_lob               COMMENT 'The LOB(s) this metric covers, in UPPER_SNAKE: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO), or several joined with + in that fixed order when the metric combines them (e.g. POSTPAID + BROADBAND for the MFC total). NULL = the metric has no LOB (e.g. total site UPV, store traffic, virtual retail calls).',
   sort_order               COMMENT 'Display order within the report. Reference-only rows use 900+ so they sort last.',
   metric_role              COMMENT 'ACTUAL = the metric the report writes about. TARGET = a forecast or QGP target; it is snapshotted and shown NEXT TO its actual (target_week_value, vs_target_pct, QTD vs target on the actual row), but never written up as a metric of its own.',
@@ -154,11 +152,11 @@ CREATE OR REPLACE VIEW
   is_active                COMMENT 'FALSE = not snapshotted. Used for retired metrics and for pre-built rows waiting on a scope change (e.g. TFB).',
   notes                    COMMENT 'Free-text definition notes, caveats and known source issues for this metric.'
 )
-COMMENT 'Weekly narrative report: static control view. One row per reportable metric slice. Maps report language (display names, aliases, sections, metric_lob) to exact metric slices of an upstream source (today only PulseTMS Gold, sdi_vw_dashboardPulseTms_gold_unified_long, recorded in source_project and source_object), plus source LOB matching (single or summed), targets (forecast or QGP target) and driver rules. Changed only through code review and redeploy; bump registry_version on every change.'
+COMMENT 'Weekly narrative report: static control view. One row per reportable metric slice. Maps report language (display names, aliases, metric_lob) to exact metric slices of an upstream source (today only PulseTMS Gold, sdi_vw_dashboardPulseTms_gold_unified_long, recorded in source_project and source_object), plus source LOB matching (single or summed), targets (forecast or QGP target) and driver rules. Changed only through code review and redeploy; bump registry_version on every change.'
 AS
 
 SELECT
-  '2026-10-29.11' AS registry_version,
+  '2026-10-29.13' AS registry_version,
   r.*
 
 FROM VALUES
@@ -167,126 +165,126 @@ FROM VALUES
      TRAFFIC / FUNNEL  (PulseTMS ADOBE, All Channels headline, channel drivers)
      =============================================================================================== */
 
-  ( 'pulseTms.upvTotalAdobe', 'UPV (total Adobe)', 'Traffic', CAST(NULL AS STRING), 10, 'ACTUAL',
+  ( 'pulseTms.upvTotalAdobe', 'UPV (total Adobe)', 'POSTPAID + BROADBAND', 10, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'upvTotalAdobe', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, 'pulseTms.upvForecast', TRUE, '%',
     ARRAY('upv', 'traffic', 'site traffic', 'visitors'), 'SDI', TRUE,
     'Headline traffic metric. Compared against UPV forecast (All Channels only).' ),
 
-  ( 'pulseTms.upvFlowTotal', 'UPV in flow', 'Traffic', 'POSTPAID + BROADBAND + BYOD', 20, 'ACTUAL',
+  ( 'pulseTms.upvFlowTotal', 'UPV in flow', 'POSTPAID + BROADBAND', 20, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'upvFlowTotal', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('flow upv', 'flow traffic', 'flow visitors'), 'SDI', TRUE,
     'Postpaid + HSI + BYOD flows.' ),
 
-  ( 'pulseTms.upvPostpaid', 'UPV Postpaid', 'Traffic', 'POSTPAID', 30, 'ACTUAL',
+  ( 'pulseTms.upvPostpaid', 'UPV Postpaid', 'POSTPAID', 30, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'upvPostpaid', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('postpaid upv', 'postpaid traffic', 'postpaid visitors'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.upvHsi', 'UPV HSI', 'Traffic', 'BROADBAND', 40, 'ACTUAL',
+  ( 'pulseTms.upvHsi', 'UPV HSI', 'BROADBAND', 40, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'upvHsi', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('hsi upv', 'hsi traffic', 'broadband traffic', 'home internet traffic'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.upvByod', 'UPV BYOD', 'Traffic', 'BYOD', 45, 'ACTUAL',
+  ( 'pulseTms.upvByod', 'UPV BYOD', 'BYOD', 45, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'upvByod', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('byod upv', 'byod traffic', 'bring your own device traffic'), 'SDI', TRUE,
     'BYOD kept as its own metric_lob. Confirm whether the report treats BYOD as part of Postpaid.' ),
 
-  ( 'pulseTms.cartstartTotal', 'Cart starts', 'Funnel', 'POSTPAID + BROADBAND + BYOD', 50, 'ACTUAL',
+  ( 'pulseTms.cartstartTotal', 'Cart starts', 'POSTPAID + BROADBAND', 50, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'cartstartTotal', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('cart starts', 'cartstarts', 'carts'), 'SDI', TRUE,
     'Postpaid + HSI + BYOD (built in Adobe Silver).' ),
 
-  ( 'pulseTms.cartstartPostpaid', 'Cart starts Postpaid', 'Funnel', 'POSTPAID', 51, 'ACTUAL',
+  ( 'pulseTms.cartstartPostpaid', 'Cart starts Postpaid', 'POSTPAID', 51, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'cartstartPostpaid', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('postpaid cart starts', 'postpaid carts'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.cartstartHsi', 'Cart starts HSI', 'Funnel', 'BROADBAND', 52, 'ACTUAL',
+  ( 'pulseTms.cartstartHsi', 'Cart starts HSI', 'BROADBAND', 52, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'cartstartHsi', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('hsi cart starts', 'broadband cart starts'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.cartstartByod', 'Cart starts BYOD', 'Funnel', 'BYOD', 53, 'ACTUAL',
+  ( 'pulseTms.cartstartByod', 'Cart starts BYOD', 'BYOD', 53, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'cartstartByod', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('byod cart starts'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersTotal', 'Orders (total)', 'Funnel', 'POSTPAID + BROADBAND + BYOD', 60, 'ACTUAL',
+  ( 'pulseTms.ordersTotal', 'Orders (total)', 'POSTPAID + BROADBAND', 60, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersTotal', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('orders', 'total orders', 'web orders'), 'SDI', TRUE,
     'Assisted + unassisted, Postpaid + HSI + BYOD.' ),
 
-  ( 'pulseTms.ordersUnassistedTotal', 'Orders unassisted', 'Funnel', 'POSTPAID + BROADBAND + BYOD', 70, 'ACTUAL',
+  ( 'pulseTms.ordersUnassistedTotal', 'Orders unassisted', 'POSTPAID + BROADBAND', 70, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersUnassistedTotal', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('unassisted orders', 'self-serve orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersUnassistedPostpaid', 'Orders unassisted Postpaid', 'Funnel', 'POSTPAID', 71, 'ACTUAL',
+  ( 'pulseTms.ordersUnassistedPostpaid', 'Orders unassisted Postpaid', 'POSTPAID', 71, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersUnassistedPostpaid', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('postpaid unassisted orders', 'postpaid orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersUnassistedHsi', 'Orders unassisted HSI', 'Funnel', 'BROADBAND', 72, 'ACTUAL',
+  ( 'pulseTms.ordersUnassistedHsi', 'Orders unassisted HSI', 'BROADBAND', 72, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersUnassistedHsi', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('hsi unassisted orders', 'hsi orders', 'broadband orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersUnassistedByod', 'Orders unassisted BYOD', 'Funnel', 'BYOD', 73, 'ACTUAL',
+  ( 'pulseTms.ordersUnassistedByod', 'Orders unassisted BYOD', 'BYOD', 73, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersUnassistedByod', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('byod unassisted orders', 'byod orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersAssistedTotal', 'Orders assisted', 'Funnel', 'POSTPAID + BROADBAND + BYOD', 75, 'ACTUAL',
+  ( 'pulseTms.ordersAssistedTotal', 'Orders assisted', 'POSTPAID + BROADBAND', 75, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersAssistedTotal', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('assisted orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersAssistedPostpaid', 'Orders assisted Postpaid', 'Funnel', 'POSTPAID', 76, 'ACTUAL',
+  ( 'pulseTms.ordersAssistedPostpaid', 'Orders assisted Postpaid', 'POSTPAID', 76, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersAssistedPostpaid', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('postpaid assisted orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersAssistedHsi', 'Orders assisted HSI', 'Funnel', 'BROADBAND', 77, 'ACTUAL',
+  ( 'pulseTms.ordersAssistedHsi', 'Orders assisted HSI', 'BROADBAND', 77, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersAssistedHsi', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
     ARRAY('hsi assisted orders', 'broadband assisted orders'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.ordersAssistedByod', 'Orders assisted BYOD', 'Funnel', 'BYOD', 78, 'ACTUAL',
+  ( 'pulseTms.ordersAssistedByod', 'Orders assisted BYOD', 'BYOD', 78, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'ADOBE', 'ordersAssistedByod', 'ADOBE_VOLUME', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), TRUE, '%',
@@ -298,7 +296,7 @@ FROM VALUES
      FORECAST TARGET  (shown next to UPV actual, not written up on its own)
      =============================================================================================== */
 
-  ( 'pulseTms.upvForecast', 'UPV forecast', 'Traffic', CAST(NULL AS STRING), 900, 'TARGET',
+  ( 'pulseTms.upvForecast', 'UPV forecast', 'POSTPAID + BROADBAND', 900, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'UPV_FORECAST', 'upvForecast', 'UPV_FORECAST', CAST(NULL AS ARRAY<STRING>), 'All Channels',
     'COUNT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
@@ -310,56 +308,56 @@ FROM VALUES
      MFC SPEND  (actual vs MFC forecast; per LOB + Postpaid + Broadband rollup; TFB pre-built, inactive)
      =============================================================================================== */
 
-  ( 'pulseTms.mfcSpendActualTotal', 'MFC spend, Postpaid + Broadband', 'Spend', 'POSTPAID + BROADBAND', 100, 'ACTUAL',
+  ( 'pulseTms.mfcSpendActualTotal', 'MFC spend, Postpaid + Broadband', 'POSTPAID + BROADBAND', 100, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendActual', 'MFC_SPEND_ACTUAL', ARRAY('POSTPAID', 'BROADBAND'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), 'pulseTms.mfcSpendForecastTotal', TRUE, '%',
     ARRAY('media spend', 'total spend', 'mfc spend', 'flowchart spend'), 'SDI', TRUE,
     'LOB rollup of POSTPAID + BROADBAND, same definition as mfcSpendActualTotal in the PulseTMS wide view. Add TFB / METRO to source_lob only when the report scope expands.' ),
 
-  ( 'pulseTms.mfcSpendForecastTotal', 'MFC forecast spend, Postpaid + Broadband', 'Spend', 'POSTPAID + BROADBAND', 905, 'TARGET',
+  ( 'pulseTms.mfcSpendForecastTotal', 'MFC forecast spend, Postpaid + Broadband', 'POSTPAID + BROADBAND', 905, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendForecast', 'MFC_SPEND_FORECAST', ARRAY('POSTPAID', 'BROADBAND'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '%',
     ARRAY('planned spend', 'spend plan', 'spend forecast'), 'SDI', TRUE,
     'Drivers kept so channel-level actual vs forecast can be compared.' ),
 
-  ( 'pulseTms.mfcSpendActualPostpaid', 'MFC spend, Postpaid', 'Spend', 'POSTPAID', 101, 'ACTUAL',
+  ( 'pulseTms.mfcSpendActualPostpaid', 'MFC spend, Postpaid', 'POSTPAID', 101, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendActual', 'MFC_SPEND_ACTUAL', ARRAY('POSTPAID'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), 'pulseTms.mfcSpendForecastPostpaid', TRUE, '%',
     ARRAY('postpaid spend', 'postpaid media spend'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.mfcSpendForecastPostpaid', 'MFC forecast spend, Postpaid', 'Spend', 'POSTPAID', 910, 'TARGET',
+  ( 'pulseTms.mfcSpendForecastPostpaid', 'MFC forecast spend, Postpaid', 'POSTPAID', 910, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendForecast', 'MFC_SPEND_FORECAST', ARRAY('POSTPAID'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '%',
     ARRAY('postpaid forecast spend', 'postpaid spend plan'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.mfcSpendActualBroadband', 'MFC spend, Broadband', 'Spend', 'BROADBAND', 102, 'ACTUAL',
+  ( 'pulseTms.mfcSpendActualBroadband', 'MFC spend, Broadband', 'BROADBAND', 102, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendActual', 'MFC_SPEND_ACTUAL', ARRAY('BROADBAND'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), 'pulseTms.mfcSpendForecastBroadband', TRUE, '%',
     ARRAY('broadband spend', 'hsi spend'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.mfcSpendForecastBroadband', 'MFC forecast spend, Broadband', 'Spend', 'BROADBAND', 920, 'TARGET',
+  ( 'pulseTms.mfcSpendForecastBroadband', 'MFC forecast spend, Broadband', 'BROADBAND', 920, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendForecast', 'MFC_SPEND_FORECAST', ARRAY('BROADBAND'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '%',
     ARRAY('broadband forecast spend', 'hsi spend plan'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.mfcSpendActualTfb', 'MFC spend, TFB', 'Spend', 'TFB', 103, 'ACTUAL',
+  ( 'pulseTms.mfcSpendActualTfb', 'MFC spend, TFB', 'TFB', 103, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendActual', 'MFC_SPEND_ACTUAL', ARRAY('TFB'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), 'pulseTms.mfcSpendForecastTfb', TRUE, '%',
     ARRAY('tfb spend', 'business spend', 't-mobile for business spend'), 'SDI', FALSE,
     'Pre-built for the TFB scope expansion. TFB rows already exist in PulseTMS MFC Gold; set is_active = TRUE (and bump registry_version) to start reporting.' ),
 
-  ( 'pulseTms.mfcSpendForecastTfb', 'MFC forecast spend, TFB', 'Spend', 'TFB', 925, 'TARGET',
+  ( 'pulseTms.mfcSpendForecastTfb', 'MFC forecast spend, TFB', 'TFB', 925, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'MFC_SPEND_CHANNEL', 'mfcSpendForecast', 'MFC_SPEND_FORECAST', ARRAY('TFB'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '%',
@@ -371,28 +369,28 @@ FROM VALUES
      BIDDABLE SPEND  (ALL + per LOB)
      =============================================================================================== */
 
-  ( 'pulseTms.biddableSpendTotal', 'Biddable spend, all LOBs', 'Spend', 'POSTPAID + BROADBAND + FIBER', 120, 'ACTUAL',
+  ( 'pulseTms.biddableSpendTotal', 'Biddable spend, all LOBs', 'POSTPAID + BROADBAND + FIBER', 120, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'BIDDABLE_SPEND_CHANNEL', 'biddableSpend', 'BIDDABLE_SPEND', ARRAY('ALL'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '% - All',
     ARRAY('biddable spend', 'biddable', 'search social programmatic spend'), 'SDI', TRUE,
     'PulseTMS Biddable ALL = POSTPAID + BROADBAND + FIBER. Drivers restricted to channel totals (% - All).' ),
 
-  ( 'pulseTms.biddableSpendPostpaid', 'Biddable spend, Postpaid', 'Spend', 'POSTPAID', 121, 'ACTUAL',
+  ( 'pulseTms.biddableSpendPostpaid', 'Biddable spend, Postpaid', 'POSTPAID', 121, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'BIDDABLE_SPEND_CHANNEL', 'biddableSpend', 'BIDDABLE_SPEND', ARRAY('POSTPAID'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '% - All',
     ARRAY('postpaid biddable spend'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.biddableSpendBroadband', 'Biddable spend, Broadband', 'Spend', 'BROADBAND', 122, 'ACTUAL',
+  ( 'pulseTms.biddableSpendBroadband', 'Biddable spend, Broadband', 'BROADBAND', 122, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'BIDDABLE_SPEND_CHANNEL', 'biddableSpend', 'BIDDABLE_SPEND', ARRAY('BROADBAND'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '% - All',
     ARRAY('broadband biddable spend', 'hsi biddable spend'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.biddableSpendFiber', 'Biddable spend, Fiber', 'Spend', 'FIBER', 123, 'ACTUAL',
+  ( 'pulseTms.biddableSpendFiber', 'Biddable spend, Fiber', 'FIBER', 123, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'BIDDABLE_SPEND_CHANNEL', 'biddableSpend', 'BIDDABLE_SPEND', ARRAY('FIBER'), 'All Channels',
     'USD', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), TRUE, '% - All',
@@ -404,98 +402,98 @@ FROM VALUES
      QGP SCORECARD  (actual vs QGP target; channel_group is NULL in PulseTMS Gold)
      =============================================================================================== */
 
-  ( 'pulseTms.qgpActivationsBopisActual', 'Digital phone activations (BOPIS + non-BOPIS)', 'Activations', 'POSTPAID', 200, 'ACTUAL',
+  ( 'pulseTms.qgpActivationsBopisActual', 'Digital phone activations (BOPIS + non-BOPIS)', 'POSTPAID', 200, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'activationsBopis', 'QGP_ACTUAL', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, 'pulseTms.qgpActivationsBopisTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('bopis', 'activations', 'digital activations', 'phone activations'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpActivationsBopisTarget', 'Digital phone activations (BOPIS + non-BOPIS) QGP target', 'Activations', 'POSTPAID', 930, 'TARGET',
+  ( 'pulseTms.qgpActivationsBopisTarget', 'Digital phone activations (BOPIS + non-BOPIS) QGP target', 'POSTPAID', 930, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'activationsBopis', 'QGP_TARGET', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('bopis target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpActivationsNewAalNoAssistanceActual', 'Activations, New + AAL, no assistance', 'Activations', 'POSTPAID', 210, 'ACTUAL',
+  ( 'pulseTms.qgpActivationsNewAalNoAssistanceActual', 'Activations, New + AAL, no assistance', 'POSTPAID', 210, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'activationsNewAalNoAssistance', 'QGP_ACTUAL', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, 'pulseTms.qgpActivationsNewAalNoAssistanceTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('new + aal', 'aal activations', 'bts activations'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpActivationsNewAalNoAssistanceTarget', 'Activations, New + AAL, no assistance QGP target', 'Activations', 'POSTPAID', 940, 'TARGET',
+  ( 'pulseTms.qgpActivationsNewAalNoAssistanceTarget', 'Activations, New + AAL, no assistance QGP target', 'POSTPAID', 940, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'activationsNewAalNoAssistance', 'QGP_TARGET', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('new + aal target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedActual', 'Digital % of postpaid activations', 'Activations', 'POSTPAID', 220, 'ACTUAL',
+  ( 'pulseTms.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedActual', 'Digital % of postpaid activations', 'POSTPAID', 220, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'digitalPctConsumerPostpaidActivationsTotalInclAssisted', 'QGP_ACTUAL', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'PCT', TRUE, 'pulseTms.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('digital %', 'digital share', 'digital mix'), 'SDI', TRUE,
     'Ratio metric. Compare in percentage points (unit = PCT).' ),
 
-  ( 'pulseTms.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget', 'Digital % of postpaid activations QGP target', 'Activations', 'POSTPAID', 950, 'TARGET',
+  ( 'pulseTms.qgpDigitalPctConsumerPostpaidActivationsTotalInclAssistedTarget', 'Digital % of postpaid activations QGP target', 'POSTPAID', 950, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'digitalPctConsumerPostpaidActivationsTotalInclAssisted', 'QGP_TARGET', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'PCT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('digital % target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpStoreTrafficActual', 'Store traffic', 'Retail', CAST(NULL AS STRING), 300, 'ACTUAL',
+  ( 'pulseTms.qgpStoreTrafficActual', 'Store traffic', CAST(NULL AS STRING), 300, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'storeTraffic', 'QGP_ACTUAL', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', TRUE, 'pulseTms.qgpStoreTrafficTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('store traffic', 'foot traffic', 'retail traffic'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpStoreTrafficTarget', 'Store traffic QGP target', 'Retail', CAST(NULL AS STRING), 960, 'TARGET',
+  ( 'pulseTms.qgpStoreTrafficTarget', 'Store traffic QGP target', CAST(NULL AS STRING), 960, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'storeTraffic', 'QGP_TARGET', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('store traffic target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrCallsActual', 'Virtual retail calls', 'Virtual Retail', CAST(NULL AS STRING), 400, 'ACTUAL',
+  ( 'pulseTms.qgpVrCallsActual', 'Virtual retail calls', CAST(NULL AS STRING), 400, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrCalls', 'QGP_ACTUAL', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', CAST(NULL AS BOOLEAN), 'pulseTms.qgpVrCallsTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('vr calls', 'virtual retail calls', 'inbound calls'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrCallsTarget', 'Virtual retail calls QGP target', 'Virtual Retail', CAST(NULL AS STRING), 970, 'TARGET',
+  ( 'pulseTms.qgpVrCallsTarget', 'Virtual retail calls QGP target', CAST(NULL AS STRING), 970, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrCalls', 'QGP_TARGET', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('vr calls target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrChatsActual', 'Virtual retail chats', 'Virtual Retail', CAST(NULL AS STRING), 410, 'ACTUAL',
+  ( 'pulseTms.qgpVrChatsActual', 'Virtual retail chats', CAST(NULL AS STRING), 410, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrChats', 'QGP_ACTUAL', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', CAST(NULL AS BOOLEAN), 'pulseTms.qgpVrChatsTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('vr chats', 'virtual retail chats', 'chats'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrChatsTarget', 'Virtual retail chats QGP target', 'Virtual Retail', CAST(NULL AS STRING), 980, 'TARGET',
+  ( 'pulseTms.qgpVrChatsTarget', 'Virtual retail chats QGP target', CAST(NULL AS STRING), 980, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrChats', 'QGP_TARGET', CAST(NULL AS ARRAY<STRING>), CAST(NULL AS STRING),
     'COUNT', CAST(NULL AS BOOLEAN), CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
     ARRAY('vr chats target'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrPostpaidActivationsActual', 'Virtual retail postpaid activations', 'Virtual Retail', 'POSTPAID', 420, 'ACTUAL',
+  ( 'pulseTms.qgpVrPostpaidActivationsActual', 'Virtual retail postpaid activations', 'POSTPAID', 420, 'ACTUAL',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrPostpaidActivations', 'QGP_ACTUAL', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, 'pulseTms.qgpVrPostpaidActivationsTarget', FALSE, CAST(NULL AS STRING),
     ARRAY('vr activations', 'virtual retail activations'), 'SDI', TRUE,
     CAST(NULL AS STRING) ),
 
-  ( 'pulseTms.qgpVrPostpaidActivationsTarget', 'Virtual retail postpaid activations QGP target', 'Virtual Retail', 'POSTPAID', 990, 'TARGET',
+  ( 'pulseTms.qgpVrPostpaidActivationsTarget', 'Virtual retail postpaid activations QGP target', 'POSTPAID', 990, 'TARGET',
     'PULSE_TMS', 'prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long',
     'QGP_SCORECARD', 'vrPostpaidActivations', 'QGP_TARGET', ARRAY('POSTPAID'), CAST(NULL AS STRING),
     'COUNT', TRUE, CAST(NULL AS STRING), FALSE, CAST(NULL AS STRING),
@@ -505,7 +503,6 @@ FROM VALUES
 AS r(
   metric_key,
   display_name,
-  report_section,
   metric_lob,
   sort_order,
   metric_role,

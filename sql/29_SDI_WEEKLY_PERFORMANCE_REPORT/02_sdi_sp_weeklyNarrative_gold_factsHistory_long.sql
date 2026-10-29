@@ -113,7 +113,7 @@ VALIDATION LINEAGE:
 NAMING CONVENTION (same as the registry):
   Codes (filter / join / branch) UPPER_SNAKE: metric_lob, source_lob, unit, source_project,
   row_role, run_type, plus PulseTMS codes kept as-is. Labels for the report text in their own
-  columns: display_name, report_section. Upstream PulseTMS values are never re-cased.
+  column: display_name. Upstream PulseTMS values are never re-cased.
 
 METADATA:
   Every column carries a COMMENT in the CREATE TABLE below. CREATE TABLE IF NOT EXISTS does
@@ -250,7 +250,6 @@ BEGIN
     registry_version     STRING     COMMENT 'registry_version of sdi_vw_weeklyNarrative_control_metricRegistry_static used for this snapshot.',
     metric_key           STRING     COMMENT 'Registry primary key of the metric slice.',
     display_name         STRING     COMMENT 'Report-facing metric name from the registry.',
-    report_section       STRING     COMMENT 'Report section display label from the registry (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
     metric_lob           STRING     COMMENT 'LOB(s) the metric covers, from the registry: one LOB (POSTPAID, BROADBAND, BYOD, FIBER, TFB, METRO) or several joined with + (e.g. POSTPAID + BROADBAND). NULL = metric has no LOB (e.g. total site UPV, store traffic). Group the report by this.',
     sort_order           INT        COMMENT 'Report display order from the registry.',
     row_role             STRING     COMMENT 'ACTUAL = the metric at its own channel_group (what the report writes about). ACTUAL_DRIVER = same metric at another channel_group, used to explain moves. TARGET = forecast or QGP target row. TARGET_DRIVER = channel-level forecast or target.',
@@ -410,7 +409,7 @@ BEGIN
      slices; recomputed from summed numerators / denominators for multi-LOB slices. */
   AllRows AS (
     SELECT
-      r.registry_version, r.metric_key, r.display_name, r.report_section, r.metric_lob,
+      r.registry_version, r.metric_key, r.display_name, r.metric_lob,
       r.sort_order, r.unit, r.higher_is_better, r.target_metric_key,
       r.source_project, r.source_object,
       r.data_source, r.metric_name, r.metric_type,
@@ -518,7 +517,7 @@ BEGIN
   (
     snapshot_id, snapshot_ts, run_type, job_run_id,
     week_end, week_type, qgp_quarter, days_in_period, is_complete_period,
-    registry_version, metric_key, display_name, report_section, metric_lob, sort_order, row_role,
+    registry_version, metric_key, display_name, metric_lob, sort_order, row_role,
     source_project, source_object,
     data_source, metric_name, metric_type, source_lob, is_lob_rollup_complete,
     channel_group,
@@ -549,7 +548,6 @@ BEGIN
     w.registry_version,
     w.metric_key,
     w.display_name,
-    w.report_section,
     w.metric_lob,
     CAST(w.sort_order AS INT),
     w.row_role,

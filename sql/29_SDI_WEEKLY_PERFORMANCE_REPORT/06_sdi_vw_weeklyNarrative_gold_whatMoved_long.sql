@@ -62,7 +62,6 @@ CREATE OR REPLACE VIEW
 
   metric_key                  COMMENT 'Registry key of the metric, e.g. pulseTms.upvTotalAdobe.',
   display_name                COMMENT 'Metric name to use in the narrative (sentence case).',
-  report_section              COMMENT 'Report section label (Traffic, Funnel, Spend, Activations, Retail, Virtual Retail).',
   metric_lob                  COMMENT 'LOB(s) the metric covers: one LOB, several joined with + (e.g. POSTPAID + BROADBAND), or NULL when the metric has no LOB.',
   sort_order                  COMMENT 'Registry display order.',
   unit                        COMMENT 'COUNT | USD | PCT. PCT values are ratios (0.31 = 31%).',
@@ -105,8 +104,7 @@ CREATE OR REPLACE VIEW
   highlight_reasons           COMMENT 'Rules this metric triggered: UNUSUAL_MOVE, BIG_WOW, OFF_TARGET, QTD_OFF_PACE, NEW_13WK_HIGH, NEW_13WK_LOW. Empty when none.',
   highlight_score             COMMENT 'Strongest rule score; 1.0 = exactly at a threshold, 2.0 = twice the threshold. Used for ranking.',
   is_highlight                COMMENT 'TRUE when no data quality issue and highlight_score >= 1.0.',
-  highlight_rank              COMMENT 'Rank among this week highlights, 1 = most newsworthy. NULL when not a highlight.',
-  section_highlight_rank      COMMENT 'Rank among this week highlights within the same report_section. NULL when not a highlight.'
+  highlight_rank              COMMENT 'Rank among this week highlights, 1 = most newsworthy. NULL when not a highlight.'
 )
 COMMENT 'Weekly narrative report: rule-based highlight picker over sdi_vw_weeklyNarrative_gold_factsLatest_long (numbers from PulseTMS Gold). One row per headline metric per week with the rules it triggered, a score, data quality gate and top channel driver. Thresholds live in the Thresholds CTE.'
 AS
@@ -311,7 +309,6 @@ SELECT
 
   f.metric_key,
   f.display_name,
-  f.report_section,
   f.metric_lob,
   f.sort_order,
   f.unit,
@@ -360,14 +357,7 @@ SELECT
       PARTITION BY f.week_end
       ORDER BY CASE WHEN f.is_highlight THEN 0 ELSE 1 END, f.highlight_score DESC, f.sort_order
     )
-  END AS highlight_rank,
-
-  CASE WHEN f.is_highlight THEN
-    ROW_NUMBER() OVER (
-      PARTITION BY f.week_end, f.report_section
-      ORDER BY CASE WHEN f.is_highlight THEN 0 ELSE 1 END, f.highlight_score DESC, f.sort_order
-    )
-  END AS section_highlight_rank
+  END AS highlight_rank
 
 FROM Final f
 ;
