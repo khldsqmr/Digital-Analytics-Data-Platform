@@ -356,3 +356,16 @@ week_end	week_type	metric_key	week_value	target_week_value	vs_target_pct
 2026-07-04	BOUNDARY_FIRST	pulseTms.qgpVrChatsActual	24561	32562.958499	-0.2457380676650046
 2026-07-04	BOUNDARY_FIRST	pulseTms.qgpVrPostpaidActivationsActual	76607.00000100001	55144.815642	0.38919677415067366
 2026-07-04	BOUNDARY_FIRST	pulseTms.upvTotalAdobe	1510963	876000	0.7248436073059361
+
+
+SELECT data_source, metric_name, metric_type, true_lob, qgp_date, week_type, days_in_period,
+       metric_value, wow_numerator, wow_denominator
+FROM   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+WHERE  channel_group <=> CASE WHEN data_source = 'QGP_SCORECARD' THEN NULL ELSE 'All Channels' END
+  AND  (   qgp_date BETWEEN DATE'2026-06-27' AND DATE'2026-07-11'
+        OR qgp_date BETWEEN DATE'2026-09-26' AND DATE'2026-10-10')
+  AND  (   (data_source = 'ADOBE'        AND metric_name = 'upvTotalAdobe')
+        OR (data_source = 'UPV_FORECAST')
+        OR (metric_name IN ('mfcSpendActual', 'mfcSpendForecast') AND true_lob = 'POSTPAID')
+        OR (data_source = 'QGP_SCORECARD' AND metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted'))
+ORDER BY data_source, metric_name, metric_type, qgp_date;
