@@ -325,3 +325,11 @@ MFC spend, Postpaid	POSTPAID	NO_VALUE	[]
 MFC spend, Broadband	BROADBAND	NO_VALUE	["QTD_OFF_PACE"]
 Biddable spend, Fiber	FIBER	NO_VALUE	[]
 Digital % of postpaid activations	POSTPAID	NO_VALUE	[]
+
+
+SELECT week_end, week_type, metric_key, week_value, target_week_value, vs_target_pct
+FROM   prdrzranalytics.lab42.sdi_vw_weeklyNarrative_gold_factsLatest_long
+WHERE  week_type = 'BOUNDARY_FIRST'
+  AND  row_role  = 'ACTUAL'
+  AND  target_week_value IS NOT NULL
+ORDER BY week_end DESC, metric_key;
