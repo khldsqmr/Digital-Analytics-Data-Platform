@@ -104,6 +104,9 @@ CONTEXT STATS (averages, totals, normal swing):
     vs_avg_prior_4wk / 13wk / 52wk   week_value vs the trailing average
     zscore_prior_13wk                (week_value - avg_prior_13wk) / stddev_prior_13wk
     qtd_vs_target                    QTD total vs QTD target total (PCT: QTD avg vs target avg)
+                                     The QTD target only counts periods where the actual has a
+                                     value, so a week whose actual has not landed yet (e.g. MFC
+                                     lag) does not make the quarter look under target.
 
 VALIDATION LINEAGE:
   Stamps the PulseTMS validation run for the same data_as_of_date (if one exists) and the
@@ -296,8 +299,8 @@ BEGIN
     mtd_total            DOUBLE     COMMENT 'Month-to-date total (weeks ending in the month of week_end). NULL for PCT.',
     qtd_total            DOUBLE     COMMENT 'QGP quarter-to-date total through week_end, quarter-boundary exact. NULL for PCT.',
     ytd_total            DOUBLE     COMMENT 'Year-to-date total through week_end. NULL for PCT.',
-    qtd_target_avg_weekly DOUBLE    COMMENT 'Quarter-to-date target, average per 7 days (same channel_group).',
-    qtd_target_total     DOUBLE     COMMENT 'Quarter-to-date target total. NULL for PCT.',
+    qtd_target_avg_weekly DOUBLE    COMMENT 'Quarter-to-date target, average per 7 days (same channel_group), over the same periods as the actual (periods with no actual are left out).',
+    qtd_target_total     DOUBLE     COMMENT 'Quarter-to-date target total over the periods where the actual has a value, so it is comparable to qtd_total. NULL for PCT.',
     qtd_vs_target        DOUBLE     COMMENT 'Quarter-to-date pacing vs target. COUNT/USD: qtd_total / qtd_target_total - 1 (ratio). PCT: qtd_avg_weekly - qtd_target_avg_weekly (points).',
 
     max_date             DATE       COMMENT 'Latest qgp_date with a non-null value for this metric in PulseTMS Gold at snapshot time (PulseTMS Gold max_date). For LOB rollups, the earliest max_date of the member LOBs.',
@@ -501,6 +504,33 @@ BEGIN
   ),
 
 
+  /* QTD target over the SAME periods as the actual: only qgp_dates where both the actual and
+     its target have a value. Without this, a lagging actual (e.g. MFC not loaded for the latest
+     week) is compared to a target that already includes that week. */
+  QtdTarget AS (
+    SELECT
+      a.metric_key,
+      a.channel_group,
+      SUM(a.metric_value)                          AS qtd_actual_sum,
+      SUM(a.metric_value * a.days_in_period)       AS qtd_actual_valdays,
+      SUM(t.metric_value)                          AS qtd_target_sum,
+      SUM(t.days_in_period)                        AS qtd_target_days,
+      SUM(t.metric_value * t.days_in_period)       AS qtd_target_valdays
+    FROM Reg r
+    JOIN Agg a
+      ON  a.metric_key = r.metric_key
+    JOIN Agg t
+      ON  t.metric_key    = r.target_metric_key
+      AND t.channel_group <=> a.channel_group
+      AND t.qgp_date      = a.qgp_date
+    WHERE r.target_metric_key IS NOT NULL
+      AND a.qgp_date >= trunc(v_week_end, 'QUARTER')
+      AND a.metric_value IS NOT NULL
+      AND t.metric_value IS NOT NULL
+    GROUP BY a.metric_key, a.channel_group
+  ),
+
+
   /* PulseTMS validation status per data source for this week (if a run exists). */
   ValidationBySource AS (
     SELECT
@@ -609,10 +639,13 @@ BEGIN
     CAST(s.qtd_total      AS DOUBLE),
     CAST(s.ytd_total      AS DOUBLE),
 
-    CAST(ts.qtd_avg_weekly AS DOUBLE),
-    CAST(ts.qtd_total      AS DOUBLE),
-    CAST(CASE WHEN w.unit = 'PCT' THEN s.qtd_avg_weekly - ts.qtd_avg_weekly
-              ELSE try_divide(s.qtd_total, ts.qtd_total) - 1 END AS DOUBLE),
+    CAST(CASE WHEN w.unit = 'PCT' THEN try_divide(qt.qtd_target_valdays, qt.qtd_target_days)
+              ELSE try_divide(qt.qtd_target_sum, qt.qtd_target_days / 7.0) END AS DOUBLE),
+    CAST(CASE WHEN w.unit = 'PCT' THEN NULL ELSE qt.qtd_target_sum END AS DOUBLE),
+    /* Both sides over the same periods (qt only covers periods where actual and target exist). */
+    CAST(CASE WHEN w.unit = 'PCT' THEN try_divide(qt.qtd_actual_valdays, qt.qtd_target_days)
+                                       - try_divide(qt.qtd_target_valdays, qt.qtd_target_days)
+              ELSE try_divide(qt.qtd_actual_sum, qt.qtd_target_sum) - 1 END AS DOUBLE),
 
     CAST(w.max_date AS DATE),
     CAST(w.max_date AS DATE) >= v_week_end,
@@ -628,9 +661,9 @@ BEGIN
     ON  s.metric_key    = w.metric_key
     AND s.channel_group <=> w.channel_group
 
-  LEFT JOIN StatsFinal ts
-    ON  ts.metric_key    = w.target_metric_key
-    AND ts.channel_group <=> w.channel_group
+  LEFT JOIN QtdTarget qt
+    ON  qt.metric_key    = w.metric_key
+    AND qt.channel_group <=> w.channel_group
 
   LEFT JOIN ValidationBySource vs
     ON vs.validation_data_source =
