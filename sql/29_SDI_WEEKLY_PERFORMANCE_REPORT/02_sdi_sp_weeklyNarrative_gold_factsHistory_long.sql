@@ -41,14 +41,21 @@ WEEK SELECTION:
   Must be a Saturday: the report is a natural Sunday-Saturday week. BOUNDARY_STUB dates are
   never snapshotted on their own.
 
-WEEK VALUE (boundary-safe):
-  week_value = COALESCE(wow_numerator, metric_value)
+WEEK VALUE (boundary-safe, built here from the Gold periods):
+  week_value = the Gold periods inside the Sunday-Saturday week ending week_end:
+    NORMAL week          one 7-day period              -> its metric_value
+    BOUNDARY_FIRST week  BOUNDARY_STUB (old quarter) + BOUNDARY_FIRST (new quarter)
+                         COUNT / USD  -> sum of the two pieces
+                         PCT          -> day-weighted average of the two pieces
+  If the pieces do not cover all 7 days with a value (e.g. a forecast that only starts on
+  the first day of the quarter), week_value is NULL rather than a partial week.
 
-  For NORMAL weeks wow_numerator = metric_value.
-  For BOUNDARY_FIRST weeks Gold's metric_value is only the post-quarter-end days, while
-  wow_numerator = current + preceding stub = the full natural week. Using wow_numerator
-  keeps the report on a whole Sunday-Saturday week, consistent with wow_pct.
-  The raw metric_value is kept alongside for traceability.
+  Why not PulseTMS wow_numerator: on boundary weeks it is not reliable for every source.
+  It sums the two pieces even for PCT ratios (0.47 + 0.49 = 0.96), and it holds only the
+  new-quarter days when the stub has no value (UPV forecast, week ending 2026-07-04).
+  prior_week_value and wow_pct are computed the same way (week_value 7 days earlier), so the
+  week after a boundary week is also correct. YoY stays PulseTMS (yoy_numerator /
+  yoy_denominator). The raw metric_value is kept alongside for traceability.
 
 LINE OF BUSINESS:
   Two columns, both from the registry:
@@ -271,9 +278,9 @@ BEGIN
     higher_is_better     BOOLEAN    COMMENT 'Direction of good performance from the registry. NULL = neutral.',
 
     metric_value         DOUBLE     COMMENT 'PulseTMS Gold metric_value for the QGP period ending week_end, unchanged. Partial on BOUNDARY_FIRST weeks. Kept for traceability; report on week_value instead.',
-    week_value           DOUBLE     COMMENT 'Value for the full Sunday-Saturday week = COALESCE(wow_numerator, metric_value). Equals metric_value on NORMAL weeks; adds the preceding quarter-end stub on BOUNDARY_FIRST weeks. The number the report uses.',
-    prior_week_value     DOUBLE     COMMENT 'PulseTMS Gold wow_denominator: prior full week value used for WoW (includes stub when the prior week was BOUNDARY_FIRST).',
-    wow_pct              DOUBLE     COMMENT 'Week-over-week change as a ratio (0.12 = +12%). PulseTMS Gold wow_pct for single-LOB rows; recomputed from summed WoW numerators and denominators for LOB rollup rows.',
+    week_value           DOUBLE     COMMENT 'Value for the full Sunday-Saturday week, built from the Gold periods inside it: NORMAL = its 7-day period; BOUNDARY_FIRST = quarter-end stub + new-quarter piece (sum for COUNT/USD, day-weighted average for PCT). NULL if the periods with a value do not cover all 7 days. Use this in the narrative.',
+    prior_week_value     DOUBLE     COMMENT 'week_value of the week ending 7 days earlier (same boundary-safe build).',
+    wow_pct              DOUBLE     COMMENT 'Week-over-week change as a ratio (0.12 = +12%): week_value / prior_week_value - 1. Computed here (not PulseTMS wow_pct) so boundary weeks and the week after them are correct.',
     ly_week_value        DOUBLE     COMMENT 'PulseTMS Gold yoy_denominator: same ISO week last year, full weekly total.',
     yoy_pct              DOUBLE     COMMENT 'Year-over-year change as a ratio (0.04 = +4%). PulseTMS Gold yoy_pct for single-LOB rows; recomputed from summed numerators and denominators for LOB rollup rows. NULL where prior-year history does not exist (e.g. Programmatic, Fiber).',
 
@@ -338,7 +345,7 @@ BEGIN
     SELECT
       data_source, metric_name, metric_type, true_lob, channel_group,
       qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period,
-      metric_value, wow_numerator, wow_denominator, wow_pct,
+      metric_value,
       yoy_numerator, yoy_denominator, yoy_pct, max_date
     FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
     WHERE qgp_date BETWEEN date_sub(v_week_end, 371) AND v_week_end
@@ -395,12 +402,8 @@ BEGIN
       MAX(CAST(is_complete_period AS INT)) = 1                             AS is_complete_period,
       COUNT(DISTINCT CASE WHEN metric_value IS NOT NULL THEN true_lob END) AS lobs_with_value,
       SUM(metric_value)                                                    AS metric_value,
-      SUM(COALESCE(wow_numerator, metric_value))                           AS week_value,
-      SUM(wow_numerator)                                                   AS wow_numerator,
-      SUM(wow_denominator)                                                 AS prior_week_value,
       SUM(yoy_numerator)                                                   AS yoy_numerator,
       SUM(yoy_denominator)                                                 AS ly_week_value,
-      MAX(wow_pct)                                                         AS source_wow_pct,
       MAX(yoy_pct)                                                         AS source_yoy_pct,
       MIN(max_date)                                                        AS max_date
     FROM Matched
@@ -408,8 +411,50 @@ BEGIN
   ),
 
 
-  /* Current week rows + registry attributes. WoW / YoY: PulseTMS values for single-LOB
-     slices; recomputed from summed numerators / denominators for multi-LOB slices. */
+  /* Full Sunday-Saturday week value for every Saturday in the window, built from the Gold
+     periods inside that week (see WEEK VALUE in the header). NULL when the periods with a
+     value do not cover all 7 days. */
+  Weekly AS (
+    SELECT
+      s.metric_key,
+      s.row_role,
+      s.channel_group,
+      s.qgp_date,
+      CASE
+        WHEN COALESCE(SUM(CASE WHEN p.metric_value IS NOT NULL THEN p.days_in_period END), 0) <> 7
+          THEN CAST(NULL AS DOUBLE)
+        WHEN r.unit = 'PCT' THEN SUM(p.metric_value * p.days_in_period) / 7.0
+        ELSE SUM(p.metric_value)
+      END                                                                  AS week_value
+    FROM Agg s
+    JOIN Reg r
+      ON  r.metric_key = s.metric_key
+    JOIN Agg p
+      ON  p.metric_key    = s.metric_key
+      AND p.row_role      = s.row_role
+      AND p.channel_group <=> s.channel_group
+      AND p.qgp_date BETWEEN date_sub(s.qgp_date, 6) AND s.qgp_date
+    WHERE DAYOFWEEK(s.qgp_date) = 7
+    GROUP BY s.metric_key, s.row_role, s.channel_group, s.qgp_date, r.unit
+  ),
+
+
+  /* Prior week = the full week value exactly 7 days earlier. */
+  WeeklyWow AS (
+    SELECT
+      w.*,
+      MAX(w.week_value) OVER (
+        PARTITION BY w.metric_key, w.row_role, w.channel_group
+        ORDER BY unix_date(w.qgp_date)
+        RANGE BETWEEN 7 PRECEDING AND 7 PRECEDING
+      )                                                                    AS prior_week_value
+    FROM Weekly w
+  ),
+
+
+  /* Current week rows + registry attributes. WoW from the boundary-safe week values above.
+     YoY: PulseTMS values for single-LOB slices; recomputed from summed numerators /
+     denominators for multi-LOB slices. */
   AllRows AS (
     SELECT
       r.registry_version, r.metric_key, r.display_name, r.metric_lob,
@@ -419,14 +464,18 @@ BEGIN
       array_join(r.source_lob, ' + ')                                                AS source_lob,
       CASE WHEN size(r.source_lob) > 1 THEN a.lobs_with_value = size(r.source_lob) END AS is_lob_rollup_complete,
       a.row_role, a.channel_group, a.week_type, a.qgp_quarter, a.days_in_period, a.is_complete_period,
-      a.metric_value, a.week_value, a.prior_week_value, a.ly_week_value, a.max_date,
-      CASE WHEN a.is_rollup THEN try_divide(a.wow_numerator, a.prior_week_value) - 1
-           ELSE a.source_wow_pct END                                                    AS wow_pct,
+      a.metric_value, wk.week_value, wk.prior_week_value, a.ly_week_value, a.max_date,
+      try_divide(wk.week_value, wk.prior_week_value) - 1                               AS wow_pct,
       CASE WHEN a.is_rollup THEN try_divide(a.yoy_numerator, a.ly_week_value) - 1
            ELSE a.source_yoy_pct END                                                    AS yoy_pct
     FROM Agg a
     JOIN Reg r
       ON r.metric_key = a.metric_key
+    LEFT JOIN WeeklyWow wk
+      ON  wk.metric_key    = a.metric_key
+      AND wk.row_role      = a.row_role
+      AND wk.channel_group <=> a.channel_group
+      AND wk.qgp_date      = a.qgp_date
     WHERE a.qgp_date = v_week_end
   ),
 
@@ -452,23 +501,23 @@ BEGIN
       /* Trailing full weeks before week_end: Saturdays only, boundary-safe week value. */
       AVG(CASE WHEN DAYOFWEEK(h.qgp_date) = 7
                 AND h.qgp_date BETWEEN date_sub(v_week_end, 28) AND date_sub(v_week_end, 7)
-               THEN h.week_value END)                                  AS avg_prior_4wk,
+               THEN wk.week_value END)                                  AS avg_prior_4wk,
 
       AVG(CASE WHEN DAYOFWEEK(h.qgp_date) = 7
                 AND h.qgp_date BETWEEN date_sub(v_week_end, 91) AND date_sub(v_week_end, 7)
-               THEN h.week_value END)                                  AS avg_prior_13wk,
+               THEN wk.week_value END)                                  AS avg_prior_13wk,
 
       AVG(CASE WHEN DAYOFWEEK(h.qgp_date) = 7
                 AND h.qgp_date BETWEEN date_sub(v_week_end, 364) AND date_sub(v_week_end, 7)
-               THEN h.week_value END)                                  AS avg_prior_52wk,
+               THEN wk.week_value END)                                  AS avg_prior_52wk,
 
       STDDEV_SAMP(CASE WHEN DAYOFWEEK(h.qgp_date) = 7
                         AND h.qgp_date BETWEEN date_sub(v_week_end, 91) AND date_sub(v_week_end, 7)
-                       THEN h.week_value END)                          AS stddev_prior_13wk,
+                       THEN wk.week_value END)                          AS stddev_prior_13wk,
 
       COUNT(CASE WHEN DAYOFWEEK(h.qgp_date) = 7
                   AND h.qgp_date BETWEEN date_sub(v_week_end, 364) AND date_sub(v_week_end, 7)
-                 THEN h.week_value END)                                AS prior_52wk_weeks,
+                 THEN wk.week_value END)                                AS prior_52wk_weeks,
 
       /* Calendar to-date: every QGP period in the window (exact at quarter / year boundaries). */
       SUM(CASE WHEN h.qgp_date >= trunc(v_week_end, 'MM')      THEN h.metric_value END)                    AS mtd_sum,
@@ -484,6 +533,11 @@ BEGIN
       SUM(CASE WHEN h.qgp_date >= trunc(v_week_end, 'YEAR')    THEN h.metric_value * h.days_in_period END) AS ytd_valdays
 
     FROM Agg h
+    LEFT JOIN Weekly wk
+      ON  wk.metric_key    = h.metric_key
+      AND wk.row_role      = h.row_role
+      AND wk.channel_group <=> h.channel_group
+      AND wk.qgp_date      = h.qgp_date
     GROUP BY h.metric_key, h.channel_group
   ),
 

@@ -56,9 +56,9 @@ CREATE OR REPLACE VIEW
   higher_is_better     COMMENT 'Direction of good performance. NULL = neutral.',
 
   metric_value         COMMENT 'PulseTMS Gold metric_value for the QGP period, unchanged. Partial on BOUNDARY_FIRST weeks; report on week_value.',
-  week_value           COMMENT 'Full Sunday-Saturday week value = COALESCE(wow_numerator, metric_value). The number the report uses.',
-  prior_week_value     COMMENT 'Prior full week value used for WoW (PulseTMS Gold wow_denominator).',
-  wow_pct              COMMENT 'Week-over-week change as a ratio (0.12 = +12%).',
+  week_value           COMMENT 'Full Sunday-Saturday week value built from the Gold periods inside the week (boundary weeks = stub + new-quarter piece). NULL if the week is not fully covered. The number the report uses.',
+  prior_week_value     COMMENT 'week_value of the week ending 7 days earlier.',
+  wow_pct              COMMENT 'Week-over-week change as a ratio (0.12 = +12%): week_value / prior_week_value - 1.',
   ly_week_value        COMMENT 'Same ISO week last year, full weekly total (PulseTMS Gold yoy_denominator).',
   yoy_pct              COMMENT 'Year-over-year change as a ratio. NULL where prior-year history does not exist.',
 
