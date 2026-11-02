@@ -207,16 +207,16 @@ CHANGE LOG
       If no component-level QGP rows exist in Bronze, those QGP_TARGET values naturally
       remain NULL. No artificial target split is performed.
 
-  11. Boundary-week WoW / YoY corrected (see WoW/YoY LOGIC):
+  11. Boundary-week WoW / YoY corrected (see WoW/YoY LOGIC). Only the formulas inside
+      WithWowYoy and LYWeeklyLookup changed; CTEs, joins and run time are as before.
       - digitalPct* ratios: full week is now the day-weighted average of the stub and
         BOUNDARY_FIRST pieces (was their sum, e.g. 0.467 + 0.493 = 0.960).
       - Missing piece: full week is now NULL (was the single piece treated as a full week,
         because the missing piece was COALESCEd to 0).
-      - wow_denominator: decides "prior week was a boundary week" from the calendar
-        (via the prior row's own full week) and is NULL, not 0, when the prior week is missing.
-      - LY: built from prior-year full weeks (same ISO week Saturday) instead of summing all
-        QGP periods in that ISO week; metric_value_ly no longer scales ratios by days / 7 and
-        keeps 3 decimals for ratios (2 would show 0.4819 as 0.48, a full point off).
+      - wow_denominator: "prior week was a boundary week" is decided by the calendar
+        (prior_cal.week_type), and is NULL, not 0, when the prior week is missing.
+      - LY: built per week-ending Saturday (stub + first, or the ratio day-weighted average);
+        metric_value_ly no longer scales ratios by days / 7 and keeps 3 decimals for ratios.
       - metric_value and every output column are unchanged.
 
 
@@ -240,7 +240,8 @@ orphaned/NULL rows around quarter-end and will require adjustment.
 WoW/YoY LOGIC (full Sunday-Saturday week, unit-aware)
 ---------------------------------------------------------------------------------------------------
 
-Every WoW / YoY value is built from a FULL Sunday-Saturday week value (FullWeek CTE):
+Every WoW / YoY value is built from a FULL Sunday-Saturday week value (computed inline in
+WithWowYoy and LYWeeklyLookup, using the same joins as before the fix, so run time is unchanged):
 
   NORMAL          full week = metric_value
 
@@ -259,6 +260,8 @@ Every WoW / YoY value is built from a FULL Sunday-Saturday week value (FullWeek 
   wow_denominator = full week of wow_prior_qgp_date (NULL, never 0, when it does not exist)
   yoy_numerator   = full week of this row
   yoy_denominator = full week of the prior-year Saturday in the same ISO week
+                    (LYWeeklyLookup groups each QGP period by its week-ending Saturday, so a
+                    stub is combined with its own BOUNDARY_FIRST piece)
   wow_pct / yoy_pct = numerator / denominator - 1 (ratios: relative change of the percentage)
 
   metric_value_ly
@@ -823,7 +826,6 @@ BEGIN
 
   /* ===============================================================================================
      STEP 4: CURRENT-PERIOD LOOKUP
-     One row per QGP period (used to find the BOUNDARY_STUB piece of a BOUNDARY_FIRST week).
      =============================================================================================== */
 
   MetricLookup AS (
@@ -839,85 +841,56 @@ BEGIN
 
 
   /* ===============================================================================================
-     STEP 5: FULL SUNDAY-SATURDAY WEEK VALUE
-     NORMAL         = metric_value
-     BOUNDARY_FIRST = stub + first (counts) / day-weighted average (ratios); NULL if a piece is missing
-     BOUNDARY_STUB  = NULL (its value is consumed by the BOUNDARY_FIRST row)
-     =============================================================================================== */
-
-  FullWeek AS (
-
-    SELECT
-      u.qgp_date,
-      u.week_type,
-      u.iso_year,
-      u.iso_week_number,
-      u.metric_name,
-      u.metric_type,
-
-      CASE
-        WHEN u.week_type = 'BOUNDARY_STUB'
-          THEN CAST(NULL AS DOUBLE)
-
-        WHEN u.week_type = 'BOUNDARY_FIRST' THEN
-          CASE
-            WHEN u.metric_value IS NULL
-              OR stub_lookup.metric_value IS NULL
-              THEN CAST(NULL AS DOUBLE)
-
-            WHEN u.metric_name IN (
-             'digitalPctPhoneNewActsNoAssistPlusAssist',
-             'digitalPctConsumerPostpaidActivationsTotalInclAssisted',
-             'digitalPctNoAssistanceActivations',
-             'digitalPctAssistanceActivations'
-           )
-              THEN ( u.metric_value * u.days_in_period
-                   + stub_lookup.metric_value * (7 - u.days_in_period) ) / 7.0
-
-            ELSE u.metric_value + stub_lookup.metric_value
-          END
-
-        ELSE u.metric_value
-      END AS full_week_value
-
-    FROM Unpivoted u
-
-    LEFT JOIN MetricLookup stub_lookup
-      ON  stub_lookup.qgp_date    = u.boundary_stub_date
-      AND stub_lookup.metric_name = u.metric_name
-      AND stub_lookup.metric_type = u.metric_type
-  ),
-
-
-  /* ===============================================================================================
-     STEP 6: PRIOR-YEAR FULL WEEK LOOKUP
-     Every ISO week (Monday-Sunday) contains exactly one Saturday, so the full week of the
-     non-stub row in an ISO week is that ISO week's value.
+     STEP 5: PRIOR-YEAR FULL WEEK LOOKUP
+     Every QGP period is grouped by its week-ending Saturday (a BOUNDARY_STUB rolls forward to
+     its own BOUNDARY_FIRST Saturday), so each group is one full Sunday-Saturday week:
+       counts : sum of the pieces
+       ratios : day-weighted average of the pieces
+     The week is NULL unless the pieces with a value cover all 7 days. The ISO week / year of
+     that Saturday is the join key (same values the calendar carries on the Saturday row).
      =============================================================================================== */
 
   LYWeeklyLookup AS (
 
     SELECT
-      iso_year,
-      iso_week_number,
-      metric_name,
-      metric_type,
-      MAX(full_week_value) AS ly_weekly_metric_value
+      EXTRACT(YEAROFWEEK FROM w.week_saturday)  AS iso_year,
+      EXTRACT(WEEK       FROM w.week_saturday)  AS iso_week_number,
+      w.metric_name,
+      w.metric_type,
 
-    FROM FullWeek
+      CASE
+        WHEN SUM(w.days_in_period) <> 7
+          THEN CAST(NULL AS DOUBLE)
+        WHEN w.metric_name IN (
+             'digitalPctPhoneNewActsNoAssistPlusAssist',
+             'digitalPctConsumerPostpaidActivationsTotalInclAssisted',
+             'digitalPctNoAssistanceActivations',
+             'digitalPctAssistanceActivations'
+           )
+          THEN SUM(w.metric_value * w.days_in_period) / 7.0
+        ELSE SUM(w.metric_value)
+      END AS ly_weekly_metric_value
 
-    WHERE week_type <> 'BOUNDARY_STUB'
+    FROM (
+      SELECT
+        date_add(qgp_date, 7 - dayofweek(qgp_date)) AS week_saturday,
+        metric_name,
+        metric_type,
+        metric_value,
+        days_in_period
+      FROM Unpivoted
+      WHERE metric_value IS NOT NULL
+    ) w
 
     GROUP BY
-      iso_year,
-      iso_week_number,
-      metric_name,
-      metric_type
+      w.week_saturday,
+      w.metric_name,
+      w.metric_type
   ),
 
 
   /* ===============================================================================================
-     STEP 7: WOW / YOY FROM FULL WEEKS
+     STEP 6: WOW / YOY
      =============================================================================================== */
 
   WithWowYoy AS (
@@ -932,6 +905,7 @@ BEGIN
       u.metric_type,
       u.metric_value,
 
+      /* LY: counts scaled to this period's days; ratios as is (3 decimals) */
       CASE
         WHEN u.metric_name IN (
              'digitalPctPhoneNewActsNoAssistPlusAssist',
@@ -943,39 +917,123 @@ BEGIN
         ELSE ROUND(ly_week.ly_weekly_metric_value * try_divide(u.days_in_period, 7), 2)
       END AS metric_value_ly,
 
-      fw.full_week_value AS wow_numerator,
+      /* Full week of THIS row:
+           NORMAL         = metric_value
+           BOUNDARY_FIRST = stub + first (counts) / day-weighted average (ratios); NULL if a piece is missing
+           BOUNDARY_STUB  = NULL */
+      CASE u.week_type
+        WHEN 'BOUNDARY_STUB'
+          THEN NULL
 
+        WHEN 'BOUNDARY_FIRST' THEN
+          CASE
+            WHEN u.metric_value IS NULL OR stub_lookup.metric_value IS NULL
+              THEN NULL
+            WHEN u.metric_name IN (
+             'digitalPctPhoneNewActsNoAssistPlusAssist',
+             'digitalPctConsumerPostpaidActivationsTotalInclAssisted',
+             'digitalPctNoAssistanceActivations',
+             'digitalPctAssistanceActivations'
+           )
+              THEN ( u.metric_value * u.days_in_period
+                   + stub_lookup.metric_value * (7 - u.days_in_period) ) / 7.0
+            ELSE u.metric_value + stub_lookup.metric_value
+          END
+
+        ELSE u.metric_value
+      END AS wow_numerator,
+
+      /* Full week of the PRIOR QGP Saturday (NULL, never 0, when missing) */
       CASE
-        WHEN fw.full_week_value IS NULL
-          THEN CAST(NULL AS DOUBLE)
-        ELSE prior_fw.full_week_value
+        WHEN u.metric_value IS NULL
+          THEN NULL
+
+        WHEN u.week_type = 'BOUNDARY_STUB'
+          THEN NULL
+
+        WHEN u.week_type = 'BOUNDARY_FIRST' AND stub_lookup.metric_value IS NULL
+          THEN NULL
+
+        WHEN prior_cal.week_type = 'BOUNDARY_FIRST' THEN
+          CASE
+            WHEN wow_prior_lookup.metric_value IS NULL OR wow_prior_stub_lookup.metric_value IS NULL
+              THEN NULL
+            WHEN u.metric_name IN (
+             'digitalPctPhoneNewActsNoAssistPlusAssist',
+             'digitalPctConsumerPostpaidActivationsTotalInclAssisted',
+             'digitalPctNoAssistanceActivations',
+             'digitalPctAssistanceActivations'
+           )
+              THEN ( wow_prior_lookup.metric_value * prior_cal.days_in_period
+                   + wow_prior_stub_lookup.metric_value * (7 - prior_cal.days_in_period) ) / 7.0
+            ELSE wow_prior_lookup.metric_value + wow_prior_stub_lookup.metric_value
+          END
+
+        ELSE wow_prior_lookup.metric_value
       END AS wow_denominator,
 
-      fw.full_week_value AS yoy_numerator,
+      /* YoY numerator: same full week as wow_numerator */
+      CASE u.week_type
+        WHEN 'BOUNDARY_STUB'
+          THEN NULL
 
+        WHEN 'BOUNDARY_FIRST' THEN
+          CASE
+            WHEN u.metric_value IS NULL OR stub_lookup.metric_value IS NULL
+              THEN NULL
+            WHEN u.metric_name IN (
+             'digitalPctPhoneNewActsNoAssistPlusAssist',
+             'digitalPctConsumerPostpaidActivationsTotalInclAssisted',
+             'digitalPctNoAssistanceActivations',
+             'digitalPctAssistanceActivations'
+           )
+              THEN ( u.metric_value * u.days_in_period
+                   + stub_lookup.metric_value * (7 - u.days_in_period) ) / 7.0
+            ELSE u.metric_value + stub_lookup.metric_value
+          END
+
+        ELSE u.metric_value
+      END AS yoy_numerator,
+
+      /* YoY denominator: prior-year full week (NULL when this row has no full week) */
       CASE
-        WHEN fw.full_week_value IS NULL
-          THEN CAST(NULL AS DOUBLE)
+        WHEN u.metric_value IS NULL
+          THEN NULL
+
+        WHEN u.week_type = 'BOUNDARY_STUB'
+          THEN NULL
+
+        WHEN u.week_type = 'BOUNDARY_FIRST' AND stub_lookup.metric_value IS NULL
+          THEN NULL
+
         ELSE ly_week.ly_weekly_metric_value
       END AS yoy_denominator
 
     FROM Unpivoted u
 
-    LEFT JOIN FullWeek fw
-      ON  fw.qgp_date    = u.qgp_date
-      AND fw.metric_name = u.metric_name
-      AND fw.metric_type = u.metric_type
+    LEFT JOIN MetricLookup wow_prior_lookup
+      ON  wow_prior_lookup.qgp_date = u.wow_prior_qgp_date
+      AND wow_prior_lookup.metric_name = u.metric_name
+      AND wow_prior_lookup.metric_type = u.metric_type
 
-    LEFT JOIN FullWeek prior_fw
-      ON  prior_fw.qgp_date    = u.wow_prior_qgp_date
-      AND prior_fw.metric_name = u.metric_name
-      AND prior_fw.metric_type = u.metric_type
+    LEFT JOIN prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar prior_cal
+      ON prior_cal.qgp_date = u.wow_prior_qgp_date
+
+    LEFT JOIN MetricLookup wow_prior_stub_lookup
+      ON  wow_prior_stub_lookup.qgp_date = prior_cal.boundary_stub_date
+      AND wow_prior_stub_lookup.metric_name = u.metric_name
+      AND wow_prior_stub_lookup.metric_type = u.metric_type
+
+    LEFT JOIN MetricLookup stub_lookup
+      ON  stub_lookup.qgp_date = u.boundary_stub_date
+      AND stub_lookup.metric_name = u.metric_name
+      AND stub_lookup.metric_type = u.metric_type
 
     LEFT JOIN LYWeeklyLookup ly_week
-      ON  ly_week.iso_year        = u.iso_year - 1
+      ON  ly_week.iso_year = u.iso_year - 1
       AND ly_week.iso_week_number = u.iso_week_number
-      AND ly_week.metric_name     = u.metric_name
-      AND ly_week.metric_type     = u.metric_type
+      AND ly_week.metric_name = u.metric_name
+      AND ly_week.metric_type = u.metric_type
   )
 
 
