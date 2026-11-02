@@ -207,8 +207,8 @@ CHANGE LOG
       If no component-level QGP rows exist in Bronze, those QGP_TARGET values naturally
       remain NULL. No artificial target split is performed.
 
-  11. Boundary-week WoW / YoY corrected (see WoW/YoY LOGIC). Only the formulas inside
-      WithWowYoy and LYWeeklyLookup changed; CTEs, joins and run time are as before.
+  11. Boundary-week WoW / YoY corrected (see WoW/YoY LOGIC). The formulas inside
+      WithWowYoy and LYWeeklyLookup changed; the joins are as before.
       - digitalPct* ratios: full week is now the day-weighted average of the stub and
         BOUNDARY_FIRST pieces (was their sum, e.g. 0.467 + 0.493 = 0.960).
       - Missing piece: full week is now NULL (was the single piece treated as a full week,
@@ -218,6 +218,8 @@ CHANGE LOG
       - LY: built per week-ending Saturday (stub + first, or the ratio day-weighted average);
         metric_value_ly no longer scales ratios by days / 7 and keeps 3 decimals for ratios.
       - metric_value and every output column are unchanged.
+      - Performance: steps 1-3 are materialized once into prdrzranalytics.lab42.tmp_silver_qgp_unpivoted
+        (dropped at the end of the procedure), same pattern as adobeFunnel Silver.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -241,7 +243,7 @@ WoW/YoY LOGIC (full Sunday-Saturday week, unit-aware)
 ---------------------------------------------------------------------------------------------------
 
 Every WoW / YoY value is built from a FULL Sunday-Saturday week value (computed inline in
-WithWowYoy and LYWeeklyLookup, using the same joins as before the fix, so run time is unchanged):
+WithWowYoy and LYWeeklyLookup, using the same joins as before the fix):
 
   NORMAL          full week = metric_value
 
@@ -286,44 +288,21 @@ LANGUAGE SQL
 AS
 BEGIN
 
+  /* ===============================================================================================
+     PHASE A: MATERIALIZE STEPS 1-3 ONCE
+     Aggregate Bronze -> join calendar -> unpivot 12 metrics x 2 variants, written to a small
+     intermediate table (about one row per QGP date x metric x variant). Every WoW / YoY lookup
+     below reads this table instead of re-expanding the 24-branch UNION ALL, which otherwise makes
+     Spark re-plan and recompute the Bronze aggregation for each reference. Same pattern as
+     adobeFunnel Silver (tmp_silver_adobe_unpivoted). Dropped at the end of the procedure.
+     =============================================================================================== */
+
   CREATE OR REPLACE TABLE
-    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
-  USING DELTA
-  CLUSTER BY (qgp_date, metric_name, metric_type)
-  COMMENT '
-    PulseTMS Silver - QGP scorecard metrics in long format with WoW/YoY.
-
-    12 named metrics with QGP_ACTUAL / QGP_TARGET representation.
-
-    Phone activation metrics:
-      activationsBopis
-        = existing combined BOPIS + Non-BOPIS metric
-
-      activationsBopisOnly
-        = BOPIS-only component
-
-      activationsNonBopisOnly
-        = Non-BOPIS-only component
-
-    Component QGP targets are read directly from their corresponding
-    MetricIDs when metric_type = QGP rows exist.
-
-    No artificial BOPIS / Non-BOPIS target allocation is performed.
-
-    Confirmed hardcoded NULL QGP targets:
-      digitalPctNoAssistanceActivations
-      digitalPctAssistanceActivations
-
-    metric_type:
-      QGP_ACTUAL
-      QGP_TARGET
-
-    Refreshed weekly via:
-      sdi_sp_dashboardPulseTms_silver_qgp_weekly
-  '
+    prdrzranalytics.lab42.tmp_silver_qgp_unpivoted
   AS
 
   WITH
+
 
   /* ===============================================================================================
      STEP 1: AGGREGATE BRONZE QGP ROWS TO ONE COLUMN PER METRIC x VARIANT
@@ -821,6 +800,56 @@ BEGIN
     SELECT qgp_date, week_type, qgp_quarter, days_in_period, is_complete_period, wow_prior_qgp_date, boundary_stub_date, iso_week_number, iso_year,
            'digitalPctAssistanceActivations', 'QGP_TARGET', digitalPctAssistanceActivations_qgp
     FROM WithCalendar
+  )
+
+  SELECT * FROM Unpivoted;
+
+
+  /* ===============================================================================================
+     PHASE B: FINAL SILVER TABLE, reading the materialized QGP periods
+     =============================================================================================== */
+
+  CREATE OR REPLACE TABLE
+    prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+  USING DELTA
+  CLUSTER BY (qgp_date, metric_name, metric_type)
+  COMMENT '
+    PulseTMS Silver - QGP scorecard metrics in long format with WoW/YoY.
+
+    12 named metrics with QGP_ACTUAL / QGP_TARGET representation.
+
+    Phone activation metrics:
+      activationsBopis
+        = existing combined BOPIS + Non-BOPIS metric
+
+      activationsBopisOnly
+        = BOPIS-only component
+
+      activationsNonBopisOnly
+        = Non-BOPIS-only component
+
+    Component QGP targets are read directly from their corresponding
+    MetricIDs when metric_type = QGP rows exist.
+
+    No artificial BOPIS / Non-BOPIS target allocation is performed.
+
+    Confirmed hardcoded NULL QGP targets:
+      digitalPctNoAssistanceActivations
+      digitalPctAssistanceActivations
+
+    metric_type:
+      QGP_ACTUAL
+      QGP_TARGET
+
+    Refreshed weekly via:
+      sdi_sp_dashboardPulseTms_silver_qgp_weekly
+  '
+  AS
+
+  WITH
+
+  Unpivoted AS (
+    SELECT * FROM prdrzranalytics.lab42.tmp_silver_qgp_unpivoted
   ),
 
 
@@ -1097,5 +1126,9 @@ BEGIN
 
   FROM WithWowYoy
   ;
+
+
+
+  DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_silver_qgp_unpivoted;
 
 END;
