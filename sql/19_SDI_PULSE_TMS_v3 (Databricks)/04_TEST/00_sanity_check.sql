@@ -15,6 +15,20 @@ HOW TO USE:
   Run one PART at a time, top to bottom, in a Databricks SQL editor / notebook.
   Every CHECK says what it must return. If a CHECK fails, stop and use PART 9 (rollback).
 
+WHAT EACH CHECK COMPARES AGAINST (no data copies are made):
+  - The raw source, wherever the raw source holds the same thing (Programmatic archive and
+    Biddable Programmatic).
+  - The table's OWN previous Delta version (time travel: VERSION AS OF), for the PulseTMS Bronze
+    and Silver tables. WoW / YoY columns do not exist in any raw source, so "before the change"
+    is the only meaningful comparison for them.
+  - One tiny column-list snapshot (metadata only, no data rows) to prove no column changed;
+    views keep no version history, so this is the only way to compare their columns.
+
+  Replace the four placeholders <V_BRONZE_BIDDABLE>, <V_SILVER_BIDDABLE>, <V_SILVER_QGP> and
+  <V_SILVER_UPV> with the version numbers written down in PART 0.2 (Find and Replace).
+  Run the comparisons the same day as the change: old versions stay readable until VACUUM
+  removes their files (7 days by default).
+
 OBJECTS DEPLOYED (files in this folder):
   01_sdi_sp_biddProgrammaticArchive_bronze_snapshot_weekly.sql          NEW  -> ..._bronze_retained_weekly
   02_sdi_sp_biddProgrammaticArchive_silver_conformed_weekly.sql          NEW  -> ..._silver_conformed_weekly
@@ -31,10 +45,10 @@ OBJECTS DEPLOYED (files in this folder):
 
 
 /* =================================================================================================
-   PART 0 - BEFORE ANYTHING: schema snapshot + backups + Delta versions
+   PART 0 - BEFORE ANYTHING: column snapshot + Delta versions (no data is copied)
    ================================================================================================= */
 
--- 0.1 Column snapshot of every existing object these fixes touch or feed
+-- 0.1 Column snapshot (metadata only) of every existing object these fixes touch or feed
 CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_schema_before AS
 SELECT table_name, ordinal_position, column_name, data_type
 FROM   prdrzranalytics.information_schema.columns
@@ -48,23 +62,12 @@ WHERE  table_schema = 'lab42'
          'sdi_vw_dashboardpulsetms_gold_unified_wide',
          'sdi_tbl_dashboardpulsetms_validation_history_perrun');
 
--- 0.2 Backups (frozen copies used for every comparison below)
-CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_before_bronzeBiddable AS
-SELECT * FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly;
-
-CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_before_silverBiddable AS
-SELECT * FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly;
-
-CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_before_silverQgp AS
-SELECT * FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly;
-
-CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_before_silverUpvForecast AS
-SELECT * FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly;
-
-CREATE OR REPLACE TABLE prdrzranalytics.lab42.tmp_pulseFix_before_goldLong AS
-SELECT * FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long;
-
--- 0.3 Write down the current Delta version of each table (needed only for a rollback, PART 9)
+-- 0.2 Write down the CURRENT Delta version of each table that will change (the "version" column of
+--     the first row). Every "before" comparison below and the rollback in PART 9 use these.
+--       <V_BRONZE_BIDDABLE>  sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
+--       <V_SILVER_BIDDABLE>  sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly
+--       <V_SILVER_QGP>       sdi_tbl_dashboardPulseTms_silver_qgp_weekly
+--       <V_SILVER_UPV>       sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
 DESCRIBE HISTORY prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly LIMIT 1;
 DESCRIBE HISTORY prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly LIMIT 1;
 DESCRIBE HISTORY prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly          LIMIT 1;
@@ -119,29 +122,67 @@ FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_bronze_retained_weekl
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly();
 CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly();
 
--- CHECK 2.2: Bronze identical to the backup (expect 0 rows)
+-- CHECK 2.0: Programmatic in the NEW Bronze equals the RAW source run through the same Bronze
+--            logic (week, LOB scope, DSP normalization). Expect 0 rows.
+--            Valid while the raw source still holds the whole year (i.e. before January).
+WITH RawProg AS (
+  SELECT
+    date_add(CAST(raw.`date` AS DATE), 7 - dayofweek(CAST(raw.`date` AS DATE))) AS week_sun_sat,
+    UPPER(TRIM(raw.lob))                                                      AS lob,
+    CASE
+      WHEN UPPER(TRIM(raw.DSP)) IN ('AMAZON', 'AMAZON DSP')                   THEN 'Amazon DSP'
+      WHEN UPPER(TRIM(raw.DSP)) IN ('THE TRADE DESK', 'TTD')                  THEN 'The Trade Desk'
+      WHEN UPPER(TRIM(raw.DSP)) IN ('DV360', 'DBM', 'DISPLAY & VIDEO 360')    THEN 'DV360'
+      WHEN UPPER(TRIM(raw.DSP)) = 'BLIS'                                      THEN 'Blis'
+      WHEN UPPER(TRIM(raw.DSP)) IN ('GOOGLE', 'GOOGLE ADS')                   THEN 'Google Ads'
+      WHEN NULLIF(TRIM(raw.DSP), '') IS NOT NULL                              THEN TRIM(raw.DSP)
+      ELSE 'Unknown'
+    END                                                                       AS platform,
+    TRY_CAST(raw.spend AS DOUBLE)                                             AS spend
+  FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr raw
+  WHERE raw.`date` IS NOT NULL
+    AND UPPER(TRIM(raw.lob)) IN ('POSTPAID', 'CONSUMER POSTPAID', 'HSI', 'BROADBAND')),
+RawWeekly AS (
+  SELECT week_sun_sat, lob, platform, SUM(COALESCE(spend, 0)) AS spend
+  FROM RawProg
+  WHERE week_sun_sat IS NOT NULL
+  GROUP BY 1, 2, 3),
+NewBronze AS (
+  SELECT week_sun_sat, lob, platform, spend
+  FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly
+  WHERE channel_group = 'Programmatic')
+SELECT COALESCE(r.week_sun_sat, n.week_sun_sat) AS week_sun_sat, COALESCE(r.lob, n.lob) AS lob,
+       COALESCE(r.platform, n.platform) AS platform, r.spend AS raw_source_spend, n.spend AS bronze_spend
+FROM RawWeekly r
+FULL OUTER JOIN NewBronze n
+  ON r.week_sun_sat = n.week_sun_sat AND r.lob = n.lob AND r.platform = n.platform
+WHERE ABS(COALESCE(r.spend, 0) - COALESCE(n.spend, 0)) > 0.005
+ORDER BY 1 DESC, 2, 3;
+
+-- CHECK 2.2: Bronze identical to its own version before the change (expect 0 rows)
 SELECT COALESCE(n.week_sun_sat, o.week_sun_sat) AS week_sun_sat, COALESCE(n.lob, o.lob) AS lob,
        COALESCE(n.channel_group, o.channel_group) AS channel_group, COALESCE(n.platform, o.platform) AS platform,
        o.spend AS before_spend, n.spend AS after_spend
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly n
-FULL OUTER JOIN prdrzranalytics.lab42.tmp_pulseFix_before_bronzeBiddable o
+FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly VERSION AS OF <V_BRONZE_BIDDABLE> o
   ON  n.week_sun_sat = o.week_sun_sat AND n.lob <=> o.lob
   AND n.channel_group <=> o.channel_group AND n.platform <=> o.platform
 WHERE NOT (ROUND(n.spend, 2) <=> ROUND(o.spend, 2));
 
--- CHECK 2.3: Silver identical to the backup (expect 0 rows)
+-- CHECK 2.3: Silver identical to its own version before the change (expect 0 rows)
 SELECT COALESCE(n.qgp_date, o.qgp_date) AS qgp_date, COALESCE(n.lob, o.lob) AS lob,
        COALESCE(n.channel_group, o.channel_group) AS channel_group
 FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly n
-FULL OUTER JOIN prdrzranalytics.lab42.tmp_pulseFix_before_silverBiddable o
+FULL OUTER JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly VERSION AS OF <V_SILVER_BIDDABLE> o
   ON  n.qgp_date = o.qgp_date AND n.lob <=> o.lob AND n.channel_group <=> o.channel_group
   AND n.metric_name <=> o.metric_name
 WHERE NOT (ROUND(n.metric_value, 2)    <=> ROUND(o.metric_value, 2))
    OR NOT (ROUND(n.wow_numerator, 2)   <=> ROUND(o.wow_numerator, 2))
    OR NOT (ROUND(n.wow_denominator, 2) <=> ROUND(o.wow_denominator, 2))
    OR NOT (ROUND(n.yoy_denominator, 2) <=> ROUND(o.yoy_denominator, 2));
--- Note: the source keeps loading during the day. If 2.2 / 2.3 show rows ONLY for the latest
--- one or two weeks, that is new spend that landed between the backup and this run, not the fix.
+-- Note: the sources keep loading during the day. If 2.2 / 2.3 show rows ONLY for the latest one
+-- or two weeks, that is new spend that landed between the previous run and this one, not the fix
+-- (CHECK 2.0 compares against the raw source directly and is not affected by this).
 
 
 /* =================================================================================================
@@ -154,11 +195,11 @@ CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_qgp_weekly();
 -- CHECK 3.2: row count unchanged and metric_value unchanged on EVERY row
 --            (expect rows_before = rows_after, metric_value_changed = 0)
 SELECT
-  (SELECT COUNT(*) FROM prdrzranalytics.lab42.tmp_pulseFix_before_silverQgp)                AS rows_before,
+  (SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly VERSION AS OF <V_SILVER_QGP>)                AS rows_before,
   (SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly)  AS rows_after,
   (SELECT COUNT(*)
    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly n
-   JOIN prdrzranalytics.lab42.tmp_pulseFix_before_silverQgp o
+   JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly VERSION AS OF <V_SILVER_QGP> o
      ON n.qgp_date = o.qgp_date AND n.metric_name = o.metric_name AND n.metric_type = o.metric_type
    WHERE NOT (n.metric_value <=> o.metric_value))                                            AS metric_value_changed;
 
@@ -178,7 +219,7 @@ WITH D AS (
                            'digitalPctAssistanceActivations') AS is_ratio,
          NOT (n.metric_value <=> o.metric_value) AS value_changed
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly n
-  JOIN prdrzranalytics.lab42.tmp_pulseFix_before_silverQgp o
+  JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly VERSION AS OF <V_SILVER_QGP> o
     ON n.qgp_date = o.qgp_date AND n.metric_name = o.metric_name AND n.metric_type = o.metric_type
   WHERE NOT (n.metric_value    <=> o.metric_value)
      OR NOT (n.wow_numerator   <=> o.wow_numerator)
@@ -225,11 +266,11 @@ CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();
 
 -- CHECK 4.2: row count and metric_value unchanged (expect rows equal, metric_value_changed = 0)
 SELECT
-  (SELECT COUNT(*) FROM prdrzranalytics.lab42.tmp_pulseFix_before_silverUpvForecast)                AS rows_before,
+  (SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly VERSION AS OF <V_SILVER_UPV>)                AS rows_before,
   (SELECT COUNT(*) FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly)  AS rows_after,
   (SELECT COUNT(*)
    FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly n
-   JOIN prdrzranalytics.lab42.tmp_pulseFix_before_silverUpvForecast o
+   JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly VERSION AS OF <V_SILVER_UPV> o
      ON n.qgp_date = o.qgp_date AND n.channel_group = o.channel_group AND n.metric_name = o.metric_name
    WHERE NOT (n.metric_value <=> o.metric_value))                                                    AS metric_value_changed;
 
@@ -245,7 +286,7 @@ WITH D AS (
          o.metric_value_ly AS before_ly,       n.metric_value_ly AS after_ly,
          NOT (n.metric_value <=> o.metric_value) AS value_changed
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly n
-  JOIN prdrzranalytics.lab42.tmp_pulseFix_before_silverUpvForecast o
+  JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly VERSION AS OF <V_SILVER_UPV> o
     ON n.qgp_date = o.qgp_date AND n.channel_group = o.channel_group AND n.metric_name = o.metric_name
   WHERE NOT (n.metric_value    <=> o.metric_value)
      OR NOT (n.wow_numerator   <=> o.wow_numerator)
@@ -296,34 +337,42 @@ ORDER BY metric_name, qgp_date;
    PART 6 - End-to-end checks after the full run
    ================================================================================================= */
 
--- CHECK 6.1: Gold long metric_value unchanged for every row that existed before (expect 0 rows,
---            apart from the latest week or two if sources loaded new data in between)
-SELECT n.data_source, n.metric_name, n.metric_type, n.true_lob, n.channel_group, n.qgp_date,
-       o.metric_value AS before_value, n.metric_value AS after_value
-FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long n
-JOIN prdrzranalytics.lab42.tmp_pulseFix_before_goldLong o
-  ON  n.data_source <=> o.data_source AND n.metric_name <=> o.metric_name
-  AND n.metric_type <=> o.metric_type AND n.true_lob <=> o.true_lob
-  AND n.channel_group <=> o.channel_group AND n.qgp_date = o.qgp_date
-  AND n.mfc_channel <=> o.mfc_channel AND n.mfc_tactic <=> o.mfc_tactic
-  AND n.mfc_message_type <=> o.mfc_message_type AND n.mfc_agency <=> o.mfc_agency
+-- CHECK 6.1: after the full run, metric_value in every changed table still equals its version
+--            before the change (expect 0 for all four; small counts ONLY in the latest week or two
+--            mean sources loaded new data in between). Gold long and Gold wide are views on these
+--            tables, so equal tables mean equal Gold.
+SELECT 'bronze_biddableSpend' AS table_checked, COUNT(*) AS rows_with_different_value
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly VERSION AS OF <V_BRONZE_BIDDABLE> o
+  ON n.week_sun_sat = o.week_sun_sat AND n.lob <=> o.lob AND n.channel_group <=> o.channel_group AND n.platform <=> o.platform
+WHERE NOT (ROUND(n.spend, 2) <=> ROUND(o.spend, 2))
+UNION ALL
+SELECT 'silver_biddableSpend', COUNT(*)
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly VERSION AS OF <V_SILVER_BIDDABLE> o
+  ON n.qgp_date = o.qgp_date AND n.lob <=> o.lob AND n.channel_group <=> o.channel_group AND n.metric_name <=> o.metric_name
 WHERE NOT (ROUND(n.metric_value, 2) <=> ROUND(o.metric_value, 2))
-ORDER BY n.qgp_date DESC, n.data_source, n.metric_name;
+UNION ALL
+SELECT 'silver_qgp', COUNT(*)
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly VERSION AS OF <V_SILVER_QGP> o
+  ON n.qgp_date = o.qgp_date AND n.metric_name = o.metric_name AND n.metric_type = o.metric_type
+WHERE NOT (n.metric_value <=> o.metric_value)
+UNION ALL
+SELECT 'silver_upvForecast', COUNT(*)
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly VERSION AS OF <V_SILVER_UPV> o
+  ON n.qgp_date = o.qgp_date AND n.channel_group = o.channel_group AND n.metric_name = o.metric_name
+WHERE NOT (n.metric_value <=> o.metric_value);
 
--- CHECK 6.2: Gold long WoW changed ONLY for QGP Digital % and UPV forecast
---            (expect 0 rows for any other data_source / metric)
-SELECT n.data_source, n.metric_name, COUNT(*) AS rows_with_wow_change
-FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long n
-JOIN prdrzranalytics.lab42.tmp_pulseFix_before_goldLong o
-  ON  n.data_source <=> o.data_source AND n.metric_name <=> o.metric_name
-  AND n.metric_type <=> o.metric_type AND n.true_lob <=> o.true_lob
-  AND n.channel_group <=> o.channel_group AND n.qgp_date = o.qgp_date
-  AND n.mfc_channel <=> o.mfc_channel AND n.mfc_tactic <=> o.mfc_tactic
-  AND n.mfc_message_type <=> o.mfc_message_type AND n.mfc_agency <=> o.mfc_agency
-WHERE NOT (ROUND(n.wow_pct, 6) <=> ROUND(o.wow_pct, 6))
-   OR NOT (ROUND(n.yoy_pct, 6) <=> ROUND(o.yoy_pct, 6))
-GROUP BY n.data_source, n.metric_name
-ORDER BY 1, 2;
+-- CHECK 6.2: Gold long shows the corrected boundary weeks (eyeball; same values as CHECK 3.4 / 4.4)
+SELECT data_source, metric_name, metric_type, qgp_date, ROUND(wow_numerator, 6) AS full_week,
+       ROUND(wow_denominator, 6) AS prior_full_week, ROUND(wow_pct, 4) AS wow_pct
+FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+WHERE qgp_date IN (DATE'2026-07-04', DATE'2026-07-11')
+  AND (   (data_source = 'QGP_SCORECARD' AND metric_name = 'digitalPctConsumerPostpaidActivationsTotalInclAssisted')
+       OR (data_source = 'UPV_FORECAST'  AND metric_name = 'upvForecast' AND channel_group = 'All Channels'))
+ORDER BY data_source, metric_type, qgp_date;
 
 -- CHECK 6.3: columns of every existing object unchanged (expect 0 rows in both directions)
 WITH AfterCols AS (
@@ -377,23 +426,18 @@ ORDER BY 1, 2;
    PART 8 - Clean up (after everything is signed off)
    ================================================================================================= */
 
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_schema_before;
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_before_bronzeBiddable;
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_before_silverBiddable;
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_before_silverQgp;
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_before_silverUpvForecast;
--- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_before_goldLong;
+-- DROP TABLE IF EXISTS prdrzranalytics.lab42.tmp_pulseFix_schema_before;   -- the only helper table (metadata)
 
 
 /* =================================================================================================
    PART 9 - ROLLBACK (only if a CHECK fails)
    ================================================================================================= */
 
--- 9.1 Put the data back (use the versions written down in 0.3). Views follow automatically.
--- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly TO VERSION AS OF <v>;
--- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly TO VERSION AS OF <v>;
--- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly          TO VERSION AS OF <v>;
--- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly  TO VERSION AS OF <v>;
+-- 9.1 Put the data back (versions written down in PART 0.2). Views follow automatically.
+-- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_bronze_biddableSpend_weekly TO VERSION AS OF <V_BRONZE_BIDDABLE>;
+-- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_biddableSpend_weekly TO VERSION AS OF <V_SILVER_BIDDABLE>;
+-- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly          TO VERSION AS OF <V_SILVER_QGP>;
+-- RESTORE TABLE prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly  TO VERSION AS OF <V_SILVER_UPV>;
 
 -- 9.2 Put the code back: re-deploy the ORIGINAL version of whichever procedure file was updated,
 --     so the next scheduled run does not re-apply the change.
@@ -402,7 +446,6 @@ ORDER BY 1, 2;
 --     stay in place even if Biddable Bronze is rolled back (it simply goes back to the raw source).
 --     Keep the archive running weekly regardless: it is what protects the history.
 
-
 /* =================================================================================================
 FILE:     05_pulseTms_fixQuickChecks_adhoc.sql
 PURPOSE:  Quick health checks for the PulseTMS fixes (Biddable Programmatic archive, QGP and UPV
@@ -410,8 +453,8 @@ PURPOSE:  Quick health checks for the PulseTMS fixes (Biddable Programmatic arch
           weekly run, or in the first week of January after the source rolls over).
 
           Every query says what it must return. Most return 0 rows when healthy.
-          Checks Q1-Q9 need nothing else. Q10 needs the backups from
-          00_pulseTms_fixDeploy_verify_adhoc.sql PART 0 (skip it once those are dropped).
+          Every check compares against the raw source, the archive, or (Q10 only) a table's own
+          previous Delta version. No backup tables are needed.
 ================================================================================================= */
 
 
@@ -569,25 +612,23 @@ ORDER BY data_source, metric_type, qgp_date;
 
 
 /* -------------------------------------------------------------------------------------------------
-   Q10. Nothing else moved: Gold long row counts and metric_value totals per data_source vs the
-        PART 0 backup (expect same_rows = TRUE and value_diff = 0 for every data_source, apart from
-        the latest week or two if sources loaded new data in between)
+   Q10. Nothing else moved: metric_value in the two fixed Silvers vs their version before the
+        change (time travel). Replace <V_SILVER_QGP> / <V_SILVER_UPV> with the versions from
+        DESCRIBE HISTORY (the version just before the fix was deployed). Run within 7 days of the
+        change (old versions are removed by VACUUM after that).
+        Expect 0 for both (small counts ONLY in the latest week or two = new data loaded since).
    ------------------------------------------------------------------------------------------------- */
-WITH N AS (
-  SELECT data_source, COUNT(*) AS rows_after, ROUND(SUM(metric_value), 2) AS total_after
-  FROM   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
-  WHERE  qgp_date <= date_sub(current_date(), 21)
-  GROUP BY data_source),
-O AS (
-  SELECT data_source, COUNT(*) AS rows_before, ROUND(SUM(metric_value), 2) AS total_before
-  FROM   prdrzranalytics.lab42.tmp_pulseFix_before_goldLong
-  WHERE  qgp_date <= date_sub(current_date(), 21)
-  GROUP BY data_source)
-SELECT COALESCE(N.data_source, O.data_source) AS data_source,
-       O.rows_before, N.rows_after, (O.rows_before <=> N.rows_after) AS same_rows,
-       O.total_before, N.total_after, ROUND(COALESCE(N.total_after, 0) - COALESCE(O.total_before, 0), 2) AS value_diff
-FROM N FULL OUTER JOIN O ON N.data_source = O.data_source
-ORDER BY 1;
+SELECT 'silver_qgp' AS table_checked, COUNT(*) AS rows_with_different_value
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly VERSION AS OF <V_SILVER_QGP> o
+  ON n.qgp_date = o.qgp_date AND n.metric_name = o.metric_name AND n.metric_type = o.metric_type
+WHERE NOT (n.metric_value <=> o.metric_value)
+UNION ALL
+SELECT 'silver_upvForecast', COUNT(*)
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly n
+JOIN prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly VERSION AS OF <V_SILVER_UPV> o
+  ON n.qgp_date = o.qgp_date AND n.channel_group = o.channel_group AND n.metric_name = o.metric_name
+WHERE NOT (n.metric_value <=> o.metric_value);
 
 
 /* -------------------------------------------------------------------------------------------------
