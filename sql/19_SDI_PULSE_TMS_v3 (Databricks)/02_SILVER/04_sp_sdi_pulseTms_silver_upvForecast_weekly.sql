@@ -381,12 +381,8 @@ END;
 
 
 output:
-qgp_date	week_type	metric_name	metric_value	full_week	prior_full_week	wow_pct
-2026-07-04	BOUNDARY_FIRST	upvForecast	876000	1533000	null	null
-2026-07-11	NORMAL	upvForecast	1460000	1460000	1533000	-0.0476
-2026-10-03	BOUNDARY_FIRST	upvForecast	756372	1597531	1793592	-0.1093
-2026-10-10	NORMAL	upvForecast	1609303	1609303	1597531	0.0074
-2026-07-04	BOUNDARY_FIRST	upvWebAppForecast	1027791.21	1798634.6175	null	null
-2026-07-11	NORMAL	upvWebAppForecast	1919477.83	1919477.83	1798634.6175	0.0672
-2026-10-03	BOUNDARY_FIRST	upvWebAppForecast	151500	1176741.1099999999	2395283.69	-0.5087
-2026-10-10	NORMAL	upvWebAppForecast	322400	322400	1176741.1099999999	-0.726
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly();
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly();
+
+CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun();
+
