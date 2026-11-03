@@ -29,7 +29,7 @@ PURPOSE:
   The AI never reads Gold directly; it reads a snapshot_id from this table.
 
 WHY APPEND-ONLY (same pattern as the PulseTMS validation history):
-  - Every run writes a new snapshot_id. Nothing is ever updated or deleted.
+  - Every run writes a UUID-suffixed snapshot_id. Nothing is ever updated or deleted.
   - The published report pins the snapshot_id it was written from, so a published week
     never changes when Gold restates, and any restatement is visible by comparing snapshots.
   - sdi_vw_weeklyNarrative_gold_factsLatest_long returns the newest snapshot per week.
@@ -47,8 +47,14 @@ WEEK VALUE (boundary-safe, built here from the Gold periods):
     BOUNDARY_FIRST week  BOUNDARY_STUB (old quarter) + BOUNDARY_FIRST (new quarter)
                          COUNT / USD  -> sum of the two pieces
                          PCT          -> day-weighted average of the two pieces
-  If the pieces do not cover all 7 days with a value (e.g. a forecast that only starts on
-  the first day of the quarter), week_value is NULL rather than a partial week.
+  If one boundary piece has no value, the rule depends on what "missing" means for the source
+  (same rules as PulseTMS Silver):
+    UPV_FORECAST     the missing days are estimated from the other piece's daily rate
+                     (e.g. week ending 2026-07-04: 876,000 for Jul 1-4 -> 876,000 x 7 / 4 = 1,533,000)
+    QGP_SCORECARD    missing stays missing: week_value is NULL
+    spend and Adobe  a missing piece counts as 0 (MFC / Biddable / Platform sources contain no
+                     zero-spend rows, so no row means no spend; Adobe pieces come from one row)
+  No piece with a value at all -> NULL.
 
   Why not PulseTMS wow_numerator: on boundary weeks it is not reliable for every source.
   It sums the two pieces even for PCT ratios (0.47 + 0.49 = 0.96), and it holds only the
@@ -179,7 +185,7 @@ BEGIN
 
 
   SET v_snapshot_id =
-    CONCAT('WKNARR_FACTS_', DATE_FORMAT(v_ts, 'yyyyMMdd_HHmmss_SSS'));
+    CONCAT('WN_FACTS_', DATE_FORMAT(v_ts, 'yyyyMMdd_HHmmss_SSS'), '_', REPLACE(UUID(), '-', ''));
 
 
   SET v_run_type =
@@ -205,7 +211,7 @@ BEGIN
         SELECT cal.qgp_date
         FROM   prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_dim_qgp_calendar cal
         WHERE  cal.is_complete_period = TRUE
-          AND  cal.qgp_date <= CURRENT_DATE()
+          AND  cal.qgp_date < CURRENT_DATE()
           AND  DAYOFWEEK(cal.qgp_date) = 7
         ORDER BY cal.qgp_date DESC
         LIMIT 1
@@ -221,10 +227,10 @@ BEGIN
 
 
   /* A week that has not finished yet would freeze NULL / partial values into history. */
-  IF v_week_end > CURRENT_DATE() THEN
+  IF v_week_end >= CURRENT_DATE() THEN
     SIGNAL SQLSTATE '45000'
       SET MESSAGE_TEXT =
-        'Weekly narrative facts snapshot: week_end is in the future. Only completed Sunday-Saturday weeks can be snapshotted.';
+        'Weekly narrative facts snapshot: week_end must be before today; do not snapshot an unfinished Saturday.';
   END IF;
 
 
@@ -246,7 +252,7 @@ BEGIN
   CREATE TABLE IF NOT EXISTS
     prdrzranalytics.lab42.sdi_tbl_weeklyNarrative_gold_factsHistory_long
   (
-    snapshot_id          STRING     COMMENT 'Snapshot identifier, WKNARR_FACTS_yyyyMMdd_HHmmss_SSS. One per procedure run. Published reports pin this value.',
+    snapshot_id          STRING     COMMENT 'Snapshot identifier, WN_FACTS_yyyyMMdd_HHmmss_SSS_uuid. One per procedure run. Published reports pin this value.',
     snapshot_ts          TIMESTAMP  COMMENT 'When the snapshot was taken (UTC).',
     run_type             STRING     COMMENT 'JOB = scheduled Databricks Job run. MANUAL = interactive or ad hoc call (including backfills).',
     job_run_id           STRING     COMMENT 'Databricks Job Run ID for JOB runs; the snapshot_id for MANUAL runs.',
@@ -278,7 +284,7 @@ BEGIN
     higher_is_better     BOOLEAN    COMMENT 'Direction of good performance from the registry. NULL = neutral.',
 
     metric_value         DOUBLE     COMMENT 'PulseTMS Gold metric_value for the QGP period ending week_end, unchanged. Partial on BOUNDARY_FIRST weeks. Kept for traceability; report on week_value instead.',
-    week_value           DOUBLE     COMMENT 'Value for the full Sunday-Saturday week, built from the Gold periods inside it: NORMAL = its 7-day period; BOUNDARY_FIRST = quarter-end stub + new-quarter piece (sum for COUNT/USD, day-weighted average for PCT). NULL if the periods with a value do not cover all 7 days. Use this in the narrative.',
+    week_value           DOUBLE     COMMENT 'Value for the full Sunday-Saturday week, built from the Gold periods inside it: NORMAL = its 7-day period; BOUNDARY_FIRST = quarter-end stub + new-quarter piece (sum for COUNT/USD, day-weighted average for PCT). If a boundary piece is missing: UPV_FORECAST estimates the missing days from the other piece daily rate, QGP_SCORECARD gives NULL, spend and Adobe count it as 0. Use this in the narrative.',
     prior_week_value     DOUBLE     COMMENT 'week_value of the week ending 7 days earlier (same boundary-safe build).',
     wow_pct              DOUBLE     COMMENT 'Week-over-week change as a ratio (0.12 = +12%): week_value / prior_week_value - 1. Computed here (not PulseTMS wow_pct) so boundary weeks and the week after them are correct.',
     ly_week_value        DOUBLE     COMMENT 'PulseTMS Gold yoy_denominator: same ISO week last year, full weekly total.',
@@ -412,8 +418,8 @@ BEGIN
 
 
   /* Full Sunday-Saturday week value for every Saturday in the window, built from the Gold
-     periods inside that week (see WEEK VALUE in the header). NULL when the periods with a
-     value do not cover all 7 days. */
+     periods inside that week (see WEEK VALUE in the header). A missing boundary piece is
+     estimated (UPV_FORECAST), left NULL (QGP_SCORECARD) or counted as 0 (spend, Adobe). */
   Weekly AS (
     SELECT
       s.metric_key,
@@ -421,9 +427,21 @@ BEGIN
       s.channel_group,
       s.qgp_date,
       CASE
-        WHEN COALESCE(SUM(CASE WHEN p.metric_value IS NOT NULL THEN p.days_in_period END), 0) <> 7
+        /* no piece with a value */
+        WHEN COALESCE(SUM(CASE WHEN p.metric_value IS NOT NULL THEN p.days_in_period END), 0) = 0
           THEN CAST(NULL AS DOUBLE)
-        WHEN r.unit = 'PCT' THEN SUM(p.metric_value * p.days_in_period) / 7.0
+
+        /* all 7 days covered (normal week, or both boundary pieces present) */
+        WHEN SUM(CASE WHEN p.metric_value IS NOT NULL THEN p.days_in_period END) = 7
+          THEN CASE WHEN r.unit = 'PCT' THEN SUM(p.metric_value * p.days_in_period) / 7.0
+                    ELSE SUM(p.metric_value) END
+
+        /* a boundary piece is missing */
+        WHEN r.data_source = 'UPV_FORECAST'
+          THEN SUM(p.metric_value) * 7.0
+               / SUM(CASE WHEN p.metric_value IS NOT NULL THEN p.days_in_period END)
+        WHEN r.data_source = 'QGP_SCORECARD'
+          THEN CAST(NULL AS DOUBLE)
         ELSE SUM(p.metric_value)
       END                                                                  AS week_value
     FROM Agg s
@@ -435,7 +453,7 @@ BEGIN
       AND p.channel_group <=> s.channel_group
       AND p.qgp_date BETWEEN date_sub(s.qgp_date, 6) AND s.qgp_date
     WHERE DAYOFWEEK(s.qgp_date) = 7
-    GROUP BY s.metric_key, s.row_role, s.channel_group, s.qgp_date, r.unit
+    GROUP BY s.metric_key, s.row_role, s.channel_group, s.qgp_date, r.unit, r.data_source
   ),
 
 
