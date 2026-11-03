@@ -1,0 +1,25 @@
+# Weekly Narrative v8 knowledge-refresh workflow BLUEPRINT ONLY.
+# Not deployable until real notebook paths, SQL warehouse/cluster, task definitions,
+# permissions, parameter mapping, retries and service principal are configured.
+# All stored-procedure writes must be serialized (max_concurrent_runs=1).
+resources:
+  jobs:
+    weekly_narrative_knowledge_refresh:
+      name: weekly_narrative_knowledge_refresh
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: sql_layers
+          # SQL task: CALL ...orchestration_sqlLayers_perRun('WEEKLY_REFRESH', :week_end, NULL)
+          # Internally: Track A facts → Bronze APP_SYNC → Silver → physical Gold REFRESH
+        - task_key: gold_ai_enrichment
+          depends_on: [{task_key: sql_layers}]
+          # NOTEBOOK: trackB/gold/02_sdi_nb_weeklyNarrative_gold_aiEnrichment_perRun.py
+          # Pass week_end, ai_enabled=true, endpoint. Notebook calls Gold SP APPLY itself.
+        - task_key: graph_extraction_and_persistence
+          depends_on: [{task_key: gold_ai_enrichment}]
+          # NOTEBOOK: knowledgeGraph/gold/03_sdi_nb_weeklyNarrative_gold_extractKnowledgeGraph_perRun.py
+          # The notebook CALLs Nodes SP then Edges SP, using validated JSON batches.
+        - task_key: validation
+          depends_on: [{task_key: graph_extraction_and_persistence}]
+          # SQL validation: Track B Gold eligibility reconciliation + graph referential integrity
+          # No approval is implied by an AI extraction run.

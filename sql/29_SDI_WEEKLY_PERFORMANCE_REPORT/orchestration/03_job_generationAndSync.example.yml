@@ -1,0 +1,24 @@
+# Databricks workflow BLUEPRINT. The front-end invokes the API, not production tables.
+# Generation and review can happen concurrently for DIFFERENT versions.
+# All Bronze/Silver downstream mutation should be via one serialized sync job.
+resources:
+  jobs:
+    weekly_narrative_generate:
+      name: weekly_narrative_generate
+      tasks:
+        - task_key: generate
+          # Agent gold/09 notebook; creates immutable Gold investigation and version
+        - task_key: sync_versions
+          depends_on: [{task_key: generate}]
+          # SQL CALL orchestration_sqlLayers_perRun('APP_SYNC',NULL,NULL)
+    weekly_narrative_review:
+      name: weekly_narrative_review
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: process_review
+          # Agent gold/10 notebook; appends review event or new version
+        - task_key: sync_eligibility
+          depends_on: [{task_key: process_review}]
+          # SQL CALL orchestration_sqlLayers_perRun('APP_SYNC',NULL,NULL)
+# Ensure sync_versions and sync_eligibility target one serialized writer workflow,
+# NOT independent jobs writing Bronze concurrently. Reconcile periodically.
