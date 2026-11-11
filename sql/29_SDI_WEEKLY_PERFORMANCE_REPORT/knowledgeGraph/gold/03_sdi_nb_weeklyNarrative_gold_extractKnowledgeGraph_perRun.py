@@ -2,9 +2,11 @@
 # ============================================================================
 # FILE: 03_sdi_nb_weeklyNarrative_gold_extractKnowledgeGraph_perRun.py
 # LAYER: Knowledge Graph / Gold | PURPOSE: AI proposes governed Nodes/Edges
-# INPUT: Eligible Track B Gold evidence, registered Track A metric keys
+# INPUT: Eligible Track B Silver chunks (is_evidence_eligible = TRUE), registered Track A metric keys
 # OUTPUT: JSON batches passed directly to dedicated Nodes / Edges Gold SPs (no UC Volume).
 # APPROVAL: all new graph records stay PENDING_REVIEW. Never infer causality.
+# CHANGE 7.1: reads Silver instead of the removed Track B Gold approvedEvidence table;
+#             deterministic chunk ordering; backslash-safe SQL literals.
 # ============================================================================
 import json,uuid,re,hashlib
 from databricks.sdk import WorkspaceClient
@@ -19,9 +21,13 @@ endpoint=dbutils.widgets.get('endpoint').strip()
 if endpoint.startswith('REPLACE') or not re.fullmatch(r'[\w.-]+',endpoint):raise ValueError('Configure endpoint')
 reg=spark.table(f'{BASE}.sdi_vw_weeklyNarrative_control_metricRegistry_static')
 allowed={r.metric_key:r.display_name for r in reg.where(F.col('is_active')).select('metric_key','display_name').collect()}
-df=spark.table(f'{BASE}.sdi_tbl_weeklyNarrative_gold_approvedEvidence_long')
+# Only currently published passages may support graph claims.
+df=(spark.table(f'{BASE}.sdi_tbl_weeklyNarrative_silver_narrativeChunks_weekly')
+      .where(F.col('is_evidence_eligible')==F.lit(True)))
 if week:df=df.where(F.col('report_week_end')==F.lit(week).cast('date'))
-rows=df.select('chunk_id','chunk_text','report_week_end').limit(min(500,int(dbutils.widgets.get('max_chunks')))).collect()
+rows=(df.select('chunk_id','chunk_text','report_week_end')
+        .orderBy('report_week_end','chunk_id')
+        .limit(min(500,int(dbutils.widgets.get('max_chunks')))).collect())
 client=WorkspaceClient().serving_endpoints.get_open_ai_client()
 NODE_TYPES={'METRIC','CAMPAIGN','CHANNEL','EVENT','LOB','ISSUE','PAGE','PRODUCT'}
 REL_TYPES={'ASSOCIATED_WITH_CHANNEL','REPORTED_DRIVER_OF','MENTIONED_WITH','AFFECTS_LOB','RELATED_TO_METRIC','REPORTED_ISSUE_FOR'}
@@ -60,7 +66,9 @@ for chunk in rows:
           'confidence_score':None,'extraction_model_id':endpoint}
 # Stored procedure handoff; only owning graph procedures may write graph tables.
 # Use guarded JSON literals and small batches so a huge payload never reaches the SQL parser.
-def lit(s):return "'"+str(s).replace("'","''")+"'"
+# Backslashes are escaped first: Spark SQL string literals treat \" and \n as escapes, which
+# would otherwise corrupt any JSON string containing a quote or newline.
+def lit(s):return "'"+str(s).replace("\\","\\\\").replace("'","''")+"'"
 def call_batches(sp,records):
     if not records:return 0
     size=min(40,max(1,int(dbutils.widgets.get('batch_size'))))

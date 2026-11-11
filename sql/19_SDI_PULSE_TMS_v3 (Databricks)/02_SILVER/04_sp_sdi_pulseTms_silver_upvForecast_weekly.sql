@@ -379,10 +379,3 @@ BEGIN
 
 END;
 
-
-output:
-CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_biddableSpend_weekly();
-CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly();
-
-CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_validation_history_perRun();
-
