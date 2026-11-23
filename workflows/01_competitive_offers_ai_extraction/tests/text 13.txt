@@ -1,0 +1,246 @@
+
+/* Q1  BRONZE: the CM360 columns exist and are filled (exception campaign, by week)
+  Expect: every week from 2026-09-05 at about 100 percent; the newest partial week may be lower only if CM360 lags DV360. */
+SELECT date_add(archive_date, 7 - dayofweek(archive_date)) AS week_ending,
+       COUNT(*) AS source_rows,
+       SUM(CASE WHEN cm360_total_impressions > 0 THEN 1 ELSE 0 END) AS rows_with_cm360,
+       ROUND(100.0 * SUM(CASE WHEN cm360_total_impressions > 0 THEN 1 ELSE 0 END) / COUNT(*), 1) AS pct_rows_with_cm360
+FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_bronze_retained_weekly
+WHERE archive_date >= DATE'2026-09-01'
+  AND campaign_name = 'TMO_PostpaidHINT_VoiceHINTFiber_X_PSTPHINTPro_Perf_VINT_X_EL_DIS_2026_Multi-Opt_PR-OEX_DV360_X_US_DSP-CMP-001'
+GROUP BY date_add(archive_date, 7 - dayofweek(archive_date))
+ORDER BY week_ending;
+/*
+output:
+week_ending	source_rows	rows_with_cm360	pct_rows_with_cm360
+2026-09-05	380	373	98.2
+2026-09-12	529	525	99.2
+2026-09-19	534	533	99.8
+2026-09-26	536	530	98.9
+2026-10-03	551	545	98.9
+2026-10-10	592	589	99.5
+2026-10-17	587	586	99.8
+2026-10-24	556	551	99.1
+2026-10-31	515	509	98.8
+2026-11-07	503	500	99.4
+2026-11-14	532	532	100.0
+2026-11-21	152	152	100.0
+*/
+/* Q2  BRONZE: the latest run copied the source exactly (no rows lost or multiplied)
+  Expect: source_rows = bronze_rows and source_spend = bronze_spend. */
+SELECT s.source_rows, b.bronze_rows, s.source_spend, b.bronze_spend
+FROM (
+  SELECT COUNT(*) AS source_rows, ROUND(SUM(TRY_CAST(spend AS DOUBLE)), 2) AS source_spend
+  FROM prd_dbi_analytics.improvado.pbi_programmatic_browsers_currentyr
+  WHERE CAST(`date` AS DATE) IS NOT NULL
+) s
+CROSS JOIN (
+  SELECT COUNT(*) AS bronze_rows, ROUND(SUM(TRY_CAST(spend AS DOUBLE)), 2) AS bronze_spend
+  FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_bronze_retained_weekly
+  WHERE archive_run_id = (SELECT archive_run_id FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_bronze_retained_weekly ORDER BY archive_loaded_ts DESC LIMIT 1)
+) b;
+/*
+source_rows	bronze_rows	source_spend	bronze_spend
+843638	843638	438147752.75	438147752.75
+*/
+/* Q3  BRONZE: no date holds more than one run
+  Expect: no rows. */
+SELECT archive_date, COUNT(DISTINCT archive_run_id) AS runs
+FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_bronze_retained_weekly
+GROUP BY archive_date
+HAVING COUNT(DISTINCT archive_run_id) > 1
+ORDER BY archive_date;
+/*
+No rows returned
+*/
+
+/* Q4  GOLD: the exception campaign's HSI, week by week, against the expected values
+  Expect: gold_hsi_minus_expected within a few dollars (CM360 can be revised slightly).
+  Expected = the creative-name rule applied to each week (checked on 2026-11-18). Before the change these weeks were 358K to 372K. */
+WITH expected AS (
+  SELECT * FROM VALUES
+  (DATE'2026-09-12', 191418),
+  (DATE'2026-09-19', 195773),
+  (DATE'2026-09-26', 181299),
+  (DATE'2026-10-03', 143830),
+  (DATE'2026-10-10', 121625),
+  (DATE'2026-10-17', 121143),
+  (DATE'2026-10-24', 117953),
+  (DATE'2026-10-31', 119644),
+  (DATE'2026-11-07', 118832),
+  (DATE'2026-11-14', 122979)
+  AS t(week_ending, expected_hsi)
+)
+SELECT e.week_ending, e.expected_hsi, ROUND(g.gold_hsi, 0) AS gold_hsi, ROUND(g.gold_hsi - e.expected_hsi, 0) AS gold_hsi_minus_expected
+FROM expected e
+LEFT JOIN (
+  SELECT date_add(spend_date, 7 - dayofweek(spend_date)) AS week_ending, SUM(spend_reallocated) AS gold_hsi
+  FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_gold_curated_weekly
+  WHERE lob = 'HSI' AND spend_reallocated > 0
+  GROUP BY date_add(spend_date, 7 - dayofweek(spend_date))
+) g ON g.week_ending = e.week_ending
+ORDER BY e.week_ending;
+/*
+week_ending	expected_hsi	gold_hsi	gold_hsi_minus_expected
+2026-09-12	191418	191418	0
+2026-09-19	195773	195773	0
+2026-09-26	181299	181299	0
+2026-10-03	143830	143830	0
+2026-10-10	121625	121625	0
+2026-10-17	121143	121143	0
+2026-10-24	117953	117953	0
+2026-10-31	119644	119644	0
+2026-11-07	118832	118832	0
+2026-11-14	122979	122979	0
+*/
+/* Q5  GOLD: Programmatic weekly total did not move (the rule only shifts spend between LOBs)
+  Expect: gold_total_minus_before between 0 and about +1,300 (spend on days with no DV360 impressions is now carried). */
+WITH before AS (
+  SELECT * FROM VALUES
+  (DATE'2026-10-24', 4967338),
+  (DATE'2026-10-31', 5058025),
+  (DATE'2026-11-07', 5083665),
+  (DATE'2026-11-14', 5315793)
+  AS t(week_ending, total_before)
+)
+SELECT b.week_ending, b.total_before, ROUND(g.gold_total, 0) AS gold_total, ROUND(g.gold_total - b.total_before, 0) AS gold_total_minus_before
+FROM before b
+LEFT JOIN (
+  SELECT date_add(spend_date, 7 - dayofweek(spend_date)) AS week_ending, SUM(spend) AS gold_total
+  FROM prdrzranalytics.lab42.sdi_tbl_biddProgrammaticArchive_gold_curated_weekly
+  WHERE lob IN ('POSTPAID', 'HSI', 'PREPAID', 'TFB')
+  GROUP BY date_add(spend_date, 7 - dayofweek(spend_date))
+) g ON g.week_ending = b.week_ending
+ORDER BY b.week_ending;
+/*
+week_ending	total_before	gold_total	gold_total_minus_before
+2026-10-24	4967338	4967337	-1
+2026-10-31	5058025	5058025	0
+2026-11-07	5083665	5083665	0
+2026-11-14	5315793	5315792	-1
+*/
+/* Q6  PULSETMS GOLD: Programmatic Broadband and Postpaid after the shift
+  Expect: pulse_minus_expected within a few hundred dollars. Prepaid and TFB should not change. */
+WITH expected AS (
+  SELECT * FROM VALUES
+  (DATE'2026-10-24', 'BROADBAND', 1227623),
+  (DATE'2026-10-24', 'POSTPAID', 2546909),
+  (DATE'2026-10-31', 'BROADBAND', 1316583),
+  (DATE'2026-10-31', 'POSTPAID', 2456408),
+  (DATE'2026-11-07', 'BROADBAND', 1334424),
+  (DATE'2026-11-07', 'POSTPAID', 2426168),
+  (DATE'2026-11-14', 'BROADBAND', 1375624),
+  (DATE'2026-11-14', 'POSTPAID', 2651686)
+  AS t(qgp_date, lob, expected_programmatic)
+)
+SELECT e.qgp_date, e.lob, e.expected_programmatic, ROUND(g.pulse_programmatic, 0) AS pulse_programmatic, ROUND(g.pulse_programmatic - e.expected_programmatic, 0) AS pulse_minus_expected
+FROM expected e
+LEFT JOIN (
+  SELECT qgp_date, UPPER(TRIM(true_lob)) AS lob, SUM(metric_value) AS pulse_programmatic
+  FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+  WHERE data_source = 'BIDDABLE_SPEND_CHANNEL' AND metric_name = 'biddableSpend' AND channel_group = 'Programmatic - All'
+    AND qgp_date IN (DATE'2026-10-24', DATE'2026-10-31', DATE'2026-11-07', DATE'2026-11-14')
+  GROUP BY qgp_date, UPPER(TRIM(true_lob))
+) g ON g.qgp_date = e.qgp_date AND g.lob = e.lob
+ORDER BY e.qgp_date, e.lob;
+/*
+qgp_date	lob	expected_programmatic	pulse_programmatic	pulse_minus_expected
+2026-10-24	BROADBAND	1227623	1227623	0
+2026-10-24	POSTPAID	2546909	2546909	0
+2026-10-31	BROADBAND	1316583	1316583	0
+2026-10-31	POSTPAID	2456408	2456409	1
+2026-11-07	BROADBAND	1334424	1334423	-1
+2026-11-07	POSTPAID	2426168	2426168	0
+2026-11-14	BROADBAND	1375624	1375623	-1
+2026-11-14	POSTPAID	2651686	2651686	0
+*/
+/* Q7  PULSETMS GOLD: all channels against the Biddable team (the final tie-out)
+  Expect: 11-14 by LOB within about 300 dollars each; 11-14 total within about 1,300; the other weeks within a few dollars. */
+WITH team AS (
+  SELECT * FROM VALUES
+  (DATE'2026-11-14', 'POSTPAID', 8194126),
+  (DATE'2026-11-14', 'BROADBAND', 5515795),
+  (DATE'2026-11-14', 'PREPAID', 2140372),
+  (DATE'2026-11-14', 'TFB', 1372005),
+  (DATE'2026-10-24', 'ALL', 14183441),
+  (DATE'2026-10-31', 'ALL', 14607751),
+  (DATE'2026-11-07', 'ALL', 15440701),
+  (DATE'2026-11-14', 'ALL', 17222298)
+  AS t(qgp_date, lob, team_spend)
+)
+SELECT t.qgp_date, t.lob, t.team_spend, ROUND(g.pulse_spend, 0) AS pulse_spend, ROUND(g.pulse_spend - t.team_spend, 0) AS pulse_minus_team
+FROM team t
+LEFT JOIN (
+  SELECT qgp_date, UPPER(TRIM(true_lob)) AS lob, SUM(metric_value) AS pulse_spend
+  FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+  WHERE data_source = 'BIDDABLE_SPEND_CHANNEL' AND metric_name = 'biddableSpend' AND channel_group = 'All Channels'
+    AND qgp_date IN (DATE'2026-10-24', DATE'2026-10-31', DATE'2026-11-07', DATE'2026-11-14')
+  GROUP BY qgp_date, UPPER(TRIM(true_lob))
+) g ON g.qgp_date = t.qgp_date AND g.lob = t.lob
+ORDER BY t.qgp_date, t.lob;
+/*qgp_date	lob	team_spend	pulse_spend	pulse_minus_team
+2026-10-24	ALL	14183441	14183441	0
+2026-10-31	ALL	14607751	14607751	0
+2026-11-07	ALL	15440701	15440700	-1
+2026-11-14	ALL	17222298	17221078	-1220
+2026-11-14	BROADBAND	5515795	5515646	-149
+2026-11-14	POSTPAID	8194126	8193481	-645
+2026-11-14	PREPAID	2140372	2140213	-159
+2026-11-14	TFB	1372005	1371739	-266
+
+*/
+/* Q8  VALIDATION PROCEDURE: the Biddable lines of its latest run
+  Expect: status = Healthy on all five lines (run sdi_sp_dashboardPulseTms_validation_history_perRun first). */
+SELECT metric_name, status, issue_layer, source_value, bronze_value, silver_value, gold_value, notes
+FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun
+WHERE validation_run_id = (SELECT validation_run_id FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_validation_history_perRun ORDER BY validation_run_ts DESC, validation_run_id DESC LIMIT 1)
+  AND data_source = 'BIDDABLE_SPEND'
+ORDER BY metric_name;
+
+/*
+metric_name	status	issue_layer	source_value	bronze_value	silver_value	gold_value	notes
+biddableSpendBroadband	Healthy	NONE	5515645.83	5515645.83	5515645.83	5515645.83	Values reconcile to two-decimal precision across all applicable layers.
+biddableSpendPostpaid	Healthy	NONE	8193481.30	8193481.30	8193481.30	8193481.30	Values reconcile to two-decimal precision across all applicable layers.
+biddableSpendPrepaid	Healthy	NONE	2140212.60	2140212.60	2140212.60	2140212.60	Values reconcile to two-decimal precision across all applicable layers.
+biddableSpendTfb	Healthy	NONE	1371738.69	1371738.69	1371738.69	1371738.69	Values reconcile to two-decimal precision across all applicable layers.
+biddableSpendTotal	Healthy	NONE	17221078.42	17221078.42	17221078.42	17221078.42	Values reconcile to two-decimal precision across all applicable layers.
+*/
+/* Q9  PULSETMS GOLD: the quarter-boundary week (Paid Search by LOB; also confirms the BTS account exclusion)
+  Expect: pulse_minus_team within a few hundred dollars. If Postpaid on 2026-09-30 is about 10K a day higher, the BTS exclusion is not applied. */
+WITH expected AS (
+  SELECT * FROM VALUES
+  (DATE'2026-09-30', 'POSTPAID', 1637206),
+  (DATE'2026-09-30', 'BROADBAND', 1274296),
+  (DATE'2026-09-30', 'PREPAID', 722035),
+  (DATE'2026-09-30', 'TFB', 190973),
+  (DATE'2026-09-30', 'ALL', 3824511),
+  (DATE'2026-10-03', 'POSTPAID', 1039686),
+  (DATE'2026-10-03', 'BROADBAND', 1018194),
+  (DATE'2026-10-03', 'PREPAID', 546196),
+  (DATE'2026-10-03', 'TFB', 167782),
+  (DATE'2026-10-03', 'ALL', 2771858)
+  AS t(qgp_date, lob, team_paid_search)
+)
+SELECT e.qgp_date, e.lob, e.team_paid_search, ROUND(g.pulse_now, 0) AS pulse_now, ROUND(g.pulse_now - e.team_paid_search, 0) AS pulse_minus_team
+FROM expected e
+LEFT JOIN (
+  SELECT qgp_date, UPPER(TRIM(true_lob)) AS lob, SUM(metric_value) AS pulse_now
+  FROM prdrzranalytics.lab42.sdi_vw_dashboardPulseTms_gold_unified_long
+  WHERE data_source = 'BIDDABLE_SPEND_CHANNEL' AND metric_name = 'biddableSpend' AND channel_group = 'Paid Search - All'
+    AND qgp_date IN (DATE'2026-09-30', DATE'2026-10-03')
+  GROUP BY qgp_date, UPPER(TRIM(true_lob))
+) g ON g.qgp_date = e.qgp_date AND g.lob = e.lob
+ORDER BY e.qgp_date, e.lob;
+/*
+qgp_date	lob	team_paid_search	pulse_now	pulse_minus_team
+2026-09-30	ALL	3824511	3824511	0
+2026-09-30	BROADBAND	1274296	1274296	0
+2026-09-30	POSTPAID	1637206	1637207	1
+2026-09-30	PREPAID	722035	722035	0
+2026-09-30	TFB	190973	190973	0
+2026-10-03	ALL	2771858	2771858	0
+2026-10-03	BROADBAND	1018194	1018194	0
+2026-10-03	POSTPAID	1039686	1039686	0
+2026-10-03	PREPAID	546196	546196	0
+2026-10-03	TFB	167782	167782	0
+*/
