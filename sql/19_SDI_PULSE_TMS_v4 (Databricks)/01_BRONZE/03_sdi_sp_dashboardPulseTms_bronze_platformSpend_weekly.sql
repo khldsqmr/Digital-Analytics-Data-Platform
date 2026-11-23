@@ -77,6 +77,7 @@ CALENDAR ALIGNMENT:
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_bronze_platformSpend_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
 

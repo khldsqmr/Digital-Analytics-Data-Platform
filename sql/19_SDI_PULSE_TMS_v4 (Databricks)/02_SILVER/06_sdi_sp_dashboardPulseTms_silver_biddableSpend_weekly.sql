@@ -338,7 +338,7 @@ CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_biddableSpend_weekly()
 
 LANGUAGE SQL
-
+SQL SECURITY INVOKER
 AS
 
 BEGIN

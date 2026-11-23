@@ -18,8 +18,6 @@ EXECUTION FLOW:
       ↓
   QGP Archive
       ↓
-  Biddable Programmatic Archive
-      ↓
   Pulse TMS Bronze
       ↓
   Pulse TMS Silver
@@ -29,12 +27,6 @@ EXECUTION FLOW:
   Gold live views
       ↓
   Post-run validation
-
-CHANGE LOG:
-  - Added step 3B: Biddable Programmatic archive
-    (sdi_sp_biddProgrammaticArchive_orchestration_allLayers_weekly), run before PulseTMS Bronze
-    so Biddable Bronze reads a complete, never-shrinking Programmatic history.
-  - Step 6 comment corrected: UPV Forecast Silver no longer reads Adobe Silver.
 
 ================================================================================================= */
 
@@ -86,23 +78,12 @@ BEGIN
 
   CALL prdrzranalytics.lab42.sdi_sp_mfc_silver_spendGranular_weekly();
 
-
+  CALL prdrzranalytics.lab42.sdi_sp_biddProgrammaticArchive_orchestration_allLayers_weekly();
   /* ===============================================================================================
      3. QGP ARCHIVE
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_qgpArchive_orchestration_allLayers_weekly();
-
-
-  /* ===============================================================================================
-     3B. BIDDABLE PROGRAMMATIC ARCHIVE
-
-     Bronze (retained) -> Silver (conformed) -> Gold (curated). Must run before PulseTMS Bronze:
-     Biddable Bronze reads sdi_tbl_biddProgrammaticArchive_gold_curated_weekly so prior-year
-     Programmatic spend is never lost when the current-year-only source rolls over.
-     =============================================================================================== */
-
-  CALL prdrzranalytics.lab42.sdi_sp_biddProgrammaticArchive_orchestration_allLayers_weekly();
 
 
   /* ===============================================================================================
@@ -136,11 +117,9 @@ BEGIN
 
 
   /* ===============================================================================================
-     6. SILVER: UPV FORECAST
+     6. DEPENDENT SILVER: UPV FORECAST
 
-     No longer depends on Silver Adobe Funnel (prior-year Adobe channel ratios are temporarily
-     removed from UPV Forecast Silver). Kept last in Silver so the order does not change if
-     ratio-based channel allocation is restored.
+     Runs after Silver Adobe Funnel because UPV Forecast uses Adobe allocation information.
      =============================================================================================== */
 
   CALL prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_upvForecast_weekly();

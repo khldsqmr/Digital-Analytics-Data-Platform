@@ -378,4 +378,3 @@ BEGIN
   FROM WithWowYoy;
 
 END;
-

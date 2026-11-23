@@ -26,13 +26,18 @@ ACTIVE CHANNEL-GRAIN SOURCES:
     - C2C / Chat Engagement / Eligibility Check (EC)
     - Orders
     - Pre-computed Adobe CVRs
+    - Metro / TFB mPulse metrics (18, volumes only, no CVR)
 
   MFC_SPEND_CHANNEL
     - mfcSpendActualPostpaid
     - mfcSpendActualBroadband
+    - mfcSpendActualTfb
+    - mfcSpendActualPrepaid
     - mfcSpendActualTotal
     - mfcSpendForecastPostpaid
     - mfcSpendForecastBroadband
+    - mfcSpendForecastTfb
+    - mfcSpendForecastPrepaid
     - mfcSpendForecastTotal
 
   PLATFORM_SPEND_CHANNEL
@@ -55,6 +60,7 @@ DATE-LEVEL SOURCE:
 
   QGP_SCORECARD
     - 13 named QGP metrics (the 12 original + vrChatsPctOfChatEngagement)
+    - 11 Metro/TFB QGP metrics (added 2026-11-10)
     - Actual/Target representation
     - no channel_group dimension
     - joined by qgp_date and repeated across each channel row
@@ -107,6 +113,39 @@ Each of the four has an Adobe CVR column in the ADOBE CVR block of this view:
 
 
 ---------------------------------------------------------------------------------------------------
+METRO / TFB (added 2026-11-10)
+---------------------------------------------------------------------------------------------------
+
+ADOBE (channel grain, same columns as the Silver metric_name, volumes only, NO CVR columns):
+
+  Metro
+    metroProspectVisitors, metroHomepageEntryVisitors, metroDealsEntryVisitors,
+    metroProductPlansEntryVisitors, metroOtherEntryVisitors, metroActivationIntentVisitors,
+    metroCartStartVisitors, metroProspectClicktocallVisitors      (visitors)
+    metroOrderConfirmationOrders                                  (orders)
+
+  TFB
+    tfbExclSinglePageVisitors, tfbCartStartsVisitors, tfbClicktocallExistsVisitors,
+    tfbChatEngagementVisitors                                     (visitors)
+    tfbLeadgenFormCompleteEvent104, tfbCreditCheckEvent104        (event 104)
+    tfbAllClicktocallEvent95                                      (event 95)
+    tfbAllChatEngagementEvent21                                   (event 21)
+    tfbEcommOrderHitOrders                                        (orders)
+
+  Units differ by metric: do not divide one by another. Unique-visitor metrics are not additive
+  across channel_group.
+
+QGP (date grain, repeated across channel rows, Actual / Target):
+
+  qgpMetroActivations*, qgpMetroNets*, qgpMetroDigitalActivationsPhoneAndOther*, qgpMetroNewAccounts*,
+  qgpMetroPspvs* (Target is NULL in the feed), qgpTfbTotalActivations*, qgpTfbPhoneActivations*,
+  qgpTfbHsiActivations*, qgpTfbDigitalChannelActivations*, qgpTfbEcommerceActivations*,
+  qgpTfbSalesCredit*   (each as ...Actual and ...Target)
+
+Not in this view: metroMediaSpend (deferred to the Consumer Prepaid pass).
+
+
+---------------------------------------------------------------------------------------------------
 SPEND LOB SCOPE — IMPORTANT
 ---------------------------------------------------------------------------------------------------
 
@@ -115,10 +154,15 @@ Spend Total definitions are source-specific.
 MFC:
 
   mfcSpendActualTotal
-    = POSTPAID + BROADBAND
+    = POSTPAID + BROADBAND + TFB + CONSUMER PREPAID
 
   mfcSpendForecastTotal
-    = POSTPAID + BROADBAND
+    = POSTPAID + BROADBAND + TFB + CONSUMER PREPAID
+
+  Changed 2026-11-10: these MFC Totals previously covered POSTPAID + BROADBAND only. TFB and
+  CONSUMER PREPAID are separate LOBs, so the four components do not overlap, and each has its own
+  column (mfcSpend{Actual|Forecast}{Postpaid|Broadband|Tfb|Prepaid}). The Platform and Biddable
+  Totals below are unchanged.
 
 
 PLATFORM:
@@ -154,13 +198,14 @@ because ALL already contains the component LOBs.
 
 Other source LOBs such as:
 
-  TFB
-  PREPAID
   METRO
   TMONEY
+  HOME INTERNET
   etc.
 
 remain outside the current approved spend totals unless explicitly added.
+(TFB and CONSUMER PREPAID are inside the MFC Totals; the Platform Total still covers
+POSTPAID + BROADBAND only.)
 
 
 ---------------------------------------------------------------------------------------------------
@@ -243,6 +288,15 @@ Each channel_group value is an alternative reporting selection.
 
 Do NOT sum channel totals together with their platform-detail rows.
 
+In Wide (changed 2026-11-10): only the channel TOTAL rows are shown, mapped onto the main groups:
+
+  All Channels       -> All Channels
+  Paid Search - All  -> Paid Search
+  Paid Social - All  -> Paid Social
+  Programmatic - All -> Programmatic
+
+The platform-detail rows are not in Wide (they remain in the long view).
+
 
 ---------------------------------------------------------------------------------------------------
 QGP METRIC HANDLING
@@ -284,6 +338,15 @@ ChannelSpine is constructed from:
   UPV Forecast
 
 This prevents valid spend/channel rows from disappearing when Adobe lacks the same key.
+
+MAIN CHANNEL GROUPS ONLY (changed 2026-11-10):
+
+  All Channels | Paid Search | Paid Social | Organic Search | Direct | Programmatic | Other
+
+Every channel-grain source is restricted to that list (CTE MainChannelGroups), so Wide has no other
+channel_group values. Rows for groups outside the list, such as Platform's iSpot National TV,
+iSpot OTT and Affiliate, are not shown in Wide; they stay in the long view, and the All Channels row
+of each source still contains their spend.
 
 
 ---------------------------------------------------------------------------------------------------
@@ -337,6 +400,29 @@ CREATE OR REPLACE VIEW
 AS
 
 WITH
+
+/* ===============================================================================================
+   MAIN CHANNEL GROUPS
+
+   The only channel_group values Wide shows. One place to change if the vocabulary changes.
+   Every channel-grain source below is restricted to this list, so rows for any other group
+   (Platform iSpot / Affiliate, Biddable platform-level groups, ...) never reach the spine.
+   =============================================================================================== */
+
+MainChannelGroups AS (
+
+  SELECT channel_group
+  FROM VALUES
+    ('All Channels'),
+    ('Paid Search'),
+    ('Paid Social'),
+    ('Organic Search'),
+    ('Direct'),
+    ('Programmatic'),
+    ('Other')
+  AS t(channel_group)
+),
+
 
 /* ===============================================================================================
    QGP CALENDAR METADATA
@@ -393,6 +479,27 @@ Adobe AS (
 
     MAX(IF(metric_name = 'ordersTotal', metric_value, NULL)) AS ordersTotal,
 
+    /* ---- METRO / TFB mPULSE (volumes only, no CVR) ---- */
+    MAX(IF(metric_name = 'metroProspectVisitors', metric_value, NULL)) AS metroProspectVisitors,
+    MAX(IF(metric_name = 'metroHomepageEntryVisitors', metric_value, NULL)) AS metroHomepageEntryVisitors,
+    MAX(IF(metric_name = 'metroDealsEntryVisitors', metric_value, NULL)) AS metroDealsEntryVisitors,
+    MAX(IF(metric_name = 'metroProductPlansEntryVisitors', metric_value, NULL)) AS metroProductPlansEntryVisitors,
+    MAX(IF(metric_name = 'metroOtherEntryVisitors', metric_value, NULL)) AS metroOtherEntryVisitors,
+    MAX(IF(metric_name = 'metroActivationIntentVisitors', metric_value, NULL)) AS metroActivationIntentVisitors,
+    MAX(IF(metric_name = 'metroCartStartVisitors', metric_value, NULL)) AS metroCartStartVisitors,
+    MAX(IF(metric_name = 'metroProspectClicktocallVisitors', metric_value, NULL)) AS metroProspectClicktocallVisitors,
+    MAX(IF(metric_name = 'metroOrderConfirmationOrders', metric_value, NULL)) AS metroOrderConfirmationOrders,
+
+    MAX(IF(metric_name = 'tfbExclSinglePageVisitors', metric_value, NULL)) AS tfbExclSinglePageVisitors,
+    MAX(IF(metric_name = 'tfbLeadgenFormCompleteEvent104', metric_value, NULL)) AS tfbLeadgenFormCompleteEvent104,
+    MAX(IF(metric_name = 'tfbCreditCheckEvent104', metric_value, NULL)) AS tfbCreditCheckEvent104,
+    MAX(IF(metric_name = 'tfbAllClicktocallEvent95', metric_value, NULL)) AS tfbAllClicktocallEvent95,
+    MAX(IF(metric_name = 'tfbAllChatEngagementEvent21', metric_value, NULL)) AS tfbAllChatEngagementEvent21,
+    MAX(IF(metric_name = 'tfbCartStartsVisitors', metric_value, NULL)) AS tfbCartStartsVisitors,
+    MAX(IF(metric_name = 'tfbEcommOrderHitOrders', metric_value, NULL)) AS tfbEcommOrderHitOrders,
+    MAX(IF(metric_name = 'tfbClicktocallExistsVisitors', metric_value, NULL)) AS tfbClicktocallExistsVisitors,
+    MAX(IF(metric_name = 'tfbChatEngagementVisitors', metric_value, NULL)) AS tfbChatEngagementVisitors,
+
     MAX(IF(metric_name = 'upvFlowTotal', adobe_cvr_value, NULL)) AS cvrUpvFlow,
     MAX(IF(metric_name = 'upvPostpaid', adobe_cvr_value, NULL)) AS cvrUpvPostpaid,
     MAX(IF(metric_name = 'upvHsi', adobe_cvr_value, NULL)) AS cvrUpvHsi,
@@ -420,6 +527,7 @@ Adobe AS (
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_adobeFunnel_weekly
   WHERE metric_type = 'ADOBE_VOLUME'
+    AND channel_group IN (SELECT channel_group FROM MainChannelGroups)
 
   GROUP BY
     qgp_date,
@@ -449,13 +557,14 @@ MfcBase AS (
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_mfcSpend_weekly
   WHERE data_source = 'MFC_SPEND_CHANNEL'
+    AND channel_group IN (SELECT channel_group FROM MainChannelGroups)
 ),
 
 
 /* ===============================================================================================
    MFC SPEND
 
-   Total = POSTPAID + BROADBAND
+   Total = POSTPAID + BROADBAND + TFB + CONSUMER PREPAID
    =============================================================================================== */
 
 Mfc AS (
@@ -477,7 +586,19 @@ Mfc AS (
         END) AS mfcSpendActualBroadband,
 
     SUM(CASE
-          WHEN lob IN ('POSTPAID', 'BROADBAND')
+          WHEN lob = 'TFB'
+           AND metric_name = 'mfcSpendActual'
+          THEN metric_value
+        END) AS mfcSpendActualTfb,
+
+    SUM(CASE
+          WHEN lob = 'CONSUMER PREPAID'
+           AND metric_name = 'mfcSpendActual'
+          THEN metric_value
+        END) AS mfcSpendActualPrepaid,
+
+    SUM(CASE
+          WHEN lob IN ('POSTPAID', 'BROADBAND', 'TFB', 'CONSUMER PREPAID')
            AND metric_name = 'mfcSpendActual'
           THEN metric_value
         END) AS mfcSpendActualTotal,
@@ -495,14 +616,26 @@ Mfc AS (
         END) AS mfcSpendForecastBroadband,
 
     SUM(CASE
-          WHEN lob IN ('POSTPAID', 'BROADBAND')
+          WHEN lob = 'TFB'
+           AND metric_name = 'mfcSpendForecast'
+          THEN metric_value
+        END) AS mfcSpendForecastTfb,
+
+    SUM(CASE
+          WHEN lob = 'CONSUMER PREPAID'
+           AND metric_name = 'mfcSpendForecast'
+          THEN metric_value
+        END) AS mfcSpendForecastPrepaid,
+
+    SUM(CASE
+          WHEN lob IN ('POSTPAID', 'BROADBAND', 'TFB', 'CONSUMER PREPAID')
            AND metric_name = 'mfcSpendForecast'
           THEN metric_value
         END) AS mfcSpendForecastTotal
 
   FROM MfcBase
 
-  WHERE lob IN ('POSTPAID', 'BROADBAND')
+  WHERE lob IN ('POSTPAID', 'BROADBAND', 'TFB', 'CONSUMER PREPAID')
 
   GROUP BY
     qgp_date,
@@ -524,6 +657,8 @@ PlatformBase AS (
     metric_value
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_platformSpend_weekly
+
+  WHERE channel_group IN (SELECT channel_group FROM MainChannelGroups)
 ),
 
 
@@ -583,7 +718,17 @@ BiddableBase AS (
 
   SELECT
     qgp_date,
-    channel_group,
+
+    /* Channel TOTAL rows map onto the main groups. Platform-level rows (Paid Search - Google, ...)
+       are alternative views of those same totals, so they are excluded: summing them would
+       double count. */
+    CASE channel_group
+      WHEN 'All Channels'       THEN 'All Channels'
+      WHEN 'Paid Search - All'  THEN 'Paid Search'
+      WHEN 'Paid Social - All'  THEN 'Paid Social'
+      WHEN 'Programmatic - All' THEN 'Programmatic'
+    END AS channel_group,
+
     metric_name,
     UPPER(TRIM(lob)) AS lob,
     metric_value
@@ -592,6 +737,7 @@ BiddableBase AS (
 
   WHERE data_source = 'BIDDABLE_SPEND_CHANNEL'
     AND lob IN ('ALL', 'POSTPAID', 'BROADBAND', 'FIBER')
+    AND channel_group IN ('All Channels', 'Paid Search - All', 'Paid Social - All', 'Programmatic - All')
 ),
 
 
@@ -654,6 +800,8 @@ UpvForecast AS (
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_upvForecast_weekly
 
+  WHERE channel_group IN (SELECT channel_group FROM MainChannelGroups)
+
   GROUP BY
     qgp_date,
     channel_group
@@ -675,6 +823,8 @@ UpvForecast AS (
    Each is exposed independently for:
      QGP_ACTUAL
      QGP_TARGET
+
+   The 11 Metro/TFB QGP metrics are pivoted the same way (qgpMetro... / qgpTfb...).
    =============================================================================================== */
 
 Qgp AS (
@@ -980,6 +1130,249 @@ Qgp AS (
         NULL
       )
     ) AS qgpDigitalPctAssistanceActivationsTarget
+    ,
+
+    /* -------------------------------------------------------------------------------------------
+       METROACTIVATIONS (METRO)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'metroActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'metroActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       METRONETS (METRO)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'metroNets'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroNetsActual,
+
+    MAX(
+      IF(
+        metric_name = 'metroNets'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroNetsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       METRODIGITALACTIVATIONSPHONEANDOTHER (METRO)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'metroDigitalActivationsPhoneAndOther'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroDigitalActivationsPhoneAndOtherActual,
+
+    MAX(
+      IF(
+        metric_name = 'metroDigitalActivationsPhoneAndOther'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroDigitalActivationsPhoneAndOtherTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       METRONEWACCOUNTS (METRO)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'metroNewAccounts'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroNewAccountsActual,
+
+    MAX(
+      IF(
+        metric_name = 'metroNewAccounts'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroNewAccountsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       METROPSPVS (METRO)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'metroPspvs'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroPspvsActual,
+
+    MAX(
+      IF(
+        metric_name = 'metroPspvs'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpMetroPspvsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBTOTALACTIVATIONS (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbTotalActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbTotalActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbTotalActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbTotalActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBPHONEACTIVATIONS (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbPhoneActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbPhoneActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbPhoneActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbPhoneActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBHSIACTIVATIONS (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbHsiActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbHsiActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbHsiActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbHsiActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBDIGITALCHANNELACTIVATIONS (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbDigitalChannelActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbDigitalChannelActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbDigitalChannelActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbDigitalChannelActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBECOMMERCEACTIVATIONS (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbEcommerceActivations'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbEcommerceActivationsActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbEcommerceActivations'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbEcommerceActivationsTarget,
+
+    /* -------------------------------------------------------------------------------------------
+       TFBSALESCREDIT (TFB)
+       ------------------------------------------------------------------------------------------- */
+
+    MAX(
+      IF(
+        metric_name = 'tfbSalesCredit'
+        AND metric_type = 'QGP_ACTUAL',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbSalesCreditActual,
+
+    MAX(
+      IF(
+        metric_name = 'tfbSalesCredit'
+        AND metric_type = 'QGP_TARGET',
+        metric_value,
+        NULL
+      )
+    ) AS qgpTfbSalesCreditTarget
 
   FROM prdrzranalytics.lab42.sdi_tbl_dashboardPulseTms_silver_qgp_weekly
 
@@ -995,12 +1388,10 @@ Qgp AS (
 
    UNION intentionally removes duplicate keys.
 
-   Biddable may introduce platform-level channel_group values such as:
-     Paid Search - Google
-     Paid Social - Facebook
-     Programmatic - DV360
+   Every source is already restricted to MainChannelGroups, so the spine contains only:
+     All Channels, Paid Search, Paid Social, Organic Search, Direct, Programmatic, Other
 
-   Those are intentionally retained for Wide sense-checking.
+   Biddable's channel totals are mapped onto those groups; its platform-level groups are excluded.
    =============================================================================================== */
 
 ChannelSpine AS (
@@ -1107,22 +1498,54 @@ SELECT
 
 
   /* ---------------------------------------------------------------------------------------------
+     ADOBE METRO / TFB mPULSE (added 2026-11-10)
+
+     Volumes only, no CVR. Units differ by metric (visitors / orders / events): do not divide
+     one by another. Unique-visitor metrics are not additive across channel_group.
+     --------------------------------------------------------------------------------------------- */
+
+  a.metroProspectVisitors,
+  a.metroHomepageEntryVisitors,
+  a.metroDealsEntryVisitors,
+  a.metroProductPlansEntryVisitors,
+  a.metroOtherEntryVisitors,
+  a.metroActivationIntentVisitors,
+  a.metroCartStartVisitors,
+  a.metroProspectClicktocallVisitors,
+  a.metroOrderConfirmationOrders,
+
+  a.tfbExclSinglePageVisitors,
+  a.tfbLeadgenFormCompleteEvent104,
+  a.tfbCreditCheckEvent104,
+  a.tfbAllClicktocallEvent95,
+  a.tfbAllChatEngagementEvent21,
+  a.tfbCartStartsVisitors,
+  a.tfbEcommOrderHitOrders,
+  a.tfbClicktocallExistsVisitors,
+  a.tfbChatEngagementVisitors,
+
+
+  /* ---------------------------------------------------------------------------------------------
      MFC ACTUAL SPEND
-     Total = POSTPAID + BROADBAND
+     Total = POSTPAID + BROADBAND + TFB + CONSUMER PREPAID
      --------------------------------------------------------------------------------------------- */
 
   m.mfcSpendActualPostpaid,
   m.mfcSpendActualBroadband,
+  m.mfcSpendActualTfb,
+  m.mfcSpendActualPrepaid,
   m.mfcSpendActualTotal,
 
 
   /* ---------------------------------------------------------------------------------------------
      MFC FORECAST SPEND
-     Total = POSTPAID + BROADBAND
+     Total = POSTPAID + BROADBAND + TFB + CONSUMER PREPAID
      --------------------------------------------------------------------------------------------- */
 
   m.mfcSpendForecastPostpaid,
   m.mfcSpendForecastBroadband,
+  m.mfcSpendForecastTfb,
+  m.mfcSpendForecastPrepaid,
   m.mfcSpendForecastTotal,
 
 
@@ -1202,6 +1625,46 @@ SELECT
 
   q.qgpDigitalPctAssistanceActivationsActual,
   q.qgpDigitalPctAssistanceActivationsTarget,
+
+  /* ---------------------------------------------------------------------------------------------
+     QGP SCORECARD - METRO / TFB (added 2026-11-10)
+
+     Date-level values repeated across channel_group rows. Do not aggregate across channel_group.
+     qgpMetroPspvsTarget is NULL in the feed.
+     --------------------------------------------------------------------------------------------- */
+
+  q.qgpMetroActivationsActual,
+  q.qgpMetroActivationsTarget,
+
+  q.qgpMetroNetsActual,
+  q.qgpMetroNetsTarget,
+
+  q.qgpMetroDigitalActivationsPhoneAndOtherActual,
+  q.qgpMetroDigitalActivationsPhoneAndOtherTarget,
+
+  q.qgpMetroNewAccountsActual,
+  q.qgpMetroNewAccountsTarget,
+
+  q.qgpMetroPspvsActual,
+  q.qgpMetroPspvsTarget,
+
+  q.qgpTfbTotalActivationsActual,
+  q.qgpTfbTotalActivationsTarget,
+
+  q.qgpTfbPhoneActivationsActual,
+  q.qgpTfbPhoneActivationsTarget,
+
+  q.qgpTfbHsiActivationsActual,
+  q.qgpTfbHsiActivationsTarget,
+
+  q.qgpTfbDigitalChannelActivationsActual,
+  q.qgpTfbDigitalChannelActivationsTarget,
+
+  q.qgpTfbEcommerceActivationsActual,
+  q.qgpTfbEcommerceActivationsTarget,
+
+  q.qgpTfbSalesCreditActual,
+  q.qgpTfbSalesCreditTarget,
 
 
   /* ---------------------------------------------------------------------------------------------

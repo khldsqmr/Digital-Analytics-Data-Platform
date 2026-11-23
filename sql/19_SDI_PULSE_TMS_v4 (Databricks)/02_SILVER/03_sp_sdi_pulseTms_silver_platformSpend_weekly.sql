@@ -1,5 +1,5 @@
 /* =================================================================================================
-FILE:         07_sdi_sp_dashboardPulseTms_silver_platformSpend_weekly.sql
+FILE:         04_sdi_sp_dashboardPulseTms_silver_platformSpend_weekly.sql
 LAYER:        Stored Procedure
 PROCEDURE:    sdi_sp_dashboardPulseTms_silver_platformSpend_weekly
 
@@ -72,6 +72,7 @@ known quirk):
 CREATE OR REPLACE PROCEDURE
   prdrzranalytics.lab42.sdi_sp_dashboardPulseTms_silver_platformSpend_weekly()
 LANGUAGE SQL
+SQL SECURITY INVOKER
 AS
 BEGIN
 

@@ -1,0 +1,128 @@
+-- ============================================================
+-- BRONZE 2 — SPEND ACTUALS, GRANULAR
+-- ============================================================
+-- 2026-11-23: when two versions of the same flowchart share the latest FileLoad_Date and File_Date (for example
+-- "... Q3 Actualization.xlsx" and "... Q3 Actualization v2.xlsx" loaded the same day), only the version with the latest
+-- FileModified_TimeStamp is used. Before, both versions were summed and every line counted twice. No output column changed.
+CREATE OR REPLACE PROCEDURE
+  prdrzranalytics.lab42.sdi_sp_mfc_bronze_spendActualsGranular_weekly()
+SQL SECURITY DEFINER
+COMMENT 'Creates/refreshes sdi_tbl_mfc_bronze_spendActualsGranular_weekly. Refreshed weekly. Uses latest-file-snapshot selection per (Quarter, QGP_Week, LOB) — no per-campaign fallback across files.'
+BEGIN
+  CREATE OR REPLACE TABLE
+    prdrzranalytics.lab42.sdi_tbl_mfc_bronze_spendActualsGranular_weekly
+  USING DELTA
+  COMMENT 'MFC Bronze Actuals (granular). For each (Quarter, QGP_Week, LOB), uses only the single most recent file that has any actual data. Includes legacy LOB codes HSI (Broadband) and TBG (TFB), normalized to canonical values. Includes CONSUMER PREPAID (the Metro brand), passed through uppercased. Non-working spend is excluded for every LOB.'
+  AS
+  WITH raw AS (
+    SELECT
+      Quarter,
+      TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) AS Week_Beginning_Monday,
+      COALESCE(
+        TRY_CAST(NULLIF(CAST(Week_Ending_Sunday AS STRING), 'None') AS DATE),
+        DATE_ADD(TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE), 6)
+      ) AS Week_Ending_Sunday,
+      TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) AS QGP_Week,
+      TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) AS FileLoad_Date,
+      TRY_CAST(File_Date AS DATE) AS Source_File_Date,
+      TRY_CAST(CAST(FileModified_TimeStamp AS STRING) AS TIMESTAMP) AS File_Modified_Ts,
+      File_Name,
+      CASE
+        WHEN UPPER(TRIM(LOB_Supported)) = 'HSI' THEN 'BROADBAND'
+        WHEN UPPER(TRIM(LOB_Supported)) = 'TBG' THEN 'TFB'
+        ELSE UPPER(TRIM(LOB_Supported))
+      END AS LOB_Supported,
+      Channel, Tactic, Message_Type,
+      CASE
+        WHEN LOWER(TRIM(Agency)) = 'ini' THEN 'Initiative'
+        WHEN LOWER(TRIM(Agency)) IN ('in house', 'inhouse', 'internal', 'progact', 'search') THEN 'In-House (TMO)'
+        WHEN Agency IS NULL THEN NULL
+        ELSE TRIM(Agency)
+      END AS Agency,
+      Spend AS Spend_Actual
+    FROM prdrzranalytics.lab42.raw_media_flowchart
+    WHERE 1=1
+      -- CONSUMER PREPAID (Metro) added 2026-11-10. It needs no CASE mapping above: it passes through uppercased.
+      AND UPPER(TRIM(LOB_Supported)) IN ('CONSUMER POSTPAID', 'CONSUMER PREPAID', 'BROADBAND', 'TFB', 'HSI', 'TBG')
+      AND UPPER(TRIM(WM_V_NWM)) = 'WORKING'
+      AND Channel IS NOT NULL
+      AND Channel NOT IN ('OTHER (do not use)', 'Non-Working', 'Budget Held')
+      AND TRY_CAST(NULLIF(CAST(Week_Beginning_Monday AS STRING), 'None') AS DATE) IS NOT NULL
+      AND TRY_CAST(NULLIF(CAST(QGP_Week AS STRING), 'None') AS DATE) IS NOT NULL
+      AND TRY_CAST(CAST(FileLoad_Date AS STRING) AS DATE) IS NOT NULL
+      --AND UPPER(TRIM(Message_Type)) NOT IN ('MICRO')
+      --AND UPPER(TRIM(Message)) NOT IN ('SEM POSTPAID/MICRO', 'MICRO POSTPAID OFFERS')
+      AND Quarter IS NOT NULL
+      AND Quarter RLIKE "^Q[1-4]'[0-9]{2}$"
+      AND UPPER(TRIM(QGP)) = 'ACTUAL'
+      AND Spend IS NOT NULL
+  ),
+  weekly_snapshots AS (
+    SELECT
+      Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week,
+      FileLoad_Date, Source_File_Date, File_Modified_Ts, File_Name, LOB_Supported, Channel, Tactic, Message_Type, Agency,
+      SUM(Spend_Actual) AS weekly_actual
+    FROM raw
+    WHERE Week_Beginning_Monday <= Week_Ending_Sunday
+    GROUP BY Quarter, Week_Beginning_Monday, Week_Ending_Sunday, QGP_Week, FileLoad_Date, Source_File_Date, File_Modified_Ts, File_Name, LOB_Supported, Channel, Tactic, Message_Type, Agency
+  ),
+  latest_file_per_week AS (
+    SELECT Quarter, QGP_Week, LOB_Supported, MAX(FileLoad_Date) AS latest_FileLoad_Date
+    FROM weekly_snapshots
+    GROUP BY Quarter, QGP_Week, LOB_Supported
+  ),
+  latest_source_file_per_week AS (
+    SELECT ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date,
+      MAX(ws.Source_File_Date) AS latest_Source_File_Date
+    FROM weekly_snapshots ws
+    JOIN latest_file_per_week lf
+      ON ws.Quarter = lf.Quarter AND ws.QGP_Week = lf.QGP_Week AND ws.LOB_Supported = lf.LOB_Supported
+     AND ws.FileLoad_Date = lf.latest_FileLoad_Date
+    GROUP BY ws.Quarter, ws.QGP_Week, ws.LOB_Supported, lf.latest_FileLoad_Date
+  ),
+  latest_file_version_per_week AS (
+    SELECT Quarter, QGP_Week, LOB_Supported, FileLoad_Date, Source_File_Date, File_Modified_Ts, File_Name
+    FROM (
+      SELECT
+        v.Quarter, v.QGP_Week, v.LOB_Supported, v.FileLoad_Date, v.Source_File_Date, v.File_Modified_Ts, v.File_Name,
+        ROW_NUMBER() OVER (
+          PARTITION BY v.Quarter, v.QGP_Week, v.LOB_Supported
+          ORDER BY v.File_Modified_Ts DESC NULLS LAST, v.File_Name DESC NULLS LAST
+        ) AS rn
+      FROM (
+        SELECT DISTINCT Quarter, QGP_Week, LOB_Supported, FileLoad_Date, Source_File_Date, File_Modified_Ts, File_Name
+        FROM weekly_snapshots
+      ) v
+      JOIN latest_source_file_per_week lsf
+        ON v.Quarter = lsf.Quarter AND v.QGP_Week = lsf.QGP_Week AND v.LOB_Supported = lsf.LOB_Supported
+       AND v.FileLoad_Date = lsf.latest_FileLoad_Date
+       AND v.Source_File_Date <=> lsf.latest_Source_File_Date
+    )
+    WHERE rn = 1
+  ),
+  best AS (
+    SELECT ws.*
+    FROM weekly_snapshots ws
+    JOIN latest_file_version_per_week lfv
+      ON ws.Quarter = lfv.Quarter AND ws.QGP_Week = lfv.QGP_Week AND ws.LOB_Supported = lfv.LOB_Supported
+     AND ws.FileLoad_Date = lfv.FileLoad_Date
+     AND ws.Source_File_Date <=> lfv.Source_File_Date
+     AND ws.File_Modified_Ts <=> lfv.File_Modified_Ts
+     AND ws.File_Name <=> lfv.File_Name
+  ),
+  week_type AS (
+    SELECT
+      QGP_Week,
+      CASE WHEN COUNT(DISTINCT Quarter) > 1 THEN 'boundary_week' ELSE 'normal' END AS week_type
+    FROM best
+    GROUP BY QGP_Week
+  )
+  SELECT
+    b.Quarter, b.Week_Beginning_Monday, b.Week_Ending_Sunday, b.QGP_Week,
+    b.FileLoad_Date, b.Source_File_Date, b.LOB_Supported, b.Channel, b.Tactic, b.Message_Type, b.Agency,
+    b.weekly_actual, w.week_type
+  FROM best b
+  JOIN week_type w ON b.QGP_Week = w.QGP_Week
+  WHERE b.weekly_actual IS NOT NULL AND b.weekly_actual != 0
+  ;
+END;
